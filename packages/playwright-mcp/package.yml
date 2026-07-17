@@ -25,6 +25,7 @@ source_policy:
   browser_logo_assets: Ten active root-lock packages lack license metadata; their exact source legal statement reserves the marks to their owners and excludes them from the repository MIT grant. Six logos are inlined and four are separate SVGs in the published dashboard, so distribution remains review-blocked.
   dashboard_runtime_scope: Browser logos are used only by the dashboard. Default MCP tools do not enable devtools; browser_annotate under --caps=devtools requires dashboardApp.js and lib/vite/dashboard. A default-surface binary may omit dashboard output, but the normal upstream build still requires the logo source inputs.
   generated_javascript_policy: Node-executed esbuild outputs are bundled CJS with minify unset and are not minified. Production Vite assets are browser-targeted and minified; they require normal corresponding-source and license evidence. Copied xdg-open is a POSIX shell script.
+  xdg_open_integration: open 11.0.0 supplies an MIT-licensed xdg-open 1.2.1 copy, but the bundled runtime selects the system command. Fedora 43/44 provide xdg-utils 1.2.1; omit the dead copy for headless MCP and require xdg-utils only for a selected headed/report/dashboard surface.
   browser: Fedora chromium-headless only
   browser_compatibility: Exact MCP wrapper ran over stdio with Fedora 44 chromium-headless 150.0.7871.114, listed 24 tools, and passed local data-URL navigation and evaluation; repeat from packaged RPMs in F43/F44 after source closure.
   browser_downloads: forbidden

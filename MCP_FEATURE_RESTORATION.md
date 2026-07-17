@@ -71,6 +71,8 @@ Dashboard scope correction: those logo packages are used only by `packages/dashb
 
 Generated-JavaScript correction: Playwright's Node-executed esbuild outputs are bundled/transpiled CJS with minification disabled by default and retain readable source markers. Minified outputs are browser-targeted Vite assets, so local Node JavaScript minification is not a blocker; browser generated-source and license gates remain.
 
+System-integration correction: the copied `open@11.0.0` `xdg-open` script is upstream xdg-utils 1.2.1, while the generated bundle selects the system `xdg-open` command. Fedora 43/44 provide matching xdg-utils 1.2.1, and default headless MCP does not reach report/trace/dashboard reveal paths, so the dead copied file can be omitted from that binary surface.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.

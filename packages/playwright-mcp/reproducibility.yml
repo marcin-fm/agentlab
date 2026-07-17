@@ -77,6 +77,16 @@ build_mapping:
     browser_vite_assets_minified: true
     browser_assets_policy_class: browser-targeted generated output with corresponding source
     copied_xdg_open_type: POSIX shell script
+  xdg_open:
+    npm_package: open 11.0.0
+    npm_integrity: sha512-smsWv2LzFjP03xmvFoJ331ss6h+jixfA4UUV/Bsiyuu4YJPfN+FIQGOIiv4w9/+MoHkfkJ22UIaQWRVFRfH6Vw==
+    copied_script_version: 1.2.1
+    published_copy_sha256: 7d759d54f0d4ce1beeb34ee62c587985b5042374e8de237b0dcb8cd47aa698cf
+    generated_bundle_uses_system_command: true
+    fedora_43_provider: xdg-utils 1.2.1-4.fc43
+    fedora_44_provider: xdg-utils 1.2.1-5.fc44
+    default_headless_mcp_reachable: false
+    binary_copy_omission_safe: true
   nested_stable_test_runner_lock:
     required_by_normal_build: true
     skippable_by_upstream_flag: false
@@ -186,6 +196,7 @@ evidence:
   published_sidecar_entries_matched_to_root_lock: true
   browser_logo_distribution_reviewed: false
   local_node_javascript_minification_gate_passed: true
+  xdg_open_headless_system_integration_gate_passed: true
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

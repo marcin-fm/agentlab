@@ -126,6 +126,15 @@ is minified browser-targeted content and remains subject to generated-source and
 license review. The copied `xdg-open` payload is a licensed POSIX shell script,
 not JavaScript.
 
+The copied `xdg-open` gate is also resolved for the selected headless surface.
+Playwright copies the MIT-licensed `open@11.0.0` script, upstream xdg-utils
+`1.2.1`, into `playwright-core/lib`, but the generated bundled code detects its
+bundle context and executes the system command `xdg-open` instead of that local
+copy. Fedora 43 and 44 both provide xdg-utils `1.2.1`. Default headless MCP
+stdio does not open reports, traces, or dashboard file locations, so the dead
+copied file can be omitted from the binary. A future headed/report/dashboard
+surface would require the Fedora `xdg-utils` runtime dependency.
+
 ## Intentional Failure
 
 `playwright-mcp.spec` exits in `%prep` before unpacking or building. It must

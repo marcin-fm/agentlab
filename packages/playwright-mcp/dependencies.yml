@@ -55,6 +55,16 @@ build_closure:
       browser_assets: production Vite dashboard, reporter, recorder, and trace assets are minified browser-targeted output
       copied_xdg_open: POSIX shell script, not JavaScript
       local_javascript_minification_gate: resolved
+    xdg_open:
+      source_package: open@11.0.0
+      source_integrity: sha512-smsWv2LzFjP03xmvFoJ331ss6h+jixfA4UUV/Bsiyuu4YJPfN+FIQGOIiv4w9/+MoHkfkJ22UIaQWRVFRfH6Vw==
+      copied_script_version: 1.2.1
+      copied_script_sha256: 7d759d54f0d4ce1beeb34ee62c587985b5042374e8de237b0dcb8cd47aa698cf
+      fedora_43_provider: xdg-utils 1.2.1-4.fc43
+      fedora_44_provider: xdg-utils 1.2.1-5.fc44
+      bundled_runtime_selection: system xdg-open command; adjacent copied script is not selected
+      selected_headless_surface: copied payload omitted and no xdg-utils runtime path reached
+      headed_surface_requirement: require Fedora xdg-utils if report, trace, or dashboard reveal is selected
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1
