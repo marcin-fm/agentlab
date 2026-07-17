@@ -10,6 +10,11 @@ local_nonrelease:
   configured_version: 0.32.0
   provenance: file:///tmp/headroom
   packageable: false
+current_draft:
+  release: 0.31.0-0.3
+  validation: not built
+  hold: custom mcp-minimal feature graph requires substantive rework or explicit maintainer approval
+  license_gate: aggregate SPDX accounting for the statically linked Rust closure is pending
 fedora_surface:
   cli: headroom mcp serve
   transport: stdio only
@@ -28,6 +33,7 @@ patches:
   headroom-mcp-minimal-tests.patch: 77d669095849ff2b0c0786a77e5c3477ea4f717ab12068fc3082f3de9bf2a08c
   headroom-mcp-remove-unavailable-native-deps.patch: 0e4243e3b108161093ac86d95666ebb59e6fc1ba269a73bf0445a78637d425d3
 validation:
+  applies_to: 0.31.0-0.1 historical package only
   source_hash_verified: true
   spec_sha256: c6e84d9dc574e2a423cbabd969a6a0a80578054af52aae554c5252334bd91096
   mcp_security_review: mcp-1.26-stdio-security-review.md

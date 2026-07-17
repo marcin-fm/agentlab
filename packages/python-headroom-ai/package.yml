@@ -1,7 +1,9 @@
 name: python-headroom-ai
 status: blocked
 blockers:
-  - Exact Rust tokenization awaits clean Fedora 43 and Fedora 44 Mock builds, fixed-token parity, packaged MCP smoke, rpmlint, and receipt refresh.
+  - Updated project policy places the custom mcp-minimal feature graph under substantive-rework hold; do not rebuild, enable, or publish until an upstream-supported feature selection replaces it or the maintainer explicitly approves it.
+  - The binary RPM needs an aggregate SPDX review for its statically linked Rust closure before any future validation build.
+  - Exact Rust tokenization and its compatibility drafts remain dependent-scope evidence only until the Headroom surface is re-selected.
 dependency_status:
   python_runtime:
     - tiktoken >= 0.5
@@ -31,16 +33,16 @@ network_policy:
   file_read_tool: disabled even when HEADROOM_MCP_READ is set
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.31.0-0.2
-  status: exact-tokenization rebuild pending
+  release: 0.31.0-0.3
+  status: unbuilt draft under substantive-rework hold
   prior_release: 0.31.0-0.1
   source_sha256_verified: true
   spec_parse: passed
-  mock_fedora_43: clean build and packaged stdio MCP smoke passed
-  mock_fedora_44: clean build and packaged stdio MCP smoke passed
-  native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed per chroot; 1 library test ignored
-  mcp_smoke: initialize, exact tool list, compression, byte-identical retrieval, local miss, and statistics passed
-  rpmlint: zero errors and one expected no-manual-page warning per chroot
+  prior_mock_fedora_43: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
+  prior_mock_fedora_44: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
+  prior_native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed per chroot; 1 library test ignored
+  prior_mcp_smoke: initialize, exact tool list, compression, byte-identical retrieval, local miss, and statistics passed
+  prior_rpmlint: zero errors and one expected no-manual-page warning per chroot
 prior_artifacts:
   spec_sha256: c6e84d9dc574e2a423cbabd969a6a0a80578054af52aae554c5252334bd91096
   patches:

@@ -1,7 +1,7 @@
 name: rust-fancy-regex0.17
 status: blocked
 blockers:
-  - Clean Fedora 43 and Fedora 44 Mock builds, published tests, rpmlint, and artifact receipts are pending.
+  - Dependent-scope hold: confirm the crate remains required after python-headroom-ai is reduced to an upstream-supported surface; do not build or enable it before that decision.
 upstream:
   provider: crates_io
   crate: fancy-regex

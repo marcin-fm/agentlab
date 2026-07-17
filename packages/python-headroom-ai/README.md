@@ -6,21 +6,22 @@ version, `0.31.0`, from the Apache-2.0 PyPI sdist with SHA-256
 The configured local `0.32.0` installation came from `file:///tmp/headroom` and
 has no release artifact, so it is intentionally not used.
 
-The Fedora package builds the upstream Rust/PyO3 `headroom._core` extension but
-selects a bounded `mcp-minimal` feature surface. It retains native compression,
-local tokenizer loading, and the stdio MCP tools `headroom_compress`,
-`headroom_retrieve`, and `headroom_stats`. It disables proxy/provider commands,
-update checks, the optional file-read tool, runtime Hugging Face acquisition,
-fastembed, Magika, ORT, Redis, Rust tiktoken, and bundled SQLite. The Rust core
-uses system SQLite and the separately packaged `rust-unidiff0.4` provider.
+The prior validated `0.31.0-0.1` package built the Rust/PyO3 `headroom._core`
+extension through a downstream `mcp-minimal` feature graph and exposed the
+stdio tools `headroom_compress`, `headroom_retrieve`, and `headroom_stats`.
+Updated project policy classifies that custom feature graph and its companion
+patches as substantive downstream product work. Release `0.31.0-0.3` is
+therefore an unbuilt, blocked draft: it must not be rebuilt, enabled, or
+published until an upstream-supported feature selection replaces the custom
+surface or the maintainer explicitly approves it.
 
-Clean Fedora 43 and Fedora 44 builds passed 836 library tests, seven CCR backend
-tests, and two reduced tokenizer property tests per chroot; one upstream library
-test remained ignored. A real packaged stdio MCP session initialized, listed
-exactly the three bounded tools, compressed a repeated JSON payload, restored the
-byte-identical original from local memory, returned a local miss for an unknown
-hash, and reported statistics. `rpmlint` reported zero errors and one expected
-no-manual-page warning per chroot.
+Historical Fedora 43 and Fedora 44 `0.31.0-0.1` builds passed 836 library tests,
+seven CCR backend tests, two reduced tokenizer property tests, the packaged
+three-tool stdio smoke, and `rpmlint` with zero errors. Those receipts do not
+validate the `0.3` draft. Exact Rust tokenization and the compatibility drafts
+`rust-fancy-regex0.17` and `rust-tiktoken-rs0.11` remain dependent-scope audit
+evidence only. A future binary also needs aggregate SPDX accounting for its
+statically linked Rust closure.
 
 The Fedora MCP 1.26 dependency is accepted only through the reviewed stdio,
 no-task, no-WebSocket boundary recorded in `mcp-1.26-stdio-security-review.md`.

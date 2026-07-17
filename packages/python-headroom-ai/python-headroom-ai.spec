@@ -3,14 +3,20 @@
 
 Name:           python-headroom-ai
 Version:        0.31.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Local context compression and stdio MCP server
 
 License:        Apache-2.0
 URL:            https://github.com/headroomlabs-ai/headroom
 Source0:        https://files.pythonhosted.org/packages/ad/fd/fe59aa45a74ead7ce0faad8175b29f02e5ef81034a434ff2a0da7f59a0a6/headroom_ai-%{version}.tar.gz
+# Fedora-specific custom feature reduction; not submitted upstream and held for
+# substantive rework under /srv/wikis/agentlab/needs-fixing.md.
 Patch0:         headroom-mcp-minimal.patch
+# Fedora-specific test adaptation for Patch0; not submitted upstream and held
+# with the custom feature reduction.
 Patch1:         headroom-mcp-minimal-tests.patch
+# Fedora-specific dependency pruning and Fedora runtime integration; not
+# submitted upstream and held for the same substantive rework review.
 Patch2:         headroom-mcp-remove-unavailable-native-deps.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -172,6 +178,9 @@ PY
 %{_bindir}/headroom
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.31.0-0.3
+- Record the substantive-rework hold for the downstream feature patches.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.31.0-0.2
 - Restore exact local OpenAI tokenization through tiktoken-rs 0.11.
 

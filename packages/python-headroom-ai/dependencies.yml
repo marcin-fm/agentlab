@@ -29,11 +29,15 @@ build_runtime:
     - rust-fancy-regex0.17 = 0.17.0
     - rust-tiktoken-rs0.11 = 0.11.0
 validation:
-  fedora_43:
-    mock: passed
-    native_tests: 836 library, 7 CCR backend, and 2 tokenizer property tests passed; 1 ignored
-    mcp: initialize, exact three-tool list, compression, retrieval, local miss, and statistics passed
-  fedora_44:
-    mock: passed
-    native_tests: 836 library, 7 CCR backend, and 2 tokenizer property tests passed; 1 ignored
-    mcp: initialize, exact three-tool list, compression, retrieval, local miss, and statistics passed
+  current_draft:
+    release: 0.31.0-0.3
+    status: not built; substantive-rework hold
+  prior_release_0_1:
+    fedora_43:
+      mock: passed
+      native_tests: 836 library, 7 CCR backend, and 2 tokenizer property tests passed; 1 ignored
+      mcp: initialize, exact three-tool list, compression, retrieval, local miss, and statistics passed
+    fedora_44:
+      mock: passed
+      native_tests: 836 library, 7 CCR backend, and 2 tokenizer property tests passed; 1 ignored
+      mcp: initialize, exact three-tool list, compression, retrieval, local miss, and statistics passed
