@@ -7,12 +7,12 @@
 
 Name:           rust-unidiff0.4
 Version:        0.4.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Unified diff parsing and metadata extraction library for Rust
 
 License:        MIT
 URL:            https://crates.io/crates/unidiff
-Source0:        %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -91,5 +91,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.4.0-0.2
+- Use the canonical static crates.io source URL.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.4.0-0.1
 - Add the initial Fedora package.
