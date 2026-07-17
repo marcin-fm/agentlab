@@ -4,17 +4,20 @@
 %global playwright_source_sha256 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
 %global playwright_core_source_sha256 a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c
 %global playwright_version 1.62.0-alpha-1783623505000
+%global playwright_commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+%global playwright_commit_archive_sha256 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
 
 Name:           playwright-mcp
 Version:        0.0.78
-Release:        0.6%{?dist}
+Release:        0.7%{?dist}
 Summary:        Model Context Protocol server for Playwright
 
-License:        Apache-2.0
+License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC0-1.0 AND ISC AND MIT
 URL:            https://github.com/microsoft/playwright-mcp
 Source0:        https://registry.npmjs.org/@playwright/mcp/-/mcp-%{version}.tgz
 Source1:        https://registry.npmjs.org/playwright/-/playwright-%{playwright_version}.tgz
 Source2:        https://registry.npmjs.org/playwright-core/-/playwright-core-%{playwright_version}.tgz
+Source3:        https://codeload.github.com/microsoft/playwright/tar.gz/%{playwright_commit}#/playwright-%{playwright_commit}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  chromium-headless
@@ -39,10 +42,14 @@ are all proven.
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{playwright_source_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{playwright_core_source_sha256}  %{SOURCE2}" | sha256sum -c -
+echo "%{playwright_commit_archive_sha256}  %{SOURCE3}" | sha256sum -c -
 echo 'playwright-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.7
+- Pin the exact Playwright source archive and record Core bundle notices.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.6
 - Record the selected headless payload's bounded license inventory.
 

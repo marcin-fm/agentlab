@@ -116,16 +116,23 @@ or omitted from the exact installed tree.
 That selected binary retains only `utilsBundle.js.LICENSE` from the five
 published bundle sidecars. Its 91 unique package/version entries all match the
 root lock and carry full embedded notice text: 76 MIT, 9 ISC, 4 BSD-3-Clause,
-1 BSD-2-Clause, and 1 BlueOak-1.0.0. Fedora marks BlueOak-1.0.0 allowed. With
-the Apache-2.0 MCP/Core sources and retained Playwright `NOTICE`, the
-provisional selected-binary expression is `Apache-2.0 AND BSD-2-Clause AND
-BSD-3-Clause AND BlueOak-1.0.0 AND ISC AND MIT`. This is 91 of the published
-five-sidecar set's 213 entries, a 57.28% reduction. The omitted dashboard logos
-and other bundle sidecars do not affect that binary expression, but remain
-inputs to Playwright's unconditional normal build. Final license closure still
-requires source-to-bundle reconciliation for all in-tree or copied Core code;
-the audited BiDi/Puppeteer-derived sources are Apache-2.0 and covered by the
-retained root license and notice.
+1 BSD-2-Clause, and 1 BlueOak-1.0.0. Fedora marks BlueOak-1.0.0 allowed. Direct
+reconciliation of all 400 `coreBundle.js` source markers adds CC0-1.0 and gives
+the provisional selected-binary expression `Apache-2.0 AND BSD-2-Clause AND
+BSD-3-Clause AND BlueOak-1.0.0 AND CC0-1.0 AND ISC AND MIT`. This is 91 of the
+published five-sidecar set's 213 entries, a 57.28% reduction.
+
+Upstream generates `.js.LICENSE` sidecars only for inlined npm packages, so it
+does not preserve the source headers stripped from `coreBundle.js`. A future
+build must generate one packaging notice directly from the pinned Playwright
+source archive, carrying the exact headers for Mapbox `pixelmatch` (ISC), Max
+Ogden `extractZip` (BSD-2-Clause), Made With MOXY/Microsoft `lockfile` (MIT),
+Isaac Schlueter/James Talmage/Microsoft `stackTrace` (MIT), James Halliday's
+`minimist` (MIT), Joyent/Microsoft `eventEmitter` (MIT), Christian
+Johansen/Microsoft `clock` (BSD-3-Clause), and the Chromium BiDi/Puppeteer
+Apache-2.0 attributions. The CC0 tokenizer states that reproduction is not
+required. The exact source archive is now a checksummed draft spec input, but
+the generated notice has not yet been produced or validated.
 
 The Linux/x86_64 root lock has license metadata for 614 of 624 active entries.
 The ten exceptions are the Chrome, Chrome Beta, Chrome Canary, Chrome Dev,

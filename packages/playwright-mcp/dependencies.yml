@@ -86,11 +86,23 @@ build_closure:
         embedded_notice_text_complete: true
         expression_counts: MIT=76, ISC=9, BSD-3-Clause=4, BSD-2-Clause=1, BlueOak-1.0.0=1
         fedora_blueoak_status: allowed
-        provisional_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND ISC AND MIT
+        provisional_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC0-1.0 AND ISC AND MIT
         published_sidecar_entries: 213
         retained_entry_percent: 42.72
         omitted_sidecar_entries: 122
-        remaining_gate: Reconcile all in-tree and copy-derived coreBundle sources to the retained Apache-2.0 license and NOTICE; audited BiDi/Puppeteer-derived sources are covered.
+        core_bundle_source_markers: 400
+        core_bundle_notice_groups:
+          - pixelmatch: ISC; Copyright (c) 2019 Mapbox
+          - extractZip: BSD-2-Clause; Copyright (c) 2014 Max Ogden and other contributors
+          - lockfile: MIT; Copyright (c) 2018 Made With MOXY Lda; modifications Microsoft Corporation
+          - stackTrace: MIT; Isaac Z. Schlueter, James Talmage, contributors; modifications Microsoft Corporation
+          - minimist: MIT; Copyright (c) 2013 James Halliday and contributors
+          - eventEmitter: MIT; Joyent and Node contributors; modifications Microsoft Corporation
+          - clock: BSD-3-Clause; Christian Johansen; modifications Microsoft Corporation
+          - bidi: Apache-2.0; Chromium BiDi and Puppeteer-derived Google/Microsoft attributions
+        cc0_source: cssTokenizer is CC0-1.0 and states that attribution or license reproduction is not required
+        upstream_notice_generator_scope: npm dependencies only; no coreBundle in-tree source sidecar exists
+        remaining_gate: Generate and verify one verbatim packaging notice from the pinned Playwright source archive for the eight required notice groups.
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1
