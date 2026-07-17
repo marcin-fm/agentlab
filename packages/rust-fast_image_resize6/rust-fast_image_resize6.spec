@@ -9,7 +9,7 @@
 
 Name:           rust-fast_image_resize6
 Version:        6.0.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Library for fast image resizing with using of SIMD instructions
 
 License:        MIT OR Apache-2.0
@@ -164,10 +164,7 @@ tar -xzf %{SOURCE1} --strip-components=1 \
 %check
 # image 0.25.10 changed luma conversion from the upstream-locked 0.25.6.
 # Keep all resize checks whose fixture inputs are unchanged.
-CARGO_HOME=.cargo RUSTC_BOOTSTRAP=1 RUSTFLAGS='%{build_rustflags}' \
-  cargo test %{?_smp_mflags} -Z avoid-dev-deps --profile rpm \
-  --no-fail-fast --features for_testing -- \
-  --skip not_u8x4::upscale_u8 \
+%cargo_test -f for_testing -- -- --skip not_u8x4::upscale_u8 \
   --skip not_u8x4::upscale_u8x2 \
   --skip not_u8x4::upscale_u16 \
   --skip not_u8x4::upscale_u16x2 \
@@ -196,13 +193,14 @@ for test_name in \
   not_u8x4::downscale_f32x3 \
   not_u8x4::downscale_f32x4
 do
-  CARGO_HOME=.cargo RUSTC_BOOTSTRAP=1 RUSTFLAGS='%{build_rustflags}' \
-    cargo test %{?_smp_mflags} -Z avoid-dev-deps --profile rpm \
-    --features for_testing --test resize_tests -- "${test_name}" --exact
+  %cargo_test -f for_testing -- --test resize_tests -- "${test_name}" --exact
 done
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 6.0.0-0.3
+- Run the fixture-aware test selection through Fedora's Cargo test macro.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 6.0.0-0.2
 - Document the benchmark and reference-comparison dependency-pruning patch.
 
