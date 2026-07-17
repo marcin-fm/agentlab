@@ -9,13 +9,15 @@
 
 Name:           rust-fast_image_resize6
 Version:        6.0.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Library for fast image resizing with using of SIMD instructions
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/fast_image_resize
 Source:         %{crates_source}
 Source1:        https://github.com/Cykooz/fast_image_resize/archive/%{fixtures_commit}/fast_image_resize-%{fixtures_commit}.tar.gz
+# Prune benchmark/reference-comparison dependencies and metadata unused by the packaged library tests.
+# Fedora-specific; not submitted because upstream intentionally retains the benchmark comparison suite.
 Patch:          fast_image_resize-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -201,5 +203,8 @@ done
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 6.0.0-0.2
+- Document the benchmark and reference-comparison dependency-pruning patch.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 6.0.0-0.1
 - Add the initial repository packaging changelog.
