@@ -7,7 +7,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.2%{?dist}
+Release:        0.0.3%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -15,6 +15,8 @@ License:        MIT AND LGPL-2.0-only AND LGPL-2.1-only AND Apache-2.0 AND BSD-2
 URL:            https://bun.com
 Source0:        https://github.com/oven-sh/bun/archive/refs/tags/bun-v%{version}.tar.gz
 Source1:        https://codeload.github.com/oven-sh/zig/tar.gz/%{zig_commit}#/%{name}-%{version}-zig-%{zig_commit}.tar.gz
+# Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
+# Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
 
 ExclusiveArch:  x86_64
@@ -111,6 +113,9 @@ exit 1
 %license LICENSE.md
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.3
+- Document the Fedora Zig bootstrap patch purpose and upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.2
 - Source-bootstrap the release-pinned Zig fork as a private Bun build stage.
 
