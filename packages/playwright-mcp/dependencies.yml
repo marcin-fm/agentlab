@@ -102,7 +102,9 @@ build_closure:
           - bidi: Apache-2.0; Chromium BiDi and Puppeteer-derived Google/Microsoft attributions
         cc0_source: cssTokenizer is CC0-1.0 and states that attribution or license reproduction is not required
         upstream_notice_generator_scope: npm dependencies only; no coreBundle in-tree source sidecar exists
-        remaining_gate: Generate and verify one verbatim packaging notice from the pinned Playwright source archive for the eight required notice groups.
+        generated_notice_lines: 434
+        generated_notice_sha256: c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
+        generation_status: Reproduced from the pinned source archive and hash-verified; install and package verification remain pending behind the fail-closed build gate.
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1

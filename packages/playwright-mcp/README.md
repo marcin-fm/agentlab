@@ -131,8 +131,10 @@ Isaac Schlueter/James Talmage/Microsoft `stackTrace` (MIT), James Halliday's
 `minimist` (MIT), Joyent/Microsoft `eventEmitter` (MIT), Christian
 Johansen/Microsoft `clock` (BSD-3-Clause), and the Chromium BiDi/Puppeteer
 Apache-2.0 attributions. The CC0 tokenizer states that reproduction is not
-required. The exact source archive is now a checksummed draft spec input, but
-the generated notice has not yet been produced or validated.
+required. The draft spec now generates the 434-line notice directly from the
+checksummed source archive and verifies SHA-256
+`c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a`.
+It remains uninstalled because the package is fail-closed before `%build`.
 
 The Linux/x86_64 root lock has license metadata for 614 of 624 active entries.
 The ten exceptions are the Chrome, Chrome Beta, Chrome Canary, Chrome Dev,

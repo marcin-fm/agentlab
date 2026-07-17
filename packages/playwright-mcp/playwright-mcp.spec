@@ -6,10 +6,11 @@
 %global playwright_version 1.62.0-alpha-1783623505000
 %global playwright_commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
 %global playwright_commit_archive_sha256 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
+%global core_notices_sha256 c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
 
 Name:           playwright-mcp
 Version:        0.0.78
-Release:        0.7%{?dist}
+Release:        0.8%{?dist}
 Summary:        Model Context Protocol server for Playwright
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC0-1.0 AND ISC AND MIT
@@ -43,10 +44,49 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{playwright_source_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{playwright_core_source_sha256}  %{SOURCE2}" | sha256sum -c -
 echo "%{playwright_commit_archive_sha256}  %{SOURCE3}" | sha256sum -c -
+%setup -q -T -b 3 -n playwright-%{playwright_commit}
+node <<'EOF'
+const fs = require('fs');
+
+const headers = [
+  'packages/utils/third_party/pixelmatch.js',
+  'packages/utils/third_party/extractZip.ts',
+  'packages/utils/third_party/lockfile.ts',
+  'packages/utils/stackTrace.ts',
+  'packages/playwright-core/src/tools/cli-client/minimist.ts',
+  'packages/playwright-core/src/client/eventEmitter.ts',
+  'packages/injected/src/clock.ts',
+  'packages/playwright-core/src/server/bidi/third_party/bidiProtocolCore.ts',
+  'packages/playwright-core/src/server/bidi/third_party/bidiProtocolPermissions.ts',
+  'packages/playwright-core/src/server/bidi/third_party/bidiProtocol.ts',
+  'packages/playwright-core/src/server/bidi/third_party/bidiSerializer.ts',
+  'packages/playwright-core/src/server/bidi/third_party/bidiKeyboard.ts',
+  'packages/playwright-core/src/server/bidi/third_party/firefoxPrefs.ts',
+];
+const sections = [
+  'Playwright Core in-tree third-party notices',
+  'Generated from Playwright commit %{playwright_commit}.',
+  'Each section below is reproduced verbatim from the named source path.',
+  '',
+];
+const license = 'packages/playwright-core/src/server/bidi/third_party/LICENSE';
+sections.push(`===== ${license} =====`, fs.readFileSync(license, 'utf8').trimEnd(), '');
+for (const source of headers) {
+  const match = fs.readFileSync(source, 'utf8').match(/^\/\*\*[\s\S]*?\*\//);
+  if (!match)
+    throw new Error(`missing initial notice: ${source}`);
+  sections.push(`===== ${source} =====`, match[0], '');
+}
+fs.writeFileSync('PLAYWRIGHT-CORE-IN-TREE-NOTICES.txt', `${sections.join('\n')}\n`);
+EOF
+echo "%{core_notices_sha256}  PLAYWRIGHT-CORE-IN-TREE-NOTICES.txt" | sha256sum -c -
 echo 'playwright-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.8
+- Generate the Core in-tree notice payload from the pinned source archive.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.7
 - Pin the exact Playwright source archive and record Core bundle notices.
 

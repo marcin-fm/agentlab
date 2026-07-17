@@ -159,8 +159,10 @@ build_mapping:
         - packages/injected/src/clock.ts lines 2-10; BSD-3-Clause; Christian Johansen and Microsoft modifications
         - packages/playwright-core/src/server/bidi/third_party; Apache-2.0; Chromium BiDi and Puppeteer Google/Microsoft attribution
       source_derived_notice_plan: Generate one verbatim packaging notice from the exact pinned Playwright commit archive; do not synthesize or rewrite upstream text.
+      source_derived_notice_lines: 434
+      source_derived_notice_sha256: c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
       cc0_reproduction_required: false
-      in_tree_source_reconciliation_complete: false
+      in_tree_source_reconciliation_complete: true
   narrow_build_target: none; the only build flags are watch and disable-install, and disable-install only affects browser installation in watch mode
   esbuild:
     version: 0.28.1
@@ -256,7 +258,8 @@ evidence:
   selected_default_headless_payload_smoke_passed: true
   selected_binary_sidecar_lock_and_notice_audit_passed: true
   core_bundle_source_marker_reconciliation_passed: true
-  core_bundle_source_notice_payload_generated: false
+  core_bundle_source_notice_payload_generated: true
+  core_bundle_source_notice_payload_packaged: false
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false
