@@ -7,12 +7,15 @@
 
 Name:           rust-tower-lsp-server0.23
 Version:        0.23.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Language Server Protocol implementation based on Tower
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/tower-lsp-server
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Drop the WebSocket example and align retained examples with Fedora's LSP types.
+# Fedora-specific; ast-grep requires ls-types 0.0.6 instead of upstream's lockfile choice.
+Patch0:         tower-lsp-server-drop-websocket-example.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -143,5 +146,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.23.0-0.2
+- Drop the WebSocket dependency and align retained examples with Fedora's LSP types.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.23.0-0.1
 - Add the compatibility crate required by ast-grep.

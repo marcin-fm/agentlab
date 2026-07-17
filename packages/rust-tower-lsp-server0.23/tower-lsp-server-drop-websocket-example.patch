@@ -1,0 +1,59 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -61,9 +61,5 @@ name = "tcp"
+ path = "examples/tcp.rs"
+ 
+-[[example]]
+-name = "websocket"
+-path = "examples/websocket.rs"
+-
+ [dependencies.async-codec-lite]
+ version = "0.0"
+ optional = true
+@@ -87,6 +83,6 @@ version = "1"
+ 
+ [dependencies.ls-types]
+-version = "0.0"
++version = "=0.0.6"
+ 
+ [dependencies.memchr]
+ version = "2"
+@@ -115,10 +111,6 @@ default-features = false
+ [dependencies.tracing]
+ version = "0.1"
+ 
+-[dev-dependencies.async-tungstenite]
+-version = "0.32"
+-features = ["tokio-runtime"]
+-
+ [dev-dependencies.tokio]
+ version = "1"
+ features = [
+@@ -125,6 +117,7 @@ features = [
+     "io-util",
+     "io-std",
+     "macros",
++    "net",
+     "rt-multi-thread",
+     "time",
+ ]
+--- a/examples/common/lsp.rs
++++ b/examples/common/lsp.rs
+@@ -39,7 +39,6 @@ impl LanguageServer for Backend {
+                 }),
+                 ..ServerCapabilities::default()
+             },
+-            #[cfg(feature = "proposed")]
+             offset_encoding: None,
+         })
+     }
+--- a/examples/custom_notification.rs
++++ b/examples/custom_notification.rs
+@@ -46,7 +46,6 @@ impl LanguageServer for Backend {
+                 }),
+                 ..ServerCapabilities::default()
+             },
+-            #[cfg(feature = "proposed")]
+             offset_encoding: None,
+         })
+     }
