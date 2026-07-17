@@ -109,6 +109,12 @@ All ten assets ship in the published dashboard: six are Vite-inlined SVG data
 URIs and four are standalone SVG files. Packaging therefore requires explicit
 redistribution/trademark review or an upstream-supported build that omits the
 dashboard/logo payload; the repository MIT text does not clear the marks.
+The logo packages are used only by `packages/dashboard`. The default MCP
+surface does not enable `devtools`; the dashboard is required by the opt-in
+`browser_annotate` path under `--caps=devtools`. A Fedora binary selecting the
+default surface can therefore omit generated dashboard files, but Playwright's
+normal build still compiles the dashboard unconditionally and still needs the
+logo source inputs. Binary omission narrows runtime payload, not source closure.
 
 ## Intentional Failure
 

@@ -23,6 +23,7 @@ source_policy:
   browser_install_scripts: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 is an upstream-supported no-download path.
   bundle_license_sidecars: Five published sidecars map 213 bundled package entries to exact root-lock versions.
   browser_logo_assets: Ten active root-lock packages lack license metadata; their exact source legal statement reserves the marks to their owners and excludes them from the repository MIT grant. Six logos are inlined and four are separate SVGs in the published dashboard, so distribution remains review-blocked.
+  dashboard_runtime_scope: Browser logos are used only by the dashboard. Default MCP tools do not enable devtools; browser_annotate under --caps=devtools requires dashboardApp.js and lib/vite/dashboard. A default-surface binary may omit dashboard output, but the normal upstream build still requires the logo source inputs.
   browser: Fedora chromium-headless only
   browser_compatibility: Exact MCP wrapper ran over stdio with Fedora 44 chromium-headless 150.0.7871.114, listed 24 tools, and passed local data-URL navigation and evaluation; repeat from packaged RPMs in F43/F44 after source closure.
   browser_downloads: forbidden

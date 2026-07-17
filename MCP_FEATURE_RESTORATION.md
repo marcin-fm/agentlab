@@ -67,6 +67,8 @@ Status meanings:
 
 Additional Playwright distribution gate: ten browser-logo packages in the active root lock have no npm license metadata or tarball notice. Their exact source repository excludes logos and trademarks from its MIT grant, and all ten assets are present in the published Playwright Core dashboard, so packaging requires explicit redistribution/trademark review or an upstream-supported omission.
 
+Dashboard scope correction: those logo packages are used only by `packages/dashboard`. Default MCP tools do not enable `devtools`; only the opt-in `browser_annotate` path requires the generated dashboard. A default-surface binary can omit that output, but the normal upstream build has no dashboard-exclusion flag and still requires the logo source inputs.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.

@@ -46,6 +46,9 @@ build_closure:
       npm_tarball_license_notice: absent
       source_repository_legal_statement: All logos and trademarks are the property of their respective owners; everything else is MIT-licensed.
       published_dashboard_mapping: six Vite-inlined SVG data URIs and four standalone SVG files
+      source_usage: packages/dashboard only
+      runtime_scope: Default MCP excludes devtools; browser_annotate under --caps=devtools requires dashboardApp.js and lib/vite/dashboard.
+      binary_omission: Safe for an explicitly selected default MCP surface, but it does not remove the logo inputs from the unconditional normal source build.
       decision: Explicit redistribution/trademark review or an upstream-supported dashboard/logo omission is required.
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
