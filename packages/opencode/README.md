@@ -84,6 +84,12 @@ draft recipe therefore rebuilds `watcher.node` from the authenticated main npm
 package with Fedora Node 24 headers and replaces the published platform payload
 before Bun compilation. Two local rebuilds were byte-identical and an inotify
 smoke passed, but final Bun embedding and F43/F44 reproduction remain unproven.
+The bun-pty npm wrapper byte-matches its release commit but omits Rust source.
+The draft replaces only its prebuilt `rust-pty` directory with the exact Git
+source, builds against a deterministic 43-crate Cargo vendor archive through
+Fedora macros, and preserves the release path expected by Bun's static import.
+Empty-cache vendored builds were byte-identical; public vendor hosting, final
+Bun embedding, F43/F44 macro builds, and aggregate license closure remain open.
 
 All functional WASM remains fail-closed. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp

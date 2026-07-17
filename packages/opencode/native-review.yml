@@ -174,12 +174,53 @@ components:
       peeled_commit: 41dd5b887f3f47d7c307fd93f828a75dbee97d5a
       package_version_at_source: "0.4.8"
       correspondence: The registry gitHead and release tag agree.
+      source_build:
+        npm_source_url: https://registry.npmjs.org/bun-pty/-/bun-pty-0.4.8.tgz
+        npm_source_sha256: 0d222ae7cab5b2a3e158cdda0461534f44edf08e5c5a72adb1c0b9144e21cedc
+        npm_contains_rust_source: false
+        git_source_url: https://github.com/sursaone/bun-pty/archive/41dd5b887f3f47d7c307fd93f828a75dbee97d5a/bun-pty-41dd5b887f3f47d7c307fd93f828a75dbee97d5a.tar.gz
+        git_source_sha256: d4731314a00c46d3810fa08b94ee0bcddb7a5026e47dbca88c83449d351bff9e
+        git_source_contains_prebuilt_payloads: false
+        npm_git_package_json_sha256: df55f9b3f2559b66321021f8566b88d940b6ea300072dbb07898f0f957fa1ab9
+        npm_git_terminal_ts_sha256: 0c6cdf358568816ec96aef9b320239ef6f9552e9298f8609f0c94cfb12ad51f9
+        npm_git_wrapper_byte_identical: true
+        cargo_vendor_archive: opencode-1.18.3-bun-pty-cargo-vendor.tar.zst
+        cargo_vendor_sha256: 5c22d4bd79109a3460f3a3d3840d2541da9a6c4c91513c39065a1f4611b7ec5e
+        cargo_vendor_crates: 43
+        cargo_vendor_manifest: opencode-1.18.3-bun-pty-cargo-vendor.txt
+        cargo_vendor_manifest_sha256: d57a66c2a1e90516e0b103b3074001f96cefcb4adb4ecc8c3a5532a2c884e500
+        cargo_vendor_archive_reproducible: true
+        cargo_vendor_command: cargo vendor --locked --versioned-dirs
+        cargo_vendor_archive_root: cargo-vendor
+        cargo_vendor_source_date_epoch: 1768507021
+        cargo_vendor_archive_rebuilds: 2
+        immutable_public_hosting_verified: false
+        active_linux_registry_crates: 37
+        exact_fedora_provider_closure: false
+        macro_build: "%cargo_prep -v cargo-vendor and %cargo_build"
+        output: rust-pty/target/release/librust_pty.so
+        published_payloads:
+          rust-pty/target/release/librust_pty.so: a135c3d9f41d09a555e3e4609e0c80fa0ba035736c56791b9df3b55e6376438d
+          rust-pty/target/release/librust_pty_arm64.so: c920f230370d0ea9393ac1311bda45db4c785fd92249b10ff8af67dc3d4b1bc5
+          rust-pty/target/release/librust_pty.dylib: b8a27c3106b164f57472edc9266acc80c11c1b837dba5c397689d63a86e96b7c
+          rust-pty/target/release/librust_pty_arm64.dylib: d61d60ed8348eadfb396418f85ff8dcee7428fe94feb1395c0ae9f68eba3868f
+          rust-pty/target/release/rust_pty.dll: 6a653ea742db3dfe37b27bfabcd905800d0bfce57dd60efcbf5a6b032ff5ad77
+        local_release_sha256: f0fb41201158d23541d858cf5d4df2697ebdfbe17f30b645ee1be4a51457ef2a
+        local_fedora_profile_sha256: d389cec65b9d6f74135ebb2d449afabb97c65eb1cd7781ca40b78ab2ad5654de
+        local_rebuilds: 2
+        local_rebuilds_byte_identical: true
+        ffi_exports: [bun_pty_close, bun_pty_get_exit_code, bun_pty_get_pid, bun_pty_kill, bun_pty_read, bun_pty_resize, bun_pty_spawn, bun_pty_write]
+        dynamic_libraries: [libc.so.6, ld-linux-x86-64.so.2, libgcc_s.so.1]
+        final_bun_embedding_verified: false
+        f43_f44_macro_builds_verified: false
+        root_cargo_license_declared: false
+        authoritative_parent_license: MIT
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Build the Linux x86_64 Rust shared library from source and discard all published cross-platform outputs.
+      reason: Replace npm's prebuilt-only rust-pty directory with the exact Git source, build the Linux x86_64 library through Fedora's vendored Cargo macros, and discard every published cross-platform output.
   - package: "clipboardy@4.0.0"
     npm_name: clipboardy
     version: "4.0.0"

@@ -567,4 +567,26 @@ class AgentlabTest < Minitest::Test
       assert(errors.any? { |error| error.include?("Parcel watcher source-build evidence does not match") })
     end
   end
+
+  def test_rejects_incomplete_opencode_bun_pty_build_evidence
+    source_package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+
+    Dir.mktmpdir do |directory|
+      %w[selected_lock_audit source_audit license_review native_review].each do |key|
+        filename = dependencies.dig("source_closure_files", key)
+        FileUtils.cp(File.join(source_package.directory, filename), File.join(directory, filename))
+      end
+      native_path = File.join(directory, dependencies.dig("source_closure_files", "native_review"))
+      native_review = Agentlab.load_yaml(native_path)
+      bun_pty = native_review.fetch("components").find { |component| component["package"] == "bun-pty@0.4.8" }
+      bun_pty.fetch("provenance").delete("source_build")
+      File.write(native_path, YAML.dump(native_review))
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
+
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+
+      assert(errors.any? { |error| error.include?("bun-pty source-build evidence does not match") })
+    end
+  end
 end
