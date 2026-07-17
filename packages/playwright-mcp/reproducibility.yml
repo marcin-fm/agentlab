@@ -59,6 +59,10 @@ build_mapping:
     linux_release_workspace_crates: 45
     fedora_43_exact_same_name_absent: 144/30/73
     fedora_44_exact_same_name_absent: 143/30/74
+    active_license_packages: 292
+    cargo_license_expressions: 23
+    missing_license_metadata: 0
+    candidate_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib
     source_build_supported: true
     exact_fedora_provider: false
   lightningcss:
@@ -69,6 +73,10 @@ build_mapping:
     linux_release_registry_crates: 115
     linux_release_workspace_crates: 7
     fedora_43_44_exact_same_name_absent: 41/62/12
+    active_license_packages: 122
+    cargo_license_expressions: 12
+    missing_license_metadata: lightningcss_node; tagged source project license is MPL-2.0
+    candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0
     source_build_supported: true
     exact_fedora_provider: false
   lifecycle_edges:

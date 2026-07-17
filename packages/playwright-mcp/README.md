@@ -60,6 +60,16 @@ and is not part of the normal generated-runtime build. Darwin-only `fsevents`
 is excluded, and Playwright's browser-package install scripts honor
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
 
+Cargo metadata gives a bounded license starting point for those release
+graphs. Rolldown's 292 active packages have no missing license field and reduce
+to the provisional aggregate `Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND
+CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib`. Lightning CSS's 122 active
+packages reduce to `Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0`; its
+publish-disabled `lightningcss_node` workspace crate omits a manifest license
+field, while the tagged source carries the MPL-2.0 project license. These are
+candidate binary-RPM expressions, not a substitute for verifying every source
+license text and retaining the required notices.
+
 The published payloads contain 7 MCP files, 62 Playwright files, and 104
 Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
 package entries to exact root-lock versions, but aggregate SPDX accounting and

@@ -60,6 +60,15 @@ build_closure:
         absent_crate_names: 74
       provider_difference: Fedora 44 additionally lacks append-only-vec; the other 72 absent names are common to both releases.
       dominant_missing_groups: 34 Oxc crates, 5 N-API crates, 5 Rolldown support crates, and 2 mimalloc crates
+      license_inventory:
+        active_packages: 292
+        raw_cargo_expressions: 23
+        missing_metadata: 0
+        legacy_slash_expression_packages: 8
+        project_license_sha256: 23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734
+        third_party_notice_sha256: a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c
+        candidate_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib
+        source_text_verification: pending
     fedora_43_44_provider: absent
   lightningcss:
     version: 1.32.0
@@ -87,6 +96,16 @@ build_closure:
         - serde-detach
         - simd-abstraction
         - vlq
+      license_inventory:
+        active_packages: 122
+        raw_cargo_expressions: 12
+        missing_metadata: lightningcss_node
+        missing_metadata_resolution: The publish-disabled node workspace crate is part of the tagged MPL-2.0 source tree; verify and carry the project license manually.
+        legacy_slash_expression_packages: 8
+        project_license_sha256: 5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e
+        selectors_license_sha256: 1af2d2b02d9c86030d29ed77117ca7a1b0e4b6ff35bcf8eeb124867d0f5cb59e
+        candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0
+        source_text_verification: pending
     fedora_43_44_provider: absent
   excluded_platform_edges:
     fsevents: Darwin-only
