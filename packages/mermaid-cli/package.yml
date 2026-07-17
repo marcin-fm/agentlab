@@ -2,7 +2,6 @@ name: mermaid-cli
 status: blocked
 blockers:
   - Generated Source1-Source6 artifacts, including the 145 MB production closure, have not been immutably hosted for COPR SCM builds.
-  - The required public upstream request for a system-library or externally supplied dependency mechanism has not been recorded.
 source_policy:
   runtime_tree: private Node application closure
   generated_html: copied from the equivalent release source index.html
@@ -11,6 +10,8 @@ source_policy:
   native_payloads: forbidden
   networked_icon_packs: runtime opt-in only
   corresponding_sources: verified for generated-heavy Mermaid, ELK, ZenUML, and Font Awesome content
+  browser_generated_assets: The selected readable ESM bundles retain source-path markers and are injected only into Chromium. Remaining minified release output is browser-only, exact corresponding source is retained, and rebuilding the full Mermaid, ELK, ZenUML, KaTeX, and Font Awesome frontend toolchains in this application package is impractical.
+  locally_executed_javascript: The mmdc Node entry point and its direct Node-side dependencies are not minified.
   font_awesome_fonts: official 7.2.0 release data matched byte-for-byte to the three active runtime WOFF2 files
 closure_validation:
   release: 11.16.0
@@ -21,7 +22,8 @@ closure_validation:
   licenses_verified: true
   bundled_provides_verified: true
   offline_verified: true
-  upstream_contact_recorded: false
+  upstream_contact_recorded: true
+  upstream_contact: https://github.com/mermaid-js/mermaid-cli/issues/830
 build_validation:
   release: 11.16.0-1
   fedora_43_x86_64: passed

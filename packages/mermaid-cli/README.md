@@ -20,6 +20,22 @@ ZenUML, and Font Awesome content has matching corresponding source or official
 release data. The RPM carries the reviewed aggregate SPDX expression, exact
 bundled Node Provides, a dependency license inventory, and consolidated notices.
 
+The Node-executed `mmdc` entry point is readable and unminified. It injects the
+readable, source-marked Mermaid, ELK, tidy-tree, and ZenUML ESM release bundles
+into Chromium. Some browser-only release output remains minified, including the
+ELK worker and frontend distributions retained by transitive packages. Rebuilding
+all of those outputs would require the development-only Vite, Rollup, esbuild,
+Gradle, Babel, Browserify, Bun, Tailwind, KaTeX, and Font Awesome toolchains.
+The exact npm source archives and the preferred Mermaid, ELK, ZenUML, and Font
+Awesome sources remain available for correspondence, so this is the documented
+Fedora browser-asset hardship rather than locally executed minified JavaScript.
+
+Upstream issue [#830](https://github.com/mermaid-js/mermaid-cli/issues/830)
+records a Nix distribution-packaging request for externally supplied Puppeteer.
+Upstream retains Puppeteer as a peer plus development dependency and recommends
+normal package-manager or shrinkwrap materialization. Fedora records that public
+contact, carries the exact bundled dependency metadata, and uses system Chromium.
+
 `mermaid-cli-11.16.0-1` clean-built on Fedora 43 and Fedora 44 x86_64. Both
 builds exercised the staged installed `mmdc` command against Fedora
 `chromium-headless`, rendering SVG, PNG, and PDF with Font Awesome solid,
@@ -28,5 +44,4 @@ produced RPM was installed on the host.
 
 The package remains blocked and COPR-disabled only until all generated
 `Source1`-`Source6` artifacts, including the 145 MB closure, are hosted at
-immutable checksummed URLs and the required public upstream request for a
-system-library or externally supplied dependency mechanism is recorded.
+immutable checksummed URLs.

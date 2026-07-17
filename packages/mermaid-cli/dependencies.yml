@@ -118,7 +118,22 @@ closure_audit:
   generated_sources_verified: true
   preferred_sources_verified: true
   bundled_provides_verified: true
-  upstream_contact_recorded: false
+  upstream_contact_recorded: true
+  upstream_contact:
+    url: https://github.com/mermaid-js/mermaid-cli/issues/830
+    subject: Nix distribution packaging request for externally supplied Puppeteer
+    result: Upstream retains Puppeteer as a peer plus development dependency and documents package-manager installation or shrinkwrap materialization as the supported path. Fedora therefore records and bundles the exact runtime dependency while using system Chromium.
+  browser_generated_assets:
+    selected_runtime_bundles: readable source-marked ESM injected into Chromium
+    selected_paths:
+      - mermaid/dist/mermaid.esm.mjs
+      - "@mermaid-js/layout-elk/dist/mermaid-layout-elk.esm.mjs"
+      - "@mermaid-js/layout-tidy-tree/dist/mermaid-layout-tidy-tree.esm.mjs"
+      - "@mermaid-js/mermaid-zenuml/dist/mermaid-zenuml.esm.mjs"
+    locally_executed_minified_javascript: false
+    browser_only_minified_output: true
+    hardship: Rebuilding every selected Mermaid, ELK, ZenUML, KaTeX, Font Awesome, and transitive browser distribution would require the large development-only Vite, Rollup, esbuild, Gradle, Babel, Browserify, Bun, and Tailwind toolchains. The exact release outputs are retained with original npm sources plus Source7-Source13 corresponding-source or official-release records.
+    reviewed: true
   offline_verified: true
 source_closure_files:
   production_archive: mermaid-cli-11.16.0-node-closure.tar.zst
@@ -175,4 +190,4 @@ gates:
   - Verify every registry SHA-512 integrity value and record a SHA-256 for each source tarball.
   - Retain the audited bundled licenses, notices, corresponding sources, and official Font Awesome release data.
   - Publish the deterministic closure archive at an immutable checksummed URL usable by COPR.
-  - Record the required public upstream request for a system-library or externally supplied dependency mechanism.
+  - Retain the public upstream distribution-packaging contact and exact bundled dependency metadata.

@@ -23,7 +23,7 @@
 
 Name:           mermaid-cli
 Version:        11.16.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Command-line tool for rendering Mermaid diagrams
 
 License:        MIT AND Apache-2.0 AND ISC AND BSD-3-Clause AND 0BSD AND CC-BY-4.0 AND OFL-1.1 AND EPL-2.0 AND (MPL-2.0 OR Apache-2.0) AND Zlib AND Unlicense
@@ -465,6 +465,12 @@ for font in fa-solid-900.woff2 fa-regular-400.woff2 fa-brands-400.woff2; do
 done
 
 %build
+# The selected browser ESM bundles are readable and retain source-path markers.
+# Remaining minified release output, including ELK's worker, executes only in
+# Chromium. Rebuilding every Mermaid/ELK/ZenUML/KaTeX/Font Awesome frontend
+# artifact would require the full development-only Vite/Rollup/esbuild/Gradle/
+# Babel/Browserify/Bun/Tailwind closure. Source1 and Source7-Source13 retain the
+# exact original and preferred corresponding sources for this Fedora hardship.
 # Vite only copies this source document into dist for the CLI runtime. Avoid
 # importing the development-only Vite/Rollup/esbuild closure.
 install -Dpm0644 index.html dist/index.html
@@ -575,6 +581,9 @@ install -Dpm0644 README.md %{buildroot}%{_docdir}/%{name}/README.md
 %{nodejs_sitelib}/@mermaid-js/mermaid-cli/
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 11.16.0-0.3
+- Record browser generated-source hardship and upstream bundling contact.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 11.16.0-0.2
 - Add Fedora Node build mechanics and document downstream patch status.
 
