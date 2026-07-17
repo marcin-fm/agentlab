@@ -149,9 +149,13 @@ class AgentlabTest < Minitest::Test
       File.chmod(0o600, config_path)
       previous = ENV["COPR_CONFIG"]
       original_capture = Agentlab.method(:capture)
+      original_command_available = Agentlab.method(:command_available?)
       status = Object.new
       status.define_singleton_method(:success?) { true }
       ENV["COPR_CONFIG"] = config_path
+      Agentlab.singleton_class.send(:define_method, :command_available?) do |name|
+        name == "copr-cli"
+      end
       Agentlab.singleton_class.send(:define_method, :capture) do |_argv|
         ["another-owner\n", "", status]
       end
@@ -160,6 +164,7 @@ class AgentlabTest < Minitest::Test
       assert_match(/expected "marcin", got "another-owner"/, error.message)
     ensure
       Agentlab.singleton_class.send(:define_method, :capture, original_capture)
+      Agentlab.singleton_class.send(:define_method, :command_available?, original_command_available)
       ENV["COPR_CONFIG"] = previous
     end
   end

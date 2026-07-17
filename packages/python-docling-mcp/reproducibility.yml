@@ -1,6 +1,6 @@
 schema: python-docling-mcp-reproducibility/v1
 package: python-docling-mcp
-version: 2.1.0-2
+version: 2.1.0-0.2
 source:
   url: https://files.pythonhosted.org/packages/e3/bc/59f74a19ac66ddebfe2bee76f8f5c6b208f9dd1fe96fff5d020720985f5d/docling_mcp-2.1.0.tar.gz
   sha256: 46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7
@@ -32,19 +32,19 @@ validation:
     base_stdio_smoke: default initialize, list_tools, and create-document call passed with conversion absent
     remote_stdio_smoke: fake Serve health/upload/poll/result/cache and fail-closed negative paths passed
     rpmlint: zero errors; two missing-manpage warnings and one optional-package documentation warning
-    srpm_sha256: 3f46be9c55c64a61a199b20214715c089068254478cd43b0a9a6ef15ce2657e5
-    base_rpm_sha256: 20cf99f71f6c3e388dc4131f60e43b2538e405ab083961ef7a466be4b9dd7c11
-    remote_conversion_rpm_sha256: 9f27d40bd8f8be9640a4c1c70e0f7927d740f88f154fc8da538b984567daaa3a
+    srpm_sha256: c912a87a7b109a5dc5ff1fd861add2aa05fd4ff3989fb738eae80eeed898ea43
+    base_rpm_sha256: 117fa59d27c851e61d2270ac7158d0c101178c3051e327a43b64530039dcbf9f
+    remote_conversion_rpm_sha256: 8d7690bf3e6c5e186e63b6ce5e55d28c6897b3c62bcb72aa7a58bb4914fd5a2f
   fedora_44_x86_64:
     mock_build: passed
     base_stdio_smoke: default initialize, list_tools, and create-document call passed with conversion absent
     remote_stdio_smoke: fake Serve health/upload/poll/result/cache and fail-closed negative paths passed
     rpmlint: zero errors; two missing-manpage warnings and one optional-package documentation warning
-    srpm_sha256: 70b3a081c2a91c9b3387272f1b060eaee1939133980db0745052378a2b927cb8
-    base_rpm_sha256: e5470c957f70ab9539758f857800a4a448b22b6b8efed2947bdafe777089f921
-    remote_conversion_rpm_sha256: 2eb7e4eaad06199698e14ea71b65eb76e223d6199714633df24e3df5873395dc
+    srpm_sha256: 36d42a4cd6f277f61616b1362994f7ea412e1f148f624d2913e26f6d43b5af79
+    base_rpm_sha256: ffe3373cbb6d57b84ee5c482edd854c6cb99140b77d45ca0189d59619a8806e1
+    remote_conversion_rpm_sha256: 3287dc21ee89f784fcc2af4bc0f94d42f7236531275af5eb8c4723926e7d0cc1
 artifacts:
-  spec_sha256: 00e900e854a92cea43e172c15e691f587fd6103b5bfc4bcadb87a471179d01de
+  spec_sha256: 824bdff808976cb9a30b41151101ee4ae9ad942b2bda64d4bc293663540c0753
 security:
   mcp_provider: 1.26.0
   review: mcp-1.26-stdio-security-review.md

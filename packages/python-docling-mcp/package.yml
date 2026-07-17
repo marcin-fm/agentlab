@@ -25,25 +25,25 @@ security_boundary:
   excluded: local conversion, directory conversion, RAG, HTTP, SSE, WebSocket, and experimental task handlers
   mcp_1_26_advisories: reviewed as unreachable through the enforced package entry point
 build_validation:
-  fedora_43: release 2 clean Mock build passed with the base and remote-conversion MCP smokes
-  fedora_44: release 2 clean Mock build passed with the base and remote-conversion MCP smokes
+  fedora_43: release 0.2 clean Mock build passed with the base and remote-conversion MCP smokes
+  fedora_44: release 0.2 clean Mock build passed with the base and remote-conversion MCP smokes
   remote_conversion_wave: health, bounded upload, polling, inline result, cache, API-key confinement, and fail-closed negative paths passed
   upstream_tests: unavailable; the PyPI sdist excludes the test tree
   stdio_mcp_smoke: base defaults remained generation/manipulation; optional launcher added only single-document remote conversion
   rpmlint: zero errors and three non-fatal documentation/manpage warnings per chroot
 artifacts:
-  spec_sha256: 00e900e854a92cea43e172c15e691f587fd6103b5bfc4bcadb87a471179d01de
+  spec_sha256: 824bdff808976cb9a30b41151101ee4ae9ad942b2bda64d4bc293663540c0753
   stdio_patch_sha256: 9df6ba1e63fcf11a7688101019985d339ead205e9dd19ff3b01b3f82ff53e059
   remote_conversion_patch_sha256: 3b42e39ea5ce0e316fb0935d54f6fb72739dfd6a78f499696dd4d6d5dd528c51
   remote_smoke_sha256: e8d22004276672dca79b2a182e21268884ab1bb72bf44c8850b3c3ecbad3fd15
   fedora_43:
-    srpm_sha256: 3f46be9c55c64a61a199b20214715c089068254478cd43b0a9a6ef15ce2657e5
-    base_rpm_sha256: 20cf99f71f6c3e388dc4131f60e43b2538e405ab083961ef7a466be4b9dd7c11
-    remote_conversion_rpm_sha256: 9f27d40bd8f8be9640a4c1c70e0f7927d740f88f154fc8da538b984567daaa3a
+    srpm_sha256: c912a87a7b109a5dc5ff1fd861add2aa05fd4ff3989fb738eae80eeed898ea43
+    base_rpm_sha256: 117fa59d27c851e61d2270ac7158d0c101178c3051e327a43b64530039dcbf9f
+    remote_conversion_rpm_sha256: 8d7690bf3e6c5e186e63b6ce5e55d28c6897b3c62bcb72aa7a58bb4914fd5a2f
   fedora_44:
-    srpm_sha256: 70b3a081c2a91c9b3387272f1b060eaee1939133980db0745052378a2b927cb8
-    base_rpm_sha256: e5470c957f70ab9539758f857800a4a448b22b6b8efed2947bdafe777089f921
-    remote_conversion_rpm_sha256: 2eb7e4eaad06199698e14ea71b65eb76e223d6199714633df24e3df5873395dc
+    srpm_sha256: 36d42a4cd6f277f61616b1362994f7ea412e1f148f624d2913e26f6d43b5af79
+    base_rpm_sha256: ffe3373cbb6d57b84ee5c482edd854c6cb99140b77d45ca0189d59619a8806e1
+    remote_conversion_rpm_sha256: 3287dc21ee89f784fcc2af4bc0f94d42f7236531275af5eb8c4723926e7d0cc1
 upstream:
   provider: pypi
   project: docling-mcp

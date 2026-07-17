@@ -1,6 +1,6 @@
 # Docling MCP Packaging Status
 
-`docling-mcp` `2.1.0-2` is packaged from the published MIT-licensed PyPI sdist,
+`docling-mcp` `2.1.0-0.2` is packaged from the published MIT-licensed PyPI sdist,
 not a Git snapshot or wheel. Source0 has SHA-256
 `46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7`.
 

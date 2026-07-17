@@ -1,6 +1,6 @@
 # MCP 1.26 Stdio Security Review
 
-`python-docling-mcp 2.1.0-2` uses Fedora's `python-mcp 1.26.0` only through
+`python-docling-mcp 2.1.0-0.2` uses Fedora's `python-mcp 1.26.0` only through
 patched local stdio servers. The base launcher defaults to generation and
 manipulation. The separately installed remote-conversion launcher adds one
 bounded conversion tool, but still cannot select HTTP, SSE, WebSocket, RAG, or
