@@ -40,7 +40,16 @@ build_mapping:
     mcp: 7
     playwright: 62
     playwright_core: 104
-  prebuilt_tool_blocker: "esbuild 0.28.1 selects @esbuild/linux-x64 through an install script"
+  narrow_build_target: none; the only build flags are watch and disable-install, and disable-install only affects browser installation in watch mode
+  esbuild:
+    version: 0.28.1
+    source_tag_archive_sha256: 65c756fa87d43178ac4a5242454c2bd0fde325f8ecf77997f8fa4b88f94d5cd2
+    npm_neutral_package_sha256: eb8ef756f8299d16d5c8b35678606d715ba29923f500db7b37c181310eed40a5
+    source_build_supported: true
+    source_build_pattern: CGO_ENABLED=0 Go binary plus upstream-generated neutral npm module and platform package
+    fedora_43_version: 0.24.2
+    fedora_44_version: 0.27.2
+    exact_fedora_provider: false
   published_license_sidecars:
     playwright_core_utils_bundle: 91
     playwright_core_server_registry: 14

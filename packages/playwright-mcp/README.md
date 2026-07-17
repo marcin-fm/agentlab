@@ -33,9 +33,18 @@ commit and imports `tools.createConnection` from generated
 
 Playwright's normal build is monorepo-wide. It unconditionally installs a
 separate stable-test-runner lock, compiles and bundles with esbuild, runs Vite
-builds, generates types and browser metadata, and copies `xdg-open`. The root
-lock selects esbuild's prebuilt `@esbuild/linux-x64` package through an install
-script; no policy-compliant source-built replacement path has been proven.
+builds, generates types and browser metadata, and copies `xdg-open`. It exposes
+no package or MCP-only build target. Its `--disable-install` option only disables
+browser installation in watch mode; it does not skip the stable-test-runner
+`npm ci` in a normal build.
+
+The pinned esbuild `0.28.1` tool is source-buildable without its prebuilt
+`@esbuild/linux-x64` payload. The exact tag builds the Go binary with
+`CGO_ENABLED=0`, generates the neutral npm JavaScript module, and supports an
+external exact-version binary. Fedora already uses this source-built binary plus
+JavaScript/platform-module layout for esbuild `0.24.2` on Fedora 43 and `0.27.2`
+on Fedora 44. An exact `0.28.1` compatibility provider is still missing, but the
+prebuilt binary is no longer an architectural blocker.
 
 The published payloads contain 7 MCP files, 62 Playwright files, and 104
 Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
