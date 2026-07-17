@@ -5,12 +5,11 @@ application. The package source is Apache-2.0 and the npm provenance
 attestation identifies upstream tag `v0.0.78` at commit
 `5f8fc00210b27b4407c375b59cda4838045d429c`.
 
-Independent correspondence review is complete. Six of the npm package's seven
-files byte-match the release tag; its Apache license differs only in formatting
-and final line ending. The release tag archive SHA-256 is
-`9f4b1c550c24aaf202b422c568c105a6c29e4c3d10735cc317c56aa650cda3d7`,
-and the audit record SHA-256 is
-`e35a16efe0a6fe753e1ee2142647069eaa310c3d2485c2576a7b4d06c50649f6`.
+Independent correspondence review is complete. All seven published npm files
+byte-match the release tag. The release tag archive SHA-256 is
+`9f4b1c550c24aaf202b422c568c105a6c29e4c3d10735cc317c56aa650cda3d7`.
+The exact Playwright source commit archive SHA-256 is
+`446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46`.
 
 ## Immutable Runtime Inputs
 
@@ -20,9 +19,28 @@ and the audit record SHA-256 is
 | `playwright` | `1.62.0-alpha-1783623505000` | `738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a` |
 | `playwright-core` | `1.62.0-alpha-1783623505000` | `a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c` |
 
-The reference runtime package closure is limited to those three packages on Fedora;
-`fsevents@2.3.2` is an optional Darwin-only dependency. The test closure is
-separate and remains unstaged and unaudited.
+Those are the three top-level published runtime packages. Their generated
+Playwright bundles are not a three-package source closure: the exact monorepo
+lock has 719 non-root entries, including 679 integrity-pinned registry
+tarballs. `fsevents@2.3.2` is an optional Darwin-only dependency.
+
+## Source Build Audit
+
+The MCP package's `build` script is only `echo OK`; `roll.js` is a networked
+release-maintenance script. The actual runtime comes from the exact Playwright
+commit and imports `tools.createConnection` from generated
+`playwright-core/lib/coreBundle`.
+
+Playwright's normal build is monorepo-wide. It unconditionally installs a
+separate stable-test-runner lock, compiles and bundles with esbuild, runs Vite
+builds, generates types and browser metadata, and copies `xdg-open`. The root
+lock selects esbuild's prebuilt `@esbuild/linux-x64` package through an install
+script; no policy-compliant source-built replacement path has been proven.
+
+The published payloads contain 7 MCP files, 62 Playwright files, and 104
+Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
+package entries to exact root-lock versions, but aggregate SPDX accounting and
+the full immutable source/build/test closure remain incomplete.
 
 ## Intentional Failure
 
@@ -35,12 +53,15 @@ The remaining source gate is the generated Playwright runtime: compiled JS,
 bundled modules, Vite/esbuild assets, generated browser metadata, and copied
 `xdg-open` must be reproduced from Playwright commit
 `9fb36027c64c8edcf08bf06f618b3ca97a7b0d97` with a complete offline build
-closure and license evidence.
+closure, source-built tooling, and license evidence.
 
 The intended browser is Fedora `chromium-headless` through
-`/usr/lib64/chromium-browser/headless_shell`, but this exact Playwright alpha
-runtime requests Chromium `151.0.7922.10` while Fedora currently provides
-Chromium `150.0.7871.114`; it has not passed an offline operation smoke.
+`/usr/lib64/chromium-browser/headless_shell`. Although the runtime metadata
+requests Chromium `151.0.7922.10`, the exact Playwright Core alpha successfully
+launched Fedora 44 Chromium `150.0.7871.114`, navigated to a local `data:` page,
+and read its title and DOM without a browser download. This removes a hard
+version-compatibility blocker; a packaged MCP smoke must still be repeated in
+both target chroots after the source-build closure is complete.
 
 ## References
 

@@ -1,16 +1,19 @@
 name: playwright-mcp
 status: blocked
 blockers:
-  - The generated Playwright runtime must be rebuilt from the pinned source commit with a complete offline Node build and test closure.
-  - Bundled modules, Vite/esbuild outputs, copied xdg-open, generated browser metadata, and their license evidence remain unresolved.
-  - The runtime targets Chromium 151.0.7922.10 while Fedora currently provides Chromium 150; no-download compatibility is unproven.
+  - The generated Playwright runtime requires the full pinned monorepo closure: 679 integrity-pinned registry tarballs plus a separate stable-test-runner lock.
+  - The normal build selects a prebuilt esbuild platform package through an install script; no upstream-supported source-built replacement path is proven.
+  - Bundled modules, Vite outputs, copied xdg-open, generated browser metadata, and aggregate SPDX accounting remain unresolved.
   - The audited immutable closure has not been hosted for offline COPR SCM builds.
   - RPM Fusion updates duplicate availability has not been conclusively checked.
 source_policy:
   npm_package: "@playwright/mcp"
-  source_correspondence: Six of seven npm files byte-match tag v0.0.78; LICENSE differs only formatting and line ending. Playwright alpha tarballs identify source commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
-  source_audit_sha256: e35a16efe0a6fe753e1ee2142647069eaa310c3d2485c2576a7b4d06c50649f6
+  source_correspondence: All seven npm files byte-match tag v0.0.78. Playwright alpha tarballs identify source commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
+  playwright_source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
+  generated_build: Full Playwright monorepo build with esbuild, Vite, generated types/assets, copied xdg-open, and a separate stable-test-runner install.
+  bundle_license_sidecars: Five published sidecars map 213 bundled package entries to exact root-lock versions.
   browser: Fedora chromium-headless only
+  browser_compatibility: Exact Playwright Core alpha launched Fedora 44 chromium-headless 150.0.7871.114 and passed local data-URL title and DOM reads; repeat as a packaged F43/F44 MCP smoke after source closure.
   browser_downloads: forbidden
   lifecycle_scripts: forbidden
   networked_npm_install: forbidden

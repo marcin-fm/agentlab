@@ -23,28 +23,44 @@ optional_runtime_dependencies:
     version: 2.3.2
     scope: Darwin-only optional dependency; excluded on Fedora
 build_closure:
-  status: pending
-  reason: The released package has no compiling build script, but its release-maintenance roll script depends on an unspecified sibling Playwright checkout.
+  status: audited-blocked
+  source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
+  root_lock:
+    non_root_entries: 719
+    registry_tarballs: 679
+    registry_entries_with_integrity: 679
+    workspace_entries_including_root: 21
+    workspace_links: 20
+  reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and esbuild's prebuilt platform package or an unproven source-built replacement.
 test_closure:
-  status: pending
+  status: audited-blocked
   direct_dependencies:
     - "@modelcontextprotocol/sdk@1.29.0"
     - "@playwright/test@1.62.0-alpha-1783623505000"
     - "@types/node@24.12.2"
-  reason: The exact lockfile closure, source tarballs, integrity checks, and licenses have not been staged.
+  reason: The normal Playwright build unconditionally runs npm ci for a separate stable-test-runner lock whose Playwright alpha differs from the published runtime alpha. Its immutable source and license closure is not staged.
 closure_audit:
   audited_release: 0.0.78
+  wrapper_files_matching_tag: 7
+  wrapper_files_published: 7
+  root_lock_integrity_verified: true
+  generated_output_mapping_reviewed: true
+  published_license_sidecars_matched_to_lock: true
   production_build_sources_verified: false
   test_sources_verified: false
   licenses_verified: false
   native_sources_verified: false
   generated_sources_verified: false
   bundled_provides_verified: false
+  fedora_44_chromium_core_smoke_passed: true
+  packaged_mcp_chromium_smoke_f43_f44: false
   upstream_contact_recorded: false
   offline_verified: false
 gates:
-  - Reproduce or otherwise independently verify npm-to-tag source correspondence.
-  - Vendor the exact production, build, and test closure from original source tarballs without lifecycle execution.
-  - Inventory generated, native, executable, WASM, and browser-facing assets with corresponding sources and full license texts.
-  - Prove the configured Fedora chromium-headless path works without Playwright browser downloads.
+  - Vendor the exact root and stable-test-runner production, build, and test closures from original source tarballs without networked lifecycle execution.
+  - Replace the selected prebuilt esbuild platform package through an upstream-supported source-built or Fedora system-provider path.
+  - Reproduce every generated bundle, Vite asset, type, browser descriptor, and copied executable from the pinned source commit.
+  - Complete aggregate SPDX accounting and retain applicable license texts for the shipped bundled closure.
+  - Repeat the no-download Fedora chromium-headless operation smoke through the packaged MCP on Fedora 43 and Fedora 44.
   - Host the complete checksummed closure at immutable URLs usable by COPR SCM.

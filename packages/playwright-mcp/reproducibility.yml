@@ -8,6 +8,16 @@ release_identity:
   npm_integrity: sha512-XLTUeA6mEN9sQ+hJ4dfG8EIkDbxS0K3Trc2RBkUJuf02TgE2FQRNTMtq/aJfhyRMINsRl/Ybc4sxcWLtFn4/TQ==
   source_tag_archive: https://codeload.github.com/microsoft/playwright-mcp/tar.gz/refs/tags/v0.0.78
   source_tag_archive_sha256: 9f4b1c550c24aaf202b422c568c105a6c29e4c3d10735cc317c56aa650cda3d7
+  published_files_matching_tag: 7
+  published_files_total: 7
+  published_file_sha256:
+    cli.js: 70dab09ab9a5bc1943fb78e2655f00af7349f9931073833919f19c5d7d786ad6
+    config.d.ts: b0947558717d0180276fbddb609ff0cce5d87fb1aae31ee1a590fa8e08c8a80f
+    index.d.ts: f2605b325688707066df6b196a7852ff68253ab27902321acb8addd012a01542
+    index.js: 28c639173fb79f5cae1ed44519995cea0dd2aee2f4a48a2511f06f153802b946
+    LICENSE: 9a7110fc2d2f964038e5dc49128f908f29f47a574c961cba16085914e879cbda
+    package.json: d1d7d6d08a2c8b10ac95a04fc358f8ca55b8855fabb8d6fa8c7cf26dfd5378b7
+    README.md: b52c795d5e8b0fc6ae465e7666474c590434da2eb0ea54d131c753a5d261e61a
 runtime_sources:
   playwright:
     version: 1.62.0-alpha-1783623505000
@@ -16,17 +26,38 @@ runtime_sources:
     version: 1.62.0-alpha-1783623505000
     sha256: a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c
   source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  source_commit_archive: https://codeload.github.com/microsoft/playwright/tar.gz/9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  source_commit_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
   requested_chromium: 151.0.7922.10
   fedora_chromium_observed: 150.0.7871.114
+  fedora_44_chromium_core_smoke: exact alpha launched headless_shell by executable path and passed local data-URL title and DOM reads
+build_mapping:
+  root_lock_non_root_entries: 719
+  root_lock_registry_tarballs: 679
+  root_lock_integrity_entries: 679
+  nested_stable_test_runner_lock: required by the normal build and distinct from the published runtime alpha
+  generated_payload_files:
+    mcp: 7
+    playwright: 62
+    playwright_core: 104
+  prebuilt_tool_blocker: "esbuild 0.28.1 selects @esbuild/linux-x64 through an install script"
+  published_license_sidecars:
+    playwright_core_utils_bundle: 91
+    playwright_core_server_registry: 14
+    playwright_babel_bundle: 69
+    playwright_esm_loader: 12
+    playwright_expect: 27
 evidence:
   npm_provenance_attestation: https://registry.npmjs.org/-/npm/v1/attestations/@playwright%2fmcp@0.0.78
   npm_to_source_correspondence_reproduced: true
-  correspondence_audit_sha256: e35a16efe0a6fe753e1ee2142647069eaa310c3d2485c2576a7b4d06c50649f6
+  exact_source_to_generated_output_mapping_reviewed: true
+  published_sidecar_entries_matched_to_root_lock: true
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false
   generated_assets_proven: false
   native_payload_inventory: no native, WASM, shared-library, or executable payloads in the three npm tarballs
-  system_chromium_smoke_passed: false
+  system_chromium_core_smoke_f44_passed: true
+  packaged_mcp_system_chromium_smoke_f43_f44_passed: false
   offline_build_passed: false
   rpm_produced: false
