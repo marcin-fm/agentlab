@@ -1,6 +1,6 @@
 target_release: 1.18.3
 closure_audit:
-  audited_release:
+  audited_release: 1.18.3
   production_build_sources_verified: false
   test_sources_verified: false
   licenses_verified: false
@@ -20,8 +20,8 @@ current_lock_snapshot:
   bun: 1.3.14
   workspace_records: 37
   package_records: 3215
-  selected_production_closure: false
-  note: Lockfile-wide counts include unrelated workspaces, development inputs, and platform variants.
+  selected_production_closure: true
+  note: Lockfile-wide counts include unrelated inputs; the separate selected source set is current, but final binary inclusion and bundled Provides remain unverified.
 rpm_subpackages: []
 closure_entry_schema:
   required:

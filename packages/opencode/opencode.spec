@@ -8,7 +8,7 @@
 
 Name:           opencode
 Version:        1.18.3
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -152,6 +152,8 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.5
+- Reconcile the current selected-source audit records.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.4
 - Rebuild bun-pty from exact Git and vendored Cargo sources.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.3

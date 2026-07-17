@@ -1,6 +1,6 @@
 # OpenCode Packaging Status
 
-OpenCode `1.18.3` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The last detailed closure audit covered `1.17.20`, so the current release must be regenerated and reviewed before enablement.
+OpenCode `1.18.3` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.3`; final binary inclusion, generated bundled Provides, aggregate licensing, native and WASM rebuilds, and an offline build remain unverified.
 
 The immutable `v1.18.3` tag resolves to commit
 `127bdb30784d508cc556c71a0f32b508a3061517`, and its source archive has
