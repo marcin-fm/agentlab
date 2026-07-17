@@ -7,12 +7,14 @@
 
 Name:           rust-deser-hjson2
 Version:        2.2.4
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Hjson deserializer for Serde
 
 License:        MIT
 URL:            https://crates.io/crates/deser-hjson
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Omit the benchmark-only glassbench dependency from Fedora's build and test graph.
+# Fedora-specific; upstream retains the benchmark added in commit 2e5027d.
 Patch0:         deser-hjson-drop-benchmark-dependency.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -58,6 +60,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.2.4-0.2
+- Document the benchmark-only dependency patch and upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 2.2.4-0.1
 - Add the compatibility crate required by termimad 0.34.1.
 - Drop the benchmark-only glassbench dependency from the package build graph.
