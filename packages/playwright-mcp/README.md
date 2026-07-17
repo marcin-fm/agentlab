@@ -70,6 +70,17 @@ field, while the tagged source carries the MPL-2.0 project license. These are
 candidate binary-RPM expressions, not a substitute for verifying every source
 license text and retaining the required notices.
 
+The source-text audit is also bounded. The active Rolldown graph has local
+license or notice files in 200 of 247 registry crates; the Lightning CSS graph
+has them in 99 of 115. Of the resulting 63 omissions, exact commit-pinned
+repository texts cover 56 crates through 15 repositories. An immutable later
+SeaHash commit supplies the same upstream project's missing MIT text for one
+more crate. Six active crates still have no license file anywhere in either the
+exact release commit tree or the current upstream tree: `base-encode`,
+`typedmap`, `json-escape-simd`, `async-scoped`, `serde-detach`, and
+`parcel_sourcemap`. Their Cargo license declarations remain recorded, but the
+applicable text and notice obligations need an explicit packaging decision.
+
 The published payloads contain 7 MCP files, 62 Playwright files, and 104
 Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
 package entries to exact root-lock versions, but aggregate SPDX accounting and

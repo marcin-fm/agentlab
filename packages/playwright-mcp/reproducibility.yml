@@ -60,6 +60,21 @@ build_mapping:
     fedora_43_exact_same_name_absent: 144/30/73
     fedora_44_exact_same_name_absent: 143/30/74
     active_license_packages: 292
+    registry_crates_with_local_license_text: 200
+    registry_crates_without_local_license_text: 47
+    exact_repository_text_coverage: 43
+    supplemental_repository_texts:
+      oxc_27_crates: 6d56d57535f5b81da647e8008f636e0d6cb05f52 / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
+      napi_rs_5_crates: 9cc199fa348a6ef395eb2cce14e84057dfebcfd8, e9c50bb430b7d34659c0541f600e1e323d37432a, dea608eae7481a47d64aab563a2ab5cdd8eda03c / 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
+      ts_rs_2_crates: 7182ad8289596097235406b715fa04506443b4ad / db7f7f8e7236a2d0b41b855b2501b7b913caebbcda6ce498637a304ad1706ce1
+      nugine_simd_2_crates: d74c030d9dc4f3cae02146d1f497ff62726ef09a / 71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d
+      oxc_resolver_2_crates: 517961d13419600470d74d0fe9d0ddb8ce36f7a5 / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
+      fast_glob: 96fc2766c419687ae5b29a34c304538251535595 / 6820b5c369fa4c0cda088630d17a635f1dcdb4b5501f6077996934fab1690e2b
+      nodejs_built_in_modules: 9117efa38fe088325e8a1036a8ddea7f3546c1ac / 20538257cfb1812d48164a7d11c0008a66b33c01b4debdfa0ec2a104fe00f028
+      oxc_browserslist: 2b1dfa94e2557306af7b9954530686f467a5848c / 6fb8065469e053e7193bd6a82616740b2819725fbd12a027aa99534643247cca
+      oxc_index_vec: 8e09fe324eb6df02f56e4eacdfac958930300380 / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
+      oxc_sourcemap: 296f3576b1b6b518eb48609477f35dddb681d66f / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
+    unresolved_declaration_only_crates: base-encode MIT; typedmap MIT OR Apache-2.0; json-escape-simd MIT; async-scoped Apache-2.0 OR MIT
     cargo_license_expressions: 23
     missing_license_metadata: 0
     candidate_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib
@@ -74,6 +89,19 @@ build_mapping:
     linux_release_workspace_crates: 7
     fedora_43_44_exact_same_name_absent: 41/62/12
     active_license_packages: 122
+    registry_crates_with_local_license_text: 99
+    registry_crates_without_local_license_text: 16
+    exact_repository_text_coverage: 13
+    supplemental_repository_texts:
+      napi_rs_5_crates: a312b7eb4e12d3e0a3e9770429ee05c333947a39, fa0fe874489f45b8d1ece8eb3e58f7d17b23ccd2, 39d38278d6b6b44e3cc99cdb97d6abfde46cd573, f1b8ab5e645e674df33c796ef75aa278cd1b4a31 / 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
+      nugine_const_str_2_crates: a80a942800cbf0b3cb656a4e4a4b7b6b63da15a6 / 565aacda8f5ea53f937f867ed49a0ac7e6828b60b4568803185cd0a13297d4e4
+      nugine_simd_2_crates: 220c2e5f615d897b999aba46acdce3d281ef4ca4, f3381a842a6b86f4eafd5ac587f8081cd7e9bb2f / 71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d
+      browserslist_rs: 0a9a5c20b4a44c1216582881eed8019bc11d3c8c / 982d71ece9934b3bb7b95cec8a143d0db7523537fce588387dec98bbe72edbe5
+      wyz: d404c761c0b7bfd38651c68c20faa09750c2d0a3 / 43fb7b0d1c6fa07d1ffe65d574dc53830cc31027d7c171e4b65f128d74190d94
+      rust_phf: c9c35fd8ba3f1bc228388b0cef6e3814a02a72c0 / 0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38
+      rust_cssparser: cab31ead1cded6a6c48967953298861e914739ad / fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85
+      seahash_later_upstream_text: 3088c5c912b70b586d27bf553fbe964e025a2c89 / 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
+    unresolved_declaration_only_crates: serde-detach MPL-2.0; parcel_sourcemap MIT
     cargo_license_expressions: 12
     missing_license_metadata: lightningcss_node; tagged source project license is MPL-2.0
     candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0
