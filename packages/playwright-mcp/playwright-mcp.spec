@@ -7,7 +7,7 @@
 
 Name:           playwright-mcp
 Version:        0.0.78
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        Model Context Protocol server for Playwright
 
 License:        Apache-2.0
@@ -22,6 +22,8 @@ BuildRequires:  nodejs >= 20
 Requires:       chromium-headless
 Requires:       nodejs >= 20
 
+# Provisional scoped-root metadata. Regenerate this from the final installed
+# tree; omit it if the selected CLI payload does not install the public module.
 Provides:       npm(@playwright/mcp) = %{version}
 
 %description
@@ -41,6 +43,9 @@ echo 'playwright-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.5
+- Record the audited default headless MCP runtime payload boundary.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.4
 - Record the system xdg-open integration for the headless MCP surface.
 

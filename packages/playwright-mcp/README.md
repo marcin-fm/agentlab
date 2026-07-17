@@ -99,6 +99,20 @@ Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
 package entries to exact root-lock versions, but aggregate SPDX accounting and
 the full immutable source/build/test closure remain incomplete.
 
+The selected default headless CLI surface has a much smaller installed-payload
+boundary. An enforced package-file denylist smoke needed only 11 files totaling
+`6,798,642` bytes, or 37.85% of the three published payloads: MCP `cli.js`, its
+manifest and license; Playwright Core `coreBundle.js`, `utilsBundle.js`,
+`utilsBundle.js.LICENSE`, `package.json`, `browsers.json`, and its three legal
+files. Removing either Core manifest or `browsers.json` failed before MCP
+startup; with those restored, the reduced boundary listed 24 tools and passed
+local navigation/evaluation through Fedora Chromium without downloads. It does
+not install the `playwright` package, the programmatic MCP entry, server
+registry, Vite assets, copied executables, or optional UI/tooling trees. This is
+a CLI application payload, not the complete public npm module, so the draft
+root `npm(@playwright/mcp)` Provide remains provisional and must be regenerated
+or omitted from the exact installed tree.
+
 The Linux/x86_64 root lock has license metadata for 614 of 624 active entries.
 The ten exceptions are the Chrome, Chrome Beta, Chrome Canary, Chrome Dev,
 Chromium, Edge, Firefox, Firefox Beta, Firefox Nightly, and Safari logo

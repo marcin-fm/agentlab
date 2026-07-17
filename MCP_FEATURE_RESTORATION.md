@@ -73,6 +73,8 @@ Generated-JavaScript correction: Playwright's Node-executed esbuild outputs are 
 
 System-integration correction: the copied `open@11.0.0` `xdg-open` script is upstream xdg-utils 1.2.1, while the generated bundle selects the system `xdg-open` command. Fedora 43/44 provide matching xdg-utils 1.2.1, and default headless MCP does not reach report/trace/dashboard reveal paths, so the dead copied file can be omitted from that binary surface.
 
+Installed-payload correction: an enforced package-file denylist smoke reduced the default headless CLI surface from 173 published files and 17,962,355 bytes to 11 files and 6,798,642 bytes. The required runtime is MCP `cli.js` plus its manifest, Playwright Core `coreBundle.js`, `utilsBundle.js`, both manifests, `browsers.json`, and applicable legal files; removing either Core metadata file prevents startup. The reduced surface still lists 24 tools and passes Fedora Chromium navigation/evaluation, while the entire `playwright` package and generated UI/tooling trees are omitted. This narrows the binary and its license inventory but not Playwright's unconditional normal source build. It is a CLI application payload, so the provisional full npm-module Provide must be regenerated or omitted.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.

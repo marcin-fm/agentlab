@@ -2,6 +2,7 @@ name: pdfium
 status: blocked
 blockers:
   - The release-pinned subordinate PDFium commit policy boundary has not been approved for enablement.
+  - The private component names, versioned SONAMEs, and embedded ICU-data boundary require explicit approval.
   - The generated Source0-Source4 inputs need immutable public hosting for COPR SCM builds.
   - The package has only been proven on x86_64; aarch64 remains unverified.
 source_policy:

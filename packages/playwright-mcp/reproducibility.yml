@@ -105,6 +105,28 @@ build_mapping:
     mcp: 7
     playwright: 62
     playwright_core: 104
+  selected_default_headless_payload:
+    files: 11
+    bytes: 6798642
+    published_payload_bytes: 17962355
+    retained_percent: 37.85
+    required_files:
+      - mcp/cli.js
+      - mcp/package.json
+      - mcp/LICENSE
+      - playwright-core/package.json
+      - playwright-core/browsers.json
+      - playwright-core/LICENSE
+      - playwright-core/NOTICE
+      - playwright-core/ThirdPartyNotices.txt
+      - playwright-core/lib/coreBundle.js
+      - playwright-core/lib/utilsBundle.js
+      - playwright-core/lib/utilsBundle.js.LICENSE
+    denylist_smoke: All other files under the exact MCP and Playwright Core payload roots were treated as absent; MCP listed 24 tools and passed Fedora Chromium data-URL navigation and evaluation.
+    independently_required: playwright-core/package.json and playwright-core/browsers.json
+    omitted_top_level_runtime: playwright
+    public_module_complete: false
+    normal_source_build_reduced: false
   narrow_build_target: none; the only build flags are watch and disable-install, and disable-install only affects browser installation in watch mode
   esbuild:
     version: 0.28.1
@@ -197,6 +219,7 @@ evidence:
   browser_logo_distribution_reviewed: false
   local_node_javascript_minification_gate_passed: true
   xdg_open_headless_system_integration_gate_passed: true
+  selected_default_headless_payload_smoke_passed: true
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

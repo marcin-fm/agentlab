@@ -65,6 +65,19 @@ build_closure:
       bundled_runtime_selection: system xdg-open command; adjacent copied script is not selected
       selected_headless_surface: copied payload omitted and no xdg-utils runtime path reached
       headed_surface_requirement: require Fedora xdg-utils if report, trace, or dashboard reveal is selected
+    selected_runtime_payload:
+      surface: default headless MCP stdio CLI with explicit Fedora Chromium executable
+      files: 11
+      bytes: 6798642
+      published_payload_bytes: 17962355
+      retained_percent: 37.85
+      required_mcp_files: cli.js, package.json, LICENSE
+      required_playwright_core_files: package.json, browsers.json, LICENSE, NOTICE, ThirdPartyNotices.txt, lib/coreBundle.js, lib/utilsBundle.js, lib/utilsBundle.js.LICENSE
+      omitted_payloads: complete playwright npm package, MCP programmatic entry and declarations, server registry, Vite assets, copied xdg-open, browser installers, dashboard, trace, reporter, recorder, extension, Electron, and CLI skill trees
+      enforced_smoke: All other MCP and Playwright Core package files were denied. The candidate listed 24 tools and passed local data-URL navigation and evaluation with Fedora Chromium and browser downloads disabled.
+      required_file_proof: Removing playwright-core/package.json or browsers.json fails before MCP startup.
+      metadata_consequence: The installed CLI application is not the complete public npm module; regenerate or omit the provisional root npm Provide.
+      source_build_consequence: Binary omission does not reduce the unconditional normal Playwright monorepo build or its source inputs.
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1

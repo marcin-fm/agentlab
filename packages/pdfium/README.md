@@ -22,6 +22,9 @@ consumer tests.
 ICU data is embedded in the private ICU component rather than shipped as an
 unlocated `icudtl.dat` file. The RPM installs PDFium, ICU, AGG, and consolidated
 third-party license notices. The final embedded-data revision passed clean
-Fedora 43 and 44 builds and extracted-payload validation. The package remains
-blocked for immutable public source hosting, approval of the subordinate source
-boundary pinned by the Chromium release, and future aarch64 proof.
+Fedora 43 and 44 builds and extracted-payload validation. The private component
+names, versioned SONAMEs, and embedded ICU-data ownership form a Fedora-specific
+package, ABI, and runtime boundary that still requires explicit approval. The
+package remains blocked for that review, immutable public source hosting,
+approval of the subordinate source boundary pinned by the Chromium release,
+and future aarch64 proof.

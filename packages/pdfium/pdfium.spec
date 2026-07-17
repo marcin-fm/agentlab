@@ -20,7 +20,7 @@
 
 Name:           pdfium
 Version:        146.0.7678.0
-Release:        0.0.1%{?dist}
+Release:        0.0.2%{?dist}
 Summary:        PDF rendering library used by Chromium
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
@@ -32,11 +32,23 @@ Source3:        source-closure.yml
 Source4:        pdfium-%{version}-closure-receipt.json
 Source5:        AGG-LICENSE.txt
 Source6:        THIRD-PARTY-NOTICES.txt
+# Drop simdutf from an embedder-test target omitted by Fedora's reduced build.
+# Fedora-specific; not submitted because Fedora does not build that test surface.
 Patch0:         pdfium-drop-simdutf-test-dependency.patch
+# Select Fedora's x86_64 Clang target and compiler-rt directory layout.
+# Fedora-specific; not submitted because it follows Fedora's toolchain layout.
 Patch1:         pdfium-fedora-clang-target.patch
+# Give private Abseil and ICU components collision-free PDFium library names.
+# Fedora-specific boundary; upstream does not install these components system-wide.
 Patch2:         pdfium-private-component-names.patch
+# Use SHA-1 linker build IDs so RPM can create its build-id link hierarchy.
+# Fedora-specific; not submitted because RPM requires the longer build ID.
 Patch3:         pdfium-fedora-build-id.patch
+# Give PDFium and private components versioned SONAMEs for system installation.
+# Fedora-specific ABI boundary; upstream does not ship a system-library ABI.
 Patch4:         pdfium-versioned-sonames.patch
+# Embed ICU data in the private component instead of shipping unlocated icudtl.dat.
+# Fedora-specific runtime boundary; upstream controls data placement in its embedder.
 Patch5:         pdfium-embed-icu-data.patch
 
 ExclusiveArch:  x86_64
@@ -263,6 +275,9 @@ EOF
 %{_libdir}/pkgconfig/pdfium.pc
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.2
+- Document downstream patch status and the private library boundary.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.1
 - Add a blocked deterministic source-closure draft for the Chromium-pinned PDFium revision.
 - Drop an unused simdutf dependency from the unbuilt embedder-test target.
