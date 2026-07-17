@@ -23,7 +23,7 @@
 
 Name:           mermaid-cli
 Version:        11.16.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Command-line tool for rendering Mermaid diagrams
 
 License:        MIT AND Apache-2.0 AND ISC AND BSD-3-Clause AND 0BSD AND CC-BY-4.0 AND OFL-1.1 AND EPL-2.0 AND (MPL-2.0 OR Apache-2.0) AND Zlib AND Unlicense
@@ -48,13 +48,19 @@ Source16:       https://raw.githubusercontent.com/developit/dlv/e636db817a96e4ca
 Source17:       https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/MIT.txt
 Source18:       https://raw.githubusercontent.com/madler/zlib/v1.2.8/README#/zlib-1.2.8-README
 Source19:       https://raw.githubusercontent.com/KaTeX/KaTeX/90de97946bb60aa82108d6dbb217cf10602d8709/contrib/mhchem/mhchem.js#/katex-mhchem.js
+# Pin the audited Puppeteer release into Fedora's private runtime closure.
+# Fedora-specific; upstream intentionally uses a peer dependency in commit 9cf8b75.
 Patch0:         mermaid-cli-runtime-puppeteer.patch
+# Discover Fedora Chromium and root-container flags when explicit configuration is absent.
+# Fedora-specific; upstream supports explicit browser configuration in https://github.com/mermaid-js/mermaid-cli/pull/390.
 Patch1:         mermaid-cli-fedora-chromium.patch
 
 BuildArch:      noarch
+ExclusiveArch:  %{nodejs_arches} noarch
 BuildRequires:  chromium-headless
 BuildRequires:  hardlink
 BuildRequires:  nodejs >= 22.12
+BuildRequires:  nodejs-devel
 BuildRequires:  nodejs-packaging
 BuildRequires:  python3
 BuildRequires:  tar
@@ -569,5 +575,8 @@ install -Dpm0644 README.md %{buildroot}%{_docdir}/%{name}/README.md
 %{nodejs_sitelib}/@mermaid-js/mermaid-cli/
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 11.16.0-0.2
+- Add Fedora Node build mechanics and document downstream patch status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 11.16.0-0.1
 - Build the audited production closure with Fedora Chromium and corresponding sources.
