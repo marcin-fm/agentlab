@@ -4,7 +4,6 @@ blockers:
   - The release-pinned subordinate PDFium commit policy boundary has not been approved for enablement.
   - The private component names, versioned SONAMEs, and embedded ICU-data boundary require explicit approval.
   - The generated Source0-Source4 inputs need immutable public hosting for COPR SCM builds.
-  - The package has only been proven on x86_64; aarch64 remains unverified.
 source_policy:
   version_identity: Chromium release 146.0.7678.0
   pdfium_revision: efbbd0fc95825e049ad790911356e0b689418899
@@ -18,9 +17,9 @@ source_closure:
   source_count: 7
   source_sha256: 1880e1d7d4659f589e63a319d8967cf5e584085e1e817667d51356ad6ad1b7ef
   closure_sha256: 27749bcd3fab8c6dc5f621882823d6c43ca8c437193a56998a0c46b6be71a140
-  manifest_sha256: 9b5b8c2bb16092e4f47b60b95f758d56d6bef37fb78752c311845b6c85cbe538
-  policy_sha256: 6e376ca07511c8416a82c645c341d93b5f9d71833e8603e4803546c230d12ea4
-  receipt_sha256: 18196c6505b027d93b852151261e0e4e8a4ad76066993d954777bc76e531a4e0
+  manifest_sha256: 3751903dfbd79d53a969f96f05eed44200c0737a7a9a1c16d71ca501121cca45
+  policy_sha256: bceac435331b957027ef4f86bbd43a38d9941488aaee24f246243fcd4eeedc77
+  receipt_sha256: bd6b304cabeab431ab504bcf39477bc759593f974e0290a8b56d4d2d6d462991
 license_audit:
   state: reviewed and verified in final Fedora 43 and 44 builds
   aggregate_expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
@@ -30,9 +29,16 @@ license_audit:
     - AGG-LICENSE.txt
     - THIRD-PARTY-NOTICES.txt
 build_validation:
-  architecture: x86_64
+  supported_architectures:
+    - x86_64
+    - aarch64
+  proven_architectures:
+    - x86_64
+    - aarch64
   fedora_43: passed with embedded ICU data
   fedora_44: passed with embedded ICU data
+  fedora_43_aarch64: passed in exact-current transient COPR build 10737741
+  fedora_44_aarch64: passed in exact-current transient COPR build 10737741
   exported_fpdf_symbols: passed
   c_api_smoke: passed
   extracted_pkgconfig_consumer_smoke: passed

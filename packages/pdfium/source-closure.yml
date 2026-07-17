@@ -13,6 +13,7 @@ target:
   os: linux
   architectures:
     - x86_64
+    - aarch64
 build_policy:
   network: forbidden
   gclient: forbidden
@@ -76,8 +77,8 @@ fedora_patches:
     purpose: Remove an unavailable dependency from an unbuilt embedder-test target.
   - id: fedora-clang-target
     file: pdfium-fedora-clang-target.patch
-    sha256: b9848a48f7e80ef33217f113b271db0994a4fb48989ca2c8bc230520f5201681
-    purpose: Use Fedora's x86_64 Clang target triple and compiler-rt layout.
+    sha256: 09f3badac7487cb01f7d7d90c414173230bfca3a155684f12cd23c930ac9a99c
+    purpose: Use Fedora's x86_64 and aarch64 Clang target triples and compiler-rt layouts.
   - id: private-component-names
     file: pdfium-private-component-names.patch
     sha256: 7244edaa8d2164c5fb1b18b424777f86856af757f87dd7e0aff70d4b869a9945
@@ -106,10 +107,13 @@ excluded_sources:
   - Rust PNG and Fontations
 verification:
   source_closure_generated: true
-  fedora_43_gn: true
-  fedora_44_gn: true
-  fedora_43_build: true
-  fedora_44_build: true
+  fedora_43_x86_64_gn: true
+  fedora_44_x86_64_gn: true
+  fedora_43_x86_64_build: true
+  fedora_44_x86_64_build: true
+  fedora_43_aarch64_build: true
+  fedora_44_aarch64_build: true
+  aarch64_copr_build_id: 10737741
   exported_fpdf_symbols: true
   c_api_smoke: true
   licenses_verified: true

@@ -12,12 +12,16 @@ different gzip bytes for the same commit. The RPM build must not invoke
 `gclient`, CIPD, GCS downloads, remote execution, or Chromium-provided binary
 toolchains.
 
-The x86_64 proof builds versioned `libpdfium.so.146` plus private, collision-free
-Abseil and ICU component libraries. V8, XFA, Skia, Rust PNG, Fontations,
-PartitionAlloc, tests, and corpora are disabled. Fedora provides GN, Ninja,
-Clang, and the selected system image/font libraries. Local and clean Fedora 43
-and 44 builds passed with FPDF export, C API, pkg-config, and extracted-payload
-consumer tests.
+The draft builds versioned `libpdfium.so.146` plus private, collision-free
+Abseil and ICU component libraries on native `x86_64` and `aarch64` targets.
+The Fedora Clang patch selects each architecture's `redhat-linux-gnu` target and
+compiler-rt directory. V8, XFA, Skia, Rust PNG, Fontations, PartitionAlloc,
+tests, and corpora are disabled. Fedora provides GN, Ninja, Clang, and the
+selected system image/font libraries. Local and clean Fedora 43 and 44 x86_64
+builds passed with FPDF export, C API, pkg-config, and extracted-payload
+consumer tests. Exact-current transient COPR build `10737741` passed natively on Fedora 43
+and 44 aarch64 with the same checks, including the architecture-specific Clang
+target and compiler-rt path.
 
 ICU data is embedded in the private ICU component rather than shipped as an
 unlocated `icudtl.dat` file. The RPM installs PDFium, ICU, AGG, and consolidated
@@ -26,5 +30,6 @@ Fedora 43 and 44 builds and extracted-payload validation. The private component
 names, versioned SONAMEs, and embedded ICU-data ownership form a Fedora-specific
 package, ABI, and runtime boundary that still requires explicit approval. The
 package remains blocked for that review, immutable public source hosting,
-approval of the subordinate source boundary pinned by the Chromium release,
-and future aarch64 proof.
+and approval of the subordinate source boundary pinned by the Chromium release.
+The aarch64 proof used a separate transient COPR project and does not enable
+this package in `marcin/agentlab`.

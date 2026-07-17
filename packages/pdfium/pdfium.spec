@@ -1,10 +1,10 @@
 # Disabled by package.yml pending immutable source hosting, release-boundary
-# approval, and architecture proof beyond x86_64.
+# approval, and successful native aarch64 proof builds.
 %global source_sha256 1880e1d7d4659f589e63a319d8967cf5e584085e1e817667d51356ad6ad1b7ef
 %global source_closure_sha256 27749bcd3fab8c6dc5f621882823d6c43ca8c437193a56998a0c46b6be71a140
-%global source_manifest_sha256 9b5b8c2bb16092e4f47b60b95f758d56d6bef37fb78752c311845b6c85cbe538
-%global source_policy_sha256 6e376ca07511c8416a82c645c341d93b5f9d71833e8603e4803546c230d12ea4
-%global source_receipt_sha256 18196c6505b027d93b852151261e0e4e8a4ad76066993d954777bc76e531a4e0
+%global source_manifest_sha256 3751903dfbd79d53a969f96f05eed44200c0737a7a9a1c16d71ca501121cca45
+%global source_policy_sha256 bceac435331b957027ef4f86bbd43a38d9941488aaee24f246243fcd4eeedc77
+%global source_receipt_sha256 bd6b304cabeab431ab504bcf39477bc759593f974e0290a8b56d4d2d6d462991
 %global agg_license_sha256 7c9a090bc2f7a49601bfb39e5504850feb7edc5ac2eba980610f6148a5538b43
 %global third_party_notices_sha256 caa7153703e3bf5e968b6f22a1c8b94d6732a0bd9f10bb6a5b3a9da5ff97f34e
 # Chromium already adds .gdb_index sections when linking with LLD.
@@ -17,10 +17,19 @@
 %else
 %global clang_major 22
 %endif
+%ifarch x86_64
+%global gn_target_cpu x64
+%global fedora_clang_target x86_64-redhat-linux-gnu
+%global expected_elf_machine X86-64
+%else
+%global gn_target_cpu arm64
+%global fedora_clang_target aarch64-redhat-linux-gnu
+%global expected_elf_machine AArch64
+%endif
 
 Name:           pdfium
 Version:        146.0.7678.0
-Release:        0.0.2%{?dist}
+Release:        0.0.4%{?dist}
 Summary:        PDF rendering library used by Chromium
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
@@ -35,7 +44,7 @@ Source6:        THIRD-PARTY-NOTICES.txt
 # Drop simdutf from an embedder-test target omitted by Fedora's reduced build.
 # Fedora-specific; not submitted because Fedora does not build that test surface.
 Patch0:         pdfium-drop-simdutf-test-dependency.patch
-# Select Fedora's x86_64 Clang target and compiler-rt directory layout.
+# Select Fedora's native x86_64 and aarch64 Clang target and compiler-rt layouts.
 # Fedora-specific; not submitted because it follows Fedora's toolchain layout.
 Patch1:         pdfium-fedora-clang-target.patch
 # Give private Abseil and ICU components collision-free PDFium library names.
@@ -51,7 +60,7 @@ Patch4:         pdfium-versioned-sonames.patch
 # Fedora-specific runtime boundary; upstream controls data placement in its embedder.
 Patch5:         pdfium-embed-icu-data.patch
 
-ExclusiveArch:  x86_64
+ExclusiveArch:  x86_64 aarch64
 
 BuildRequires:  clang
 BuildRequires:  clang-devel
@@ -117,11 +126,11 @@ assert manifest["schema"] == 1
 assert manifest["package"] == "pdfium"
 assert manifest["version"] == "%{version}"
 assert manifest["consumer"] == {"name": "kreuzberg", "version": "4.10.2"}
-assert manifest["target"] == {"os": "linux", "architectures": ["x86_64"]}
+assert manifest["target"] == {"os": "linux", "architectures": ["x86_64", "aarch64"]}
 assert all(value == "forbidden" for value in manifest["build_policy"].values() if isinstance(value, str))
 assert {patch["file"]: patch["sha256"] for patch in manifest["fedora_patches"]} == {
     "pdfium-drop-simdutf-test-dependency.patch": "849a32a628d4ac5bb87d2eb8cac5395e938551e50aaf44b3ef6060c00557b5df",
-    "pdfium-fedora-clang-target.patch": "b9848a48f7e80ef33217f113b271db0994a4fb48989ca2c8bc230520f5201681",
+    "pdfium-fedora-clang-target.patch": "09f3badac7487cb01f7d7d90c414173230bfca3a155684f12cd23c930ac9a99c",
     "pdfium-private-component-names.patch": "7244edaa8d2164c5fb1b18b424777f86856af757f87dd7e0aff70d4b869a9945",
     "pdfium-fedora-build-id.patch": "773e5b8e0cbca0b9888d9616466df8f53f6bf05787b22cc5c4143e7780cefb2b",
     "pdfium-versioned-sonames.patch": "b1d76926fc311801dd0b19ef37f22e0773c7dcb1a66aa85f146de64a4ccf0e47",
@@ -165,6 +174,7 @@ cat > out/Release/args.gn <<'EOF'
 is_component_build = true
 is_debug = false
 symbol_level = 2
+target_cpu = "%{gn_target_cpu}"
 use_debug_fission = false
 is_clang = true
 clang_base_path = "/usr"
@@ -199,6 +209,10 @@ ninja -C out/Release pdfium
 test -f out/Release/libpdfium.so.146
 test -f out/Release/libpdfium_absl.so.146
 test -f out/Release/libpdfium_icuuc.so.146
+readelf -h out/Release/libpdfium.so.146 | grep -Eq 'Machine:.*%{expected_elf_machine}'
+grep -Fq -- '--target=%{fedora_clang_target}' out/Release/obj/pdfium.ninja
+grep -Fq '/usr/lib/clang/%{clang_major}/lib/%{fedora_clang_target}/libclang_rt.builtins.a' \
+  out/Release/obj/pdfium.ninja
 nm -D --defined-only out/Release/libpdfium.so.146 | grep -q ' FPDF_InitLibrary'
 nm -D --defined-only out/Release/libpdfium.so.146 | grep -q ' FPDF_DestroyLibrary'
 readelf -d out/Release/libpdfium.so.146 | grep -q 'Library soname: \[libpdfium.so.146\]'
@@ -275,6 +289,13 @@ EOF
 %{_libdir}/pkgconfig/pdfium.pc
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.4
+- Record successful Fedora 43 and 44 aarch64 COPR proof in the source policy.
+
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.3
+- Add native aarch64 target and compiler-rt handling for the COPR proof draft.
+- Verify the generated target triple, compiler-rt path, and ELF architecture.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.2
 - Document downstream patch status and the private library boundary.
 

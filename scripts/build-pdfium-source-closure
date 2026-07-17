@@ -43,6 +43,7 @@ end
 manifest_path = File.join(Agentlab::ROOT, "packages", "pdfium", "source-closure.yml")
 manifest = Agentlab.load_yaml(manifest_path)
 version = manifest.fetch("version")
+package_dir = File.dirname(manifest_path)
 staging = File.join(workdir, "staging")
 archives = File.join(workdir, "archives")
 repositories = File.join(workdir, "repositories")
@@ -55,6 +56,15 @@ manifest.fetch("fedora_patches").each do |patch|
   actual = Digest::SHA256.file(patch_path).hexdigest
   expected = patch.fetch("sha256")
   raise Agentlab::Error, "Fedora patch SHA-256 mismatch for #{patch.fetch('id')}: #{actual}" unless actual == expected
+end
+
+local_sources = ["source-closure.yml", "AGG-LICENSE.txt", "THIRD-PARTY-NOTICES.txt"] +
+                manifest.fetch("fedora_patches").map { |patch| patch.fetch("file") }
+local_sources.each do |name|
+  source = File.join(package_dir, name)
+  raise Agentlab::Error, "missing package source #{source}" unless File.file?(source)
+
+  FileUtils.cp(source, File.join(output_dir, name))
 end
 
 def run!(*command)
@@ -142,7 +152,7 @@ tar_command = [
   "--numeric-owner", "--pax-option=delete=atime,delete=ctime", "-C", staging,
   "-cf", "-", "."
 ]
-statuses = Open3.pipeline(tar_command, ["zstd", "-19", "-T0", "-q"], out: closure_archive)
+statuses = Open3.pipeline(tar_command, ["zstd", "-19", "-T4", "-q"], out: closure_archive)
 raise Agentlab::Error, "closure archive was not created" unless statuses.all?(&:success?)
 
 receipt = {
