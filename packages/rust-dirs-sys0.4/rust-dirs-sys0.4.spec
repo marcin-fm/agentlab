@@ -6,7 +6,7 @@
 
 Name:           rust-dirs-sys0.4
 Version:        0.4.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        System-level directory helpers for Rust applications
 
 License:        MIT OR Apache-2.0
@@ -67,5 +67,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-0.2
+- Expand COPR targets to Fedora 44 and Rawhide on x86_64 and aarch64.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-0.1
 - Add the Fedora 44 compatibility crate required by RTK.

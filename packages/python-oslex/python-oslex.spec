@@ -2,7 +2,7 @@
 
 Name:           python-oslex
 Version:        2.0.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        OS-independent command-line quoting wrapper
 License:        MIT
 URL:            https://github.com/petamas/oslex
@@ -52,5 +52,8 @@ sed -i 's/\r$//' README.md
 %doc README.md
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.0.0-0.2
+- Document the expanded COPR architecture and Rawhide target matrix.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.0.0-0.1
 - Initial Fedora package draft; blocked on the missing mslex provider.

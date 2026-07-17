@@ -14,6 +14,13 @@ require "yaml"
 module Agentlab
   ROOT = File.expand_path("../..", __dir__)
   DEFAULT_CONFIG = File.join(ROOT, "config", "copr.yml")
+  COPR_ARCHITECTURES = %w[x86_64 aarch64].freeze
+  STABLE_COPR_RELEASES = %w[43 44].freeze
+  STABLE_COPR_CHROOTS = STABLE_COPR_RELEASES.flat_map do |release|
+    COPR_ARCHITECTURES.map { |architecture| "fedora-#{release}-#{architecture}" }
+  end.freeze
+  RAWHIDE_COPR_CHROOTS = COPR_ARCHITECTURES.map { |architecture| "fedora-rawhide-#{architecture}" }.freeze
+  DEFAULT_COPR_CHROOTS = (STABLE_COPR_CHROOTS + RAWHIDE_COPR_CHROOTS).freeze
   BUN_BUILD_STAGES = %w[
     zig_source_bootstrap
     webkit_source_build
@@ -52,6 +59,35 @@ module Agentlab
   end
 
   module_function
+
+  def copr_chroot_matrix_errors(chroots, require_all_stable_releases:)
+    errors = []
+    duplicates = chroots.tally.select { |_chroot, count| count > 1 }.keys
+    errors << "contains duplicate chroots: #{duplicates.join(', ')}" if duplicates.any?
+
+    unknown = chroots - DEFAULT_COPR_CHROOTS
+    errors << "contains unsupported chroots: #{unknown.join(', ')}" if unknown.any?
+
+    missing_rawhide = RAWHIDE_COPR_CHROOTS - chroots
+    errors << "must include Rawhide on both architectures; missing: #{missing_rawhide.join(', ')}" if missing_rawhide.any?
+
+    stable_releases = if require_all_stable_releases
+                        STABLE_COPR_RELEASES
+                      else
+                        STABLE_COPR_RELEASES.select do |release|
+                          COPR_ARCHITECTURES.any? { |architecture| chroots.include?("fedora-#{release}-#{architecture}") }
+                        end
+                      end
+    errors << "must include at least one stable Fedora release" if stable_releases.empty?
+
+    stable_releases.each do |release|
+      required = COPR_ARCHITECTURES.map { |architecture| "fedora-#{release}-#{architecture}" }
+      missing = required - chroots
+      errors << "Fedora #{release} must include both architectures; missing: #{missing.join(', ')}" if missing.any?
+    end
+
+    errors
+  end
 
   def load_yaml(path)
     YAML.safe_load(File.read(path), aliases: false) || {}

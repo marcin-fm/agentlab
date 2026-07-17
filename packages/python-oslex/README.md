@@ -10,4 +10,5 @@ found.
 
 Clean Fedora 43 and Fedora 44 Mock builds passed 9 upstream tests with 3
 platform skips. Final source and binary RPM artifacts pass `rpmlint` with zero
-errors and zero warnings. The package is enabled for both configured chroots.
+errors and zero warnings. The package is enabled for the complete configured
+COPR target matrix.

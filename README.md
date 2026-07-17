@@ -36,7 +36,7 @@ scripts/generate-node-bundled-provides
                                     generate manual metadata for embedded npm code
 scripts/prove-bun-zig-bootstrap    reproduce the private pinned-Zig source proof
 scripts/retire-package             remove a package from COPR and archive it
-scripts/update-and-build          update releases and submit changed builds
+scripts/update-and-build          update releases and request pushed SCM builds
 ```
 
 ## Current Packages
@@ -99,16 +99,30 @@ Apply the reconciliation after activating the identity. The script verifies that
 scripts/create-copr-packages --apply
 ```
 
-Preview stable upstream release updates and builds:
+Enabled packages target Fedora 43, Fedora 44, and Rawhide on both `x86_64`
+and `aarch64`. Fedora 43/44 failures are fatal. Rawhide builds are always
+submitted and reported, but Rawhide failures are non-fatal for now. Package
+overrides may narrow stable releases only when they retain both architectures
+and both Rawhide targets.
+
+Preview stable upstream release updates:
 
 ```bash
 scripts/update-and-build
 ```
 
-Apply updates and submit builds for changed enabled packages:
+Apply and validate updates without submitting an agentlab build:
 
 ```bash
 scripts/update-and-build --apply
+```
+
+After explicitly committing and pushing an enabled package update, request its
+SCM build. The command verifies clean package inputs and requires local `HEAD`
+to equal the configured remote branch:
+
+```bash
+scripts/update-and-build --apply --build-current --package package-name
 ```
 
 Blocked packages can be included in release checks without submitting builds:

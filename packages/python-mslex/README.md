@@ -11,4 +11,4 @@ checked for an existing provider before packaging; no duplicate was found.
 Clean Fedora 43 and Fedora 44 Mock builds passed 13 upstream tests with 4
 platform skips. Final source and binary RPM artifacts pass `rpmlint` with zero
 errors and one expected no-manual-page warning for `mslex-split` per chroot.
-The package is enabled for both configured chroots.
+The package is enabled for the complete configured COPR target matrix.

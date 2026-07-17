@@ -2,7 +2,7 @@
 
 Name:           python-overrides
 Version:        7.7.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Decorators for detecting method override mismatches
 License:        Apache-2.0
 URL:            https://github.com/mkorpela/overrides
@@ -48,5 +48,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %doc README.rst
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 7.7.0-0.2
+- Document the expanded COPR architecture and Rawhide target matrix.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 7.7.0-0.1
 - Initial Fedora package.

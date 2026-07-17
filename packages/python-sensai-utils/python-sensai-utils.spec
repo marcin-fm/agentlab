@@ -2,7 +2,7 @@
 
 Name:           python-sensai-utils
 Version:        1.5.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        General-purpose utility modules from sensAI
 License:        MIT
 URL:            https://github.com/opcode81/sensAI-utils
@@ -54,6 +54,9 @@ sed -i 's/\r$//' setup.py README.md
 %doc README.md
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.5.0-0.3
+- Document the expanded COPR architecture and Rawhide target matrix.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.5.0-0.2
 - Document the published-sdist metadata repair and upstream status.
 

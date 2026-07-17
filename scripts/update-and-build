@@ -8,6 +8,7 @@ require_relative "lib/agentlab"
 
 begin
 apply = false
+build_current = false
 include_blocked = false
 selected_name = nil
 config_path = Agentlab::DEFAULT_CONFIG
@@ -15,10 +16,13 @@ config_path = Agentlab::DEFAULT_CONFIG
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/update-and-build [--apply] [--include-blocked] [--package NAME]"
   parser.on("--apply", "Write updates and build changed enabled packages") { apply = true }
+  parser.on("--build-current", "Build one already-pushed SCM package definition") { build_current = true }
   parser.on("--include-blocked", "Check and update blocked drafts, but never build them") { include_blocked = true }
   parser.on("--package NAME", "Process only one package") { |name| selected_name = name }
   parser.on("--config PATH", "Use another COPR config file") { |path| config_path = path }
 end.parse!
+
+raise Agentlab::Error, "--build-current requires --package NAME" if build_current && selected_name.nil?
 
 config = Agentlab.config(config_path)
 packages = selected_name ? [Agentlab.package_named(selected_name)] : Agentlab.packages
@@ -49,18 +53,31 @@ updates = packages.filter_map do |package|
   { package: package, version: version, sha256: sha256 }
 end
 
-if updates.empty?
+if updates.empty? && !build_current
   puts "No released updates found."
   exit 0
 end
 
 unless apply
   puts "Dry run: no files changed and no builds submitted."
+  puts "Use --apply to request the current pushed SCM build." if build_current
   exit 0
 end
 
 project = "#{config.fetch('owner')}/#{config.fetch('project')}"
-builds = updates.map { |update| update.fetch(:package) }.select(&:enabled?)
+agentlab_project = project == "marcin/agentlab"
+if build_current && updates.any?
+  raise Agentlab::Error,
+        "--build-current requires already-current package files; apply the update, commit, and push it first"
+end
+
+builds = if build_current
+           packages.select(&:enabled?)
+         elsif agentlab_project
+           []
+         else
+           updates.map { |update| update.fetch(:package) }.select(&:enabled?)
+         end
 Agentlab.verify_copr_owner!(config.fetch("owner")) if builds.any?
 
 updates.each do |update|
@@ -79,11 +96,45 @@ Agentlab.run!([RbConfig.ruby, File.join(Agentlab::ROOT, "scripts", "check-packag
 if builds.any?
   builds.each do |package|
     chroot_args = package.chroots(config.fetch("chroots")).flat_map { |chroot| ["--chroot", chroot] }
-    Agentlab.run!(Agentlab.copr_command("build", project, "--nowait", *chroot_args, package.spec_path))
+    if agentlab_project
+      package_path = package.directory.delete_prefix("#{Agentlab::ROOT}/")
+      status_stdout, status_stderr, status = Agentlab.capture(
+        ["git", "status", "--porcelain", "--", package_path, ".copr/Makefile"]
+      )
+      raise Agentlab::Error, status_stderr.strip unless status.success?
+      unless status_stdout.empty?
+        raise Agentlab::Error, "SCM build inputs have uncommitted changes: #{package_path} or .copr/Makefile"
+      end
+
+      local_stdout, local_stderr, local_status = Agentlab.capture(["git", "rev-parse", "HEAD"])
+      raise Agentlab::Error, local_stderr.strip unless local_status.success?
+
+      branch = config.fetch("branch")
+      remote_stdout, remote_stderr, remote_status = Agentlab.capture(
+        ["git", "ls-remote", "origin", "refs/heads/#{branch}"]
+      )
+      raise Agentlab::Error, remote_stderr.strip unless remote_status.success?
+
+      remote_head = remote_stdout.split.first.to_s
+      unless local_stdout.strip == remote_head
+        raise Agentlab::Error, "local HEAD does not match pushed origin/#{branch}"
+      end
+
+      Agentlab.run!(
+        Agentlab.copr_command("build-package", project, "--nowait", *chroot_args, "--name", package.name)
+      )
+    else
+      Agentlab.run!(Agentlab.copr_command("build", project, "--nowait", *chroot_args, package.spec_path))
+    end
   end
 end
 
-puts builds.empty? ? "Updated blocked drafts; no builds were submitted." : "Submitted #{builds.length} COPR build(s)."
+if agentlab_project && updates.any?
+  puts "Updated #{updates.length} package(s); no agentlab builds were submitted."
+  puts "Commit and push the changes, then run --apply --build-current --package NAME for each enabled package."
+else
+  puts builds.empty? ? "Updated blocked drafts; no builds were submitted." : "Submitted #{builds.length} COPR build(s)."
+end
 rescue Agentlab::Error, KeyError => e
   warn "error: #{e.message}"
   exit 1

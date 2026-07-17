@@ -16,6 +16,10 @@ project_chroots = Agentlab.config.fetch("chroots")
 errors = []
 warnings = []
 
+Agentlab.copr_chroot_matrix_errors(project_chroots, require_all_stable_releases: true).each do |error|
+  errors << "config/copr.yml: #{error}"
+end
+
 packages.each do |package|
   unless %w[enabled blocked].include?(package.status)
     errors << "#{package.name}: status must be enabled or blocked"
@@ -40,6 +44,15 @@ packages.each do |package|
     else
       unknown_chroots = package_chroots - project_chroots
       errors << "#{package.name}: copr.chroots contains project-unknown chroots: #{unknown_chroots.join(', ')}" if unknown_chroots.any?
+    end
+  end
+
+  if package.enabled?
+    Agentlab.copr_chroot_matrix_errors(
+      package.chroots(project_chroots),
+      require_all_stable_releases: false
+    ).each do |error|
+      errors << "#{package.name}: copr.chroots #{error}"
     end
   end
 

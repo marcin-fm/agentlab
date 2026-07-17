@@ -2,7 +2,7 @@
 
 Name:           python-mslex
 Version:        1.3.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Windows command-line quoting and splitting for Python
 License:        Apache-2.0
 URL:            https://github.com/smoofra/mslex
@@ -49,5 +49,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %{_bindir}/mslex-split
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.3.0-0.2
+- Document the expanded COPR architecture and Rawhide target matrix.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.3.0-0.1
 - Initial Fedora package.

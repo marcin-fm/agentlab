@@ -3,7 +3,7 @@
 
 Name:           rubygem-ferrum
 Version:        0.17.2
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Ruby headless Chrome driver
 
 License:        MIT
@@ -72,5 +72,8 @@ RUBY
 %doc %{gem_docdir}
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.17.2-0.2
+- Document the expanded COPR architecture and Rawhide target matrix.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.17.2-0.1
 - Add the initial Fedora source package with a local Chromium CDP smoke test.

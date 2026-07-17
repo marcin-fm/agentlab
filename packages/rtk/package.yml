@@ -51,8 +51,10 @@ architecture_audit:
   verified:
     - fedora-43-x86_64
     - fedora-44-x86_64
-  configured_chroots_are_x86_64: true
-  additional_architectures: not claimed
+  project_target_architectures:
+    - x86_64
+    - aarch64
+  additional_architecture_verification: tracked by the COPR target matrix
 duplicate_check:
   checked: "2026-07-15"
   fedora_43_44: absent

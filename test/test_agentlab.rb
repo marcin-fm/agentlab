@@ -318,9 +318,50 @@ class AgentlabTest < Minitest::Test
 
   def test_package_chroots_use_project_defaults
     package = Agentlab::Package.new(directory: Dir.tmpdir, manifest_path: "unused", data: { "copr" => {} })
-    defaults = ["fedora-43-x86_64", "fedora-44-x86_64"]
+    defaults = Agentlab::DEFAULT_COPR_CHROOTS
 
     assert_equal(defaults, package.chroots(defaults))
+  end
+
+  def test_default_copr_chroot_matrix_covers_stable_and_rawhide_architectures
+    assert_equal(
+      %w[
+        fedora-43-x86_64
+        fedora-43-aarch64
+        fedora-44-x86_64
+        fedora-44-aarch64
+        fedora-rawhide-x86_64
+        fedora-rawhide-aarch64
+      ],
+      Agentlab::DEFAULT_COPR_CHROOTS
+    )
+    assert_empty(
+      Agentlab.copr_chroot_matrix_errors(
+        Agentlab::DEFAULT_COPR_CHROOTS,
+        require_all_stable_releases: true
+      )
+    )
+  end
+
+  def test_copr_chroot_override_allows_one_stable_release_with_rawhide
+    chroots = %w[
+      fedora-44-x86_64
+      fedora-44-aarch64
+      fedora-rawhide-x86_64
+      fedora-rawhide-aarch64
+    ]
+
+    assert_empty(Agentlab.copr_chroot_matrix_errors(chroots, require_all_stable_releases: false))
+  end
+
+  def test_copr_chroot_override_rejects_missing_architecture_and_rawhide
+    errors = Agentlab.copr_chroot_matrix_errors(
+      ["fedora-44-x86_64", "fedora-rawhide-x86_64"],
+      require_all_stable_releases: false
+    )
+
+    assert(errors.any? { |error| error.include?("fedora-44-aarch64") })
+    assert(errors.any? { |error| error.include?("fedora-rawhide-aarch64") })
   end
 
   def test_validates_verified_bun_zig_stage

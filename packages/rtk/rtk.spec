@@ -3,7 +3,7 @@
 
 Name:           rtk
 Version:        0.43.0
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        CLI proxy that reduces command output sent to language models
 
 License:        Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
@@ -61,6 +61,9 @@ python3 %{SOURCE1} \
 %{_bindir}/rtk
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.4
+- Document the expanded COPR architecture and Rawhide target matrix.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.3
 - Document the system-SQLite patch purpose and upstream status.
 

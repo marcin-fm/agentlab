@@ -12,5 +12,5 @@ access.
 Clean Fedora 43 and Fedora 44 mock builds passed with the local Chromium CDP
 smoke test. The generated runtime requirements resolve to Fedora packages, the
 payload and MIT license were verified, and final `rpmlint` reported zero errors
-or warnings. The package is enabled for both configured chroots. No produced
-RPM was installed on the host.
+or warnings. The package is enabled for the complete configured COPR target
+matrix. No produced RPM was installed on the host.

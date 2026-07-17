@@ -19,5 +19,8 @@ copr:
   enabled: true
   chroots:
     - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-dirs-sys0.4
   spec: rust-dirs-sys0.4.spec

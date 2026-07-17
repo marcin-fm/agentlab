@@ -7,7 +7,7 @@
 
 Name:           rust-atty0.2
 Version:        0.2.14
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Simple interface for querying atty
 
 License:        MIT
@@ -73,6 +73,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.2.14-0.3
+- Expand COPR targets to Fedora 44 and Rawhide on x86_64 and aarch64.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.2.14-0.2
 - Document Fedora target pruning and its upstream status.
 

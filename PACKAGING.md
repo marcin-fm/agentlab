@@ -166,11 +166,13 @@ COPR package definitions use SCM source with:
 - source method `make_srpm`
 - webhook rebuild disabled
 
-Release updates are submitted from the reviewed local spec with `copr-cli build`; this avoids pretending uncommitted changes already exist on GitHub. After the changes are committed and pushed, `copr-cli build-package` may rebuild the SCM definition explicitly.
+Never upload or directly submit an SRPM to `marcin/agentlab`. Prepare and validate release updates locally, commit and push them explicitly, then rebuild the configured SCM definition with `copr-cli build-package`. `scripts/update-and-build --apply` writes validated updates without submitting an agentlab build; after the pushed branch contains those inputs, `scripts/update-and-build --apply --build-current --package NAME` verifies the selected package is clean and local `HEAD` matches the remote branch before requesting the SCM build. Other COPR projects may still use direct SRPM submission when their task and policy allow it.
 
 Authenticated automation uses the explicit identity-scoped path in `COPR_CONFIG`, not an ambient `HOME`. Before any project or package mutation, the scripts call COPR's authenticated, read-only `/api_3/auth-check` endpoint and require the server-returned account to match the configured owner `marcin` exactly. Config-only `copr-cli whoami` output is not accepted as proof that a token is valid.
 
-Packages may set `copr.chroots` to a subset of the project chroots. Direct build submission honors that restriction. The `rust-dirs5`, `rust-dirs-sys0.4`, and `rust-atty0.2` compatibility crates target only Fedora 44 because Fedora 43 already provides those branches.
+The default enabled-package matrix is Fedora 43, Fedora 44, and Rawhide on both `x86_64` and `aarch64`. Fedora 43 and Fedora 44 results are required on both architectures. Rawhide builds must also be submitted and monitored on both architectures, but Rawhide failure is non-fatal for now and must be reported explicitly.
+
+Packages may set `copr.chroots` to a subset of the project chroots. SCM build submission honors that restriction. An override may narrow stable releases only when every selected stable release retains both architectures and both Rawhide architectures remain selected. The `rust-dirs5`, `rust-dirs-sys0.4`, and `rust-atty0.2` compatibility crates omit Fedora 43 because Fedora 43 already provides those branches; they still target Fedora 44 and Rawhide on both architectures.
 
 ## Fedora References
 
