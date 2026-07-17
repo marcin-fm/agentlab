@@ -172,6 +172,28 @@ stdio does not open reports, traces, or dashboard file locations, so the dead
 copied file can be omitted from the binary. A future headed/report/dashboard
 surface would require the Fedora `xdg-utils` runtime dependency.
 
+## Command Surface
+
+Upstream defaults to stdio when no port is configured, and the selected
+canonical invocation is source-supported:
+
+```text
+playwright-mcp --browser chromium --headless --isolated \
+  --executable-path /usr/lib64/chromium-browser/headless_shell \
+  --image-responses omit
+```
+
+That profile omits additional capabilities and uses the 24 default core tools,
+but the released executable cannot enforce it. The same command accepts
+`--port`/`--host` for Streamable HTTP and legacy SSE, remote/CDP/extension
+browser connections, optional capabilities, proxy and origin controls,
+unrestricted filesystem access, and JSON/INI or `PLAYWRIGHT_MCP_*` overrides.
+Its `install-browser` alias also invokes Playwright's managed browser installer.
+No upstream option disables those alternate modes. Under the current selected
+surface policy, the package remains blocked until upstream supplies a bounded
+entry point or the maintainer explicitly accepts the broader direct CLI; a
+downstream security wrapper or protocol adapter is not authorized.
+
 ## Intentional Failure
 
 `playwright-mcp.spec` exits in `%prep` before unpacking or building. It must

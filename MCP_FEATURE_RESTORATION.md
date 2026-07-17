@@ -77,6 +77,8 @@ Installed-payload correction: an enforced package-file denylist smoke reduced th
 
 Selected-binary license correction: the 11-file candidate retains one generated sidecar with 91 unique, lock-matched package/version entries and full notice text (76 MIT, 9 ISC, 4 BSD-3-Clause, 1 BSD-2-Clause, 1 Fedora-allowed BlueOak-1.0.0). Reconciliation of all 400 `coreBundle.js` source markers adds CC0-1.0, giving the provisional expression `Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC0-1.0 AND ISC AND MIT`. Upstream emits sidecars only for inlined npm packages; the draft spec now generates a 434-line verbatim notice for the stripped pixelmatch, extractZip, lockfile, stackTrace, minimist, eventEmitter, clock, and BiDi/Puppeteer notices from the exact pinned source archive, SHA-256 `c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a`. Packaging verification remains behind the fail-closed build gate.
 
+Command-surface correction: upstream defaults to stdio and supports the selected explicit Chromium/headless/isolated/system-executable profile, but the same CLI exposes `--port` HTTP/SSE, remote/CDP/extension browser modes, optional capabilities, unrestricted filesystem and proxy controls, config/environment overrides, and an `install-browser` managed-download alias. No upstream switch enforces the selected profile. Keep the package blocked rather than add an unauthorized downstream security wrapper or protocol adapter.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.

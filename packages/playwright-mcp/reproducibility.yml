@@ -127,6 +127,16 @@ build_mapping:
     omitted_top_level_runtime: playwright
     public_module_complete: false
     normal_source_build_reduced: false
+    command_surface:
+      selected_profile: playwright-mcp --browser chromium --headless --isolated --executable-path /usr/lib64/chromium-browser/headless_shell --image-responses omit
+      default_stdio_without_port: true
+      http_and_legacy_sse_available: true
+      managed_browser_install_alias_available: true
+      remote_cdp_extension_modes_available: true
+      optional_capabilities_available: true
+      config_and_environment_overrides_available: true
+      upstream_enforcement_switch: false
+      downstream_adapter_authorized: false
     license_inventory:
       retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
       sidecar_total_packages: 91
@@ -260,6 +270,8 @@ evidence:
   core_bundle_source_marker_reconciliation_passed: true
   core_bundle_source_notice_payload_generated: true
   core_bundle_source_notice_payload_packaged: false
+  selected_command_profile_smoke_passed: true
+  selected_command_profile_enforced_by_upstream: false
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

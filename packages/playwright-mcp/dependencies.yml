@@ -78,6 +78,15 @@ build_closure:
       required_file_proof: Removing playwright-core/package.json or browsers.json fails before MCP startup.
       metadata_consequence: The installed CLI application is not the complete public npm module; regenerate or omit the provisional root npm Provide.
       source_build_consequence: Binary omission does not reduce the unconditional normal Playwright monorepo build or its source inputs.
+      command_surface:
+        selected_profile: playwright-mcp --browser chromium --headless --isolated --executable-path /usr/lib64/chromium-browser/headless_shell --image-responses omit
+        default_transport: stdio when port is undefined
+        alternate_transports: --port enables Streamable HTTP at /mcp and legacy SSE at /sse; --host and --allowed-hosts remain available
+        alternate_browser_modes: remote Playwright endpoint, CDP endpoint, extension attachment, Firefox, WebKit, and Chromium channels
+        optional_capabilities: vision, pdf, devtools, network, storage, testing, and tracing-related paths remain selectable
+        override_sources: JSON or INI config plus PLAYWRIGHT_MCP_* environment variables, followed by CLI precedence
+        managed_download_alias: install-browser is rewritten to Playwright install
+        enforcement_status: No upstream switch locks the selected profile; a downstream wrapper or adapter is not authorized.
       license_inventory:
         retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
         package_entries: 91
