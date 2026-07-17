@@ -74,7 +74,8 @@ build_mapping:
       oxc_browserslist: 2b1dfa94e2557306af7b9954530686f467a5848c / 6fb8065469e053e7193bd6a82616740b2819725fbd12a027aa99534643247cca
       oxc_index_vec: 8e09fe324eb6df02f56e4eacdfac958930300380 / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
       oxc_sourcemap: 296f3576b1b6b518eb48609477f35dddb681d66f / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
-    unresolved_declaration_only_crates: base-encode MIT; typedmap MIT OR Apache-2.0; json-escape-simd MIT; async-scoped Apache-2.0 OR MIT
+    canonical_reference_resolutions: typedmap and async-scoped READMEs explicitly link the canonical Apache-2.0 and MIT texts
+    unresolved_required_notices: base-encode MIT; json-escape-simd MIT
     cargo_license_expressions: 23
     missing_license_metadata: 0
     candidate_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib
@@ -101,7 +102,8 @@ build_mapping:
       rust_phf: c9c35fd8ba3f1bc228388b0cef6e3814a02a72c0 / 0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38
       rust_cssparser: cab31ead1cded6a6c48967953298861e914739ad / fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85
       seahash_later_upstream_text: 3088c5c912b70b586d27bf553fbe964e025a2c89 / 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
-    unresolved_declaration_only_crates: serde-detach MPL-2.0; parcel_sourcemap MIT
+    canonical_reference_resolutions: serde-detach can use the canonical MPL-2.0 steward text while retaining source availability
+    unresolved_required_notices: parcel_sourcemap MIT
     cargo_license_expressions: 12
     missing_license_metadata: lightningcss_node; tagged source project license is MPL-2.0
     candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0

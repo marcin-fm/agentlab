@@ -65,14 +65,15 @@ build_closure:
         active_registry_crates_with_local_text: 200
         active_registry_crates_without_local_text: 47
         exact_repository_text_coverage: 43
-        unresolved_without_upstream_text: base-encode, typedmap, json-escape-simd, async-scoped
+        canonical_text_reference_coverage: typedmap and async-scoped explicitly link canonical Apache-2.0 and MIT texts in their READMEs
+        unresolved_required_notice: base-encode, json-escape-simd
         raw_cargo_expressions: 23
         missing_metadata: 0
         legacy_slash_expression_packages: 8
         project_license_sha256: 23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734
         third_party_notice_sha256: a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c
         candidate_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib
-        source_text_verification: pending
+        source_text_verification: partial; two MIT-only notice identities remain unresolved
     fedora_43_44_provider: absent
   lightningcss:
     version: 1.32.0
@@ -106,7 +107,8 @@ build_closure:
         active_registry_crates_without_local_text: 16
         exact_repository_text_coverage: 13
         later_immutable_repository_text_coverage: seahash
-        unresolved_without_upstream_text: serde-detach, parcel_sourcemap
+        canonical_text_reference_coverage: serde-detach can use the canonical MPL-2.0 steward text while retaining source availability
+        unresolved_required_notice: parcel_sourcemap
         raw_cargo_expressions: 12
         missing_metadata: lightningcss_node
         missing_metadata_resolution: The publish-disabled node workspace crate is part of the tagged MPL-2.0 source tree; verify and carry the project license manually.
@@ -114,7 +116,7 @@ build_closure:
         project_license_sha256: 5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e
         selectors_license_sha256: 1af2d2b02d9c86030d29ed77117ca7a1b0e4b6ff35bcf8eeb124867d0f5cb59e
         candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0
-        source_text_verification: pending
+        source_text_verification: partial; one MIT-only notice identity remains unresolved
     fedora_43_44_provider: absent
   excluded_platform_edges:
     fsevents: Darwin-only

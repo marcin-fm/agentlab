@@ -5,7 +5,7 @@ blockers:
   - Playwright exposes no package or MCP-only build target; the normal monorepo build cannot skip the separate stable-test-runner npm ci.
   - Exact source-built esbuild 0.28.1 is feasible through the upstream and Fedora packaging pattern, but Fedora 43/44 provide only 0.24.2/0.27.2 and no exact compatibility provider exists yet.
   - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers. Their Linux release graphs require 247/115 registry crates; Fedora 43/44 lack 73-74/12 crate names and have substantial additional version drift.
-  - Candidate aggregate SPDX expressions are derived for the target-filtered Rolldown and Lightning CSS graphs. Repository texts close 57 of 63 crate-archive omissions, but six active crates have declarations without any license file in their exact or current upstream trees and still need an explicit packaging decision.
+  - Candidate aggregate SPDX expressions are derived for the target-filtered Rolldown and Lightning CSS graphs. Repository or canonical texts resolve 60 of 63 crate-archive omissions; the MIT-only base-encode, json-escape-simd, and parcel_sourcemap crates still lack an identified copyright and permission notice.
   - The audited immutable closure has not been hosted for offline COPR SCM builds.
 source_policy:
   npm_package: "@playwright/mcp"
@@ -15,7 +15,7 @@ source_policy:
   narrow_build_target: none; --disable-install only affects browser installation in watch mode
   esbuild_source_path: Exact 0.28.1 Go binary and neutral npm module can be source-built; Fedora uses the same binary plus JavaScript/platform-module layout for older releases.
   required_native_build_tools: Exact source-built esbuild 0.28.1, Rolldown 1.1.3, and Lightning CSS 1.32.0; optional DuckDB and Darwin fsevents are excluded.
-  native_license_candidates: Rolldown is Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib; Lightning CSS is Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0. Exact repository texts cover 56 of 63 crate-archive omissions and a later immutable SeaHash text covers one more; six declaration-only crates remain unresolved.
+  native_license_candidates: Rolldown is Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib; Lightning CSS is Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0. Exact repository texts cover 56 of 63 crate-archive omissions, a later immutable SeaHash text covers one, and upstream-linked or steward canonical texts cover three; three MIT-only notices remain unresolved.
   browser_install_scripts: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 is an upstream-supported no-download path.
   bundle_license_sidecars: Five published sidecars map 213 bundled package entries to exact root-lock versions.
   browser: Fedora chromium-headless only
