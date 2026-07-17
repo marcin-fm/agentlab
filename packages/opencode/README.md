@@ -91,6 +91,18 @@ Fedora macros, and preserves the release path expected by Bun's static import.
 Empty-cache vendored builds were byte-identical; public vendor hosting, final
 Bun embedding, F43/F44 macro builds, and aggregate license closure remain open.
 
+OpenTUI's native library now has a complete source recipe. The draft privately
+bootstraps the exact Zig 0.15.2 fork pinned by Bun, preloads the exact uucode and
+Yoga package sources into Zig's cache, builds the OpenTUI `v0.4.3` source for
+`x86_64-linux-gnu.2.17` without network access, strips non-runtime metadata, and
+replaces the removed `@opentui/core-linux-x64` npm payload before Bun compiles
+OpenCode. The exact recipe output loaded successfully, resolved all dynamic
+symbols, exposed representative renderer/Yoga FFI exports, and required no
+glibc symbol newer than `GLIBC_2.17`. Independent builds were not byte-identical;
+Fedora does not require byte-for-byte reproducibility, so the evidence remains
+honestly false without blocking the source-built replacement. Final Bun
+embedding and clean Fedora 43/44 package builds remain unverified.
+
 All functional WASM remains fail-closed. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp
 assets, including immutable source archives and byte-level asset correspondence.

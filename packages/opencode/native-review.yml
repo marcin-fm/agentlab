@@ -110,12 +110,58 @@ components:
       peeled_commit: 5803b2cfa2942c45a3aedbb3601754e27f2cdc68
       package_version_at_source: "0.4.3"
       correspondence: The annotated release tag peels to the registry gitHead for both core packages.
+      source_build:
+        source_url: https://github.com/anomalyco/opentui/archive/refs/tags/v0.4.3.tar.gz
+        source_sha256: 3a72427d6cc6c7dc1086d44037d4f4c499ebc38c2e3e67ecf998695e65c8337a
+        source_commit: 5803b2cfa2942c45a3aedbb3601754e27f2cdc68
+        zig:
+          release_pin: bun-v1.3.14
+          source_url: https://codeload.github.com/oven-sh/zig/tar.gz/04e7f6ac1e009525bc00934f20199c68f04e0a24
+          source_commit: 04e7f6ac1e009525bc00934f20199c68f04e0a24
+          source_sha256: b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d
+          version: 0.15.2
+          fedora_patch: opencode-zig-fedora-lib64.patch
+          fedora_patch_sha256: 77be015e0b2a83e6d287cfa832fa190dcfe7296320d111e0b129e11a418161fc
+          external_zig_binary_used: false
+        uucode:
+          source_url: https://github.com/jacobsandlund/uucode/archive/84ceda8561a17ba4a9b96ac5c583f779660bbd4e.tar.gz
+          source_commit: 84ceda8561a17ba4a9b96ac5c583f779660bbd4e
+          source_sha256: 4a7f194ad1f583ffae00bf625986527df89ddd55309ff30314d2d17539a7b011
+          zig_package_hash: uucode-0.1.0-ZZjBPtA_TQCWp5PIKmfm5tu1WOkKWFmBGFEMxircPfkA
+        yoga:
+          source_url: https://codeload.github.com/facebook/yoga/tar.gz/042f5013152eb81c1552dec945b88f7b95ca350f
+          source_tag: v3.2.1
+          source_commit: 042f5013152eb81c1552dec945b88f7b95ca350f
+          source_sha256: 86b399ac31fd820d8ffa823c3fae31bb690b6fc45301b2a8a966c09b5a088b55
+          zig_package_hash: N-V-__8AAOYl0gAU76B1VRPFD9AWvy2VkOef2jN0B3sISTeO
+        target: x86_64-linux-gnu.2.17
+        optimize: ReleaseFast
+        command: .build-tools/bun-zig/zig build --seed 0 --build-id=sha1 -fno-incremental -Dtarget=x86_64-linux-gnu.2.17 -Doptimize=ReleaseFast -j1
+        strip_command: strip --strip-unneeded lib/x86_64-linux/libopentui.so
+        output: packages/core/src/zig/lib/x86_64-linux/libopentui.so
+        platform_package: "@opentui/core-linux-x64@0.4.3"
+        platform_payload: libopentui.so
+        published_payload_sha256: 6a0ea52ab0408a7909f35565d4e204f2a6fd884e33ff6ec570fa9357126ead49
+        local_recipe_output_sha256: 1ce4b92b1a075602837c361c6423b7b54298d0c402e3801cbeb27e4e7d935baa
+        byte_reproducible: false
+        reproducibility_required_by_fedora: false
+        ffi_exports: [bufferDrawBox, createRenderer, destroyRenderer, render, yogaNodeCreate]
+        dynamic_libraries: [libm.so.6, libpthread.so.0, libc.so.6, libdl.so.2, ld-linux-x86-64.so.2]
+        max_glibc: GLIBC_2.17
+        linked_source_licenses: [opentui-LICENSE, opentui-uucode-LICENSE.md, opentui-yoga-LICENSE]
+        offline_build_verified: true
+        ctypes_dlopen_verified: true
+        bun_ffi_smoke_in_spec: true
+        published_payload_discarded: true
+        final_bun_embedding_verified: false
+        f43_f44_builds_verified: false
+        local_proof_only: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
       reproducible_build_verified: false
-      reason: The selected terminal runtime requires libopentui.so built from the exact released source.
+      reason: Build libopentui.so offline from exact OpenTUI, uucode, Yoga, and Bun-pinned Zig sources, replace the published platform payload, and retain byte reproducibility as a non-blocking false evidence state.
   - package: "@parcel/watcher-linux-x64-glibc@2.5.1"
     npm_name: "@parcel/watcher-linux-x64-glibc"
     version: "2.5.1"

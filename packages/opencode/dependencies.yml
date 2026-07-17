@@ -142,6 +142,7 @@ source_acquisition_findings:
     source_mappings_verified: 13
     source_mappings_unresolved: 1
     native_sources_verified: false
+    opentui_native_source_build_verified: true
     wasm_sources_verified: false
   install_phase_scripts:
     - "@parcel/watcher@2.5.1"

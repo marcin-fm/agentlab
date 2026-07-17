@@ -1,0 +1,45 @@
+From: Marcin FM <marcin@lgic.pl>
+Date: Wed, 15 Jul 2026 00:00:00 +0000
+Subject: [PATCH] cmake: resolve shared LLVM support libraries
+
+Fedora installs 64-bit system libraries in /usr/lib64. The stage3 Zig build
+receives LLVM's system dependencies as -lz, -lzstd, and -lxml2, but its CMake
+integration only adds LLVM's private library directory to the Zig build search
+path. Resolve these non-LLVM dependencies during CMake configuration so the
+self-hosted stage can link them without assuming a /usr/lib layout.
+
+This patch is specific to the Bun-pinned Zig source build and is not taken
+from upstream.
+---
+ CMakeLists.txt | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 435caee..bbd82d3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -158,6 +158,22 @@ if(ZIG_STATIC_ZSTD)
+     list(APPEND LLVM_LIBRARIES "${ZSTD}")
+ endif()
+ 
++if(LLVM_LINK_MODE STREQUAL "shared" AND NOT WIN32)
++    foreach(SYSTEM_LIBRARY z zstd xml2)
++        list(FIND LLVM_LIBRARIES "-l${SYSTEM_LIBRARY}" SYSTEM_LIBRARY_INDEX)
++        if(NOT SYSTEM_LIBRARY_INDEX EQUAL -1)
++            string(TOUPPER "${SYSTEM_LIBRARY}" SYSTEM_LIBRARY_UPPER)
++            find_library(
++                ZIG_${SYSTEM_LIBRARY_UPPER}_LIBRARY
++                NAMES "${SYSTEM_LIBRARY}"
++                REQUIRED
++            )
++            list(REMOVE_ITEM LLVM_LIBRARIES "-l${SYSTEM_LIBRARY}")
++            list(APPEND LLVM_LIBRARIES "${ZIG_${SYSTEM_LIBRARY_UPPER}_LIBRARY}")
++        endif()
++    endforeach()
++endif()
++
+ if (MSVC)
+     if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+         if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+-- 
+2.50.1

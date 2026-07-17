@@ -568,6 +568,30 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_rejects_incomplete_opencode_opentui_build_evidence
+    source_package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+
+    Dir.mktmpdir do |directory|
+      %w[selected_lock_audit source_audit license_review native_review].each do |key|
+        filename = dependencies.dig("source_closure_files", key)
+        FileUtils.cp(File.join(source_package.directory, filename), File.join(directory, filename))
+      end
+      native_path = File.join(directory, dependencies.dig("source_closure_files", "native_review"))
+      native_review = Agentlab.load_yaml(native_path)
+      opentui = native_review.fetch("components").find do |component|
+        component["package"] == "@opentui/core-linux-x64@0.4.3"
+      end
+      opentui.fetch("provenance").delete("source_build")
+      File.write(native_path, YAML.dump(native_review))
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
+
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+
+      assert(errors.any? { |error| error.include?("OpenTUI source-build evidence does not match") })
+    end
+  end
+
   def test_rejects_incomplete_opencode_bun_pty_build_evidence
     source_package = Agentlab.package_named("opencode")
     dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
