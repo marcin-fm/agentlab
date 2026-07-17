@@ -148,24 +148,47 @@ class AgentlabTest < Minitest::Test
       File.write(config_path, "[copr-cli]\n")
       File.chmod(0o600, config_path)
       previous = ENV["COPR_CONFIG"]
-      original_capture = Agentlab.method(:capture)
+      original_authenticated_owner = Agentlab.method(:copr_authenticated_owner)
       original_command_available = Agentlab.method(:command_available?)
-      status = Object.new
-      status.define_singleton_method(:success?) { true }
       ENV["COPR_CONFIG"] = config_path
       Agentlab.singleton_class.send(:define_method, :command_available?) do |name|
         name == "copr-cli"
       end
-      Agentlab.singleton_class.send(:define_method, :capture) do |_argv|
-        ["another-owner\n", "", status]
+      Agentlab.singleton_class.send(:define_method, :copr_authenticated_owner) do |_path|
+        "another-owner"
       end
 
       error = assert_raises(Agentlab::Error) { Agentlab.verify_copr_owner!("marcin") }
       assert_match(/expected "marcin", got "another-owner"/, error.message)
     ensure
-      Agentlab.singleton_class.send(:define_method, :capture, original_capture)
+      Agentlab.singleton_class.send(:define_method, :copr_authenticated_owner, original_authenticated_owner)
       Agentlab.singleton_class.send(:define_method, :command_available?, original_command_available)
       ENV["COPR_CONFIG"] = previous
+    end
+  end
+
+  def test_reads_only_the_copr_cli_config_section
+    Dir.mktmpdir do |directory|
+      config_path = File.join(directory, "copr")
+      File.write(config_path, <<~CONFIG)
+        [ignored]
+        token = wrong
+
+        [copr-cli]
+        login = api-login
+        token = api-token
+        copr_url = https://copr.example.test/
+        # expiration date: 2026-12-31
+      CONFIG
+
+      assert_equal(
+        {
+          "login" => "api-login",
+          "token" => "api-token",
+          "copr_url" => "https://copr.example.test/"
+        },
+        Agentlab.copr_config_values(config_path)
+      )
     end
   end
 

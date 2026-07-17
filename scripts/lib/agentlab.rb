@@ -95,6 +95,60 @@ module Agentlab
     command.concat(arguments)
   end
 
+  def copr_config_values(path)
+    values = {}
+    section = nil
+
+    File.foreach(path) do |line|
+      stripped = line.strip
+      if (match = stripped.match(/\A\[([^\]]+)\]\z/))
+        section = match[1]
+        next
+      end
+      next unless section == "copr-cli"
+      next if stripped.empty? || stripped.start_with?("#", ";")
+
+      key, value = line.split("=", 2)
+      values[key.strip] = value.strip if value
+    end
+
+    values
+  end
+
+  def copr_authenticated_owner(config_path)
+    values = copr_config_values(config_path)
+    missing = %w[login token copr_url].reject { |key| !values[key].to_s.empty? }
+    raise Error, "COPR config is missing #{missing.join(', ')}: #{config_path}" unless missing.empty?
+
+    uri = URI("#{values.fetch('copr_url').sub(%r{/+\z}, '')}/api_3/auth-check")
+    raise Error, "refusing non-HTTPS COPR URL #{uri}" unless uri.is_a?(URI::HTTPS)
+
+    request = Net::HTTP::Get.new(uri)
+    request.basic_auth(values.fetch("login"), values.fetch("token"))
+    request["Accept"] = "application/json"
+    request["User-Agent"] = "agentlab-packaging"
+    response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
+
+    unless response.is_a?(Net::HTTPSuccess)
+      detail = response.body.to_s[0, 300]
+      begin
+        detail = JSON.parse(response.body).fetch("error", detail)
+      rescue JSON::ParserError
+        # Preserve the bounded response body when COPR does not return JSON.
+      end
+      raise Error, "COPR authentication failed: #{detail}"
+    end
+
+    owner = JSON.parse(response.body).fetch("name").to_s
+    raise Error, "COPR authentication response did not identify an account" if owner.empty?
+
+    owner
+  rescue JSON::ParserError, KeyError => e
+    raise Error, "invalid COPR authentication response: #{e.message}"
+  rescue URI::InvalidURIError => e
+    raise Error, "invalid COPR URL: #{e.message}"
+  end
+
   def verify_copr_owner!(expected_owner)
     config_path = ENV["COPR_CONFIG"].to_s
     raise Error, "COPR_CONFIG is not set; activate the project identity before COPR mutation" if config_path.empty?
@@ -106,10 +160,7 @@ module Agentlab
     end
     raise Error, "copr-cli is not installed" unless command_available?("copr-cli")
 
-    stdout, stderr, status = capture(copr_command("whoami"))
-    raise Error, "COPR authentication failed: #{stderr.strip}" unless status.success?
-
-    actual_owner = stdout.strip
+    actual_owner = copr_authenticated_owner(config_path)
     return actual_owner if actual_owner == expected_owner
 
     raise Error, "COPR identity mismatch: expected #{expected_owner.inspect}, got #{actual_owner.inspect}"
