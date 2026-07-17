@@ -3,13 +3,15 @@
 
 Name:           rtk
 Version:        0.43.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        CLI proxy that reduces command output sent to language models
 
 License:        Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
 URL:            https://github.com/rtk-ai/rtk
 Source0:        https://github.com/rtk-ai/rtk/archive/refs/tags/v%{version}.tar.gz
 Source1:        collect-cargo-licenses.py
+# Link RTK against Fedora system SQLite instead of compiling rusqlite's bundled copy.
+# Upstream support is proposed in https://github.com/rtk-ai/rtk/pull/2404; Fedora selects it unconditionally.
 Patch0:         rtk-use-system-sqlite.patch
 
 BuildRequires:  cargo-rpm-macros
@@ -59,6 +61,9 @@ python3 %{SOURCE1} \
 %{_bindir}/rtk
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.3
+- Document the system-SQLite patch purpose and upstream status.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.2
 - Add fail-closed collection of full linked-crate license evidence.
 - Retain the exact resolved Cargo crate to Fedora provider mapping.
