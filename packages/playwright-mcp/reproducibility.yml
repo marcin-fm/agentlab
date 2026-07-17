@@ -55,12 +55,13 @@ build_mapping:
     source_tag_archive_sha256: 343c933d7826428704d75700e32ff1bfa75c82d89f7383471e979d6d4df520e8
     npm_package_sha256: 226cd0767228ad5c955d5e3e551ff3031dceb24701a2656f4832b1acf9063684
     cargo_lock_packages: 411
-    linux_release_registry_crates: 247
+    linux_release_registry_crates: 239
     linux_release_workspace_crates: 45
-    fedora_43_exact_same_name_absent: 144/30/73
-    fedora_44_exact_same_name_absent: 143/30/74
-    active_license_packages: 292
-    registry_crates_with_local_license_text: 200
+    fedora_43_provider_audit: exact=136 compatible=23 absent=71 incompatible=7 missing-features=2 unresolved=80
+    fedora_44_provider_audit: exact=136 compatible=22 absent=72 incompatible=7 missing-features=2 unresolved=81
+    required_missing_features: tracing 0.1.44/valuable; tracing-core 0.1.36/valuable
+    active_license_packages: 284
+    registry_crates_with_local_license_text: 192
     registry_crates_without_local_license_text: 47
     exact_repository_text_coverage: 43
     supplemental_repository_texts:
@@ -75,7 +76,10 @@ build_mapping:
       oxc_index_vec: 8e09fe324eb6df02f56e4eacdfac958930300380 / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
       oxc_sourcemap: 296f3576b1b6b518eb48609477f35dddb681d66f / 95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3
     canonical_reference_resolutions: typedmap and async-scoped READMEs explicitly link the canonical Apache-2.0 and MIT texts
-    unresolved_required_notices: base-encode MIT; json-escape-simd MIT
+    unresolved_required_notices: base-encode 0.3.1 MIT; json-escape-simd 3.0.2 MIT
+    unresolved_notice_history:
+      base_encode: commit 41bdeb57488beec4ed63180e848ce1e99fba227d; crate sha256 a17bd29f7c70f32e9387f4d4acfa5ea7b7749ef784fb78cf382df97069337b8c; no notice in 13 Git commits or six releases
+      json_escape_simd: commit a7eb4e70c5dc007ec618c53914e3301a0c159af7; crate sha256 35e770254dd7802184595b1d30da2a15cb72569e2aca2b177aef8d22eac8a693; no notice in Git history or any release through 3.1.1
     cargo_license_expressions: 23
     missing_license_metadata: 0
     candidate_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib
@@ -86,25 +90,26 @@ build_mapping:
     source_tag_archive_sha256: ca67b9ba532d439f5f91d23debfc2543d6decac130ee88bc4c66202fc7173ad9
     npm_package_sha256: c83e81ea213c9e419c5877460a6788f0d0931d58a4aa9fea92fac1a99a1550e8
     cargo_lock_packages: 209
-    linux_release_registry_crates: 115
+    linux_release_registry_crates: 92
     linux_release_workspace_crates: 7
-    fedora_43_44_exact_same_name_absent: 41/62/12
-    active_license_packages: 122
-    registry_crates_with_local_license_text: 99
-    registry_crates_without_local_license_text: 16
-    exact_repository_text_coverage: 13
+    fedora_43_44_provider_audit: exact=25 compatible=47 absent=10 incompatible=10 missing-features=0 unresolved=20
+    active_license_packages: 99
+    registry_crates_with_local_license_text: 77
+    registry_crates_without_local_license_text: 15
+    exact_repository_text_coverage: 12
     supplemental_repository_texts:
       napi_rs_5_crates: a312b7eb4e12d3e0a3e9770429ee05c333947a39, fa0fe874489f45b8d1ece8eb3e58f7d17b23ccd2, 39d38278d6b6b44e3cc99cdb97d6abfde46cd573, f1b8ab5e645e674df33c796ef75aa278cd1b4a31 / 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
       nugine_const_str_2_crates: a80a942800cbf0b3cb656a4e4a4b7b6b63da15a6 / 565aacda8f5ea53f937f867ed49a0ac7e6828b60b4568803185cd0a13297d4e4
       nugine_simd_2_crates: 220c2e5f615d897b999aba46acdce3d281ef4ca4, f3381a842a6b86f4eafd5ac587f8081cd7e9bb2f / 71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d
-      browserslist_rs: 0a9a5c20b4a44c1216582881eed8019bc11d3c8c / 982d71ece9934b3bb7b95cec8a143d0db7523537fce588387dec98bbe72edbe5
       wyz: d404c761c0b7bfd38651c68c20faa09750c2d0a3 / 43fb7b0d1c6fa07d1ffe65d574dc53830cc31027d7c171e4b65f128d74190d94
       rust_phf: c9c35fd8ba3f1bc228388b0cef6e3814a02a72c0 / 0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38
       rust_cssparser: cab31ead1cded6a6c48967953298861e914739ad / fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85
       seahash_later_upstream_text: 3088c5c912b70b586d27bf553fbe964e025a2c89 / 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
     canonical_reference_resolutions: serde-detach can use the canonical MPL-2.0 steward text while retaining source availability
-    unresolved_required_notices: parcel_sourcemap MIT
-    cargo_license_expressions: 12
+    unresolved_required_notices: parcel_sourcemap 2.1.1 MIT
+    unresolved_notice_history:
+      parcel_sourcemap: commit a136bd6ba9f1d3cded501ae824341be0a54c5ce3; crate sha256 485b74d7218068b2b7c0e3ff12fbc61ae11d57cb5d8224f525bd304c6be05bbb; no notice in Git history, 13 crate releases, or npm 2.1.1
+    cargo_license_expressions: 10
     missing_license_metadata: lightningcss_node; tagged source project license is MPL-2.0
     candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0
     source_build_supported: true

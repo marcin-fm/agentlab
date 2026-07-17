@@ -48,21 +48,27 @@ build_closure:
     source_build_path: Rust N-API binding plus generated JavaScript glue
     cargo_lock_packages: 411
     linux_release_graph:
-      registry_crates: 247
+      registry_crates: 239
       workspace_crates: 45
       fedora_43:
-        exact_locked_versions: 144
-        same_name_version_drift: 30
-        absent_crate_names: 73
+        exact_locked_versions: 136
+        semver_compatible_versions: 23
+        absent_crate_names: 71
+        incompatible_versions: 7
+        missing_feature_providers: 2
+        effective_unresolved: 80
       fedora_44:
-        exact_locked_versions: 143
-        same_name_version_drift: 30
-        absent_crate_names: 74
-      provider_difference: Fedora 44 additionally lacks append-only-vec; the other 72 absent names are common to both releases.
-      dominant_missing_groups: 34 Oxc crates, 5 N-API crates, 5 Rolldown support crates, and 2 mimalloc crates
+        exact_locked_versions: 136
+        semver_compatible_versions: 22
+        absent_crate_names: 72
+        incompatible_versions: 7
+        missing_feature_providers: 2
+        effective_unresolved: 81
+      provider_difference: Fedora 44 additionally lacks append-only-vec; the other 71 absent names are common to both releases.
+      genuine_feature_gaps: tracing 0.1.44/valuable and tracing-core 0.1.36/valuable
       license_inventory:
-        active_packages: 292
-        active_registry_crates_with_local_text: 200
+        active_packages: 284
+        active_registry_crates_with_local_text: 192
         active_registry_crates_without_local_text: 47
         exact_repository_text_coverage: 43
         canonical_text_reference_coverage: typedmap and async-scoped explicitly link canonical Apache-2.0 and MIT texts in their READMEs
@@ -82,15 +88,16 @@ build_closure:
     source_build_path: Rust N-API binding plus published JavaScript loader
     cargo_lock_packages: 209
     linux_release_graph:
-      registry_crates: 115
+      registry_crates: 92
       workspace_crates: 7
       fedora_43_44:
-        exact_locked_versions: 41
-        same_name_version_drift: 62
-        absent_crate_names: 12
+        exact_locked_versions: 25
+        semver_compatible_versions: 47
+        absent_crate_names: 10
+        incompatible_versions: 10
+        missing_feature_providers: 0
+        effective_unresolved: 20
       absent_names:
-        - browserslist-data
-        - browserslist-rs
         - napi
         - napi-build
         - napi-derive
@@ -102,14 +109,14 @@ build_closure:
         - simd-abstraction
         - vlq
       license_inventory:
-        active_packages: 122
-        active_registry_crates_with_local_text: 99
-        active_registry_crates_without_local_text: 16
-        exact_repository_text_coverage: 13
+        active_packages: 99
+        active_registry_crates_with_local_text: 77
+        active_registry_crates_without_local_text: 15
+        exact_repository_text_coverage: 12
         later_immutable_repository_text_coverage: seahash
         canonical_text_reference_coverage: serde-detach can use the canonical MPL-2.0 steward text while retaining source availability
         unresolved_required_notice: parcel_sourcemap
-        raw_cargo_expressions: 12
+        raw_cargo_expressions: 10
         missing_metadata: lightningcss_node
         missing_metadata_resolution: The publish-disabled node workspace crate is part of the tagged MPL-2.0 source tree; verify and carry the project license manually.
         legacy_slash_expression_packages: 8

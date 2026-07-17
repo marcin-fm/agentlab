@@ -50,20 +50,22 @@ The remaining Linux native build edges are Vite's required Rolldown `1.1.3`
 and Lightning CSS `1.32.0` bindings. Both have exact released source tags and
 N-API source-build paths, but Fedora 43/44 provide neither. Target-filtered
 release graphs are smaller than the complete locks but still substantial:
-Rolldown requires 247 registry crates and 45 workspace crates, with 73 crate
-names absent on Fedora 43 and 74 absent on Fedora 44; Lightning CSS requires
-115 registry crates and 7 workspace crates, with 12 crate names absent on both
-releases. Existing providers for another 30 Rolldown and 62 Lightning CSS crate
-names are at different versions and still require compatibility review. The
+Rolldown requires 239 registry crates and 45 workspace crates. Semver- and
+feature-aware comparison leaves 80 unresolved provider edges on Fedora 43 and
+81 on Fedora 44: 71/72 absent names, seven incompatible versions, and two
+missing `valuable` feature providers. Lightning CSS requires 92 registry crates
+and 7 workspace crates; 47 compatible Fedora versions reduce its unresolved
+set to 20 on both releases, comprising ten absent names and ten incompatible
+versions with no missing feature provider. The
 optional DuckDB binding is referenced only by test/result-database utilities
 and is not part of the normal generated-runtime build. Darwin-only `fsevents`
 is excluded, and Playwright's browser-package install scripts honor
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
 
 Cargo metadata gives a bounded license starting point for those release
-graphs. Rolldown's 292 active packages have no missing license field and reduce
+graphs. Rolldown's 284 active packages have no missing license field and reduce
 to the provisional aggregate `Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND
-CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib`. Lightning CSS's 122 active
+CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib`. Lightning CSS's 99 active
 packages reduce to `Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0`; its
 publish-disabled `lightningcss_node` workspace crate omits a manifest license
 field, while the tagged source carries the MPL-2.0 project license. These are
@@ -71,18 +73,13 @@ candidate binary-RPM expressions, not a substitute for verifying every source
 license text and retaining the required notices.
 
 The source-text audit is also bounded. The active Rolldown graph has local
-license or notice files in 200 of 247 registry crates; the Lightning CSS graph
-has them in 99 of 115. Of the resulting 63 omissions, exact commit-pinned
-repository texts cover 56 crates through 15 repositories. An immutable later
-SeaHash commit supplies the same upstream project's missing MIT text for one
-more crate. Six active crates have no license file anywhere in either the exact
-release commit tree or the current upstream tree. Fedora requires a manually
-supplied text only when the license requires it: `typedmap` and `async-scoped`
-explicitly link the canonical Apache-2.0 and MIT texts from their READMEs, and
-`serde-detach` can use the canonical MPL-2.0 steward text while retaining source
-availability. The remaining MIT-only `base-encode`, `json-escape-simd`, and
-`parcel_sourcemap` declarations do not identify the required copyright and
-permission notice, so those three remain unresolved under project policy.
+license or notice files in 192 of 239 registry crates; the Lightning CSS graph
+has them in 77 of 92. Immutable repository or canonical texts resolve 59 of the
+resulting 62 omissions. The remaining MIT-only `base-encode`,
+`json-escape-simd`, and `parcel_sourcemap` declarations do not identify the
+required copyright and permission notice. Exhaustive checks of their Git
+histories and every published crate release found no upstream notice, so those
+three remain genuine blockers under project policy.
 
 The published payloads contain 7 MCP files, 62 Playwright files, and 104
 Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
