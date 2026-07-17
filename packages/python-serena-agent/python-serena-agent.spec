@@ -7,7 +7,11 @@ Summary:        Headless MCP server for semantic code retrieval and editing
 License:        MIT
 URL:            https://github.com/oraios/serena
 Source0:        https://files.pythonhosted.org/packages/31/5b/de5ebc95ac17909c25e2251e2b2bd8353e6db49c8c1d388cd0ccffb22e84/serena_agent-1.6.0.tar.gz
+# Reduce dependencies and force headless local LSP operation without telemetry or downloads.
+# Downstream security profile; upstream intentionally supports the omitted application surfaces.
 Patch0:         serena-headless-fedora.patch
+# Enforce stdio-only MCP and omit dashboard, project-server, JetBrains, and query surfaces.
+# Downstream security profile; not submitted because upstream does not enforce this boundary.
 Patch1:         serena-stdio-only-fedora.patch
 BuildArch:       noarch
 

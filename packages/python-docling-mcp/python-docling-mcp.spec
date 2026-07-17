@@ -8,7 +8,11 @@ License:        MIT
 URL:            https://github.com/docling-project/docling-mcp
 Source0:        https://files.pythonhosted.org/packages/e3/bc/59f74a19ac66ddebfe2bee76f8f5c6b208f9dd1fe96fff5d020720985f5d/docling_mcp-%{version}.tar.gz
 Source1:        docling-mcp-remote-smoke.py
+# Limit the base package to generation and manipulation over local stdio.
+# Downstream package profile; upstream intentionally exposes broader tool and transport surfaces.
 Patch0:         docling-mcp-stdio-generation.patch
+# Add the bounded opt-in Docling Serve conversion profile and launcher.
+# Downstream security profile; not submitted because upstream does not enforce this boundary.
 Patch1:         docling-mcp-remote-conversion.patch
 
 BuildArch:       noarch
