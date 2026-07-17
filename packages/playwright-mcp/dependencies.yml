@@ -87,6 +87,12 @@ build_closure:
         override_sources: JSON or INI config plus PLAYWRIGHT_MCP_* environment variables, followed by CLI precedence
         managed_download_alias: install-browser is rewritten to Playwright install
         enforcement_status: No upstream switch locks the selected profile; a downstream wrapper or adapter is not authorized.
+        default_tool_count: 24
+        unsafe_default_tool: browser_run_code_unsafe; capability core; upstream description says arbitrary JavaScript in the server process and RCE-equivalent
+        tool_filter: Every capability starting with core is included; skillOnly tools are excluded; no per-tool denylist exists.
+        count_reconciliation: browser_press_sequentially is core-input but skillOnly, so it is absent from the exact default list.
+        managed_install_tool_status: install-browser is a CLI alias and is not registered as an MCP tool.
+        policy_status: blocked pending an upstream exclusion mechanism, explicit approval for a downstream filter, or an approved process sandbox
       license_inventory:
         retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
         package_entries: 91

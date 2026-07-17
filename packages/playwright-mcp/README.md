@@ -194,6 +194,18 @@ surface policy, the package remains blocked until upstream supplies a bounded
 entry point or the maintainer explicitly accepts the broader direct CLI; a
 downstream security wrapper or protocol adapter is not authorized.
 
+The default 24-tool set has a separate mandatory hold. Upstream's own capability
+test includes `browser_run_code_unsafe`, whose source marks it as `core` and
+describes it as arbitrary JavaScript in the Playwright server process and
+RCE-equivalent. Default filtering includes every capability beginning with
+`core`; no per-tool exclude or denylist exists. The nearby
+`browser_press_sequentially` helper is `skillOnly` and is correctly excluded,
+so the published and executable default count remains exactly 24. Managed
+browser installation is not one of those MCP tools; it remains the separate
+`install-browser` CLI alias. The package cannot expose a policy-bounded default
+tool set without an upstream exclusion mechanism, explicit maintainer approval
+for a downstream filter, or a separately approved process sandbox.
+
 ## Intentional Failure
 
 `playwright-mcp.spec` exits in `%prep` before unpacking or building. It must

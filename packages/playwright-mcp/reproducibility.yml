@@ -137,6 +137,13 @@ build_mapping:
       config_and_environment_overrides_available: true
       upstream_enforcement_switch: false
       downstream_adapter_authorized: false
+      default_tool_count: 24
+      unsafe_default_tool: browser_run_code_unsafe
+      unsafe_default_tool_capability: core
+      unsafe_default_tool_upstream_rce_equivalent: true
+      per_tool_exclusion_available: false
+      skill_only_helper_excluded: browser_press_sequentially
+      managed_browser_install_is_mcp_tool: false
     license_inventory:
       retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
       sidecar_total_packages: 91
@@ -272,6 +279,8 @@ evidence:
   core_bundle_source_notice_payload_packaged: false
   selected_command_profile_smoke_passed: true
   selected_command_profile_enforced_by_upstream: false
+  selected_default_tool_list_audited: true
+  selected_default_tool_surface_policy_bounded: false
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

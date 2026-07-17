@@ -79,6 +79,8 @@ Selected-binary license correction: the 11-file candidate retains one generated 
 
 Command-surface correction: upstream defaults to stdio and supports the selected explicit Chromium/headless/isolated/system-executable profile, but the same CLI exposes `--port` HTTP/SSE, remote/CDP/extension browser modes, optional capabilities, unrestricted filesystem and proxy controls, config/environment overrides, and an `install-browser` managed-download alias. No upstream switch enforces the selected profile. Keep the package blocked rather than add an unauthorized downstream security wrapper or protocol adapter.
 
+Default-tool correction: the exact upstream test and executable expose 24 default tools. `browser_run_code_unsafe` is an unconditional `core` tool and is explicitly described upstream as arbitrary JavaScript in the server process and RCE-equivalent. `browser_press_sequentially` is `skillOnly` and therefore does not create a 25th default tool; browser installation is a CLI alias, not an MCP tool. Upstream has no per-tool denylist, so the selected surface remains blocked pending an upstream exclusion mechanism, explicit approval for a downstream filter, or an approved process sandbox.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.
