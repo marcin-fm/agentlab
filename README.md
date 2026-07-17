@@ -16,6 +16,7 @@ Agentlab is Marcin FM's source-first Fedora COPR packaging repository for open-s
 - Preserve authorship when adapting another packager's work.
 - Do not install locally built RPMs in the development container.
 - Keep spec releases below `1`: use the normal `0.x` sequence and preserve legacy fractional steps as `0.0.x`.
+- Keep the active repository minimal. When an Agentlab package is no longer needed because Fedora or RPM Fusion provides a compatible replacement for every configured target, remove its COPR definition and move its complete package tree from `packages/` to `archived/`.
 
 See [`PACKAGING.md`](PACKAGING.md) for the package gates and source-closure model.
 
@@ -23,13 +24,18 @@ See [`PACKAGING.md`](PACKAGING.md) for the package gates and source-closure mode
 
 ```text
 config/copr.yml                    COPR project policy
+archived/<name>/                   retired package history, excluded from automation
 packages/<name>/<name>.spec       package spec
 packages/<name>/package.yml       release and enablement metadata
+scripts/audit-opencode-lock-closure
+                                    audit the selected OpenCode Bun lock graph
+scripts/acquire-opencode-sources    verify and inventory selected source archives
 scripts/check-packages            local manifest/spec validation
 scripts/create-copr-packages      create or reconcile COPR definitions
 scripts/generate-node-bundled-provides
                                     generate manual metadata for embedded npm code
 scripts/prove-bun-zig-bootstrap    reproduce the private pinned-Zig source proof
+scripts/retire-package             remove a package from COPR and archive it
 scripts/update-and-build          update releases and submit changed builds
 ```
 
@@ -53,14 +59,14 @@ scripts/update-and-build          update releases and submit changed builds
 | python-latex2mathml | 3.81.0 | enabled | Reusable Docling prerequisite; hatchling substitution and F43/F44 conversion smokes passed |
 | python-docling-core | 2.87.1 | enabled | Base Docling model/serialization package; clean F43/F44 builds, 29 tests, and installed smokes passed |
 | python-docling-slim | 2.113.0 | enabled | API-only base/service-client package; clean F43/F44 loopback health smokes passed without local parser/model branches |
-| playwright-mcp | 0.0.78 | blocked | Wrapper correspondence is proven; generated Playwright source build, licenses, and Chromium 151-vs-150 proof remain |
+| playwright-mcp | 0.0.78 | blocked | All wrapper files match source and the exact stdio MCP works with Fedora Chromium 150; full generated monorepo closure, source-built esbuild, and licenses remain |
 | python-serena-agent | 1.6.0 | enabled | Headless stdio/LSP package; clean F43/F44 MCP smokes and download-denial checks passed |
 | python-sensai-utils | 1.5.0 | enabled | Repaired published sdist metadata; clean F43/F44 builds and 16 tests passed |
 | python-overrides | 7.7.0 | enabled | Clean F43/F44 builds and 67 tests passed |
 | python-mslex | 1.3.0 | enabled | Clean F43/F44 builds and tests passed; expected missing-manpage warning only |
 | python-oslex | 2.0.0 | enabled | Clean F43/F44 builds passed using the local mslex provider |
 | rust-unidiff0.4 | 0.4.0 | enabled | Reusable Headroom Rust dependency; clean F43/F44 builds, tests, and rpmlint passed |
-| python-headroom-ai | 0.31.0 | enabled | MCP-minimal native package; clean F43/F44 tests and local stdio compress/retrieve/stats smokes passed |
+| python-headroom-ai | 0.31.0 | blocked | Custom MCP-minimal draft requires re-scope around upstream 0.32.0 features, aggregate Rust licensing, and fresh F43/F44 proof |
 
 Blocked specs are reviewable drafts. Automation will not create a COPR package or submit a build until `package.yml` has both `status: enabled` and `copr.enabled: true`.
 
@@ -109,6 +115,23 @@ Blocked packages can be included in release checks without submitting builds:
 
 ```bash
 scripts/update-and-build --include-blocked
+```
+
+Preview retirement after verifying that no selected package still depends on it and that Fedora/RPM Fusion provides a compatible replacement in every configured target chroot:
+
+```bash
+scripts/retire-package \
+  --reason "Fedora 43 and 44 provide the required package" \
+  package-name
+```
+
+Apply the COPR deletion and repository archive move after activating the identity:
+
+```bash
+scripts/retire-package \
+  --apply \
+  --reason "Fedora 43 and 44 provide the required package" \
+  package-name
 ```
 
 Generate the OpenCode spec's bundled Node metadata from an audited closure:

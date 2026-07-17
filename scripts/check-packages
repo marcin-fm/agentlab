@@ -240,6 +240,42 @@ packages.each do |package|
   errors << "#{package.name}: rpmspec parse failed: #{stderr.strip}" unless status.success?
 end
 
+unless selected_name
+  active_names = packages.map(&:name)
+  archive_root = File.join(Agentlab::ROOT, "archived")
+  Dir.glob(File.join(archive_root, "*")).sort.each do |archive_directory|
+    next unless File.directory?(archive_directory)
+
+    archive_name = File.basename(archive_directory)
+    manifest_path = File.join(archive_directory, "package.yml")
+    retirement_path = File.join(archive_directory, "retirement.yml")
+    unless File.file?(manifest_path)
+      errors << "#{archive_name}: archived package is missing package.yml"
+      next
+    end
+
+    manifest = Agentlab.load_yaml(manifest_path)
+
+    errors << "#{archive_name}: package exists in both packages/ and archived/" if active_names.include?(archive_name)
+    errors << "#{archive_name}: archived manifest name #{manifest['name'].inspect} does not match its directory" unless manifest["name"] == archive_name
+
+    unless File.file?(retirement_path)
+      errors << "#{archive_name}: archived package is missing retirement.yml"
+      next
+    end
+
+    retirement = Agentlab.load_yaml(retirement_path)
+    errors << "#{archive_name}: retirement name #{retirement['name'].inspect} does not match its directory" unless retirement["name"] == archive_name
+    errors << "#{archive_name}: retirement date must use YYYY-MM-DD" unless retirement["retired_on"].to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+    errors << "#{archive_name}: retirement reason is required" if retirement["reason"].to_s.strip.empty?
+    errors << "#{archive_name}: retirement COPR project is required" if retirement["copr_project"].to_s.strip.empty?
+    retirement_chroots = retirement["configured_chroots_at_retirement"]
+    unless retirement_chroots.is_a?(Array) && retirement_chroots.any? && retirement_chroots.all? { |chroot| chroot.is_a?(String) && !chroot.empty? }
+      errors << "#{archive_name}: retirement chroots must be a nonempty array of strings"
+    end
+  end
+end
+
 warnings << "rpmspec is unavailable; spec parsing was skipped" unless Agentlab.command_available?("rpmspec")
 
 warnings.each { |warning| warn "warning: #{warning}" }

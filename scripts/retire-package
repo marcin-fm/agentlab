@@ -1,0 +1,93 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "optparse"
+require "yaml"
+require_relative "lib/agentlab"
+
+begin
+  apply = false
+  config_path = Agentlab::DEFAULT_CONFIG
+  reason = nil
+
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/retire-package [--apply] --reason TEXT [--config PATH] PACKAGE"
+    parser.on("--apply", "Delete the COPR definition and archive the package; the default is a dry run") { apply = true }
+    parser.on("--reason TEXT", "Record why the package is no longer needed") { |value| reason = value }
+    parser.on("--config PATH", "Use another COPR config file") { |path| config_path = path }
+  end.parse!
+
+  name = ARGV.shift
+  raise Agentlab::Error, "exactly one package name is required" if name.nil? || ARGV.any?
+  raise Agentlab::Error, "invalid package name: #{name.inspect}" unless name.match?(/\A[A-Za-z0-9][A-Za-z0-9+_.-]*\z/)
+  raise Agentlab::Error, "--reason is required" if reason.to_s.strip.empty?
+
+  active_directory = File.join(Agentlab::ROOT, "packages", name)
+  archive_root = File.join(Agentlab::ROOT, "archived")
+  archive_directory = File.join(archive_root, name)
+  active = Dir.exist?(active_directory)
+  archived = Dir.exist?(archive_directory)
+
+  raise Agentlab::Error, "package exists in both packages/ and archived/: #{name}" if active && archived
+  raise Agentlab::Error, "unknown package: #{name}" unless active || archived
+
+  source_directory = active ? active_directory : archive_directory
+  manifest_path = File.join(source_directory, "package.yml")
+  raise Agentlab::Error, "missing package manifest: #{manifest_path}" unless File.file?(manifest_path)
+
+  manifest = Agentlab.load_yaml(manifest_path)
+  raise Agentlab::Error, "manifest name #{manifest['name'].inspect} does not match #{name.inspect}" unless manifest["name"] == name
+
+  config = Agentlab.config(config_path)
+  project = "#{config.fetch('owner')}/#{config.fetch('project')}"
+  delete_command = Agentlab.copr_command("delete-package", project, "--name", name)
+  retirement_path = File.join(archive_directory, "retirement.yml")
+  retirement = {
+    "name" => name,
+    "retired_on" => Time.now.utc.strftime("%Y-%m-%d"),
+    "reason" => reason.strip,
+    "copr_project" => project,
+    "configured_chroots_at_retirement" => config.fetch("chroots")
+  }
+
+  unless apply
+    puts "Dry run: COPR and repository files are not being changed."
+    puts "$ #{Agentlab.command_string(delete_command)}"
+    if active
+      puts "Move packages/#{name} to archived/#{name}."
+    else
+      puts "Package is already under archived/#{name}."
+    end
+    puts "Write archived/#{name}/retirement.yml." unless File.file?(retirement_path)
+    exit 0
+  end
+
+  Agentlab.verify_copr_owner!(config.fetch("owner"))
+  _stdout, stderr, status = Agentlab.capture(
+    Agentlab.copr_command("get-package", project, "--name", name, "--output-format", "json")
+  )
+  if status.success?
+    Agentlab.run!(delete_command)
+  elsif Agentlab.copr_resource_missing?(stderr)
+    puts "COPR package #{project}/#{name} is already absent."
+  else
+    raise Agentlab::Error, "cannot inspect COPR package #{name}: #{stderr.strip}"
+  end
+
+  if active
+    FileUtils.mkdir_p(archive_root)
+    FileUtils.mv(active_directory, archive_directory)
+    puts "Moved packages/#{name} to archived/#{name}."
+  end
+
+  unless File.file?(retirement_path)
+    Agentlab.atomic_write(retirement_path, YAML.dump(retirement))
+    puts "Recorded archived/#{name}/retirement.yml."
+  end
+
+  puts "Retired #{name} from active packaging and COPR."
+rescue Agentlab::Error, KeyError => e
+  warn "error: #{e.message}"
+  exit 1
+end
