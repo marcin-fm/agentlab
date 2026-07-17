@@ -30,7 +30,7 @@ runtime_sources:
   source_commit_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
   requested_chromium: 151.0.7922.10
   fedora_chromium_observed: 150.0.7871.114
-  fedora_44_chromium_core_smoke: exact alpha launched headless_shell by executable path and passed local data-URL title and DOM reads
+  fedora_44_chromium_mcp_smoke: exact wrapper ran over stdio, listed 24 tools, and passed local data-URL navigation and evaluation through headless_shell
 build_mapping:
   root_lock_non_root_entries: 719
   root_lock_registry_tarballs: 679
@@ -57,7 +57,7 @@ evidence:
   test_closure_audited: false
   generated_assets_proven: false
   native_payload_inventory: no native, WASM, shared-library, or executable payloads in the three npm tarballs
-  system_chromium_core_smoke_f44_passed: true
-  packaged_mcp_system_chromium_smoke_f43_f44_passed: false
+  exact_wrapper_system_chromium_mcp_smoke_f44_passed: true
+  packaged_rpm_system_chromium_mcp_smoke_f43_f44_passed: false
   offline_build_passed: false
   rpm_produced: false

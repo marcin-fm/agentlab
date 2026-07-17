@@ -53,8 +53,8 @@ closure_audit:
   native_sources_verified: false
   generated_sources_verified: false
   bundled_provides_verified: false
-  fedora_44_chromium_core_smoke_passed: true
-  packaged_mcp_chromium_smoke_f43_f44: false
+  exact_wrapper_mcp_chromium_smoke_f44_passed: true
+  packaged_rpm_mcp_chromium_smoke_f43_f44: false
   upstream_contact_recorded: false
   offline_verified: false
 gates:

@@ -57,10 +57,11 @@ closure, source-built tooling, and license evidence.
 
 The intended browser is Fedora `chromium-headless` through
 `/usr/lib64/chromium-browser/headless_shell`. Although the runtime metadata
-requests Chromium `151.0.7922.10`, the exact Playwright Core alpha successfully
-launched Fedora 44 Chromium `150.0.7871.114`, navigated to a local `data:` page,
-and read its title and DOM without a browser download. This removes a hard
-version-compatibility blocker; a packaged MCP smoke must still be repeated in
+requests Chromium `151.0.7922.10`, the exact MCP wrapper and Playwright alpha
+successfully ran over stdio with Fedora 44 Chromium `150.0.7871.114`. The smoke
+listed 24 tools, navigated to a local `data:` page, and evaluated its title, DOM,
+and user agent without a browser download. This removes a hard
+version-compatibility blocker; an RPM-packaged smoke must still be repeated in
 both target chroots after the source-build closure is complete.
 
 ## References
