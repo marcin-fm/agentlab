@@ -1,6 +1,7 @@
 name: python-headroom-ai
-status: enabled
-blockers: []
+status: blocked
+blockers:
+  - Exact Rust tokenization awaits clean Fedora 43 and Fedora 44 Mock builds, fixed-token parity, packaged MCP smoke, rpmlint, and receipt refresh.
 dependency_status:
   python_runtime:
     - tiktoken >= 0.5
@@ -59,6 +60,6 @@ upstream:
   source_sha256: a13f9764be168e4d075fd80ff6ee5d47a9febe0152b82ad28bab0e949fcd9bd3
   license: Apache-2.0
 copr:
-  enabled: true
+  enabled: false
   subdir: packages/python-headroom-ai
   spec: python-headroom-ai.spec

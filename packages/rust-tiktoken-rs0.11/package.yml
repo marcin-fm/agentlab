@@ -1,0 +1,22 @@
+name: rust-tiktoken-rs0.11
+status: blocked
+blockers:
+  - Clean Fedora 43 and Fedora 44 Mock builds, published tests, token fixtures, rpmlint, and artifact receipts are pending.
+upstream:
+  provider: crates_io
+  crate: tiktoken-rs
+  version_requirement: = 0.11.0
+  current_version: 0.11.0
+  source_url_template: https://static.crates.io/crates/tiktoken-rs/tiktoken-rs-{version}.crate
+  source_sha256: fac4a168cfc1d8ed65bf17a6ee0843ad9a68f863c63c0fb2fa7eab67838782ee
+supplemental:
+  project_license:
+    commit: b1151970e4ae250b01352a80281c097e4a1c0cc5
+    sha256: f7c6ddf9d84fd7b8ad5917e4074d4c05e4c1dfb752a28a0058f06bd0f5e2edcc
+  vendored_openai_license:
+    commit: eedc856364506a9d4651645a0290eb0ba81e6935
+    sha256: 418cb499b436128d653d79941333a5437b7be2ea9213dcc2f04d15d5d2c51d86
+copr:
+  enabled: false
+  subdir: packages/rust-tiktoken-rs0.11
+  spec: rust-tiktoken-rs0.11.spec

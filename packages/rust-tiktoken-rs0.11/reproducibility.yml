@@ -1,0 +1,17 @@
+package: rust-tiktoken-rs0.11
+version: 0.11.0-0.1
+source:
+  url: https://static.crates.io/crates/tiktoken-rs/tiktoken-rs-0.11.0.crate
+  sha256: fac4a168cfc1d8ed65bf17a6ee0843ad9a68f863c63c0fb2fa7eab67838782ee
+  license: MIT
+  project_license_sha256: f7c6ddf9d84fd7b8ad5917e4074d4c05e4c1dfb752a28a0058f06bd0f5e2edcc
+  vendored_openai_license_sha256: 418cb499b436128d653d79941333a5437b7be2ea9213dcc2f04d15d5d2c51d86
+build:
+  generator: rust2rpm 28
+  tests: all published unit tests with optional API and profiler features disabled
+  fedora_43_x86_64: pending
+  fedora_44_x86_64: pending
+policy:
+  runtime_downloads: none; tokenizer assets are verified compile-time inputs
+  produced_rpms_installed_on_host: false
+  copr_mutated: false

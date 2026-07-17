@@ -40,6 +40,7 @@ scripts/update-and-build          update releases and submit changed builds
 | OpenCode | 1.18.1 | blocked | Requires a source-built Bun and an audited npm source closure |
 | Bun | 1.3.14 | blocked | Pinned Zig source bootstrap works; WebKit, source closures, seed build, and offline self-rebuild remain |
 | RTK | 0.43.0 | enabled | Current F43/F44 builds passed 2,287 tests, full linked-license/provider receipts, system-SQLite smokes, and rpmlint |
+| codex-cli | 0.144.5 | blocked | Immutable source is verified; selected Linux Cargo closure, Git sources, Bubblewrap treatment, and offline builds remain |
 | rust-dirs5 | 5.0.1 | enabled | Fedora 44-only compatibility crate for RTK; clean mock build passed |
 | rust-dirs-sys0.4 | 0.4.1 | enabled | Fedora 44-only compatibility crate for RTK; clean mock build passed |
 | rubygem-ferrum | 0.17.2 | enabled | Pure-Ruby package; Fedora 43/44 clean builds and Chromium CDP smoke passed |

@@ -1,0 +1,29 @@
+target_release: 0.17.0
+runtime:
+  bit-set: '>= 0.8, < 0.9'
+  regex-automata: '>= 0.4, < 0.5'
+  regex-syntax: '>= 0.8, < 0.9'
+features:
+  default:
+    - unicode
+    - perf
+    - std
+    - variable-lookbehinds
+  perf:
+    - regex-automata/perf
+  std:
+    - regex-automata/std
+    - regex-syntax/std
+    - bit-set/std
+  track_caller: []
+  unicode:
+    - regex-automata/unicode
+    - regex-syntax/unicode
+  variable-lookbehinds:
+    - regex-automata/dfa-search
+fedora:
+  fedora_43: ordinary dependencies provided; fancy-regex 0.17 absent
+  fedora_44: ordinary dependencies provided; fancy-regex 0.17 absent
+duplicate_checks:
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent

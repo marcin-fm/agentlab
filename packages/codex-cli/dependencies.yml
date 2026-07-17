@@ -1,0 +1,57 @@
+---
+target_release: 0.144.5
+target_triple: x86_64-unknown-linux-gnu
+workspace:
+  members: 128
+  edition: "2024"
+  minimum_rust: 1.95.0
+  selected_member: codex-cli
+dynamic_buildrequires_probe:
+  command: cargo2rpm --path codex-rs/cli/Cargo.toml buildrequires
+  generator: cargo2rpm-0.3.3-1.fc44
+  generated_requirements: 400
+  windows_related_requirements: 53
+  v8_requirements: 1
+  test_marker_requirements: 3
+  artifact: codex-cli-0.144.5-0.1.fc44.buildreqs.nosrc.rpm
+  artifact_sha256: 3e17eb2bb95d0b85bc2b57158a1ca926b940b1e46e3f15dcadde4532d621e42f
+  production_usable: false
+  limitation: cargo2rpm treats the member manifest as the full workspace and does not filter target expressions.
+selected_graph:
+  status: pending
+  reason: The workspace-wide probe includes unrelated members, test helpers, and non-Linux target dependencies.
+workspace_lock_git_sources:
+- repository: https://github.com/nornagon/crossterm
+  commit: 87db8bfa6dc99427fd3b071681b07fc31c6ce995
+  selected_for_linux_cli: pending
+- repository: https://github.com/nornagon/ratatui
+  commit: 9b2ad1298408c45918ee9f8241a6f95498cdbed2
+  selected_for_linux_cli: pending
+- repository: https://github.com/openai-oss-forks/tokio-tungstenite
+  commit: 0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186
+  selected_for_linux_cli: pending
+- repository: https://github.com/openai-oss-forks/tungstenite-rs
+  commit: 4fffad30fe373adbdcffab9545e9e9bf4f2fc19f
+  selected_for_linux_cli: pending
+- repository: https://github.com/dzbarsky/rules_rust
+  commit: b56cbaa8465e74127f1ea216f813cd377295ad81
+  selected_for_linux_cli: pending
+- repository: https://github.com/helix-editor/nucleo.git
+  commit: 4253de9faabb4e5c6d81d946a5e35a90f87347ee
+  selected_for_linux_cli: pending
+- repository: https://github.com/juberti-oai/rust-sdks.git
+  commit: e2d1d1d230c6fc9df171ccb181423f957bb3c1f0
+  selected_for_linux_cli: unproven-workspace-member
+vendored_native_sources:
+- component: bubblewrap
+  version: 0.11.2
+  license: LGPL-2.0-or-later
+  path: codex-rs/vendor/bubblewrap
+  status: system-source-treatment-pending
+closure_audit:
+  production_sources_verified: false
+  git_sources_verified: false
+  licenses_verified: false
+  native_sources_verified: false
+  system_libraries_verified: false
+  offline_verified: false

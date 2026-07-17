@@ -1,0 +1,15 @@
+name: rust-fancy-regex0.17
+status: blocked
+blockers:
+  - Clean Fedora 43 and Fedora 44 Mock builds, published tests, rpmlint, and artifact receipts are pending.
+upstream:
+  provider: crates_io
+  crate: fancy-regex
+  version_requirement: = 0.17.0
+  current_version: 0.17.0
+  source_url_template: https://static.crates.io/crates/fancy-regex/fancy-regex-{version}.crate
+  source_sha256: 72cf461f865c862bb7dc573f643dd6a2b6842f7c30b07882b56bd148cc2761b8
+copr:
+  enabled: false
+  subdir: packages/rust-fancy-regex0.17
+  spec: rust-fancy-regex0.17.spec

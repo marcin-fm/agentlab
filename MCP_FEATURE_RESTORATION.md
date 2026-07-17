@@ -9,6 +9,8 @@ test, and a security boundary that does not silently widen the base package.
 
 Status meanings:
 
+- `selected`: the next bounded wave under source/dependency and package-layout
+  validation; it remains blocked until every gate passes.
 - `restored`: available only through a validated explicit optional package; the
   base package and its defaults remain unchanged.
 - `blocked`: potentially packageable, but one or more source, dependency,
@@ -36,7 +38,7 @@ Status meanings:
 | Capability | Exact source and dependency edge | Fedora 43/44 and RPM Fusion status | Missing reusable packages | System/native implications | Runtime network/model behavior | License/source closure | Smallest offline test | Outcome |
 |---|---|---|---|---|---|---|---|---|
 | Compression, retrieval, and statistics | Packaged `mcp-minimal` surface in `python-headroom-ai 0.31.0`; system SQLite and `rust-unidiff0.4` | Validated local providers; no exact Fedora/RPM Fusion Headroom duplicate | None for the selected surface | Source-built native extension dynamically links system SQLite | Local stdio only; no provider/model traffic | Apache-2.0 source and reusable Rust provider closure recorded | Existing three-tool stdio round trip | **retained** |
-| Rust exact tokenization | Removed `tiktoken-rs = 0.11` Cargo edge | No exact Fedora/RPM Fusion provider found | Reusable `rust-tiktoken-rs0.11` package | Pure Rust tokenizer implementation | Local only; no model download required for fixed encodings | Crate source/license review not yet recorded | Fixed text/token fixture compared with the reference implementation | **blocked** as a future exact-tokenization subpackage |
+| Rust exact tokenization | Removed `tiktoken-rs = 0.11` Cargo edge | No exact Fedora/RPM Fusion provider found; Fedora's `fancy-regex` branch is older than the required 0.17 | Reusable `rust-fancy-regex0.17` and `rust-tiktoken-rs0.11` packages | Pure Rust tokenizer implementation | Local only; no model download required for fixed encodings | Released MIT crate sources require a complete dependency/license audit | Fixed text/token fixture compared with the released reference implementation | **selected** for a minimal package-layout and source-closure audit; retain the blocker if it requires a duplicate native extension or non-minimal compatibility patch |
 | Native embeddings and Magika | Removed `fastembed`, `magika`, and `native-ml` paths | Fedora ONNX Runtime exists: F43 1.20.1, F44 1.22.2; exact Rust stacks absent | Rust ORT provider closure, fastembed, Magika, and immutable model packages | ONNX Runtime and architecture/model compatibility | Model initialization/inference; runtime acquisition is forbidden | Crate and model-weight source/license closure incomplete | Offline inference with checksummed packaged models and no cache/network writes | **blocked** |
 | Proxy and model providers | Removed LiteLLM/direct/proxy command paths | LiteLLM exact provider not found | LiteLLM/provider stack | Potential HTTP listener and provider clients | Authenticated outbound provider traffic | Provider source/license and operational policy incomplete | Loopback-only fake provider with auth/egress denial tests | **blocked**; never implicit in base |
 | Redis backend | Removed Rust Redis edge | Fedora provider status varies and is not closed for this package | Exact reusable Rust Redis branch and tested server contract | Networked shared storage backend | Redis connection traffic | Source closure not recorded | Loopback Redis protocol fixture and backend parity smoke | **blocked** |
@@ -49,7 +51,7 @@ Status meanings:
 | Capability | Exact source and dependency edge | Fedora 43/44 and RPM Fusion status | Missing reusable packages | System/native implications | Runtime network/model behavior | License/source closure | Smallest offline test | Outcome |
 |---|---|---|---|---|---|---|---|---|
 | Headless stdio and system LSP commands | Current patched `python-serena-agent 1.6.0` surface | MCP/LSP Python stack and several system language servers are available; no exact Serena duplicate | Language servers not already in Fedora must be packaged independently | Executes explicit administrator-provided system commands | No managed downloads; stdio MCP only | MIT source closure recorded | Existing initialize/list and download-denial smoke | **retained** |
-| Cross-project query | Removed `query_project_tools` registration and `modes/query-projects.yml` | No additional provider need established | None identified, but registration/mode closure must be restored coherently | Broadens project/filesystem scope | No necessary network/model behavior | Source known | Two isolated fixture projects proving explicit scope, denial outside roots, and stable tool registration | **blocked** pending a separate scoped design; not restored in this wave |
+| Cross-project query | Removed `query_project_tools` registration and `modes/query-projects.yml` | No additional provider need established | None identified, but registration/mode closure must be restored coherently | Broadens project/filesystem scope; upstream symbolic queries require the rejected Flask project server | No necessary model behavior, but symbolic queries add loopback HTTP and LSP startup | Source known; upstream dispatch accepts every tool not marked editing, including configuration mutation | Two isolated fixture projects proving explicit scope, a fixed query-safe tool allowlist, denial outside roots, and no server/LSP creation | **blocked**; a safe replacement is materially larger than restoring the import and mode file |
 | Dashboard and project server | `serena.project_server.ProjectServer`, `SerenaDashboardViewer`; Flask/Werkzeug | Flask/Werkzeug available in F43/F44; RPM Fusion has no duplicate | Remaining dashboard dependencies and reviewed server integration | Local HTTP server; optional GUI/browser launch paths must stay absent | Listener exposure; no model required | Core source known; auth/origin/CSRF review incomplete | Loopback-only bind, no auto-browser, origin/CSRF/auth and shutdown tests | **blocked** as an optional subpackage |
 | GUI/tray/webview | Lazy `webview`, tray manager, pywebview/pystray dependencies | pystray exists; pywebview/provider closure is unknown | pywebview and native GUI closure | Desktop GUI/tray native stack | Local GUI control surface | Dependency/license closure incomplete | Headless import plus explicit GUI launch in isolated desktop test | **blocked** |
 | JetBrains backend/plugin | `determine_language_backend`, IDE contexts, external plugin | No Fedora/RPM Fusion provider found | External plugin/backend and licensing/access closure | IDE process/plugin integration | IDE communication | Closure and redistribution status unresolved | Explicit backend handshake without downloads | **rejected** until independently packageable |
@@ -80,3 +82,17 @@ following gates passed before it was enabled:
    jobs, followed by packaged MCP smokes and zero `rpmlint` errors.
 7. Specs, patches, SRPMs, RPMs, tests, and receipts are hashed in package
    manifests; documentation and wiki records are updated.
+
+## Selected Headroom Wave Gates
+
+The next wave is Rust exact tokenization only. It remains blocked unless:
+
+1. Released `fancy-regex 0.17` and `tiktoken-rs 0.11` have complete reusable
+   Fedora source/license closure with no optional network/API dependencies.
+2. The Headroom change restores only the existing `tiktoken` feature edge and
+   does not alter MCP tools, proxy/model/file-reading, Redis, or SQLite policy.
+3. The feature has an honest package layout; do not ship an empty marker package
+   or a second conflicting native extension.
+4. Fixed token fixtures match the released reference implementation offline.
+5. Zero-fuzz checks and serialized four-job Fedora 43/44 builds pass with zero
+   `rpmlint` errors before any manifest is enabled.

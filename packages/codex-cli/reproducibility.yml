@@ -1,0 +1,25 @@
+---
+target_release: 0.144.5
+source:
+  tag: rust-v0.144.5
+  commit: 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
+  url: https://codeload.github.com/openai/codex/tar.gz/87db9bc18ba5bc82c1cb4e4381b44f693ee35623
+  sha256: b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9
+source_probe:
+  target: fedora-44-x86_64
+  prep_verified: true
+  compilation_started: false
+  generated_buildrequires_rpm: codex-cli-0.144.5-0.1.fc44.buildreqs.nosrc.rpm
+  generated_buildrequires_sha256: 3e17eb2bb95d0b85bc2b57158a1ca926b940b1e46e3f15dcadde4532d621e42f
+  generated_requirements: 400
+  production_usable: false
+  reason: The generator expanded the full workspace and retained non-Linux target dependencies.
+builds:
+  fedora_43_x86_64:
+    status: not-run-blocked
+  fedora_44_x86_64:
+    status: not-run-blocked
+installation:
+  generated_rpms_installed: false
+copr:
+  mutated: false

@@ -1,0 +1,41 @@
+---
+name: codex-cli
+status: blocked
+blockers:
+- A target-aware production Linux dependency closure for the selected codex-cli workspace member has not been generated.
+- Seven Git-sourced package records in the preliminary selected graph need immutable source inputs or acceptable Fedora providers.
+- The Linux sandbox compiles vendored Bubblewrap 0.11.2 sources; the system-source and license treatment is unresolved.
+- npm and GitHub self-update checks plus npm and brew update recommendations need a Fedora-specific offline policy.
+- Offline Fedora 43 and Fedora 44 builds, tests, linked-license evidence, and payload validation have not been completed.
+source_policy:
+  npm_wrapper: forbidden platform-binary selector
+  rpm_build_network: forbidden
+  upstream_prebuilt_binaries: forbidden
+  selected_workspace_member: codex-cli
+  target: x86_64-unknown-linux-gnu
+upstream:
+  provider: github
+  repository: openai/codex
+  tag_prefix: rust-v
+  current_version: 0.144.5
+  source_url_template: https://codeload.github.com/openai/codex/tar.gz/{source_commit}
+  source_sha256: b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9
+  source_tag: rust-v0.144.5
+  source_commit: 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
+  license: Apache-2.0
+duplicate_check:
+  checked: "2026-07-17"
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+  binary_provider: absent
+probe:
+  environment: fedora-44-x86_64
+  generator: cargo2rpm-0.3.3-1.fc44
+  generated_requirements: 400
+  windows_related_requirements: 53
+  result_sha256: 3e17eb2bb95d0b85bc2b57158a1ca926b940b1e46e3f15dcadde4532d621e42f
+  usable_as_production_closure: false
+copr:
+  enabled: false
+  subdir: packages/codex-cli
+  spec: codex-cli.spec
