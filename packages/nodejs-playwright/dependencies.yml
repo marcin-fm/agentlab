@@ -30,8 +30,11 @@ build_closure:
   fedora_linux_x86_64_package_names: 562
   fedora_43_44_exact_locked_providers: 0
   stable_test_runner_linux_packages: 3
+  stable_test_runner_upstream_normal_build_install: true
+  stable_test_runner_downstream_patch: playwright-skip-stable-test-runner-install.patch
+  stable_test_runner_normal_build_install: removed
+  stable_test_runner_check_materialized: false
   normal_build_package_target: none
-  normal_build_skips_npm_ci: false
   native_build_tools:
     esbuild: 0.28.1
     rolldown: 1.1.3

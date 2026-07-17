@@ -53,12 +53,12 @@ release-maintenance script. The actual runtime comes from the exact Playwright
 commit and imports `tools.createConnection` from generated
 `playwright-core/lib/coreBundle`.
 
-Playwright's normal build is monorepo-wide. It unconditionally installs a
-separate stable-test-runner lock, compiles and bundles with esbuild, runs Vite
-builds, generates types and browser metadata, and copies `xdg-open`. It exposes
-no package or MCP-only build target. Its `--disable-install` option only disables
-browser installation in watch mode; it does not skip the stable-test-runner
-`npm ci` in a normal build.
+Playwright's normal build is monorepo-wide: it compiles and bundles with
+esbuild, runs Vite builds, generates types and browser metadata, and copies
+`xdg-open`. It exposes no package or MCP-only build target. Upstream also
+installs a separate stable-test-runner lock, and its `--disable-install` option
+only disables browser installation in watch mode. The provider's Patch1 removes
+only that test-runner `npm ci` from the normal release-module build.
 
 The stable-test-runner lock is now bounded rather than an unknown secondary
 closure. It contains four entries: `@playwright/test`, `playwright`, and
@@ -66,8 +66,10 @@ closure. It contains four entries: `@playwright/test`, `playwright`, and
 `fsevents`. The three Linux packages have no install scripts or browser-download
 edge, carry npm SLSA provenance to Playwright commit
 `e9a206539527957abd177749dd893939d3c6c85c`, and have exact staged tarball and
-source-archive hashes. The remaining issue is the upstream build's unskippable
-`npm ci`, not an additional native or provenance gap.
+source-archive hashes. Upstream offers no flag to skip the runner's `npm ci`,
+but this is not an additional native or provenance gap. Patch1 separates that
+install from the normal build, while the exact closure remains to be
+materialized independently for a future `%check`.
 
 The pinned esbuild `0.28.1` tool is source-buildable without its prebuilt
 `@esbuild/linux-x64` payload. The exact tag builds the Go binary with

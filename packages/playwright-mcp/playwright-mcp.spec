@@ -5,7 +5,7 @@
 
 Name:           playwright-mcp
 Version:        0.0.78
-Release:        0.13%{?dist}
+Release:        0.14%{?dist}
 Summary:        Model Context Protocol server for Playwright
 
 License:        Apache-2.0
@@ -39,6 +39,9 @@ echo 'playwright-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.14
+- Record the test-runner separation in the reusable Playwright provider.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.13
 - Record the neutral dashboard icon provider closure.
 - Accept the documented same-user code-execution risk and require isolated service deployment.

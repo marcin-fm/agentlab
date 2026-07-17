@@ -40,8 +40,11 @@ The patched root lock contains 669 integrity-pinned registry tarballs. After
 target filtering, 614 entries across 562 names remain active for Fedora
 Linux/x86_64;
 Fedora 43 and 44 provide no exact locked npm versions. Playwright exposes no
-package-only build target and its normal build unconditionally runs `npm ci`
-for a separately bounded three-package Linux stable-test-runner closure.
+package-only build target. Patch1 removes the test-only stable runner's
+unconditional `npm ci` from the normal release-module build. The separately
+bounded three-package Linux runner closure remains an input for a future
+`%check` and must be materialized independently without package-manager
+execution.
 
 Exact esbuild `0.28.1`, Rolldown `1.1.3`, and Lightning CSS `1.32.0` are
 source-buildable but unavailable as exact Fedora providers. Rolldown retains

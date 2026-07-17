@@ -140,7 +140,7 @@ playwright_provider_audit:
         generated_notice_lines: 434
         generated_notice_sha256: c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
         generation_status: Reproduced from the pinned source archive and hash-verified; install and package verification remain pending behind the fail-closed build gate.
-  reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
+  reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, and copied xdg-open. Upstream exposes no package or MCP-only build target; the provider patch removes the test-only stable-runner install from the normal build.
   esbuild:
     version: 0.28.1
     source_tag_archive_sha256: 65c756fa87d43178ac4a5242454c2bd0fde325f8ecf77997f8fa4b88f94d5cd2
@@ -254,7 +254,12 @@ test_closure:
     playwright_core_npm_sha256: b20b80f5e2b13f0ef8949b9062887f439a46ae116e1909025a4f38da161f73d0
     provenance: All three npm packages carry SLSA attestations resolving to the exact source commit.
     linux_lifecycle: No install scripts or browser-download edge; optional fsevents is Darwin-only.
-  reason: The normal Playwright build unconditionally runs npm ci for the bounded stable-test-runner lock. Its source, license, and Linux lifecycle edges are proven, but upstream provides no switch to omit the install.
+    upstream_normal_build_install: true
+    upstream_skip_flag: false
+    downstream_separation_patch: ../nodejs-playwright/playwright-skip-stable-test-runner-install.patch
+    normal_build_install_removed: true
+    future_check_materialized: false
+  reason: The provider patch removes the bounded stable-runner install from the normal Playwright build. Its source, license, and Linux lifecycle edges remain proven, but the closure still must be materialized independently without package-manager execution for a future check phase.
 closure_audit:
   audited_release: 0.0.78
   wrapper_files_matching_tag: 7

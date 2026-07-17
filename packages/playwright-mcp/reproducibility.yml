@@ -108,8 +108,12 @@ playwright_provider_evidence:
     default_headless_mcp_reachable: false
     binary_copy_omission_safe: true
   nested_stable_test_runner_lock:
-    required_by_normal_build: true
+    required_by_upstream_normal_build: true
+    required_by_patched_normal_build: false
     skippable_by_upstream_flag: false
+    downstream_separation_patch: ../nodejs-playwright/playwright-skip-stable-test-runner-install.patch
+    retained_for_future_check: true
+    future_check_materialized: false
     lock_entries: 4
     linux_packages: 3
     version: 1.62.0-alpha-2026-07-06
@@ -214,7 +218,7 @@ playwright_provider_evidence:
       source_derived_notice_sha256: c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
       cc0_reproduction_required: false
       in_tree_source_reconciliation_complete: true
-  narrow_build_target: none; the only build flags are watch and disable-install, and disable-install only affects browser installation in watch mode
+  narrow_build_target: none; upstream flags are watch and disable-install, and disable-install only affects browser installation in watch mode; the downstream patch separately removes the test-runner install from normal builds
   esbuild:
     version: 0.28.1
     source_tag_archive_sha256: 65c756fa87d43178ac4a5242454c2bd0fde325f8ecf77997f8fa4b88f94d5cd2
@@ -306,6 +310,8 @@ evidence:
   browser_logo_distribution_reviewed: true
   browser_logo_dependencies_removed: true
   neutral_fallback_preserves_complete_dashboard: true
+  stable_test_runner_normal_build_separation_patch_validated: true
+  stable_test_runner_lock_preserved_for_future_check: true
   local_node_javascript_minification_gate_passed: true
   xdg_open_headless_system_integration_gate_passed: true
   selected_default_headless_payload_smoke_passed: true

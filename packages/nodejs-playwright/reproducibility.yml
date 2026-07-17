@@ -25,7 +25,11 @@ build_mapping:
   root_lock_fedora_linux_x86_64_registry_entries: 614
   root_lock_fedora_linux_x86_64_package_names: 562
   stable_test_runner_linux_packages: 3
-  stable_test_runner_install_skippable: false
+  stable_test_runner_upstream_normal_build_install: true
+  stable_test_runner_upstream_skip_flag: false
+  stable_test_runner_downstream_separation_patch: playwright-skip-stable-test-runner-install.patch
+  stable_test_runner_normal_build_install_removed: true
+  stable_test_runner_check_closure_materialized: false
   generated_module_payload_reproduced: false
   exact_native_tools_source_built: false
   immutable_closure_hosted: false
@@ -48,6 +52,9 @@ license_mapping:
   browser_logo_review_complete: true
 validation:
   spec_fail_closed_before_build: true
+  downstream_patches_apply_with_zero_fuzz: true
+  normal_build_stable_runner_reference_absent_after_patch: true
+  stable_runner_lock_preserved_after_patch: true
   public_module_load_tests: false
   upstream_tests: false
   fedora_43_offline_build: false

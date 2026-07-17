@@ -2,7 +2,7 @@ name: nodejs-playwright
 status: blocked
 blockers:
   - The patched Playwright root lock has 669 integrity-pinned registry tarballs; 614 across 562 names are active on Fedora Linux/x86_64, and Fedora 43/44 provide no exact locked npm versions.
-  - The normal monorepo build has no package-only target and unconditionally runs npm ci for its separately bounded stable-test-runner lock.
+  - The normal monorepo build has no package-only target. Patch1 removes the test-only stable-runner install, but its exact closure remains unmaterialized for a future independent check phase.
   - Exact source-built esbuild 0.28.1, Rolldown 1.1.3, and Lightning CSS 1.32.0 remain unavailable as Fedora providers; the latter two retain substantial unresolved Rust provider closures.
   - Required legal material remains unavailable for base-encode and parcel_sourcemap MIT code and for json-escape-simd's MIT declaration plus its borrowed Apache-2.0 sonic-rs implementation.
   - The exact production, build, and test closure has not been materialized or immutably hosted for offline COPR SCM builds.
@@ -15,6 +15,7 @@ source_policy:
   source_correspondence: Both npm releases identify Playwright commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
   source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
   build_model: One monorepo source build emits separate public playwright and playwright-core module RPMs.
+  stable_test_runner: Patch1 removes its package-manager install from the normal build; retain the exact audited closure for a future independently materialized check phase.
   browser_downloads: forbidden
   lifecycle_scripts: forbidden
   networked_package_manager: forbidden
