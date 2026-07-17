@@ -84,10 +84,13 @@ All functional WASM remains fail-closed. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp
 assets, including immutable source archives and byte-level asset correspondence.
 Their rebuilds remain unproven because upstream leaves the Tree-sitter release
-workflow, Emscripten version, or Alpine build packages floating. Photon's
-Rust/wasm-bindgen release boundary is the only unresolved WASM source mapping;
-Tree-sitter Bash, PowerShell, and web-tree-sitter also still need reproducible
-build evidence.
+workflow, Emscripten version, or Alpine build packages floating. Photon is the
+only unresolved WASM source mapping: its authenticated npm 0.3.4 tarball differs
+from both the registry `gitHead` and the nearest generated `compiled-wasm`
+commit in WASM bytes, JavaScript, declarations, package identity, version, and
+filenames. No exact generated package exists in the checked immutable refs, so
+the prebuilt payload remains unusable. Tree-sitter Bash, PowerShell, and
+web-tree-sitter also still need reproducible build evidence.
 
 ```bash
 scripts/acquire-opencode-sources --plan

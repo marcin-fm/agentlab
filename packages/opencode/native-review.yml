@@ -269,14 +269,47 @@ components:
       source_tag: null
       tag_object: null
       peeled_commit: 685f5b155b36c5611c08ca678bb78ddbab3edbac
-      package_version_at_source: null
-      correspondence: npm records an exact source commit, but upstream has no matching v0.3.4 tag or release package manifest at that commit.
+      package_version_at_source: "0.3.3"
+      correspondence: The authenticated npm artifact does not correspond to the registry gitHead or the nearest generated compiled-wasm commit; no exact v0.3.4 package output exists in local immutable refs.
+      published_artifact:
+        published_at: "2025-05-10T18:44:21.604Z"
+        source_url: https://registry.npmjs.org/@silvia-odwyer/photon-node/-/photon-node-0.3.4.tgz
+        integrity: sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA==
+        sha256: 5a23015c1cd2c38e3c492dd96929985247b92f52d2ff0fb948d29edca52bc50a
+        package_name: "@silvia-odwyer/photon-node"
+        package_version: "0.3.4"
+        files:
+          package/photon_rs_bg.wasm: 10468181565c56004c867f3a4af96f89a0ef5a63a72f2b5fb12c1f1992a3615c
+          package/photon_rs.js: d60656705f0d59baa79e36b0381eb023f1864eeb57e92956cf21dcd9fb8f879f
+          package/photon_rs_bg.js: 02d724f9efb4c4b9a5f49dd83ff7ba0d83af14428059ba21372bad43cc8b2253
+          package/photon_rs.d.ts: b3f7efb72280d1c32cf17dbe436fb783e3f04dc0da56e8c4eaa0ccab3da43d23
+      closest_generated_candidate:
+        commit: 232df2fe11218cac0856a56d94ab560b22d5b414
+        generated_from_commit: 8591d316252ede15d9f3ed5d3646c4c0c4a215fc
+        committed_at: "2025-05-10T18:20:50Z"
+        package_name: photon-rs
+        package_version: "0.3.2"
+        files:
+          package.json: eaef1dedeb5187129e7044889eadf83322b0cd378be5747b76673bd200087d6a
+          photon-node_bg.wasm: 651870eb6466366b89ad46429aaba97e7cfc32992045cc97b9e54a2e63d4e980
+          photon-node.js: c6d3594ee7f96c04417e809ed63b546f8a8a3f77bd307986bc2caf3c5688696b
+          photon-node.d.ts: f672376bf32dba6b98ddc6259779e8f800aa1f01c63845176ff2a72c865a8fe2
+          photon-node_bg.wasm.d.ts: 36ea91bf5bf0874e40e842d018a7a062a8ae36a04a37152c71e36e28dd4c913e
+      correspondence_checks:
+        source_package_version_matches: false
+        generated_package_identity_matches: false
+        generated_package_version_matches: false
+        generated_filenames_match: false
+        generated_wasm_sha256_matches: false
+        generated_js_sha256_matches: false
+        generated_declarations_sha256_matches: false
+        exact_local_ref_found: false
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: false
       reproducible_build_verified: false
-      reason: Establish the exact Rust/wasm-bindgen release boundary and reproduce photon_rs_bg.wasm.
+      reason: Obtain exact corresponding v0.3.4 Rust/wasm-bindgen sources and a reproducible build; the registry gitHead and nearest generated branch artifact both mismatch the published payload.
   - package: "shiki@4.2.0"
     npm_name: shiki
     version: "4.2.0"

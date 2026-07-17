@@ -782,6 +782,90 @@ module Agentlab
         end
       end
 
+      photon_identity = "@silvia-odwyer/photon-node@0.3.4"
+      photon = components.find { |component| component["package"] == photon_identity }
+      photon_source = sources.find do |source|
+        source["npm_name"] == "@silvia-odwyer/photon-node" && source["version"].to_s == "0.3.4"
+      end
+      published = photon&.dig("provenance", "published_artifact")
+      candidate = photon&.dig("provenance", "closest_generated_candidate")
+      checks = photon&.dig("provenance", "correspondence_checks")
+      errors << "#{prefix} Photon registry gitHead evidence does not match" unless photon&.dig("provenance", "registry_git_head") == "685f5b155b36c5611c08ca678bb78ddbab3edbac"
+      errors << "#{prefix} Photon source package version evidence does not match" unless photon&.dig("provenance", "package_version_at_source").to_s == "0.3.3"
+      if photon_source && published.is_a?(Hash)
+        %w[source_url integrity sha256].each do |field|
+          errors << "#{prefix} Photon published artifact #{field} does not match source audit" unless published[field] == photon_source[field]
+        end
+        errors << "#{prefix} Photon published package identity does not match" unless published["package_name"] == photon_source["npm_name"]
+        errors << "#{prefix} Photon published package version does not match" unless published["package_version"].to_s == photon_source["version"].to_s
+        errors << "#{prefix} Photon published timestamp evidence does not match" unless published["published_at"] == "2025-05-10T18:44:21.604Z"
+      else
+        errors << "#{prefix} Photon published artifact evidence is missing"
+      end
+
+      published_files = published.to_h.fetch("files", {}).to_h
+      expected_published_files = {
+        "package/photon_rs_bg.wasm" => "10468181565c56004c867f3a4af96f89a0ef5a63a72f2b5fb12c1f1992a3615c",
+        "package/photon_rs.js" => "d60656705f0d59baa79e36b0381eb023f1864eeb57e92956cf21dcd9fb8f879f",
+        "package/photon_rs_bg.js" => "02d724f9efb4c4b9a5f49dd83ff7ba0d83af14428059ba21372bad43cc8b2253",
+        "package/photon_rs.d.ts" => "b3f7efb72280d1c32cf17dbe436fb783e3f04dc0da56e8c4eaa0ccab3da43d23"
+      }
+      unless published_files == expected_published_files
+        errors << "#{prefix} Photon published artifact file evidence does not match"
+      end
+      published_files.each do |path, sha256|
+        errors << "#{prefix} Photon published artifact SHA-256 is invalid for #{path}" unless sha256.to_s.match?(/\A[0-9a-f]{64}\z/)
+      end
+
+      expected_candidate_files = {
+        "package.json" => "eaef1dedeb5187129e7044889eadf83322b0cd378be5747b76673bd200087d6a",
+        "photon-node_bg.wasm" => "651870eb6466366b89ad46429aaba97e7cfc32992045cc97b9e54a2e63d4e980",
+        "photon-node.js" => "c6d3594ee7f96c04417e809ed63b546f8a8a3f77bd307986bc2caf3c5688696b",
+        "photon-node.d.ts" => "f672376bf32dba6b98ddc6259779e8f800aa1f01c63845176ff2a72c865a8fe2",
+        "photon-node_bg.wasm.d.ts" => "36ea91bf5bf0874e40e842d018a7a062a8ae36a04a37152c71e36e28dd4c913e"
+      }
+      candidate_files = candidate.to_h.fetch("files", {}).to_h
+      unless candidate_files == expected_candidate_files
+        errors << "#{prefix} Photon generated candidate file evidence does not match"
+      end
+      expected_candidate_metadata = {
+        "commit" => "232df2fe11218cac0856a56d94ab560b22d5b414",
+        "generated_from_commit" => "8591d316252ede15d9f3ed5d3646c4c0c4a215fc",
+        "committed_at" => "2025-05-10T18:20:50Z",
+        "package_name" => "photon-rs",
+        "package_version" => "0.3.2"
+      }
+      expected_candidate_metadata.each do |field, value|
+        errors << "#{prefix} Photon generated candidate #{field} does not match" unless candidate.to_h[field].to_s == value
+      end
+      candidate_files.each do |path, sha256|
+        errors << "#{prefix} Photon generated candidate SHA-256 is invalid for #{path}" unless sha256.to_s.match?(/\A[0-9a-f]{64}\z/)
+      end
+
+      required_failed_checks = %w[
+        source_package_version_matches
+        generated_package_identity_matches
+        generated_package_version_matches
+        generated_filenames_match
+        generated_wasm_sha256_matches
+        generated_js_sha256_matches
+        generated_declarations_sha256_matches
+        exact_local_ref_found
+      ]
+      required_failed_checks.each do |flag|
+        errors << "#{prefix} Photon mismatch evidence flag #{flag} is not false" unless checks.to_h[flag] == false
+      end
+      {
+        "WASM" => ["package/photon_rs_bg.wasm", "photon-node_bg.wasm"],
+        "JavaScript" => ["package/photon_rs.js", "photon-node.js"],
+        "declarations" => ["package/photon_rs.d.ts", "photon-node.d.ts"]
+      }.each do |kind, (published_path, candidate_path)|
+        if published_files[published_path] == candidate_files[candidate_path]
+          errors << "#{prefix} Photon #{kind} mismatch evidence has equal hashes"
+        end
+      end
+      errors << "#{prefix} Photon source mapping must remain unresolved" unless photon&.dig("decision", "source_mapping_verified") == false
+
       expected_counts = {
         "component_identities" => reviewed_sources.length,
         "native_sources" => native_sources.length,
