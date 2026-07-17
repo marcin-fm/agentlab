@@ -519,4 +519,28 @@ class AgentlabTest < Minitest::Test
       assert(errors.any? { |error| error.include?("Photon generated candidate file evidence does not match") })
     end
   end
+
+  def test_rejects_incomplete_opencode_fff_fallback_evidence
+    source_package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+
+    Dir.mktmpdir do |directory|
+      %w[selected_lock_audit source_audit license_review native_review].each do |key|
+        filename = dependencies.dig("source_closure_files", key)
+        FileUtils.cp(File.join(source_package.directory, filename), File.join(directory, filename))
+      end
+      native_path = File.join(directory, dependencies.dig("source_closure_files", "native_review"))
+      native_review = Agentlab.load_yaml(native_path)
+      fff = native_review.fetch("components").find do |component|
+        component["package"] == "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
+      end
+      fff.fetch("provenance").delete("supported_disable")
+      File.write(native_path, YAML.dump(native_review))
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
+
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+
+      assert(errors.any? { |error| error.include?("FFF supported-disable evidence does not match") })
+    end
+  end
 end

@@ -5,7 +5,7 @@ blockers:
 - Fedora-source-built Bun 1.3.14 is unavailable.
 - Final applicable license texts and the aggregate expression await source and binary payload mapping; the three raw declaration omissions are resolved in license-review.yml.
 - The release does not pin the models.dev snapshot embedded during the standalone build.
-- The native review classifies all 22 prebuilt payloads; required OpenTUI and bun-pty rebuilds plus the FFF and Parcel rebuild-or-disable decisions remain unproven.
+- The native review classifies all 22 prebuilt payloads; required OpenTUI and bun-pty rebuilds plus the Parcel rebuild-or-disable decision remain unproven. FFF is omitted through the documented system-ripgrep fallback patch.
 - The WASM review classifies all 14 payloads; corresponding-source pins and reproducible rebuilds remain incomplete.
 - Five install or postinstall lifecycle scripts and 68 prepare scripts require source-build policy review; none may run during RPM dependency reconstruction.
 - Offline OpenCode build and test execution has not been demonstrated.

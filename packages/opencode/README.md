@@ -77,8 +77,9 @@ The selected runtime may omit the Node-only node-pty wrapper and msgpackr's
 optional native acceleration. Clipboardy must use Fedora `xsel` instead of its
 bundled executables, and tree-sitter-bash must omit all Node prebuilds while
 rebuilding its functional WASM. OpenTUI and bun-pty require native source
-builds. FFF and Parcel watcher still require either source builds or proof that
-their upstream-supported fallback/disable paths preserve the selected CLI.
+builds. The Fedora patch binds FFF to OpenCode's existing no-FFF adapter, so the
+required system ripgrep provides find, glob, and grep without `libfff_c.so`.
+Parcel watcher still requires a source build or a behavior-preserving fallback.
 
 All functional WASM remains fail-closed. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp

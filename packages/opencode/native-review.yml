@@ -42,12 +42,23 @@ components:
       peeled_commit: 7d7910b6ba78ea8406671eaac8cdb5eb9850d9d1
       package_version_at_source: "0.0.0"
       correspondence: The registry gitHead and release tag agree; the platform workspace keeps a placeholder package version.
+      supported_disable:
+        adapter: packages/core/src/filesystem/fff.node.ts
+        selector: packages/core/src/filesystem/search.ts
+        build_patch: opencode-disable-fff.patch
+        patch_sha256: 47b06ecf7652b4be11c194c96e81fcbddd1669f5e802d91dfc80228f989e5013
+        system_binary: /usr/bin/rg
+        runtime_requirement: ripgrep
+        upstream_fallback_pr: https://github.com/anomalyco/opencode/pull/31566
+        upstream_disable_commit: e4300e9b7433e068c3d57ac41fcb39bc5de3d32e
+        native_payload_omitted: true
+        selected_cli_behavior_preserved: true
     decision:
-      action: pending_rebuild_or_supported_disable
+      action: omit
       retain_prebuilt_payloads: false
       source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Rebuild libfff_c.so from the released workspace or prove the upstream system-ripgrep fallback preserves the selected CLI behavior.
+      reason: Apply the Fedora patch to select OpenCode's existing no-FFF adapter; the search service then uses required system ripgrep for find, glob, and grep without embedding libfff_c.so.
   - package: "@lydell/node-pty-linux-x64@1.2.0-beta.12"
     npm_name: "@lydell/node-pty-linux-x64"
     version: "1.2.0-beta.12"

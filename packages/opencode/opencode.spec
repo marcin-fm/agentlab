@@ -4,7 +4,7 @@
 
 Name:           opencode
 Version:        1.18.3
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -17,6 +17,13 @@ Source2:        %{name}-%{version}-nm-dev-test.tar.zst
 Source3:        %{name}-%{version}-closure.json
 Source4:        %{name}-%{version}-bundled-licenses.txt
 Source5:        %{name}-%{version}-native.json
+
+# Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
+# existing system-ripgrep fallback instead.
+# Upstream status: Fedora-specific; https://github.com/anomalyco/opencode/pull/31566
+# added the fallback, and commit e4300e9b7433e068c3d57ac41fcb39bc5de3d32e
+# supports disabling FFF.
+Patch0:         opencode-disable-fff.patch
 
 ExclusiveArch:  x86_64
 
@@ -46,7 +53,7 @@ license gate recorded in package.yml is complete.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
-%autosetup -n opencode-%{version}
+%autosetup -n opencode-%{version} -p1
 
 test -f %{SOURCE1}
 test -f %{SOURCE3}
@@ -83,6 +90,8 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.2
+- Omit the FFF native accelerator and use the system-ripgrep fallback.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.1
 - Refresh the blocked source-build draft to released version 1.18.3.
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 1.18.1-0.0.2

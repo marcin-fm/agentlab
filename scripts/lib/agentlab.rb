@@ -782,6 +782,34 @@ module Agentlab
         end
       end
 
+      fff_identity = "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
+      fff = components.find { |component| component["package"] == fff_identity }
+      expected_fff_disable = {
+        "adapter" => "packages/core/src/filesystem/fff.node.ts",
+        "selector" => "packages/core/src/filesystem/search.ts",
+        "build_patch" => "opencode-disable-fff.patch",
+        "patch_sha256" => "47b06ecf7652b4be11c194c96e81fcbddd1669f5e802d91dfc80228f989e5013",
+        "system_binary" => "/usr/bin/rg",
+        "runtime_requirement" => "ripgrep",
+        "upstream_fallback_pr" => "https://github.com/anomalyco/opencode/pull/31566",
+        "upstream_disable_commit" => "e4300e9b7433e068c3d57ac41fcb39bc5de3d32e",
+        "native_payload_omitted" => true,
+        "selected_cli_behavior_preserved" => true
+      }
+      unless fff&.dig("provenance", "supported_disable") == expected_fff_disable
+        errors << "#{prefix} FFF supported-disable evidence does not match"
+      end
+      errors << "#{prefix} FFF native payload must be omitted" unless fff&.dig("decision", "action") == "omit"
+      fff_patch = File.join(package.directory, expected_fff_disable.fetch("build_patch"))
+      errors << "#{prefix} FFF disable patch is missing" unless File.file?(fff_patch)
+      if File.file?(fff_patch)
+        errors << "#{prefix} FFF disable patch SHA-256 does not match" unless Digest::SHA256.file(fff_patch).hexdigest == expected_fff_disable.fetch("patch_sha256")
+      end
+      opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
+      unless opencode_spec.match?(/^Patch\d+:\s+#{Regexp.escape(expected_fff_disable.fetch("build_patch"))}$/)
+        errors << "#{prefix} spec does not apply the FFF disable patch"
+      end
+
       photon_identity = "@silvia-odwyer/photon-node@0.3.4"
       photon = components.find { |component| component["package"] == photon_identity }
       photon_source = sources.find do |source|
