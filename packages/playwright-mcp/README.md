@@ -113,6 +113,20 @@ a CLI application payload, not the complete public npm module, so the draft
 root `npm(@playwright/mcp)` Provide remains provisional and must be regenerated
 or omitted from the exact installed tree.
 
+That selected binary retains only `utilsBundle.js.LICENSE` from the five
+published bundle sidecars. Its 91 unique package/version entries all match the
+root lock and carry full embedded notice text: 76 MIT, 9 ISC, 4 BSD-3-Clause,
+1 BSD-2-Clause, and 1 BlueOak-1.0.0. Fedora marks BlueOak-1.0.0 allowed. With
+the Apache-2.0 MCP/Core sources and retained Playwright `NOTICE`, the
+provisional selected-binary expression is `Apache-2.0 AND BSD-2-Clause AND
+BSD-3-Clause AND BlueOak-1.0.0 AND ISC AND MIT`. This is 91 of the published
+five-sidecar set's 213 entries, a 57.28% reduction. The omitted dashboard logos
+and other bundle sidecars do not affect that binary expression, but remain
+inputs to Playwright's unconditional normal build. Final license closure still
+requires source-to-bundle reconciliation for all in-tree or copied Core code;
+the audited BiDi/Puppeteer-derived sources are Apache-2.0 and covered by the
+retained root license and notice.
+
 The Linux/x86_64 root lock has license metadata for 614 of 624 active entries.
 The ten exceptions are the Chrome, Chrome Beta, Chrome Canary, Chrome Dev,
 Chromium, Edge, Firefox, Firefox Beta, Firefox Nightly, and Safari logo

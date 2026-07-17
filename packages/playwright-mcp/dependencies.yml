@@ -78,6 +78,19 @@ build_closure:
       required_file_proof: Removing playwright-core/package.json or browsers.json fails before MCP startup.
       metadata_consequence: The installed CLI application is not the complete public npm module; regenerate or omit the provisional root npm Provide.
       source_build_consequence: Binary omission does not reduce the unconditional normal Playwright monorepo build or its source inputs.
+      license_inventory:
+        retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
+        package_entries: 91
+        unique_package_versions: 91
+        lock_metadata_complete: true
+        embedded_notice_text_complete: true
+        expression_counts: MIT=76, ISC=9, BSD-3-Clause=4, BSD-2-Clause=1, BlueOak-1.0.0=1
+        fedora_blueoak_status: allowed
+        provisional_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND ISC AND MIT
+        published_sidecar_entries: 213
+        retained_entry_percent: 42.72
+        omitted_sidecar_entries: 122
+        remaining_gate: Reconcile all in-tree and copy-derived coreBundle sources to the retained Apache-2.0 license and NOTICE; audited BiDi/Puppeteer-derived sources are covered.
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1

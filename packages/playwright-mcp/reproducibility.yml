@@ -127,6 +127,26 @@ build_mapping:
     omitted_top_level_runtime: playwright
     public_module_complete: false
     normal_source_build_reduced: false
+    license_inventory:
+      retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
+      sidecar_total_packages: 91
+      unique_package_versions: 91
+      root_lock_matches: 91
+      entries_with_full_notice_text: 91
+      license_counts:
+        MIT: 76
+        ISC: 9
+        BSD-3-Clause: 4
+        BSD-2-Clause: 1
+        BlueOak-1.0.0: 1
+      fedora_blueoak_status: allowed
+      provisional_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND ISC AND MIT
+      published_five_sidecar_entries: 213
+      omitted_sidecar_entries: 122
+      retained_entry_percent: 42.72
+      core_legal_boundary: MCP and Playwright Core Apache-2.0 licenses, Playwright NOTICE for Puppeteer-derived code, and ThirdPartyNotices sidecar policy
+      bidi_puppeteer_source_license: Apache-2.0
+      in_tree_source_reconciliation_complete: false
   narrow_build_target: none; the only build flags are watch and disable-install, and disable-install only affects browser installation in watch mode
   esbuild:
     version: 0.28.1
@@ -220,6 +240,7 @@ evidence:
   local_node_javascript_minification_gate_passed: true
   xdg_open_headless_system_integration_gate_passed: true
   selected_default_headless_payload_smoke_passed: true
+  selected_binary_sidecar_lock_and_notice_audit_passed: true
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

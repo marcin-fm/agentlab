@@ -75,6 +75,8 @@ System-integration correction: the copied `open@11.0.0` `xdg-open` script is ups
 
 Installed-payload correction: an enforced package-file denylist smoke reduced the default headless CLI surface from 173 published files and 17,962,355 bytes to 11 files and 6,798,642 bytes. The required runtime is MCP `cli.js` plus its manifest, Playwright Core `coreBundle.js`, `utilsBundle.js`, both manifests, `browsers.json`, and applicable legal files; removing either Core metadata file prevents startup. The reduced surface still lists 24 tools and passes Fedora Chromium navigation/evaluation, while the entire `playwright` package and generated UI/tooling trees are omitted. This narrows the binary and its license inventory but not Playwright's unconditional normal source build. It is a CLI application payload, so the provisional full npm-module Provide must be regenerated or omitted.
 
+Selected-binary license correction: the 11-file candidate retains one generated sidecar with 91 unique, lock-matched package/version entries and full notice text (76 MIT, 9 ISC, 4 BSD-3-Clause, 1 BSD-2-Clause, 1 Fedora-allowed BlueOak-1.0.0). Together with Apache-2.0 MCP/Core code and the Playwright notice, its provisional expression is `Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND ISC AND MIT`. This removes 122 of the published five-sidecar set's 213 entries from the binary inventory. The broader build still needs the omitted sources, and final in-tree Core source-to-bundle reconciliation remains open.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.
