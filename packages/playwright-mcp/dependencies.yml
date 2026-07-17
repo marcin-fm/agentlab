@@ -32,6 +32,12 @@ build_closure:
     registry_entries_with_integrity: 679
     workspace_entries_including_root: 21
     workspace_links: 20
+    fedora_linux_x86_64_registry_entries: 624
+    fedora_linux_x86_64_package_names: 572
+    excluded_optional_platform_entries: 55
+    fedora_43_44_exact_locked_providers: 0
+    fedora_43_44_different_version_names: colors, esbuild, punycode, undici
+    rpm_fusion_43_44_npm_providers: 0
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1

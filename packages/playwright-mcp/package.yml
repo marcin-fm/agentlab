@@ -1,7 +1,7 @@
 name: playwright-mcp
 status: blocked
 blockers:
-  - The generated Playwright runtime requires the full pinned monorepo closure of 679 integrity-pinned registry tarballs. The separate stable-test-runner lock is source-proven and only three packages on Linux, but its npm ci remains unskippable.
+  - The root lock has 679 integrity-pinned registry tarballs; 624 across 572 package names are eligible on Fedora Linux/x86_64. Fedora 43/44 provide no exact locked npm version and RPM Fusion provides no reusable npm capability, so the active root closure still needs immutable offline sources. The separate stable-test-runner lock is source-proven and only three packages on Linux, but its npm ci remains unskippable.
   - Playwright exposes no package or MCP-only build target; the normal monorepo build cannot skip the stable-test-runner npm ci.
   - Exact source-built esbuild 0.28.1 is feasible through the upstream and Fedora packaging pattern, but Fedora 43/44 provide only 0.24.2/0.27.2 and no exact compatibility provider exists yet.
   - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers. Their actual Linux roots require 239/92 registry crates; semver- and feature-aware Fedora comparison leaves 80-81/20 unresolved provider edges.
@@ -12,6 +12,7 @@ source_policy:
   source_correspondence: All seven npm files byte-match tag v0.0.78. Playwright alpha tarballs identify source commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
   playwright_source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
   generated_build: Full Playwright monorepo build with esbuild, Vite, generated types/assets, copied xdg-open, and a separate stable-test-runner install.
+  root_npm_provider_audit: Of 679 locked registry entries, 624 across 572 names are Linux/x86_64 eligible. Fedora 43/44 have zero exact locked providers and only colors, esbuild, punycode, and undici at different versions; RPM Fusion has no npm provider.
   stable_test_runner: Four lock entries; Linux uses three Apache-2.0 Playwright packages with npm SLSA provenance to commit e9a206539527957abd177749dd893939d3c6c85c. Optional fsevents is Darwin-only, and no Linux install or browser-download script is present.
   narrow_build_target: none; --disable-install only affects browser installation in watch mode
   esbuild_source_path: Exact 0.28.1 Go binary and neutral npm module can be source-built; Fedora uses the same binary plus JavaScript/platform-module layout for older releases.

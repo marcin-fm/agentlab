@@ -22,7 +22,11 @@ The exact Playwright source commit archive SHA-256 is
 Those are the three top-level published runtime packages. Their generated
 Playwright bundles are not a three-package source closure: the exact monorepo
 lock has 719 non-root entries, including 679 integrity-pinned registry
-tarballs. `fsevents@2.3.2` is an optional Darwin-only dependency.
+tarballs. Platform metadata excludes 55 optional non-Linux or non-x86_64
+payloads, leaving 624 Fedora Linux/x86_64 registry entries across 572 package
+names. Fedora 43 and 44 provide no exact locked `npm(...)` version; only four
+names exist at different versions, and RPM Fusion provides none.
+`fsevents@2.3.2` is an optional Darwin-only dependency.
 
 ## Source Build Audit
 

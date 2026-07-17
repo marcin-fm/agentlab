@@ -35,6 +35,12 @@ build_mapping:
   root_lock_non_root_entries: 719
   root_lock_registry_tarballs: 679
   root_lock_integrity_entries: 679
+  root_lock_fedora_linux_x86_64_registry_entries: 624
+  root_lock_fedora_linux_x86_64_package_names: 572
+  root_lock_excluded_optional_platform_entries: 55
+  root_lock_fedora_43_44_exact_locked_providers: 0
+  root_lock_fedora_43_44_different_version_names: colors, esbuild, punycode, undici
+  root_lock_rpm_fusion_43_44_npm_providers: 0
   nested_stable_test_runner_lock:
     required_by_normal_build: true
     skippable_by_upstream_flag: false
