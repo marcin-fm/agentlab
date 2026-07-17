@@ -10,12 +10,13 @@ production_runtime:
     - pyo3 >= 0.27.2, < 0.28 with abi3-py310 and extension-module
     - pyo3-log >= 0.13, < 0.14
     - tokenizers >= 0.22, < 0.23
+    - tiktoken-rs >= 0.11, < 0.12 using rust-tiktoken-rs0.11
     - rusqlite >= 0.31, < 0.32 using system SQLite
     - unidiff >= 0.4, < 0.5 using rust-unidiff0.4
     - Fedora-provided serde, serde_json, bytes, thiserror, tracing, digest, compression, regex, rayon, toml, and blake3 branches
 excluded_runtime:
   rust:
-    - fastembed, magika, ort, ort-sys, hf-hub, tiktoken-rs, and redis
+    - fastembed, magika, ort, ort-sys, hf-hub, and redis
   python:
     - litellm, rich, ast-grep-cli, httpx direct dependency, proxy/model extras, and sqlite-vec
 build_runtime:
@@ -25,6 +26,8 @@ build_runtime:
     - pkgconfig(sqlite3)
   local_packages:
     - rust-unidiff0.4 = 0.4.0
+    - rust-fancy-regex0.17 = 0.17.0
+    - rust-tiktoken-rs0.11 = 0.11.0
 validation:
   fedora_43:
     mock: passed

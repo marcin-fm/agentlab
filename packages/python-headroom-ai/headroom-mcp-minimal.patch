@@ -70,7 +70,7 @@ index 360346e..637c471 100644
 -default = []
 +default = ["full-native"]
 +full-native = ["native-ml", "tiktoken"]
-+mcp-minimal = []
++mcp-minimal = ["tiktoken"]
 +native-ml = ["dep:fastembed", "dep:magika"]
 +tiktoken = ["dep:tiktoken-rs"]
  # Compile in the Redis CCR backend. Enable for multi-worker deployments

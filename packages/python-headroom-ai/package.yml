@@ -15,7 +15,7 @@ dependency_status:
     - rusqlite 0.31 built against system SQLite
     - unidiff 0.4 from the completed rust-unidiff0.4 package
   excluded_surfaces:
-    - fastembed, Magika, ORT, Hugging Face downloads, and Rust tiktoken
+    - fastembed, Magika, ORT, and Hugging Face downloads
     - Redis, proxy/provider commands, update checks, and the optional file-read tool
     - litellm, rich, ast-grep-cli, sqlite-vec, and proxy/model Python extras
 duplicate_check:
@@ -31,7 +31,9 @@ network_policy:
   file_read_tool: disabled even when HEADROOM_MCP_READ is set
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.31.0-1
+  release: 0.31.0-0.2
+  status: exact-tokenization rebuild pending
+  prior_release: 0.31.0-0.1
   source_sha256_verified: true
   spec_parse: passed
   mock_fedora_43: clean build and packaged stdio MCP smoke passed
@@ -39,7 +41,7 @@ build_validation:
   native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed per chroot; 1 library test ignored
   mcp_smoke: initialize, exact tool list, compression, byte-identical retrieval, local miss, and statistics passed
   rpmlint: zero errors and one expected no-manual-page warning per chroot
-artifacts:
+prior_artifacts:
   spec_sha256: c6e84d9dc574e2a423cbabd969a6a0a80578054af52aae554c5252334bd91096
   patches:
     headroom-mcp-minimal.patch: 0ed335b70366fb39ee995f154e108168539d4b76967e4bbfc4746077612b23ca

@@ -3,7 +3,7 @@
 
 Name:           python-headroom-ai
 Version:        0.31.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Local context compression and stdio MCP server
 
 License:        Apache-2.0
@@ -67,6 +67,15 @@ popd >/dev/null
 %{__cargo} test %{__cargo_common_opts} --profile rpm --no-fail-fast \
   -p headroom-core --no-default-features --features mcp-minimal \
   --test tokenizer_proptest
+
+%{python3} - <<'PY'
+import tiktoken
+
+encoding = tiktoken.encoding_for_model("gpt-4o-mini")
+assert len(encoding.encode("hello")) == 1
+assert len(encoding.encode("Hello, world!")) == 4
+assert len(encoding.encode("the quick brown fox jumps over the lazy dog")) == 9
+PY
 
 export PYTHONPATH=%{buildroot}%{python3_sitearch}
 export HOME="$PWD/.home"
@@ -163,5 +172,8 @@ PY
 %{_bindir}/headroom
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.31.0-0.2
+- Restore exact local OpenAI tokenization through tiktoken-rs 0.11.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.31.0-0.1
 - Add the Fedora MCP-minimal source build.

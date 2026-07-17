@@ -11,11 +11,11 @@
  pyo3-log = "0.13"
 --- a/crates/headroom-core/Cargo.toml
 +++ b/crates/headroom-core/Cargo.toml
-@@ -13,7 +13,6 @@
+@@ -13,7 +13,7 @@
  bytes = { workspace = true }
  thiserror = { workspace = true }
  tracing = { workspace = true }
--tiktoken-rs = { version = "0.11", optional = true }
+ tiktoken-rs = { version = "0.11", optional = true }
  # `tokenizers` is the HuggingFace pure-Rust tokenizer crate. Default features
  # pull in `onig` for the BPE pre-tokenizer regex; that vendors oniguruma so it
  # builds without a system dep on macOS/Linux.
@@ -35,7 +35,7 @@
  # `http` powers the auth-mode classifier (Phase F PR-F1). The proxy
  # crate already depends on this — pulling it into core lets the
  # classifier live with the other Phase B/F policy primitives without
-@@ -121,41 +118,11 @@
+@@ -121,41 +118,12 @@
  # cycling through the proxy crate. Tiny crate (no I/O, just types).
  http = "1"
  
@@ -72,11 +72,10 @@
 -default = ["full-native"]
 -full-native = ["native-ml", "tiktoken"]
 +default = []
- mcp-minimal = []
+ mcp-minimal = ["tiktoken"]
 -native-ml = ["dep:fastembed", "dep:magika"]
--tiktoken = ["dep:tiktoken-rs"]
 +native-ml = []
-+tiktoken = []
+ tiktoken = ["dep:tiktoken-rs"]
  # Compile in the Redis CCR backend. Enable for multi-worker deployments
  # that want a shared CCR store with no sticky-session at the LB. The
  # SQLite backend (always compiled) is the production default for
