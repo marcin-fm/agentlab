@@ -58,7 +58,16 @@ It records these unresolved gates:
 - 7 sources containing 14 WASM payloads.
 - Only 7 source archives with directly visible native source files.
 
-No lifecycle script was executed. Native payloads include platform packages for
+No lifecycle script was executed. The lifecycle review now requires dependency
+reconstruction by direct extraction of the reviewed registry archives and
+forbids all dependency hooks. The 68 prepare hooks are publish/development
+steps whose released outputs are already present, without waiving separate
+generated-output review. Parcel's install hook is replaced by the explicit
+watcher source build; msgpackr's optional native hook is omitted; protobufjs's
+postinstall only emits a version-scheme warning; and the tree-sitter Bash and
+PowerShell native hooks are skipped while their WASM rebuilds remain open.
+
+Native payloads include platform packages for
 OpenTUI, Parcel watcher, node-pty, msgpackr, tree-sitter, and fff-bun, plus
 bundled fallback executables in `clipboardy` and compiled artifacts in
 `bun-pty`. These require corresponding-source and rebuild decisions before the

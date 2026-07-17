@@ -642,6 +642,85 @@ module Agentlab
       end
     end
 
+    expected_lifecycle_review = {
+      "source_audit_sha256" => "0f067275e2513d5e2cb6658ba9b58fef42549f2fbeb650c3bd1c65fac1b8f179",
+      "reviewed" => true,
+      "selected_sources" => 73,
+      "counts" => { "prepare" => 68, "install" => 4, "postinstall" => 1 },
+      "dependency_reconstruction" => {
+        "method" => "extract_reviewed_registry_archives",
+        "lifecycle_scripts_executed" => false,
+        "network_resolution" => false,
+        "policy" => "skip_all_dependency_lifecycle_scripts"
+      },
+      "prepare" => {
+        "action" => "skip",
+        "count" => 68,
+        "reason" => "Released registry archives already contain their publish-time outputs; generated-output correspondence remains a separate fail-closed review."
+      },
+      "install_phase" => [
+        {
+          "package" => "@parcel/watcher@2.5.1",
+          "phase" => "install",
+          "script" => "node scripts/build-from-source.js",
+          "action" => "skip_and_rebuild_from_source",
+          "reason" => "The spec explicitly rebuilds watcher.node and replaces the platform payload."
+        },
+        {
+          "package" => "msgpackr-extract@3.0.4",
+          "phase" => "install",
+          "script" => "node-gyp-build-optional-packages",
+          "action" => "skip_optional_native_acceleration",
+          "reason" => "The selected runtime retains msgpackr's supported JavaScript fallback."
+        },
+        {
+          "package" => "protobufjs@7.6.2",
+          "phase" => "postinstall",
+          "script" => "node scripts/postinstall",
+          "action" => "skip_non_generating_warning",
+          "reason" => "The script only warns about an incompatible parent dependency version scheme and creates no payload."
+        },
+        {
+          "package" => "tree-sitter-bash@0.25.0",
+          "phase" => "install",
+          "script" => "node-gyp-build",
+          "action" => "skip_native_loader_rebuild_wasm",
+          "reason" => "Node prebuilds are omitted; the required grammar WASM remains a separate source-build gate."
+        },
+        {
+          "package" => "tree-sitter-powershell@0.25.10",
+          "phase" => "install",
+          "script" => "node-gyp-build",
+          "action" => "skip_native_loader_rebuild_wasm",
+          "reason" => "The selected shell parser consumes the grammar WASM, whose source build remains a separate gate."
+        }
+      ]
+    }
+    lifecycle_review = dependencies.dig("source_acquisition_findings", "lifecycle_script_review")
+    errors << "#{prefix} lifecycle-script review does not match" unless lifecycle_review == expected_lifecycle_review
+    lifecycle_sources = sources.select { |source| source.fetch("lifecycle_scripts", {}).any? }
+    lifecycle_counts = Hash.new(0)
+    lifecycle_sources.each do |source|
+      source.fetch("lifecycle_scripts").each_key { |phase| lifecycle_counts[phase] += 1 }
+    end
+    errors << "#{prefix} lifecycle-script source count does not match" unless lifecycle_sources.length == expected_lifecycle_review.fetch("selected_sources")
+    errors << "#{prefix} lifecycle-script phase counts do not match" unless lifecycle_counts == expected_lifecycle_review.fetch("counts")
+    actual_install_phase = lifecycle_sources.filter_map do |source|
+      scripts = source.fetch("lifecycle_scripts")
+      phase = scripts.key?("install") ? "install" : scripts.key?("postinstall") ? "postinstall" : nil
+      next unless phase
+
+      {
+        "package" => "#{source.fetch('npm_name')}@#{source.fetch('version')}",
+        "phase" => phase,
+        "script" => scripts.fetch(phase)
+      }
+    end
+    reviewed_install_phase = expected_lifecycle_review.fetch("install_phase").map do |entry|
+      entry.slice("package", "phase", "script")
+    end
+    errors << "#{prefix} lifecycle install-phase coverage does not match" unless actual_install_phase == reviewed_install_phase
+
     license_filename = source_files["license_review"]
     license_finding = dependencies.dig("source_acquisition_findings", "license_review")
     errors << "#{prefix} license review path linkage is invalid" unless license_finding.is_a?(Hash) && license_finding["path"] == license_filename

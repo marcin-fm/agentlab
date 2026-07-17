@@ -321,6 +321,7 @@ install -Dpm0755 \
 %changelog
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.6
 - Rebuild OpenTUI from exact source with the Bun-pinned Zig toolchain.
+- Record fail-closed lifecycle-script dispositions for the selected closure.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.5
 - Reconcile the current selected-source audit records.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.4

@@ -150,6 +150,46 @@ source_acquisition_findings:
     - protobufjs@7.6.2
     - tree-sitter-bash@0.25.0
     - tree-sitter-powershell@0.25.10
+  lifecycle_script_review:
+    source_audit_sha256: 0f067275e2513d5e2cb6658ba9b58fef42549f2fbeb650c3bd1c65fac1b8f179
+    reviewed: true
+    selected_sources: 73
+    counts: { prepare: 68, install: 4, postinstall: 1 }
+    dependency_reconstruction:
+      method: extract_reviewed_registry_archives
+      lifecycle_scripts_executed: false
+      network_resolution: false
+      policy: skip_all_dependency_lifecycle_scripts
+    prepare:
+      action: skip
+      count: 68
+      reason: Released registry archives already contain their publish-time outputs; generated-output correspondence remains a separate fail-closed review.
+    install_phase:
+      - package: "@parcel/watcher@2.5.1"
+        phase: install
+        script: node scripts/build-from-source.js
+        action: skip_and_rebuild_from_source
+        reason: The spec explicitly rebuilds watcher.node and replaces the platform payload.
+      - package: msgpackr-extract@3.0.4
+        phase: install
+        script: node-gyp-build-optional-packages
+        action: skip_optional_native_acceleration
+        reason: The selected runtime retains msgpackr's supported JavaScript fallback.
+      - package: protobufjs@7.6.2
+        phase: postinstall
+        script: node scripts/postinstall
+        action: skip_non_generating_warning
+        reason: The script only warns about an incompatible parent dependency version scheme and creates no payload.
+      - package: tree-sitter-bash@0.25.0
+        phase: install
+        script: node-gyp-build
+        action: skip_native_loader_rebuild_wasm
+        reason: Node prebuilds are omitted; the required grammar WASM remains a separate source-build gate.
+      - package: tree-sitter-powershell@0.25.10
+        phase: install
+        script: node-gyp-build
+        action: skip_native_loader_rebuild_wasm
+        reason: The selected shell parser consumes the grammar WASM, whose source build remains a separate gate.
   native_payload_sources:
     - "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
     - "@lydell/node-pty-linux-x64@1.2.0-beta.12"

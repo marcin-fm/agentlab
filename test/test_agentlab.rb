@@ -453,6 +453,16 @@ class AgentlabTest < Minitest::Test
     assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3"))
   end
 
+  def test_rejects_incomplete_opencode_lifecycle_review
+    package = Agentlab.package_named("opencode")
+    dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
+    dependencies.fetch("source_acquisition_findings").delete("lifecycle_script_review")
+
+    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+
+    assert(errors.any? { |error| error.include?("lifecycle-script review does not match") })
+  end
+
   def test_rejects_incomplete_opencode_native_review_coverage
     source_package = Agentlab.package_named("opencode")
     dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
