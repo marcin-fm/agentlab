@@ -7,6 +7,8 @@ Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
 Source0:        https://files.pythonhosted.org/packages/22/35/149f23813b0df840945c99a2789f0a749431a23a6846d4da132de4bbda40/docling_slim-%{version}.tar.gz
+# Keep the selected service-client extra API-only by omitting command-only dependencies.
+# Fedora-specific package split; upstream CLI design is https://github.com/docling-project/docling/pull/3622.
 Patch0:         docling-slim-service-client-api-only.patch
 
 BuildArch:      noarch

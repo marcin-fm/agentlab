@@ -7,6 +7,8 @@ Summary:        General-purpose utility modules from sensAI
 License:        MIT
 URL:            https://github.com/opcode81/sensAI-utils
 Source0:        https://files.pythonhosted.org/packages/8c/dd/faa2e2de71a03af3def212c70777e794dd54ad5ab87927bb5c29f85f24fc/sensai_utils-%{version}.tar.gz
+# Restore the sole runtime requirement omitted from the published 1.5.0 sdist.
+# Source-artifact-specific; upstream repository includes requirements.txt, so this was not submitted.
 Patch0:         sensai-utils-fix-missing-requirements.patch
 
 BuildArch:      noarch

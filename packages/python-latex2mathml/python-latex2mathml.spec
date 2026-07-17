@@ -11,6 +11,8 @@ URL:            https://github.com/roniemartinez/latex2mathml
 Source0:        https://files.pythonhosted.org/packages/3b/62/35bb816c5c19d4d0cde5bdfb82ebb996306243d5f94e03f201658c629960/latex2mathml-%{version}.tar.gz
 Source1:        https://raw.githubusercontent.com/roniemartinez/latex2mathml/605e02726eca5a77bb07395631fde9e0acacdbab/LICENSE#/latex2mathml-LICENSE
 Source2:        https://www.latex-project.org/lppl/lppl-1-3c.txt#/LPPL-1.3c.txt
+# Build the unchanged Python payload with a backend available in Fedora 43 and 44.
+# Fedora-specific; upstream intentionally selected uv_build in https://github.com/roniemartinez/latex2mathml/pull/574.
 Patch0:         latex2mathml-use-hatchling.patch
 
 BuildArch:      noarch

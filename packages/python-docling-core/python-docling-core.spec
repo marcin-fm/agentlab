@@ -7,7 +7,11 @@ Summary:        Core document types and serialization for Docling
 License:        MIT
 URL:            https://github.com/docling-project/docling-core
 Source0:        https://files.pythonhosted.org/packages/6c/36/96e3c029d8e018403e178e1d68b2135b63413c1a3ed4c39a56fec032d265/docling_core-%{version}.tar.gz
+# Declare the standard setuptools backend omitted from the published sdist metadata.
+# Not submitted upstream; no matching issue or pull request found as of 2026-07-17.
 Patch0:         docling-core-setuptools-backend.patch
+# Declare requests for the installed CLI file resolver's unconditional import.
+# Not submitted upstream; no matching issue or pull request found as of 2026-07-17.
 Patch1:         docling-core-add-requests.patch
 
 BuildArch:      noarch

@@ -7,6 +7,8 @@ Summary:        Reference toolkit for the DocLang document markup format
 License:        Apache-2.0
 URL:            https://github.com/doclang-project/doclang
 Source0:        https://files.pythonhosted.org/packages/f5/3a/005e4856ad8e9b9879414a4df4dbc56dc3663b96f9d8c920ef210e8931cf/doclang-%{version}.tar.gz
+# Lower only the build-tool floor to Fedora 43's compatible setuptools.
+# Fedora-specific; no matching upstream issue or pull request found as of 2026-07-17.
 Patch0:         doclang-fedora-setuptools.patch
 
 BuildArch:      noarch
