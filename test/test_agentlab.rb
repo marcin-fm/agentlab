@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "fileutils"
 require "tmpdir"
 require "yaml"
 require_relative "../scripts/lib/agentlab"
@@ -19,6 +20,35 @@ class AgentlabTest < Minitest::Test
       "license" => "MIT",
       "source_verified" => true
     }.merge(overrides)
+  end
+
+  def test_parses_jsonc_comments_and_trailing_commas
+    parsed = Agentlab.parse_jsonc(<<~JSONC, source: "fixture")
+      {
+        // Keep URLs inside strings intact.
+        "url": "https://example.test/a//b",
+        "items": [
+          "one",
+          "two",
+        ],
+        /* block comment */
+        "nested": {
+          "enabled": true,
+        },
+      }
+    JSONC
+
+    assert_equal("https://example.test/a//b", parsed.fetch("url"))
+    assert_equal(%w[one two], parsed.fetch("items"))
+    assert_equal(true, parsed.dig("nested", "enabled"))
+  end
+
+  def test_rejects_invalid_jsonc
+    error = assert_raises(Agentlab::Error) do
+      Agentlab.parse_jsonc("{ /* unfinished", source: "fixture")
+    end
+
+    assert_match(/invalid JSONC in fixture/, error.message)
   end
 
   def test_generates_fedora_node_bundled_provides
@@ -112,6 +142,17 @@ class AgentlabTest < Minitest::Test
 
       assert_equal("old first", File.read(first))
       assert_equal("old second", File.read(second))
+    end
+  end
+
+  def test_atomic_write_creates_new_file
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "new-file")
+
+      Agentlab.atomic_write(path, "content")
+
+      assert_equal("content", File.read(path))
+      assert_equal(0o644, File.stat(path).mode & 0o777)
     end
   end
 
@@ -403,5 +444,33 @@ class AgentlabTest < Minitest::Test
     assert_equal("bun-v1.3.14", manifest.dig("build_plan", "source_inputs", "zig", "release_pin"))
     assert_equal("a" * 40, manifest.dig("build_plan", "source_inputs", "zig", "commit"))
     assert(manifest.dig("build_plan", "source_inputs", "zig", "stale"))
+  end
+
+  def test_validates_opencode_review_evidence
+    package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+
+    assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3"))
+  end
+
+  def test_rejects_incomplete_opencode_native_review_coverage
+    source_package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+
+    Dir.mktmpdir do |directory|
+      %w[selected_lock_audit source_audit license_review native_review].each do |key|
+        filename = dependencies.dig("source_closure_files", key)
+        FileUtils.cp(File.join(source_package.directory, filename), File.join(directory, filename))
+      end
+      native_path = File.join(directory, dependencies.dig("source_closure_files", "native_review"))
+      native_review = Agentlab.load_yaml(native_path)
+      native_review.fetch("components").pop
+      File.write(native_path, YAML.dump(native_review))
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
+
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+
+      assert(errors.any? { |error| error.include?("source coverage does not match") })
+    end
   end
 end

@@ -146,6 +146,92 @@ packages.each do |package|
     end
   end
 
+  if dependencies && (receipt_config = dependencies["selected_lock_receipt"])
+    receipt_filename = dependencies.dig("source_closure_files", "selected_lock_audit")
+    receipt_path = receipt_filename.is_a?(String) && File.join(package.directory, receipt_filename)
+    unless receipt_path && File.file?(receipt_path)
+      errors << "#{package.name}: selected lock receipt is missing"
+    else
+      expected_sha256 = receipt_config["sha256"].to_s
+      actual_sha256 = Digest::SHA256.file(receipt_path).hexdigest
+      errors << "#{package.name}: selected lock receipt SHA-256 does not match" unless actual_sha256 == expected_sha256
+
+      begin
+        receipt = JSON.parse(File.read(receipt_path))
+        errors << "#{package.name}: selected lock receipt release does not match" unless receipt["release"].to_s == manifest_version
+        errors << "#{package.name}: selected lock receipt schema is invalid" unless receipt["schema"] == "opencode-selected-lock-audit/v1"
+        errors << "#{package.name}: selected lock receipt performed dependency resolution" unless receipt.dig("validation", "no_dependency_resolution_performed") == true
+        errors << "#{package.name}: selected lock receipt incorrectly claims source verification" unless receipt.dig("validation", "source_archives_verified") == false
+        errors << "#{package.name}: selected lock receipt incorrectly claims license verification" unless receipt.dig("validation", "licenses_verified") == false
+
+        expected_counts = {
+          "selected_workspaces" => receipt.dig("selection", "selected_workspaces"),
+          "selected_packages" => receipt.dig("selection", "selected_packages"),
+          "runtime_packages" => receipt.dig("selection", "roles", "runtime"),
+          "build_packages" => receipt.dig("selection", "roles", "build"),
+          "registry_packages" => receipt.dig("selection", "origins", "registry"),
+          "github_packages" => receipt.dig("selection", "origins", "github"),
+          "platform_excluded" => receipt.dig("selection", "platform_excluded")
+        }
+        expected_counts.each do |key, value|
+          errors << "#{package.name}: selected lock receipt #{key} does not match" unless value == receipt_config[key]
+        end
+        errors << "#{package.name}: selected lock receipt lock SHA-256 does not match" unless receipt.dig("lockfile", "sha256") == receipt_config["lock_sha256"]
+      rescue JSON::ParserError => e
+        errors << "#{package.name}: invalid selected lock receipt #{receipt_filename}: #{e.message}"
+      end
+    end
+  end
+
+  if dependencies && (source_config = dependencies["source_acquisition_receipt"])
+    source_filename = dependencies.dig("source_closure_files", "source_audit")
+    source_path = source_filename.is_a?(String) && File.join(package.directory, source_filename)
+    unless source_path && File.file?(source_path)
+      errors << "#{package.name}: source acquisition receipt is missing"
+    else
+      actual_sha256 = Digest::SHA256.file(source_path).hexdigest
+      errors << "#{package.name}: source acquisition receipt SHA-256 does not match" unless actual_sha256 == source_config["sha256"]
+
+      begin
+        receipt = JSON.parse(File.read(source_path))
+        errors << "#{package.name}: source acquisition receipt release does not match" unless receipt["release"].to_s == manifest_version
+        errors << "#{package.name}: source acquisition receipt schema is invalid" unless receipt["schema"] == "opencode-source-acquisition/v1"
+        errors << "#{package.name}: source acquisition receipt selected-lock SHA-256 does not match" unless receipt["selected_lock_receipt_sha256"] == source_config["selected_lock_receipt_sha256"]
+        errors << "#{package.name}: source acquisition receipt lacks registry integrity proof" unless receipt.dig("validation", "registry_integrity_verified") == true
+        errors << "#{package.name}: source acquisition receipt lacks archive safety proof" unless receipt.dig("validation", "archive_paths_verified") == true
+        errors << "#{package.name}: source acquisition receipt executed lifecycle scripts" unless receipt.dig("validation", "lifecycle_scripts_executed") == false
+        errors << "#{package.name}: source acquisition receipt incorrectly claims license verification" unless receipt.dig("validation", "licenses_verified") == false
+        errors << "#{package.name}: source acquisition receipt incorrectly claims native-source verification" unless receipt.dig("validation", "native_sources_verified") == false
+
+        summary = receipt.fetch("summary", {})
+        expected_counts = {
+          "selected_package_records" => summary["selected_package_records"],
+          "unique_sources" => summary["unique_sources"],
+          "registry_sources" => summary.dig("origins", "registry"),
+          "github_sources" => summary.dig("origins", "github"),
+          "sources_without_declared_license" => summary["sources_without_declared_license"],
+          "sources_without_license_files" => summary["sources_without_license_files"],
+          "sources_with_lifecycle_scripts" => summary["sources_with_lifecycle_scripts"],
+          "lifecycle_script_count" => summary["lifecycle_script_count"],
+          "sources_with_native_payloads" => summary["sources_with_native_payloads"],
+          "native_payload_count" => summary["native_payload_count"],
+          "sources_with_wasm_payloads" => summary["sources_with_wasm_payloads"],
+          "wasm_payload_count" => summary["wasm_payload_count"],
+          "sources_with_executable_payloads" => summary["sources_with_executable_payloads"],
+          "executable_payload_count" => summary["executable_payload_count"],
+          "sources_with_native_source" => summary["sources_with_native_source"]
+        }
+        expected_counts.each do |key, value|
+          errors << "#{package.name}: source acquisition receipt #{key} does not match" unless value == source_config[key]
+        end
+      rescue JSON::ParserError => e
+        errors << "#{package.name}: invalid source acquisition receipt #{source_filename}: #{e.message}"
+      end
+    end
+  end
+
+  errors.concat(Agentlab.validate_opencode_review_evidence(package, dependencies, manifest_version)) if dependencies
+
   errors.concat(Agentlab.validate_bun_build_plan(package, spec))
 
   next unless Agentlab.command_available?("rpmspec")

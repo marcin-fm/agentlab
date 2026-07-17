@@ -1,0 +1,300 @@
+schema: opencode-native-review/v1
+release: 1.18.3
+checked: "2026-07-17"
+receipts:
+  selected_lock_audit:
+    path: opencode-1.18.3-selected-lock-audit.json
+    sha256: 2edb9d0fb479330a5d5466a1ff1a1aa9d468b43352f1e20d9b2c95306238a0f0
+  source_audit:
+    path: opencode-1.18.3-source-audit.json
+    sha256: 0f067275e2513d5e2cb6658ba9b58fef42549f2fbeb650c3bd1c65fac1b8f179
+scope:
+  feature_surface: terminal_cli_without_embedded_web_ui
+  target: linux-x86_64-glibc
+  component_identities: 14
+  native_sources: 8
+  native_payloads: 22
+  wasm_sources: 7
+  wasm_payloads: 14
+status:
+  component_identities_classified: 14
+  native_sources_classified: 8
+  native_payloads_classified: 22
+  wasm_sources_classified: 7
+  wasm_payloads_classified: 14
+  retained_prebuilt_payloads: 0
+  native_sources_verified: false
+  wasm_sources_verified: false
+  reproducible_builds_verified: false
+components:
+  - package: "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
+    npm_name: "@ff-labs/fff-bin-linux-x64-gnu"
+    version: "0.9.4"
+    roles: [native]
+    payloads: { native: 1, wasm: 0 }
+    provenance:
+      source_repository: https://github.com/dmtrKovalenko/fff
+      registry_git_head: 7d7910b6ba78ea8406671eaac8cdb5eb9850d9d1
+      source_tag: v0.9.4
+      tag_object: 7d7910b6ba78ea8406671eaac8cdb5eb9850d9d1
+      peeled_commit: 7d7910b6ba78ea8406671eaac8cdb5eb9850d9d1
+      package_version_at_source: "0.0.0"
+      correspondence: The registry gitHead and release tag agree; the platform workspace keeps a placeholder package version.
+    decision:
+      action: pending_rebuild_or_supported_disable
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: Rebuild libfff_c.so from the released workspace or prove the upstream system-ripgrep fallback preserves the selected CLI behavior.
+  - package: "@lydell/node-pty-linux-x64@1.2.0-beta.12"
+    npm_name: "@lydell/node-pty-linux-x64"
+    version: "1.2.0-beta.12"
+    roles: [native]
+    payloads: { native: 1, wasm: 0 }
+    provenance:
+      source_repository: https://github.com/lydell/node-pty
+      registry_git_head: 9ef881c5f15e1a56531e4e687c4984ca74e7f70b
+      source_tag: v1.2.0-beta.12
+      tag_object: 1d8def2f44e573f1f9e8faca013a2e25662d1994
+      peeled_commit: 9ef881c5f15e1a56531e4e687c4984ca74e7f70b
+      package_version_at_source: "1.2.0-beta.12"
+      correspondence: The annotated release tag peels to the registry gitHead.
+    decision:
+      action: omit
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: This Node-only platform leaf is not used by the selected Bun terminal runtime.
+  - package: "@msgpackr-extract/msgpackr-extract-linux-x64@3.0.4"
+    npm_name: "@msgpackr-extract/msgpackr-extract-linux-x64"
+    version: "3.0.4"
+    roles: [native]
+    payloads: { native: 4, wasm: 0 }
+    provenance:
+      source_repository: https://github.com/kriszyp/msgpackr-extract
+      registry_git_head: 71def7bd969e5c88d2c918e0d81ee2ba3155d19c
+      source_tag: v3.0.4
+      tag_object: fff769f9b841342c62720489de7a72727f18d1db
+      peeled_commit: fff769f9b841342c62720489de7a72727f18d1db
+      package_version_at_source: "3.0.4"
+      correspondence: The later registry gitHead changes publication metadata and optional platform declarations, not native source.
+    decision:
+      action: omit
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: The addon is optional acceleration; retain the supported JavaScript fallback.
+  - package: "@opentui/core-linux-x64@0.4.3"
+    npm_name: "@opentui/core-linux-x64"
+    version: "0.4.3"
+    roles: [native]
+    payloads: { native: 1, wasm: 0 }
+    provenance:
+      source_repository: https://github.com/anomalyco/opentui
+      registry_git_head: 5803b2cfa2942c45a3aedbb3601754e27f2cdc68
+      source_tag: v0.4.3
+      tag_object: 0ce8e531e5da283404f305e2daff024c550a4ee8
+      peeled_commit: 5803b2cfa2942c45a3aedbb3601754e27f2cdc68
+      package_version_at_source: "0.4.3"
+      correspondence: The annotated release tag peels to the registry gitHead for both core packages.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: The selected terminal runtime requires libopentui.so built from the exact released source.
+  - package: "@parcel/watcher-linux-x64-glibc@2.5.1"
+    npm_name: "@parcel/watcher-linux-x64-glibc"
+    version: "2.5.1"
+    roles: [native]
+    payloads: { native: 1, wasm: 0 }
+    provenance:
+      source_repository: https://github.com/parcel-bundler/watcher
+      registry_git_head: 119f1ff04bb41c2369929e37274900c61b0a9f49
+      source_tag: v2.5.1
+      tag_object: 664695dbb2488d53f782c3e2b8791c4c114731fb
+      peeled_commit: 664695dbb2488d53f782c3e2b8791c4c114731fb
+      package_version_at_source: "2.5.1"
+      correspondence: The registry gitHead differs only by a Windows C++17 binding option; Linux source is unchanged.
+    decision:
+      action: pending_rebuild_or_supported_disable
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: Rebuild watcher.node or prove the upstream file-watcher disable switch preserves the selected CLI behavior.
+  - package: "bun-pty@0.4.8"
+    npm_name: bun-pty
+    version: "0.4.8"
+    roles: [native]
+    payloads: { native: 5, wasm: 0 }
+    provenance:
+      source_repository: https://github.com/sursaone/bun-pty
+      registry_git_head: 41dd5b887f3f47d7c307fd93f828a75dbee97d5a
+      source_tag: v0.4.8
+      tag_object: 41dd5b887f3f47d7c307fd93f828a75dbee97d5a
+      peeled_commit: 41dd5b887f3f47d7c307fd93f828a75dbee97d5a
+      package_version_at_source: "0.4.8"
+      correspondence: The registry gitHead and release tag agree.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: Build the Linux x86_64 Rust shared library from source and discard all published cross-platform outputs.
+  - package: "clipboardy@4.0.0"
+    npm_name: clipboardy
+    version: "4.0.0"
+    roles: [native]
+    payloads: { native: 3, wasm: 0 }
+    provenance:
+      source_repository: https://github.com/sindresorhus/clipboardy
+      registry_git_head: 06110f3e1a0cbf66dc86c87cf87d28fba772b7a1
+      source_tag: v4.0.0
+      tag_object: 582aaadb12d5c31c0c61b1240736e7db356ded55
+      peeled_commit: 582aaadb12d5c31c0c61b1240736e7db356ded55
+      package_version_at_source: "4.0.0"
+      correspondence: The release tag and registry gitHead have identical tracked content.
+    decision:
+      action: replace_with_system
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: Remove the bundled xsel and Windows executables; use Fedora xsel through Clipboardy's normal command path.
+  - package: "tree-sitter-bash@0.25.0"
+    npm_name: tree-sitter-bash
+    version: "0.25.0"
+    roles: [native, wasm]
+    payloads: { native: 6, wasm: 1 }
+    provenance:
+      source_repository: https://github.com/tree-sitter/tree-sitter-bash
+      registry_git_head: 20f885f1f510eb458412d39ab920b5ace98f2f9a
+      source_tag: v0.25.0
+      tag_object: 56b54c61fb48bce0c63e3dfa2240b5d274384763
+      peeled_commit: 56b54c61fb48bce0c63e3dfa2240b5d274384763
+      package_version_at_source: "0.25.0"
+      correspondence: Use the exact registry gitHead; its generated parser metadata differs from the release tag.
+    decision:
+      action: omit_native_rebuild_wasm
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: Omit all Node prebuilds and rebuild the functional grammar WASM from the included C sources.
+  - package: "@opentui/core@0.4.3"
+    npm_name: "@opentui/core"
+    version: "0.4.3"
+    roles: [wasm]
+    payloads: { native: 0, wasm: 5 }
+    provenance:
+      source_repository: https://github.com/anomalyco/opentui
+      registry_git_head: 5803b2cfa2942c45a3aedbb3601754e27f2cdc68
+      source_tag: v0.4.3
+      tag_object: 0ce8e531e5da283404f305e2daff024c550a4ee8
+      peeled_commit: 5803b2cfa2942c45a3aedbb3601754e27f2cdc68
+      package_version_at_source: "0.4.3"
+      correspondence: The package source is exact, but the five grammar repositories and revisions remain to be pinned.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: false
+      reproducible_build_verified: false
+      reason: Pin corresponding JavaScript, Markdown, Markdown-inline, TypeScript, and Zig grammar sources and rebuild every WASM.
+  - package: "@silvia-odwyer/photon-node@0.3.4"
+    npm_name: "@silvia-odwyer/photon-node"
+    version: "0.3.4"
+    roles: [wasm]
+    payloads: { native: 0, wasm: 1 }
+    provenance:
+      source_repository: https://github.com/silvia-odwyer/photon
+      registry_git_head: 685f5b155b36c5611c08ca678bb78ddbab3edbac
+      source_tag: null
+      tag_object: null
+      peeled_commit: 685f5b155b36c5611c08ca678bb78ddbab3edbac
+      package_version_at_source: null
+      correspondence: npm records an exact source commit, but upstream has no matching v0.3.4 tag or release package manifest at that commit.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: false
+      reproducible_build_verified: false
+      reason: Establish the exact Rust/wasm-bindgen release boundary and reproduce photon_rs_bg.wasm.
+  - package: "shiki@4.2.0"
+    npm_name: shiki
+    version: "4.2.0"
+    roles: [wasm]
+    payloads: { native: 0, wasm: 1 }
+    provenance:
+      source_repository: https://github.com/shikijs/shiki
+      registry_git_head: null
+      source_tag: v4.2.0
+      tag_object: eaa5cab56b535370c1b7fc1c27d6d01bad05666b
+      peeled_commit: 1d56dae84801bad3a48dc7104437fbc21819ee4c
+      package_version_at_source: "4.2.0"
+      correspondence: The annotated release tag identifies Shiki exactly; the subordinate Oniguruma source for onig.wasm remains unpinned.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: false
+      reproducible_build_verified: false
+      reason: Pin the corresponding Oniguruma source and reproduce onig.wasm.
+  - package: "tree-sitter-powershell@0.25.10"
+    npm_name: tree-sitter-powershell
+    version: "0.25.10"
+    roles: [wasm]
+    payloads: { native: 0, wasm: 1 }
+    provenance:
+      source_repository: https://github.com/airbus-cert/tree-sitter-powershell
+      registry_git_head: 9d1509db4b486aba3f790692e837b730c665f603
+      source_tag: v0.25.10
+      tag_object: 7212f47716ced384ac012b2cc428fd9f52f7c5d4
+      peeled_commit: 7212f47716ced384ac012b2cc428fd9f52f7c5d4
+      package_version_at_source: "0.25.10"
+      correspondence: The registry gitHead differs from the tag only in Cargo and npm metadata; parser sources are unchanged.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: Rebuild the grammar WASM from the included parser and scanner sources.
+  - package: "undici@5.29.0"
+    npm_name: undici
+    version: "5.29.0"
+    roles: [wasm]
+    payloads: { native: 0, wasm: 2 }
+    provenance:
+      source_repository: https://github.com/nodejs/undici
+      registry_git_head: 9528f6853a72a637823e863f1dd12ec47a3fc9e7
+      source_tag: v5.29.0
+      tag_object: 9528f6853a72a637823e863f1dd12ec47a3fc9e7
+      peeled_commit: 9528f6853a72a637823e863f1dd12ec47a3fc9e7
+      package_version_at_source: "5.29.0"
+      correspondence: The registry gitHead and release tag agree; the subordinate llhttp source and build inputs remain to be pinned.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: false
+      reproducible_build_verified: false
+      reason: Pin corresponding llhttp sources and reproduce both normal and SIMD WASM outputs.
+  - package: "web-tree-sitter@0.25.10"
+    npm_name: web-tree-sitter
+    version: "0.25.10"
+    roles: [wasm]
+    payloads: { native: 0, wasm: 3 }
+    provenance:
+      source_repository: https://github.com/tree-sitter/tree-sitter
+      registry_git_head: da6fe9beb4f7f67beb75914ca8e0d48ae48d6406
+      source_tag: v0.25.10
+      tag_object: 208c6cac1453315e979f05ab34b6d4f7cd0340be
+      peeled_commit: da6fe9beb4f7f67beb75914ca8e0d48ae48d6406
+      package_version_at_source: "0.25.10"
+      correspondence: The annotated release tag peels to the registry gitHead and the npm source contains the C runtime sources.
+    decision:
+      action: rebuild
+      retain_prebuilt_payloads: false
+      source_mapping_verified: true
+      reproducible_build_verified: false
+      reason: Rebuild the runtime WASM; omit only copies proven unused or byte-identical by the final import trace.
+validation:
+  exact_native_wasm_source_coverage: true
+  registry_git_heads_checked: true
+  local_git_refs_checked: true
+  raw_source_audit_unchanged: true

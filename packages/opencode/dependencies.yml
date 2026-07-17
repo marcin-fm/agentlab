@@ -57,12 +57,123 @@ current_sensitive_versions:
   tree-sitter-bash: 0.25.0
   tree-sitter-powershell: 0.25.10
   web-tree-sitter: 0.25.10
+selected_lock_audit:
+  schema: opencode-selected-lock-audit/v1
+  target:
+    os: linux
+    cpu: x64
+    libc: glibc
+  feature_surface:
+    terminal_cli: true
+    embedded_web_ui: false
+    upstream_build_flag: --skip-embed-web-ui
+  runtime_workspaces:
+    - packages/opencode
+  build_workspaces:
+    - packages/script
+  build_dependencies: {}
+  git_sources: {}
+  expected_workspaces:
+    - packages/codemode
+    - packages/core
+    - packages/effect-drizzle-sqlite
+    - packages/effect-sqlite-node
+    - packages/llm
+    - packages/opencode
+    - packages/plugin
+    - packages/protocol
+    - packages/schema
+    - packages/script
+    - packages/sdk/js
+    - packages/server
+    - packages/tui
+    - packages/ui
+  models_snapshot:
+    required: true
+    source_url: https://models.dev/api.json
+    immutable_source_recorded: false
+    supplied_to_audit: false
+selected_lock_receipt:
+  sha256: 2edb9d0fb479330a5d5466a1ff1a1aa9d468b43352f1e20d9b2c95306238a0f0
+  lock_sha256: 307b9ca4c74b7d5786ce24b6536ec6335639151cc5a3ad971507016341a66697
+  selected_workspaces: 14
+  selected_packages: 1014
+  runtime_packages: 1014
+  build_packages: 0
+  registry_packages: 1014
+  github_packages: 0
+  platform_excluded: 36
+source_acquisition_receipt:
+  sha256: 0f067275e2513d5e2cb6658ba9b58fef42549f2fbeb650c3bd1c65fac1b8f179
+  selected_lock_receipt_sha256: 2edb9d0fb479330a5d5466a1ff1a1aa9d468b43352f1e20d9b2c95306238a0f0
+  selected_package_records: 1014
+  unique_sources: 826
+  registry_sources: 826
+  github_sources: 0
+  sources_without_declared_license: 3
+  sources_without_license_files: 28
+  sources_with_lifecycle_scripts: 73
+  lifecycle_script_count: 73
+  sources_with_native_payloads: 8
+  native_payload_count: 22
+  sources_with_wasm_payloads: 7
+  wasm_payload_count: 14
+  sources_with_executable_payloads: 4
+  executable_payload_count: 9
+  sources_with_native_source: 7
+source_acquisition_findings:
+  raw_missing_declared_license:
+    - "@openauthjs/openauth@0.0.0-20250322224806"
+    - poe-oauth@0.0.8
+    - socket.io-client@4.8.3
+  license_review:
+    path: license-review.yml
+    absent_declarations_resolved: 3
+    package_local_text_gaps_classified: 28
+    final_payload_license_set_verified: false
+  native_review:
+    path: native-review.yml
+    component_identities_classified: 14
+    native_sources_classified: 8
+    native_payloads_classified: 22
+    wasm_sources_classified: 7
+    wasm_payloads_classified: 14
+    retained_prebuilt_payloads: 0
+    native_sources_verified: false
+    wasm_sources_verified: false
+  install_phase_scripts:
+    - "@parcel/watcher@2.5.1"
+    - msgpackr-extract@3.0.4
+    - protobufjs@7.6.2
+    - tree-sitter-bash@0.25.0
+    - tree-sitter-powershell@0.25.10
+  native_payload_sources:
+    - "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
+    - "@lydell/node-pty-linux-x64@1.2.0-beta.12"
+    - "@msgpackr-extract/msgpackr-extract-linux-x64@3.0.4"
+    - "@opentui/core-linux-x64@0.4.3"
+    - "@parcel/watcher-linux-x64-glibc@2.5.1"
+    - bun-pty@0.4.8
+    - clipboardy@4.0.0
+    - tree-sitter-bash@0.25.0
+  wasm_sources:
+    - "@opentui/core@0.4.3"
+    - "@silvia-odwyer/photon-node@0.3.4"
+    - shiki@4.2.0
+    - tree-sitter-bash@0.25.0
+    - tree-sitter-powershell@0.25.10
+    - undici@5.29.0
+    - web-tree-sitter@0.25.10
 source_closure_files:
   production_build_archive: opencode-1.18.3-nm-prod-build.tar.zst
   test_archive: opencode-1.18.3-nm-dev-test.tar.zst
   closure_manifest: opencode-1.18.3-closure.json
   bundled_licenses: opencode-1.18.3-bundled-licenses.txt
   native_manifest: opencode-1.18.3-native.json
+  selected_lock_audit: opencode-1.18.3-selected-lock-audit.json
+  source_audit: opencode-1.18.3-source-audit.json
+  license_review: license-review.yml
+  native_review: native-review.yml
 gates:
   - Recompute the complete closure and all counts for target_release before enabling.
   - Parse the tagged release bun.lock without resolving new versions.

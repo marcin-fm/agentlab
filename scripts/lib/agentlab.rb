@@ -59,6 +59,117 @@ module Agentlab
     raise Error, "invalid YAML in #{path}: #{e.message}"
   end
 
+  def parse_jsonc(content, source: "JSONC input")
+    without_comments = +""
+    index = 0
+    in_string = false
+    escaped = false
+    line_comment = false
+    block_comment = false
+
+    while index < content.length
+      character = content[index]
+      following = content[index + 1]
+
+      if line_comment
+        if character == "\n"
+          line_comment = false
+          without_comments << character
+        end
+        index += 1
+        next
+      end
+
+      if block_comment
+        if character == "*" && following == "/"
+          block_comment = false
+          index += 2
+        else
+          without_comments << "\n" if character == "\n"
+          index += 1
+        end
+        next
+      end
+
+      if in_string
+        without_comments << character
+        if escaped
+          escaped = false
+        elsif character == "\\"
+          escaped = true
+        elsif character == '"'
+          in_string = false
+        end
+        index += 1
+        next
+      end
+
+      if character == '"'
+        in_string = true
+        without_comments << character
+        index += 1
+      elsif character == "/" && following == "/"
+        line_comment = true
+        index += 2
+      elsif character == "/" && following == "*"
+        block_comment = true
+        index += 2
+      else
+        without_comments << character
+        index += 1
+      end
+    end
+
+    raise Error, "invalid JSONC in #{source}: unterminated block comment" if block_comment
+
+    without_trailing_commas = +""
+    index = 0
+    in_string = false
+    escaped = false
+    while index < without_comments.length
+      character = without_comments[index]
+      if in_string
+        without_trailing_commas << character
+        if escaped
+          escaped = false
+        elsif character == "\\"
+          escaped = true
+        elsif character == '"'
+          in_string = false
+        end
+        index += 1
+        next
+      end
+
+      if character == '"'
+        in_string = true
+        without_trailing_commas << character
+        index += 1
+        next
+      end
+
+      if character == ","
+        following_index = index + 1
+        following_index += 1 while without_comments[following_index]&.match?(/\s/)
+        if ["]", "}"].include?(without_comments[following_index])
+          index += 1
+          next
+        end
+      end
+
+      without_trailing_commas << character
+      index += 1
+    end
+
+    JSON.parse(without_trailing_commas)
+  rescue JSON::ParserError => e
+    raise Error, "invalid JSONC in #{source}: #{e.message}"
+  end
+
+  def load_jsonc(path)
+    parse_jsonc(File.read(path), source: path)
+  end
+
   def config(path = DEFAULT_CONFIG)
     load_yaml(path)
   end
@@ -503,6 +614,161 @@ module Agentlab
     end
   end
 
+  def validate_opencode_review_evidence(package, dependencies, release)
+    return [] unless package.name == "opencode"
+
+    errors = []
+    prefix = "#{package.name}:"
+    source_files = dependencies.fetch("source_closure_files", {})
+    selected_filename = source_files["selected_lock_audit"]
+    source_filename = source_files["source_audit"]
+    selected_path = selected_filename.is_a?(String) && File.join(package.directory, selected_filename)
+    source_path = source_filename.is_a?(String) && File.join(package.directory, source_filename)
+    unless selected_path && File.file?(selected_path) && source_path && File.file?(source_path)
+      errors << "#{prefix} review evidence requires selected-lock and source receipts"
+      return errors
+    end
+
+    source_audit = JSON.parse(File.read(source_path))
+    sources = Array(source_audit["sources"])
+    validate_receipts = lambda do |label, review|
+      {
+        "selected_lock_audit" => [selected_filename, selected_path],
+        "source_audit" => [source_filename, source_path]
+      }.each do |key, (filename, path)|
+        errors << "#{prefix} #{label} #{key} path does not match" unless review.dig("receipts", key, "path") == filename
+        expected_sha256 = Digest::SHA256.file(path).hexdigest
+        errors << "#{prefix} #{label} #{key} SHA-256 does not match" unless review.dig("receipts", key, "sha256") == expected_sha256
+      end
+    end
+
+    license_filename = source_files["license_review"]
+    license_finding = dependencies.dig("source_acquisition_findings", "license_review")
+    errors << "#{prefix} license review path linkage is invalid" unless license_finding.is_a?(Hash) && license_finding["path"] == license_filename
+    license_path = license_filename.is_a?(String) && File.join(package.directory, license_filename)
+    if license_path && File.file?(license_path)
+      license_review = load_yaml(license_path)
+      errors << "#{prefix} license review schema is invalid" unless license_review["schema"] == "opencode-license-review/v1"
+      errors << "#{prefix} license review release does not match" unless license_review["release"].to_s == release
+      validate_receipts.call("license review", license_review)
+
+      missing_declarations = sources.filter_map do |source|
+        next unless source["declared_license"].to_s.empty?
+
+        "#{source.fetch('npm_name')}@#{source.fetch('version')}"
+      end.sort
+      resolved_declarations = Array(license_review["declaration_resolutions"]).map { |entry| entry["package"] }.sort
+      errors << "#{prefix} license review declaration coverage does not match source audit" unless resolved_declarations == missing_declarations
+      errors << "#{prefix} license review declaration count does not match" unless license_review.dig("status", "absent_declarations_resolved") == missing_declarations.length
+      errors << "#{prefix} dependency license declaration count does not match" unless license_finding["absent_declarations_resolved"] == missing_declarations.length
+
+      text_groups = %w[software content].flat_map do |kind|
+        license_review.dig("missing_package_local_texts", kind).to_h.values
+      end
+      reviewed_text_packages = text_groups.flat_map { |entry| Array(entry["packages"]) }.sort
+      reviewed_text_count = text_groups.sum { |entry| entry["count"].to_i }
+      missing_text_packages = sources.filter_map do |source|
+        next unless Array(source["license_files"]).empty?
+
+        "#{source.fetch('npm_name')}@#{source.fetch('version')}"
+      end.sort
+      errors << "#{prefix} license review text coverage does not match source audit" unless reviewed_text_packages == missing_text_packages
+      errors << "#{prefix} license review text counts are internally inconsistent" unless reviewed_text_count == reviewed_text_packages.length
+      errors << "#{prefix} license review text count does not match" unless license_review.dig("status", "package_local_text_gaps_classified") == missing_text_packages.length
+      errors << "#{prefix} dependency license text count does not match" unless license_finding["package_local_text_gaps_classified"] == missing_text_packages.length
+      %w[raw_source_audit_unchanged_by_resolution missing_text_count_matches_source_audit excluded_fsl_source_absent_from_selected_receipt].each do |flag|
+        errors << "#{prefix} license review validation flag #{flag} is not true" unless license_review.dig("validation", flag) == true
+      end
+    else
+      errors << "#{prefix} license review is missing"
+    end
+
+    native_filename = source_files["native_review"]
+    native_finding = dependencies.dig("source_acquisition_findings", "native_review")
+    errors << "#{prefix} native review path linkage is invalid" unless native_finding.is_a?(Hash) && native_finding["path"] == native_filename
+    native_path = native_filename.is_a?(String) && File.join(package.directory, native_filename)
+    if native_path && File.file?(native_path)
+      native_review = load_yaml(native_path)
+      errors << "#{prefix} native review schema is invalid" unless native_review["schema"] == "opencode-native-review/v1"
+      errors << "#{prefix} native review release does not match" unless native_review["release"].to_s == release
+      validate_receipts.call("native review", native_review)
+
+      native_sources = sources.select { |source| Array(source["native_payloads"]).any? }
+      wasm_sources = sources.select { |source| Array(source["wasm_payloads"]).any? }
+      reviewed_sources = (native_sources + wasm_sources).uniq { |source| [source["npm_name"], source["version"]] }
+      expected = reviewed_sources.to_h do |source|
+        identity = "#{source.fetch('npm_name')}@#{source.fetch('version')}"
+        roles = []
+        roles << "native" if Array(source["native_payloads"]).any?
+        roles << "wasm" if Array(source["wasm_payloads"]).any?
+        [identity, {
+          "roles" => roles,
+          "native" => Array(source["native_payloads"]).length,
+          "wasm" => Array(source["wasm_payloads"]).length
+        }]
+      end
+      components = Array(native_review["components"])
+      component_names = components.map { |component| component["package"] }
+      errors << "#{prefix} native review contains duplicate components" unless component_names.uniq.length == component_names.length
+      errors << "#{prefix} native review source coverage does not match source audit" unless component_names.sort == expected.keys.sort
+
+      allowed_actions = %w[omit replace_with_system rebuild omit_native_rebuild_wasm pending_rebuild_or_supported_disable]
+      components.each do |component|
+        identity = component["package"]
+        expected_component = expected[identity]
+        next unless expected_component
+
+        errors << "#{prefix} native review roles do not match for #{identity}" unless Array(component["roles"]) == expected_component["roles"]
+        errors << "#{prefix} native payload count does not match for #{identity}" unless component.dig("payloads", "native") == expected_component["native"]
+        errors << "#{prefix} WASM payload count does not match for #{identity}" unless component.dig("payloads", "wasm") == expected_component["wasm"]
+        errors << "#{prefix} native review action is invalid for #{identity}" unless allowed_actions.include?(component.dig("decision", "action"))
+        errors << "#{prefix} native review retains a prebuilt payload for #{identity}" unless component.dig("decision", "retain_prebuilt_payloads") == false
+        errors << "#{prefix} native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
+        errors << "#{prefix} native review reproducibility state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "reproducible_build_verified"))
+        errors << "#{prefix} native review source repository is missing for #{identity}" if component.dig("provenance", "source_repository").to_s.empty?
+        %w[registry_git_head tag_object peeled_commit].each do |field|
+          value = component.dig("provenance", field)
+          errors << "#{prefix} native review #{field} is invalid for #{identity}" unless value.nil? || value.to_s.match?(/\A[0-9a-f]{40}\z/)
+        end
+      end
+
+      expected_counts = {
+        "component_identities" => reviewed_sources.length,
+        "native_sources" => native_sources.length,
+        "native_payloads" => native_sources.sum { |source| Array(source["native_payloads"]).length },
+        "wasm_sources" => wasm_sources.length,
+        "wasm_payloads" => wasm_sources.sum { |source| Array(source["wasm_payloads"]).length }
+      }
+      expected_counts.each do |key, value|
+        errors << "#{prefix} native review scope #{key} does not match" unless native_review.dig("scope", key) == value
+      end
+      status_counts = {
+        "component_identities_classified" => expected_counts["component_identities"],
+        "native_sources_classified" => expected_counts["native_sources"],
+        "native_payloads_classified" => expected_counts["native_payloads"],
+        "wasm_sources_classified" => expected_counts["wasm_sources"],
+        "wasm_payloads_classified" => expected_counts["wasm_payloads"],
+        "retained_prebuilt_payloads" => 0
+      }
+      status_counts.each do |key, value|
+        errors << "#{prefix} native review status #{key} does not match" unless native_review.dig("status", key) == value
+        errors << "#{prefix} dependency native review #{key} does not match" unless native_finding[key] == value
+      end
+      %w[native_sources_verified wasm_sources_verified reproducible_builds_verified].each do |flag|
+        errors << "#{prefix} native review must remain fail-closed for #{flag}" unless native_review.dig("status", flag) == false
+      end
+      %w[exact_native_wasm_source_coverage registry_git_heads_checked local_git_refs_checked raw_source_audit_unchanged].each do |flag|
+        errors << "#{prefix} native review validation flag #{flag} is not true" unless native_review.dig("validation", flag) == true
+      end
+    else
+      errors << "#{prefix} native review is missing"
+    end
+
+    errors
+  rescue JSON::ParserError, Agentlab::Error, KeyError => e
+    ["#{package.name}: invalid OpenCode review evidence: #{e.message}"]
+  end
+
   def updated_dependency_audit(package, version)
     path = File.join(package.directory, "dependencies.yml")
     return unless File.file?(path)
@@ -541,7 +807,7 @@ module Agentlab
   end
 
   def atomic_write(path, content)
-    mode = File.stat(path).mode & 0o777
+    mode = File.exist?(path) ? File.stat(path).mode & 0o777 : 0o644
     Tempfile.create([".agentlab-", ".tmp"], File.dirname(path)) do |file|
       file.binmode
       file.write(content)
