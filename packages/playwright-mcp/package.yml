@@ -4,10 +4,9 @@ blockers:
   - The generated Playwright runtime requires the full pinned monorepo closure: 679 integrity-pinned registry tarballs plus a separate stable-test-runner lock.
   - Playwright exposes no package or MCP-only build target; the normal monorepo build cannot skip the separate stable-test-runner npm ci.
   - Exact source-built esbuild 0.28.1 is feasible through the upstream and Fedora packaging pattern, but Fedora 43/44 provide only 0.24.2/0.27.2 and no exact compatibility provider exists yet.
-  - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers; Fedora 43/44 provide neither and their 411/209-package Cargo locks are unaudited.
+  - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers. Their Linux release graphs require 247/115 registry crates; Fedora 43/44 lack 73-74/12 crate names and have substantial additional version drift.
   - Bundled modules, Vite outputs, copied xdg-open, generated browser metadata, and aggregate SPDX accounting remain unresolved.
   - The audited immutable closure has not been hosted for offline COPR SCM builds.
-  - RPM Fusion updates duplicate availability has not been conclusively checked.
 source_policy:
   npm_package: "@playwright/mcp"
   source_correspondence: All seven npm files byte-match tag v0.0.78. Playwright alpha tarballs identify source commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
@@ -37,10 +36,10 @@ upstream:
   source_tag_archive_sha256: 9f4b1c550c24aaf202b422c568c105a6c29e4c3d10735cc317c56aa650cda3d7
   license: Apache-2.0
 duplicate_check:
-  checked: "2026-07-16"
+  checked: "2026-07-17"
   fedora_43_44: absent
   rpm_fusion_release_43_44: absent
-  rpm_fusion_updates_43_44: pending
+  rpm_fusion_updates_43_44: absent
 copr:
   enabled: false
   subdir: packages/playwright-mcp

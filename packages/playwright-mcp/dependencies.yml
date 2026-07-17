@@ -47,6 +47,19 @@ build_closure:
     npm_package_sha256: 226cd0767228ad5c955d5e3e551ff3031dceb24701a2656f4832b1acf9063684
     source_build_path: Rust N-API binding plus generated JavaScript glue
     cargo_lock_packages: 411
+    linux_release_graph:
+      registry_crates: 247
+      workspace_crates: 45
+      fedora_43:
+        exact_locked_versions: 144
+        same_name_version_drift: 30
+        absent_crate_names: 73
+      fedora_44:
+        exact_locked_versions: 143
+        same_name_version_drift: 30
+        absent_crate_names: 74
+      provider_difference: Fedora 44 additionally lacks append-only-vec; the other 72 absent names are common to both releases.
+      dominant_missing_groups: 34 Oxc crates, 5 N-API crates, 5 Rolldown support crates, and 2 mimalloc crates
     fedora_43_44_provider: absent
   lightningcss:
     version: 1.32.0
@@ -54,6 +67,26 @@ build_closure:
     npm_package_sha256: c83e81ea213c9e419c5877460a6788f0d0931d58a4aa9fea92fac1a99a1550e8
     source_build_path: Rust N-API binding plus published JavaScript loader
     cargo_lock_packages: 209
+    linux_release_graph:
+      registry_crates: 115
+      workspace_crates: 7
+      fedora_43_44:
+        exact_locked_versions: 41
+        same_name_version_drift: 62
+        absent_crate_names: 12
+      absent_names:
+        - browserslist-data
+        - browserslist-rs
+        - napi
+        - napi-build
+        - napi-derive
+        - napi-derive-backend
+        - napi-sys
+        - parcel_sourcemap
+        - serde-content
+        - serde-detach
+        - simd-abstraction
+        - vlq
     fedora_43_44_provider: absent
   excluded_platform_edges:
     fsevents: Darwin-only

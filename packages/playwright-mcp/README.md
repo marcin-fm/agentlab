@@ -48,12 +48,16 @@ prebuilt binary is no longer an architectural blocker.
 
 The remaining Linux native build edges are Vite's required Rolldown `1.1.3`
 and Lightning CSS `1.32.0` bindings. Both have exact released source tags and
-N-API source-build paths, but Fedora 43/44 provide neither. Their pinned Cargo
-locks contain 411 and 209 packages respectively, so their reusable source
-closures must be reviewed before a Playwright build is attempted. The optional
-DuckDB binding is referenced only by test/result-database utilities and is not
-part of the normal generated-runtime build. Darwin-only `fsevents` is excluded,
-and Playwright's browser-package install scripts honor
+N-API source-build paths, but Fedora 43/44 provide neither. Target-filtered
+release graphs are smaller than the complete locks but still substantial:
+Rolldown requires 247 registry crates and 45 workspace crates, with 73 crate
+names absent on Fedora 43 and 74 absent on Fedora 44; Lightning CSS requires
+115 registry crates and 7 workspace crates, with 12 crate names absent on both
+releases. Existing providers for another 30 Rolldown and 62 Lightning CSS crate
+names are at different versions and still require compatibility review. The
+optional DuckDB binding is referenced only by test/result-database utilities
+and is not part of the normal generated-runtime build. Darwin-only `fsevents`
+is excluded, and Playwright's browser-package install scripts honor
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
 
 The published payloads contain 7 MCP files, 62 Playwright files, and 104

@@ -55,6 +55,10 @@ build_mapping:
     source_tag_archive_sha256: 343c933d7826428704d75700e32ff1bfa75c82d89f7383471e979d6d4df520e8
     npm_package_sha256: 226cd0767228ad5c955d5e3e551ff3031dceb24701a2656f4832b1acf9063684
     cargo_lock_packages: 411
+    linux_release_registry_crates: 247
+    linux_release_workspace_crates: 45
+    fedora_43_exact_same_name_absent: 144/30/73
+    fedora_44_exact_same_name_absent: 143/30/74
     source_build_supported: true
     exact_fedora_provider: false
   lightningcss:
@@ -62,6 +66,9 @@ build_mapping:
     source_tag_archive_sha256: ca67b9ba532d439f5f91d23debfc2543d6decac130ee88bc4c66202fc7173ad9
     npm_package_sha256: c83e81ea213c9e419c5877460a6788f0d0931d58a4aa9fea92fac1a99a1550e8
     cargo_lock_packages: 209
+    linux_release_registry_crates: 115
+    linux_release_workspace_crates: 7
+    fedora_43_44_exact_same_name_absent: 41/62/12
     source_build_supported: true
     exact_fedora_provider: false
   lifecycle_edges:
@@ -85,6 +92,7 @@ evidence:
   generated_assets_proven: false
   native_payload_inventory: no native, WASM, shared-library, or executable payloads in the three npm tarballs
   exact_wrapper_system_chromium_mcp_smoke_f44_passed: true
+  rpm_fusion_updates_duplicate_check_f43_f44: absent
   packaged_rpm_system_chromium_mcp_smoke_f43_f44_passed: false
   offline_build_passed: false
   rpm_produced: false
