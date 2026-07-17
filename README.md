@@ -65,7 +65,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | python-overrides | 7.7.0 | enabled | Clean F43/F44 builds and 67 tests passed |
 | python-mslex | 1.3.0 | enabled | Clean F43/F44 builds and tests passed; expected missing-manpage warning only |
 | python-oslex | 2.0.0 | enabled | Clean F43/F44 builds passed using the local mslex provider |
-| rust-unidiff0.4 | 0.4.0 | enabled | Reusable Headroom Rust dependency; clean F43/F44 builds, tests, and rpmlint passed |
+| rust-unidiff0.4 | 0.4.0 | enabled | Stable-only Headroom Rust dependency; Rawhide provides the exact crate |
 | python-headroom-ai | 0.31.0 | blocked | Custom MCP-minimal draft requires re-scope around upstream 0.32.0 features, aggregate Rust licensing, and fresh F43/F44 proof |
 
 Blocked specs are reviewable drafts. Automation will not create a COPR package or submit a build until `package.yml` has both `status: enabled` and `copr.enabled: true`.

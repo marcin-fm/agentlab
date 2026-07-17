@@ -7,7 +7,7 @@
 
 Name:           rust-unidiff0.4
 Version:        0.4.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Unified diff parsing and metadata extraction library for Rust
 
 License:        MIT
@@ -91,6 +91,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.4.0-0.3
+- Omit Rawhide builds because Fedora provides the exact unidiff 0.4 crate.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.4.0-0.2
 - Use the canonical static crates.io source URL.
 

@@ -23,5 +23,12 @@ upstream:
   source_sha256: e3ae26d2e6582eb32eff85cffebf74d20b6510e8b558bbac3a23b48965cf952f
 copr:
   enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+  omitted_target_families:
+    rawhide: Fedora Rawhide provides rust-unidiff-devel 0.4.0 with crate(unidiff) = 0.4.0.
   subdir: packages/rust-unidiff0.4
   spec: rust-unidiff0.4.spec

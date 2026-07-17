@@ -47,9 +47,38 @@ packages.each do |package|
     end
   end
 
+  omitted_target_families = package.data.dig("copr", "omitted_target_families")
+  omitted_families = []
+  if omitted_target_families
+    unless omitted_target_families.is_a?(Hash) && omitted_target_families.any?
+      errors << "#{package.name}: copr.omitted_target_families must be a nonempty mapping"
+    else
+      omitted_families = omitted_target_families.keys
+      unknown_families = omitted_families - %w[stable rawhide]
+      errors << "#{package.name}: copr.omitted_target_families contains unknown families: #{unknown_families.join(', ')}" if unknown_families.any?
+      omitted_target_families.each do |family, reason|
+        unless reason.is_a?(String) && !reason.strip.empty?
+          errors << "#{package.name}: copr.omitted_target_families.#{family} must explain the omission"
+        end
+      end
+      errors << "#{package.name}: copr.omitted_target_families cannot omit every target family" if (omitted_families & %w[stable rawhide]).length == 2
+    end
+
+    selected_chroots = package.chroots(project_chroots)
+    if omitted_families.include?("stable") && (selected_chroots & Agentlab::STABLE_COPR_CHROOTS).any?
+      errors << "#{package.name}: copr.chroots selects stable targets that copr.omitted_target_families omits"
+    end
+    if omitted_families.include?("rawhide") && (selected_chroots & Agentlab::RAWHIDE_COPR_CHROOTS).any?
+      errors << "#{package.name}: copr.chroots selects Rawhide targets that copr.omitted_target_families omits"
+    end
+  end
+
   if package.enabled?
+    matrix_chroots = package.chroots(project_chroots).dup
+    matrix_chroots.concat(Agentlab::STABLE_COPR_CHROOTS) if omitted_families.include?("stable")
+    matrix_chroots.concat(Agentlab::RAWHIDE_COPR_CHROOTS) if omitted_families.include?("rawhide")
     Agentlab.copr_chroot_matrix_errors(
-      package.chroots(project_chroots),
+      matrix_chroots.uniq,
       require_all_stable_releases: false
     ).each do |error|
       errors << "#{package.name}: copr.chroots #{error}"

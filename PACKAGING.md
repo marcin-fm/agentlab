@@ -172,7 +172,7 @@ Authenticated automation uses the explicit identity-scoped path in `COPR_CONFIG`
 
 The default enabled-package matrix is Fedora 43, Fedora 44, and Rawhide on both `x86_64` and `aarch64`. Fedora 43 and Fedora 44 results are required on both architectures. Rawhide builds must also be submitted and monitored on both architectures, but Rawhide failure is non-fatal for now and must be reported explicitly.
 
-Packages may set `copr.chroots` to a subset of the project chroots. SCM build submission honors that restriction. An override may narrow stable releases only when every selected stable release retains both architectures and both Rawhide architectures remain selected. The `rust-dirs5`, `rust-dirs-sys0.4`, and `rust-atty0.2` compatibility crates omit Fedora 43 because Fedora 43 already provides those branches; they still target Fedora 44 and Rawhide on both architectures.
+Packages may set `copr.chroots` to a subset of the project chroots. SCM build submission honors that restriction. Every selected stable release and the Rawhide family must remain architecture-symmetric. A package may omit an entire stable or Rawhide family only by recording a nonempty reason under `copr.omitted_target_families`; use this only when exact distribution-provider or selected-graph evidence proves the local compatibility package unnecessary there. The `rust-dirs5`, `rust-dirs-sys0.4`, and `rust-atty0.2` compatibility crates omit Fedora 43 because Fedora 43 already provides those branches. `rust-unidiff0.4` targets Fedora 43 and Fedora 44 but omits Rawhide because Fedora provides the exact unidiff 0.4 crate there.
 
 ## Fedora References
 
