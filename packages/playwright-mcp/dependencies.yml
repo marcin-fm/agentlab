@@ -135,7 +135,18 @@ test_closure:
     - "@modelcontextprotocol/sdk@1.29.0"
     - "@playwright/test@1.62.0-alpha-1783623505000"
     - "@types/node@24.12.2"
-  reason: The normal Playwright build unconditionally runs npm ci for a separate stable-test-runner lock whose Playwright alpha differs from the published runtime alpha. Its immutable source and license closure is not staged.
+  stable_test_runner:
+    lock_entries: 4
+    linux_packages: 3
+    version: 1.62.0-alpha-2026-07-06
+    source_commit: e9a206539527957abd177749dd893939d3c6c85c
+    source_commit_archive_sha256: efd0cb65807825808536da6bb52ef8fbdbc64738da18c86c72ced7c497f18917
+    playwright_test_npm_sha256: 956a467af8ffd8e6c06145086c061b970041065ee1f1ccacdfbf22c50b7138de
+    playwright_npm_sha256: 58f57300807e0fe3261e9e09970363e213ecfcfdb968bffc0ed288e35e730d96
+    playwright_core_npm_sha256: b20b80f5e2b13f0ef8949b9062887f439a46ae116e1909025a4f38da161f73d0
+    provenance: All three npm packages carry SLSA attestations resolving to the exact source commit.
+    linux_lifecycle: No install scripts or browser-download edge; optional fsevents is Darwin-only.
+  reason: The normal Playwright build unconditionally runs npm ci for the bounded stable-test-runner lock. Its source, license, and Linux lifecycle edges are proven, but upstream provides no switch to omit the install.
 closure_audit:
   audited_release: 0.0.78
   wrapper_files_matching_tag: 7

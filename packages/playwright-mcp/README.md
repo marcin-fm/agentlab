@@ -38,6 +38,15 @@ no package or MCP-only build target. Its `--disable-install` option only disable
 browser installation in watch mode; it does not skip the stable-test-runner
 `npm ci` in a normal build.
 
+The stable-test-runner lock is now bounded rather than an unknown secondary
+closure. It contains four entries: `@playwright/test`, `playwright`, and
+`playwright-core` `1.62.0-alpha-2026-07-06`, plus optional Darwin-only
+`fsevents`. The three Linux packages have no install scripts or browser-download
+edge, carry npm SLSA provenance to Playwright commit
+`e9a206539527957abd177749dd893939d3c6c85c`, and have exact staged tarball and
+source-archive hashes. The remaining issue is the upstream build's unskippable
+`npm ci`, not an additional native or provenance gap.
+
 The pinned esbuild `0.28.1` tool is source-buildable without its prebuilt
 `@esbuild/linux-x64` payload. The exact tag builds the Go binary with
 `CGO_ENABLED=0`, generates the neutral npm JavaScript module, and supports an
