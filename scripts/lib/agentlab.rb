@@ -732,6 +732,56 @@ module Agentlab
         end
       end
 
+      required_subordinate_sources = {
+        "@opentui/core@0.4.3" => {
+          "ids" => %w[
+            tree-sitter-javascript-0.25.0
+            tree-sitter-typescript-0.23.2
+            tree-sitter-markdown-0.5.1
+            tree-sitter-zig-1.1.2
+          ],
+          "assets" => 5
+        },
+        "shiki@4.2.0" => {
+          "ids" => %w[vscode-oniguruma-1.7.0 oniguruma-08d36110],
+          "assets" => 1
+        },
+        "undici@5.29.0" => {
+          "ids" => %w[llhttp-generator-8.1.0 llhttp-generated-release-8.1.0],
+          "assets" => 2
+        }
+      }
+      required_subordinate_sources.each do |identity, required|
+        component = components.find { |entry| entry["package"] == identity }
+        subordinate_sources = Array(component&.dig("provenance", "subordinate_sources"))
+        subordinate_ids = subordinate_sources.map { |source| source["id"] }
+        unless subordinate_ids.sort == required["ids"].sort
+          errors << "#{prefix} native review subordinate source ids do not match for #{identity}"
+        end
+        subordinate_sources.each do |source|
+          source_id = source["id"].to_s
+          errors << "#{prefix} native review subordinate repository is missing for #{identity}/#{source_id}" if source["source_repository"].to_s.empty?
+          errors << "#{prefix} native review subordinate URL is invalid for #{identity}/#{source_id}" unless source["source_url"].to_s.match?(%r{\Ahttps://})
+          errors << "#{prefix} native review subordinate commit is invalid for #{identity}/#{source_id}" unless source["peeled_commit"].to_s.match?(/\A[0-9a-f]{40}\z/)
+          errors << "#{prefix} native review subordinate SHA-256 is invalid for #{identity}/#{source_id}" unless source["source_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+          tag_object = source["tag_object"]
+          errors << "#{prefix} native review subordinate tag object is invalid for #{identity}/#{source_id}" unless tag_object.nil? || tag_object.to_s.match?(/\A[0-9a-f]{40}\z/)
+          source.fetch("correspondence_files", {}).each do |path, sha256|
+            errors << "#{prefix} native review subordinate correspondence path is empty for #{identity}/#{source_id}" if path.to_s.empty?
+            errors << "#{prefix} native review subordinate correspondence SHA-256 is invalid for #{identity}/#{source_id}" unless sha256.to_s.match?(/\A[0-9a-f]{64}\z/)
+          end
+        end
+
+        assets = Array(component&.dig("provenance", "asset_correspondence"))
+        errors << "#{prefix} native review asset correspondence count does not match for #{identity}" unless assets.length == required["assets"]
+        assets.each do |asset|
+          errors << "#{prefix} native review asset path is missing for #{identity}" if asset["path"].to_s.empty?
+          errors << "#{prefix} native review asset URL is invalid for #{identity}" unless asset["upstream_url"].to_s.match?(%r{\Ahttps://})
+          errors << "#{prefix} native review asset SHA-256 is invalid for #{identity}" unless asset["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+          errors << "#{prefix} native review asset correspondence is not verified for #{identity}" unless asset["verified"] == true
+        end
+      end
+
       expected_counts = {
         "component_identities" => reviewed_sources.length,
         "native_sources" => native_sources.length,
@@ -748,7 +798,9 @@ module Agentlab
         "native_payloads_classified" => expected_counts["native_payloads"],
         "wasm_sources_classified" => expected_counts["wasm_sources"],
         "wasm_payloads_classified" => expected_counts["wasm_payloads"],
-        "retained_prebuilt_payloads" => 0
+        "retained_prebuilt_payloads" => 0,
+        "source_mappings_verified" => components.count { |component| component.dig("decision", "source_mapping_verified") == true },
+        "source_mappings_unresolved" => components.count { |component| component.dig("decision", "source_mapping_verified") == false }
       }
       status_counts.each do |key, value|
         errors << "#{prefix} native review status #{key} does not match" unless native_review.dig("status", key) == value

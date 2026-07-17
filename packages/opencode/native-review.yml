@@ -23,6 +23,8 @@ status:
   wasm_sources_classified: 7
   wasm_payloads_classified: 14
   retained_prebuilt_payloads: 0
+  source_mappings_verified: 13
+  source_mappings_unresolved: 1
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
@@ -191,13 +193,71 @@ components:
       tag_object: 0ce8e531e5da283404f305e2daff024c550a4ee8
       peeled_commit: 5803b2cfa2942c45a3aedbb3601754e27f2cdc68
       package_version_at_source: "0.4.3"
-      correspondence: The package source is exact, but the five grammar repositories and revisions remain to be pinned.
+      correspondence: All five npm assets byte-match the named official grammar release assets; exact release commits and source archives are pinned below.
+      subordinate_sources:
+        - id: tree-sitter-javascript-0.25.0
+          source_repository: https://github.com/tree-sitter/tree-sitter-javascript
+          source_tag: v0.25.0
+          tag_object: f76aea6aa47322ea5c208c9c2e67f4a350d554f3
+          peeled_commit: 44c892e0be055ac465d5eeddae6d3e194424e7de
+          source_url: https://codeload.github.com/tree-sitter/tree-sitter-javascript/tar.gz/44c892e0be055ac465d5eeddae6d3e194424e7de
+          source_sha256: a13fa28148e41bb939b2c2b8cd73c4b4295273b70cbac55a7a589020f52b9611
+          grammar_paths: [.]
+          generator: { tool: tree-sitter-cli, version: "0.25.8", command: "tree-sitter build --wasm", workflow_pinned: false }
+        - id: tree-sitter-typescript-0.23.2
+          source_repository: https://github.com/tree-sitter/tree-sitter-typescript
+          source_tag: v0.23.2
+          tag_object: f975a621f4e7f532fe322e13c4f79495e0a7b2e7
+          peeled_commit: f975a621f4e7f532fe322e13c4f79495e0a7b2e7
+          source_url: https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/f975a621f4e7f532fe322e13c4f79495e0a7b2e7
+          source_sha256: 4de2e82e557810eecb93cb3b31fbb3bd28ba4c91ba9a6c6164bcaa074125b7b5
+          grammar_paths: [typescript]
+          generator: { tool: tree-sitter-cli, version: "0.24.4", command: "tree-sitter build --wasm", workflow_pinned: false }
+        - id: tree-sitter-markdown-0.5.1
+          source_repository: https://github.com/tree-sitter-grammars/tree-sitter-markdown
+          source_tag: v0.5.1
+          tag_object: 2dfd57f547f06ca5631a80f601e129d73fc8e9f0
+          peeled_commit: 2dfd57f547f06ca5631a80f601e129d73fc8e9f0
+          source_url: https://codeload.github.com/tree-sitter-grammars/tree-sitter-markdown/tar.gz/2dfd57f547f06ca5631a80f601e129d73fc8e9f0
+          source_sha256: 74138adf4535291593560d401bf0a6f0b3cc8a0c43d0912f462e5590f7e8fbb9
+          grammar_paths: [tree-sitter-markdown, tree-sitter-markdown-inline]
+          generator: { tool: tree-sitter-cli, version: "0.24.3", command: "tree-sitter build --wasm", workflow_pinned: false }
+        - id: tree-sitter-zig-1.1.2
+          source_repository: https://github.com/tree-sitter-grammars/tree-sitter-zig
+          source_tag: v1.1.2
+          tag_object: b670c8df85a1568f498aa5c8cae42f51a90473c0
+          peeled_commit: b670c8df85a1568f498aa5c8cae42f51a90473c0
+          source_url: https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0
+          source_sha256: c7af5b1a992fcaffdf50a11a9974fbf8f09d20c4d9ef42245ac90c152dd3a85a
+          grammar_paths: [.]
+          generator: { tool: tree-sitter-cli, version: "0.24.5", command: "tree-sitter build --wasm", workflow_pinned: false }
+      asset_correspondence:
+        - path: package/assets/javascript/tree-sitter-javascript.wasm
+          upstream_url: https://github.com/tree-sitter/tree-sitter-javascript/releases/download/v0.25.0/tree-sitter-javascript.wasm
+          sha256: 5fb488d0cabb4775a594bab85682de5ad6ce83c0d6ac997a9f82dd084d571240
+          verified: true
+        - path: package/assets/typescript/tree-sitter-typescript.wasm
+          upstream_url: https://github.com/tree-sitter/tree-sitter-typescript/releases/download/v0.23.2/tree-sitter-typescript.wasm
+          sha256: 778025db5a8be0e70f8ccc3671e486dfeddd048c25d9e8a70c26de2e1bf6f97d
+          verified: true
+        - path: package/assets/markdown/tree-sitter-markdown.wasm
+          upstream_url: https://github.com/tree-sitter-grammars/tree-sitter-markdown/releases/download/v0.5.1/tree-sitter-markdown.wasm
+          sha256: 3e13182f21373634c40653f170e6f2d2790914eb2c243927086d79023c534f7a
+          verified: true
+        - path: package/assets/markdown_inline/tree-sitter-markdown_inline.wasm
+          upstream_url: https://github.com/tree-sitter-grammars/tree-sitter-markdown/releases/download/v0.5.1/tree-sitter-markdown_inline.wasm
+          sha256: 9bbd71a70a23f6d0193bb162a72eecf2a2bd9ce76910d7ad3da9c5f80f122671
+          verified: true
+        - path: package/assets/zig/tree-sitter-zig.wasm
+          upstream_url: https://github.com/tree-sitter-grammars/tree-sitter-zig/releases/download/v1.1.2/tree-sitter-zig.wasm
+          sha256: 54b3b83dd9c62da5815f06132bc3fc914d9dcc780370b32416446a0b7969e8c6
+          verified: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
-      source_mapping_verified: false
+      source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Pin corresponding JavaScript, Markdown, Markdown-inline, TypeScript, and Zig grammar sources and rebuild every WASM.
+      reason: Rebuild every WASM from the pinned grammar sources; upstream release automation floats on tree-sitter/workflows@main, so byte reproducibility is not yet proven.
   - package: "@silvia-odwyer/photon-node@0.3.4"
     npm_name: "@silvia-odwyer/photon-node"
     version: "0.3.4"
@@ -229,13 +289,38 @@ components:
       tag_object: eaa5cab56b535370c1b7fc1c27d6d01bad05666b
       peeled_commit: 1d56dae84801bad3a48dc7104437fbc21819ee4c
       package_version_at_source: "4.2.0"
-      correspondence: The annotated release tag identifies Shiki exactly; the subordinate Oniguruma source for onig.wasm remains unpinned.
+      correspondence: Shiki copies vscode-oniguruma 1.7.0 release/onig.wasm verbatim; the npm asset, source tag, and Oniguruma submodule are pinned below.
+      subordinate_sources:
+        - id: vscode-oniguruma-1.7.0
+          source_repository: https://github.com/microsoft/vscode-oniguruma
+          source_tag: v1.7.0
+          tag_object: 716aeaa229e4ae2e3b0057377b55743e9a3e995b
+          peeled_commit: 716aeaa229e4ae2e3b0057377b55743e9a3e995b
+          source_url: https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b
+          source_sha256: 7b3616492af2d012bdb8904e35c6a5584f8d4326bfe013ebbda079330cf3c1ed
+          npm_tarball: https://registry.npmjs.org/vscode-oniguruma/-/vscode-oniguruma-1.7.0.tgz
+          npm_integrity: sha512-L9WMGRfrjOhgHSdOYgCt/yRMsXzLDJSL7BPrOZt73gU0iWO4mpqzqQzOz5srxqTvMBaR0XZTSrVWo4j55Rc6cA==
+          npm_sha256: 830c8de8fd475455d8c161ca3c1f5f3c935fad8327ee548dec38c8985097657f
+          generator: { tool: emscripten, version: null, command: "npm run build-onig && npm run build-wasm", workflow_pinned: false }
+        - id: oniguruma-08d36110
+          source_repository: https://github.com/kkos/oniguruma
+          source_tag: null
+          tag_object: null
+          peeled_commit: 08d36110c5670c815ad6d6f969e578049d209080
+          source_url: https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080
+          source_sha256: 197bdc01b6e71245ca95e652827fe53c4b1532a4175870f62157b5f909fa0e6f
+      asset_correspondence:
+        - path: package/dist/onig.wasm
+          upstream_url: https://registry.npmjs.org/vscode-oniguruma/-/vscode-oniguruma-1.7.0.tgz
+          upstream_path: package/release/onig.wasm
+          sha256: fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9
+          verified: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
-      source_mapping_verified: false
+      source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Pin the corresponding Oniguruma source and reproduce onig.wasm.
+      reason: Rebuild from the pinned vscode-oniguruma and Oniguruma sources; Emscripten and CI build environments remain unpinned.
   - package: "tree-sitter-powershell@0.25.10"
     npm_name: tree-sitter-powershell
     version: "0.25.10"
@@ -267,13 +352,47 @@ components:
       tag_object: 9528f6853a72a637823e863f1dd12ec47a3fc9e7
       peeled_commit: 9528f6853a72a637823e863f1dd12ec47a3fc9e7
       package_version_at_source: "5.29.0"
-      correspondence: The registry gitHead and release tag agree; the subordinate llhttp source and build inputs remain to be pinned.
+      correspondence: The registry gitHead and release tag agree; all vendored llhttp inputs byte-match the generated llhttp 8.1.0 release tree pinned below.
+      subordinate_sources:
+        - id: llhttp-generator-8.1.0
+          source_repository: https://github.com/nodejs/llhttp
+          source_tag: v8.1.0
+          tag_object: 4f4a2ae3a3bbfbece269adf2905f797588a597df
+          peeled_commit: 85dd446419966cafb5a7fdd5031e3113a0768e65
+          source_url: https://codeload.github.com/nodejs/llhttp/tar.gz/85dd446419966cafb5a7fdd5031e3113a0768e65
+          source_sha256: 27064e854a76feec38a13f57be14d33900b108f1b62cf0a09d6cdf085348edd7
+        - id: llhttp-generated-release-8.1.0
+          source_repository: https://github.com/nodejs/llhttp
+          source_tag: release/v8.1.0
+          tag_object: a294239338eff8bffd4c709265ab8f5a11e57e41
+          peeled_commit: a294239338eff8bffd4c709265ab8f5a11e57e41
+          source_url: https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41
+          source_sha256: ca8b68d982b1c2a7aa28599fe46596738f17fffd05d2ad27d7ffc3e7fca43591
+          correspondence_files:
+            include/llhttp.h: d10cbae21267c5d08e0dac01c8584c799b50be7dddd0a0f3193d110922981c38
+            src/llhttp.c: af384dc4a9e83b4b2ef8a658117a42afa1ee1585344563818ac730604e150f5f
+            src/api.c: 6e5a4528cd67bb79c3b1c1e08bb8b4d9beeac4775877098d28be0a8f0d000897
+            src/http.c: c55eda50972fb150c093d54ba4a92921906f1f51ee60a6b1e0d13f5b9877f539
+          generator:
+            command: node build/wasm.js
+            base_image: node:20-alpine@sha256:4559bc033338938e54d0a3c2f0d7c3ad7d1d13c28c4c405b85c6b3a26f4ce5f7
+            recorded_toolchain: clang-15.0.7-r0, lld-15.0.7-r0, wasi-sdk-16-r0
+            toolchain_pinned: false
+      asset_correspondence:
+        - path: package/lib/llhttp/llhttp.wasm
+          upstream_url: https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41
+          sha256: ee82b848a5ca8e9f99fda109e59bbc20193d049a7f6bff93f4130cba5b68261c
+          verified: true
+        - path: package/lib/llhttp/llhttp_simd.wasm
+          upstream_url: https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41
+          sha256: cd48aefa974e9fc21adec14ef0c73f0ad501b598078b12568ed129c320318154
+          verified: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
-      source_mapping_verified: false
+      source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Pin corresponding llhttp sources and reproduce both normal and SIMD WASM outputs.
+      reason: Rebuild both WASMs from the pinned llhttp inputs; floating Alpine packages and npm install keep the upstream toolchain non-reproducible.
   - package: "web-tree-sitter@0.25.10"
     npm_name: web-tree-sitter
     version: "0.25.10"

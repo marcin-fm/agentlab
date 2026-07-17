@@ -80,10 +80,14 @@ rebuilding its functional WASM. OpenTUI and bun-pty require native source
 builds. FFF and Parcel watcher still require either source builds or proof that
 their upstream-supported fallback/disable paths preserve the selected CLI.
 
-All functional WASM remains fail-closed. OpenTUI grammar revisions, Photon's
-Rust/wasm-bindgen boundary, Shiki's Oniguruma input, and Undici's llhttp input
-still need exact corresponding-source pins. Tree-sitter Bash, PowerShell, and
-web-tree-sitter have mapped source but still need reproducible build evidence.
+All functional WASM remains fail-closed. Exact corresponding sources are now
+mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp
+assets, including immutable source archives and byte-level asset correspondence.
+Their rebuilds remain unproven because upstream leaves the Tree-sitter release
+workflow, Emscripten version, or Alpine build packages floating. Photon's
+Rust/wasm-bindgen release boundary is the only unresolved WASM source mapping;
+Tree-sitter Bash, PowerShell, and web-tree-sitter also still need reproducible
+build evidence.
 
 ```bash
 scripts/acquire-opencode-sources --plan

@@ -139,6 +139,8 @@ source_acquisition_findings:
     wasm_sources_classified: 7
     wasm_payloads_classified: 14
     retained_prebuilt_payloads: 0
+    source_mappings_verified: 13
+    source_mappings_unresolved: 1
     native_sources_verified: false
     wasm_sources_verified: false
   install_phase_scripts:
