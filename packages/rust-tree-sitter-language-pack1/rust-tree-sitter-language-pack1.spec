@@ -14,13 +14,21 @@ License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND ISC
 URL:            https://crates.io/crates/tree-sitter-language-pack
 Source:         %{crates_source}
 Source1:        parser-sources-1.12.5-licensed-subset.tar.zst
-# Automatically generated patch to strip dependencies and normalize metadata
+# Remove benchmark-only and WASM-only dependencies from generated metadata.
+# Fedora-specific; not submitted upstream because it selects the packaged native build graph.
 Patch:          tree-sitter-language-pack-fix-metadata-auto.diff
+# Use the packaged parser subset and disable runtime parser downloads.
+# Fedora-specific; not submitted upstream because it integrates RPM-owned offline sources.
 Patch1:         tree-sitter-language-pack-fedora-offline.patch
+# Align the test dependency with Fedora's packaged insta release.
+# Fedora-specific; not submitted upstream because it supports Fedora's crate version.
 Patch2:         tree-sitter-language-pack-relax-insta.patch
+# Expose every definition from the packaged static parser subset.
+# Fedora-specific; not submitted upstream because it selects the audited RPM parser payload.
 Patch3:         tree-sitter-language-pack-fedora-static-subset.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
+BuildRequires:  util-linux-core
 
 %global _description %{expand:
 Core library for a source-built, licensed tree-sitter parser subset.}
@@ -139,6 +147,8 @@ rm -rf %{buildroot}%{crate_instdir}/LICENSES \
   %{buildroot}%{crate_instdir}/license-evidence
 install -d %{buildroot}%{_defaultlicensedir}/%{name}
 cp -a LICENSES/. %{buildroot}%{_defaultlicensedir}/%{name}/
+/usr/bin/hardlink -cv %{buildroot}%{crate_instdir}
+/usr/bin/hardlink -cv %{buildroot}%{_defaultlicensedir}/%{name}
 
 %if %{with check}
 %check
@@ -159,4 +169,4 @@ TSLP_LINK_MODE=static TSLP_OFFLINE=1 \
 %changelog
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 1.12.5-0.1
 - Build the audited source-only licensed parser subset offline without
-  duplicating its license corpus in the installed crate source tree.
+  duplicating payload bytes while preserving every parser and license path.
