@@ -7,13 +7,14 @@
 
 Name:           rust-atty0.2
 Version:        0.2.14
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Simple interface for querying atty
 
 License:        MIT
 URL:            https://crates.io/crates/atty
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
-# Automatically generated patch to strip dependencies and normalize metadata
+# Remove Hermit and Windows-only dependencies from Fedora's Unix build graph.
+# Fedora-generated target pruning; not submitted because upstream supports those platforms.
 Patch:          atty-fix-metadata-auto.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -72,5 +73,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.2.14-0.2
+- Document Fedora target pruning and its upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.2.14-0.1
 - Add the Fedora 44 compatibility crate required by ast-grep.
