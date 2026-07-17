@@ -35,13 +35,15 @@ declares exact RPM-normalized metadata manually.
 
 The MCP tarball is this package's only source. The two Playwright tarballs are
 canonical inputs of `nodejs-playwright` and are retained here as exact provider
-evidence. Their generated
-Playwright bundles are not a three-package source closure: the exact monorepo
-lock has 719 non-root entries, including 679 integrity-pinned registry
-tarballs. Platform metadata excludes 55 optional non-Linux or non-x86_64
-payloads, leaving 624 Fedora Linux/x86_64 registry entries across 572 package
-names. Fedora 43 and 44 provide no exact locked `npm(...)` version; only four
-names exist at different versions, and RPM Fusion provides none.
+evidence. Their generated Playwright bundles are not a three-package source
+closure: the unpatched exact monorepo lock has 719 non-root entries, including
+679 integrity-pinned registry tarballs. Platform metadata excludes 55 optional
+non-Linux or non-x86_64 payloads, leaving 624 Fedora Linux/x86_64 registry
+entries across 572 package names. The canonical neutral-icon patch removes ten
+dashboard logo packages, leaving 709 non-root entries, 669 registry tarballs,
+and 614 Fedora-active entries across 562 package names. Fedora 43 and 44 provide
+no exact locked `npm(...)` version; only four names exist at different versions,
+and RPM Fusion provides none.
 `fsevents@2.3.2` is an optional Darwin-only dependency.
 
 ## Provider Source Build Audit
@@ -152,22 +154,19 @@ checksummed source archive and verifies SHA-256
 `c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a`.
 It remains uninstalled because the package is fail-closed before `%build`.
 
-The Linux/x86_64 root lock has license metadata for 614 of 624 active entries.
-The ten exceptions are the Chrome, Chrome Beta, Chrome Canary, Chrome Dev,
-Chromium, Edge, Firefox, Firefox Beta, Firefox Nightly, and Safari logo
-packages used by the dashboard. Their npm tarballs contain no license or
-notice, and their exact source repository states that all logos and trademarks
-belong to their respective owners while only everything else is MIT-licensed.
-All ten assets ship in the published dashboard: six are Vite-inlined SVG data
-URIs and four are standalone SVG files. Packaging therefore requires explicit
-redistribution/trademark review or an upstream-supported build that omits the
-dashboard/logo payload; the repository MIT text does not clear the marks.
-The logo packages are used only by `packages/dashboard`. The default MCP
-surface does not enable `devtools`; the dashboard is required by the opt-in
-`browser_annotate` path under `--caps=devtools`. A Fedora binary selecting the
-default surface can therefore omit generated dashboard files, but Playwright's
-normal build still compiles the dashboard unconditionally and still needs the
-logo source inputs. Binary omission narrows runtime payload, not source closure.
+The upstream Linux/x86_64 root lock has license metadata for 614 of 624 active
+entries. The ten exceptions are dashboard logo packages whose npm tarballs
+contain no license or notice and whose exact source repository excludes the
+logos and trademarks from its MIT grant. Their exact hashes and source commits
+remain recorded as audit provenance.
+
+The canonical provider applies
+`playwright-dashboard-neutral-browser-icons.patch` before build. It removes all
+ten logo dependencies and uses the dashboard's existing neutral initial
+fallback while preserving the complete dashboard, public Core APIs, and exact
+browser/channel tooltip. The patched closure has license metadata for all 614
+active entries and no browser-logo source inputs, so no post-patch logo
+redistribution review is required.
 
 The local-JavaScript minification gate is resolved. Playwright's common esbuild
 step emits Node/CJS with source maps disabled in release mode and does not set
@@ -205,40 +204,39 @@ but the released executable cannot enforce it. The same command accepts
 browser connections, optional capabilities, proxy and origin controls,
 unrestricted filesystem access, and JSON/INI or `PLAYWRIGHT_MCP_*` overrides.
 Its `install-browser` alias also invokes Playwright's managed browser installer.
-No upstream option disables those alternate modes. Under the current selected
-surface policy, the package remains blocked until upstream supplies a bounded
-entry point or the maintainer explicitly accepts the broader direct CLI; a
-downstream security wrapper or protocol adapter is not authorized.
+No upstream option disables those alternate modes. The released direct CLI is
+accepted without a downstream security wrapper or protocol adapter, but the
+package must not recommend or ease insecure deployment. Prefer local stdio with
+trusted clients and a least-privilege user; do not expose HTTP/SSE to untrusted
+networks without container, process, or equivalent isolation.
 
-The default 24-tool set has a separate mandatory hold. Upstream's own capability
-test includes `browser_run_code_unsafe`, whose source marks it as `core` and
-describes it as arbitrary JavaScript in the Playwright server process and
-RCE-equivalent. Default filtering includes every capability beginning with
-`core`; no per-tool exclude or denylist exists. The nearby
+Upstream's capability test includes `browser_run_code_unsafe`, whose source
+marks it as `core` and describes it as arbitrary JavaScript in the Playwright
+server process and RCE-equivalent. Default filtering includes every capability
+beginning with `core`; no per-tool exclude or denylist exists. The nearby
 `browser_press_sequentially` helper is `skillOnly` and is correctly excluded,
 so the published and executable default count remains exactly 24. Managed
 browser installation is not one of those MCP tools; it remains the separate
-`install-browser` CLI alias. The package cannot expose a policy-bounded default
-tool set without an upstream exclusion mechanism, explicit maintainer approval
-for a downstream filter, or a separately approved process sandbox.
+`install-browser` CLI alias. This same-user code-execution behavior is accepted
+as an intentional capability and must remain explicit in package documentation.
 
-This is an observed host boundary failure, not only an upstream warning. An
-exact-runtime MCP smoke called `browser_run_code_unsafe` through the published
-CLI and Fedora Chromium. Code running in the tool's `vm` context reached the
-host `process` through the live Playwright `page` object, loaded Node's built-in
-`fs` module, and wrote a marker under the audit root. The marker content had
-SHA-256 `d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933`
-and was removed after verification. The same smoke confirmed the exact 24-tool
-list and used no browser download. A real per-tool exclusion or independently
-approved process sandbox is therefore mandatory before publication.
+An exact-runtime MCP smoke confirmed the host impact rather than treating the
+upstream warning as hypothetical. Code in the unsafe tool's `vm` context reached
+the host `process` through the live Playwright `page` object, loaded Node's
+built-in `fs` module, and wrote a marker under the audit root. The marker content
+had SHA-256 `d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933`
+and was removed after verification. The package currently includes no systemd
+service. If one is added later, it must enforce container, process, or equivalent
+isolation; unsandboxed invocation grants connected agents code execution with
+the invoking OS user's permissions.
 
 ## Intentional Failure
 
 `playwright-mcp.spec` verifies only the released MCP npm tarball and exits in
 `%prep`. It must remain fail-closed until the exact `nodejs-playwright`
-providers are complete, the packaged Fedora 43/44 integration passes, and the
-command/tool policy is resolved. No npm install, lifecycle script, or Playwright
-browser download is permitted in an RPM build.
+providers are complete and the packaged Fedora 43/44 integration passes. No npm
+install, lifecycle script, or Playwright browser download is permitted in an RPM
+build.
 
 The generated Playwright runtime, its Core notice, native build tools, complete
 module license inventory, and immutable closure are now canonical

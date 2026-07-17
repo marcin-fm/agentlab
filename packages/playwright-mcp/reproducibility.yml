@@ -35,6 +35,7 @@ rpm_runtime_dependencies:
   fedora_44_chromium_mcp_smoke: exact wrapper ran over stdio, listed 24 tools, and passed local data-URL navigation and evaluation through headless_shell
 playwright_provider_evidence:
   canonical_package_record: ../nodejs-playwright/reproducibility.yml
+  root_lock_counts_scope: unpatched upstream source audit
   root_lock_non_root_entries: 719
   root_lock_registry_tarballs: 679
   root_lock_integrity_entries: 679
@@ -46,6 +47,16 @@ playwright_provider_evidence:
   root_lock_rpm_fusion_43_44_npm_providers: 0
   root_lock_license_metadata_entries: 614
   root_lock_missing_license_metadata_entries: 10
+  patched_provider:
+    resolution_patch: ../nodejs-playwright/playwright-dashboard-neutral-browser-icons.patch
+    root_lock_non_root_entries: 709
+    root_lock_registry_tarballs: 669
+    root_lock_integrity_entries: 669
+    root_lock_fedora_linux_x86_64_registry_entries: 614
+    root_lock_fedora_linux_x86_64_package_names: 562
+    root_lock_license_metadata_entries: 614
+    root_lock_missing_license_metadata_entries: 0
+    browser_logo_source_inputs: 0
   browser_logo_assets:
     exact_source_commits:
       chrome_2_0_0: 7173185f6715f5f1e9be8b6654d8f3e3815f669b
@@ -72,7 +83,13 @@ playwright_provider_evidence:
     default_mcp_requires_dashboard: false
     normal_build_requires_dashboard_sources: true
     default_surface_binary_omission_safe: true
-    distribution_review_complete: false
+    distribution_review_complete: true
+    dependencies_removed_by_patch: true
+    resolution_patch: ../nodejs-playwright/playwright-dashboard-neutral-browser-icons.patch
+    existing_neutral_initial_fallback_used: true
+    complete_dashboard_preserved: true
+    public_core_apis_preserved: true
+    browser_channel_tooltip_preserved: true
   generated_javascript:
     esbuild_node_defaults: platform=node; format=cjs; release sourcemap=false; minify unset
     node_runtime_minified: false
@@ -140,6 +157,12 @@ playwright_provider_evidence:
       config_and_environment_overrides_available: true
       upstream_enforcement_switch: false
       downstream_adapter_authorized: false
+      risk_disposition: accepted documented same-user code execution
+      recommended_transport: local stdio with trusted clients
+      unsandboxed_effective_privilege: invoking OS user
+      untrusted_http_sse_exposure: prohibited without container, process, or equivalent isolation
+      packaged_systemd_service: false
+      future_packaged_service_isolation_required: true
       default_tool_count: 24
       unsafe_default_tool: browser_run_code_unsafe
       unsafe_default_tool_capability: core
@@ -280,7 +303,9 @@ evidence:
   npm_to_source_correspondence_reproduced: true
   exact_source_to_generated_output_mapping_reviewed: true
   published_sidecar_entries_matched_to_root_lock: true
-  browser_logo_distribution_reviewed: false
+  browser_logo_distribution_reviewed: true
+  browser_logo_dependencies_removed: true
+  neutral_fallback_preserves_complete_dashboard: true
   local_node_javascript_minification_gate_passed: true
   xdg_open_headless_system_integration_gate_passed: true
   selected_default_headless_payload_smoke_passed: true
@@ -292,6 +317,9 @@ evidence:
   selected_command_profile_enforced_by_upstream: false
   selected_default_tool_list_audited: true
   selected_default_tool_surface_policy_bounded: false
+  same_user_code_execution_risk_accepted: true
+  insecure_deployment_recommendation_forbidden: true
+  packaged_service_isolation_required: true
   unsafe_default_tool_vm_escape_reproduced: true
   closure_archive_hosted_immutably: false
   production_closure_audited: false

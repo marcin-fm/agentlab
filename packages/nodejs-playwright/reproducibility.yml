@@ -21,8 +21,9 @@ metadata_boundary:
 build_mapping:
   monorepo_source_builds_once: true
   package_only_build_target: false
-  root_lock_registry_tarballs: 679
-  root_lock_fedora_linux_x86_64_registry_entries: 624
+  root_lock_registry_tarballs: 669
+  root_lock_fedora_linux_x86_64_registry_entries: 614
+  root_lock_fedora_linux_x86_64_package_names: 562
   stable_test_runner_linux_packages: 3
   stable_test_runner_install_skippable: false
   generated_module_payload_reproduced: false
@@ -37,11 +38,14 @@ license_mapping:
   exact_notice_sources_reviewed: true
   legal_payload_complete: false
   missing_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT
-  browser_logo_source_scope_verified: true
-  browser_logo_covered_by_repository_mit: false
-  browser_logo_omission_preserves_complete_public_module: false
-  browser_logo_redistribution_approved: false
-  browser_logo_review_complete: false
+  upstream_browser_logo_source_scope_verified: true
+  upstream_browser_logo_covered_by_repository_mit: false
+  browser_logo_resolution_patch: playwright-dashboard-neutral-browser-icons.patch
+  browser_logo_dependencies_removed: true
+  browser_logo_fallback_preserves_dashboard: true
+  browser_logo_exact_channel_tooltip_preserved: true
+  browser_logo_redistribution_required_after_patch: false
+  browser_logo_review_complete: true
 validation:
   spec_fail_closed_before_build: true
   public_module_load_tests: false

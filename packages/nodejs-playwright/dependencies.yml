@@ -25,9 +25,9 @@ build_closure:
   status: audited-blocked
   source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
   source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
-  root_lock_registry_tarballs: 679
-  fedora_linux_x86_64_registry_entries: 624
-  fedora_linux_x86_64_package_names: 572
+  root_lock_registry_tarballs: 669
+  fedora_linux_x86_64_registry_entries: 614
+  fedora_linux_x86_64_package_names: 562
   fedora_43_44_exact_locked_providers: 0
   stable_test_runner_linux_packages: 3
   normal_build_package_target: none
@@ -41,8 +41,9 @@ build_closure:
     rolldown_fedora_44: 81
     lightningcss_fedora_43_44: 20
   unresolved_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT
-  browser_logo_packages: 10
-  browser_logo_review_complete: false
+  upstream_browser_logo_packages: 10
+  patched_browser_logo_packages: 0
+  browser_logo_review_complete: true
 license_inventory:
   published_bundle_sidecars: 5
   unique_inlined_package_versions: 175
@@ -73,15 +74,21 @@ license_notice_audit:
       declared_license: MIT
       finding: The crate and exact source commit contain no license text or copyright notice.
 browser_logo_audit:
-  exact_lock_entries: chrome@2.0.0, chrome-beta@3.0.0, chrome-canary@2.0.0, chrome-dev@3.0.0, chromium@2.0.1, edge@2.0.7, firefox@3.0.10, firefox-beta@4.1.4, firefox-nightly@3.0.6, safari@2.1.0
+  upstream_exact_lock_entries: chrome@2.0.0, chrome-beta@3.0.0, chrome-canary@2.0.0, chrome-dev@3.0.0, chromium@2.0.1, edge@2.0.7, firefox@3.0.10, firefox-beta@4.1.4, firefox-nightly@3.0.6, safari@2.1.0
   generated_payload: packages/playwright-core/lib/vite/dashboard
   public_api_dependency: playwright-core exports dashboard launch APIs that serve the generated payload
   legal_scope_source: alrra/browser-logos
   legal_scope_commit: 7173185f6715f5f1e9be8b6654d8f3e3815f669b
   upstream_legal_scope: All logos and trademarks remain their owners' property; MIT applies to everything else.
-  covered_by_repository_mit: false
-  omission_preserves_complete_public_module: false
-  redistribution_approved: false
+  upstream_covered_by_repository_mit: false
+  resolution_patch: playwright-dashboard-neutral-browser-icons.patch
+  resolution: Remove all ten logo dependencies and always render the existing neutral browser-family initial badge.
+  patched_source_inputs: 0
+  generated_dashboard_preserved: true
+  public_api_preserved: true
+  exact_channel_tooltip_preserved: true
+  redistribution_required_after_patch: false
+  status: resolved
 closure_audit:
   audited_release: 1.62.0-alpha-1783623505000
   production_build_sources_verified: false
@@ -96,6 +103,6 @@ gates:
   - Materialize the exact production, build, and test closures from original immutable source archives without package-manager installation or lifecycle execution in RPM phases.
   - Source-build exact esbuild, Rolldown, Lightning CSS, and every functional native or WASM input.
   - Reproduce the complete public playwright and playwright-core module trees from the pinned source commit.
-  - Complete aggregate legal accounting, including the missing MIT and borrowed Apache-2.0 material plus dashboard-logo redistribution review.
+  - Complete aggregate legal accounting for the missing MIT and borrowed Apache-2.0 material.
   - Run public-module load tests and upstream tests in clean offline Fedora 43 and Fedora 44 buildroots.
   - Host every generated closure input at immutable URLs usable by COPR SCM builds.

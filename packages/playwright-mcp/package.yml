@@ -2,8 +2,6 @@ name: playwright-mcp
 status: blocked
 blockers:
   - The exact reusable nodejs-playwright and nodejs-playwright-core providers remain blocked on their monorepo source, build, license, and immutable-closure gates.
-  - The released CLI exposes HTTP/SSE, remote/CDP/extension modes, optional capabilities, unrestricted filesystem controls, config/environment overrides, and an install-browser alias with no upstream bounded-profile switch.
-  - The exact default 24-tool surface unconditionally includes browser_run_code_unsafe. The published runtime reached host process and fs through the live page object, and upstream provides no per-tool exclusion mechanism.
   - Packaged Fedora 43 and Fedora 44 integration through the exact split module providers has not been proven.
 source_policy:
   npm_package: "@playwright/mcp"
@@ -21,9 +19,11 @@ source_policy:
   lifecycle_scripts: forbidden
   networked_package_manager: forbidden
   selected_command_profile: playwright-mcp --browser chromium --headless --isolated --executable-path /usr/lib64/chromium-browser/headless_shell --image-responses omit
-  command_surface_enforcement: unavailable upstream
-  default_tool_boundary: Exactly 24 tools; browser_run_code_unsafe is unconditional core and no per-tool exclude exists.
+  command_surface_enforcement: unavailable upstream; the released direct CLI is accepted with explicit deployment-risk documentation
+  default_tool_boundary: Exactly 24 tools; browser_run_code_unsafe is unconditional core, has no per-tool exclude, and is accepted as intentional same-user code execution.
   unsafe_tool_runtime_proof: Exact published CLI and Core bundles escaped the vm through the live page object, accessed host process and fs, wrote a marker with content SHA-256 d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933, and removed it after verification.
+  deployment_security_policy: Do not recommend or ease insecure deployment. A packaged systemd service is permitted only with container, process, or equivalent isolation; unsandboxed operation must be clearly documented as granting connected agents code execution with the invoking OS user's permissions.
+  accepted_risk: Trusted connected agents can execute code with the invoking OS user's permissions; prefer local stdio and least-privilege execution, and do not expose HTTP/SSE to untrusted networks without isolation.
 upstream:
   provider: github-and-npm
   repository: microsoft/playwright-mcp

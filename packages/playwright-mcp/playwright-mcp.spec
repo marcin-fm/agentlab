@@ -5,7 +5,7 @@
 
 Name:           playwright-mcp
 Version:        0.0.78
-Release:        0.12%{?dist}
+Release:        0.13%{?dist}
 Summary:        Model Context Protocol server for Playwright
 
 License:        Apache-2.0
@@ -30,8 +30,8 @@ Playwright MCP exposes Playwright browser automation through the Model Context
 Protocol.
 
 This draft is intentionally blocked. It must not produce an RPM until the
-separate nodejs-playwright provider, MCP integration tests, command-surface
-policy, and packaged Fedora operation are all proven.
+separate nodejs-playwright provider, MCP integration tests, and packaged Fedora
+operation are all proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -39,6 +39,10 @@ echo 'playwright-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.13
+- Record the neutral dashboard icon provider closure.
+- Accept the documented same-user code-execution risk and require isolated service deployment.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.12
 - Split reusable Playwright modules into the nodejs-playwright source package.
 

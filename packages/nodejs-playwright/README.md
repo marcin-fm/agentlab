@@ -36,8 +36,9 @@ to a non-npm version.
 
 ## Source Build Boundary
 
-The root lock contains 679 integrity-pinned registry tarballs. After target
-filtering, 624 entries across 572 names remain active for Fedora Linux/x86_64;
+The patched root lock contains 669 integrity-pinned registry tarballs. After
+target filtering, 614 entries across 562 names remain active for Fedora
+Linux/x86_64;
 Fedora 43 and 44 provide no exact locked npm versions. Playwright exposes no
 package-only build target and its normal build unconditionally runs `npm ci`
 for a separately bounded three-package Linux stable-test-runner closure.
@@ -67,12 +68,13 @@ attribution, and its source states that the implementation is borrowed from
 Apache-2.0 `sonic-rs 0.5.5`; an MIT-only generated notice would therefore be
 incomplete.
 
-The generated Core dashboard consumes ten exact `@browser-logos/*` inputs.
-Browser Logos states that the logos and trademarks remain their owners'
-property and applies MIT only to everything else. The dashboard is served by
-public Playwright Core dashboard APIs, so dropping it would not preserve the
-complete public module. Explicit redistribution review or an upstream-supported
-behavior-preserving omission is still required.
+Upstream's generated Core dashboard originally consumed ten exact
+`@browser-logos/*` inputs whose marks are outside the source repository's MIT
+grant. `playwright-dashboard-neutral-browser-icons.patch` removes those ten
+dependencies and always uses the dashboard's existing neutral browser-family
+initial fallback. The generated dashboard, public Core APIs, and exact
+browser/channel tooltip remain intact, while the patched source closure contains
+no browser-logo input requiring redistribution review.
 
 ## Intentional Failure
 

@@ -19,6 +19,7 @@ playwright_provider_audit:
   source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
   source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
   root_lock:
+    counts_scope: unpatched upstream source audit
     non_root_entries: 719
     registry_tarballs: 679
     registry_entries_with_integrity: 679
@@ -32,6 +33,16 @@ playwright_provider_audit:
     rpm_fusion_43_44_npm_providers: 0
     license_metadata_entries: 614
     missing_license_metadata_entries: 10
+    patched_provider:
+      resolution_patch: ../nodejs-playwright/playwright-dashboard-neutral-browser-icons.patch
+      non_root_entries: 709
+      registry_tarballs: 669
+      registry_entries_with_integrity: 669
+      fedora_linux_x86_64_registry_entries: 614
+      fedora_linux_x86_64_package_names: 562
+      license_metadata_entries: 614
+      missing_license_metadata_entries: 0
+      browser_logo_source_inputs: 0
     browser_logo_assets:
       packages: "@browser-logos/chrome@2.0.0, @browser-logos/chrome-beta@3.0.0, @browser-logos/chrome-canary@2.0.0, @browser-logos/chrome-dev@3.0.0, @browser-logos/chromium@2.0.1, @browser-logos/edge@2.0.7, @browser-logos/firefox@3.0.10, @browser-logos/firefox-beta@4.1.4, @browser-logos/firefox-nightly@3.0.6, @browser-logos/safari@2.1.0"
       npm_license_metadata: absent
@@ -41,7 +52,14 @@ playwright_provider_audit:
       source_usage: packages/dashboard only
       runtime_scope: Default MCP excludes devtools; browser_annotate under --caps=devtools requires dashboardApp.js and lib/vite/dashboard.
       binary_omission: Safe for an explicitly selected default MCP surface, but it does not remove the logo inputs from the unconditional normal source build.
-      decision: Explicit redistribution/trademark review or an upstream-supported dashboard/logo omission is required.
+      resolution_patch: ../nodejs-playwright/playwright-dashboard-neutral-browser-icons.patch
+      dependencies_removed: true
+      existing_neutral_initial_fallback_used: true
+      complete_dashboard_preserved: true
+      public_core_apis_preserved: true
+      browser_channel_tooltip_preserved: true
+      post_patch_redistribution_review_required: false
+      decision: Resolved by removing the logo dependencies before build.
     generated_javascript:
       node_runtime: esbuild platform=node, format=cjs, minify unset; published output is readable and unminified
       browser_assets: production Vite dashboard, reporter, recorder, and trace assets are minified browser-targeted output
@@ -89,7 +107,12 @@ playwright_provider_audit:
           result: Code in the tool vm reached host process through the live page object, loaded built-in fs, and wrote outside MCP workspace/output filename validation.
           marker_content_sha256: d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933
           cleanup: marker removed after verification; no browser download used
-        policy_status: blocked pending an upstream exclusion mechanism, explicit approval for a downstream filter, or an approved process sandbox
+        policy_status: accepted documented same-user code-execution risk; no downstream filter or profile adapter selected
+        recommended_transport: local stdio with trusted clients
+        unsandboxed_effective_privilege: invoking OS user
+        untrusted_http_sse_exposure: prohibited without container, process, or equivalent isolation
+        packaged_systemd_service: false
+        future_packaged_service_isolation_required: true
       license_inventory:
         retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
         package_entries: 91
@@ -250,7 +273,6 @@ closure_audit:
   upstream_contact_recorded: false
   offline_verified: false
 gates:
-  - Complete and enable the exact nodejs-playwright provider after its production/build/test closure, native/generated source, license, logo, and immutable-hosting gates pass.
+  - Complete and enable the exact nodejs-playwright provider after its production/build/test closure, native/generated source, remaining license, and immutable-hosting gates pass.
   - Install the complete released MCP public module without package-manager resolution or lifecycle execution in RPM phases.
   - Repeat the no-download Fedora chromium-headless operation smoke through both packaged modules on Fedora 43 and Fedora 44.
-  - Resolve the unbounded command and default unsafe-tool surface through an upstream control, explicit maintainer-approved downstream change, or approved process sandbox.

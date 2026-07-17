@@ -16,7 +16,7 @@
 
 Name:           nodejs-playwright
 Version:        1.62.0~alpha.1783623505000
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        High-level browser automation API for Node.js
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT
@@ -24,6 +24,9 @@ URL:            https://playwright.dev
 Source0:        https://registry.npmjs.org/playwright/-/playwright-%{npm_version}.tgz
 Source1:        https://registry.npmjs.org/playwright-core/-/playwright-core-%{npm_version}.tgz
 Source2:        https://codeload.github.com/microsoft/playwright/tar.gz/%{playwright_commit}#/playwright-%{playwright_commit}.tar.gz
+# Replace third-party browser marks with the dashboard's existing neutral initial badge.
+# Downstream legal-closure fix; not submitted because upstream currently ships branded assets.
+Patch0:         playwright-dashboard-neutral-browser-icons.patch
 
 BuildArch:      noarch
 ExclusiveArch:  %{nodejs_arches} noarch
@@ -56,6 +59,7 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{core_source_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{playwright_commit_archive_sha256}  %{SOURCE2}" | sha256sum -c -
 %setup -q -T -b 2 -n playwright-%{playwright_commit}
+%patch -P 0 -p1
 %{__nodejs} <<'EOF'
 const fs = require('fs');
 
@@ -95,5 +99,8 @@ echo 'nodejs-playwright is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.62.0~alpha.1783623505000-0.2
+- Replace dashboard browser marks with the existing neutral initial fallback.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.62.0~alpha.1783623505000-0.1
 - Add a fail-closed reusable-module split for Playwright and Playwright Core.
