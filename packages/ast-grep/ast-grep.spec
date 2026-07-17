@@ -4,15 +4,17 @@
 
 Name:           ast-grep
 Version:        0.44.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Structural code search, linting, and rewriting tool
 
 License:        MIT AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT-0 AND Unicode-DFS-2016 AND LicenseRef-Fedora-Public-Domain
 URL:            https://ast-grep.github.io/
 Source0:        https://github.com/ast-grep/ast-grep/archive/refs/tags/%{version}.tar.gz
+# Limit dependency generation to the native CLI products selected by Fedora.
+# Fedora-specific; not submitted because upstream intentionally ships all workspace products.
 Patch0:         ast-grep-cli-workspace.patch
 
-BuildRequires:  cargo-rpm-macros
+BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  gcc
 
 %description
@@ -75,6 +77,9 @@ install -d %{buildroot}%{fish_completions_dir}
 %{fish_completions_dir}/ast-grep.fish
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.44.1-0.2
+- Record the reduced compatibility graph and complete Cargo patch metadata.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.44.1-0.1
 - Complete Fedora 43 and Fedora 44 source builds and dependency license audit.
 - Build only the native CLI, omit the conflicting sg alias, and generate shell completions.

@@ -170,7 +170,7 @@ Release updates are submitted from the reviewed local spec with `copr-cli build`
 
 Authenticated automation uses the explicit identity-scoped path in `COPR_CONFIG`, not an ambient `HOME`. Before any project or package mutation, the scripts call COPR's authenticated, read-only `/api_3/auth-check` endpoint and require the server-returned account to match the configured owner `marcin` exactly. Config-only `copr-cli whoami` output is not accepted as proof that a token is valid.
 
-Packages may set `copr.chroots` to a subset of the project chroots. Direct build submission honors that restriction. The `rust-dirs5`, `rust-dirs-sys0.4`, and `rust-atty0.2` compatibility crates target only Fedora 44 because Fedora 43 already provides those branches. `rust-tungstenite0.28` targets only Fedora 43 because Fedora 44 already provides that branch.
+Packages may set `copr.chroots` to a subset of the project chroots. Direct build submission honors that restriction. The `rust-dirs5`, `rust-dirs-sys0.4`, and `rust-atty0.2` compatibility crates target only Fedora 44 because Fedora 43 already provides those branches.
 
 ## Fedora References
 

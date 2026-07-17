@@ -4,13 +4,11 @@ blockers: []
 dependency_status:
   fedora_43:
     complete: true
-    compatibility_packages: 33
+    compatibility_packages: 29
   fedora_44:
     complete: true
-    compatibility_packages: 33
+    compatibility_packages: 30
   release_specific:
-    fedora_43:
-      - rust-tungstenite0.28
     fedora_44:
       - rust-atty0.2
 source_policy:

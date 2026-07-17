@@ -1,0 +1,9 @@
+---
+name: rust-tungstenite0.28
+retired_on: '2026-07-17'
+reason: no selected package requires tungstenite 0.28 after removal of tower-lsp-server's
+  WebSocket example-only async-tungstenite chain
+copr_project: marcin/agentlab
+configured_chroots_at_retirement:
+- fedora-43-x86_64
+- fedora-44-x86_64

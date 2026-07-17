@@ -7,7 +7,7 @@
 
 Name:           rust-ls-types0.0.6
 Version:        0.0.6
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Types for the Language Server Protocol specification
 
 License:        MIT
@@ -63,5 +63,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.6-0.2
+- Record selection as the single tower-lsp-server and ast-grep LSP types branch.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.0.6-0.1
 - Add the exact semver-zero compatibility crate required by ast-grep 0.44.1.

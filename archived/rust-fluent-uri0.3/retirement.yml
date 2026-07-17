@@ -1,0 +1,8 @@
+---
+name: rust-fluent-uri0.3
+retired_on: '2026-07-17'
+reason: no selected package requires fluent-uri 0.3 after retirement of ls-types 0.0.2
+copr_project: marcin/agentlab
+configured_chroots_at_retirement:
+- fedora-43-x86_64
+- fedora-44-x86_64

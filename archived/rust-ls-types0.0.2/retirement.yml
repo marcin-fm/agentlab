@@ -1,0 +1,9 @@
+---
+name: rust-ls-types0.0.2
+retired_on: '2026-07-17'
+reason: tower-lsp-server 0.23.0-0.2 uses ls-types 0.0.6; no selected package requires
+  ls-types 0.0.2
+copr_project: marcin/agentlab
+configured_chroots_at_retirement:
+- fedora-43-x86_64
+- fedora-44-x86_64
