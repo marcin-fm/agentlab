@@ -206,6 +206,16 @@ browser installation is not one of those MCP tools; it remains the separate
 tool set without an upstream exclusion mechanism, explicit maintainer approval
 for a downstream filter, or a separately approved process sandbox.
 
+This is an observed host boundary failure, not only an upstream warning. An
+exact-runtime MCP smoke called `browser_run_code_unsafe` through the published
+CLI and Fedora Chromium. Code running in the tool's `vm` context reached the
+host `process` through the live Playwright `page` object, loaded Node's built-in
+`fs` module, and wrote a marker under the audit root. The marker content had
+SHA-256 `d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933`
+and was removed after verification. The same smoke confirmed the exact 24-tool
+list and used no browser download. A real per-tool exclusion or independently
+approved process sandbox is therefore mandatory before publication.
+
 ## Intentional Failure
 
 `playwright-mcp.spec` exits in `%prep` before unpacking or building. It must

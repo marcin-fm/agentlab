@@ -10,7 +10,7 @@
 
 Name:           playwright-mcp
 Version:        0.0.78
-Release:        0.10%{?dist}
+Release:        0.11%{?dist}
 Summary:        Model Context Protocol server for Playwright
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC0-1.0 AND ISC AND MIT
@@ -84,6 +84,9 @@ echo 'playwright-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.11
+- Record the exact unsafe-tool VM escape and host-write proof.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.10
 - Record the unfilterable unsafe tool in the default MCP surface.
 

@@ -7,7 +7,7 @@ blockers:
   - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers. Their actual Linux roots require 239/92 registry crates; semver- and feature-aware Fedora comparison leaves 80-81/20 unresolved provider edges.
   - Candidate aggregate SPDX expressions are derived for the actual Rolldown and Lightning CSS roots. Repository or canonical texts resolve 59 of 62 crate-archive omissions; exhaustive history and release checks confirm that base-encode, json-escape-simd, and parcel_sourcemap still lack the required MIT notice.
   - The released CLI defaults to stdio but also exposes HTTP/SSE listeners, remote/CDP/extension modes, optional capabilities, unrestricted filesystem controls, config/environment overrides, and an install-browser download alias. Upstream has no bounded entry point that enforces the selected Chromium-only headless stdio profile without a downstream adapter.
-  - The exact default 24-tool set unconditionally includes browser_run_code_unsafe as a core capability. Upstream calls it RCE-equivalent and provides no per-tool exclusion mechanism; the package cannot publish a bounded default tool surface without an approved upstream control, downstream filter, or process sandbox.
+  - The exact default 24-tool set unconditionally includes browser_run_code_unsafe as a core capability. An exact-runtime smoke escaped its Node vm through the live page object, loaded host fs, and wrote a verified marker. Upstream provides no per-tool exclusion mechanism; the package cannot publish without an approved upstream control, downstream filter, or process sandbox.
   - Ten browser-logo dependencies have no npm license metadata or tarball notice. Their exact source repository excludes the logos from its MIT grant, and all ten marks ship in the generated Playwright Core dashboard; explicit redistribution/trademark review or an upstream-supported omission is required.
   - The audited immutable closure has not been hosted for offline COPR SCM builds.
 source_policy:
@@ -41,6 +41,7 @@ source_policy:
   selected_command_profile: playwright-mcp --browser chromium --headless --isolated --executable-path /usr/lib64/chromium-browser/headless_shell --image-responses omit
   command_surface_enforcement: unavailable upstream; omit port, capabilities, remote/CDP/extension, unrestricted filesystem, proxy, and managed-install modes in the canonical cx invocation, but direct CLI and PLAYWRIGHT_MCP_* overrides remain user-selectable
   default_tool_boundary: Exactly 24 tools; browser_run_code_unsafe is an unconditional core tool and is described upstream as RCE-equivalent. No per-tool exclude exists. browser_press_sequentially is skillOnly and excluded; browser installation is a CLI alias, not an MCP tool.
+  unsafe_tool_runtime_proof: Exact published CLI and Core bundles escaped the vm through the live page object, accessed host process and fs, wrote a marker with content SHA-256 d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933, and removed it after verification.
 upstream:
   provider: github-and-npm
   repository: microsoft/playwright-mcp

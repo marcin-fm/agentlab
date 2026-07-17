@@ -81,6 +81,8 @@ Command-surface correction: upstream defaults to stdio and supports the selected
 
 Default-tool correction: the exact upstream test and executable expose 24 default tools. `browser_run_code_unsafe` is an unconditional `core` tool and is explicitly described upstream as arbitrary JavaScript in the server process and RCE-equivalent. `browser_press_sequentially` is `skillOnly` and therefore does not create a 25th default tool; browser installation is a CLI alias, not an MCP tool. Upstream has no per-tool denylist, so the selected surface remains blocked pending an upstream exclusion mechanism, explicit approval for a downstream filter, or an approved process sandbox.
 
+Runtime-isolation correction: an exact-runtime MCP smoke reproduced the unsafe tool's host impact. Code in its Node `vm` context reached the host `process` through the live Playwright `page` object, loaded built-in `fs`, and wrote a verified marker outside MCP filename validation; the marker was then removed. The content SHA-256 was `d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933`. Publication therefore requires a real per-tool exclusion or independently approved process sandbox, not documentation alone.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.

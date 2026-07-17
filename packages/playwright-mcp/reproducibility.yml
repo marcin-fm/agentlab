@@ -144,6 +144,14 @@ build_mapping:
       per_tool_exclusion_available: false
       skill_only_helper_excluded: browser_press_sequentially
       managed_browser_install_is_mcp_tool: false
+      unsafe_tool_runtime_smoke:
+        exact_wrapper_and_core: true
+        fedora_chromium: true
+        vm_escape_to_host_process: true
+        host_fs_write: true
+        marker_content_sha256: d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933
+        marker_removed_after_verification: true
+        browser_download: false
     license_inventory:
       retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
       sidecar_total_packages: 91
@@ -281,6 +289,7 @@ evidence:
   selected_command_profile_enforced_by_upstream: false
   selected_default_tool_list_audited: true
   selected_default_tool_surface_policy_bounded: false
+  unsafe_default_tool_vm_escape_reproduced: true
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

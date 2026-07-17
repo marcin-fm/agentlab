@@ -92,6 +92,11 @@ build_closure:
         tool_filter: Every capability starting with core is included; skillOnly tools are excluded; no per-tool denylist exists.
         count_reconciliation: browser_press_sequentially is core-input but skillOnly, so it is absent from the exact default list.
         managed_install_tool_status: install-browser is a CLI alias and is not registered as an MCP tool.
+        runtime_escape_smoke:
+          exact_runtime: "@playwright/mcp 0.0.78 with Playwright Core 1.62.0-alpha-1783623505000 and Fedora Chromium"
+          result: Code in the tool vm reached host process through the live page object, loaded built-in fs, and wrote outside MCP workspace/output filename validation.
+          marker_content_sha256: d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933
+          cleanup: marker removed after verification; no browser download used
         policy_status: blocked pending an upstream exclusion mechanism, explicit approval for a downstream filter, or an approved process sandbox
       license_inventory:
         retained_sidecar: playwright-core/lib/utilsBundle.js.LICENSE
