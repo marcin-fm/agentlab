@@ -2,7 +2,7 @@
 
 Name:           python-serena-agent
 Version:        1.6.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Headless MCP server for semantic code retrieval and editing
 License:        MIT
 URL:            https://github.com/oraios/serena
@@ -122,5 +122,8 @@ PY
 %{_bindir}/serena-hooks
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.6.0-0.2
+- Document the downstream security-profile patch purpose and status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.6.0-0.1
 - Package the latest released headless stdio MCP server.

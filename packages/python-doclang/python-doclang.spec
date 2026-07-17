@@ -2,7 +2,7 @@
 
 Name:           python-doclang
 Version:        0.7.3
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Reference toolkit for the DocLang document markup format
 License:        Apache-2.0
 URL:            https://github.com/doclang-project/doclang
@@ -74,5 +74,8 @@ rm -f test-doclang.xmld
 %{_bindir}/doclang
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.7.3-0.2
+- Document the Fedora setuptools patch purpose and upstream status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.7.3-0.1
 - Initial Fedora package for DocLang.

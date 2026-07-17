@@ -4,7 +4,7 @@
 
 Name:           python-latex2mathml
 Version:        3.81.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Convert LaTeX math expressions to MathML
 License:        MIT AND LPPL-1.3c
 URL:            https://github.com/roniemartinez/latex2mathml
@@ -77,5 +77,8 @@ PY
 %{_bindir}/l2m
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.81.0-0.2
+- Document the Fedora build-backend substitution and upstream status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.81.0-0.1
 - Initial Fedora package for latex2mathml.

@@ -2,7 +2,7 @@
 
 Name:           python-docling-core
 Version:        2.87.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Core document types and serialization for Docling
 License:        MIT
 URL:            https://github.com/docling-project/docling-core
@@ -85,5 +85,8 @@ PY
 %{_bindir}/docling-view
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.87.1-0.2
+- Document the build metadata patches and their upstream status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.87.1-0.1
 - Initial Fedora package for docling-core.

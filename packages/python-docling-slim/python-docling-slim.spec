@@ -2,7 +2,7 @@
 
 Name:           python-docling-slim
 Version:        2.113.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
@@ -109,5 +109,8 @@ trap - EXIT
 %doc packages/docling-slim/README.md
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.113.0-0.2
+- Document the API-only service-client patch and upstream design.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.113.0-0.1
 - Initial Fedora package for the remote-service Docling surface.

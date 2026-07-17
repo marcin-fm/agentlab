@@ -2,7 +2,7 @@
 
 Name:           python-docling-mcp
 Version:        2.1.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Stdio Docling document-generation MCP server
 License:        MIT
 URL:            https://github.com/docling-project/docling-mcp
@@ -79,6 +79,9 @@ python3 %{SOURCE1}
 %{python3_sitelib}/docling_mcp/tools/__pycache__/remote_conversion.*.pyc
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.1.0-0.3
+- Document the downstream security-profile patch purpose and status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.1.0-0.2
 - Add an opt-in bounded remote-conversion stdio subpackage.
 
