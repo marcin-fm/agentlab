@@ -179,6 +179,10 @@ module Agentlab
     [stdout, stderr, status]
   end
 
+  def copr_resource_missing?(message)
+    message.match?(/\b404\b|does not exist|not found|no (?:package|project|copr) with name/i)
+  end
+
   def github_latest_release(repository)
     response = http_get(URI("https://api.github.com/repos/#{repository}/releases/latest"), json: true)
     release = JSON.parse(response)

@@ -43,7 +43,7 @@ if apply
   _stdout, get_stderr, get_status = Agentlab.capture(Agentlab.copr_command("get", project))
   if get_status.success?
     Agentlab.run!(modify_project)
-  elsif get_stderr.match?(/404|does not exist|not found/i)
+  elsif Agentlab.copr_resource_missing?(get_stderr)
     Agentlab.run!(create_project)
   else
     raise Agentlab::Error, "cannot inspect COPR project #{project}: #{get_stderr.strip}"
@@ -73,7 +73,7 @@ enabled.each do |package|
     )
     if status.success?
       Agentlab.run!(Agentlab.copr_command("edit-package-scm", project, *common))
-    elsif stderr.match?(/404|does not exist|not found/i)
+    elsif Agentlab.copr_resource_missing?(stderr)
       Agentlab.run!(Agentlab.copr_command("add-package-scm", project, *common))
     else
       raise Agentlab::Error, "cannot inspect COPR package #{package.name}: #{stderr.strip}"

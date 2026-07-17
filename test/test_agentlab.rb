@@ -192,6 +192,13 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_recognizes_copr_cli_missing_package_response
+    message = "Something went wrong:\nError: No package with name ast-grep in copr agentlab\n"
+
+    assert(Agentlab.copr_resource_missing?(message))
+    refute(Agentlab.copr_resource_missing?("Login invalid/expired"))
+  end
+
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions
     response = JSON.dump(
       "versions" => [
