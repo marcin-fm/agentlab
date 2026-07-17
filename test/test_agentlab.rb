@@ -199,6 +199,15 @@ class AgentlabTest < Minitest::Test
     refute(Agentlab.copr_resource_missing?("Login invalid/expired"))
   end
 
+  def test_copr_makefile_uses_stock_source_builder_tools
+    makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
+
+    refute_match(/\bspectool\b/, makefile)
+    assert_includes(makefile, 'rpmspec -P "$(spec)"')
+    assert_includes(makefile, "curl --fail --location --retry 3")
+    assert_includes(makefile, 'filename="$${fragment#/}"')
+  end
+
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions
     response = JSON.dump(
       "versions" => [
