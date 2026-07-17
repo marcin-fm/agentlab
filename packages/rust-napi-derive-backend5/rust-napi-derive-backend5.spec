@@ -99,7 +99,7 @@ install -pm 0644 %{SOURCE1} LICENSE-MIT
 %endif
 
 %changelog
-* Thu Jul 16 2026 OpenCode <noreply@example.invalid> - 5.1.1-0.3
+* Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 5.1.1-0.3
 - Restore the retained ctor 0.6 compatibility patch.
 - Install the pinned upstream MIT license omitted from the published crate.
 

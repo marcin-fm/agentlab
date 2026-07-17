@@ -639,5 +639,5 @@ install -pm 0644 %{SOURCE1} LICENSE-MIT
 %endif
 
 %changelog
-* Thu Jul 16 2026 OpenCode <noreply@example.invalid> - 3.10.3-0.2
+* Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 3.10.3-0.2
 - Install the pinned upstream MIT license omitted from the published crate.

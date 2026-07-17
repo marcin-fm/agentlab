@@ -142,5 +142,5 @@ export ORT_DYLIB_PATH=%{_libdir}/libonnxruntime.so
 %endif
 
 %changelog
-* Thu Jul 16 2026 Kreuzberg <kreuzberg@example.invalid> - 2.0.0~rc.12-0.2
+* Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.2
 - Build the offline system-ONNX Runtime feature surface.

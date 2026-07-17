@@ -16,7 +16,7 @@ patches:
   rtk-use-system-sqlite.patch: e9f2b1d08874a2bd46ca87ea671cec389bb0bc71dc82d29262c50eb3ccc4df0d
   dirs-sys-fix-metadata-auto.diff: c668f7b6bb5c658eed85acec48214a35d3d69ad4432fb34522063d64be019bf6
 collector_sha256: d17d4ef4e530cb61ac5d9b36decf4e6fe17cd4223b22972d61eed2c7059b0bb9
-spec_sha256: 2eb0a5c479012dfca320e42fdc4fb1f7e7109d30f3dc07c9fd21bbce7fc72d1b
+spec_sha256: c8a22f20620dfc46c4de1018fe18df2365b6c6b67c5b40984b3bcead3932100c
 closure:
   dependency_inventory_records: 114
   resolved_crate_versions: 114
@@ -58,17 +58,17 @@ validation:
     sqlite_database_smoke: passed
 artifacts:
   fedora_43:
-    srpm_sha256: 173c71bd2021ae8b27daaf87f8b8237288f21a36dc5357cd6412d324bf3b4f9f
-    rpm_sha256: 89610e65e127a6056fe109c7a09f68f013ab6a1d5784c4ff1b8d13b54f8d979b
-    debuginfo_sha256: 488fccfe04de038aa4027dd52b5b88d0f1cc2d2a6e5f79b9ead70b0427839969
-    debugsource_sha256: a83d8a108dcd835739fb11abb70ee163c6c9ea64a9cc01426fc0b9193126a9aa
-    extracted_binary_sha256: dddf763c8f6030527d0b0e9240ccc25d9d216f8b8ff360dc5816170a1b442643
+    srpm_sha256: 8537c52c1b1a3867f2b82dc6bb19bc0a109b60a9ce4789dec43951f3e5f58bcd
+    rpm_sha256: 93dce80e841d7c6894f992f8b19fc4c8a0f1705cad582ad9ec16ec0340ba57b6
+    debuginfo_sha256: 92b80b9c5906c22a69101bf904a8fde03e34e0a8170fcf5b4d3773cd07a7673b
+    debugsource_sha256: f9339fcc93330ac0944a6d910a57d30041a081a4dd2e008404cb5e7ddcec5b3a
+    extracted_binary_sha256: 8ecd064f4efb20278129114af620bee16d55fba94f720c7a15a7715a597d5faa
   fedora_44:
-    srpm_sha256: 6bd87b2243f3bfe5fd4972e105e05872926ad2bb7df5e6c5d8e40a071fe8ad29
-    rpm_sha256: 8de919750efc2768253fe6ca68d7076bc98ac127d17b6ddb0f895f80c565f59c
-    debuginfo_sha256: db59dee9c5af50060cae1fa5b30266f2d4d04a10a7d3adbf341522e683db3b5f
-    debugsource_sha256: ac6733f689e10dc6e9016f12ef2be8dcad2533bf3195a256e7c39489523cb0c5
-    extracted_binary_sha256: f997495c7094e62391ec18c76d858163d69c10f10c6932f9fa7aee0ad2ebf174
+    srpm_sha256: 6e006280bcd29fea9e03265721ba110b9366cea872bcc67857193d8d3a2dea11
+    rpm_sha256: 8d25dc5d2e94774bd4b52215cfdc6bf4371222aa8f4887cb90d2c7e41c804561
+    debuginfo_sha256: fbd7544ba01fda11c82edc338e127650b58de547574df75b1dc26dc6e7253ed4
+    debugsource_sha256: c86a41989de237286dfb8f538cd2e1340291bc15437a6c3fe9b34b1da72b7fd8
+    extracted_binary_sha256: 498a2ceb7e042bd940fa778747d788ec02502babe204fce32c62b018fa8c3fa8
 host_policy:
   produced_rpms_installed: false
   copr_mutated: false

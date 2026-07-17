@@ -211,5 +211,5 @@ cp -p %{SOURCE2} assets/test.pdf
 %endif
 
 %changelog
-* Thu Jul 16 2026 OpenCode <noreply@example.invalid> - 0.44.0-0.2
+* Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.44.0-0.2
 - Restore the immutable upstream test assets and retained time compatibility patch.

@@ -83,5 +83,5 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 1.0.0-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.0.0-0.1
 - Clarify the compile-time architecture feature description.

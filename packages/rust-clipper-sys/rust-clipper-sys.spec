@@ -114,6 +114,6 @@ rm -f %{buildroot}%{crate_instdir}/clipper/LICENSE.txt
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 0.8.0-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.8.0-0.1
 - Add the initial repository packaging changelog.
 %autochangelog

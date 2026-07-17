@@ -1,6 +1,6 @@
 # RTK License Review
 
-RTK `0.43.0-2` was clean-built from the current repository package on Fedora
+RTK `0.43.0-0.2` was clean-built from the current repository package on Fedora
 43 and Fedora 44. Both builds produced the same 114-record linked dependency
 inventory. The exact provider receipt contains 370 rows: one RTK workspace row
 and 369 owning Fedora binary-package rows. Those rows resolve to 117 source

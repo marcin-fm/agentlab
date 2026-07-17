@@ -153,5 +153,5 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 3.5.9-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.5.9-0.1
 - Add the initial repository packaging changelog.

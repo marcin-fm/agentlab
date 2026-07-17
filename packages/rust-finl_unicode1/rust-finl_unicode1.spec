@@ -95,5 +95,5 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 1.4.0-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.4.0-0.1
 - Add the initial changelog and clarify Unicode segmentation wording.

@@ -217,8 +217,8 @@ install -pm 0644 LICENSE-MIT %{buildroot}%{crate_instdir}/LICENSE-MIT
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 3.2.2-0.3
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.2.2-0.3
 - Preserve the supplemental MIT license with the crate's explicit include list.
 
-* Thu Jul 16 2026 OpenCode <noreply@example.invalid> - 3.2.2-0.2
+* Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 3.2.2-0.2
 - Install the pinned upstream MIT license omitted from the published crate.

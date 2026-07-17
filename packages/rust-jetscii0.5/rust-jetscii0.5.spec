@@ -95,5 +95,5 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 0.5.3-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.5.3-0.1
 - Shorten the package summary for RPM metadata.

@@ -201,5 +201,5 @@ done
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 6.0.0-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 6.0.0-0.1
 - Add the initial repository packaging changelog.

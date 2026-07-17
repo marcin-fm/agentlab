@@ -121,6 +121,6 @@ export ORT_PREFER_DYNAMIC_LINK=1
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 2.0.0~rc.12-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.1
 - Add the initial repository packaging changelog.
 %autochangelog

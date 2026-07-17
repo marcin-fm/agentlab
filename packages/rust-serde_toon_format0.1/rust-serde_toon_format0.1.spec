@@ -82,5 +82,5 @@ chmod 0755 benchmarks/flamegraph_to_csv.py
 %endif
 
 %changelog
-* Fri Jul 17 2026 OpenCode <noreply@example.invalid> - 0.1.2-0.1
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.1.2-0.1
 - Preserve executable mode for the benchmark Python helper.

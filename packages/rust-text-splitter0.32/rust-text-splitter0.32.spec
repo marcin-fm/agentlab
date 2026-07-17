@@ -122,6 +122,6 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
-* Thu Jul 16 2026 Fedora Packaging <packaging@fedoraproject.org> - 0.32.0-0.1
+* Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.1
 - Build text-splitter 0.32.0 with Fedora tokenizers compatibility
 - Retain inline tests and omit only unpublished fixture/snapshot tests

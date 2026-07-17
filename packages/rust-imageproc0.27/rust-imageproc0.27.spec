@@ -146,5 +146,5 @@ install -Dpm 0644 %{SOURCE1} tests/data/fonts/DejaVuSans.ttf
 %endif
 
 %changelog
-* Thu Jul 16 2026 OpenCode <noreply@example.invalid> - 0.27.0-0.1
+* Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.27.0-0.1
 - Restore the upstream DejaVuSans test fixture omitted from the crates.io archive.
