@@ -1,46 +1,28 @@
 name: playwright-mcp
 status: blocked
 blockers:
-  - The root lock has 679 integrity-pinned registry tarballs; 624 across 572 package names are eligible on Fedora Linux/x86_64. Fedora 43/44 provide no exact locked npm version and RPM Fusion provides no reusable npm capability, so the active root closure still needs immutable offline sources. The separate stable-test-runner lock is source-proven and only three packages on Linux, but its npm ci remains unskippable.
-  - Playwright exposes no package or MCP-only build target; the normal monorepo build cannot skip the stable-test-runner npm ci.
-  - Exact source-built esbuild 0.28.1 is feasible through the upstream and Fedora packaging pattern, but Fedora 43/44 provide only 0.24.2/0.27.2 and no exact compatibility provider exists yet.
-  - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers. Their actual Linux roots require 239/92 registry crates; semver- and feature-aware Fedora comparison leaves 80-81/20 unresolved provider edges.
-  - Candidate aggregate SPDX expressions are derived for the actual Rolldown and Lightning CSS roots. Repository or canonical texts resolve 59 of 62 crate-archive omissions; exhaustive history and release checks confirm that base-encode, json-escape-simd, and parcel_sourcemap still lack the required MIT notice.
-  - The released CLI defaults to stdio but also exposes HTTP/SSE listeners, remote/CDP/extension modes, optional capabilities, unrestricted filesystem controls, config/environment overrides, and an install-browser download alias. Upstream has no bounded entry point that enforces the selected Chromium-only headless stdio profile without a downstream adapter.
-  - The exact default 24-tool set unconditionally includes browser_run_code_unsafe as a core capability. An exact-runtime smoke escaped its Node vm through the live page object, loaded host fs, and wrote a verified marker. Upstream provides no per-tool exclusion mechanism; the package cannot publish without an approved upstream control, downstream filter, or process sandbox.
-  - Ten browser-logo dependencies have no npm license metadata or tarball notice. Their exact source repository excludes the logos from its MIT grant, and all ten marks ship in the generated Playwright Core dashboard; explicit redistribution/trademark review or an upstream-supported omission is required.
-  - The audited immutable closure has not been hosted for offline COPR SCM builds.
+  - The exact reusable nodejs-playwright and nodejs-playwright-core providers remain blocked on their monorepo source, build, license, and immutable-closure gates.
+  - The released CLI exposes HTTP/SSE, remote/CDP/extension modes, optional capabilities, unrestricted filesystem controls, config/environment overrides, and an install-browser alias with no upstream bounded-profile switch.
+  - The exact default 24-tool surface unconditionally includes browser_run_code_unsafe. The published runtime reached host process and fs through the live page object, and upstream provides no per-tool exclusion mechanism.
+  - Packaged Fedora 43 and Fedora 44 integration through the exact split module providers has not been proven.
 source_policy:
   npm_package: "@playwright/mcp"
-  source_correspondence: All seven npm files byte-match tag v0.0.78. Playwright alpha tarballs identify source commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
-  playwright_source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
-  generated_build: Full Playwright monorepo build with esbuild, Vite, generated types/assets, copied xdg-open, and a separate stable-test-runner install.
-  root_npm_provider_audit: Of 679 locked registry entries, 624 across 572 names are Linux/x86_64 eligible. Fedora 43/44 have zero exact locked providers and only colors, esbuild, punycode, and undici at different versions; RPM Fusion has no npm provider.
-  stable_test_runner: Four lock entries; Linux uses three Apache-2.0 Playwright packages with npm SLSA provenance to commit e9a206539527957abd177749dd893939d3c6c85c. Optional fsevents is Darwin-only, and no Linux install or browser-download script is present.
-  narrow_build_target: none; --disable-install only affects browser installation in watch mode
-  esbuild_source_path: Exact 0.28.1 Go binary and neutral npm module can be source-built; Fedora uses the same binary plus JavaScript/platform-module layout for older releases.
-  required_native_build_tools: Exact source-built esbuild 0.28.1, Rolldown 1.1.3, and Lightning CSS 1.32.0; optional DuckDB and Darwin fsevents are excluded.
-  native_provider_audit: Rolldown has 80 unresolved Fedora 43 edges and 81 on Fedora 44, including explicit tracing/valuable and tracing-core/valuable gaps; Lightning CSS has 20 on each release and no missing feature provider.
-  native_license_candidates: Rolldown is Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib; Lightning CSS is Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0. Immutable repository or canonical texts cover 59 of 62 active crate-archive omissions; three MIT-only notices remain unresolved.
-  browser_install_scripts: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 is an upstream-supported no-download path.
-  bundle_license_sidecars: Five published sidecars map 213 bundled package entries to exact root-lock versions; the selected binary retains only utilsBundle.js.LICENSE with 91 entries.
-  browser_logo_assets: Ten active root-lock packages lack license metadata; their exact source legal statement reserves the marks to their owners and excludes them from the repository MIT grant. Six logos are inlined and four are separate SVGs in the published dashboard, so distribution remains review-blocked.
-  dashboard_runtime_scope: Browser logos are used only by the dashboard. Default MCP tools do not enable devtools; browser_annotate under --caps=devtools requires dashboardApp.js and lib/vite/dashboard. A default-surface binary may omit dashboard output, but the normal upstream build still requires the logo source inputs.
-  selected_runtime_payload: "The default headless CLI candidate is 11 files and 6,798,642 bytes: MCP cli.js, manifest, and license plus Playwright Core coreBundle.js, utilsBundle.js, utilsBundle.js.LICENSE, package.json, browsers.json, LICENSE, NOTICE, and ThirdPartyNotices.txt. An enforced denylist smoke listed 24 tools and passed Fedora Chromium navigation/evaluation; package.json and browsers.json were independently proven required. The playwright npm payload and all other generated trees were not accessed."
-  installed_metadata_boundary: This candidate is a CLI application rather than the complete public npm module. The provisional npm(@playwright/mcp) Provide must be regenerated from the final installed tree or omitted.
-  selected_binary_license: The retained utilsBundle sidecar has 91 unique lock-matched entries with full notices (76 MIT, 9 ISC, 4 BSD-3-Clause, 1 BSD-2-Clause, 1 BlueOak-1.0.0). Fedora marks BlueOak-1.0.0 allowed. Reconciliation of all 400 coreBundle source markers adds CC0-1.0, giving the provisional expression Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC0-1.0 AND ISC AND MIT.
-  core_bundle_notices: Upstream has no sidecar generator for in-tree Core sources. The draft spec generates a 434-line notice verbatim from the pinned archive for pixelmatch, extractZip, lockfile, stackTrace, minimist, eventEmitter, clock, and Chromium BiDi/Puppeteer attribution; SHA-256 is c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a. CC0 reproduction is optional.
-  generated_javascript_policy: Node-executed esbuild outputs are bundled CJS with minify unset and are not minified. Production Vite assets are browser-targeted and minified; they require normal corresponding-source and license evidence. Copied xdg-open is a POSIX shell script.
-  xdg_open_integration: open 11.0.0 supplies an MIT-licensed xdg-open 1.2.1 copy, but the bundled runtime selects the system command. Fedora 43/44 provide xdg-utils 1.2.1; omit the dead copy for headless MCP and require xdg-utils only for a selected headed/report/dashboard surface.
+  source_correspondence: All seven npm files byte-match tag v0.0.78.
+  build: The released build script is a no-op; install the complete published public module after the provider and policy gates pass.
+  runtime_providers:
+    playwright_npm_version: 1.62.0-alpha-1783623505000
+    playwright_rpm_capability: 1.62.0~alpha.1783623505000
+    source_package: nodejs-playwright
+    binary_packages: nodejs-playwright and nodejs-playwright-core
+  installed_metadata_boundary: The scoped root does not trigger Fedora's current Node file attribute, so npm(@playwright/mcp) is declared manually.
   browser: Fedora chromium-headless only
-  browser_compatibility: Exact MCP wrapper ran over stdio with Fedora 44 chromium-headless 150.0.7871.114, listed 24 tools, and passed local data-URL navigation and evaluation; repeat from packaged RPMs in F43/F44 after source closure.
+  browser_compatibility: Exact MCP wrapper ran over stdio with Fedora 44 chromium-headless 150.0.7871.114, listed 24 tools, and passed local data-URL navigation and evaluation.
   browser_downloads: forbidden
   lifecycle_scripts: forbidden
-  networked_npm_install: forbidden
-  native_payloads: forbidden until inventoried and source-proven
+  networked_package_manager: forbidden
   selected_command_profile: playwright-mcp --browser chromium --headless --isolated --executable-path /usr/lib64/chromium-browser/headless_shell --image-responses omit
-  command_surface_enforcement: unavailable upstream; omit port, capabilities, remote/CDP/extension, unrestricted filesystem, proxy, and managed-install modes in the canonical cx invocation, but direct CLI and PLAYWRIGHT_MCP_* overrides remain user-selectable
-  default_tool_boundary: Exactly 24 tools; browser_run_code_unsafe is an unconditional core tool and is described upstream as RCE-equivalent. No per-tool exclude exists. browser_press_sequentially is skillOnly and excluded; browser installation is a CLI alias, not an MCP tool.
+  command_surface_enforcement: unavailable upstream
+  default_tool_boundary: Exactly 24 tools; browser_run_code_unsafe is unconditional core and no per-tool exclude exists.
   unsafe_tool_runtime_proof: Exact published CLI and Core bundles escaped the vm through the live page object, accessed host process and fs, wrote a marker with content SHA-256 d74568fdd4ec92e9d21cf2c2c8d407690f747bfa5fc06575e4561e0aecde2933, and removed it after verification.
 upstream:
   provider: github-and-npm

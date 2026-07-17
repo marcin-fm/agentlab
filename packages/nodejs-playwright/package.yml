@@ -1,0 +1,42 @@
+name: nodejs-playwright
+status: blocked
+blockers:
+  - The Playwright root lock has 679 integrity-pinned registry tarballs; 624 across 572 names are active on Fedora Linux/x86_64, and Fedora 43/44 provide no exact locked npm versions.
+  - The normal monorepo build has no package-only target and unconditionally runs npm ci for its separately bounded stable-test-runner lock.
+  - Exact source-built esbuild 0.28.1, Rolldown 1.1.3, and Lightning CSS 1.32.0 remain unavailable as Fedora providers; the latter two retain substantial unresolved Rust provider closures.
+  - Required legal material remains unavailable for base-encode and parcel_sourcemap MIT code and for json-escape-simd's MIT declaration plus its borrowed Apache-2.0 sonic-rs implementation.
+  - Ten browser-logo inputs required by the generated public dashboard are outside the source repository's MIT grant and remain under explicit redistribution and trademark review.
+  - The exact production, build, and test closure has not been materialized or immutably hosted for offline COPR SCM builds.
+source_policy:
+  npm_modules: playwright and playwright-core
+  npm_version: 1.62.0-alpha-1783623505000
+  rpm_version: 1.62.0~alpha.1783623505000
+  version_mapping: The RPM tilde preserves prerelease ordering while both installed package.json files retain the published npm semver.
+  generator_boundary: Fedora's provider generator emits the raw alpha as invalid RPM syntax, while its requirement generator discards the prerelease. Automatic metadata is suppressed for both roots and exact normalized capabilities are manual.
+  source_correspondence: Both npm releases identify Playwright commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
+  source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
+  build_model: One monorepo source build emits separate public playwright and playwright-core module RPMs.
+  browser_downloads: forbidden
+  lifecycle_scripts: forbidden
+  networked_package_manager: forbidden
+  native_payloads: forbidden until rebuilt and source-proven
+  browser: Fedora chromium-headless for downstream integration tests
+duplicate_check:
+  checked: "2026-07-17"
+  fedora_43_44: absent
+  rpm_fusion_release_43_44: absent
+  rpm_fusion_updates_43_44: absent
+upstream:
+  provider: npm-and-github
+  repository: microsoft/playwright
+  current_version: 1.62.0-alpha-1783623505000
+  rpm_version: 1.62.0~alpha.1783623505000
+  source_url_template: https://registry.npmjs.org/playwright/-/playwright-{version}.tgz
+  source_sha256: 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
+  source_integrity: sha512-6KV9h4PP3hqu4NaGdxxcijWfYh9LJcFI/R2sP4TTC4I5cFo3oRawN0ETlW5MkE3cQEgKhhoj0KUNz4sfpCT0Tg==
+  source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  license: Apache-2.0
+copr:
+  enabled: false
+  subdir: packages/nodejs-playwright
+  spec: nodejs-playwright.spec

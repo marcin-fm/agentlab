@@ -11,7 +11,21 @@ byte-match the release tag. The release tag archive SHA-256 is
 The exact Playwright source commit archive SHA-256 is
 `446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46`.
 
-## Immutable Runtime Inputs
+## Package Split
+
+The reusable runtime is now owned by one `nodejs-playwright` source package,
+which will build the Playwright monorepo once and emit `nodejs-playwright` plus
+`nodejs-playwright-core`. This package owns only the released
+`@playwright/mcp` public module and requires both exact normalized capabilities:
+`1.62.0~alpha.1783623505000`.
+
+The original npm manifests retain
+`1.62.0-alpha-1783623505000`. Fedora's automatic Node provider emits that raw
+prerelease as invalid RPM syntax and its requirement generator discards the
+prerelease, so `nodejs-playwright` suppresses those automatic root records and
+declares exact RPM-normalized metadata manually.
+
+## Provider Release Inputs
 
 | npm package | Version | SHA-256 |
 | --- | --- | --- |
@@ -19,7 +33,9 @@ The exact Playwright source commit archive SHA-256 is
 | `playwright` | `1.62.0-alpha-1783623505000` | `738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a` |
 | `playwright-core` | `1.62.0-alpha-1783623505000` | `a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c` |
 
-Those are the three top-level published runtime packages. Their generated
+The MCP tarball is this package's only source. The two Playwright tarballs are
+canonical inputs of `nodejs-playwright` and are retained here as exact provider
+evidence. Their generated
 Playwright bundles are not a three-package source closure: the exact monorepo
 lock has 719 non-root entries, including 679 integrity-pinned registry
 tarballs. Platform metadata excludes 55 optional non-Linux or non-x86_64
@@ -28,7 +44,7 @@ names. Fedora 43 and 44 provide no exact locked `npm(...)` version; only four
 names exist at different versions, and RPM Fusion provides none.
 `fsevents@2.3.2` is an optional Darwin-only dependency.
 
-## Source Build Audit
+## Provider Source Build Audit
 
 The MCP package's `build` script is only `echo OK`; `roll.js` is a networked
 release-maintenance script. The actual runtime comes from the exact Playwright
@@ -218,16 +234,16 @@ approved process sandbox is therefore mandatory before publication.
 
 ## Intentional Failure
 
-`playwright-mcp.spec` exits in `%prep` before unpacking or building. It must
-remain fail-closed until the records in `package.yml`, `dependencies.yml`, and
-`reproducibility.yml` are all satisfied. In particular, no npm install,
-lifecycle script, or Playwright browser download is permitted in an RPM build.
+`playwright-mcp.spec` verifies only the released MCP npm tarball and exits in
+`%prep`. It must remain fail-closed until the exact `nodejs-playwright`
+providers are complete, the packaged Fedora 43/44 integration passes, and the
+command/tool policy is resolved. No npm install, lifecycle script, or Playwright
+browser download is permitted in an RPM build.
 
-The remaining source gate is the generated Playwright runtime: compiled JS,
-bundled modules, Vite/esbuild assets, generated browser metadata, and copied
-`xdg-open` must be reproduced from Playwright commit
-`9fb36027c64c8edcf08bf06f618b3ca97a7b0d97` with a complete offline build
-closure, source-built tooling, and license evidence.
+The generated Playwright runtime, its Core notice, native build tools, complete
+module license inventory, and immutable closure are now canonical
+`nodejs-playwright` responsibilities. The detailed evidence above remains here
+to preserve the MCP dependency audit.
 
 The intended browser is Fedora `chromium-headless` through
 `/usr/lib64/chromium-browser/headless_shell`. Although the runtime metadata

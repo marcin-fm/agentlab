@@ -1,0 +1,51 @@
+release: 1.62.0-alpha-1783623505000
+rpm_version: 1.62.0~alpha.1783623505000
+status: blocked
+release_identity:
+  playwright_npm_tarball: https://registry.npmjs.org/playwright/-/playwright-1.62.0-alpha-1783623505000.tgz
+  playwright_npm_sha256: 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
+  playwright_core_npm_tarball: https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.0-alpha-1783623505000.tgz
+  playwright_core_npm_sha256: a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c
+  source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  source_commit_archive: https://codeload.github.com/microsoft/playwright/tar.gz/9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  source_commit_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
+metadata_boundary:
+  installed_npm_versions_preserved: true
+  automatic_provides_usable: false
+  automatic_requires_exact: false
+  automatic_provide_failure: Raw npm alpha contains two RPM hyphen separators.
+  automatic_requirement_failure: Fedora nodejs.req discards the prerelease and widens the exact dependency to the stable 1.62.0 interval.
+  manual_capability_version: 1.62.0~alpha.1783623505000
+  source_package: nodejs-playwright
+  binary_packages: nodejs-playwright and nodejs-playwright-core
+build_mapping:
+  monorepo_source_builds_once: true
+  package_only_build_target: false
+  root_lock_registry_tarballs: 679
+  root_lock_fedora_linux_x86_64_registry_entries: 624
+  stable_test_runner_linux_packages: 3
+  stable_test_runner_install_skippable: false
+  generated_module_payload_reproduced: false
+  exact_native_tools_source_built: false
+  immutable_closure_hosted: false
+license_mapping:
+  published_sidecars: 5
+  unique_inlined_package_versions: 175
+  all_sidecar_entries_matched_to_lock: true
+  provisional_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT
+  core_source_derived_notice_sha256: c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
+  exact_notice_sources_reviewed: true
+  legal_payload_complete: false
+  missing_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT
+  browser_logo_source_scope_verified: true
+  browser_logo_covered_by_repository_mit: false
+  browser_logo_omission_preserves_complete_public_module: false
+  browser_logo_redistribution_approved: false
+  browser_logo_review_complete: false
+validation:
+  spec_fail_closed_before_build: true
+  public_module_load_tests: false
+  upstream_tests: false
+  fedora_43_offline_build: false
+  fedora_44_offline_build: false
+  downstream_mcp_chromium_smoke: false

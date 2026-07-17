@@ -6,23 +6,15 @@ runtime_closure:
     sha256: cfff0fd8eae3ac3bcb39827861298cb6b483a8d72e3c558e7991658ed3d22562
     integrity: sha512-XLTUeA6mEN9sQ+hJ4dfG8EIkDbxS0K3Trc2RBkUJuf02TgE2FQRNTMtq/aJfhyRMINsRl/Ybc4sxcWLtFn4/TQ==
     license: Apache-2.0
-  - npm_name: playwright
-    version: 1.62.0-alpha-1783623505000
-    source_url: https://registry.npmjs.org/playwright/-/playwright-1.62.0-alpha-1783623505000.tgz
-    sha256: 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
-    integrity: sha512-6KV9h4PP3hqu4NaGdxxcijWfYh9LJcFI/R2sP4TTC4I5cFo3oRawN0ETlW5MkE3cQEgKhhoj0KUNz4sfpCT0Tg==
-    license: Apache-2.0
-  - npm_name: playwright-core
-    version: 1.62.0-alpha-1783623505000
-    source_url: https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.0-alpha-1783623505000.tgz
-    sha256: a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c
-    integrity: sha512-CPJZdsA/KGT2QQlekiV6Wt+QlQrZHVSZ6oiNtOI/bYYOIVLM8jfKGWTM4zQiyd4UN+40Cq4cA6lxmZHZbtPvJQ==
-    license: Apache-2.0
-optional_runtime_dependencies:
-  - npm_name: fsevents
-    version: 2.3.2
-    scope: Darwin-only optional dependency; excluded on Fedora
-build_closure:
+rpm_runtime_dependencies:
+  source_package: nodejs-playwright
+  npm_version: 1.62.0-alpha-1783623505000
+  rpm_capability_version: 1.62.0~alpha.1783623505000
+  required_capabilities:
+    - npm(playwright) = 1.62.0~alpha.1783623505000
+    - npm(playwright-core) = 1.62.0~alpha.1783623505000
+playwright_provider_audit:
+  canonical_package_record: ../nodejs-playwright/dependencies.yml
   status: audited-blocked
   source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
   source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
@@ -258,11 +250,7 @@ closure_audit:
   upstream_contact_recorded: false
   offline_verified: false
 gates:
-  - Vendor the exact root and stable-test-runner production, build, and test closures from original source tarballs without networked lifecycle execution.
-  - Package exact esbuild 0.28.1 from source using the upstream/Fedora Go-binary and JavaScript-module layout; do not use the prebuilt platform payload.
-  - Package exact Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API bindings from released source after their Cargo closures and aggregate licenses pass review.
-  - Reproduce every generated bundle, Vite asset, type, browser descriptor, and copied executable from the pinned source commit.
-  - Complete aggregate SPDX accounting and retain applicable license texts for the shipped bundled closure.
-  - Resolve distribution of the ten shipped browser-logo assets or use an upstream-supported build that omits them.
-  - Repeat the no-download Fedora chromium-headless operation smoke through the packaged MCP on Fedora 43 and Fedora 44.
-  - Host the complete checksummed closure at immutable URLs usable by COPR SCM.
+  - Complete and enable the exact nodejs-playwright provider after its production/build/test closure, native/generated source, license, logo, and immutable-hosting gates pass.
+  - Install the complete released MCP public module without package-manager resolution or lifecycle execution in RPM phases.
+  - Repeat the no-download Fedora chromium-headless operation smoke through both packaged modules on Fedora 43 and Fedora 44.
+  - Resolve the unbounded command and default unsafe-tool surface through an upstream control, explicit maintainer-approved downstream change, or approved process sandbox.

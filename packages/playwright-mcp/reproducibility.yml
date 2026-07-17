@@ -18,7 +18,9 @@ release_identity:
     LICENSE: 9a7110fc2d2f964038e5dc49128f908f29f47a574c961cba16085914e879cbda
     package.json: d1d7d6d08a2c8b10ac95a04fc358f8ca55b8855fabb8d6fa8c7cf26dfd5378b7
     README.md: b52c795d5e8b0fc6ae465e7666474c590434da2eb0ea54d131c753a5d261e61a
-runtime_sources:
+rpm_runtime_dependencies:
+  source_package: nodejs-playwright
+  rpm_capability_version: 1.62.0~alpha.1783623505000
   playwright:
     version: 1.62.0-alpha-1783623505000
     sha256: 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
@@ -31,7 +33,8 @@ runtime_sources:
   requested_chromium: 151.0.7922.10
   fedora_chromium_observed: 150.0.7871.114
   fedora_44_chromium_mcp_smoke: exact wrapper ran over stdio, listed 24 tools, and passed local data-URL navigation and evaluation through headless_shell
-build_mapping:
+playwright_provider_evidence:
+  canonical_package_record: ../nodejs-playwright/reproducibility.yml
   root_lock_non_root_entries: 719
   root_lock_registry_tarballs: 679
   root_lock_integrity_entries: 679

@@ -1,0 +1,101 @@
+target_release: 1.62.0-alpha-1783623505000
+public_modules:
+  - npm_name: playwright
+    rpm_package: nodejs-playwright
+    version: 1.62.0-alpha-1783623505000
+    rpm_version: 1.62.0~alpha.1783623505000
+    source_url: https://registry.npmjs.org/playwright/-/playwright-1.62.0-alpha-1783623505000.tgz
+    sha256: 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
+    integrity: sha512-6KV9h4PP3hqu4NaGdxxcijWfYh9LJcFI/R2sP4TTC4I5cFo3oRawN0ETlW5MkE3cQEgKhhoj0KUNz4sfpCT0Tg==
+    license: Apache-2.0
+    dependency: playwright-core 1.62.0-alpha-1783623505000
+  - npm_name: playwright-core
+    rpm_package: nodejs-playwright-core
+    version: 1.62.0-alpha-1783623505000
+    rpm_version: 1.62.0~alpha.1783623505000
+    source_url: https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.0-alpha-1783623505000.tgz
+    sha256: a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c
+    integrity: sha512-CPJZdsA/KGT2QQlekiV6Wt+QlQrZHVSZ6oiNtOI/bYYOIVLM8jfKGWTM4zQiyd4UN+40Cq4cA6lxmZHZbtPvJQ==
+    license: Apache-2.0
+optional_runtime_dependencies:
+  - npm_name: fsevents
+    version: 2.3.2
+    scope: Darwin-only optional dependency; excluded on Fedora
+build_closure:
+  status: audited-blocked
+  source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
+  root_lock_registry_tarballs: 679
+  fedora_linux_x86_64_registry_entries: 624
+  fedora_linux_x86_64_package_names: 572
+  fedora_43_44_exact_locked_providers: 0
+  stable_test_runner_linux_packages: 3
+  normal_build_package_target: none
+  normal_build_skips_npm_ci: false
+  native_build_tools:
+    esbuild: 0.28.1
+    rolldown: 1.1.3
+    lightningcss: 1.32.0
+  unresolved_fedora_edges:
+    rolldown_fedora_43: 80
+    rolldown_fedora_44: 81
+    lightningcss_fedora_43_44: 20
+  unresolved_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT
+  browser_logo_packages: 10
+  browser_logo_review_complete: false
+license_inventory:
+  published_bundle_sidecars: 5
+  unique_inlined_package_versions: 175
+  sidecar_license_counts: Apache-2.0=1, BSD-2-Clause=1, BSD-3-Clause=4, BlueOak-1.0.0=1, CC-BY-4.0=1, ISC=14, MIT=153
+  in_tree_additional_license: CC0-1.0
+  provisional_aggregate_spdx: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT
+  core_notice_sha256: c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
+license_notice_audit:
+  exact_sources_verified: true
+  legal_payload_complete: false
+  components:
+    - name: base-encode
+      version: 0.3.1
+      source_commit: 41bdeb57488beec4ed63180e848ce1e99fba227d
+      declared_license: MIT
+      finding: The crate and exact source commit contain no license text or copyright notice.
+    - name: json-escape-simd
+      version: 3.0.2
+      source_commit: a7eb4e70c5dc007ec618c53914e3301a0c159af7
+      declared_license: MIT
+      finding: The crate and exact source commit contain no MIT text or attribution.
+      borrowed_source: sonic-rs 0.5.5 src/util/string.rs
+      borrowed_source_commit: 41ae6e8a5962da26eab34432d1412f35ea6d199e
+      borrowed_source_license: Apache-2.0
+    - name: parcel_sourcemap
+      version: 2.1.1
+      source_commit: a136bd6ba9f1d3cded501ae824341be0a54c5ce3
+      declared_license: MIT
+      finding: The crate and exact source commit contain no license text or copyright notice.
+browser_logo_audit:
+  exact_lock_entries: chrome@2.0.0, chrome-beta@3.0.0, chrome-canary@2.0.0, chrome-dev@3.0.0, chromium@2.0.1, edge@2.0.7, firefox@3.0.10, firefox-beta@4.1.4, firefox-nightly@3.0.6, safari@2.1.0
+  generated_payload: packages/playwright-core/lib/vite/dashboard
+  public_api_dependency: playwright-core exports dashboard launch APIs that serve the generated payload
+  legal_scope_source: alrra/browser-logos
+  legal_scope_commit: 7173185f6715f5f1e9be8b6654d8f3e3815f669b
+  upstream_legal_scope: All logos and trademarks remain their owners' property; MIT applies to everything else.
+  covered_by_repository_mit: false
+  omission_preserves_complete_public_module: false
+  redistribution_approved: false
+closure_audit:
+  audited_release: 1.62.0-alpha-1783623505000
+  production_build_sources_verified: false
+  test_sources_verified: false
+  licenses_verified: false
+  native_sources_verified: false
+  generated_sources_verified: false
+  bundled_provides_verified: false
+  upstream_contact_recorded: false
+  offline_verified: false
+gates:
+  - Materialize the exact production, build, and test closures from original immutable source archives without package-manager installation or lifecycle execution in RPM phases.
+  - Source-build exact esbuild, Rolldown, Lightning CSS, and every functional native or WASM input.
+  - Reproduce the complete public playwright and playwright-core module trees from the pinned source commit.
+  - Complete aggregate legal accounting, including the missing MIT and borrowed Apache-2.0 material plus dashboard-logo redistribution review.
+  - Run public-module load tests and upstream tests in clean offline Fedora 43 and Fedora 44 buildroots.
+  - Host every generated closure input at immutable URLs usable by COPR SCM builds.
