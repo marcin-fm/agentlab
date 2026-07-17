@@ -1,0 +1,62 @@
+target_release: 1.18.1
+closure_audit:
+  audited_release:
+  production_build_sources_verified: false
+  test_sources_verified: false
+  licenses_verified: false
+  native_sources_verified: false
+  generated_sources_verified: false
+  bundled_provides_verified: false
+  upstream_contact_recorded: false
+  offline_verified: false
+historical_audit:
+  release: 1.17.20
+  workspace_count: 14
+  resolved_npm_package_ids: 809
+  licenses_resolved: 807
+  licenses_missing: 2
+rpm_subpackages: []
+closure_entry_schema:
+  required:
+    - npm_name
+    - version
+    - origin
+    - role
+    - included_in_binary
+    - source_url
+    - integrity
+    - sha256
+    - license
+    - source_verified
+  bundled_provides_selector:
+    origin: registry
+    role: runtime
+    included_in_binary: true
+native_or_platform_sensitive:
+  - "@opentui/core"
+  - "@parcel/watcher"
+  - "@ff-labs/fff-bun"
+  - "@silvia-odwyer/photon-node"
+  - "@lydell/node-pty"
+  - msgpackr-extract
+  - tree-sitter-bash
+  - tree-sitter-powershell
+  - web-tree-sitter
+source_closure_files:
+  production_build_archive: opencode-1.18.1-nm-prod-build.tar.zst
+  test_archive: opencode-1.18.1-nm-dev-test.tar.zst
+  closure_manifest: opencode-1.18.1-closure.json
+  bundled_licenses: opencode-1.18.1-bundled-licenses.txt
+  native_manifest: opencode-1.18.1-native.json
+gates:
+  - Recompute the complete closure and all counts for target_release before enabling.
+  - Parse the tagged release bun.lock without resolving new versions.
+  - Download original npm source tarballs, separate production/build from test inputs, and verify lockfile integrity values.
+  - Reject prebuilt executables, shared objects, native addons, and opaque generated code.
+  - Record source URLs, SHA-256 values, SPDX licenses, lifecycle scripts, and patches.
+  - Reconstruct the dependency tree deterministically with networking disabled.
+  - Publish or otherwise expose immutable checksummed closure source archives to COPR SCM builds without build-time resolution.
+  - Generate manual versioned bundled(nodejs-<npm-name>) Provides for entries embedded in the standalone executable.
+  - Record system-library decisions and required public upstream contacts.
+  - Build every required Linux native component from source.
+  - Run offline unit and smoke checks in a clean Fedora buildroot.

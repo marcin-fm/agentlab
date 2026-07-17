@@ -1,0 +1,88 @@
+schema: kreuzberg-reproducibility/v1
+release: 4.10.2
+transient_path_policy: Evidence-only paths below /srv/tmp are not distributable source locations.
+source_inputs:
+  source0:
+    url: https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v4.10.2.tar.gz
+    sha256: 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
+    observed_path: /srv/tmp/agentlab-kreuzberg/final-validation/f44/SOURCES/v4.10.2.tar.gz
+  source1:
+    url: https://registry.npmjs.org/@kreuzberg/node/-/node-4.10.2.tgz
+    sha256: 44e344738f22c6d864046e14fd5a04c63f4f1451a6275934410bfa1f428f4025
+    observed_path: /srv/tmp/agentlab-kreuzberg/final-validation/f44/SOURCES/node-4.10.2.tgz
+repositories:
+  f44:
+    rpm_count: 371
+    manifest: /srv/tmp/agentlab-kreuzberg/final-f44/manifest.tsv
+    manifest_sha256: 57875ef73b20eee11166dab63a3db6d768c08a81c6703b73338fce109fb0986a
+    pdfium_source_path: /srv/tmp/agentlab-kreuzberg/repos/f44
+    pdfium_x86_64_rpm_sha256: b5c7dc1e180c385e6929d8597eab1275e3bf607cb2e6735e7da8f31717158772
+    evidence_only: true
+  f43:
+    rpm_count: 379
+    manifest: /srv/tmp/agentlab-kreuzberg/final-f43/repo-manifest.tsv
+    manifest_sha256: 9f058637d8362435a37d95ba8d79ae670ce8d003feec4960d3068dfebd33b13a
+    source_manifest: /srv/tmp/agentlab-kreuzberg/final-f43/source-manifest.tsv
+    source_manifest_records: 65
+    source_manifest_sha256: 4a75226ee0a0187d12f7c5f5e2e3a4ae3ac7a634f3fe77d3eebbe19791a8a6d0
+    evidence_only: true
+srpms:
+  f44_kreuzberg:
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/f44/SRPMS/kreuzberg-4.10.2-0.1.fc44.src.rpm
+    historical_validated_sha256: e4b62e0e01598695cd53b69c7fd3a5546fea269986a16ae606cf14f1a62a6e6e
+    historical_validation: Fedora 44 v19 functional and rpmlint result
+    current_path_sha256: c6f1dade2e1cd5b4af23996ca97e133e4cfb3473a3b22d061e1447cb9b11cc8c
+    current_embedded_collector_sha256: 0702d4dc8befe78f74fa997793cb959d65c2d3ec443077990dcbd10a8a5e1a60
+    current_candidate_validation: not equivalent to the historical v19 artifact and not validated in this pass
+    path_content_drift: true
+    distributable: false
+  f43_kreuzberg:
+    path: /srv/tmp/agentlab-kreuzberg/final-f43/kreuzberg/SRPMS/kreuzberg-4.10.2-0.1.fc43.src.rpm
+    sha256: 8e430e529e574675ff4205c48b444642774de9adfa1b8b1ad328890ca15df84
+    distributable: false
+final_patches:
+  kreuzberg-ctor-features.patch: 8bae856d718e529d9d80634a6348c33ce410967df740e789eacb03bacef338ab
+  kreuzberg-fedora-crates.patch: 6283ec9746acc4b08a22d2707bb7600f99758430df27ca8df17c63a73e5830f9
+  kreuzberg-fedora-runtime.patch: 4bb47a02cad897ac33eb645c14cec903f783edab6f9b15ed45612767a67b1ca4
+  kreuzberg-native-targets.patch: 7d974c4e0ac3d289b4e707e1312ed93c8dc537e87ca132d4ecdbda5411bd9bef
+  kreuzberg-node-no-ffi-artifacts.patch: 950fd7e5bcada794a96cd52935ccd61e4b8bcd8f3750b51ad6a759338b3e028b
+  kreuzberg-node-no-napi-type-def.patch: ebf73498eb3646e8e718a72de1a38b7599c64464b32b0a8bc6020b3a53713f44
+  kreuzberg-node-workspace.patch: f4c3e365d4a5c403db3ab7c3e40acc7593d180e482742598b3c367fc94420ac4
+  kreuzberg-node-wrapper-fedora.patch: 1815f59e2f2c024d2e1f3e6a6ed5b9a2dcbd5c2a059f2001b0c74f77a55e6d09
+  kreuzberg-system-libraries.patch: 76ee68ac201c0ddd8ad3b5a44d329ce6a09707165b822e82488921b5f81abf65
+  kreuzberg-system-tesseract.patch: 0fb948eecbb55f3456144d08c44d0fde245cab0656a004492f4f21ed7397ad20
+collector:
+  historical_receipt_sha256: 95cdcf18a4d0387ce2a8a6fbe306816b0d56fe49c6a150e349dd6f1e9c826a44
+  current_repository_sha256: c6b273d9a9961ab6ffa3bf0b4936f23c89b60ca782ca10949ab6fecc1dc1fb5a
+  current_repository_state: multiple RPM owners handled individually; full application rebuild not run in this pass
+dependency_finalization:
+  path: dependency-finalization.yml
+  package_records: 63
+  excluded_later_f43_providers: [rust-hayro-jpeg2000, rust-fearless_simd]
+  declared_patch_members_checked: 40
+  retained_srpm_patch_bytes: all_match
+  exact_spec_build_state: not rebuilt in this pass
+scripts:
+  - path: /srv/tmp/agentlab-kreuzberg/final-f44/assemble-repo.sh
+    sha256: fe0c5039709bfc12a2fb9acf3a5a6881f9fc584c0f276b288df8b7037168014d
+  - path: /srv/tmp/agentlab-kreuzberg/final-f43/generate-manifest.rb
+    sha256: 090e9f002fa06b9950100abb51535962a79de740db5b2300cb2e40dda6294af2
+  - path: /srv/tmp/agentlab-kreuzberg/final-f43/import-srpms.rb
+    sha256: e4eee4c15185e4886f14c680a4897156a30947b14d1321e9c48e1e95e89e20dc
+  - path: /srv/tmp/agentlab-kreuzberg/final-f43/harvest-chain.rb
+    sha256: 82857cada34195abb8f9428eb4e6625b109331686fb9ca97c1e1c09dd024e8da
+evidence_paths_are_not_sources: true
+parser_subset:
+  generated_archive_records: 295
+  excluded_records: 11
+  archive_sha256: ebf1abc89cc4bef5a8d9c07e896796ddaa7aff68cb56143485bab94c47af846a
+  archive_status: retained in historical source-package evidence but omitted from the repository pending immutable public hosting
+  source_status: no immutable public source hosting
+  static_runtime_subset: true
+  language_count_is_distinct: true
+  upstream_documented_language_count: 248
+  provenance: The 295/11 accounting is preserved as generated-archive work metadata, not as a claim that 295 languages ship.
+license_fix_provenance: license-fixes.yml
+omitted:
+  - Built RPM/SRPM payloads, Mock roots, repositories, repodata, caches, build logs, and extracted trees.
+  - Generated 295-parser archive payload and other local-only source fixtures that still require immutable public hosting.

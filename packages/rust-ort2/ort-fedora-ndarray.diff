@@ -1,0 +1,5 @@
+--- ort-2.0.0-rc.12/Cargo.toml
++++ ort-2.0.0-rc.12/Cargo.toml
+@@ -184 +184 @@
+-version = "0.17"
++version = "0.16.1"

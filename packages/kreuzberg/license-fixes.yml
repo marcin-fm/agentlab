@@ -1,0 +1,84 @@
+schema: kreuzberg-license-fix-provenance/v1
+transient_path_policy: Evidence-only paths below /srv/tmp are not distributable source locations.
+source_root: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes
+source_root_evidence_only: true
+specs:
+  geo-types:
+    version: 0.7.19
+    license: MIT OR Apache-2.0
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/geo-types/rust-geo-types0.7.spec
+    sha256: 77c3002946aba2b11451aa7a8facc71cf4484c54f30ba24618de636be5efafd8
+    crate_path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/geo-types/geo-types-0.7.19.crate
+    crate_sha256: 94776032c45f950d30a13af6113c2ad5625316c9abfbccee4dd5a6695f8fe0f5
+  html-to-markdown-rs:
+    version: 3.8.3
+    license: MIT
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/html-to-markdown-rs/rust-html-to-markdown-rs3.spec
+    sha256: 64352cbfdfb79bb8dbd6519656f3cc208be0d835ba682ddd8047fdaceb07de70
+    crate_path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/html-to-markdown-rs/html-to-markdown-rs-3.8.3.crate
+    crate_sha256: c5b47de513bfcc3312a7521bd52ca1a287b0f85614d839c23b9873ff5c1465b7
+  napi:
+    version: 3.10.3
+    license: MIT
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/napi/rust-napi3.spec
+    sha256: ec8a54f19d6ed269de4ae1b8ecfc44855bb243e16cfc2e77d0c9317afbe4c97b
+    crate_path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/napi/napi-3.10.3.crate
+    crate_sha256: 0c71997d6f7ad4a756966e452426848ac27d3b37a295302d63afbbcce0270f93
+  napi-sys:
+    version: 3.2.2
+    license: MIT
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/napi-sys/rust-napi-sys3.spec
+    sha256: 05564c6c81bb1b3afa8c69b2cd79aafb5d8b26b6a4994cff6bc195d73e8be486
+    crate_path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/napi-sys/napi-sys-3.2.2.crate
+    crate_sha256: 1f5bcdf71abd3a50d00b49c1c2c75251cb3c913777d6139cd37dabc093a5e400
+  outlook-pst:
+    version: 1.2.0
+    license: MIT
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/outlook-pst/rust-outlook-pst1.spec
+    sha256: 489fb29ee7fa4491adfa718b52ada80cf2b03bd1e25652bd2ba817c79e3c51d9
+    crate_path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/outlook-pst/outlook-pst-1.2.0.crate
+    crate_sha256: 299eace9d895cc31490927d7de779f8e8f3deb5fb6bd1e68eb192aa1da19bd47
+  roman-numerals-rs:
+    version: 3.1.0
+    license: 0BSD OR CC0-1.0
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/roman-numerals-rs/rust-roman-numerals-rs3.spec
+    sha256: 2a2ea24638bd44ad0e937bddc7a2a3c16623639852520b8abd00547533351680
+    crate_path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/roman-numerals-rs/roman-numerals-rs-3.1.0.crate
+    crate_sha256: c85cd47a33a4510b1424fe796498e174c6a9cf94e606460ef022a19f3e4ff85e
+  whatlang:
+    version: 0.18.0
+    license: MIT
+    path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/whatlang/rust-whatlang0.18.spec
+    sha256: 5c7ba1df928a44b790c2666f52af284a1438e612d5433e724b588599f73bce6e
+    crate_path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/whatlang/whatlang-0.18.0.crate
+    crate_sha256: f5e8f38b596e2a359b755342473520a99421e43658548c79489ee221b728c107
+patches:
+  - path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/whatlang/whatlang-fix-metadata.diff
+    sha256: 99473387ba855d337cc18b458a963110884895c643e0a2b1b48fb6c3a0350c32
+    effect: Remove unavailable arbtest dev-dependency.
+  - path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/napi/napi-fix-metadata-auto.diff
+    sha256: 32652bc96458568267d5d1062977425be66a870e5d1f9771ea60a148ae10dedc
+    effect: Use Fedora ctor 0.6.3 and remove WASM-only Tokio dependency.
+  - path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/html-to-markdown-rs/html-to-markdown-rs-fedora-crates.diff
+    sha256: a6627da78e25885d0eda3bc6242ed533813b54651aea2ae07832495838522847
+    effect: Pin Fedora regex 1.12.4 and disable fixture-dependent test targets.
+supplemental_license_sources:
+  napi_rs_mit:
+    packages: [rust-napi3, rust-napi-sys3, rust-napi-derive-backend5]
+    commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c
+    url: https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE
+    sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
+    installed_as: LICENSE-MIT
+    current_spec_sha256:
+      rust-napi3: f67d4cbc132969d48ab17bf072b9883741567cf9ab1b008a9217ab4dc7541672
+      rust-napi-sys3: 4d06ae78cfdac6b5af770f4b4dedc7bff1780c18c32e75342eb77330ee1c0e02
+      rust-napi-derive-backend5: 0e37b6767def3b729c1c745eb880cbea3c09e7de04157c06d19973a87ff500a2
+    validation: immutable URL fetched and checksum verified; corrected specs not rebuilt in this pass
+dependency_patch_audit:
+  package_records: 63
+  declared_patch_members: 40
+  result: every repository patch byte-matches the corresponding retained successful SRPM member
+  compatibility_repairs:
+    napi-derive-backend-ctor-syntax.patch: f63c371fc549712674d7905c007f3fe3b01c550bb7f1b493fed421748f219d98
+    lopdf-time-0.3.47-compat.diff: 2d34079b7f130bda07297dafd8b02d79e76825c29ab4e6716cfbcb07adaac9c3
+import_policy: Final package specs and patches are imported under packages/rust-*; upstream crate archives, RPMs, SRPMs, Mock roots, logs, and caches remain excluded.

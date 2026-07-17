@@ -1,0 +1,5 @@
+name: rust-weezl0.2
+status: blocked
+blockers: [Final staged metadata and test patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: weezl, version_requirement: '= 0.2.1', current_version: 0.2.1, source_sha256: d4ca08e5ef825b65b056d9efbd95c8750683f0a6d0466d02e96dc2e4e360f3d2, source_url_template: 'https://static.crates.io/crates/weezl/weezl-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-weezl0.2, spec: rust-weezl0.2.spec}

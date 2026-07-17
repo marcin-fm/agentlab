@@ -1,0 +1,38 @@
+schema: python-docling-core-dependencies/v1
+target_release: 2.87.1
+runtime_direct:
+  - jsonschema >= 4.16, < 5
+  - pydantic >= 2.6, < 3 with upstream exclusions for 2.10.0 through 2.10.2
+  - jsonref >= 1.1, < 2
+  - tabulate >= 0.9, < 0.11
+  - pandas >= 2.1.4, < 4
+  - pillow >= 10, < 13
+  - pyyaml >= 5.1, < 7
+  - typing-extensions >= 4.12.2, < 5
+  - typer >= 0.12.5, < 0.25
+  - latex2mathml >= 3.77, < 4
+  - defusedxml >= 0.7.1, < 0.8
+  - requests >= 2.32, < 3
+  - pydantic-settings >= 2.14
+  - doclang >= 0.7, < 0.8
+local_prerequisites:
+  - python-latex2mathml 3.81.0
+  - python-doclang 0.7.3
+optional_not_packaged:
+  - chunking
+  - chunking-openai
+  - examples
+tests:
+  dependency: pytest
+  complete_files:
+    - test/test_base.py
+    - test/test_data_gen_flag.py
+    - test/test_doc_base.py
+    - test/test_otsl_table_export.py
+    - test/test_page.py
+    - test/test_regions_to_table.py
+  omitted_reasons:
+    - The sdist omits test/data used by many serializer and visualization files.
+    - Chunking tests require optional transformer, tokenizer, semchunk, tree-sitter, or GitPython branches.
+    - UPath tests require the optional universal-pathlib dependency.
+offline: required

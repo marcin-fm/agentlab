@@ -1,0 +1,342 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 129e775..be47fb2 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -36 +36 @@
+-ctor = "1.0"
++ctor = "0.6.3"
+@@ -65,7 +65,7 @@ serde_json = { version = "1.0.150" }
+ serde_toon_format = "0.1"
+ tempfile = "3.27.0"
+ thiserror = "2.0.18"
+-tokio = { version = "1.52.3", features = [
++tokio = { version = "1.52.2", features = [
+     "rt",
+     "rt-multi-thread",
+     "macros",
+diff --git a/crates/kreuzberg-ffi/src/lib.rs b/crates/kreuzberg-ffi/src/lib.rs
+index 2e46d45..7499104 100644
+--- a/crates/kreuzberg-ffi/src/lib.rs
++++ b/crates/kreuzberg-ffi/src/lib.rs
+@@ -107,7 +107,7 @@ pub use types::*;
+ pub use util::{kreuzberg_last_error, kreuzberg_last_error_code, kreuzberg_last_panic_context, kreuzberg_version};
+ pub use validation::*;
+ 
+-#[ctor::ctor(unsafe)]
++#[ctor::ctor]
+ fn setup_onnx_runtime_path() {
+     kreuzberg::ort_discovery::ensure_ort_available();
+ }
+diff --git a/crates/kreuzberg-node/Cargo.toml b/crates/kreuzberg-node/Cargo.toml
+index 56e6f80..c74495d 100644
+--- a/crates/kreuzberg-node/Cargo.toml
++++ b/crates/kreuzberg-node/Cargo.toml
+@@ -56,8 +56,5 @@ serde = { workspace = true }
+ serde_json = { workspace = true }
+ tokio = { workspace = true, features = ["time"] }
+ 
+-[target.'cfg(all(any(windows, unix), target_arch = "x86_64", not(target_env = "musl")))'.dependencies]
+-mimalloc-rust = "0.2"
+-
+ [build-dependencies]
+ napi-build = "2.3"
+diff --git a/crates/kreuzberg-node/src/lib.rs b/crates/kreuzberg-node/src/lib.rs
+index a611f2b..f9bfaa0 100644
+--- a/crates/kreuzberg-node/src/lib.rs
++++ b/crates/kreuzberg-node/src/lib.rs
+@@ -68,7 +68,7 @@ use std::ffi::{CStr, c_char};
+ 
+ static KNOWN_FORMAT_FIELDS: Lazy<AHashSet<&'static str>> = Lazy::new(|| KNOWN_FORMATS.iter().copied().collect());
+ 
+-#[ctor::ctor(unsafe)]
++#[ctor::ctor]
+ fn setup_onnx_runtime_path() {
+     kreuzberg::ort_discovery::ensure_ort_available();
+ }
+diff --git a/crates/kreuzberg-paddle-ocr/Cargo.toml b/crates/kreuzberg-paddle-ocr/Cargo.toml
+index 53d8c6b..b2a19c9 100644
+--- a/crates/kreuzberg-paddle-ocr/Cargo.toml
++++ b/crates/kreuzberg-paddle-ocr/Cargo.toml
+@@ -34,7 +34,7 @@ image = { workspace = true }
+ # Crate-specific dependencies (not in workspace)
+ # Disable rayon - OCR parallelism is handled at higher level
+ imageproc = { version = "0.27", default-features = false }
+-ndarray = "0.17"
++ndarray = "0.16.1"
+ ort = { workspace = true, features = ["ndarray"] }
+ # Workspace dependencies
+ serde = { workspace = true }
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+index 7c84484..8761c80 100644
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -195,12 +195,12 @@ axum = { version = "0.8", features = ["macros", "json", "multipart"], optiona
+ base64 = { workspace = true }
+ biblatex = { version = "0.12", optional = true }
+ biblib = { version = "0.7", default-features = false, features = ["ris", "pubmed", "xml"], optional = true }
+-bitvec = "1.1"
++bitvec = "1.0.1"
+ blake3 = { workspace = true }
+ bytes = { workspace = true }
+-calamine = { version = "0.36.0", features = ["dates"], optional = true }
++calamine = { version = "0.24.0", features = ["dates"], optional = true }
+ cfb = { workspace = true, optional = true }
+-chardetng = { version = "1.0.0", optional = true }
++chardetng = { version = "0.1.17", optional = true }
+ chrono = { workspace = true, optional = true }
+ comrak = { workspace = true }
+ dashmap = "6.2"
+@@ -240,11 +240,11 @@ liter-llm = { workspace = true, optional = true }
+ log = { workspace = true }
+ lopdf = { version = "0.44.0", default-features = false, features = ["chrono", "rayon"], optional = true }
+ mail-parser = { version = "0.11.5", optional = true }
+-memchr = "2.8.3"
++memchr = "2.8.2"
+ memmap2 = { workspace = true }
+ mime_guess = "2.0"
+ minijinja = { workspace = true, optional = true }
+-ndarray = { version = "0.17", optional = true }
++ndarray = { version = "0.16.1", optional = true }
+ num_cpus = { workspace = true }
+ once_cell = { workspace = true }
+ opentelemetry = { version = "0.32", features = ["trace"], optional = true }
+@@ -259,6 +259,6 @@ quick-xml = { version = "0.41.0", features = ["serialize"], optional = true }
+ rake = { version = "0.3.6", optional = true }
+ rayon = { workspace = true }
+-regex = "1.13.0"
++regex = "1.12.4"
+ rmcp = { version = "2.2.0", features = [
+     "server",
+     "macros",
+@@ -286,6 +286,6 @@ tiff = { version = "0.11", optional = true }
+ # Keep aligned with text-splitter's optional tokenizers integration so ChunkSizer
+ # is implemented for the same Tokenizer type used by Kreuzberg.
+-tokenizers = { version = "0.23.1", optional = true, default-features = false, features = ["http", "fancy-regex"] }
++tokenizers = { version = "0.22.2", optional = true, default-features = false, features = ["http", "fancy-regex"] }
+ tokio = { workspace = true, optional = true }
+ toml = { workspace = true }
+ tower = { version = "0.5", features = ["timeout", "limit", "util"], optional = true }
+@@ -311,14 +311,14 @@ whatlang = { version = "0.18.0", optional = true }
+ zip = { version = ">=7.0.0", optional = true, default-features = false, features = ["deflate-flate2"] }
+ 
+ [target.'cfg(all(not(target_os = "windows"), not(target_arch = "wasm32")))'.dependencies]
+-hf-hub = { version = "1.0", default-features = false, features = ["blocking", "rustls-tls"], optional = true }
++hf-hub = { version = "0.4.3", default-features = false, features = ["ureq", "rustls-tls"], optional = true }
+ # PaddleOCR via ONNX Runtime - not available on WASM (vendored from paddle-ocr-rs)
+ kreuzberg-paddle-ocr = { path = "../kreuzberg-paddle-ocr", version = "4.10.2", optional = true }
+ pprof = { version = "0.15.0", features = ["flamegraph"], optional = true }
+ ureq = { version = "3.3", default-features = false, features = ["rustls", "json"], optional = true }
+ 
+ [target.'cfg(all(target_os = "windows", not(target_arch = "wasm32")))'.dependencies]
+-hf-hub = { version = "1.0", default-features = false, features = ["blocking", "rustls-tls"], optional = true }
++hf-hub = { version = "0.4.3", default-features = false, features = ["ureq", "rustls-tls"], optional = true }
+ # PaddleOCR via ONNX Runtime - not available on WASM (vendored from paddle-ocr-rs)
+ kreuzberg-paddle-ocr = { path = "../kreuzberg-paddle-ocr", version = "4.10.2", optional = true }
+ ureq = { version = "3.3", default-features = false, features = ["native-tls", "json"], optional = true }
+diff --git a/crates/kreuzberg/src/embeddings/mod.rs b/crates/kreuzberg/src/embeddings/mod.rs
+index 06932fa..ecb9f5f 100644
+--- a/crates/kreuzberg/src/embeddings/mod.rs
++++ b/crates/kreuzberg/src/embeddings/mod.rs
+@@ -267,32 +267,28 @@ fn create_tokenizer(
+     {
+         for (_, value) in &map {
+             if let Some(content) = value.as_str() {
+-                tokenizer
+-                    .add_special_tokens([AddedToken {
+-                        content: content.to_string(),
+-                        special: true,
+-                        ..Default::default()
+-                    }])
+-                    .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to add special token: {e}")))?;
++                tokenizer.add_special_tokens(&[AddedToken {
++                    content: content.to_string(),
++                    special: true,
++                    ..Default::default()
++                }]);
+             } else if value.is_object()
+                 && let (Some(content), Some(single_word), Some(lstrip), Some(rstrip), Some(normalized)) = (
+                     value["content"].as_str(),
+                     value["single_word"].as_bool(),
+                     value["lstrip"].as_bool(),
+                     value["rstrip"].as_bool(),
+                     value["normalized"].as_bool(),
+                 )
+             {
+-                tokenizer
+-                    .add_special_tokens([AddedToken {
+-                        content: content.to_string(),
+-                        special: true,
+-                        single_word,
+-                        lstrip,
+-                        rstrip,
+-                        normalized,
+-                    }])
+-                    .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to add special token: {e}")))?;
++                tokenizer.add_special_tokens(&[AddedToken {
++                    content: content.to_string(),
++                    special: true,
++                    single_word,
++                    lstrip,
++                    rstrip,
++                    normalized,
++                }]);
+             }
+         }
+     }
+@@ -398,21 +394,14 @@ fn download_model_files(
+ )> {
+     cleanup_stale_locks(cache_directory, repo_name);
+ 
+-    let client = hf_hub::HFClient::builder()
+-        .cache_dir(cache_directory.to_path_buf())
++    let api = hf_hub::api::sync::ApiBuilder::from_env()
++        .with_cache_dir(cache_directory.to_path_buf())
+         .build()
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let api = hf_hub::HFClientSync::from_inner(client)
+-        .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let (owner, name) = hf_hub::split_id(repo_name);
+-    let repo = api.model(owner, name);
++    let repo = api.model(repo_name.to_string());
+ 
+-    let model_path = repo
+-        .download_file()
+-        .filename(model_file.to_string())
+-        .send()
+-        .map_err(|e| {
+-            let hint = if matches!(e, hf_hub::HFError::CacheLockTimeout { .. }) {
++    let model_path = repo.get(model_file).map_err(|e| {
++            let hint = if matches!(e, hf_hub::api::sync::ApiError::LockAcquisition(_)) {
+                 lock_acquisition_hint(cache_directory, repo_name)
+             } else {
+                 String::new()
+@@ -420,28 +413,16 @@ fn download_model_files(
+             crate::KreuzbergError::embedding(format!("Failed to download {model_file}: {e}{hint}"))
+         })?;
+ 
+-    let tokenizer_path = repo
+-        .download_file()
+-        .filename("tokenizer.json".to_string())
+-        .send()
++    let tokenizer_path = repo.get("tokenizer.json")
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to download tokenizer.json: {e}")))?;
+ 
+-    let config_path = repo
+-        .download_file()
+-        .filename("config.json".to_string())
+-        .send()
++    let config_path = repo.get("config.json")
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to download config.json: {e}")))?;
+ 
+-    let special_tokens_path = repo
+-        .download_file()
+-        .filename("special_tokens_map.json".to_string())
+-        .send()
++    let special_tokens_path = repo.get("special_tokens_map.json")
+         .unwrap_or_else(|_| std::path::PathBuf::new());
+ 
+-    let tokenizer_config_path = repo
+-        .download_file()
+-        .filename("tokenizer_config.json".to_string())
+-        .send()
++    let tokenizer_config_path = repo.get("tokenizer_config.json")
+         .unwrap_or_else(|_| std::path::PathBuf::new());
+ 
+     Ok((
+@@ -626,17 +607,14 @@ pub fn download_model(
+ 
+     tracing::info!(repo = %repo_name, "Downloading embedding model files (no ONNX init)");
+ 
+-    let client = hf_hub::HFClient::builder()
+-        .cache_dir(cache_directory)
++    let api = hf_hub::api::sync::ApiBuilder::from_env()
++        .with_cache_dir(cache_directory)
+         .build()
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let api = hf_hub::HFClientSync::from_inner(client)
+-        .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let (owner, name) = hf_hub::split_id(repo_name);
+-    let repo = api.model(owner, name);
++    let repo = api.model(repo_name.to_string());
+ 
+     for file in files {
+-        match repo.download_file().filename((*file).to_string()).send() {
++        match repo.get(file) {
+             Ok(path) => tracing::debug!(file = %file, path = ?path, "Downloaded"),
+             Err(e) => {
+                 if *file == model_file || *file == "tokenizer.json" {
+diff --git a/crates/kreuzberg/src/extraction/email.rs b/crates/kreuzberg/src/extraction/email.rs
+index 9af5250..5170200 100644
+--- a/crates/kreuzberg/src/extraction/email.rs
++++ b/crates/kreuzberg/src/extraction/email.rs
+@@ -79,9 +79,9 @@ fn maybe_transcode_utf16(data: &[u8]) -> Option<Vec<u8>> {
+         let is_be_heuristic = data[0] == 0x00 && data[2] == 0x00 && data[4] == 0x00 && data[6] == 0x00;
+ 
+         if is_le_heuristic || is_be_heuristic {
+-            let mut detector = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Allow);
++            let mut detector = chardetng::EncodingDetector::new();
+             detector.feed(data, true);
+-            let guess = detector.guess(None, chardetng::Utf8Detection::Allow);
++            let guess = detector.guess(None, true);
+ 
+             if guess.name() == "UTF-8" || guess.name() == "windows-1252" {
+                 (is_le_heuristic, 0)
+diff --git a/crates/kreuzberg/src/extraction/excel.rs b/crates/kreuzberg/src/extraction/excel.rs
+index 0981a7e..00de57d 100644
+--- a/crates/kreuzberg/src/extraction/excel.rs
++++ b/crates/kreuzberg/src/extraction/excel.rs
+@@ -594,10 +594,10 @@ fn format_cell_to_string(data: &Data) -> String {
+                 "false".to_string()
+             }
+         }
+-        Data::DateTime(dt) => {
+-            let (year, month, day, hour, min, sec, _milli) = dt.to_ymd_hms_milli();
+-            format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}", year, month, day, hour, min, sec)
+-        }
++        Data::DateTime(dt) => dt
++            .as_datetime()
++            .map(|value| value.format("%Y-%m-%d %H:%M:%S").to_string())
++            .unwrap_or_else(|| dt.as_f64().to_string()),
+         Data::Error(e) => format!("#ERR: {:?}", e),
+         Data::DateTimeIso(s) => s.clone(),
+         Data::DurationIso(s) => format!("DURATION: {}", s),
+diff --git a/crates/kreuzberg/src/model_download.rs b/crates/kreuzberg/src/model_download.rs
+index 36bc21c..4aabef5 100644
+--- a/crates/kreuzberg/src/model_download.rs
++++ b/crates/kreuzberg/src/model_download.rs
+@@ -13,14 +13,12 @@ use sha2::{Digest, Sha256};
+ pub fn hf_download(repo_id: &str, remote_filename: &str) -> Result<PathBuf, String> {
+     tracing::info!(repo = repo_id, filename = remote_filename, "Downloading via hf-hub");
+ 
+-    let api = hf_hub::HFClientSync::new().map_err(|e| format!("Failed to initialize HuggingFace Hub API: {e}"))?;
++    let api = hf_hub::api::sync::ApiBuilder::from_env()
++        .build()
++        .map_err(|e| format!("Failed to initialize HuggingFace Hub API: {e}"))?;
+ 
+-    let (owner, name) = hf_hub::split_id(repo_id);
+-    let repo = api.model(owner, name);
+-    let cached_path = repo
+-        .download_file()
+-        .filename(remote_filename.to_string())
+-        .send()
++    let repo = api.model(repo_id.to_string());
++    let cached_path = repo.get(remote_filename)
+         .map_err(|e| format!("Failed to download '{remote_filename}' from {repo_id}: {e}"))?;
+ 
+     Ok(cached_path)
+diff --git a/crates/kreuzberg/src/utils/string_utils.rs b/crates/kreuzberg/src/utils/string_utils.rs
+index bfaad8f..2226847 100644
+--- a/crates/kreuzberg/src/utils/string_utils.rs
++++ b/crates/kreuzberg/src/utils/string_utils.rs
+@@ -182,9 +182,9 @@ fn decode_and_fix_mojibake(byte_data: &[u8]) -> String {
+         }
+     }
+ 
+-    let mut detector = EncodingDetector::new(chardetng::Iso2022JpDetection::Allow);
++    let mut detector = EncodingDetector::new();
+     detector.feed(byte_data, true);
+-    let encoding = detector.guess(None, chardetng::Utf8Detection::Allow);
++    let encoding = detector.guess(None, true);
+ 
+     // OSError/RuntimeError must bubble up - system errors need user reports ~keep
+     match ENCODING_CACHE.write() {

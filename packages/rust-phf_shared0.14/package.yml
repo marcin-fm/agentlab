@@ -1,0 +1,5 @@
+name: rust-phf_shared0.14
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: phf_shared, version_requirement: '= 0.14.0', current_version: 0.14.0, source_sha256: c6fd9027e2d9319be6349febd1db4e8d02aa544921200c9b777720ac34a3aa89, source_url_template: 'https://static.crates.io/crates/phf_shared/phf_shared-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-phf_shared0.14, spec: rust-phf_shared0.14.spec}

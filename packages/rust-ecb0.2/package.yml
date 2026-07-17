@@ -1,0 +1,5 @@
+name: rust-ecb0.2
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: ecb, version_requirement: '= 0.2.0', current_version: 0.2.0, source_sha256: fbfbf3db731928d6912bc3beda911d55b834cee3df6131ba79b337a1298a3fa9, source_url_template: 'https://static.crates.io/crates/ecb/ecb-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-ecb0.2, spec: rust-ecb0.2.spec}

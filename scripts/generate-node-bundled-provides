@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require_relative "lib/agentlab"
+
+begin
+  closure_path = nil
+  spec_path = nil
+  package_name = nil
+  apply = false
+
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/generate-node-bundled-provides (--package NAME | --closure PATH) [--spec PATH --apply]"
+    parser.on("--package NAME", "Use closure/spec paths from a package manifest") { |name| package_name = name }
+    parser.on("--closure PATH", "Audited closure JSON") { |path| closure_path = path }
+    parser.on("--spec PATH", "Spec containing the generated block markers") { |path| spec_path = path }
+    parser.on("--apply", "Replace the generated block in --spec") { apply = true }
+  end.parse!
+
+  if package_name
+    raise Agentlab::Error, "--package and --closure are mutually exclusive" if closure_path
+
+    package = Agentlab.package_named(package_name)
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    filename = dependencies.dig("source_closure_files", "closure_manifest")
+    raise Agentlab::Error, "#{package_name}: closure_manifest is not configured" unless filename
+
+    closure_path = File.join(package.directory, filename)
+    spec_path ||= package.spec_path
+  end
+
+  raise Agentlab::Error, "--closure is required" unless closure_path
+  raise Agentlab::Error, "--apply requires --spec" if apply && !spec_path
+
+  closure = JSON.parse(File.read(closure_path))
+  provides = Agentlab.node_bundled_provides(closure)
+
+  if spec_path
+    spec = File.read(spec_path)
+    pattern = /# BEGIN GENERATED BUNDLED NODE PROVIDES\n.*?# END GENERATED BUNDLED NODE PROVIDES/m
+    raise Agentlab::Error, "generated block markers not found exactly once in #{spec_path}" unless spec.scan(pattern).length == 1
+
+    block = Agentlab.node_bundled_provides_block(closure)
+    if apply
+      File.write(spec_path, spec.sub(pattern, block))
+      puts "Updated #{spec_path} with #{provides.length} bundled Node provides."
+    else
+      puts block
+      puts "Dry run: pass --apply to update #{spec_path}."
+    end
+  else
+    puts provides
+  end
+rescue Agentlab::Error, JSON::ParserError, KeyError, Errno::ENOENT => e
+  warn "error: #{e.message}"
+  exit 1
+end

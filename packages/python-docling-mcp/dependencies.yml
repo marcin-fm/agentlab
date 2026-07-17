@@ -1,0 +1,46 @@
+schema: python-docling-mcp-dependencies/v1
+target_release: 2.1.0
+build_system:
+  backend: hatchling.build
+  requirement: hatchling
+runtime_direct:
+  - docling-core >= 2.51.0
+  - docling-slim ~= 2.92
+  - mcp[cli] >= 1.9.4
+  - pydantic ~= 2.10
+runtime_optional:
+  remote_conversion:
+    - docling-slim[service-client] >= 2.113
+    - pydantic-settings >= 2.4
+completed_reusable_packages:
+  - python-docling-core 2.87.1
+  - python-docling-slim 2.113.0 service-client API
+  - python-doclang 0.7.3
+  - python-latex2mathml 3.81.0
+missing_reusable_fedora_packages: []
+runtime_behavior:
+  transport: stdio only
+  base_tool_groups: generation and manipulation
+  optional_remote_tool_groups: generation, manipulation, and single-document remote conversion
+  remote_configuration: DOCLING_SERVICE_URL and DOCLING_SERVICE_UPLOAD_ROOT are required; API key, timeout, retry, polling, and size settings are optional environment variables
+  remote_input_policy: URL sources, symlinks, directories, noncanonical paths, out-of-root paths, and inputs above 64 MiB are rejected before network access
+  excluded_surfaces: local conversion, directory conversion, RAG, HTML-table conversion, model downloads, HTTP, SSE, WebSocket, and experimental tasks
+stdio_smoke:
+  base_command: docling-mcp-server
+  base_assertions:
+    - MCP initialize completed through an stdio ClientSession.
+    - list_tools included generation and manipulation tools.
+    - Single and directory conversion plus HTML-table conversion tools were absent.
+    - A create-document tool call returned nonempty content.
+    - No network request or model download occurred.
+  remote_command: docling-mcp-remote-conversion
+  remote_assertions:
+    - list_tools retained generation and manipulation and added only single-document conversion.
+    - A fake loopback service exercised health, upload, polling, inline result decoding, and cache-hit behavior.
+    - The API key reached only the configured service and no URL-source request occurred.
+    - URL, root, symlink, directory, size, failed-task, malformed-result, and invalid-configuration paths failed closed.
+    - Import tracing found no local converter or converter-factory module.
+security_review:
+  provider: python-mcp 1.26.0
+  result: accepted for both enforced stdio launchers; remote service-client egress is separately bounded
+  record: mcp-1.26-stdio-security-review.md

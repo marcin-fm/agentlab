@@ -1,0 +1,38 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use Fedora Chromium when no browser is configured
+
+The packaged application intentionally excludes Puppeteer's downloaded browser.
+Prefer Fedora chromium-headless when the caller did not provide an executable,
+and add the no-sandbox flags only for root containers such as cx. Explicit user
+configuration and PUPPETEER_EXECUTABLE_PATH continue to take precedence.
+
+--- a/src/index.js
++++ b/src/index.js
+@@ -361,6 +361,27 @@
+       JSON.parse(fs.readFileSync(puppeteerConfigFile, "utf-8")),
+     );
+   }
++  if (!puppeteerConfig.executablePath) {
++    const configuredBrowser = process.env.PUPPETEER_EXECUTABLE_PATH;
++    const fedoraBrowser = [
++      "/usr/lib64/chromium-browser/headless_shell",
++      "/usr/lib/chromium-browser/headless_shell",
++      "/usr/bin/chromium-browser",
++    ].find((candidate) => fs.existsSync(candidate));
++    puppeteerConfig.executablePath = configuredBrowser || fedoraBrowser;
++  }
++  if (process.getuid?.() === 0) {
++    const args = new Set(puppeteerConfig.args || []);
++    args.add("--no-sandbox");
++    args.add("--disable-setuid-sandbox");
++    puppeteerConfig.args = [...args];
++  }
++  if (!puppeteerConfig.executablePath) {
++    error(
++      "No Chromium executable found. Install chromium-headless, set " +
++        "PUPPETEER_EXECUTABLE_PATH, or pass --puppeteerConfigFile.",
++    );
++  }
+ 
+   // check cssFile
+   let myCSS;

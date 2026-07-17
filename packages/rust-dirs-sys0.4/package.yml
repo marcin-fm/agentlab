@@ -1,0 +1,23 @@
+name: rust-dirs-sys0.4
+status: enabled
+blockers: []
+build_validation:
+  fedora-44-x86_64: passed
+  build_arch: noarch
+duplicate_check:
+  checked: "2026-07-15"
+  fedora_44: absent
+  rpm_fusion_44: absent
+upstream:
+  provider: crates_io
+  crate: dirs-sys
+  version_requirement: ~> 0.4.0
+  current_version: 0.4.1
+  source_url_template: https://static.crates.io/crates/dirs-sys/dirs-sys-{version}.crate
+  source_sha256: 520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c
+copr:
+  enabled: true
+  chroots:
+    - fedora-44-x86_64
+  subdir: packages/rust-dirs-sys0.4
+  spec: rust-dirs-sys0.4.spec

@@ -1,0 +1,17 @@
+status: blocked
+name: rust-biblatex0.12
+blockers:
+  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - COPR enablement and package publication approval are not finalized.
+  - Fedora/RPM Fusion duplicate and license review is still required.
+upstream:
+  provider: crates_io
+  crate: biblatex
+  version_requirement: = 0.12.0
+  current_version: 0.12.0
+  source_url_template: https://static.crates.io/crates/biblatex/biblatex-{version}.crate
+  source_sha256: 591eba69b7c085632e22ca03606f0bbea68d53bbe26c8962e2d549af20c6a561
+copr:
+  enabled: false
+  subdir: packages/rust-biblatex0.12
+  spec: rust-biblatex0.12.spec

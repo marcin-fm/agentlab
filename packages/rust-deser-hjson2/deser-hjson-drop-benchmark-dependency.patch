@@ -1,0 +1,11 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Drop benchmark-only glassbench dependency
+
+The published crate has no test target that uses glassbench. Fedora does not
+need to package benchmark tooling to build and test the library.
+
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -44,2 +44,0 @@
+-[dev-dependencies.glassbench]
+-version = "0.3.5"

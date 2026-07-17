@@ -1,0 +1,47 @@
+name: python-latex2mathml
+status: enabled
+blockers: []
+source_policy:
+  sdist_omissions:
+    - The PyPI sdist omits the project MIT license file.
+    - The PyPI sdist omits the upstream test suite.
+  supplemental_license:
+    url: https://raw.githubusercontent.com/roniemartinez/latex2mathml/605e02726eca5a77bb07395631fde9e0acacdbab/LICENSE
+    sha256: 4ac1e1da07f6b343d54191c5e1716840534e08591b3f9eaec90d6800cdc47543
+  runtime_data:
+    file: latex2mathml/unimathsymbols.txt
+    sha256: 74ef8954efaf01dc1fb131313ef6d7f7b741c4f78e30f6d6d3600b9dd5a55aee
+    license: LPPL-1.3c
+  build_backend_patch: Replace the incompatible uv_build range with hatchling while preserving the root package layout.
+license_audit:
+  expression: MIT AND LPPL-1.3c
+  project_license: exact release-commit LICENSE
+  data_license: canonical LPPL 1.3c text plus the bundled file notice
+duplicate_check:
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+validation:
+  fedora_43: clean Mock build passed
+  fedora_44: clean Mock build passed
+  rpmlint: zero errors and two expected no-manual-page warnings per chroot
+  upstream_tests: unavailable; sdist contains no tests
+  local_smoke: installed-library fraction conversion, LPPL data notice, and both console scripts passed in each chroot
+artifacts:
+  fedora_43:
+    srpm_sha256: a6b5f77188cfcd4b49fea791bb8d54adbc5176c9625807a9a34d28405877f3d8
+    rpm_sha256: db865b594b1d0571c38e5c3b797effaba28fa1c1904bc8ea2f24826afcc6377e
+  fedora_44:
+    srpm_sha256: 7e13bbc2ad7c6e7c17037e4375a9ce011c205ec94df72128235d0ff09ee5e3a8
+    rpm_sha256: 3011952b445ec6d86af351f6378cbf0955ea94373d6447df350f0595ba64f162
+upstream:
+  provider: pypi
+  project: latex2mathml
+  current_version: 3.81.0
+  source_url: https://files.pythonhosted.org/packages/3b/62/35bb816c5c19d4d0cde5bdfb82ebb996306243d5f94e03f201658c629960/latex2mathml-3.81.0.tar.gz
+  source_sha256: 4b959cdc3cac8686bc0e3e5aece8127dfb1b81ca1241bed8e00ef31b82bb4022
+  repository: roniemartinez/latex2mathml
+  release_commit: 605e02726eca5a77bb07395631fde9e0acacdbab
+copr:
+  enabled: true
+  subdir: packages/python-latex2mathml
+  spec: python-latex2mathml.spec

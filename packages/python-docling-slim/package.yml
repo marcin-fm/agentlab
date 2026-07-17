@@ -1,0 +1,46 @@
+name: python-docling-slim
+status: enabled
+blockers: []
+source_policy:
+  packaged_surface: Base modules plus the service-client extra; upstream command wrappers are removed.
+  cli_exclusion: The wrappers import the excluded pypdfium2-backed local conversion path even for --help; docling-mcp consumes the Python service-client API instead.
+  service_client_metadata_patch: Removes Typer, Rich, and python-dotenv from the service-client extra because only the omitted command wrappers import them; the client API imports only httpx and websockets.
+  excluded_extras:
+    - Local PDF parser and pypdfium2 branches.
+    - Local IBM models, Torch, Transformers, OCR, VLM, audio, office, and chunking branches.
+  network_boundary: The packaged service client performs opt-in network requests only to an explicitly configured Docling service.
+  model_downloads: No model dependency or model downloader is activated by the service-client extra.
+license_audit:
+  expression: MIT
+  license_file: LICENSE
+duplicate_check:
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+validation:
+  fedora_43: clean Mock build passed; base/client import and loopback health smoke passed
+  fedora_44: clean Mock build passed; base/client import and loopback health smoke passed
+  rpmlint: zero errors and zero warnings in both chroots
+  upstream_tests: unavailable; sdist excludes the test tree
+  installed_smokes: base import, service-client construction, and local HTTP health response
+artifacts:
+  spec_sha256: 326a46cd6dd53ea079f7e59696e25b1cad224f55ec6d71f80661c13dd0a4385c
+  patch_sha256: 89a19e07fe9c16eed200da92c5aeb41db376c0554ddf83760d6028a404b84f47
+  fedora_43:
+    srpm_sha256: fa731d63806dfde2784950bacfa2d08ebbc6ea34864d8aa549235dd9623cca2c
+    rpm_sha256: 23032c73f1afff13cdd2359383e47f950a602b422abad0a152f4e8dd9846eec4
+  fedora_44:
+    srpm_sha256: a3bf8ed78e9d803ec070ce09171790dd512764ff0c10f348ad0cb0df87ccce10
+    rpm_sha256: 6459493f59c314274f652859e8e7265ee023583b96c6d643859259f215abf062
+upstream:
+  provider: pypi
+  project: docling-slim
+  current_version: 2.113.0
+  source_url: https://files.pythonhosted.org/packages/22/35/149f23813b0df840945c99a2789f0a749431a23a6846d4da132de4bbda40/docling_slim-2.113.0.tar.gz
+  source_sha256: 34135ce73e82cce494483133752f54d97391351d4faa49fbf66c6058eb18329d
+  repository: docling-project/docling
+  release_tag: v2.113.0
+  release_commit: 53a6fa5e829745cc9bf3dbf6b324d65408562bc5
+copr:
+  enabled: true
+  subdir: packages/python-docling-slim
+  spec: python-docling-slim.spec

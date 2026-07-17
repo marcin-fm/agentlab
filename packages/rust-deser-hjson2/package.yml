@@ -1,0 +1,14 @@
+name: rust-deser-hjson2
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: deser-hjson
+  version_requirement: = 2.2.4
+  current_version: 2.2.4
+  source_url_template: https://static.crates.io/crates/deser-hjson/deser-hjson-{version}.crate
+  source_sha256: 7d94aac4095c08ded7e4b9ba7fc2b2929f11b94bb96897ca188b0f64e01688e1
+copr:
+  enabled: true
+  subdir: packages/rust-deser-hjson2
+  spec: rust-deser-hjson2.spec

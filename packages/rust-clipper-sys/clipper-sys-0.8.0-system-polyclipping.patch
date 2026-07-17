@@ -1,0 +1,34 @@
+diff --git a/build.rs b/build.rs
+index 647b00c..1e6c257 100644
+--- a/build.rs
++++ b/build.rs
+@@ -4,14 +4,14 @@
+-    println!("cargo:rerun-if-changed=clipper");
++    println!("cargo:rerun-if-changed=clipper/wrapper.cpp");
+     if cfg!(feature = "update-bindings") {
+         println!("cargo:rerun-if-changed=generated");
+     }
+ 
+     cc::Build::new()
+         .cpp(true)
+-        .opt_level(3)
+-        .file("clipper/clipper.cpp")
+         .file("clipper/wrapper.cpp")
+         .flag_if_supported("-std=c++14")
+-        .compile("clipper");
+-
++        .compile("clipper_wrapper");
++
++    println!("cargo:rustc-link-lib=dylib=polyclipping");
++
+     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+diff --git a/clipper/wrapper.cpp b/clipper/wrapper.cpp
+index 780a3aa..77e9584 100644
+--- a/clipper/wrapper.cpp
++++ b/clipper/wrapper.cpp
+@@ -1,4 +1,4 @@
+ #include "wrapper.hpp"
+-#include "clipper.hpp"
++#include <polyclipping/clipper.hpp>
+ #include <iostream>
+ #include <queue>

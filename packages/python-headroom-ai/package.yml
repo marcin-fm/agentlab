@@ -1,0 +1,64 @@
+name: python-headroom-ai
+status: enabled
+blockers: []
+dependency_status:
+  python_runtime:
+    - tiktoken >= 0.5
+    - pydantic >= 2
+    - click >= 8.1
+    - opentelemetry-api >= 1.24
+    - mcp >= 1; accepted only through the reviewed stdio/no-task boundary
+  native_runtime:
+    - PyO3 0.27.2 and pyo3-log 0.13
+    - tokenizers 0.22 with local tokenizer loading only
+    - rusqlite 0.31 built against system SQLite
+    - unidiff 0.4 from the completed rust-unidiff0.4 package
+  excluded_surfaces:
+    - fastembed, Magika, ORT, Hugging Face downloads, and Rust tiktoken
+    - Redis, proxy/provider commands, update checks, and the optional file-read tool
+    - litellm, rich, ast-grep-cli, sqlite-vec, and proxy/model Python extras
+duplicate_check:
+  checked: "2026-07-17"
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+network_policy:
+  transport: stdio only
+  proxy: disabled; no health, retrieve, or statistics fallback
+  update_check: removed from the packaged CLI path
+  model_assets: native model and runtime-download branches are not compiled
+  tokenizer_downloads: from_pretrained fails closed; audited local files remain supported
+  file_read_tool: disabled even when HEADROOM_MCP_READ is set
+  rpm_build: offline after source and dependency acquisition
+build_validation:
+  release: 0.31.0-1
+  source_sha256_verified: true
+  spec_parse: passed
+  mock_fedora_43: clean build and packaged stdio MCP smoke passed
+  mock_fedora_44: clean build and packaged stdio MCP smoke passed
+  native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed per chroot; 1 library test ignored
+  mcp_smoke: initialize, exact tool list, compression, byte-identical retrieval, local miss, and statistics passed
+  rpmlint: zero errors and one expected no-manual-page warning per chroot
+artifacts:
+  spec_sha256: c6e84d9dc574e2a423cbabd969a6a0a80578054af52aae554c5252334bd91096
+  patches:
+    headroom-mcp-minimal.patch: 0ed335b70366fb39ee995f154e108168539d4b76967e4bbfc4746077612b23ca
+    headroom-mcp-minimal-tests.patch: 77d669095849ff2b0c0786a77e5c3477ea4f717ab12068fc3082f3de9bf2a08c
+    headroom-mcp-remove-unavailable-native-deps.patch: 0e4243e3b108161093ac86d95666ebb59e6fc1ba269a73bf0445a78637d425d3
+  fedora_43:
+    srpm_sha256: 6607c35f400bd4a3ad1d316ffef43d130d586234de3741dd3c881936eae3f48d
+    rpm_sha256: 84e932567fa03e2678595a1386f7596b4a621e82bc1d39dbe56a4cc5949ad16b
+  fedora_44:
+    srpm_sha256: 24526af2ef804d82ab85bdcb8b85f5cc603dd463a1fb13ded0ec381110404a1f
+    rpm_sha256: 1edb31fc85691bf492fea052c0a4cf8ed3618366066770bca748cccf05b761eb
+upstream:
+  provider: pypi
+  repository: headroomlabs-ai/headroom
+  tag_prefix: v
+  current_version: 0.31.0
+  source_url: https://files.pythonhosted.org/packages/ad/fd/fe59aa45a74ead7ce0faad8175b29f02e5ef81034a434ff2a0da7f59a0a6/headroom_ai-0.31.0.tar.gz
+  source_sha256: a13f9764be168e4d075fd80ff6ee5d47a9febe0152b82ad28bab0e949fcd9bd3
+  license: Apache-2.0
+copr:
+  enabled: true
+  subdir: packages/python-headroom-ai
+  spec: python-headroom-ai.spec

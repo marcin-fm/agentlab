@@ -1,0 +1,15 @@
+name: rust-rake0.3
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: rake
+  version_requirement: = 0.3.6
+  current_version: 0.3.6
+  source_sha256: 5a0a7b4878cdfa9c73657cf8479a1f2430104b21991db7940e97ab000056f0a1
+  source_url_template: https://static.crates.io/crates/rake/rake-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-rake0.3
+  spec: rust-rake0.3.spec

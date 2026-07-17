@@ -1,0 +1,14 @@
+name: rust-tree-sitter-php0.24
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: tree-sitter-php
+  version_requirement: = 0.24.2
+  current_version: 0.24.2
+  source_url_template: https://static.crates.io/crates/tree-sitter-php/tree-sitter-php-{version}.crate
+  source_sha256: 0d8c17c3ab69052c5eeaa7ff5cd972dd1bc25d1b97ee779fec391ad3b5df5592
+copr:
+  enabled: true
+  subdir: packages/rust-tree-sitter-php0.24
+  spec: rust-tree-sitter-php0.24.spec

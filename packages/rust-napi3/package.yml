@@ -1,0 +1,21 @@
+name: rust-napi3
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but the supplemental-license repair has not received a new serialized clean-build/rpmlint validation.
+  - COPR enablement and Fedora/RPM Fusion duplicate/license approval are not finalized.
+upstream:
+  provider: crates_io
+  crate: napi
+  version_requirement: = 3.10.3
+  current_version: 3.10.3
+  source_sha256: 0c71997d6f7ad4a756966e452426848ac27d3b37a295302d63afbbcce0270f93
+  source_url_template: https://static.crates.io/crates/napi/napi-{version}.crate
+supplemental:
+  license_url: https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE
+  license_commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c
+  license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
+  install_name: LICENSE-MIT
+copr:
+  enabled: false
+  subdir: packages/rust-napi3
+  spec: rust-napi3.spec

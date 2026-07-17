@@ -1,0 +1,209 @@
+--- a/src/tests.rs
++++ b/src/tests.rs
+@@ -4,6 +4,13 @@
+     PolyType_ptClip, PolyType_ptSubject, Polygon, Polygons,
+ };
+ 
++// Keep the backing arrays alive while the FFI wrapper reads their raw pointers.
++macro_rules! leaked_array {
++    ($values:expr) => {
++        Box::leak(Box::new($values)).as_mut_ptr()
++    };
++}
++
+ #[test]
+ fn test_no_polygons() {
+     let polygons = Polygons {
+@@ -24,58 +31,53 @@
+ #[test]
+ fn test_intersection_with_hole() {
+     let polygons = Polygons {
+-        polygons: [
++        polygons: leaked_array!([
+             Polygon {
+                 type_: PolyType_ptSubject,
+-                paths: [
++                paths: leaked_array!([
+                     Path {
+-                        vertices: [[180, 200], [260, 200], [260, 150], [180, 150]].as_mut_ptr(),
++                        vertices: leaked_array!([[180, 200], [260, 200], [260, 150], [180, 150]]),
+                         vertices_count: 4,
+                         closed: 1,
+                     },
+                     Path {
+-                        vertices: [[215, 160], [230, 190], [200, 190]].as_mut_ptr(),
++                        vertices: leaked_array!([[215, 160], [230, 190], [200, 190]]),
+                         vertices_count: 3,
+                         closed: 1,
+                     },
+-                ]
+-                .as_mut_ptr(),
++                ]),
+                 paths_count: 2,
+             },
+             Polygon {
+                 type_: PolyType_ptClip,
+-                paths: [Path {
+-                    vertices: [[190, 210], [240, 210], [240, 130], [190, 130]].as_mut_ptr(),
++                paths: leaked_array!([Path {
++                    vertices: leaked_array!([[190, 210], [240, 210], [240, 130], [190, 130]]),
+                     vertices_count: 4,
+                     closed: 1,
+-                }]
+-                .as_mut_ptr(),
++                }]),
+                 paths_count: 1,
+             },
+-        ]
+-        .as_mut_ptr(),
++        ]),
+         polygons_count: 2,
+     };
+ 
+     let expected = Polygons {
+-        polygons: [Polygon {
++        polygons: leaked_array!([Polygon {
+             type_: PolyType_ptSubject,
+-            paths: [
++            paths: leaked_array!([
+                 Path {
+-                    vertices: [[240, 200], [190, 200], [190, 150], [240, 150]].as_mut_ptr(),
++                    vertices: leaked_array!([[240, 200], [190, 200], [190, 150], [240, 150]]),
+                     vertices_count: 4,
+                     closed: 1,
+                 },
+                 Path {
+-                    vertices: [[200, 190], [230, 190], [215, 160]].as_mut_ptr(),
++                    vertices: leaked_array!([[200, 190], [230, 190], [215, 160]]),
+                     vertices_count: 3,
+                     closed: 1,
+                 },
+-            ]
+-            .as_mut_ptr(),
++            ]),
+             paths_count: 2,
+-        }]
+-        .as_mut_ptr(),
++        }]),
+         polygons_count: 1,
+     };
+ 
+@@ -95,56 +97,50 @@
+ #[test]
+ fn test_difference() {
+     let polygons = Polygons {
+-        polygons: [
++        polygons: leaked_array!([
+             Polygon {
+                 type_: PolyType_ptSubject,
+-                paths: [Path {
+-                    vertices: [[180, 200], [260, 200], [260, 150], [180, 150]].as_mut_ptr(),
++                paths: leaked_array!([Path {
++                    vertices: leaked_array!([[180, 200], [260, 200], [260, 150], [180, 150]]),
+                     vertices_count: 4,
+                     closed: 1,
+-                }]
+-                .as_mut_ptr(),
++                }]),
+                 paths_count: 1,
+             },
+             Polygon {
+                 type_: PolyType_ptClip,
+-                paths: [Path {
+-                    vertices: [[190, 210], [240, 210], [240, 130], [190, 130]].as_mut_ptr(),
++                paths: leaked_array!([Path {
++                    vertices: leaked_array!([[190, 210], [240, 210], [240, 130], [190, 130]]),
+                     vertices_count: 4,
+                     closed: 1,
+-                }]
+-                .as_mut_ptr(),
++                }]),
+                 paths_count: 1,
+             },
+-        ]
+-        .as_mut_ptr(),
++        ]),
+         polygons_count: 2,
+     };
+ 
+     let expected = Polygons {
+-        polygons: [
++        polygons: leaked_array!([
+             Polygon {
+                 type_: PolyType_ptSubject,
+-                paths: [Path {
+-                    vertices: [[190, 200], [180, 200], [180, 150], [190, 150]].as_mut_ptr(),
++                paths: leaked_array!([Path {
++                    vertices: leaked_array!([[190, 200], [180, 200], [180, 150], [190, 150]]),
+                     vertices_count: 4,
+                     closed: 1,
+-                }]
+-                .as_mut_ptr(),
++                }]),
+                 paths_count: 1,
+             },
+             Polygon {
+                 type_: PolyType_ptSubject,
+-                paths: [Path {
+-                    vertices: [[260, 200], [240, 200], [240, 150], [260, 150]].as_mut_ptr(),
++                paths: leaked_array!([Path {
++                    vertices: leaked_array!([[260, 200], [240, 200], [240, 150], [260, 150]]),
+                     vertices_count: 4,
+                     closed: 1,
+-                }]
+-                .as_mut_ptr(),
++                }]),
+                 paths_count: 1,
+             },
+-        ]
+-        .as_mut_ptr(),
++        ]),
+         polygons_count: 2,
+     };
+ 
+@@ -164,24 +160,22 @@
+ #[test]
+ fn test_offset() {
+     let polygons = Polygons {
+-        polygons: [Polygon {
++        polygons: leaked_array!([Polygon {
+             type_: PolyType_ptSubject,
+-            paths: [Path {
+-                vertices: [[100, 100], [100, 200], [200, 200], [200, 100]].as_mut_ptr(),
++            paths: leaked_array!([Path {
++                vertices: leaked_array!([[100, 100], [100, 200], [200, 200], [200, 100]]),
+                 vertices_count: 4,
+                 closed: 1,
+-            }]
+-            .as_mut_ptr(),
++            }]),
+             paths_count: 1,
+-        }]
+-        .as_mut_ptr(),
++        }]),
+         polygons_count: 1,
+     };
+ 
+     let expected = Polygon {
+         type_: PolyType_ptSubject,
+-        paths: [Path {
+-            vertices: [
++        paths: leaked_array!([Path {
++            vertices: leaked_array!([
+                 [205, 98],
+                 [205, 202],
+                 [202, 205],
+@@ -190,12 +184,10 @@
+                 [95, 98],
+                 [98, 95],
+                 [202, 95],
+-            ]
+-            .as_mut_ptr(),
++            ]),
+             vertices_count: 8,
+             closed: 1,
+-        }]
+-        .as_mut_ptr(),
++        }]),
+         paths_count: 1,
+     };

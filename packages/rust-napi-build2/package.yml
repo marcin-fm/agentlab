@@ -1,0 +1,15 @@
+name: rust-napi-build2
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: napi-build
+  version_requirement: = 2.3.2
+  current_version: 2.3.2
+  source_sha256: c9c366d2c8c60b86fa632df75f745509b52f9128f91a6bad4c796e44abb505e1
+  source_url_template: https://static.crates.io/crates/napi-build/napi-build-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-napi-build2
+  spec: rust-napi-build2.spec

@@ -1,0 +1,5 @@
+name: rust-hayro-ccitt0.3
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: hayro-ccitt, version_requirement: '= 0.3.0', current_version: 0.3.0, source_sha256: 9f4d0e94ddd48749f06bbe4e5389fb9799a0c45bcaf00495042076ef05e3241a, source_url_template: 'https://static.crates.io/crates/hayro-ccitt/hayro-ccitt-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-hayro-ccitt0.3, spec: rust-hayro-ccitt0.3.spec}

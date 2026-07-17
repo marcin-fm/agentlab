@@ -1,0 +1,9 @@
+--- gethostname-0.3.0/Cargo.toml	1970-01-01T00:00:01+00:00
++++ gethostname-0.3.0/Cargo.toml	2026-07-15T13:01:50.488500+00:00
+@@ -33,6 +33,3 @@
+ [target."cfg(not(windows))".dependencies.libc]
+ version = "^0.2"
+ 
+-[target."cfg(windows)".dependencies.winapi]
+-version = "^0.3"
+-features = ["sysinfoapi"]

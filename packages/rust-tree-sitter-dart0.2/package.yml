@@ -1,0 +1,14 @@
+name: rust-tree-sitter-dart0.2
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: tree-sitter-dart
+  version_requirement: = 0.2.0
+  current_version: 0.2.0
+  source_url_template: https://static.crates.io/crates/tree-sitter-dart/tree-sitter-dart-{version}.crate
+  source_sha256: 325dd1e24ee9ee21111e9c43680ae7d6010aaa9f282b048a99b9c7163c1cf553
+copr:
+  enabled: true
+  subdir: packages/rust-tree-sitter-dart0.2
+  spec: rust-tree-sitter-dart0.2.spec

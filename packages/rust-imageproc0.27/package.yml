@@ -1,0 +1,20 @@
+status: blocked
+name: rust-imageproc0.27
+blockers:
+  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - COPR enablement and package publication approval are not finalized.
+  - Fedora/RPM Fusion duplicate and license review is still required.
+upstream:
+  provider: crates_io
+  crate: imageproc
+  version_requirement: = 0.27.0
+  current_version: 0.27.0
+  source_url_template: https://static.crates.io/crates/imageproc/imageproc-{version}.crate
+  source_sha256: c7b27bc0867dc40df08deb53d6e96342db6e0702e7ae33ed09a4eba33e594b05
+supplemental:
+  - file: imageproc-0.27.0-DejaVuSans.ttf
+    sha256: 690243adfefe0ce154b547db6205794bd30ac4277275179517a90994f4980648
+copr:
+  enabled: false
+  subdir: packages/rust-imageproc0.27
+  spec: rust-imageproc0.27.spec

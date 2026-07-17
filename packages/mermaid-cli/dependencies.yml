@@ -1,0 +1,178 @@
+target_release: 11.16.0
+runtime_adjustments:
+  puppeteer:
+    version: 25.2.1
+    reason: Upstream imports Puppeteer at runtime but declares it only as a peer and development dependency.
+license_overrides:
+  khroma@2.1.0:
+    spdx: MIT
+    evidence: The published tarball's lowercase license file contains the standard MIT text.
+supplemental_notices:
+  - id: puppeteer-apache-license
+    packages:
+      - npm_name: "@puppeteer/browsers"
+        version: 3.0.5
+      - npm_name: puppeteer
+        version: 25.2.1
+      - npm_name: puppeteer-core
+        version: 25.2.1
+    source_url: https://raw.githubusercontent.com/puppeteer/puppeteer/4a56c699e50f0cd5ff87dd10e43f7defaf3d95a0/LICENSE
+    sha256: a27ca07269b3518550b2e83aed13eadd7d14d924b5864e14889b40cf227530ca
+    filename: LICENSE
+  - id: antlr4-bsd-license
+    packages:
+      - npm_name: antlr4
+        version: 4.11.0
+    source_url: https://raw.githubusercontent.com/antlr/antlr4/67f63fa7f03326305cb0b0175784b08304787831/LICENSE.txt
+    sha256: 3db1fb3ee79a4b4f9918fc4d0f6133bf18a3cf787f126cd22f8aa9b862281c0c
+    filename: LICENSE.txt
+  - id: dlv-mit-license
+    packages:
+      - npm_name: dlv
+        version: 1.1.3
+    source_url: https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/MIT.txt
+    sha256: b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5
+    filename: MIT.txt
+    attribution: Copyright (c) Jason Miller
+    evidence_url: https://raw.githubusercontent.com/developit/dlv/e636db817a96e4ca4710b407163fb992748b3b80d/package.json
+    evidence_sha256: d0355a98f75d3547e341ff1cbade270c5d5e9b109dd2b03163178c58b8d525d2
+  - id: pako-zlib-license
+    packages:
+      - npm_name: pako
+        version: 2.1.0
+    source_url: https://raw.githubusercontent.com/madler/zlib/v1.2.8/README
+    sha256: 53a466b504371dcdda1504c90d8121d4823921f03554c3526995fb2bae7159f9
+    filename: zlib-README
+    applies_to: pako/lib/zlib
+  - id: katex-mhchem-apache-notice
+    packages:
+      - npm_name: katex
+        version: 0.16.45
+    source_url: https://raw.githubusercontent.com/KaTeX/KaTeX/90de97946bb60aa82108d6dbb217cf10602d8709/contrib/mhchem/mhchem.js
+    sha256: 2e59e02033d60c110e5ba70a42f9259c8597bb19dbd03c542e2e5860394376fd
+    filename: contrib/mhchem/mhchem.js
+    start_line: 23
+    end_line: 44
+preferred_sources:
+  - id: mermaid-monorepo-11.16.0
+    packages:
+      - mermaid@11.16.0
+      - "@mermaid-js/layout-elk@0.2.2"
+      - "@mermaid-js/parser@1.2.0"
+    source_url: https://codeload.github.com/mermaid-js/mermaid/tar.gz/7c0cafcf42e76bfaf79d0cbbd12edb986612f014
+    sha256: 50692a34f9827708ddbbf761a9be2723cf778a53f2c136237ef38b15ddd0efb7
+    filename: mermaid-7c0cafcf42e76bfaf79d0cbbd12edb986612f014.tar.gz
+    kind: corresponding-source
+  - id: mermaid-layout-tidy-tree-0.2.2
+    packages:
+      - "@mermaid-js/layout-tidy-tree@0.2.2"
+    source_url: https://codeload.github.com/mermaid-js/mermaid/tar.gz/f4bf04b5db8bed603e40ed3d5ce5228d6b07754e
+    sha256: 1ad1bf3d5f21cb4cbecb29ae6dde34cafad6575b6d162f01742fbce822ad947e
+    filename: mermaid-f4bf04b5db8bed603e40ed3d5ce5228d6b07754e.tar.gz
+    kind: corresponding-source
+  - id: mermaid-zenuml-0.2.3
+    packages:
+      - "@mermaid-js/mermaid-zenuml@0.2.3"
+    source_url: https://codeload.github.com/mermaid-js/mermaid/tar.gz/41646dfd43ac83f001b03c70605feb036afae46d
+    sha256: 52ef9f2c9103ff0f9c639b5a94ee5b7cb2a1a77f25f2da05dc61bdfb0401e304
+    filename: mermaid-41646dfd43ac83f001b03c70605feb036afae46d.tar.gz
+    kind: corresponding-source
+  - id: elkjs-0.9.3
+    packages:
+      - elkjs@0.9.3
+    source_url: https://codeload.github.com/kieler/elkjs/tar.gz/a8304cf79fde75bc2ab1a89d28320f53f8637436
+    sha256: 850418c89dd35dbd94ea0100a7becbc09d320c153fda4c4ea4a88c67e12121a9
+    filename: elkjs-a8304cf79fde75bc2ab1a89d28320f53f8637436.tar.gz
+    kind: corresponding-source
+  - id: zenuml-core-3.47.2
+    packages:
+      - "@zenuml/core@3.47.2"
+    source_url: https://codeload.github.com/mermaid-js/zenuml-core/tar.gz/d00800a1a5f3d18bdd78f69dc01600a75bf1d4c0
+    sha256: 2ab4a18682e098dfce156b46fb81ea9deb8dc49010b182062f04695688e405f8
+    filename: zenuml-core-d00800a1a5f3d18bdd78f69dc01600a75bf1d4c0.tar.gz
+    kind: corresponding-source
+  - id: font-awesome-7.2.0-source
+    packages:
+      - "@fortawesome/fontawesome-free@7.2.0"
+    source_url: https://codeload.github.com/FortAwesome/Font-Awesome/tar.gz/337dd2045d5621ce0f8567c33c256f3dedeed55d
+    sha256: ec864e5ebabce10c8e7a190584780539a45221ba2f688b46c7c017089d4967d5
+    filename: font-awesome-337dd2045d5621ce0f8567c33c256f3dedeed55d.tar.gz
+    kind: corresponding-source
+  - id: font-awesome-7.2.0-web-release
+    packages:
+      - "@fortawesome/fontawesome-free@7.2.0"
+    source_url: https://github.com/FortAwesome/Font-Awesome/releases/download/7.2.0/fontawesome-free-7.2.0-web.zip
+    sha256: 218d19fdec1bd898d1c78683f3c72e71bcc9e5f9bb3e065f99a5c3cdc48e0d66
+    filename: fontawesome-free-7.2.0-web.zip
+    kind: official-release-data
+    active_runtime_assets:
+      fa-solid-900.woff2: ff58a6b0a01dbce082458f6e5a58719df4e80e0c2b50f744bb5871e21eca6878
+      fa-regular-400.woff2: 81aaa8342d90df0a3c0b87655e2c31a71941f0dd351fb9fb1ca5d692e744f6d0
+      fa-brands-400.woff2: 70c632ba73c7ad942141bb2f56994b8eddf0a284c01aab9f21e0cd10021530c4
+closure_audit:
+  audited_release: 11.16.0
+  production_build_sources_verified: true
+  test_sources_verified: true
+  licenses_verified: true
+  native_sources_verified: true
+  generated_sources_verified: true
+  preferred_sources_verified: true
+  bundled_provides_verified: true
+  upstream_contact_recorded: false
+  offline_verified: true
+source_closure_files:
+  production_archive: mermaid-cli-11.16.0-node-closure.tar.zst
+  closure_manifest: mermaid-cli-11.16.0-closure.json
+  bundled_licenses: mermaid-cli-11.16.0-bundled-licenses.txt
+  native_manifest: mermaid-cli-11.16.0-native.json
+  third_party_notices: mermaid-cli-11.16.0-third-party-notices.txt
+  closure_receipt: mermaid-cli-11.16.0-closure-receipt.json
+source_closure_sha256:
+  production_archive: 4a181bf1d043a892bff09f81a7aafcc6345bd93b46b1a9761b152b66f7a3eabe
+  closure_manifest: 65c2ae8e1099d2530f73b54d985e7e7b086eb87f7f9dd68e8675772951d2e9ee
+  bundled_licenses: 6e31371d7f26d7f935de9479bf734a5185d215177f3ed9236ecc439f65a713cd
+  native_manifest: eb99b57bf8df386041a02b1eb0fa0726e0f9cd19fb860f505e3e956cd36d1468
+  third_party_notices: 41be30cd3c63b27d747d64fc642b524060befc9d43faab922274f8bd4f2e8bbf
+  closure_receipt: 0e94937cfd9739a947c8cbba9599fe555e78782ca96384dca134b7bc21dca5d2
+lockfile:
+  declared_package_manager: npm@10.8.1
+  generator_npm_version: 10.9.7
+  published_sha256: 1f763f907c4d5ea8578450ee1c9769286a24ec573418b7369feebb1ed0a3d724
+  runtime_sha256: 7d0322e923419bbe61611de3cde87711fdb95b83409564cda5b7a8cb367fccf9
+  runtime_resolution_matches_published_lock: true
+local_validation:
+  release: 11.16.0-1
+  package_paths: 327
+  unique_source_archives: 326
+  supplemental_notices: 5
+  preferred_sources: 7
+  native_payloads: 0
+  lifecycle_scripts_executed: false
+  browser_downloads: false
+  fedora_43_x86_64:
+    clean_mock_build: passed
+    installed_payload_smoke: passed
+  fedora_44_x86_64:
+    clean_mock_build: passed
+    installed_payload_smoke: passed
+  checks:
+    - mmdc --version
+    - SVG rendering with solid, regular, and brand Font Awesome icons
+    - PNG rendering with Fedora chromium-headless
+    - PDF rendering with Fedora chromium-headless
+  rpmlint:
+    errors: 0
+    expected_warnings:
+      - only-non-binary-in-usr-lib
+      - no-manual-page-for-binary
+      - local Source1 has no immutable URL yet
+      - local closure source extension classification
+  upstream_test_policy: The release's Docker-oriented development suite is not shipped; clean builds test the exact staged installed runtime payload and all supported output formats without network access.
+gates:
+  - Build the closure from the published release lockfile and original registry tarballs.
+  - Promote exactly Puppeteer 25.2.1 into the production closure without running lifecycle scripts.
+  - Reject browser downloads, native addons, shared libraries, executables, and opaque WASM payloads.
+  - Verify every registry SHA-512 integrity value and record a SHA-256 for each source tarball.
+  - Retain the audited bundled licenses, notices, corresponding sources, and official Font Awesome release data.
+  - Publish the deterministic closure archive at an immutable checksummed URL usable by COPR.
+  - Record the required public upstream request for a system-library or externally supplied dependency mechanism.

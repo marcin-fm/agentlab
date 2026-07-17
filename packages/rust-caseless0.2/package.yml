@@ -1,0 +1,5 @@
+name: rust-caseless0.2
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: caseless, version_requirement: '= 0.2.2', current_version: 0.2.2, source_sha256: 8b6fd507454086c8edfd769ca6ada439193cdb209c7681712ef6275cccbfe5d8, source_url_template: 'https://static.crates.io/crates/caseless/caseless-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-caseless0.2, spec: rust-caseless0.2.spec}

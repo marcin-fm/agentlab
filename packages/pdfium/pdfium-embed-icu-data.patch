@@ -1,0 +1,17 @@
+Authored-by: Marcin FM <marcin@lgic.pl>
+
+Fedora packages the pinned ICU component as a private PDFium library. Embed
+ICU's data in that library instead of requiring an untracked icudtl.dat file
+at runtime.
+
+--- a/third_party/icu/config.gni
++++ b/third_party/icu/config.gni
+@@ -12,7 +12,7 @@ else {
+   declare_args() {
+     # Tells icu to load an external data file rather than rely on the icudata
+     # being linked directly into the binary.
+-    icu_use_data_file = true
++    icu_use_data_file = false
+ 
+     # If true, then this creates a stub data file. This should be disabled if
+     # a custom data file will be used instead, in order to avoid conflicting

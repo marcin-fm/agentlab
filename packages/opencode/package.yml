@@ -1,0 +1,19 @@
+---
+name: opencode
+status: blocked
+blockers:
+- Fedora-source-built Bun 1.3.14 is unavailable.
+- The current release's vendored npm source closure has not been acquired and license-audited.
+- Native and platform packages still need source-only build recipes.
+- Offline OpenCode build and test execution has not been demonstrated.
+upstream:
+  provider: github
+  repository: anomalyco/opencode
+  tag_prefix: v
+  current_version: 1.18.1
+  source_url_template: https://github.com/anomalyco/opencode/archive/refs/tags/v{version}.tar.gz
+  source_sha256: bcaabb54915ba5497259bb9b4790096ebb4cacdf631a4ea66c278183402659c5
+copr:
+  enabled: false
+  subdir: packages/opencode
+  spec: opencode.spec

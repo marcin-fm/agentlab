@@ -1,0 +1,17 @@
+status: blocked
+name: rust-jotdown0.10
+blockers:
+  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - COPR enablement and package publication approval are not finalized.
+  - Fedora/RPM Fusion duplicate and license review is still required.
+upstream:
+  provider: crates_io
+  crate: jotdown
+  version_requirement: = 0.10.0
+  current_version: 0.10.0
+  source_url_template: https://static.crates.io/crates/jotdown/jotdown-{version}.crate
+  source_sha256: 206bf4773a58f2a051a24fb77cb6c5eeaa84403c0dc5d072ec460ed1648db594
+copr:
+  enabled: false
+  subdir: packages/rust-jotdown0.10
+  spec: rust-jotdown0.10.spec

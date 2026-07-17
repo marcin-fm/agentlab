@@ -1,0 +1,29 @@
+--- tree-sitter-language-pack-1.12.5/Cargo.toml	2006-07-24T01:21:28+00:00
++++ tree-sitter-language-pack-1.12.5/Cargo.toml	2026-07-15T20:41:17.070175+00:00
+@@ -143,10 +143,6 @@
+ version = "0.13"
+ optional = true
+ 
+-[dev-dependencies.criterion]
+-version = "0.8"
+-features = ["html_reports"]
+-
+ [dev-dependencies.insta]
+ version = "1.48"
+ features = ["json"]
+@@ -184,10 +184,6 @@
+ version = "0.9"
+ optional = true
+ 
+-[target.'cfg(target_arch = "wasm32")'.dependencies.getrandom]
+-version = "0.4"
+-features = ["wasm_js"]
+-
+ [lints.clippy]
+ duplicated_attributes = "allow"
+ 
+@@ -205,3 +201,4 @@
+     "cfg(alef)",
+     'cfg(feature, values("test-internals"))',
+ ]
++

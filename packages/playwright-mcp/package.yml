@@ -1,0 +1,38 @@
+name: playwright-mcp
+status: blocked
+blockers:
+  - The generated Playwright runtime must be rebuilt from the pinned source commit with a complete offline Node build and test closure.
+  - Bundled modules, Vite/esbuild outputs, copied xdg-open, generated browser metadata, and their license evidence remain unresolved.
+  - The runtime targets Chromium 151.0.7922.10 while Fedora currently provides Chromium 150; no-download compatibility is unproven.
+  - The audited immutable closure has not been hosted for offline COPR SCM builds.
+  - RPM Fusion updates duplicate availability has not been conclusively checked.
+source_policy:
+  npm_package: "@playwright/mcp"
+  source_correspondence: Six of seven npm files byte-match tag v0.0.78; LICENSE differs only formatting and line ending. Playwright alpha tarballs identify source commit 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97.
+  source_audit_sha256: e35a16efe0a6fe753e1ee2142647069eaa310c3d2485c2576a7b4d06c50649f6
+  browser: Fedora chromium-headless only
+  browser_downloads: forbidden
+  lifecycle_scripts: forbidden
+  networked_npm_install: forbidden
+  native_payloads: forbidden until inventoried and source-proven
+upstream:
+  provider: github-and-npm
+  repository: microsoft/playwright-mcp
+  tag_prefix: v
+  current_version: 0.0.78
+  source_url_template: https://registry.npmjs.org/@playwright/mcp/-/mcp-{version}.tgz
+  source_sha256: cfff0fd8eae3ac3bcb39827861298cb6b483a8d72e3c558e7991658ed3d22562
+  source_integrity: sha512-XLTUeA6mEN9sQ+hJ4dfG8EIkDbxS0K3Trc2RBkUJuf02TgE2FQRNTMtq/aJfhyRMINsRl/Ybc4sxcWLtFn4/TQ==
+  source_tag: v0.0.78
+  source_commit: 5f8fc00210b27b4407c375b59cda4838045d429c
+  source_tag_archive_sha256: 9f4b1c550c24aaf202b422c568c105a6c29e4c3d10735cc317c56aa650cda3d7
+  license: Apache-2.0
+duplicate_check:
+  checked: "2026-07-16"
+  fedora_43_44: absent
+  rpm_fusion_release_43_44: absent
+  rpm_fusion_updates_43_44: pending
+copr:
+  enabled: false
+  subdir: packages/playwright-mcp
+  spec: playwright-mcp.spec

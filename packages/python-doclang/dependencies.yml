@@ -1,0 +1,29 @@
+schema: python-doclang-dependencies/v1
+target_release: 0.7.3
+build_system:
+  backend: setuptools.build_meta
+  upstream_requirement: setuptools >= 80
+  fedora_requirement: setuptools >= 78.1.1
+runtime_direct:
+  - lxml >= 4.8.0
+  - typer >= 0.15.1
+runtime_fedora:
+  - python3dist(lxml) >= 4.8
+  - python3dist(typer) >= 0.15.1
+build:
+  - python3dist(setuptools) >= 78.1.1
+  - pyproject-rpm-macros
+  - python3-devel
+optional:
+  - name: saxonche
+    requirement: saxonche >= 12.9.0
+    packaged: false
+    reason: Not required by docling-core or the default DocLang runtime.
+tests:
+  upstream_suite: absent from sdist
+  local:
+    - Import doclang and verify its package path.
+    - Verify bundled doclang.xsd and doclang.sch exist.
+    - Run doclang --help without network access.
+    - Validate a minimal local namespaced XML document with --xsd-only.
+offline: required

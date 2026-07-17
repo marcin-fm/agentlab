@@ -1,0 +1,15 @@
+diff --git a/crates/headroom-core/src/relevance/embedding.rs b/crates/headroom-core/src/relevance/embedding.rs
+--- a/crates/headroom-core/src/relevance/embedding.rs
++++ b/crates/headroom-core/src/relevance/embedding.rs
+@@ -339,7 +339,10 @@ mod tests {
+             return;
+         }
+         match EmbeddingScorer::try_new() {
+-            Err(err) => assert!(err.contains("AVX2"), "unexpected error: {err}"),
++            Err(err) => assert!(
++                err.contains("AVX2") || err.contains("disabled"),
++                "unexpected error: {err}"
++            ),
+             Ok(_) => panic!("ONNX backend must not load on a no-AVX2 CPU"),
+         }
+     }

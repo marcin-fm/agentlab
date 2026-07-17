@@ -1,0 +1,20 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Version PDFium component library SONAMEs
+
+Fedora requires shared libraries in the system library directory to have
+versioned SONAMEs.  Use the Chromium compatibility major for PDFium and its
+private Abseil and ICU components; the development package supplies only the
+unversioned libpdfium linker symlink.
+
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -227,0 +228 @@ component("pdfium") {
++  output_extension = "so.146"
+--- a/third_party/abseil-cpp/BUILD.gn
++++ b/third_party/abseil-cpp/BUILD.gn
+@@ -21,0 +22 @@ component("absl") {
++  output_extension = "so.146"
+--- a/third_party/icu/BUILD.gn
++++ b/third_party/icu/BUILD.gn
+@@ -399,0 +400 @@ generate_icuuc("icuuc_private") {
++  output_extension = "so.146"

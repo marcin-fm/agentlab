@@ -1,0 +1,18 @@
+status: blocked
+name: rust-hayro-jbig2_0.3
+blockers:
+  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - COPR enablement and package publication approval are not finalized.
+  - Fedora/RPM Fusion duplicate and license review is still required.
+  - The Fedora 43 no-fearless-simd compatibility patch requires fresh repository validation.
+upstream:
+  provider: crates_io
+  crate: hayro-jbig2
+  version_requirement: = 0.3.0
+  current_version: 0.3.0
+  source_url_template: https://static.crates.io/crates/hayro-jbig2/hayro-jbig2-{version}.crate
+  source_sha256: 69374b3668dd45aeb3d3145cda68f2c7b4f223aaa2511e67d076f1c7d741388d
+copr:
+  enabled: false
+  subdir: packages/rust-hayro-jbig2_0.3
+  spec: rust-hayro-jbig2_0.3.spec

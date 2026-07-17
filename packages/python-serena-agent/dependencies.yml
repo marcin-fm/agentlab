@@ -1,0 +1,35 @@
+target_release: 1.6.0
+runtime:
+  headless_direct:
+    mcp: '>= 1.26, < 2'
+    overrides: '>= 7.7, < 8'
+    sensai-utils: '>= 1.5, < 2'
+    pydantic: '>= 2, < 3'
+    pyyaml: '>= 6, < 7'
+    ruamel.yaml: '>= 0.18, < 0.20'
+    requests: '>= 2.31, < 3'
+    jinja2: '>= 3.1, < 4'
+    pathspec: '>= 0.12, < 2'
+    psutil: '>= 6, < 8'
+    docstring-parser: '>= 0.16, < 1'
+    joblib: '>= 1.4, < 2'
+    tqdm: '>= 4.66, < 5'
+    beautifulsoup4: '>= 4.12, < 5'
+    oslex: '>= 2, < 3'
+  fedora_43_44_branches:
+    mcp: Fedora 1.26.0 accepted only through the enforced stdio/no-task boundary
+    sensai-utils: newly-packaged
+    overrides: newly-packaged
+    mslex: newly-packaged
+    oslex: newly-packaged
+  headless_policy:
+    - Remove pywebview, pystray, anthropic, tiktoken, pygls, lsprotocol, type stubs, dotenv, pythonnet, and direct transitive pins.
+    - Reject non-stdio transport, GUI/dashboard/project-server/JetBrains requests; force LSP headless configuration and disable telemetry.
+    - Fail closed before managed archive, npm, uvx, uv, or direct urllib language-server acquisition; explicit ls_path and ls_base_cmd are supported.
+validation:
+  mcp_1_26_stdio_security_review: passed
+  mcp_1_28_1_private_api_compatible: true
+  fedora_43_44_mock: passed
+  packaged_stdio_initialize_and_tools_list: passed
+  managed_download_denial: passed
+  project_jetbrains_override_denial: passed

@@ -1,0 +1,5 @@
+name: rust-compressed-rtf1
+status: blocked
+blockers: ["Staged supplemental Microsoft MIT license is retained but immutable source hosting and final audit remain.", "Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass."]
+upstream: {provider: crates_io, crate: compressed-rtf, version_requirement: '= 1.0.1', current_version: 1.0.1, source_sha256: 51b7f2aaf6791c6517669240b82ef12c1283b39772f0cad3bc5c73f19f6e7f16, source_url_template: 'https://static.crates.io/crates/compressed-rtf/compressed-rtf-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-compressed-rtf1, spec: rust-compressed-rtf1.spec}

@@ -1,0 +1,15 @@
+name: rust-sevenz-rust2_0.20
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: sevenz-rust2
+  version_requirement: = 0.20.2
+  current_version: 0.20.2
+  source_sha256: 29225600349ef74beda5a9fffb36ac660a24613c0bde9315d0c49be1d51e9c24
+  source_url_template: https://static.crates.io/crates/sevenz-rust2/sevenz-rust2-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-sevenz-rust2_0.20
+  spec: rust-sevenz-rust2_0.20.spec

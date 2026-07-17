@@ -1,0 +1,14 @@
+name: rust-x11rb0.12
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: x11rb
+  version_requirement: = 0.12.0
+  current_version: 0.12.0
+  source_url_template: https://static.crates.io/crates/x11rb/x11rb-{version}.crate
+  source_sha256: b1641b26d4dec61337c35a1b1aaf9e3cba8f46f0b43636c609ab0291a648040a
+copr:
+  enabled: true
+  subdir: packages/rust-x11rb0.12
+  spec: rust-x11rb0.12.spec

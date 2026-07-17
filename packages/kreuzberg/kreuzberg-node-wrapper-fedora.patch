@@ -1,0 +1,57 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use the RPM-owned Kreuzberg CLI
+
+The Node package is installed together with the source-built Rust CLI. Avoid
+the unneeded emnapi, which, and upstream prebuilt platform-package runtime
+dependencies and forward the npm CLI directly to /usr/bin/kreuzberg.
+
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -113,14 +113,4 @@
+     "typescript": "^5.9.3",
+     "vitest": "^4.1.10"
+-  },
+-  "dependencies": {
+-    "@emnapi/runtime": "1.11.2",
+-    "which": "^7.0.0"
+-  },
+-  "optionalDependencies": {
+-    "@kreuzberg/node-darwin-arm64": "4.10.2",
+-    "@kreuzberg/node-linux-arm64-gnu": "4.10.2",
+-    "@kreuzberg/node-linux-x64-gnu": "4.10.2",
+-    "@kreuzberg/node-win32-x64-msvc": "4.10.2"
+   }
+ }
+diff --git a/dist/cli.js b/dist/cli.js
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -41 +41,0 @@
+-var import_which = __toESM(require("which"));
+@@ -53,9 +52,5 @@
+ function main(argv) {
+   const args = argv.slice(2);
+-  let cliPath;
+-  try {
+-    cliPath = import_which.default.sync("kreuzberg-cli");
+-  } catch {
+-  }
++  let cliPath = "/usr/bin/kreuzberg";
+   if (!cliPath) {
+     const __dirname = getDirectory();
+diff --git a/dist/cli.mjs b/dist/cli.mjs
+--- a/dist/cli.mjs
++++ b/dist/cli.mjs
+@@ -14 +14,0 @@
+-import which from "which";
+@@ -26,9 +25,5 @@
+ function main(argv) {
+   const args = argv.slice(2);
+-  let cliPath;
+-  try {
+-    cliPath = which.sync("kreuzberg-cli");
+-  } catch {
+-  }
++  let cliPath = "/usr/bin/kreuzberg";
+   if (!cliPath) {
+     const __dirname = getDirectory();

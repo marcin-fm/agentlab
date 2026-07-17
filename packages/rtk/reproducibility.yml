@@ -1,0 +1,76 @@
+schema: rtk-reproducibility/v1
+release: 0.43.0
+source_inputs:
+  rtk:
+    url: https://github.com/rtk-ai/rtk/archive/refs/tags/v0.43.0.tar.gz
+    sha256: 196bec9e9b438f0b8cd0198f68e05f072ccdfdec2c2655a3562d6ea357fa485b
+  dirs:
+    url: https://static.crates.io/crates/dirs/dirs-5.0.1.crate
+    sha256: 44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225
+    applies_to: fedora-44
+  dirs-sys:
+    url: https://static.crates.io/crates/dirs-sys/dirs-sys-0.4.1.crate
+    sha256: 520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c
+    applies_to: fedora-44
+patches:
+  rtk-use-system-sqlite.patch: e9f2b1d08874a2bd46ca87ea671cec389bb0bc71dc82d29262c50eb3ccc4df0d
+  dirs-sys-fix-metadata-auto.diff: c668f7b6bb5c658eed85acec48214a35d3d69ad4432fb34522063d64be019bf6
+collector_sha256: d17d4ef4e530cb61ac5d9b36decf4e6fe17cd4223b22972d61eed2c7059b0bb9
+spec_sha256: 2eb0a5c479012dfca320e42fdc4fb1f7e7109d30f3dc07c9fd21bbce7fc72d1b
+closure:
+  dependency_inventory_records: 114
+  resolved_crate_versions: 114
+  provider_receipt_rows: 370
+  registry_owner_rows: 369
+  fedora_43_provider_source_rpms: 117
+  fedora_44_provider_source_rpms: 116
+  local_compatibility_crates: 2
+  dependency_inventory_sha256: efe3c0966d0d745513ed61c0699a0240ac14b19287e6d99b9e18f6b337c8646b
+  fedora_43_provider_manifest_sha256: f119ad6c076946bb224edf08d53095e318d08298f5a01233fe4b2c815b76b6be
+  fedora_44_provider_manifest_sha256: 3394d9f72b0d552a051dcf068cdbdf73073f55ce9083fe2c6fae875107e10c53
+license_evidence:
+  evidence_entries: 218
+  manifest_sha256: 60dd1535a4d25b4bc2352d5b43f13e00f7ff419b924648662a012dc111fe41b1
+  checksum_verification:
+    fedora-43-x86_64: passed
+    fedora-44-x86_64: passed
+  hardlink_deduplication:
+    unique_inodes: 94
+    hardlink_groups: 21
+    hardlinked_paths: 146
+    duplicate_bytes_eliminated: 754181
+validation:
+  fedora-43-x86_64:
+    result: passed
+    executed_tests: 2287
+    ignored_tests: 8
+    rpmlint_errors: 0
+    rpmlint_warning: no upstream manual page
+    sqlite_elf_needed: libsqlite3.so.0
+    sqlite_database_smoke: passed
+  fedora-44-x86_64:
+    result: passed
+    executed_tests: 2287
+    ignored_tests: 8
+    rpmlint_errors: 0
+    rpmlint_warning: no upstream manual page
+    sqlite_elf_needed: libsqlite3.so.0
+    sqlite_database_smoke: passed
+artifacts:
+  fedora_43:
+    srpm_sha256: 173c71bd2021ae8b27daaf87f8b8237288f21a36dc5357cd6412d324bf3b4f9f
+    rpm_sha256: 89610e65e127a6056fe109c7a09f68f013ab6a1d5784c4ff1b8d13b54f8d979b
+    debuginfo_sha256: 488fccfe04de038aa4027dd52b5b88d0f1cc2d2a6e5f79b9ead70b0427839969
+    debugsource_sha256: a83d8a108dcd835739fb11abb70ee163c6c9ea64a9cc01426fc0b9193126a9aa
+    extracted_binary_sha256: dddf763c8f6030527d0b0e9240ccc25d9d216f8b8ff360dc5816170a1b442643
+  fedora_44:
+    srpm_sha256: 6bd87b2243f3bfe5fd4972e105e05872926ad2bb7df5e6c5d8e40a071fe8ad29
+    rpm_sha256: 8de919750efc2768253fe6ca68d7076bc98ac127d17b6ddb0f895f80c565f59c
+    debuginfo_sha256: db59dee9c5af50060cae1fa5b30266f2d4d04a10a7d3adbf341522e683db3b5f
+    debugsource_sha256: ac6733f689e10dc6e9016f12ef2be8dcad2533bf3195a256e7c39489523cb0c5
+    extracted_binary_sha256: f997495c7094e62391ec18c76d858163d69c10f10c6932f9fa7aee0ad2ebf174
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false
+  configured_architectures:
+    - x86_64

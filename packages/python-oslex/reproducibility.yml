@@ -1,0 +1,22 @@
+schema: oslex-reproducibility/v1
+package: python-oslex
+version: 2.0.0-1
+source:
+  url: https://files.pythonhosted.org/packages/24/19/b74ea9590378a35014acf72f221e84c5980aa7531d1852ef961764e7d3a6/oslex-2.0.0.tar.gz
+  sha256: 30d9f4a7201bdce3ab7d9cfc0f9ee9e18c423b2b1d1668141b0dd3594b368ffe
+patches: {}
+spec_sha256: fe162f64cd68837abd76d2cd09a42fe7f39115fdb443d96244358fa52775ffa5
+validation:
+  fedora_43_x86_64:
+    source_rpm_sha256: 5df4355d933bc6a2c389715fc913097a36fd760d362c7e86153f62cf45b0c83a
+    binary_rpm_sha256: b94870bb41837a64a652ede2792631d28c553ce91fd2f17671fa0c2aab37b43c
+    tests: 9 passed, 3 skipped
+    rpmlint: zero errors and zero warnings
+  fedora_44_x86_64:
+    source_rpm_sha256: 2a331fafa8188fbd4d0f7ffecf14942658cc04dd11403f97bf4ceef470bbc727
+    binary_rpm_sha256: ad9825ebedb2eca861231078e191e8832ff2bcb94204587330c402777fe2ac52
+    tests: 9 passed, 3 skipped
+    rpmlint: zero errors and zero warnings
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false

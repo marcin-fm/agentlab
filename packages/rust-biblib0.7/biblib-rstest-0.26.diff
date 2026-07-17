@@ -1,0 +1,10 @@
+--- biblib-0.7.2/Cargo.toml
++++ biblib-0.7.2/Cargo.toml
+@@ -105,6 +105,6 @@
+ [dev-dependencies.pretty_assertions]
+ version = "1.4.1"
+ 
+ [dev-dependencies.rstest]
+-version = "0.25.0"
++version = "0.26.1"
+ default-features = false

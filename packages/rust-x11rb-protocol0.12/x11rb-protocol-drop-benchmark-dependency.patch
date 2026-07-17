@@ -1,0 +1,12 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Drop benchmark-only criterion dependency
+
+Criterion is used only by upstream benchmarks and is not needed to build or
+test the protocol library for Fedora.
+
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -47,3 +47,0 @@
+-[dev-dependencies.criterion]
+-version = "0.4"
+-

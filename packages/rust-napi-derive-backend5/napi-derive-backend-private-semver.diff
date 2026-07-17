@@ -1,0 +1,11 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -33,7 +33,7 @@
+ noop = []
+ strict = []
+ tracing = []
+-type-def = ["semver"]
++type-def = ["dep:semver"]
+ 
+ [lib]
+ name = "napi_derive_backend"

@@ -1,0 +1,19 @@
+target_release: 7.7.0
+runtime: []
+build:
+  - pyproject-rpm-macros
+  - python3-devel
+  - python3dist(setuptools)
+  - python3dist(wheel)
+test:
+  - python3dist(pytest)
+tests:
+  published:
+    - tests/test_decorator_params.py
+    - tests/test_final.py
+    - tests/test_overrides.py
+    - tests/test_signatures.py
+    - tests/test_special_cases.py
+  coverage: Published test suite, including Python-version-specific modules where supported.
+consumers:
+  - python-serena-agent

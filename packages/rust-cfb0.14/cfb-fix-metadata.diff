@@ -1,0 +1,19 @@
+--- cfb-0.14.0/Cargo.toml
++++ cfb-0.14.0/Cargo.toml
+@@ -73,10 +73,6 @@
+ version = "4.4"
+ features = ["derive"]
+ 
+-[dev-dependencies.criterion]
+-version = "0.8"
+-features = ["html_reports"]
+-
+ [dev-dependencies.rand]
+ version = "0.8"
+ 
+--- cfb-0.14.0/src/internal/stream_buffer.rs
++++ cfb-0.14.0/src/internal/stream_buffer.rs
+@@ -159,2 +159,3 @@
++    #[cfg(debug_assertions)]
+     #[test]
+     #[should_panic]

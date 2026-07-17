@@ -1,0 +1,91 @@
+name: bun
+status: blocked
+blockers:
+  - The checked temporary Bun seed has not yet driven the first isolated source build.
+  - The pinned WebKit/JavaScriptCore archive checksum, source build, Arch correctness patch, and relink plan are not verified.
+  - Offline native, npm, Cargo, Node-header, and GitHub source closures are incomplete.
+  - LGPL relink objects for statically linked WebKit/JavaScriptCore are not packaged.
+  - The immediate offline self-rebuild and seed-contamination checks have not passed.
+upstream:
+  provider: github
+  repository: oven-sh/bun
+  tag_prefix: bun-v
+  current_version: 1.3.14
+  source_url_template: https://github.com/oven-sh/bun/archive/refs/tags/bun-v{version}.tar.gz
+  source_sha256: 112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e
+build_plan:
+  target_release: 1.3.14
+  source_inputs_reconciled: true
+  architectures:
+    - x86_64
+  source_inputs:
+    zig:
+      relationship: pinned_by_bun_release
+      release_pin: bun-v1.3.14
+      version_metadata: 0.15.2
+      commit: 04e7f6ac1e009525bc00934f20199c68f04e0a24
+      url: https://codeload.github.com/oven-sh/zig/tar.gz/04e7f6ac1e009525bc00934f20199c68f04e0a24
+      sha256: b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d
+      patch: zig-fedora-lib64.patch
+    webkit:
+      relationship: pinned_by_bun_release
+      state: pinned
+      release_pin: bun-v1.3.14
+      commit: 5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b
+      repository_url: https://github.com/oven-sh/WebKit.git
+      acquisition: deterministic_git_archive
+      submodules: false
+      source_tree_complete: true
+      sha256: null
+    bootstrap_seed:
+      relationship: temporary_bootstrap_only
+      state: acquired_local
+      release_pin: bun-v1.3.14
+      architecture: x86_64
+      filename: bun-seed-1.3.14-linux-x64.zip
+      url: https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-x64.zip
+      sha256: 951ee2aee855f08595aeec6225226a298d3fea83a3dcd6465c09cbccdf7e848f
+      bootstrap_only: true
+      final_payload_allowed: false
+      final_runtime_dependency_allowed: false
+  stages:
+    zig_source_bootstrap:
+      state: verified
+      source_bootstrap_verified: true
+      bun_layout_verified: true
+      external_zig_binary_used: false
+      proof_platform: fedora-44-x86_64
+      proof_date: "2026-07-15"
+      proof_receipt: zig-bootstrap-proof.json
+    webkit_source_build:
+      state: blocked
+      recursive_source_verified: false
+      source_build_verified: false
+      relink_objects_verified: false
+    dependency_closure:
+      state: blocked
+      npm_sources_verified: false
+      cargo_sources_verified: false
+      github_sources_verified: false
+      node_headers_verified: false
+      offline_materialization_verified: false
+    seed_build:
+      state: blocked
+      bootstrap_seed_verified: false
+      seed_isolated_verified: false
+      source_build_verified: false
+    self_rebuild:
+      state: blocked
+      offline_verified: false
+      seed_payload_absent_verified: false
+      seed_runtime_dependency_absent_verified: false
+      reproducibility_compared: false
+    final:
+      state: blocked
+      license_audit_verified: false
+      duplicate_check_verified: false
+      final_rpm_verified: false
+copr:
+  enabled: false
+  subdir: packages/bun
+  spec: bun.spec

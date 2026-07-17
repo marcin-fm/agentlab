@@ -1,0 +1,66 @@
+--- a/build.rs
++++ b/build.rs
+@@ -1088,6 +1088,17 @@ fn ensure_parser_sources(parsers_dir: &Path, selected: &[String], out_dir: &Pat
+     if parsers_root_populated(parsers_dir, selected) {
+         return parsers_dir.to_path_buf();
+     }
++    println!("cargo:rerun-if-env-changed=TSLP_PARSER_SOURCE_DIR");
++    if let Ok(path) = env::var("TSLP_PARSER_SOURCE_DIR") {
++        let supplied = PathBuf::from(path);
++        if !parsers_root_populated(&supplied, selected) {
++            panic!(
++                "TSLP_PARSER_SOURCE_DIR={} does not contain the requested parser sources",
++                supplied.display()
++            );
++        }
++        return supplied;
++    }
+     if env::var("TSLP_OFFLINE").is_ok_and(|v| !v.is_empty() && v != "0") {
+         println!("cargo:warning=TSLP_OFFLINE set; refusing to download parser sources");
+         return parsers_dir.to_path_buf();
+--- a/src/download.rs
++++ b/src/download.rs
+@@ -518,23 +518,3 @@ impl DownloadManager {
+-        let url = resolve_manifest_url(&self.version);
+-
+-        let body = if url.starts_with("file://") {
+-            read_file_url(&url)?
+-        } else {
+-            self.agent
+-                .get(&url)
+-                .call()
+-                .map_err(|e| Error::Download(format!("Failed to fetch manifest from {url}: {e}")))?
+-                .into_body()
+-                .read_to_string()
+-                .map_err(|e| Error::Download(format!("Failed to read manifest body: {e}")))?
+-        };
+-
+-        let manifest: ParserManifest = serde_json::from_str(&body)?;
+-
+-        // Cache the manifest atomically — caller holds the download cache lock.
+-        let manifest_path = self.cache_dir.parent().map(|p| p.join("manifest.json"));
+-        if let Some(ref path) = manifest_path {
+-            atomic_write(path, body.as_bytes())?;
+-        }
+-
+-        Ok(manifest)
++        Err(Error::Download(
++            "Fedora disables runtime downloads of upstream prebuilt parsers; build required grammars from the packaged sources".to_string(),
++        ))
+@@ -627,13 +607,3 @@ impl DownloadManager {
+-        let data = self.download_bundle(&bundle.url)?;
+-        let actual_hash = Self::sha256_hex(&data);
+-        if actual_hash != bundle.sha256 {
+-            return Err(Error::ChecksumMismatch {
+-                file: bundle.url.clone(),
+-                expected: bundle.sha256.clone(),
+-                actual: actual_hash,
+-            });
+-        }
+-
+-        // Write atomically — concurrent readers see complete bundle or nothing.
+-        atomic_write(&cache_path, &data)?;
+-        Ok(data)
++        Err(Error::Download(
++            "Fedora disables runtime downloads of upstream prebuilt parsers; populate the cache only from reviewed local RPM content".to_string(),
++        ))

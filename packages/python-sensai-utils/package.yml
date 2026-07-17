@@ -1,0 +1,29 @@
+name: python-sensai-utils
+status: enabled
+blockers: []
+source_policy:
+  sdist_defect: Published setup.py reads an omitted requirements.txt.
+  repair: Use the sole Requires-Dist value from immutable PKG-INFO, typing-extensions >= 4.6.
+  vendored_dependencies: none
+license_audit:
+  expression: MIT
+  license_file: LICENSE
+duplicate_check:
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+validation:
+  fedora_43: clean mock build passed
+  fedora_44: clean mock build passed
+  tests: 16 published import cases passed in both chroots
+  rpmlint: zero errors and zero warnings in both chroots
+upstream:
+  provider: pypi
+  project: sensai-utils
+  current_version: 1.5.0
+  source_url: https://files.pythonhosted.org/packages/8c/dd/faa2e2de71a03af3def212c70777e794dd54ad5ab87927bb5c29f85f24fc/sensai_utils-1.5.0.tar.gz
+  source_sha256: 2ca709a0d5807caf1632d665a455c173987b25276ce61693021672e875f0f17b
+  repository: opcode81/sensAI-utils
+copr:
+  enabled: true
+  subdir: packages/python-sensai-utils
+  spec: python-sensai-utils.spec

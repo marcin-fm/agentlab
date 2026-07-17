@@ -1,0 +1,12 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -30,7 +30,8 @@
+ version = "1.0.0"
+ 
+ [dev-dependencies.memmap]
+-version = "0.7.0"
++package = "memmap2"
++version = "0.7.1"
+ 
+ [dev-dependencies.proptest]
+ version = "1.0.0"

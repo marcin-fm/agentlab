@@ -1,0 +1,11 @@
+--- ort-2.0.0-rc.12/src/value/impl_tensor/copy.rs
++++ ort-2.0.0-rc.12/src/value/impl_tensor/copy.rs
+@@ -299,7 +299,7 @@ impl IdentitySessionHandle {
+ 				);
+ 
+ 				let mut builder = Session::builder()?
+-					.with_optimization_level(GraphOptimizationLevel::Level3)?
++					.with_optimization_level(GraphOptimizationLevel::All)?
+ 					// since these sessions are persistent for the lifetime of the program, keep them as lean as possible
+ 					// by disabling threading & memory optimizations (there's only 1 operation in the graph anyway)
+ 					.with_intra_threads(1)?

@@ -1,0 +1,15 @@
+target_release: 1.3.0
+runtime: []
+build:
+  - pyproject-rpm-macros
+  - python3-devel
+  - python3dist(setuptools)
+  - python3dist(wheel)
+test:
+  - python3dist(pytest)
+tests:
+  published:
+    - tests/test_mslex.py
+  coverage: Published upstream command-line quoting and splitting test suite.
+consumers:
+  - python-oslex

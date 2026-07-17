@@ -1,0 +1,15 @@
+name: rust-maybe-owned0.3
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: maybe-owned
+  version_requirement: = 0.3.4
+  current_version: 0.3.4
+  source_sha256: 4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4
+  source_url_template: https://static.crates.io/crates/maybe-owned/maybe-owned-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-maybe-owned0.3
+  spec: rust-maybe-owned0.3.spec

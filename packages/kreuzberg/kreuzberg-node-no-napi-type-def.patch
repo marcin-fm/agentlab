@@ -1,0 +1,5 @@
+--- a/crates/kreuzberg-node/Cargo.toml
++++ b/crates/kreuzberg-node/Cargo.toml
+@@ -52 +52 @@
+-napi-derive = "3"
++napi-derive = { version = "3", default-features = false, features = ["strict"] }

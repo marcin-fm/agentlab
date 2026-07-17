@@ -1,0 +1,37 @@
+schema: python-docling-slim-dependencies/v1
+target_release: 2.113.0
+packaged_extra: service-client
+base_runtime:
+  - pydantic >= 2, < 3
+  - docling-core >= 2.86, < 3
+  - pydantic-settings >= 2.3, < 3
+  - filetype >= 1.2, < 2
+  - requests >= 2.32.2, < 3
+  - certifi >= 2024.7.4
+  - pluggy >= 1, < 2
+  - tqdm >= 4.65, < 5
+service_client_runtime:
+  - httpx >= 0.28, < 1
+  - websockets >= 14, < 17
+service_client_removed_cli_dependencies:
+  - typer
+  - rich
+  - python-dotenv
+local_prerequisites:
+  - python-docling-core 2.87.1
+excluded_branches:
+  - docling-parse
+  - docling-ibm-models
+  - pypdfium2
+  - local model weights and Hugging Face downloads
+  - local OCR and VLM execution
+  - optional office, audio, HTML rendering, and chunking extras
+tests:
+  upstream: The sdist contains no tests.
+  installed:
+    - Import the base package and service client.
+    - Call the service client's health method against a local HTTP fixture.
+cli_policy:
+  packaged: false
+  reason: The upstream wrappers import pypdfium2-backed local conversion at startup, outside the declared service-client closure.
+offline_build: required

@@ -1,0 +1,7 @@
+name: rust-roman-numerals-rs3
+status: blocked
+blockers:
+  - Final staged spec imported without a new clean Fedora 43/44 validation run.
+  - Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.
+upstream: {provider: crates_io, crate: roman-numerals-rs, version_requirement: '= 3.1.0', current_version: 3.1.0, source_sha256: c85cd47a33a4510b1424fe796498e174c6a9cf94e606460ef022a19f3e4ff85e, source_url_template: 'https://static.crates.io/crates/roman-numerals-rs/roman-numerals-rs-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-roman-numerals-rs3, spec: rust-roman-numerals-rs3.spec}

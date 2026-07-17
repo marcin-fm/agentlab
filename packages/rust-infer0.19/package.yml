@@ -1,0 +1,17 @@
+status: blocked
+name: rust-infer0.19
+blockers:
+  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - COPR enablement and package publication approval are not finalized.
+  - Fedora/RPM Fusion duplicate and license review is still required.
+upstream:
+  provider: crates_io
+  crate: infer
+  version_requirement: = 0.19.0
+  current_version: 0.19.0
+  source_url_template: https://static.crates.io/crates/infer/infer-{version}.crate
+  source_sha256: a588916bfdfd92e71cacef98a63d9b1f0d74d6599980d11894290e7ddefffcf7
+copr:
+  enabled: false
+  subdir: packages/rust-infer0.19
+  spec: rust-infer0.19.spec

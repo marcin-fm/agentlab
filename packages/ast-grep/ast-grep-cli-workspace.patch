@@ -1,0 +1,42 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Limit the workspace to native CLI crates
+
+The Fedora package builds only the native ast-grep command. Exclude the N-API,
+Python, WASM, and release-tool workspace members so Cargo dependency generation
+does not pull unrelated language-binding build graphs.
+---
+ Cargo.toml | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/Cargo.toml b/Cargo.toml
+index 9f7a318..84e2b40 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,9 +1,22 @@
+ [workspace]
+ members = [
+-  "crates/*",
+-  "xtask"
++  "crates/cli",
++  "crates/config",
++  "crates/core",
++  "crates/dynamic",
++  "crates/language",
++  "crates/lsp",
++  "crates/outline",
+ ]
+-default-members = ["crates/*"]
++default-members = [
++  "crates/cli",
++  "crates/config",
++  "crates/core",
++  "crates/dynamic",
++  "crates/language",
++  "crates/lsp",
++  "crates/outline",
++]
+ resolver = "2"
+ 
+ [profile.release]
+-- 
+2.55.0

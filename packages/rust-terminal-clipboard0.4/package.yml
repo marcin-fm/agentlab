@@ -1,0 +1,14 @@
+name: rust-terminal-clipboard0.4
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: terminal-clipboard
+  version_requirement: = 0.4.1
+  current_version: 0.4.1
+  source_url_template: https://static.crates.io/crates/terminal-clipboard/terminal-clipboard-{version}.crate
+  source_sha256: 4e0fd8cb5cf744b501e657eb27df7909ff917eacbfee34bc4bb13d4e6411a131
+copr:
+  enabled: true
+  subdir: packages/rust-terminal-clipboard0.4
+  spec: rust-terminal-clipboard0.4.spec

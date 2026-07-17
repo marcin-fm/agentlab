@@ -1,0 +1,11 @@
+*.rpm
+*.src.rpm
+*.tar.zst
+*.py[cod]
+__pycache__/
+/.cache/
+/.local/
+/.playwright-mcp/
+/.serena/
+/tmp/
+/sources/

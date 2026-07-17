@@ -1,0 +1,5 @@
+name: rust-finl_unicode1
+status: blocked
+blockers: [Final staged metadata patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: finl_unicode, version_requirement: '= 1.4.0', current_version: 1.4.0, source_sha256: 9844ddc3a6e533d62bba727eb6c28b5d360921d5175e9ff0f1e621a5c590a4d5, source_url_template: 'https://static.crates.io/crates/finl_unicode/finl_unicode-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-finl_unicode1, spec: rust-finl_unicode1.spec}

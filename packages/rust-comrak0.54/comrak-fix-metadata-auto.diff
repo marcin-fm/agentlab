@@ -1,0 +1,42 @@
+--- comrak-0.54.0/Cargo.toml	2006-07-24T01:21:28+00:00
++++ comrak-0.54.0/Cargo.toml	2026-07-15T20:38:29.949254+00:00
+@@ -195,10 +195,6 @@
+ [dependencies.typed-arena]
+ version = "2.0.2"
+ 
+-[dev-dependencies.divan]
+-version = "4.2.0"
+-package = "codspeed-divan-compat"
+-
+ [dev-dependencies.glob]
+ version = "0.3.3"
+ 
+@@ -231,12 +231,6 @@
+ version = "3"
+ optional = true
+ 
+-[target.'cfg(any(target_arch = "wasm32", target_os = "ios"))'.dependencies.syntect]
+-version = "5"
+-features = ["default-fancy"]
+-optional = true
+-default-features = false
+-
+ [target.'cfg(not(any(target_arch = "wasm32", target_os = "ios")))'.dependencies.syntect]
+ version = "5"
+ features = [
+@@ -256,14 +250,7 @@
+ ]
+ optional = true
+ 
+-[target.'cfg(target_arch="wasm32")'.dependencies.clap]
+-version = "4"
+-features = [
+-    "derive",
+-    "string",
+-]
+-optional = true
+-
+ [profile.release]
+ lto = true
+ codegen-units = 1
++

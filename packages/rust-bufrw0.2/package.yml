@@ -1,0 +1,5 @@
+name: rust-bufrw0.2
+status: blocked
+blockers: [Final staged metadata patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: bufrw, version_requirement: '= 0.2.0', current_version: 0.2.0, source_sha256: 394c22b416e3981206df472c3bcbbf9ae130883619aefc2199e6087517af1bba, source_url_template: 'https://static.crates.io/crates/bufrw/bufrw-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-bufrw0.2, spec: rust-bufrw0.2.spec}

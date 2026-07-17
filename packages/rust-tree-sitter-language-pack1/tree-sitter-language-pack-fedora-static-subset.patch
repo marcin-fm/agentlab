@@ -1,0 +1,5 @@
+--- a/build.rs
++++ b/build.rs
+@@ -99 +99 @@
+-    Vec::new()
++    definitions.keys().cloned().collect()

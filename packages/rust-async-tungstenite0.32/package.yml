@@ -1,0 +1,14 @@
+name: rust-async-tungstenite0.32
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: async-tungstenite
+  version_requirement: = 0.32.1
+  current_version: 0.32.1
+  source_url_template: https://static.crates.io/crates/async-tungstenite/async-tungstenite-{version}.crate
+  source_sha256: 8acc405d38be14342132609f06f02acaf825ddccfe76c4824a69281e0458ebd4
+copr:
+  enabled: true
+  subdir: packages/rust-async-tungstenite0.32
+  spec: rust-async-tungstenite0.32.spec

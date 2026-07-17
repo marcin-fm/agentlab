@@ -1,0 +1,14 @@
+name: rust-cli-log2
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: cli-log
+  version_requirement: = 2.1.0
+  current_version: 2.1.0
+  source_url_template: https://static.crates.io/crates/cli-log/cli-log-{version}.crate
+  source_sha256: e220aa46e5395cd473a054f8e7e52403108ce147a4eb68c001afb01672a4e046
+copr:
+  enabled: true
+  subdir: packages/rust-cli-log2
+  spec: rust-cli-log2.spec

@@ -1,0 +1,6 @@
+--- whatlang-0.18.0/Cargo.toml
++++ whatlang-0.18.0/Cargo.toml
+@@ -71,3 +71,0 @@
+-[dev-dependencies.arbtest]
+-version = "0.2"
+-

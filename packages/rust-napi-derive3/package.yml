@@ -1,0 +1,15 @@
+name: rust-napi-derive3
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: napi-derive
+  version_requirement: = 3.5.9
+  current_version: 3.5.9
+  source_sha256: d4ba572deef53e2c386759a8c2014175a62679d74ff83adc205c8bc0e0285727
+  source_url_template: https://static.crates.io/crates/napi-derive/napi-derive-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-napi-derive3
+  spec: rust-napi-derive3.spec

@@ -1,0 +1,52 @@
+name: python-doclang
+status: enabled
+blockers: []
+dependency_status:
+  runtime:
+    - python3dist(lxml) >= 4.8
+    - python3dist(typer) >= 0.15.1
+  build:
+    - python3dist(setuptools) >= 78.1.1
+    - pyproject-rpm-macros
+    - python3-devel
+  optional_not_packaged:
+    - saxonche >= 12.9.0
+  fedora_43_44:
+    lxml: provided
+    typer: provided
+  rpm_fusion_43_44: no duplicate package
+license_audit:
+  expression: Apache-2.0
+  license_file: LICENSE
+  bundled_schema_data:
+    - doclang.xsd
+    - doclang.sch
+source_policy:
+  fedora_setuptools_patch: Lower the build-system floor from 80 to Fedora 43's 78.1.1; the source uses only supported PEP 621/setuptools features.
+duplicate_check:
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+validation:
+  fedora_43: clean Mock build passed
+  fedora_44: clean Mock build passed
+  rpmlint: zero errors and one expected no-manual-page warning per chroot
+  upstream_tests: unavailable; sdist contains no tests
+  local_static_smoke: import, bundled schema presence, CLI --help, and XSD-only XML validation passed in both chroots
+artifacts:
+  fedora_43:
+    srpm_sha256: d399bf5ab6f4362f20d22018ba0706a525e0a1f7b52da36a47e44d1b47c4d2c8
+    rpm_sha256: 4d143aee380a31f290dd4265d11b5e3f0dd0b639313b368f313453598e5c86d3
+  fedora_44:
+    srpm_sha256: 0f9ff81338138c4d8db412178313e036ea3c500645bf6afd2dbc6b7eccfb0a23
+    rpm_sha256: 81f78c1c16bbb05b9e5abdf06a4c84bfd90162573a4c73c38821a6ffaabb7267
+upstream:
+  provider: pypi
+  project: doclang
+  current_version: 0.7.3
+  source_url: https://files.pythonhosted.org/packages/f5/3a/005e4856ad8e9b9879414a4df4dbc56dc3663b96f9d8c920ef210e8931cf/doclang-0.7.3.tar.gz
+  source_sha256: ca50615357e46ebf9597bb9065b9112367103ec24bd539f8ae12649224cf50b0
+  repository: doclang-project/doclang
+copr:
+  enabled: true
+  subdir: packages/python-doclang
+  spec: python-doclang.spec

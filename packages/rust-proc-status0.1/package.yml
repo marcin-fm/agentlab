@@ -1,0 +1,17 @@
+name: rust-proc-status0.1
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: proc-status
+  version_requirement: = 0.1.1
+  current_version: 0.1.1
+  source_url_template: https://static.crates.io/crates/proc-status/proc-status-{version}.crate
+  source_sha256: f0e0c0ac915e7b76b47850ba4ffc377abde6c6ff9eeace61d0a89623db449712
+license_source:
+  reason: Published crate declares MIT but omits the license file.
+  file: LICENSE.mit
+copr:
+  enabled: true
+  subdir: packages/rust-proc-status0.1
+  spec: rust-proc-status0.1.spec

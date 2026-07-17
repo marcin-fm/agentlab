@@ -1,0 +1,6 @@
+name: rust-napi-derive-backend5
+status: blocked
+blockers: ["The pinned supplemental-license and retained ctor compatibility repairs have not received a new serialized clean-build/rpmlint validation.", "COPR enablement and Fedora/RPM Fusion duplicate/license approval are not finalized."]
+upstream: {provider: crates_io, crate: napi-derive-backend, version_requirement: '= 5.1.1', current_version: 5.1.1, source_sha256: ddd961eb2aa8965e3f29722d754f3a86907eb1984e2fbcbe3fe87b9a02d6bfba, source_url_template: 'https://static.crates.io/crates/napi-derive-backend/napi-derive-backend-{version}.crate'}
+supplemental: {license_url: 'https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE', license_commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, install_name: LICENSE-MIT}
+copr: {enabled: false, subdir: packages/rust-napi-derive-backend5, spec: rust-napi-derive-backend5.spec}

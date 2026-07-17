@@ -1,0 +1,18 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Fix the Rust crate name in the doctest
+
+The published crate is named tree-sitter-kotlin-sg, but its documentation
+example still refers to tree_sitter_kotlin. Use the actual crate name so the
+doctest validates the shipped API.
+
+--- a/bindings/rust/lib.rs
++++ b/bindings/rust/lib.rs
+@@ -13,7 +13,7 @@
+ //! }
+ //! "#;
+ //! let mut parser = Parser::new();
+-//! let language = tree_sitter_kotlin::LANGUAGE;
++//! let language = tree_sitter_kotlin_sg::LANGUAGE;
+ //! parser
+ //!     .set_language(&language.into())
+ //!     .expect("Error loading Kotlin grammar");

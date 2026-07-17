@@ -1,0 +1,29 @@
+name: python-overrides
+status: enabled
+blockers: []
+source_policy:
+  sdist_defect: none observed in the immutable 7.7.0 sdist
+  repair: none
+  vendored_dependencies: none
+license_audit:
+  expression: Apache-2.0
+  license_file: LICENSE
+duplicate_check:
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+validation:
+  fedora_43: clean Mock build passed
+  fedora_44: clean Mock build passed
+  tests: 67 published tests passed in both chroots
+  rpmlint: zero errors and zero warnings in both chroots
+upstream:
+  provider: pypi
+  project: overrides
+  current_version: 7.7.0
+  source_url: https://files.pythonhosted.org/packages/36/86/b585f53236dec60aba864e050778b25045f857e17f6e5ea0ae95fe80edd2/overrides-7.7.0.tar.gz
+  source_sha256: 55158fa3d93b98cc75299b1e67078ad9003ca27945c76162c1c0766d6f91820a
+  repository: mkorpela/overrides
+copr:
+  enabled: true
+  subdir: packages/python-overrides
+  spec: python-overrides.spec

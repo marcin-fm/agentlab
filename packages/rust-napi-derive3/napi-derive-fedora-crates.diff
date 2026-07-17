@@ -1,0 +1,13 @@
+--- napi-derive-3.5.9/Cargo.toml
++++ napi-derive-3.5.9/Cargo.toml
+@@ -69 +69 @@
+-version = "1.0.0"
++version = "0.6.3"
+--- napi-derive-3.5.9/src/lib.rs
++++ napi-derive-3.5.9/src/lib.rs
+@@ -157 +157 @@
+-      #[ctor(unsafe)]
++      #[ctor]
+@@ -187 +187 @@
+-      #[ctor(unsafe)]
++      #[ctor]

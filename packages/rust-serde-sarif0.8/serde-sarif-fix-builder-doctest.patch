@@ -1,0 +1,17 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use the generated builder in the doctest
+
+The published example calls a builder setter directly on `Message::default()`.
+Use the generated typed-builder API documented by the crate instead.
+
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -43,7 +43,7 @@
+ //! ```rust
+ //! use serde_sarif::sarif::Message;
+ //!
+-//! let message = Message::default()
++//! let message = Message::builder()
+ //!   .id("id")
+ //!   .build();
+ //! ```

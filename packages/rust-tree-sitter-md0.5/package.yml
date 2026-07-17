@@ -1,0 +1,17 @@
+name: rust-tree-sitter-md0.5
+status: enabled
+blockers: []
+source_policy:
+  published_crate_omits_license: true
+  license_source: Upstream v0.5.3 tag
+upstream:
+  provider: crates_io
+  crate: tree-sitter-md
+  version_requirement: = 0.5.3
+  current_version: 0.5.3
+  source_url_template: https://static.crates.io/crates/tree-sitter-md/tree-sitter-md-{version}.crate
+  source_sha256: 2efd398be546456c814598ee56c0f51769a77241511b4a58077815d120afa882
+copr:
+  enabled: true
+  subdir: packages/rust-tree-sitter-md0.5
+  spec: rust-tree-sitter-md0.5.spec

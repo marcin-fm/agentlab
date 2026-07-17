@@ -1,0 +1,17 @@
+name: rust-file-size1
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: file-size
+  version_requirement: = 1.0.3
+  current_version: 1.0.3
+  source_url_template: https://static.crates.io/crates/file-size/file-size-{version}.crate
+  source_sha256: 9544f10105d33957765016b8a9baea7e689bf1f0f2f32c2fa2f568770c38d2b3
+license_source:
+  reason: Published crate declares MIT but omits the license file.
+  file: LICENSE.mit
+copr:
+  enabled: true
+  subdir: packages/rust-file-size1
+  spec: rust-file-size1.spec

@@ -1,0 +1,687 @@
+diff --git a/crates/headroom-core/Cargo.toml b/crates/headroom-core/Cargo.toml
+index 360346e..637c471 100644
+--- a/crates/headroom-core/Cargo.toml
++++ b/crates/headroom-core/Cargo.toml
+@@ -13,7 +13,7 @@ serde_json = { workspace = true }
+ bytes = { workspace = true }
+ thiserror = { workspace = true }
+ tracing = { workspace = true }
+-tiktoken-rs = "0.11"
++tiktoken-rs = { version = "0.11", optional = true }
+ # `tokenizers` is the HuggingFace pure-Rust tokenizer crate. Default features
+ # pull in `onig` for the BPE pre-tokenizer regex; that vendors oniguruma so it
+ # builds without a system dep on macOS/Linux.
+@@ -22,7 +22,6 @@ tokenizers = "0.22"
+ # with `rustls` (no system OpenSSL dep — keeps the binary static-linkable for
+ # AWS deploys). `from_pretrained` is called once at startup, so blocking is
+ # fine; if a tokio caller needs it later we can wrap in `spawn_blocking`.
+-hf-hub = { version = "0.4", default-features = false, features = ["ureq", "rustls-tls"] }
+ # `md5` for the CCR cache_key. Python's compression_store hashes the original
+ # diff with MD5 truncated to 24 hex chars; we must match byte-for-byte.
+ md-5 = "0.10"
+@@ -67,7 +66,7 @@ flate2 = "1"
+ # crate depends on `ort`, which is already in our dep tree via
+ # `fastembed`, so adding it doesn't pull a new ML runtime — both
+ # crates share the ONNX Runtime singleton.
+-magika = "1"
++magika = { version = "1", optional = true }
+ # `unidiff` is the Stage-3d Tier-2 diff detector. We use the parser
+ # itself as the "is this a diff?" oracle — anything that successfully
+ # parses to ≥1 PatchedFile is a diff. The deterministic parser
+@@ -109,7 +108,7 @@ blake3 = "1"
+ # image may lag behind. Sub-1 MB binary cost. WAL is enabled at
+ # connection-open time (see `ccr/backends/sqlite.rs`); no extra feature
+ # flags required.
+-rusqlite = { version = "0.32", features = ["bundled"] }
++rusqlite = "0.31.0"
+ # `redis` for the optional multi-worker CCR backend. Cfg-gated behind
+ # the `redis` feature so deploys that don't need it pay no compile
+ # cost. Default features include the sync `Connection` API used in
+@@ -123,7 +122,7 @@ redis = { version = "0.27", optional = true, default-features = false }
+ http = "1"
+ 
+ [target.'cfg(all(not(windows), not(all(target_os = "macos", target_arch = "x86_64"))))'.dependencies]
+-fastembed = { version = "5", default-features = false, features = [
++fastembed = { version = "5", optional = true, default-features = false, features = [
+     "hf-hub-rustls-tls",
+     "ort-download-binaries-rustls-tls",
+     "image-models",
+@@ -135,7 +134,7 @@ fastembed = { version = "5", default-features = false, features = [
+ # several minutes per wheel. Load the pip `onnxruntime` dylib at runtime
+ # instead (same approach as Windows below). `headroom/_ort.py` pins
+ # `ORT_DYLIB_PATH` before `headroom._core` imports.
+-fastembed = { version = "5", default-features = false, features = [
++fastembed = { version = "5", optional = true, default-features = false, features = [
+     "hf-hub-rustls-tls",
+     "ort-load-dynamic",
+     "image-models",
+@@ -145,14 +144,18 @@ fastembed = { version = "5", default-features = false, features = [
+ # `ort-download-binaries-*` emits DirectML link libs on Windows (`DXCORE`,
+ # `DXGI`, `D3D12`, `DirectML`). Users installing `headroom-ai[all]` from
+ # sdist often do not have those SDK libs, so load ORT dynamically instead.
+-fastembed = { version = "5", default-features = false, features = [
++fastembed = { version = "5", optional = true, default-features = false, features = [
+     "hf-hub-rustls-tls",
+     "ort-load-dynamic",
+     "image-models",
+ ] }
+ 
+ [features]
+-default = []
++default = ["full-native"]
++full-native = ["native-ml", "tiktoken"]
++mcp-minimal = []
++native-ml = ["dep:fastembed", "dep:magika"]
++tiktoken = ["dep:tiktoken-rs"]
+ # Compile in the Redis CCR backend. Enable for multi-worker deployments
+ # that want a shared CCR store with no sticky-session at the LB. The
+ # SQLite backend (always compiled) is the production default for
+diff --git a/crates/headroom-core/src/relevance/embedding.rs b/crates/headroom-core/src/relevance/embedding.rs
+index 3c734ec..d884739 100644
+--- a/crates/headroom-core/src/relevance/embedding.rs
++++ b/crates/headroom-core/src/relevance/embedding.rs
+@@ -26,8 +26,10 @@
+ //! kernels, same weights — embeddings agree to floating-point
+ //! representation. Cosine similarity agrees to ~1e-6.
+ 
++#[cfg(feature = "native-ml")]
+ use std::sync::Mutex;
+ 
++#[cfg(feature = "native-ml")]
+ use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
+ 
+ use super::base::{RelevanceScore, RelevanceScorer};
+@@ -52,6 +54,7 @@ pub struct EmbeddingScorer {
+     /// for the SmartCrusher hot path — embedding inference is the
+     /// dominant cost so contention is bounded by inference latency,
+     /// not lock latency.
++    #[cfg(feature = "native-ml")]
+     model: Option<Mutex<TextEmbedding>>,
+ }
+ 
+@@ -70,6 +73,7 @@ impl Default for EmbeddingScorer {
+     fn default() -> Self {
+         EmbeddingScorer {
+             model_name: "BAAI/bge-small-en-v1.5".to_string(),
++            #[cfg(feature = "native-ml")]
+             model: None,
+         }
+     }
+@@ -85,13 +89,21 @@ impl EmbeddingScorer {
+     /// (network failure during download, missing ONNX runtime
+     /// binaries, etc.).
+     pub fn try_new() -> Result<Self, String> {
+-        Self::try_new_with_model(EmbeddingModel::BGESmallENV15)
++        #[cfg(feature = "native-ml")]
++        {
++            return Self::try_new_with_model(EmbeddingModel::BGESmallENV15);
++        }
++        #[cfg(not(feature = "native-ml"))]
++        {
++            Err("EmbeddingScorer native ML support is disabled in this build".to_string())
++        }
+     }
+ 
+     /// Construct with an explicit model. See `fastembed::EmbeddingModel`
+     /// for the catalog. The default `BGESmallENV15` is the best
+     /// quality/speed tradeoff for compression-relevance scoring on
+     /// short snippets.
++    #[cfg(feature = "native-ml")]
+     pub fn try_new_with_model(model_kind: EmbeddingModel) -> Result<Self, String> {
+         // fastembed links the precompiled ONNX Runtime binary, which contains
+         // AVX2 instructions on x86. Loading/running it on a non-AVX2 CPU traps
+@@ -117,6 +129,12 @@ impl RelevanceScorer for EmbeddingScorer {
+         if item.is_empty() || context.is_empty() {
+             return RelevanceScore::empty("Embedding: empty input");
+         }
++        #[cfg(not(feature = "native-ml"))]
++        {
++            return RelevanceScore::empty("Embedding: native ML support disabled");
++        }
++        #[cfg(feature = "native-ml")]
++        {
+         let Some(model) = &self.model else {
+             return RelevanceScore::empty("Embedding: model not available");
+         };
+@@ -137,6 +155,7 @@ impl RelevanceScorer for EmbeddingScorer {
+             format!("Embedding: semantic similarity {:.2}", sim),
+             Vec::new(),
+         )
++        }
+     }
+ 
+     fn score_batch(&self, items: &[&str], context: &str) -> Vec<RelevanceScore> {
+@@ -149,6 +168,15 @@ impl RelevanceScorer for EmbeddingScorer {
+                 .map(|_| RelevanceScore::empty("Embedding: empty context"))
+                 .collect();
+         }
++        #[cfg(not(feature = "native-ml"))]
++        {
++            return items
++                .iter()
++                .map(|_| RelevanceScore::empty("Embedding: native ML support disabled"))
++                .collect();
++        }
++        #[cfg(feature = "native-ml")]
++        {
+         let Some(model) = &self.model else {
+             return items
+                 .iter()
+@@ -194,10 +222,18 @@ impl RelevanceScorer for EmbeddingScorer {
+                 RelevanceScore::new(sim, format!("Embedding: {:.2}", sim), Vec::new())
+             })
+             .collect()
++        }
+     }
+ 
+     fn is_available(&self) -> bool {
+-        self.model.is_some()
++        #[cfg(feature = "native-ml")]
++        {
++            return self.model.is_some();
++        }
++        #[cfg(not(feature = "native-ml"))]
++        {
++            false
++        }
+     }
+ }
+ 
+@@ -242,6 +278,7 @@ mod tests {
+     fn unavailable_scorer() -> EmbeddingScorer {
+         EmbeddingScorer {
+             model_name: "test".to_string(),
++            #[cfg(feature = "native-ml")]
+             model: None,
+         }
+     }
+diff --git a/crates/headroom-core/src/tokenizer/hf_impl.rs b/crates/headroom-core/src/tokenizer/hf_impl.rs
+index a63d9f9..b309ebc 100644
+--- a/crates/headroom-core/src/tokenizer/hf_impl.rs
++++ b/crates/headroom-core/src/tokenizer/hf_impl.rs
+@@ -100,35 +100,16 @@ impl HfTokenizer {
+         })
+     }
+ 
+-    /// Download (or fetch from cache) `tokenizer.json` for `repo` from the
+-    /// HuggingFace Hub and load it. `repo` is the canonical Hub identifier,
+-    /// e.g. `"CohereForAI/c4ai-command-r-v01"` or `"meta-llama/Meta-Llama-3-8B"`.
+-    ///
+-    /// Uses the `main` revision. Blocking — calls into `ureq` synchronously.
+-    /// First successful call writes the file to `~/.cache/huggingface/hub`
+-    /// (or `$HF_HOME` if set); subsequent calls in the same or later
+-    /// processes hit the on-disk cache.
+-    ///
+-    /// Errors:
+-    /// - [`HfTokenizerError::Hub`] for download failures (no network, 404,
+-    ///   401 on a gated model without `HF_TOKEN`).
+-    /// - [`HfTokenizerError::Load`] if the downloaded bytes don't parse as
+-    ///   a valid `tokenizer.json`. Should not happen for healthy HF repos.
++    /// Runtime HuggingFace downloads are disabled in Fedora packages.
++    /// Administrators can still provide an audited local tokenizer through
++    /// [`HfTokenizer::from_file`] or [`HfTokenizer::from_bytes`].
+     pub fn from_pretrained(repo: &str) -> Result<Self, HfTokenizerError> {
+-        let api = hf_hub::api::sync::Api::new().map_err(|e| HfTokenizerError::Hub {
++        Err(HfTokenizerError::Hub {
+             repo: repo.to_string(),
+-            source: Box::new(e),
+-        })?;
+-        let path = api
+-            .model(repo.to_string())
+-            .get("tokenizer.json")
+-            .map_err(|e| HfTokenizerError::Hub {
+-                repo: repo.to_string(),
+-                source: Box::new(e),
+-            })?;
+-        // `get` returns the on-disk path; reuse `from_file` to keep the load
+-        // path identical to user-supplied tokenizer.json files.
+-        Self::from_file(repo, path)
++            source: Box::new(std::io::Error::other(
++                "Fedora Headroom disables runtime HuggingFace downloads",
++            )),
++        })
+     }
+ 
+     /// The logical name this tokenizer was registered under (e.g.
+diff --git a/crates/headroom-core/src/tokenizer/mod.rs b/crates/headroom-core/src/tokenizer/mod.rs
+--- a/crates/headroom-core/src/tokenizer/mod.rs
++++ b/crates/headroom-core/src/tokenizer/mod.rs
+@@ -32,6 +32,7 @@
+ mod estimator;
+ mod hf_impl;
+ mod registry;
++#[cfg(feature = "tiktoken")]
+ mod tiktoken_impl;
+ 
+ pub use estimator::EstimatingCounter;
+@@ -39,6 +40,7 @@ pub use hf_impl::{HfTokenizer, HfTokenizerError};
+ pub use registry::{
+     clear_hf_registrations, detect_backend, get_tokenizer, register_hf, try_register_hf, Backend,
+ };
++#[cfg(feature = "tiktoken")]
+ pub use tiktoken_impl::{TiktokenCounter, TiktokenError};
+ 
+ /// Counts tokens. Implementations must be thread-safe (`Send + Sync`).
+diff --git a/crates/headroom-core/src/tokenizer/registry.rs b/crates/headroom-core/src/tokenizer/registry.rs
+--- a/crates/headroom-core/src/tokenizer/registry.rs
++++ b/crates/headroom-core/src/tokenizer/registry.rs
+@@ -17,7 +17,9 @@
+ use std::collections::HashMap;
+ use std::sync::{OnceLock, RwLock};
+ 
+-use super::{EstimatingCounter, HfTokenizer, HfTokenizerError, TiktokenCounter, Tokenizer};
++use super::{EstimatingCounter, HfTokenizer, HfTokenizerError, Tokenizer};
++#[cfg(feature = "tiktoken")]
++use super::TiktokenCounter;
+ 
+ /// Which family of tokenizer was selected for a model.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+@@ -71,10 +73,13 @@ pub fn get_tokenizer(model: &str) -> Box<dyn Tokenizer> {
+         return Box::new(hf);
+     }
+     match detect_backend(model) {
++        #[cfg(feature = "tiktoken")]
+         Backend::Tiktoken => match TiktokenCounter::for_model(model) {
+             Ok(t) => Box::new(t),
+             Err(_) => Box::new(default_estimator_for(model)),
+         },
++        #[cfg(not(feature = "tiktoken"))]
++        Backend::Tiktoken => Box::new(default_estimator_for(model)),
+         // Backend::HuggingFace from detect_backend is unreachable — only
+         // runtime registrations produce HF, and we already checked above.
+         Backend::HuggingFace | Backend::Estimation => Box::new(default_estimator_for(model)),
+diff --git a/crates/headroom-core/src/transforms/magika_detector.rs b/crates/headroom-core/src/transforms/magika_detector.rs
+index 1fb1d3d..a3adf2f 100644
+--- a/crates/headroom-core/src/transforms/magika_detector.rs
++++ b/crates/headroom-core/src/transforms/magika_detector.rs
+@@ -35,10 +35,14 @@
+ //!   error early instead of crashing with SIGILL; the detection chain then
+ //!   falls through to Tier 2 and Tier 3 normally.
+ 
++#[cfg(feature = "native-ml")]
+ use std::sync::mpsc;
++#[cfg(feature = "native-ml")]
+ use std::sync::{Mutex, OnceLock};
++#[cfg(feature = "native-ml")]
+ use std::time::Duration;
+ 
++#[cfg(feature = "native-ml")]
+ use magika::Session;
+ use thiserror::Error;
+ use tracing;
+@@ -58,7 +62,14 @@ use crate::transforms::content_detector::ContentType;
+ /// Delegates to the shared [`crate::onnx_cpu`] guard so magika and the
+ /// embedding scorer agree on a single CPU-support source of truth.
+ pub(crate) fn magika_onnx_runtime_supported_by_cpu() -> bool {
+-    crate::onnx_cpu::onnx_runtime_supported_by_cpu()
++    #[cfg(feature = "native-ml")]
++    {
++        return crate::onnx_cpu::onnx_runtime_supported_by_cpu();
++    }
++    #[cfg(not(feature = "native-ml"))]
++    {
++        false
++    }
+ }
+ 
+ /// Errors from the magika detector. Wraps the underlying `magika::Error`
+@@ -93,6 +104,7 @@ pub enum MagikaDetectorError {
+ /// so init failure is recorded once and replayed cheaply on every
+ /// subsequent call (no re-attempting the load — if the model file is
+ /// missing or ort can't init, retrying just wastes cycles).
++#[cfg(feature = "native-ml")]
+ static MAGIKA_SESSION: OnceLock<Mutex<Result<Session, String>>> = OnceLock::new();
+ 
+ /// Default cap on magika ONNX session init.
+@@ -111,8 +123,10 @@ static MAGIKA_SESSION: OnceLock<Mutex<Result<Session, String>>> = OnceLock::new(
+ /// pip-installed `onnxruntime` DLL before this crate can load ort. This
+ /// timeout remains as the safety net for unpinned embedders of the crate.
+ /// Override with `HEADROOM_MAGIKA_INIT_TIMEOUT_SECS`.
++#[cfg(feature = "native-ml")]
+ const MAGIKA_INIT_TIMEOUT_SECS_DEFAULT: u64 = 5;
+ 
++#[cfg(feature = "native-ml")]
+ fn magika_init_timeout() -> Duration {
+     let secs = std::env::var("HEADROOM_MAGIKA_INIT_TIMEOUT_SECS")
+         .ok()
+@@ -122,6 +136,7 @@ fn magika_init_timeout() -> Duration {
+     Duration::from_secs(secs)
+ }
+ 
++#[cfg(feature = "native-ml")]
+ fn session() -> &'static Mutex<Result<Session, String>> {
+     MAGIKA_SESSION.get_or_init(|| {
+         // Early-out if the CPU can't run the precompiled ONNX Runtime.
+@@ -184,6 +199,14 @@ pub fn magika_detect(content: &str) -> Result<ContentType, MagikaDetectorError>
+         return Ok(ContentType::PlainText);
+     }
+ 
++    #[cfg(not(feature = "native-ml"))]
++    {
++        return Err(MagikaDetectorError::Init(
++            "Magika native ML support is disabled; AVX2/ONNX backend unavailable".to_string(),
++        ));
++    }
++    #[cfg(feature = "native-ml")]
++    {
+     let mutex = session();
+     let mut guard = mutex.lock().map_err(|_| MagikaDetectorError::Poisoned)?;
+     let session = guard
+@@ -196,6 +219,7 @@ pub fn magika_detect(content: &str) -> Result<ContentType, MagikaDetectorError>
+         .map_err(|e| MagikaDetectorError::Inference(e.to_string()))?;
+ 
+     Ok(map_magika_label(file_type.info().label))
++    }
+ }
+ 
+ /// Map a magika label string to Headroom's [`ContentType`] enum.
+diff --git a/crates/headroom-py/Cargo.toml b/crates/headroom-py/Cargo.toml
+index 779eef6..1537e0b 100644
+--- a/crates/headroom-py/Cargo.toml
++++ b/crates/headroom-py/Cargo.toml
+@@ -30,9 +30,11 @@ bench = false
+ [features]
+ default = []
+ extension-module = ["pyo3/extension-module"]
++full-native = ["headroom-core/full-native"]
++mcp-minimal = ["headroom-core/mcp-minimal"]
+ 
+ [dependencies]
+-headroom-core = { path = "../headroom-core" }
++headroom-core = { path = "../headroom-core", default-features = false }
+ pyo3 = { workspace = true }
+ pyo3-log = { workspace = true }
+ serde_json = { workspace = true }
+diff --git a/headroom/ccr/mcp_server.py b/headroom/ccr/mcp_server.py
+index b1e7ecc..3eb7e98 100644
+--- a/headroom/ccr/mcp_server.py
++++ b/headroom/ccr/mcp_server.py
+@@ -77,13 +77,7 @@ logger = logging.getLogger("headroom.ccr.mcp")
+ 
+ # Feature flag: enable headroom_read tool (file read caching via CCR)
+ # Set HEADROOM_MCP_READ=on to enable
+-_READ_ENABLED = os.environ.get("HEADROOM_MCP_READ", "off").lower().strip() in (
+-    "on",
+-    "true",
+-    "1",
+-    "yes",
+-    "enabled",
+-)
++_READ_ENABLED = False
+ 
+ DEFAULT_PROXY_URL = os.environ.get("HEADROOM_PROXY_URL", "http://127.0.0.1:8787")
+ 
+@@ -1054,6 +1048,7 @@ class HeadroomMCPServer:
+ def create_ccr_mcp_server(
+     proxy_url: str = DEFAULT_PROXY_URL,
+     direct_mode: bool = False,
++    check_proxy: bool = True,
+ ) -> HeadroomMCPServer:
+     """Create a Headroom MCP server instance.
+ 
+@@ -1064,7 +1059,7 @@ def create_ccr_mcp_server(
+     Returns:
+         HeadroomMCPServer instance.
+     """
+-    return HeadroomMCPServer(proxy_url=proxy_url)
++    return HeadroomMCPServer(proxy_url=proxy_url, check_proxy=check_proxy)
+ 
+ 
+ async def main() -> None:
+diff --git a/headroom/cli/__init__.py b/headroom/cli/__init__.py
+index 883b04c..29147f2 100644
+--- a/headroom/cli/__init__.py
++++ b/headroom/cli/__init__.py
+@@ -1,37 +1,5 @@
+-"""Headroom CLI - Command-line interface for memory and proxy management.
++"""Fedora's bounded Headroom CLI exposes only the local MCP command."""
+ 
+-The subcommand submodules are imported eagerly below so they are bound as
+-attributes of `headroom.cli`. Click registration happens via side effects in
+-`main.py::_register_commands`, but that only binds them to the *main.py*
+-module. Tests that do `patch("headroom.cli.<sub>.<attr>")` resolve the target
+-by walking attributes on the package object, and that lookup fails when a
+-prior test has popped `headroom.cli` from `sys.modules` and re-imported it
+-through a path other than `main.py` (e.g. a test that replaces
+-`sys.modules["headroom.cli.main"]` with a fake to isolate one subcommand).
+-Doing `from . import ...` here means the submodule attribute binding
+-survives that kind of sys.modules mutation.
+-"""
+-
+-from . import (  # noqa: F401
+-    audit,
+-    capture,
+-    copilot_auth,
+-    evals,
+-    init,
+-    install,
+-    learn,
+-    mcp,
+-    perf,
+-    proxy,
+-    tools,
+-    update,
+-    wrap,
+-)
+ from .main import main
+ 
+-try:
+-    from . import memory  # noqa: F401
+-except ImportError:
+-    pass
+-
+ __all__ = ["main"]
+diff --git a/headroom/cli/main.py b/headroom/cli/main.py
+index d0eeb21..3ed7585 100644
+--- a/headroom/cli/main.py
++++ b/headroom/cli/main.py
+@@ -19,59 +19,14 @@ def get_version() -> str:
+ @click.version_option(get_version(), "--version", "-v", prog_name="headroom")
+ @click.pass_context
+ def main(ctx: click.Context) -> None:
+-    """Headroom - The Context Optimization Layer for LLM Applications.
+-
+-    Manage memories, run the optimization proxy, and analyze metrics.
+-
+-    \b
+-    Examples:
+-        headroom proxy              Start the optimization proxy
+-        headroom memory list        List stored memories
+-        headroom memory stats       Show memory statistics
+-        headroom update             Update Headroom to the latest release
+-    """
++    """Headroom local stdio MCP server."""
+     ctx.ensure_object(dict)
+ 
+-    # Fire a rate-limited, opt-out background check for newer releases so other
+-    # surfaces (e.g. the proxy banner) can show an "update available" notice.
+-    # Never blocks, never raises; skipped for `update` (it checks explicitly).
+-    if ctx.invoked_subcommand != "update":
+-        try:
+-            from headroom.update_check import maybe_check_async
+-
+-            maybe_check_async()
+-        except Exception:  # noqa: BLE001 — update check must never break the CLI
+-            pass
+-
+ 
+ # Import subcommands - these register themselves with the main group
+ def _register_commands() -> None:
+-    """Register all subcommand groups."""
+-    from . import (
+-        agent_savings,  # noqa: F401
+-        audit,  # noqa: F401
+-        capture,  # noqa: F401
+-        copilot_auth,  # noqa: F401
+-        doctor,  # noqa: F401
+-        evals,  # noqa: F401
+-        init,  # noqa: F401
+-        install,  # noqa: F401
+-        learn,  # noqa: F401
+-        mcp,  # noqa: F401
+-        output_savings,  # noqa: F401
+-        perf,  # noqa: F401
+-        proxy,  # noqa: F401
+-        savings,  # noqa: F401
+-        tools,  # noqa: F401
+-        update,  # noqa: F401
+-        wrap,  # noqa: F401
+-    )
+-
+-    # Memory CLI requires numpy/hnswlib — optional
+-    try:
+-        from . import memory  # noqa: F401
+-    except ImportError:
+-        pass
++    """Register only the local MCP command group."""
++    from . import mcp  # noqa: F401
+ 
+ 
+ _register_commands()
+diff --git a/headroom/cli/mcp.py b/headroom/cli/mcp.py
+index bcef72e..90d33db 100644
+--- a/headroom/cli/mcp.py
++++ b/headroom/cli/mcp.py
+@@ -301,16 +301,10 @@ def mcp_serve(proxy_url: str | None, direct: bool, debug: bool) -> None:
+             format="%(levelname)s: %(message)s",
+         )
+ 
+-    # Use default if not specified
+-    effective_proxy_url = proxy_url or DEFAULT_PROXY_URL
++    if proxy_url is not None or direct:
++        raise click.UsageError("The Fedora Headroom package supports local MCP storage only.")
+ 
+-    if direct:
+-        click.echo(
+-            "Warning: --direct is deprecated and ignored; MCP retrieval uses the proxy URL.",
+-            err=True,
+-        )
+-
+-    server = create_ccr_mcp_server(proxy_url=effective_proxy_url)
++    server = create_ccr_mcp_server(check_proxy=False)
+ 
+     async def run() -> None:
+         try:
+diff --git a/pyproject.toml b/pyproject.toml
+index 9b6d52c..19ac013 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -49,16 +49,8 @@ dependencies = [
+     # Core: lightweight compression (SmartCrusher, ContentRouter, CCR, TOIN)
+     "tiktoken>=0.5.0",            # Tokenizer for all compressors
+     "pydantic>=2.0.0",            # Config and data models
+-    # litellm's own metadata pins requires-python <3.14, and headroom only uses it for
+-    # model registry / pricing / non-core providers — all lazily imported and
+-    # ImportError-guarded. Marking it 3.14-optional lets headroom install on Python 3.14
+-    # (core compression + the Anthropic proxy path never import litellm). See GH #956.
+-    "litellm>=1.86.2,<2.0; python_version < '3.14'",  # model registry, pricing, providers (lazy)
+     "click>=8.1.0",               # CLI framework
+-    "rich>=13.0.0",               # Rich terminal output
+     "opentelemetry-api>=1.24.0",  # Safe no-op OTEL API for instrumentation
+-    "ast-grep-cli>=0.30.0",       # AST-aware code slicing (CodeCompressor); binary wheel
+-    "tomli>=2.0.0; python_version < '3.11'",  # tomllib backport for helper scripts
+ ]
+ 
+ [project.optional-dependencies]
+@@ -206,7 +198,6 @@ strands = [
+ # MCP server for Claude Code integration
+ mcp = [
+     "mcp>=1.0.0",
+-    "httpx>=0.24.0",
+ ]
+ # Voice filler detection
+ voice = [
+@@ -359,7 +350,7 @@ module-name = "headroom._core"
+ # `cargo build` with this manifest to produce `_core.cdylib`, then injects
+ # the resulting `.so` into the wheel at `headroom/_core.so`.
+ manifest-path = "crates/headroom-py/Cargo.toml"
+-features = ["extension-module"]
++features = ["extension-module", "mcp-minimal"]
+ # Forbid building without the cdylib feature — bare `cargo build` won't
+ # produce a usable Python extension. Maturin's default `bindings` is "pyo3"
+ # which is correct here (see `crates/headroom-py/src/`).
+diff --git a/crates/headroom-core/src/transforms/magika_detector.rs b/crates/headroom-core/src/transforms/magika_detector.rs
+--- a/crates/headroom-core/src/transforms/magika_detector.rs
++++ b/crates/headroom-core/src/transforms/magika_detector.rs
+@@ -298,8 +298,8 @@ mod tests {
+             match magika_detect(content) {
+                 Err(MagikaDetectorError::Init(msg)) => {
+                     assert!(
+-                        msg.contains("AVX2"),
+-                        "{hint}: expected AVX2 error, got: {msg}"
++                        msg.contains("AVX2") || msg.contains("disabled"),
++                        "{hint}: expected an unavailable-backend error, got: {msg}"
+                     );
+                 }
+                 other => panic!("{hint}: on no-AVX2 host expected Init(AVX2) error, got {other:?}"),
+@@ -455,7 +455,10 @@ mod tests {
+             for r in [&r1, &r2, &r3] {
+                 match r {
+                     Err(MagikaDetectorError::Init(msg)) => {
+-                        assert!(msg.contains("AVX2"), "expected AVX2 error, got: {msg}");
++                        assert!(
++                            msg.contains("AVX2") || msg.contains("disabled"),
++                            "expected an unavailable-backend error, got: {msg}"
++                        );
+                     }
+                     other => panic!("on no-AVX2 host expected Init(AVX2) error, got {other:?}"),
+                 }
+diff --git a/crates/headroom-core/tests/tokenizer_proptest.rs b/crates/headroom-core/tests/tokenizer_proptest.rs
+--- a/crates/headroom-core/tests/tokenizer_proptest.rs
++++ b/crates/headroom-core/tests/tokenizer_proptest.rs
+@@ -4,7 +4,9 @@
+ //! decisions, cache keys). These are small enough to also serve as quick
+ //! regression catchers if a tokenizer-rs upgrade breaks the surface API.
+ 
+-use headroom_core::tokenizer::{get_tokenizer, EstimatingCounter, TiktokenCounter, Tokenizer};
++use headroom_core::tokenizer::{get_tokenizer, EstimatingCounter, Tokenizer};
++#[cfg(feature = "tiktoken")]
++use headroom_core::tokenizer::TiktokenCounter;
+ use proptest::prelude::*;
+ 
+ proptest! {
+@@ -15,6 +17,7 @@ proptest! {
+ 
+     /// Determinism: counting the same text twice yields the same count
+     /// regardless of which tokenizer is used.
++    #[cfg(feature = "tiktoken")]
+     #[test]
+     fn deterministic_per_instance(s in any::<String>()) {
+         let tt = TiktokenCounter::for_model("gpt-4o-mini").unwrap();
+@@ -34,6 +37,7 @@ proptest! {
+ 
+     /// Non-empty input produces at least one token. The regex `+` quantifier
+     /// already guarantees `s` is non-empty; no `prop_assume!` needed.
++    #[cfg(feature = "tiktoken")]
+     #[test]
+     fn nonempty_input_is_at_least_one_token(s in "[a-zA-Z0-9 ]+") {
+         let tt = TiktokenCounter::for_model("gpt-4o-mini").unwrap();
+@@ -53,6 +57,7 @@ proptest! {
+     /// a small constant overhead. We bound it loosely — even with a
+     /// pre-tokenizer disagreement, the boundary can introduce at most a
+     /// handful of extra tokens, never a multiplicative blowup.
++    #[cfg(feature = "tiktoken")]
+     #[test]
+     fn concat_does_not_explode(a in any::<String>(), b in any::<String>()) {
+         let tt = TiktokenCounter::for_model("gpt-4o-mini").unwrap();
+diff --git a/crates/headroom-core/Cargo.toml b/crates/headroom-core/Cargo.toml
+--- a/crates/headroom-core/Cargo.toml
++++ b/crates/headroom-core/Cargo.toml
+@@ -164,17 +164,4 @@ redis = ["dep:redis"]
+ 
+ [dev-dependencies]
+ proptest = "1"
+-criterion = { version = "0.5", features = ["html_reports"] }
+ tempfile = "3"
+-
+-[[bench]]
+-name = "tokenizer"
+-harness = false
+-
+-[[bench]]
+-name = "ccr_store"
+-harness = false
+-
+-[[bench]]
+-name = "auth_mode"
+-harness = false

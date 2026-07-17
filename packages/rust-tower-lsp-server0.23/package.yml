@@ -1,0 +1,14 @@
+name: rust-tower-lsp-server0.23
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: tower-lsp-server
+  version_requirement: = 0.23.0
+  current_version: 0.23.0
+  source_url_template: https://static.crates.io/crates/tower-lsp-server/tower-lsp-server-{version}.crate
+  source_sha256: 2f0e711655c89181a6bc6a2cc348131fcd9680085f5b06b6af13427a393a6e72
+copr:
+  enabled: true
+  subdir: packages/rust-tower-lsp-server0.23
+  spec: rust-tower-lsp-server0.23.spec

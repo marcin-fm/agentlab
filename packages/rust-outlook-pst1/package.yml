@@ -1,0 +1,15 @@
+name: rust-outlook-pst1
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: outlook-pst
+  version_requirement: = 1.2.0
+  current_version: 1.2.0
+  source_sha256: 299eace9d895cc31490927d7de779f8e8f3deb5fb6bd1e68eb192aa1da19bd47
+  source_url_template: https://static.crates.io/crates/outlook-pst/outlook-pst-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-outlook-pst1
+  spec: rust-outlook-pst1.spec

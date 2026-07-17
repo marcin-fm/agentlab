@@ -1,0 +1,15 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -46,4 +46,0 @@
+-[[bench]]
+-name = "convert"
+-path = "benches/convert.rs"
+-harness = false
+@@ -54,5 +50,3 @@
+-[dev-dependencies.criterion]
+-version = "0.5"
+-
+ [dev-dependencies.rstest]
+-version = "0.24"
++version = "0.26.1"
++default-features = false

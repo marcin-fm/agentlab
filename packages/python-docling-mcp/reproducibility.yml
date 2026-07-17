@@ -1,0 +1,59 @@
+schema: python-docling-mcp-reproducibility/v1
+package: python-docling-mcp
+version: 2.1.0-2
+source:
+  url: https://files.pythonhosted.org/packages/e3/bc/59f74a19ac66ddebfe2bee76f8f5c6b208f9dd1fe96fff5d020720985f5d/docling_mcp-2.1.0.tar.gz
+  sha256: 46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7
+patches:
+  stdio_generation:
+    path: docling-mcp-stdio-generation.patch
+    sha256: 9df6ba1e63fcf11a7688101019985d339ead205e9dd19ff3b01b3f82ff53e059
+    purpose: Enforce stdio generation/manipulation only and remove conversion/network surfaces.
+  remote_conversion:
+    path: docling-mcp-remote-conversion.patch
+    sha256: 3b42e39ea5ce0e316fb0935d54f6fb72739dfd6a78f499696dd4d6d5dd528c51
+    purpose: Add an explicit bounded remote-conversion group and stdio launcher without local conversion.
+test_source:
+  path: docling-mcp-remote-smoke.py
+  sha256: e8d22004276672dca79b2a182e21268884ab1bb72bf44c8850b3c3ecbad3fd15
+prerequisites:
+  python-docling-core: 2.87.1-1
+  python-docling-slim: 2.113.0-1
+  python-doclang: 0.7.3-1
+  python-latex2mathml: 3.81.0-1
+validation:
+  static:
+    source_sha256: verified
+    patch_fuzz_zero: passed
+    compileall: passed
+    spec_parse: passed
+  fedora_43_x86_64:
+    mock_build: passed
+    base_stdio_smoke: default initialize, list_tools, and create-document call passed with conversion absent
+    remote_stdio_smoke: fake Serve health/upload/poll/result/cache and fail-closed negative paths passed
+    rpmlint: zero errors; two missing-manpage warnings and one optional-package documentation warning
+    srpm_sha256: 3f46be9c55c64a61a199b20214715c089068254478cd43b0a9a6ef15ce2657e5
+    base_rpm_sha256: 20cf99f71f6c3e388dc4131f60e43b2538e405ab083961ef7a466be4b9dd7c11
+    remote_conversion_rpm_sha256: 9f27d40bd8f8be9640a4c1c70e0f7927d740f88f154fc8da538b984567daaa3a
+  fedora_44_x86_64:
+    mock_build: passed
+    base_stdio_smoke: default initialize, list_tools, and create-document call passed with conversion absent
+    remote_stdio_smoke: fake Serve health/upload/poll/result/cache and fail-closed negative paths passed
+    rpmlint: zero errors; two missing-manpage warnings and one optional-package documentation warning
+    srpm_sha256: 70b3a081c2a91c9b3387272f1b060eaee1939133980db0745052378a2b927cb8
+    base_rpm_sha256: e5470c957f70ab9539758f857800a4a448b22b6b8efed2947bdafe777089f921
+    remote_conversion_rpm_sha256: 2eb7e4eaad06199698e14ea71b65eb76e223d6199714633df24e3df5873395dc
+artifacts:
+  spec_sha256: 00e900e854a92cea43e172c15e691f587fd6103b5bfc4bcadb87a471179d01de
+security:
+  mcp_provider: 1.26.0
+  review: mcp-1.26-stdio-security-review.md
+  boundary: stdio only; base remains generation/manipulation, while the optional launcher adds bounded remote conversion without HTTP MCP transports, local conversion, RAG, or experimental tasks
+limitations:
+  - The PyPI sdist excludes the upstream test tree.
+  - The optional package requires an administrator-operated Docling Serve whose parser, model, authentication, and egress policy are outside this RPM closure.
+  - The package deliberately does not provide local conversion, directory conversion, URL-source submission, or local model processing.
+  - Any future transport or additional tool-group expansion requires renewed dependency and security review.
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false

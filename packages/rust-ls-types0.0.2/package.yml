@@ -1,0 +1,14 @@
+name: rust-ls-types0.0.2
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: ls-types
+  version_requirement: = 0.0.2
+  current_version: 0.0.2
+  source_url_template: https://static.crates.io/crates/ls-types/ls-types-{version}.crate
+  source_sha256: 7a7deb98ef9daaa7500324351a5bab7c80c644cfb86b4be0c4433b582af93510
+copr:
+  enabled: true
+  subdir: packages/rust-ls-types0.0.2
+  spec: rust-ls-types0.0.2.spec

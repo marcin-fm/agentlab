@@ -1,0 +1,12 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use Fedora-compatible SHA-1 build IDs
+
+RPM requires build IDs long enough for its build-id link hierarchy. Chromium's
+LLD fast build ID is only eight bytes, so use the SHA-1 form for this Fedora
+build.
+
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -515 +515 @@
+-        ldflags += [ "-Wl,--build-id=fast" ]
++        ldflags += [ "-Wl,--build-id=sha1" ]

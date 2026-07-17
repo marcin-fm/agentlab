@@ -1,0 +1,5 @@
+name: rust-codepage-strings1
+status: blocked
+blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
+upstream: {provider: crates_io, crate: codepage-strings, version_requirement: '= 1.0.2', current_version: 1.0.2, source_sha256: 96e0dcc0fce1af8fe139537bcd0c2522296a701bf11eb6b143ca88ff8c742523, source_url_template: 'https://static.crates.io/crates/codepage-strings/codepage-strings-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-codepage-strings1, spec: rust-codepage-strings1.spec}

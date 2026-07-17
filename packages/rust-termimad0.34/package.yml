@@ -1,0 +1,14 @@
+name: rust-termimad0.34
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: termimad
+  version_requirement: = 0.34.1
+  current_version: 0.34.1
+  source_url_template: https://static.crates.io/crates/termimad/termimad-{version}.crate
+  source_sha256: 889a9370996b74cf46016ce35b96c248a9ac36d69aab1d112b3e09bc33affa49
+copr:
+  enabled: true
+  subdir: packages/rust-termimad0.34
+  spec: rust-termimad0.34.spec

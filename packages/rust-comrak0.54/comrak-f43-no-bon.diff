@@ -1,0 +1,25 @@
+--- comrak-0.54.0/Cargo.toml
++++ comrak-0.54.0/Cargo.toml
+@@ -59,10 +59,8 @@
+ 
+ [features]
+ attributes = []
+-bon = ["dep:bon"]
+ cli = [
+     "clap",
+-    "bon",
+     "shell-words",
+     "xdg",
+     "fmt2io",
+@@ -73,7 +71,5 @@
+ default = [
+-    "cli",
+     "syntect-onig",
+-    "bon",
+ ]
+ phoenix_heex = []
+ shortcodes = ["emojis"]
+@@ -160,3 +156,0 @@
+-[dependencies.bon]
+-version = "3"
+-optional = true

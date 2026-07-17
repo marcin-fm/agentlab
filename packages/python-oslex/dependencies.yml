@@ -1,0 +1,19 @@
+target_release: 2.0.0
+runtime:
+  - python3dist(mslex) >= 1.3
+  - python3dist(mslex) < 2
+build:
+  - python3dist(hatchling)
+  - pyproject-rpm-macros
+  - python3-devel
+test:
+  - python3dist(mslex)
+  - python3dist(pytest)
+tests:
+  published:
+    - tests/test_join.py
+    - tests/test_quote.py
+    - tests/test_split.py
+  coverage: blocked because the required mslex provider is absent.
+consumers:
+  - python-serena-agent

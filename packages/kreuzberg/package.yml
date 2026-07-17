@@ -1,0 +1,45 @@
+name: kreuzberg
+status: blocked
+blockers:
+  - Public immutable hosting for the generated PDFium/Rust closure, 295-record parser subset, and external fixture sources is not available for SCM/COPR consumption.
+  - Final serialized F43/F44 application validation after the cargo-license collector owner-query and Node BuildRequires corrections has not been rerun.
+  - Release-boundary approval is pending for the Chromium-pinned PDFium source package.
+  - aarch64 has not been proven; completed validation is x86_64 only.
+source_policy:
+  rust_and_typescript_source: published v4.10.2 GitHub tag archive
+  generated_node_wrapper: published @kreuzberg/node 4.10.2 npm artifact with matching preferred source in Source0
+  node_runtime_dependencies: none; emnapi is unused by the native loader and the npm CLI is patched to the RPM-owned binary
+  native_addon: built from Rust source with Fedora's toolchain
+  pdfium: system library required; upstream binary downloads forbidden
+  onnxruntime: Fedora system library loaded dynamically; upstream binary downloads forbidden
+  model_downloads: runtime opt-in only
+  platform_packages: upstream prebuilt npm native packages forbidden
+duplicate_check:
+  checked: "2026-07-15"
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+upstream:
+  provider: github
+  repository: kreuzberg-dev/kreuzberg-lts
+  tag_prefix: v
+  current_version: 4.10.2
+  source_url_template: https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v{version}.tar.gz
+  source_sha256: 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
+copr:
+  enabled: false
+  subdir: packages/kreuzberg
+  spec: kreuzberg.spec
+validation:
+  pdfium_local_build: true
+  rust_closure_local_build: true
+  f44_application: passed
+  f43_application: final_node_executable_correction_reached
+  linked_license_aggregate: audited
+  parser_subset: static
+  receipt: validation-summary.md
+  reproducibility: reproducibility.yml
+  license_review: license-review.md
+  license_fixes: license-fixes.yml
+  dependency_finalization: dependency-finalization.yml
+  imported_dependency_records: 63
+  imported_dependency_patch_members_verified: 40

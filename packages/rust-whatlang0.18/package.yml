@@ -1,0 +1,15 @@
+name: rust-whatlang0.18
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: whatlang
+  version_requirement: = 0.18.0
+  current_version: 0.18.0
+  source_sha256: f5e8f38b596e2a359b755342473520a99421e43658548c79489ee221b728c107
+  source_url_template: https://static.crates.io/crates/whatlang/whatlang-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-whatlang0.18
+  spec: rust-whatlang0.18.spec

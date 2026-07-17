@@ -1,0 +1,15 @@
+name: rust-vecmath1
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: vecmath
+  version_requirement: = 1.0.0
+  current_version: 1.0.0
+  source_sha256: 956ae1e0d85bca567dee1dcf87fb1ca2e792792f66f87dced8381f99cd91156a
+  source_url_template: https://static.crates.io/crates/vecmath/vecmath-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-vecmath1
+  spec: rust-vecmath1.spec

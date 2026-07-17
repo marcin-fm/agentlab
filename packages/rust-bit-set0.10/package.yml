@@ -1,0 +1,14 @@
+name: rust-bit-set0.10
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: bit-set
+  version_requirement: = 0.10.0
+  current_version: 0.10.0
+  source_url_template: https://static.crates.io/crates/bit-set/bit-set-{version}.crate
+  source_sha256: 09ec2f926cc3060f09db9ebc5b52823d85268d24bb917e472c0c4bea35780a7d
+copr:
+  enabled: true
+  subdir: packages/rust-bit-set0.10
+  spec: rust-bit-set0.10.spec

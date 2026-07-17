@@ -1,0 +1,14 @@
+name: rust-fluent-uri0.3
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: fluent-uri
+  version_requirement: = 0.3.2
+  current_version: 0.3.2
+  source_url_template: https://static.crates.io/crates/fluent-uri/fluent-uri-{version}.crate
+  source_sha256: 1918b65d96df47d3591bed19c5cca17e3fa5d0707318e4b5ef2eae01764df7e5
+copr:
+  enabled: true
+  subdir: packages/rust-fluent-uri0.3
+  spec: rust-fluent-uri0.3.spec

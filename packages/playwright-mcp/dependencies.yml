@@ -1,0 +1,50 @@
+target_release: 0.0.78
+runtime_closure:
+  - npm_name: "@playwright/mcp"
+    version: 0.0.78
+    source_url: https://registry.npmjs.org/@playwright/mcp/-/mcp-0.0.78.tgz
+    sha256: cfff0fd8eae3ac3bcb39827861298cb6b483a8d72e3c558e7991658ed3d22562
+    integrity: sha512-XLTUeA6mEN9sQ+hJ4dfG8EIkDbxS0K3Trc2RBkUJuf02TgE2FQRNTMtq/aJfhyRMINsRl/Ybc4sxcWLtFn4/TQ==
+    license: Apache-2.0
+  - npm_name: playwright
+    version: 1.62.0-alpha-1783623505000
+    source_url: https://registry.npmjs.org/playwright/-/playwright-1.62.0-alpha-1783623505000.tgz
+    sha256: 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
+    integrity: sha512-6KV9h4PP3hqu4NaGdxxcijWfYh9LJcFI/R2sP4TTC4I5cFo3oRawN0ETlW5MkE3cQEgKhhoj0KUNz4sfpCT0Tg==
+    license: Apache-2.0
+  - npm_name: playwright-core
+    version: 1.62.0-alpha-1783623505000
+    source_url: https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.0-alpha-1783623505000.tgz
+    sha256: a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c
+    integrity: sha512-CPJZdsA/KGT2QQlekiV6Wt+QlQrZHVSZ6oiNtOI/bYYOIVLM8jfKGWTM4zQiyd4UN+40Cq4cA6lxmZHZbtPvJQ==
+    license: Apache-2.0
+optional_runtime_dependencies:
+  - npm_name: fsevents
+    version: 2.3.2
+    scope: Darwin-only optional dependency; excluded on Fedora
+build_closure:
+  status: pending
+  reason: The released package has no compiling build script, but its release-maintenance roll script depends on an unspecified sibling Playwright checkout.
+test_closure:
+  status: pending
+  direct_dependencies:
+    - "@modelcontextprotocol/sdk@1.29.0"
+    - "@playwright/test@1.62.0-alpha-1783623505000"
+    - "@types/node@24.12.2"
+  reason: The exact lockfile closure, source tarballs, integrity checks, and licenses have not been staged.
+closure_audit:
+  audited_release: 0.0.78
+  production_build_sources_verified: false
+  test_sources_verified: false
+  licenses_verified: false
+  native_sources_verified: false
+  generated_sources_verified: false
+  bundled_provides_verified: false
+  upstream_contact_recorded: false
+  offline_verified: false
+gates:
+  - Reproduce or otherwise independently verify npm-to-tag source correspondence.
+  - Vendor the exact production, build, and test closure from original source tarballs without lifecycle execution.
+  - Inventory generated, native, executable, WASM, and browser-facing assets with corresponding sources and full license texts.
+  - Prove the configured Fedora chromium-headless path works without Playwright browser downloads.
+  - Host the complete checksummed closure at immutable URLs usable by COPR SCM.

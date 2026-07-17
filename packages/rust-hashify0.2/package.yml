@@ -1,0 +1,5 @@
+name: rust-hashify0.2
+status: blocked
+blockers: [Final staged metadata patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: hashify, version_requirement: '= 0.2.9', current_version: 0.2.9, source_sha256: dd1246c0e5493286aeb2dde35b1f4eb9c4ce00e628641210a5e553fc001a1f26, source_url_template: 'https://static.crates.io/crates/hashify/hashify-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-hashify0.2, spec: rust-hashify0.2.spec}

@@ -1,0 +1,115 @@
+schema: 1
+package: pdfium
+version: 146.0.7678.0
+consumer:
+  name: kreuzberg
+  version: 4.10.2
+chromium:
+  tag: 146.0.7678.0
+  commit: deeb2f3a6598ee15f0f71708aec735580a9e68b4
+pdfium:
+  commit: efbbd0fc95825e049ad790911356e0b689418899
+target:
+  os: linux
+  architectures:
+    - x86_64
+build_policy:
+  network: forbidden
+  gclient: forbidden
+  cipd: forbidden
+  gcs: forbidden
+  remote_execution: forbidden
+  fedora_tools:
+    - clang
+    - gn
+    - lld
+    - ninja-build
+sources:
+  - id: pdfium
+    path: .
+    git_url: https://pdfium.googlesource.com/pdfium
+    revision: efbbd0fc95825e049ad790911356e0b689418899
+    license: Apache-2.0 AND BSD-3-Clause
+  - id: chromium-build
+    path: build
+    git_url: https://chromium.googlesource.com/chromium/src/build
+    revision: 06d247cb917bb5fac3103b1b7dccb75368a553ce
+    license: BSD-3-Clause
+  - id: chromium-buildtools
+    path: buildtools
+    git_url: https://chromium.googlesource.com/chromium/src/buildtools
+    revision: 6a18683f555b4ac8b05ac8395c29c84483ac9588
+    license: BSD-3-Clause
+  - id: abseil
+    path: third_party/abseil-cpp
+    git_url: https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp
+    revision: 675d3d37ecbec78fd51378c6774c45715b1e4382
+    license: Apache-2.0
+  - id: fast-float
+    path: third_party/fast_float/src
+    git_url: https://chromium.googlesource.com/external/github.com/fastfloat/fast_float
+    revision: cb1d42aaa1e14b09e1452cfdef373d051b8c02a4
+    license: Apache-2.0 OR MIT
+  - id: icu
+    path: third_party/icu
+    git_url: https://chromium.googlesource.com/chromium/deps/icu
+    revision: a86a32e67b8d1384b33f8fa48c83a6079b86f8cd
+    license: Unicode-3.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND LicenseRef-Fedora-Public-Domain
+  - id: test-fonts
+    path: third_party/test_fonts
+    git_url: https://chromium.googlesource.com/chromium/src/third_party/test_fonts
+    revision: 7f51783942943e965cd56facf786544ccfc07713
+    license: BSD-3-Clause
+system_libraries:
+  - fontconfig
+  - freetype2
+  - lcms2
+  - libjpeg
+  - libopenjp2
+  - libpng
+  - libtiff-4
+  - zlib
+fedora_patches:
+  - id: drop-simdutf-test-dependency
+    file: pdfium-drop-simdutf-test-dependency.patch
+    sha256: 849a32a628d4ac5bb87d2eb8cac5395e938551e50aaf44b3ef6060c00557b5df
+    purpose: Remove an unavailable dependency from an unbuilt embedder-test target.
+  - id: fedora-clang-target
+    file: pdfium-fedora-clang-target.patch
+    sha256: b9848a48f7e80ef33217f113b271db0994a4fb48989ca2c8bc230520f5201681
+    purpose: Use Fedora's x86_64 Clang target triple and compiler-rt layout.
+  - id: private-component-names
+    file: pdfium-private-component-names.patch
+    sha256: 7244edaa8d2164c5fb1b18b424777f86856af757f87dd7e0aff70d4b869a9945
+    purpose: Give pinned Abseil and ICU component libraries collision-free PDFium SONAMEs.
+  - id: fedora-build-id
+    file: pdfium-fedora-build-id.patch
+    sha256: 773e5b8e0cbca0b9888d9616466df8f53f6bf05787b22cc5c4143e7780cefb2b
+    purpose: Use SHA-1 build IDs compatible with RPM's build-id link hierarchy.
+  - id: versioned-sonames
+    file: pdfium-versioned-sonames.patch
+    sha256: b1d76926fc311801dd0b19ef37f22e0773c7dcb1a66aa85f146de64a4ccf0e47
+    purpose: Give PDFium and its private component libraries versioned Fedora SONAMEs.
+  - id: embed-icu-data
+    file: pdfium-embed-icu-data.patch
+    sha256: 6d9eab4ba09b001431495f90ade4366c0a628fd10917eb27d77718e3e3b58e6c
+    purpose: Embed ICU data in PDFium's private ICU component instead of requiring icudtl.dat at runtime.
+excluded_sources:
+  - Chromium Clang and sysroots
+  - CIPD GN and Ninja binaries
+  - depot_tools
+  - PDFium test corpus
+  - simdutf, referenced only by an unbuilt embedder-test target removed by the Fedora patch
+  - PartitionAlloc
+  - Skia
+  - V8
+  - Rust PNG and Fontations
+verification:
+  source_closure_generated: true
+  fedora_43_gn: true
+  fedora_44_gn: true
+  fedora_43_build: true
+  fedora_44_build: true
+  exported_fpdf_symbols: true
+  c_api_smoke: true
+  licenses_verified: true

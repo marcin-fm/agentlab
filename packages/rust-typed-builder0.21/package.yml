@@ -1,0 +1,14 @@
+name: rust-typed-builder0.21
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: typed-builder
+  version_requirement: = 0.21.2
+  current_version: 0.21.2
+  source_url_template: https://static.crates.io/crates/typed-builder/typed-builder-{version}.crate
+  source_sha256: fef81aec2ca29576f9f6ae8755108640d0a86dd3161b2e8bca6cfa554e98f77d
+copr:
+  enabled: true
+  subdir: packages/rust-typed-builder0.21
+  spec: rust-typed-builder0.21.spec

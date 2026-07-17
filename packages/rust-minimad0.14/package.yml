@@ -1,0 +1,14 @@
+name: rust-minimad0.14
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: minimad
+  version_requirement: = 0.14.0
+  current_version: 0.14.0
+  source_url_template: https://static.crates.io/crates/minimad/minimad-{version}.crate
+  source_sha256: df8b688969b16915f3ecadc7829d5b7779dee4977e503f767f34136803d5c06f
+copr:
+  enabled: true
+  subdir: packages/rust-minimad0.14
+  spec: rust-minimad0.14.spec

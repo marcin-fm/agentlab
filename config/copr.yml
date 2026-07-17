@@ -1,0 +1,16 @@
+owner: marcin
+project: agentlab
+clone_url: https://github.com/marcin-fm/agentlab.git
+branch: master
+chroots:
+  - fedora-43-x86_64
+  - fedora-44-x86_64
+project_options:
+  enable_net: false
+  bootstrap: default
+  appstream: false
+  follow_fedora_branching: false
+package_options:
+  source_type: git
+  source_method: make_srpm
+  webhook_rebuild: false

@@ -1,0 +1,54 @@
+name: mermaid-cli
+status: blocked
+blockers:
+  - Generated Source1-Source6 artifacts, including the 145 MB production closure, have not been immutably hosted for COPR SCM builds.
+  - The required public upstream request for a system-library or externally supplied dependency mechanism has not been recorded.
+source_policy:
+  runtime_tree: private Node application closure
+  generated_html: copied from the equivalent release source index.html
+  browser: Fedora chromium-headless
+  browser_downloads: forbidden
+  native_payloads: forbidden
+  networked_icon_packs: runtime opt-in only
+  corresponding_sources: verified for generated-heavy Mermaid, ELK, ZenUML, and Font Awesome content
+  font_awesome_fonts: official 7.2.0 release data matched byte-for-byte to the three active runtime WOFF2 files
+closure_validation:
+  release: 11.16.0
+  package_paths: 327
+  unique_source_archives: 326
+  supplemental_notices: 5
+  preferred_sources: 7
+  licenses_verified: true
+  bundled_provides_verified: true
+  offline_verified: true
+  upstream_contact_recorded: false
+build_validation:
+  release: 11.16.0-1
+  fedora_43_x86_64: passed
+  fedora_44_x86_64: passed
+  installed_payload_smoke: passed
+  output_formats:
+    - SVG
+    - PNG
+    - PDF
+  font_awesome_styles:
+    - solid
+    - regular
+    - brands
+  rpmlint_errors: 0
+  host_rpm_install: false
+duplicate_check:
+  checked: "2026-07-15"
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+upstream:
+  provider: github
+  repository: mermaid-js/mermaid-cli
+  tag_prefix: ""
+  current_version: 11.16.0
+  source_url_template: https://github.com/mermaid-js/mermaid-cli/archive/refs/tags/{version}.tar.gz
+  source_sha256: c95d8b32a604e8393d9cfea9ee54060752b1cf4ff291be80a0b749e96a42c0c2
+copr:
+  enabled: false
+  subdir: packages/mermaid-cli
+  spec: mermaid-cli.spec

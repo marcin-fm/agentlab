@@ -1,0 +1,5 @@
+name: rust-cbc0.2
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: cbc, version_requirement: '= 0.2.1', current_version: 0.2.1, source_sha256: ce2dc9ee5f88d11e0beb842c88b33c8a5cf0d1329c4b19494af42b07dbfe8896, source_url_template: 'https://static.crates.io/crates/cbc/cbc-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-cbc0.2, spec: rust-cbc0.2.spec}

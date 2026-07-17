@@ -1,0 +1,21 @@
+--- dirs-sys-0.4.1/Cargo.toml	1970-01-01T00:00:01+00:00
++++ dirs-sys-0.4.1/Cargo.toml	2026-07-15T09:50:22.219462+00:00
+@@ -21,18 +21,6 @@
+ [dependencies.option-ext]
+ version = "0.2.0"
+ 
+-[target."cfg(target_os = \"redox\")".dependencies.redox_users]
+-version = "0.4"
+-default-features = false
+-
+ [target."cfg(unix)".dependencies.libc]
+ version = "0.2"
+ 
+-[target."cfg(windows)".dependencies.windows-sys]
+-version = "0.48.0"
+-features = [
+-    "Win32_UI_Shell",
+-    "Win32_Foundation",
+-    "Win32_Globalization",
+-    "Win32_System_Com",
+-]

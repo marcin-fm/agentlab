@@ -1,0 +1,5 @@
+name: rust-phf_macros0.14
+status: blocked
+blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
+upstream: {provider: crates_io, crate: phf_macros, version_requirement: '= 0.14.0', current_version: 0.14.0, source_sha256: 5fa8d0ca26d424d27630da600c6624696e7dec8bf7b3b492b383c5dc49e5e085, source_url_template: 'https://static.crates.io/crates/phf_macros/phf_macros-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-phf_macros0.14, spec: rust-phf_macros0.14.spec}

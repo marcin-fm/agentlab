@@ -1,0 +1,14 @@
+name: rust-typed-builder-macro0.21
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: typed-builder-macro
+  version_requirement: = 0.21.2
+  current_version: 0.21.2
+  source_url_template: https://static.crates.io/crates/typed-builder-macro/typed-builder-macro-{version}.crate
+  source_sha256: 1ecb9ecf7799210407c14a8cfdfe0173365780968dc57973ed082211958e0b18
+copr:
+  enabled: true
+  subdir: packages/rust-typed-builder-macro0.21
+  spec: rust-typed-builder-macro0.21.spec

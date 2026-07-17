@@ -1,0 +1,11 @@
+--- sevenz-rust2-0.20.2/Cargo.toml	2006-07-24T01:21:28+00:00
++++ sevenz-rust2-0.20.2/Cargo.toml	2026-07-15T20:39:26.033707+00:00
+@@ -188,8 +188,3 @@
+ [dev-dependencies.tempfile]
+ version = "3"
+ 
+-[target.'cfg(target_arch = "wasm32")'.dependencies.js-sys]
+-version = "0.3"
+-
+-[target.'cfg(target_arch = "wasm32")'.dependencies.wasm-bindgen]
+-version = "0.2"

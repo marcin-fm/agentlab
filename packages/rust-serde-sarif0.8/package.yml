@@ -1,0 +1,14 @@
+name: rust-serde-sarif0.8
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: serde-sarif
+  version_requirement: = 0.8.0
+  current_version: 0.8.0
+  source_url_template: https://static.crates.io/crates/serde-sarif/serde-sarif-{version}.crate
+  source_sha256: a053c46f18a8043570d4e32fefc4c6377f82bf29ec310a33e93f273048e3b0be
+copr:
+  enabled: true
+  subdir: packages/rust-serde-sarif0.8
+  spec: rust-serde-sarif0.8.spec

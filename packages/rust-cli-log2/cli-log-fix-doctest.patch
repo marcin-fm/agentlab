@@ -1,0 +1,11 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Fix pattern matching syntax in the doctest
+
+The published example omits `let`, so rustdoc cannot compile it. Keep the
+example active by using valid Rust pattern matching syntax.
+
+--- a/src/init.rs
++++ b/src/init.rs
+@@ -111 +111 @@
+-/// if Err(e) = cli_log::try_init_cli_log!("my-app") {
++/// if let Err(e) = cli_log::try_init_cli_log!("my-app") {

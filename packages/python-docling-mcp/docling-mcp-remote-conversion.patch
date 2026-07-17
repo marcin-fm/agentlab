@@ -1,0 +1,282 @@
+diff --git a/docling_mcp/servers/mcp_server.py b/docling_mcp/servers/mcp_server.py
+--- a/docling_mcp/servers/mcp_server.py
++++ b/docling_mcp/servers/mcp_server.py
+@@ -14,6 +14,7 @@ class ToolGroups(str, enum.Enum):
+ class ToolGroups(str, enum.Enum):
+     """List of available toolsgroups."""
+ 
++    REMOTE_CONVERSION = "remote-conversion"
+     GENERATION = "generation"
+     MANIPULATION = "manipulation"
+ 
+@@ -44,6 +45,10 @@ def main(
+     if tools is None:
+         tools = [*_DEFAULT_TOOLS]
+ 
++    if ToolGroups.REMOTE_CONVERSION in tools:
++        logger.info("loading remote conversion tools...")
++        import docling_mcp.tools.remote_conversion
++
+     if ToolGroups.GENERATION in tools:
+         logger.info("loading generation tools...")
+         import docling_mcp.tools.generation
+diff --git a/docling_mcp/servers/remote_conversion_server.py b/docling_mcp/servers/remote_conversion_server.py
+new file mode 100644
+--- /dev/null
++++ b/docling_mcp/servers/remote_conversion_server.py
+@@ -0,0 +1,19 @@
++"""Stdio entry point for the opt-in remote-conversion tool group."""
++
++from docling_mcp.servers.mcp_server import (
++    ToolGroups,
++    TransportType,
++    main as server_main,
++)
++
++
++def main() -> None:
++    """Run the bounded remote-conversion profile."""
++    server_main(
++        transport=TransportType.STDIO,
++        tools=[
++            ToolGroups.GENERATION,
++            ToolGroups.MANIPULATION,
++            ToolGroups.REMOTE_CONVERSION,
++        ],
++    )
+diff --git a/docling_mcp/settings/remote_service.py b/docling_mcp/settings/remote_service.py
+new file mode 100644
+--- /dev/null
++++ b/docling_mcp/settings/remote_service.py
+@@ -0,0 +1,50 @@
++"""Environment-only configuration for remote Docling conversion."""
++
++from pathlib import Path
++from urllib.parse import urlsplit
++
++from pydantic import Field, field_validator
++from pydantic_settings import BaseSettings, SettingsConfigDict
++
++MAX_TRANSFER_BYTES = 67_108_864
++
++
++class RemoteServiceSettings(BaseSettings):
++    """Configuration for the administrator-selected Docling Serve endpoint."""
++
++    model_config = SettingsConfigDict(
++        env_prefix="DOCLING_",
++        env_file=None,
++        extra="ignore",
++    )
++
++    service_url: str
++    service_upload_root: Path
++    service_api_key: str | None = None
++    service_timeout: float = Field(default=300.0, gt=0)
++    service_max_retries: int = Field(default=3, ge=0, le=10)
++    service_poll_interval: float = Field(default=1.0, gt=0, le=60.0)
++    service_max_input_bytes: int = Field(
++        default=MAX_TRANSFER_BYTES, ge=1, le=MAX_TRANSFER_BYTES
++    )
++    service_max_artifact_download_bytes: int = Field(
++        default=MAX_TRANSFER_BYTES, ge=1, le=MAX_TRANSFER_BYTES
++    )
++
++    @field_validator("service_url")
++    @classmethod
++    def validate_service_url(cls, value: str) -> str:
++        """Reject ambiguous service endpoints before creating an HTTP client."""
++        parsed = urlsplit(value)
++        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
++            raise ValueError("service URL must be an absolute HTTP(S) base URL")
++        if parsed.username is not None or parsed.password is not None:
++            raise ValueError("service URL must not contain credentials")
++        if parsed.query or parsed.fragment:
++            raise ValueError("service URL must not contain a query or fragment")
++        if parsed.path.rstrip("/").endswith("/v1"):
++            raise ValueError("service URL must not include the /v1 API prefix")
++        return value
++
++
++settings = RemoteServiceSettings()
+diff --git a/docling_mcp/tools/remote_conversion.py b/docling_mcp/tools/remote_conversion.py
+new file mode 100644
+--- /dev/null
++++ b/docling_mcp/tools/remote_conversion.py
+@@ -0,0 +1,154 @@
++"""Bounded remote document conversion through an explicit Docling Serve."""
++
++import hashlib
++import os
++import stat
++from io import BytesIO
++from pathlib import Path
++from typing import Annotated
++from urllib.parse import urlsplit
++
++from docling.datamodel.base_models import OutputFormat
++from docling.datamodel.service.options import ConvertDocumentsOptions
++from docling.service_client import DoclingServiceClient, StatusWatcherKind
++from docling_core.types.doc.document import ContentLayer
++from docling_core.types.doc.labels import DocItemLabel
++from docling_core.types.io import DocumentStream
++from mcp.shared.exceptions import McpError
++from mcp.types import INTERNAL_ERROR, ErrorData, ToolAnnotations
++from pydantic import Field
++
++from docling_mcp.logger import setup_logger
++from docling_mcp.settings.remote_service import settings
++from docling_mcp.shared import local_document_cache, local_stack_cache, mcp
++
++from .converters.base import ConversionOutput
++
++logger = setup_logger()
++
++
++def _read_source(source: str) -> tuple[Path, bytes]:
++    """Read one approved regular file without permitting URL or symlink input."""
++    parsed = urlsplit(source)
++    if parsed.scheme or parsed.netloc:
++        raise ValueError("URL sources are disabled for remote conversion")
++
++    upload_root = settings.service_upload_root.expanduser().resolve(strict=True)
++    if not upload_root.is_dir():
++        raise ValueError("DOCLING_SERVICE_UPLOAD_ROOT must be a directory")
++
++    lexical_path = Path(source).expanduser().absolute()
++    resolved_path = lexical_path.resolve(strict=True)
++    if lexical_path != resolved_path:
++        raise ValueError("Symlinked source paths are not allowed")
++
++    try:
++        resolved_path.relative_to(upload_root)
++    except ValueError as exc:
++        raise ValueError(
++            "Source must be below DOCLING_SERVICE_UPLOAD_ROOT"
++        ) from exc
++
++    open_flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW
++    source_fd = os.open(resolved_path, open_flags)
++    try:
++        source_stat = os.fstat(source_fd)
++        if not stat.S_ISREG(source_stat.st_mode):
++            raise ValueError("Source must be a regular file")
++        if source_stat.st_size > settings.service_max_input_bytes:
++            raise ValueError(
++                f"Source exceeds the {settings.service_max_input_bytes}-byte limit"
++            )
++
++        opened_path = Path(f"/proc/self/fd/{source_fd}").resolve(strict=True)
++        if opened_path != resolved_path:
++            raise ValueError("Source path changed while it was being opened")
++        try:
++            opened_path.relative_to(upload_root)
++        except ValueError as exc:
++            raise ValueError(
++                "Opened source is outside DOCLING_SERVICE_UPLOAD_ROOT"
++            ) from exc
++
++        with os.fdopen(source_fd, "rb", closefd=False) as source_file:
++            content = source_file.read(settings.service_max_input_bytes + 1)
++    finally:
++        os.close(source_fd)
++    if len(content) > settings.service_max_input_bytes:
++        raise ValueError(
++            f"Source exceeds the {settings.service_max_input_bytes}-byte limit"
++        )
++    return resolved_path, content
++
++
++@mcp.tool(
++    title="Convert document with Docling Serve",
++    annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False),
++)
++def convert_document_into_docling_document(
++    source: Annotated[
++        str,
++        Field(
++            description=(
++                "A regular local file below DOCLING_SERVICE_UPLOAD_ROOT. "
++                "URL and directory sources are not accepted."
++            )
++        ),
++    ],
++) -> ConversionOutput:
++    """Upload one bounded local file to the configured Docling Serve."""
++    try:
++        source_path, content = _read_source(source)
++        cache_key = hashlib.sha256(
++            os.fsencode(source_path) + b"\0" + content
++        ).hexdigest()[:32]
++        if cache_key in local_document_cache:
++            return ConversionOutput(True, cache_key)
++
++        options = ConvertDocumentsOptions(
++            do_ocr=True,
++            do_table_structure=True,
++            include_images=False,
++            to_formats=[OutputFormat.JSON],
++            abort_on_error=False,
++        )
++        with DoclingServiceClient(
++            url=settings.service_url,
++            api_key=settings.service_api_key or "",
++            status_watcher=StatusWatcherKind.POLLING,
++            ws_fallback_to_poll=False,
++            poll_server_wait=settings.service_poll_interval,
++            poll_client_interval=settings.service_poll_interval,
++            job_timeout=settings.service_timeout,
++            http_retries=settings.service_max_retries,
++            max_artifact_download_bytes=(
++                settings.service_max_artifact_download_bytes
++            ),
++        ) as client:
++            health = client.health()
++            if health.status != "ok":
++                raise RuntimeError(
++                    f"Docling Serve health status is {health.status!r}, not 'ok'"
++                )
++            result = client.convert(
++                source=DocumentStream(
++                    name=source_path.name,
++                    stream=BytesIO(content),
++                ),
++                max_file_size=settings.service_max_input_bytes,
++                options=options,
++            )
++
++        local_document_cache[cache_key] = result.document
++        source_item = result.document.add_text(
++            label=DocItemLabel.TEXT,
++            text=f"source: {source_path}",
++            content_layer=ContentLayer.FURNITURE,
++        )
++        local_stack_cache[cache_key] = [source_item]
++        return ConversionOutput(False, cache_key)
++    except Exception as exc:
++        logger.exception("Remote conversion failed")
++        raise McpError(
++            ErrorData(code=INTERNAL_ERROR, message=f"Remote conversion failed: {exc}")
++        ) from exc
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -49,6 +49,10 @@ dependencies = [
+ ]
+ 
+ [project.optional-dependencies]
++remote-conversion = [
++    "docling-slim[service-client]~=2.92",
++    "pydantic-settings~=2.4",
++]
+ local = [
+     "docling-slim[standard]~=2.92",
+ ]
+@@ -96,6 +100,7 @@ llama-stack = [
+ 
+ [project.scripts]
+ docling-mcp-server = "docling_mcp.servers.mcp_server:app"
++docling-mcp-remote-conversion = "docling_mcp.servers.remote_conversion_server:main"
+ 
+ [project.urls]
+ Homepage = "https://github.com/docling-project/docling-mcp"

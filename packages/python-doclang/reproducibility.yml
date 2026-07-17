@@ -1,0 +1,35 @@
+schema: python-doclang-reproducibility/v1
+package: python-doclang
+version: 0.7.3-1
+source:
+  url: https://files.pythonhosted.org/packages/f5/3a/005e4856ad8e9b9879414a4df4dbc56dc3663b96f9d8c920ef210e8931cf/doclang-0.7.3.tar.gz
+  sha256: ca50615357e46ebf9597bb9065b9112367103ec24bd539f8ae12649224cf50b0
+patches:
+  doclang-fedora-setuptools.patch:
+    purpose: Use Fedora 43 setuptools 78.1.1 for standard PEP 621 metadata.
+    sha256: f447453a5969ff1286e433fd9c6d17d90662ea501a079482ecdedb00df66b000
+spec_sha256: 6fc3e4d157fb18e8b989812f5aa9628f3f00b679830860b694202a30131bd043
+validation:
+  static:
+    source_sha256: verified
+    spec_parse: passed
+    package_manifest: passed
+    local_smoke: passed in both clean chroots
+  fedora_43_x86_64:
+    mock_build: passed
+    import_schema_cli_validation_smoke: passed
+    rpmlint: zero errors; one expected no-manual-page warning
+    srpm_sha256: d399bf5ab6f4362f20d22018ba0706a525e0a1f7b52da36a47e44d1b47c4d2c8
+    rpm_sha256: 4d143aee380a31f290dd4265d11b5e3f0dd0b639313b368f313453598e5c86d3
+  fedora_44_x86_64:
+    mock_build: passed
+    import_schema_cli_validation_smoke: passed
+    rpmlint: zero errors; one expected no-manual-page warning
+    srpm_sha256: 0f9ff81338138c4d8db412178313e036ea3c500645bf6afd2dbc6b7eccfb0a23
+    rpm_sha256: 81f78c1c16bbb05b9e5abdf06a4c84bfd90162573a4c73c38821a6ffaabb7267
+limitations:
+  - Upstream sdist contains no tests.
+  - Validation therefore uses installed-payload import, schema, CLI, and XSD-only XML smokes.
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false

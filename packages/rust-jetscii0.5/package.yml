@@ -1,0 +1,5 @@
+name: rust-jetscii0.5
+status: blocked
+blockers: [Final staged metadata patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: jetscii, version_requirement: '= 0.5.3', current_version: 0.5.3, source_sha256: 47f142fe24a9c9944451e8349de0a56af5f3e7226dc46f3ed4d4ecc0b85af75e, source_url_template: 'https://static.crates.io/crates/jetscii/jetscii-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-jetscii0.5, spec: rust-jetscii0.5.spec}

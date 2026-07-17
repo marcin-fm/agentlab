@@ -1,0 +1,18 @@
+status: blocked
+name: rust-comrak0.54
+blockers:
+  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - COPR enablement and package publication approval are not finalized.
+  - Fedora/RPM Fusion duplicate and license review is still required.
+  - The Fedora 43 no-bon compatibility patch requires fresh repository validation.
+upstream:
+  provider: crates_io
+  crate: comrak
+  version_requirement: = 0.54.0
+  current_version: 0.54.0
+  source_url_template: https://static.crates.io/crates/comrak/comrak-{version}.crate
+  source_sha256: 0d5910408554659ed848ff469e67ec83b30f179e72cec286cfdae64d1616f466
+copr:
+  enabled: false
+  subdir: packages/rust-comrak0.54
+  spec: rust-comrak0.54.spec

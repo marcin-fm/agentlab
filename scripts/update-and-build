@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "optparse"
+require "rbconfig"
+require_relative "lib/agentlab"
+
+begin
+apply = false
+include_blocked = false
+selected_name = nil
+config_path = Agentlab::DEFAULT_CONFIG
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/update-and-build [--apply] [--include-blocked] [--package NAME]"
+  parser.on("--apply", "Write updates and build changed enabled packages") { apply = true }
+  parser.on("--include-blocked", "Check and update blocked drafts, but never build them") { include_blocked = true }
+  parser.on("--package NAME", "Process only one package") { |name| selected_name = name }
+  parser.on("--config PATH", "Use another COPR config file") { |path| config_path = path }
+end.parse!
+
+config = Agentlab.config(config_path)
+packages = selected_name ? [Agentlab.package_named(selected_name)] : Agentlab.packages
+packages.select! { |package| package.enabled? || include_blocked }
+
+if packages.empty?
+  puts "No enabled packages selected. Use --include-blocked to check blocked drafts."
+  exit 0
+end
+
+updates = packages.filter_map do |package|
+  provider = package.upstream.fetch("provider")
+  version = Agentlab.latest_upstream_version(package)
+  current = package.upstream.fetch("current_version")
+
+  if Gem::Version.new(version) <= Gem::Version.new(current)
+    label = provider == "static" ? "static release metadata" : "latest stable #{version}"
+    puts "#{package.name}: current #{current}, #{label}"
+    next
+  end
+
+  url = Agentlab.source_url(package, version)
+  source = Agentlab.download(url)
+  sha256 = Digest::SHA256.hexdigest(source)
+  puts "#{package.name}: #{current} -> #{version}"
+  puts "  source: #{url}"
+  puts "  sha256: #{sha256}"
+  { package: package, version: version, sha256: sha256 }
+end
+
+if updates.empty?
+  puts "No released updates found."
+  exit 0
+end
+
+unless apply
+  puts "Dry run: no files changed and no builds submitted."
+  exit 0
+end
+
+project = "#{config.fetch('owner')}/#{config.fetch('project')}"
+builds = updates.map { |update| update.fetch(:package) }.select(&:enabled?)
+Agentlab.verify_copr_owner!(config.fetch("owner")) if builds.any?
+
+updates.each do |update|
+  package = update.fetch(:package)
+  state = package.enabled? ? "enabled package" : "blocked draft"
+  Agentlab.update_package_files(
+    package,
+    version: update.fetch(:version),
+    sha256: update.fetch(:sha256),
+    changelog_message: "Update the #{state} to released version #{update.fetch(:version)}."
+  )
+end
+
+Agentlab.run!([RbConfig.ruby, File.join(Agentlab::ROOT, "scripts", "check-packages")])
+
+if builds.any?
+  builds.each do |package|
+    chroot_args = package.chroots(config.fetch("chroots")).flat_map { |chroot| ["--chroot", chroot] }
+    Agentlab.run!(Agentlab.copr_command("build", project, "--nowait", *chroot_args, package.spec_path))
+  end
+end
+
+puts builds.empty? ? "Updated blocked drafts; no builds were submitted." : "Submitted #{builds.length} COPR build(s)."
+rescue Agentlab::Error, KeyError => e
+  warn "error: #{e.message}"
+  exit 1
+end

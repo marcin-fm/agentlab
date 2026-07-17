@@ -1,0 +1,91 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require_relative "lib/agentlab"
+
+begin
+apply = false
+config_path = Agentlab::DEFAULT_CONFIG
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/create-copr-packages [--apply] [--config PATH]"
+  parser.on("--apply", "Mutate the COPR project; the default is a dry run") { apply = true }
+  parser.on("--config PATH", "Use another COPR config file") { |path| config_path = path }
+end.parse!
+
+config = Agentlab.config(config_path)
+project = "#{config.fetch('owner')}/#{config.fetch('project')}"
+chroot_args = config.fetch("chroots").flat_map { |chroot| ["--chroot", chroot] }
+project_options = config.fetch("project_options")
+
+project_arguments = [
+  project,
+  *chroot_args,
+  "--enable-net", project_options.fetch("enable_net") ? "on" : "off",
+  "--bootstrap", project_options.fetch("bootstrap"),
+  "--appstream", project_options.fetch("appstream") ? "on" : "off",
+  "--follow-fedora-branching", project_options.fetch("follow_fedora_branching") ? "on" : "off"
+]
+create_project = Agentlab.copr_command("create", *project_arguments)
+modify_project = Agentlab.copr_command("modify", *project_arguments)
+
+unless apply
+  puts "Dry run: COPR is not being changed."
+  puts "Project reconciliation commands:"
+  puts "$ #{Agentlab.command_string(create_project)}"
+  puts "$ #{Agentlab.command_string(modify_project)}"
+end
+
+if apply
+  Agentlab.verify_copr_owner!(config.fetch("owner"))
+
+  _stdout, get_stderr, get_status = Agentlab.capture(Agentlab.copr_command("get", project))
+  if get_status.success?
+    Agentlab.run!(modify_project)
+  elsif get_stderr.match?(/404|does not exist|not found/i)
+    Agentlab.run!(create_project)
+  else
+    raise Agentlab::Error, "cannot inspect COPR project #{project}: #{get_stderr.strip}"
+  end
+end
+
+enabled = Agentlab.packages.select(&:enabled?)
+blocked = Agentlab.packages.reject(&:enabled?)
+blocked.each { |package| puts "Skipping #{package.name}: status=#{package.status}, copr.enabled=#{package.data.dig('copr', 'enabled')}" }
+
+enabled.each do |package|
+  options = config.fetch("package_options")
+  common = [
+    "--name", package.name,
+    "--clone-url", config.fetch("clone_url"),
+    "--commit", config.fetch("branch"),
+    "--subdir", package.data.dig("copr", "subdir"),
+    "--spec", package.data.dig("copr", "spec"),
+    "--type", options.fetch("source_type"),
+    "--method", options.fetch("source_method"),
+    "--webhook-rebuild", options.fetch("webhook_rebuild") ? "on" : "off"
+  ]
+
+  if apply
+    _stdout, stderr, status = Agentlab.capture(
+      Agentlab.copr_command("get-package", project, "--name", package.name, "--output-format", "json")
+    )
+    if status.success?
+      Agentlab.run!(Agentlab.copr_command("edit-package-scm", project, *common))
+    elsif stderr.match?(/404|does not exist|not found/i)
+      Agentlab.run!(Agentlab.copr_command("add-package-scm", project, *common))
+    else
+      raise Agentlab::Error, "cannot inspect COPR package #{package.name}: #{stderr.strip}"
+    end
+  else
+    puts "$ #{Agentlab.command_string(Agentlab.copr_command('add-package-scm', project, *common))}"
+    puts "$ #{Agentlab.command_string(Agentlab.copr_command('edit-package-scm', project, *common))}"
+  end
+end
+
+puts enabled.empty? ? "No packages are enabled for COPR yet." : "Reconciled #{enabled.length} COPR package definition(s)."
+rescue Agentlab::Error, KeyError => e
+  warn "error: #{e.message}"
+  exit 1
+end

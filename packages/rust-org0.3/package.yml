@@ -1,0 +1,15 @@
+name: rust-org0.3
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: org
+  version_requirement: = 0.3.1
+  current_version: 0.3.1
+  source_sha256: cfdf547b633735ad9d67353aba48b3e685ab5ffb3195aaa9a1b1d8613e11b98c
+  source_url_template: https://static.crates.io/crates/org/org-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-org0.3
+  spec: rust-org0.3.spec

@@ -1,0 +1,47 @@
+schema: python-docling-core-reproducibility/v1
+package: python-docling-core
+version: 2.87.1-1
+source:
+  url: https://files.pythonhosted.org/packages/6c/36/96e3c029d8e018403e178e1d68b2135b63413c1a3ed4c39a56fec032d265/docling_core-2.87.1.tar.gz
+  sha256: a2c19e63519e49f993d93103481934b772db701c80c683900476f898dfac841a
+patches:
+  docling-core-setuptools-backend.patch:
+    purpose: Declare the setuptools build backend omitted from the published metadata.
+    sha256: b94ec5fcb99d1d8b8fde35b26bbca252c2ff6a78e5a1f769177d556a8bcb42d1
+  docling-core-add-requests.patch:
+    purpose: Declare the requests dependency used by the installed CLI file resolver.
+    sha256: f0e906623fe9ff14bd0d38cf91fa7d2b10e99a355abe7a0947be1a19520aebff
+spec_sha256: c83d612238b60e8085f8a8f37099136410ded636e7c5fb1cd329353477566400
+prerequisites:
+  python-doclang:
+    version: 0.7.3-1
+    fedora_43_44: clean builds passed
+  python-latex2mathml:
+    version: 3.81.0-1
+    fedora_43_44: clean builds passed
+validation:
+  static:
+    source_sha256: verified
+    patch_fuzz_zero: passed
+    spec_parse: passed
+    package_manifest: passed
+  fedora_43_x86_64:
+    mock_build: passed
+    upstream_tests: 29 passed
+    document_roundtrip_doclang_and_cli_smokes: passed
+    rpmlint: zero errors; two expected no-manual-page warnings
+    srpm_sha256: bf72df4d89212b9bddcae222c8dc82f34de3490f5b805dff16088f95584297e0
+    rpm_sha256: 5f438fd8e05550cab73a32ba69a82bca8e057451c8bd780495dd5a856f740df1
+  fedora_44_x86_64:
+    mock_build: passed
+    upstream_tests: 29 passed
+    document_roundtrip_doclang_and_cli_smokes: passed
+    rpmlint: zero errors; two expected no-manual-page warnings
+    srpm_sha256: 609512bf7835833dc24b247372d67e16ca10ef93b017eec86b882382d20f4641
+    rpm_sha256: 2a105f14c4fab6f88d03551b76f82bf61211c6f09dd92bf1af0f5ed94783a53c
+limitations:
+  - Many upstream tests depend on fixture trees omitted from the sdist.
+  - Optional chunking and model integrations are outside the base-package scope.
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false

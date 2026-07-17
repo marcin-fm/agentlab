@@ -1,0 +1,15 @@
+name: rust-serde_yaml_ng0.10
+status: blocked
+blockers:
+  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+upstream:
+  provider: crates_io
+  crate: serde_yaml_ng
+  version_requirement: = 0.10.0
+  current_version: 0.10.0
+  source_sha256: 7b4db627b98b36d4203a7b458cf3573730f2bb591b28871d916dfa9efabfd41f
+  source_url_template: https://static.crates.io/crates/serde_yaml_ng/serde_yaml_ng-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-serde_yaml_ng0.10
+  spec: rust-serde_yaml_ng0.10.spec

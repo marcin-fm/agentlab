@@ -1,0 +1,165 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require_relative "lib/agentlab"
+
+selected_name = nil
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/check-packages [--package NAME]"
+  parser.on("--package NAME", "Validate only one package") { |name| selected_name = name }
+end.parse!
+
+packages = selected_name ? [Agentlab.package_named(selected_name)] : Agentlab.packages
+project_chroots = Agentlab.config.fetch("chroots")
+errors = []
+warnings = []
+
+packages.each do |package|
+  unless %w[enabled blocked].include?(package.status)
+    errors << "#{package.name}: status must be enabled or blocked"
+  end
+
+  if package.status == "blocked" && package.data.dig("copr", "enabled") == true
+    errors << "#{package.name}: blocked package cannot enable COPR"
+  end
+
+  if package.status == "enabled" && package.data.dig("copr", "enabled") != true
+    errors << "#{package.name}: enabled package must enable COPR"
+  end
+
+  if package.status == "enabled" && Array(package.data["blockers"]).any?
+    errors << "#{package.name}: enabled package still has blockers"
+  end
+
+  package_chroots = package.data.dig("copr", "chroots")
+  if package_chroots
+    unless package_chroots.is_a?(Array) && package_chroots.any? && package_chroots.all? { |chroot| chroot.is_a?(String) && !chroot.empty? }
+      errors << "#{package.name}: copr.chroots must be a nonempty array of strings"
+    else
+      unknown_chroots = package_chroots - project_chroots
+      errors << "#{package.name}: copr.chroots contains project-unknown chroots: #{unknown_chroots.join(', ')}" if unknown_chroots.any?
+    end
+  end
+
+  errors << "#{package.name}: missing spec #{package.spec_path}" unless File.file?(package.spec_path)
+  next unless File.file?(package.spec_path)
+
+  spec = File.read(package.spec_path)
+  spec_name = spec[/^Name:\s+(\S+)/, 1]
+  spec_version = spec[/^Version:\s+(\S+)/, 1]
+  spec_release = spec[/^Release:\s+(\S+)/, 1]
+  spec_sha256 = spec[/^%global source_sha256\s+(\h{64})$/, 1]
+  manifest_version = package.upstream["current_version"].to_s
+  spec_version_expected = package.upstream.fetch("rpm_version", manifest_version).to_s
+  manifest_sha256 = package.upstream["source_sha256"].to_s
+
+  errors << "#{package.name}: spec Name is #{spec_name.inspect}" unless spec_name == package.name
+  errors << "#{package.name}: spec Version #{spec_version.inspect} != manifest RPM version #{spec_version_expected.inspect}" unless spec_version == spec_version_expected
+  unless spec_release&.match?(/\A0\.(?:0\.)?[1-9][0-9]*%\{\?dist\}\z/)
+    errors << "#{package.name}: Release #{spec_release.inspect} must use 0.x%{?dist} or legacy 0.0.x%{?dist}"
+  end
+
+  changelog = spec.split(/^%changelog\s*$/, 2)[1].to_s
+  changelog_release = changelog[/^\* [^\n]+ - \S+-(0\.(?:0\.)?[1-9][0-9]*)$/, 1]
+  expected_changelog_release = spec_release&.delete_suffix("%{?dist}")
+  unless changelog_release == expected_changelog_release
+    errors << "#{package.name}: latest changelog release #{changelog_release.inspect} != spec Release #{expected_changelog_release.inspect}"
+  end
+  errors << "#{package.name}: spec source SHA-256 does not match manifest" unless spec_sha256 == manifest_sha256
+  errors << "#{package.name}: source SHA-256 must be 64 lowercase hex characters" unless manifest_sha256.match?(/\A[0-9a-f]{64}\z/)
+
+  dependencies_path = File.join(package.directory, "dependencies.yml")
+  if File.file?(dependencies_path)
+    dependencies = Agentlab.load_yaml(dependencies_path)
+    target_release = dependencies["target_release"].to_s
+    errors << "#{package.name}: dependency target #{target_release.inspect} != manifest #{manifest_version.inspect}" unless target_release == manifest_version
+    errors << "#{package.name}: bundled(npm(...)) is not valid Fedora Node metadata" if spec.include?("bundled(npm(")
+    errors << "#{package.name}: private application must not provide npm(#{package.name})" if spec.match?(/^Provides:\s+npm\(#{Regexp.escape(package.name)}\)/)
+
+    spec.scan(/^Provides:\s+bundled\(([^)]+)\)\s*=\s*(\S+)/).each do |capability, _version|
+      errors << "#{package.name}: bundled Node capability #{capability.inspect} must start with nodejs-" unless capability.start_with?("nodejs-")
+    end
+
+    if dependencies.key?("closure_audit")
+      audit = dependencies.fetch("closure_audit")
+      required_audit_flags = %w[
+        production_build_sources_verified
+        test_sources_verified
+        licenses_verified
+        native_sources_verified
+        generated_sources_verified
+        bundled_provides_verified
+        upstream_contact_recorded
+        offline_verified
+      ]
+
+      if package.enabled?
+        errors << "#{package.name}: closure audit is not current" unless audit["audited_release"].to_s == manifest_version
+        required_audit_flags.each do |flag|
+          errors << "#{package.name}: closure audit flag #{flag} is not true" unless audit[flag] == true
+        end
+
+        generated_block = spec[/# BEGIN GENERATED BUNDLED NODE PROVIDES\n(.*?)# END GENERATED BUNDLED NODE PROVIDES/m, 1]
+        errors << "#{package.name}: generated bundled Node Provides block is empty" unless generated_block&.match?(/^Provides:/)
+      end
+    end
+
+    if dependencies.key?("source_closure_files")
+      source_files = dependencies.fetch("source_closure_files")
+      closure_filename = source_files["closure_manifest"]
+      closure_path = closure_filename.is_a?(String) && File.join(package.directory, closure_filename)
+      source_files.each_value do |filename|
+        unless filename.is_a?(String)
+          errors << "#{package.name}: closure source filename must be a string"
+          next
+        end
+        next unless package.enabled?
+
+        path = File.join(package.directory, filename)
+        errors << "#{package.name}: enabled package is missing closure source #{filename}" unless File.file?(path)
+      end
+
+      if closure_path && File.file?(closure_path)
+        begin
+          closure = JSON.parse(File.read(closure_path))
+          expected_block = Agentlab.node_bundled_provides_block(closure)
+          actual_block = spec[/# BEGIN GENERATED BUNDLED NODE PROVIDES\n.*?# END GENERATED BUNDLED NODE PROVIDES/m]
+          errors << "#{package.name}: bundled Node Provides block does not match #{closure_filename}" unless actual_block == expected_block
+        rescue JSON::ParserError, Agentlab::Error, KeyError => e
+          errors << "#{package.name}: invalid closure manifest #{closure_filename}: #{e.message}"
+        end
+      elsif package.enabled?
+        errors << "#{package.name}: closure manifest is not configured or missing"
+      end
+
+      native_filename = source_files["native_manifest"]
+      native_path = native_filename.is_a?(String) && File.join(package.directory, native_filename)
+      if native_path && File.file?(native_path)
+        begin
+          JSON.parse(File.read(native_path))
+        rescue JSON::ParserError => e
+          errors << "#{package.name}: invalid native manifest #{native_filename}: #{e.message}"
+        end
+      end
+    end
+  end
+
+  errors.concat(Agentlab.validate_bun_build_plan(package, spec))
+
+  next unless Agentlab.command_available?("rpmspec")
+
+  _stdout, stderr, status = Agentlab.capture(["rpmspec", "-P", package.spec_path])
+  errors << "#{package.name}: rpmspec parse failed: #{stderr.strip}" unless status.success?
+end
+
+warnings << "rpmspec is unavailable; spec parsing was skipped" unless Agentlab.command_available?("rpmspec")
+
+warnings.each { |warning| warn "warning: #{warning}" }
+if errors.any?
+  errors.each { |error| warn "error: #{error}" }
+  exit 1
+end
+
+puts "Validated #{packages.length} package#{'s' unless packages.length == 1}."

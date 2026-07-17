@@ -1,0 +1,87 @@
+target_release: 4.10.2
+package_outputs:
+  - kreuzberg
+  - nodejs-kreuzberg
+source_inputs:
+  source_archive:
+    url: https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v4.10.2.tar.gz
+    sha256: 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
+  generated_node_wrapper:
+    url: https://registry.npmjs.org/@kreuzberg/node/-/node-4.10.2.tgz
+    integrity: sha512-cOp4SpS4/dZ2MX4jJT8vvcb4KF6eM68JJPPs2ykUnH3+ypvdkJlZC92GOylczw0TNa3yiXB7EGBMrbicHCLbHw==
+    sha256: 44e344738f22c6d864046e14fd5a04c63f4f1451a6275934410bfa1f428f4025
+    preferred_source: Source0 crates/kreuzberg-node/typescript and tsup.config.ts
+system_dependencies:
+  nodejs:
+    minimum: "22"
+    state: available
+  onnxruntime:
+    state: available
+    fedora_43: 1.20.1
+    fedora_44: 1.22.2
+    integration: ort load-dynamic and ORT_DYLIB_PATH discovery
+  tesseract:
+    state: available
+  pdfium:
+    state: locally_built
+    required_capability: pkgconfig(pdfium) >= 5.0
+    incompatible_fedora_package: deepin-pdfium
+    reason: deepin-pdfium exports libdeepin-pdfium and a wrapper API, not libpdfium and the FPDF API.
+    validated_release: 146.0.7678.0
+    x86_64_rpm_sha256: b5c7dc1e180c385e6929d8597eab1275e3bf607cb2e6735e7da8f31717158772
+    source_path: /srv/tmp/agentlab-kreuzberg/repos/f44
+node_runtime_dependencies:
+  state: none
+  rationale: The native N-API loader does not import @emnapi/runtime, and the generated CLI is patched to execute the RPM-owned /usr/bin/kreuzberg directly.
+rust_workspace:
+  edition: "2024"
+  minimum_rust: "1.91"
+  selected_members:
+    - crates/kreuzberg
+    - crates/kreuzberg-cli
+    - crates/kreuzberg-ffi
+    - crates/kreuzberg-node
+    - crates/kreuzberg-paddle-ocr
+    - crates/kreuzberg-pdfium-render
+    - crates/kreuzberg-tesseract
+  excluded_surfaces:
+    - Python
+    - PHP
+    - WASM
+    - Elixir
+    - repository e2e harnesses
+build_adjustments:
+  pdfium: Replace bundled-pdfium with system-pdfium for the CLI, Node binding, and FFI crate.
+  onnxruntime: Replace download-binaries feature edges with load-dynamic.
+  tesseract: Disable the default source-download feature and link dynamically to Fedora Tesseract and Leptonica.
+  feature_scope: Preserve documented Node extraction, OCR, PaddleOCR, layout, embeddings, and tree-sitter functionality while omitting API, MCP, OpenTelemetry, and Liter LLM server-only surfaces.
+  target_scope: Remove wasm32-only dependency blocks from the selected native Linux crates before Fedora Cargo dependency generation.
+  node_native_loader: Install the Fedora-built N-API addon beside the published generated loader.
+  cli: Install the source-built Rust CLI as /usr/bin/kreuzberg and patch the npm CLI proxy to execute it directly.
+closure_audit:
+  audited_release: 4.10.2
+  cargo_sources_verified: true
+  node_sources_verified: true
+  system_pdfium_verified: true
+  system_onnxruntime_verified: true
+  licenses_verified: true
+  native_sources_verified: true
+  generated_sources_verified: true
+  offline_verified: true
+  fedora_43_verified: final_node_executable_correction_reached
+  fedora_44_verified: true
+  current_node_buildrequires_correction: recorded_not_rebuilt
+  current_collector_owner_query_correction: recorded_not_rebuilt
+  imported_dependency_records: 63
+  imported_dependency_patch_members_verified: 40
+  imported_dependency_matrix: dependency-finalization.yml
+  parser_subset_verified: true
+  parser_archive_records: 295
+  parser_excluded_records: 11
+  parser_language_count_documented_upstream: 248
+  receipt: reproducibility.yml
+gates:
+  - Host the generated PDFium, Rust closure, parser subset, and fixture sources immutably for SCM/COPR.
+  - Rerun final serialized F43/F44 application validation after the collector and Node BuildRequires corrections.
+  - Approve the Chromium-pinned PDFium release boundary.
+  - Prove the package on aarch64.

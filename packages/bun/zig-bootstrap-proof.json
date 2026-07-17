@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "package_release": "bun-v1.3.14",
+  "proof_platform": "fedora-44-x86_64",
+  "proof_date": "2026-07-15",
+  "source": {
+    "commit": "04e7f6ac1e009525bc00934f20199c68f04e0a24",
+    "sha256": "b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d"
+  },
+  "patch": {
+    "path": "zig-fedora-lib64.patch",
+    "sha256": "77be015e0b2a83e6d287cfa832fa190dcfe7296320d111e0b129e11a418161fc"
+  },
+  "toolchain": {
+    "cmake": "4.3.0",
+    "clang": "20.1.8",
+    "llvm": "20.1.8",
+    "target": "native",
+    "cpu": "baseline",
+    "shared_llvm": true
+  },
+  "output": {
+    "version": "0.15.2",
+    "executable_sha256": "7856cf26d0c0d105373a9f18a8a18ad74a4baf41d8194f7d16a7f82084c2433b",
+    "bun_layout_verified": true,
+    "source_execution_verified": true,
+    "external_zig_binary_used": false
+  },
+  "scope": "local source-bootstrap proof only; not Fedora approval or a complete Bun RPM build"
+}

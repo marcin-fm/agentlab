@@ -1,0 +1,14 @@
+name: rust-x11-clipboard0.8
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: x11-clipboard
+  version_requirement: = 0.8.1
+  current_version: 0.8.1
+  source_url_template: https://static.crates.io/crates/x11-clipboard/x11-clipboard-{version}.crate
+  source_sha256: b41aca1115b1f195f21c541c5efb423470848d48143127d0f07f8b90c27440df
+copr:
+  enabled: true
+  subdir: packages/rust-x11-clipboard0.8
+  spec: rust-x11-clipboard0.8.spec

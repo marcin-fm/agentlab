@@ -1,0 +1,58 @@
+--- serde_toon_format-0.1.2/Cargo.toml
++++ serde_toon_format-0.1.2/Cargo.toml
+@@ -49,8 +49,0 @@
+-[[example]]
+-name = "profile_decode"
+-path = "benchmarks/profile_decode.rs"
+-
+-[[example]]
+-name = "profile_encode"
+-path = "benchmarks/profile_encode.rs"
+-
+@@ -165,30 +157,0 @@
+-[[bench]]
+-name = "github_repos"
+-path = "benches/github_repos.rs"
+-harness = false
+-
+-[[bench]]
+-name = "peanuts_characters"
+-path = "benches/peanuts_characters.rs"
+-harness = false
+-
+-[[bench]]
+-name = "peanuts_specials"
+-path = "benches/peanuts_specials.rs"
+-harness = false
+-
+-[[bench]]
+-name = "peanuts_universe"
+-path = "benches/peanuts_universe.rs"
+-harness = false
+-
+-[[bench]]
+-name = "peanuts_jsonld"
+-path = "benches/peanuts_jsonld.rs"
+-harness = false
+-
+-[[bench]]
+-name = "reader_vs_str"
+-path = "benches/reader_vs_str.rs"
+-harness = false
+-
+@@ -225,10 +187,3 @@
+-[dev-dependencies.criterion]
+-version = "4.3.0"
+-package = "codspeed-criterion-compat"
+-
+-[dev-dependencies.pprof]
+-version = "0.15.0"
+-features = ["flamegraph"]
+-
+ [dev-dependencies.rstest]
+-version = "0.18.2"
++version = "0.26.1"
++default-features = false
+@@ -240,2 +195,0 @@
+-[profile.bench]
+-debug = 0

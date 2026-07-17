@@ -1,0 +1,47 @@
+name: rubygem-ferrum
+status: enabled
+blockers: []
+dependency_status:
+  runtime:
+    fedora_43_44: complete
+    packages:
+      - rubygem-addressable
+      - ruby-bundled-gems provides rubygem(base64)
+      - rubygem-concurrent-ruby
+      - rubygem-public_suffix
+      - rubygem-webrick
+      - rubygem-websocket-driver
+      - rubygem-websocket-extensions
+  browser:
+    package: chromium-headless
+    role: build-time CDP smoke test; the cx environment owns the browser runtime dependency
+architecture_audit:
+  pure_ruby: true
+  build_arch: noarch
+license_audit:
+  upstream: MIT
+  bundled_dependencies: false
+  complete: true
+duplicate_check:
+  checked: "2026-07-15"
+  fedora_43_44: absent
+  rpm_fusion_43_44: absent
+build_validation:
+  release: 0.17.2-1
+  fedora-43-x86_64: passed
+  fedora-44-x86_64: passed
+  chromium_cdp_smoke: passed
+  generated_runtime_requires: verified
+  rpmlint_errors: 0
+  rpmlint_warnings: 0
+upstream:
+  provider: github
+  repository: rubycdp/ferrum
+  tag_prefix: v
+  current_version: 0.17.2
+  source_url_template: https://rubygems.org/downloads/ferrum-{version}.gem
+  source_sha256: 2c2540a850b211a46f4d81de21bfd62048f507e4c327d1807225c3823c17e6ee
+copr:
+  enabled: true
+  subdir: packages/rubygem-ferrum
+  spec: rubygem-ferrum.spec

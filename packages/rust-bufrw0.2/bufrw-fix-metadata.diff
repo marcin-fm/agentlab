@@ -1,0 +1,11 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -39,8 +39,0 @@
+-[[bench]]
+-name = "benches"
+-path = "benches/benches.rs"
+-harness = false
+-
+-[dev-dependencies.criterion]
+-version = "0.7.0"
+-features = ["html_reports"]

@@ -1,0 +1,5 @@
+name: rust-lru0.18
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: lru, version_requirement: '= 0.18.1', current_version: 0.18.1, source_sha256: 0b6180140927ee907000b0aa540091f6ea512ead4447c92b8fc35bc72788a5a6, source_url_template: 'https://static.crates.io/crates/lru/lru-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-lru0.18, spec: rust-lru0.18.spec}

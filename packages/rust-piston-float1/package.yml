@@ -1,0 +1,5 @@
+name: rust-piston-float1
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: piston-float, version_requirement: '= 1.0.1', current_version: 1.0.1, source_sha256: ad78bf43dcf80e8f950c92b84f938a0fc7590b7f6866fbcbeca781609c115590, source_url_template: 'https://static.crates.io/crates/piston-float/piston-float-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-piston-float1, spec: rust-piston-float1.spec}

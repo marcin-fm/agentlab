@@ -1,0 +1,16 @@
+name: rust-ort2
+status: blocked
+blockers:
+  - Final F44 build passed in direct-v3-ort staging, but source hosting and system ONNX Runtime dependency review remain open.
+upstream:
+  provider: crates_io
+  crate: ort
+  version_requirement: = 2.0.0-rc.12
+  current_version: 2.0.0-rc.12
+  rpm_version: 2.0.0~rc.12
+  source_sha256: d7de3af33d24a745ffb8fab904b13478438d1cd52868e6f17735ef6e1f8bf133
+  source_url_template: https://static.crates.io/crates/ort/ort-{version}.crate
+copr:
+  enabled: false
+  subdir: packages/rust-ort2
+  spec: rust-ort2.spec

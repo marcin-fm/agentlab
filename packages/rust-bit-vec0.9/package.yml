@@ -1,0 +1,14 @@
+name: rust-bit-vec0.9
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: bit-vec
+  version_requirement: = 0.9.1
+  current_version: 0.9.1
+  source_url_template: https://static.crates.io/crates/bit-vec/bit-vec-{version}.crate
+  source_sha256: b71798fca2c1fe1086445a7258a4bc81e6e49dcd24c8d0dd9a1e57395b603f51
+copr:
+  enabled: true
+  subdir: packages/rust-bit-vec0.9
+  spec: rust-bit-vec0.9.spec

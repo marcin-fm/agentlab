@@ -1,0 +1,31 @@
+--- napi-3.10.3/Cargo.toml	2006-07-24T01:21:28+00:00
++++ napi-3.10.3/Cargo.toml	2026-07-15T20:41:17.023962+00:00
+@@ -157,7 +157,7 @@
+ optional = true
+ 
+ [dependencies.ctor]
+-version = "1.0.0"
++version = "0.6.3"
+ default-features = false
+ 
+ [dependencies.encoding_rs]
+@@ -205,14 +205,6 @@
+ [build-dependencies.napi-build]
+ version = "2.3.2"
+ 
+-[target.'cfg(all(target_family = "wasm", not(tokio_unstable)))'.dependencies.tokio]
+-version = "1"
+-features = [
+-    "rt",
+-    "sync",
+-]
+-optional = true
+-
+ [target.'cfg(any(all(target_family = "wasm", tokio_unstable), not(target_family = "wasm")))'.dependencies.tokio]
+ version = "1"
+ features = [
+@@ -221,3 +213,4 @@
+     "sync",
+ ]
+ optional = true
++

@@ -1,0 +1,23 @@
+name: rust-dirs5
+status: enabled
+blockers: []
+build_validation:
+  fedora-44-x86_64: passed
+  build_arch: noarch
+duplicate_check:
+  checked: "2026-07-15"
+  fedora_44: absent
+  rpm_fusion_44: absent
+upstream:
+  provider: crates_io
+  crate: dirs
+  version_requirement: ~> 5.0
+  current_version: 5.0.1
+  source_url_template: https://static.crates.io/crates/dirs/dirs-{version}.crate
+  source_sha256: 44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225
+copr:
+  enabled: true
+  chroots:
+    - fedora-44-x86_64
+  subdir: packages/rust-dirs5
+  spec: rust-dirs5.spec

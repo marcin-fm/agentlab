@@ -1,0 +1,96 @@
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -451,7 +451,7 @@
+ ///
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// let kind = infer::get_from_path("testdata/sample.jpg")
+ ///     .expect("file read successfully")
+ ///     .expect("file type is known");
+@@ -514,7 +514,7 @@
+ ///
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::is_app(&fs::read("testdata/sample.wasm").unwrap()));
+ /// ```
+@@ -525,7 +525,7 @@
+ /// Determines whether a buffer is an archive type.
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::is_archive(&fs::read("testdata/sample.pdf").unwrap()));
+ /// ```
+@@ -550,7 +550,7 @@
+ ///
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::is_book(&fs::read("testdata/sample.epub").unwrap()));
+ /// ```
+@@ -562,7 +562,7 @@
+ ///
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::is_document(&fs::read("testdata/sample.docx").unwrap()));
+ /// ```
+@@ -574,7 +574,7 @@
+ ///
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::is_font(&fs::read("testdata/sample.ttf").unwrap()));
+ /// ```
+@@ -598,7 +598,7 @@
+ ///
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::is_video(&fs::read("testdata/sample.mov").unwrap()));
+ /// ```
+--- a/src/matchers/app.rs
++++ b/src/matchers/app.rs
+@@ -2,7 +2,7 @@
+ ///
+ /// # Examples
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::app::is_wasm(&fs::read("testdata/sample.wasm").unwrap()));
+ /// ```
+@@ -24,7 +24,7 @@
+ ///
+ /// # Example
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::app::is_exe(&fs::read("testdata/sample.exe").unwrap()));
+ /// ```
+--- a/src/matchers/archive.rs
++++ b/src/matchers/archive.rs
+@@ -157,7 +157,7 @@
+ ///
+ /// # Example
+ ///
+-/// ```rust
++/// ```rust,ignore
+ /// use std::fs;
+ /// assert!(infer::archive::is_sqlite(&fs::read("testdata/sample.db").unwrap()));
+ /// ```

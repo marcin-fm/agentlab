@@ -1,0 +1,14 @@
+name: rust-lazy-regex3
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: lazy-regex
+  version_requirement: = 3.4.1
+  current_version: 3.4.1
+  source_url_template: https://static.crates.io/crates/lazy-regex/lazy-regex-{version}.crate
+  source_sha256: 60c7310b93682b36b98fa7ea4de998d3463ccbebd94d935d6b48ba5b6ffa7126
+copr:
+  enabled: true
+  subdir: packages/rust-lazy-regex3
+  spec: rust-lazy-regex3.spec

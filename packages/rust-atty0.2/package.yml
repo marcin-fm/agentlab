@@ -1,0 +1,16 @@
+name: rust-atty0.2
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: atty
+  version_requirement: = 0.2.14
+  current_version: 0.2.14
+  source_url_template: https://static.crates.io/crates/atty/atty-{version}.crate
+  source_sha256: d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8
+copr:
+  enabled: true
+  chroots:
+    - fedora-44-x86_64
+  subdir: packages/rust-atty0.2
+  spec: rust-atty0.2.spec

@@ -1,0 +1,86 @@
+diff --git a/src/serena/cli.py b/src/serena/cli.py
+--- a/src/serena/cli.py
++++ b/src/serena/cli.py
+@@ -261,10 +261,10 @@ class SerenaCommands(AutoRegisteringGroup):
+     )
+     @click.option(
+         "--transport",
+-        type=click.Choice(["stdio", "sse", "streamable-http"]),
++        type=click.Choice(["stdio"]),
+         default="stdio",
+         show_default=True,
+-        help="Transport protocol.",
++        help="Transport protocol. Fedora packages support stdio only.",
+     )
+     @click.option(
+         "--host",
+@@ -322,7 +322,7 @@ class SerenaCommands(AutoRegisteringGroup):
+         default_modes: Sequence[str],
+         added_modes: Sequence[str],
+         language_backend: str | None,
+-        transport: Literal["stdio", "sse", "streamable-http"],
++        transport: Literal["stdio"],
+         host: str,
+         port: int,
+         enable_web_dashboard: bool | None,
+@@ -389,7 +389,7 @@ class SerenaCommands(AutoRegisteringGroup):
+                 project_file,
+             )
+         log.info("Starting MCP server …")
+-        server.run(transport=transport)
++        server.run(transport="stdio")
+ 
+     @staticmethod
+     @click.command(
+@@ -462,6 +462,8 @@ class SerenaCommands(AutoRegisteringGroup):
+         port: int | None,
+         log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | None,
+     ) -> None:
++        raise click.UsageError("The Fedora Serena package supports only the local stdio MCP server.")
++
+         from serena.project_server import ProjectServer
+ 
+         # initialize logging
+@@ -497,6 +499,8 @@ class SerenaCommands(AutoRegisteringGroup):
+     @click.option("--width", type=int, default=1400, show_default=True, help="Window width.")
+     @click.option("--height", type=int, default=900, show_default=True, help="Window height.")
+     def dashboard_viewer(url: str, width: int, height: int) -> None:
++        raise click.UsageError("The Fedora Serena package does not provide the dashboard viewer.")
++
+         from serena.dashboard import SerenaDashboardViewer
+ 
+         viewer = SerenaDashboardViewer(url, width=width, height=height)
+diff --git a/src/serena/mcp.py b/src/serena/mcp.py
+--- a/src/serena/mcp.py
++++ b/src/serena/mcp.py
+@@ -162,7 +162,9 @@ class SerenaMCPFactory:
+             afterward.
+         :param memory_log_handler: the in-memory log handler to use for the agent's logging
+         """
+-        self.transport = transport
++        if transport != "stdio":
++            raise ValueError("The Fedora Serena package supports only stdio MCP transport.")
++        self.transport = "stdio"
+         self.context = SerenaAgentContext.load(context)
+         self.project = project
+         self.agent: SerenaAgent | None = None
+diff --git a/src/serena/tools/__init__.py b/src/serena/tools/__init__.py
+--- a/src/serena/tools/__init__.py
++++ b/src/serena/tools/__init__.py
+@@ -7,4 +7,3 @@ from .cmd_tools import *
+ from .config_tools import *
+ from .workflow_tools import *
+ from .jetbrains_tools import *
+-from .query_project_tools import *
+diff --git a/src/serena/config/serena_config.py b/src/serena/config/serena_config.py
+--- a/src/serena/config/serena_config.py
++++ b/src/serena/config/serena_config.py
+@@ -1420,6 +1420,8 @@ class SerenaConfig(SharedConfig, ModeSelectionDefinitionWithBaseModes):
+ 
+     def determine_language_backend(self, project_config: ProjectConfig | None = None, log_choice: bool = False):
+         language_backend = self.language_backend
++        if project_config and project_config.language_backend is LanguageBackend.JETBRAINS:
++            raise ValueError("The Fedora Serena package supports only the LSP language backend.")
+         if project_config and project_config.language_backend is not None:
+             language_backend = project_config.language_backend
+             if log_choice:

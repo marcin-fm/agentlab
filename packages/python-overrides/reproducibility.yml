@@ -1,0 +1,22 @@
+schema: overrides-reproducibility/v1
+package: python-overrides
+version: 7.7.0-1
+source:
+  url: https://files.pythonhosted.org/packages/36/86/b585f53236dec60aba864e050778b25045f857e17f6e5ea0ae95fe80edd2/overrides-7.7.0.tar.gz
+  sha256: 55158fa3d93b98cc75299b1e67078ad9003ca27945c76162c1c0766d6f91820a
+patches: {}
+spec_sha256: 92848bf1ee95f46c0aa7de21c07ad5f73b278101824c95a4d52ce5a110701616
+validation:
+  fedora_43_x86_64:
+    source_rpm_sha256: 89bd9998c5529914b9ff71aa68daa9f3c1cb87d5add17e13018f8423a966a1ac
+    binary_rpm_sha256: 6ed51bb2a6bce5ee6577acd9829eafa5f875daf1a51484e353c0ee3fbea39a0f
+    tests: 67 passed
+    rpmlint: zero errors and zero warnings
+  fedora_44_x86_64:
+    source_rpm_sha256: 85e3e804a812f0f6a08742127a82e04cfa78ff2618b43ff0a7cadcd704384bc8
+    binary_rpm_sha256: 2ab371497f7428b49367a3fe4efc5ef03cc3e8c70b2018ce880da0f6e3773526
+    tests: 67 passed
+    rpmlint: zero errors and zero warnings
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false

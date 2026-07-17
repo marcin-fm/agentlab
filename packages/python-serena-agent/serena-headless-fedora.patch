@@ -1,0 +1,486 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 1b2bcc5..95a7be6 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -17,41 +17,21 @@ classifiers = [
+   "Programming Language :: Python :: 3.14",
+ ]
+ dependencies = [
+-  "requests==2.33.0",
+-  "overrides==7.7.0",
+-  "python-dotenv==1.2.2",
+-  "mcp==1.27.0",
+-  "flask==3.1.3", # bumped from 3.1.1 for CVE fix (also fixes werkzeug alert)
+-  "sensai-utils==1.5.0",
+-  "pydantic==2.12.5",
+-  "types-pyyaml==6.0.12.20250516",
+-  "pyyaml==6.0.2",
+-  "ruamel.yaml==0.18.14",
+-  "jinja2==3.1.6",
+-  "dotenv==0.9.9",
+-  "pathspec==0.12.1",
+-  "psutil==7.0.0",
+-  "docstring_parser==0.17.0",
+-  "joblib==1.5.1",
+-  "tqdm==4.67.1",
+-  "tiktoken==0.12.0",
+-  "anthropic==0.59.0",
+-  "beautifulsoup4==4.14.2",
+-  "pywebview==6.2",
+-  "pystray==0.19.5",
+-  "pygls==2.1.1", # used to implement an msl language server
+-  "lsprotocol==2025.0.0",
+-  # Transitive deps pinned for security (dependabot alerts).
+-  # Exact pins because uvx installs from git, ignoring the lock file.
+-  "urllib3==2.7.0",
+-  "werkzeug==3.1.7",
+-  "starlette==1.3.1",
+-  "python-multipart==0.0.31",
+-  "filelock==3.25.2",
+-  "cryptography==48.0.1",
+-  "regex==2026.2.28",
+-  "pythonnet==3.1.0 ; sys_platform == 'win32'",
+-  "oslex==2.0.0",
++  "requests >= 2.31, < 3",
++  "overrides >= 7.7, < 8",
++  "mcp >= 1.26, < 2",
++  "sensai-utils >= 1.5, < 2",
++  "pydantic >= 2, < 3",
++  "pyyaml >= 6, < 7",
++  "ruamel.yaml >= 0.18, < 0.20",
++  "jinja2 >= 3.1, < 4",
++  "pathspec >= 0.12, < 2",
++  "psutil >= 6, < 8",
++  "docstring-parser >= 0.16, < 1",
++  "joblib >= 1.4, < 2",
++  "tqdm >= 4.66, < 5",
++  "beautifulsoup4 >= 4.12, < 5",
++  "oslex >= 2, < 3",
+ ]
+ 
+ 
+diff --git a/src/serena/agent.py b/src/serena/agent.py
+index f21d6b0..b493fd9 100644
+--- a/src/serena/agent.py
++++ b/src/serena/agent.py
+@@ -717,19 +717,8 @@ class SerenaAgent:
+         self._send_usage_info()
+ 
+     def _send_usage_info(self) -> None:
+-        if os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("SERENA_USAGE_REPORTING") == "false":
+-            return
+-        params: dict[str, str | int] = {
+-            "os": platform.system(),
+-            "dashboard": int(self.serena_config.web_dashboard),
+-            "version": self.version,
+-            "backend": self._language_backend.value,
+-            "context": self._context.name,
+-        }
+-        try:
+-            requests.get("https://oraios-software.de/serena_usage.php", params=params, timeout=1)
+-        except Exception as e:
+-            log.debug(f"Failed to send usage info: {e}")
++        """Fedora builds never send Serena usage telemetry."""
++        return
+ 
+     @classmethod
+     def _create_base_toolset(
+diff --git a/src/serena/analytics.py b/src/serena/analytics.py
+index add6fd0..b912456 100644
+--- a/src/serena/analytics.py
++++ b/src/serena/analytics.py
+@@ -8,8 +8,6 @@ from copy import copy
+ from dataclasses import asdict, dataclass
+ from enum import Enum
+ 
+-from anthropic.types import MessageParam, MessageTokensCount
+-from dotenv import load_dotenv
+ 
+ log = logging.getLogger(__name__)
+ 
+@@ -23,52 +21,6 @@ class TokenCountEstimator(ABC):
+         """
+ 
+ 
+-class TiktokenCountEstimator(TokenCountEstimator):
+-    """
+-    Approximate token count using tiktoken.
+-    """
+-
+-    def __init__(self, model_name: str = "gpt-4o"):
+-        """
+-        The tokenizer will be downloaded on the first initialization, which may take some time.
+-
+-        :param model_name: see `tiktoken.model` to see available models.
+-        """
+-        import tiktoken
+-
+-        log.info(f"Loading tiktoken encoding for model {model_name}, this may take a while on the first run.")
+-        self._encoding = tiktoken.encoding_for_model(model_name)
+-
+-    def estimate_token_count(self, text: str) -> int:
+-        return len(self._encoding.encode(text))
+-
+-
+-class AnthropicTokenCount(TokenCountEstimator):
+-    """
+-    The exact count using the Anthropic API.
+-    Counting is free, but has a rate limit and will require an API key,
+-    (typically, set through an env variable).
+-    See https://docs.anthropic.com/en/docs/build-with-claude/token-counting
+-    """
+-
+-    def __init__(self, model_name: str = "claude-sonnet-4-20250514", api_key: str | None = None):
+-        import anthropic
+-
+-        self._model_name = model_name
+-        if api_key is None:
+-            load_dotenv()
+-        self._anthropic_client = anthropic.Anthropic(api_key=api_key)
+-
+-    def _send_count_tokens_request(self, text: str) -> MessageTokensCount:
+-        return self._anthropic_client.messages.count_tokens(
+-            model=self._model_name,
+-            messages=[MessageParam(role="user", content=text)],
+-        )
+-
+-    def estimate_token_count(self, text: str) -> int:
+-        return self._send_count_tokens_request(text).input_tokens
+-
+-
+ class CharCountEstimator(TokenCountEstimator):
+     """
+     A naive character count estimator that estimates tokens based on character count.
+@@ -86,8 +38,6 @@ _registered_token_estimator_instances_cache: dict[RegisteredTokenCountEstimator,
+ 
+ 
+ class RegisteredTokenCountEstimator(Enum):
+-    TIKTOKEN_GPT4O = "TIKTOKEN_GPT4O"
+-    ANTHROPIC_CLAUDE_SONNET_4 = "ANTHROPIC_CLAUDE_SONNET_4"
+     CHAR_COUNT = "CHAR_COUNT"
+ 
+     @classmethod
+@@ -99,10 +49,6 @@ class RegisteredTokenCountEstimator(Enum):
+ 
+     def _create_estimator(self) -> TokenCountEstimator:
+         match self:
+-            case RegisteredTokenCountEstimator.TIKTOKEN_GPT4O:
+-                return TiktokenCountEstimator(model_name="gpt-4o")
+-            case RegisteredTokenCountEstimator.ANTHROPIC_CLAUDE_SONNET_4:
+-                return AnthropicTokenCount(model_name="claude-sonnet-4-20250514")
+             case RegisteredTokenCountEstimator.CHAR_COUNT:
+                 return CharCountEstimator(avg_chars_per_token=4)
+             case _:
+@@ -121,7 +67,7 @@ class ToolUsageStats:
+     A class to record and manage tool usage statistics.
+     """
+ 
+-    def __init__(self, token_count_estimator: RegisteredTokenCountEstimator = RegisteredTokenCountEstimator.TIKTOKEN_GPT4O):
++    def __init__(self, token_count_estimator: RegisteredTokenCountEstimator = RegisteredTokenCountEstimator.CHAR_COUNT):
+         self._token_count_estimator = token_count_estimator.load_estimator()
+         self._token_estimator_name = token_count_estimator.value
+         self._tool_stats: dict[str, ToolUsageStats.Entry] = defaultdict(ToolUsageStats.Entry)
+diff --git a/src/serena/config/serena_config.py b/src/serena/config/serena_config.py
+index 50d48aa..c96f480 100644
+--- a/src/serena/config/serena_config.py
++++ b/src/serena/config/serena_config.py
+@@ -1166,6 +1166,8 @@ class SerenaConfig(SharedConfig, ModeSelectionDefinitionWithBaseModes):
+         self.gui_log_window = False
+         self.web_dashboard = False
+         self.jetbrains_launch_command = None
++        self.language_backend = LanguageBackend.LSP
++        self.token_count_estimator = RegisteredTokenCountEstimator.CHAR_COUNT.name
+         return self
+ 
+     @cached_property
+diff --git a/src/serena/mcp.py b/src/serena/mcp.py
+index 321c9b3..6b08c07 100644
+--- a/src/serena/mcp.py
++++ b/src/serena/mcp.py
+@@ -347,8 +347,13 @@ class SerenaMCPFactory:
+         """
+         try:
+             config = self._create_default_serena_config()
++            if enable_web_dashboard is True or enable_gui_log_window is True:
++                raise ValueError("The Fedora Serena package is headless and does not support a web dashboard or GUI log window.")
++            if language_backend is LanguageBackend.JETBRAINS:
++                raise ValueError("The Fedora Serena package supports only the LSP language backend.")
+ 
+             # update configuration with the provided parameters
++            config.with_headless_mode_overrides()
+             if enable_web_dashboard is not None:
+                 config.web_dashboard = enable_web_dashboard
+             if enable_gui_log_window is not None:
+@@ -364,6 +369,7 @@ class SerenaMCPFactory:
+                 config.tool_timeout = tool_timeout
+             if language_backend is not None:
+                 config.language_backend = language_backend
++            config.with_headless_mode_overrides()
+ 
+             self.agent = self._create_serena_agent(config, mode_selection_def)
+ 
+diff --git a/src/solidlsp/dependency_provider.py b/src/solidlsp/dependency_provider.py
+index d3826eb..4db2e89 100644
+--- a/src/solidlsp/dependency_provider.py
++++ b/src/solidlsp/dependency_provider.py
+@@ -9,6 +9,10 @@ from solidlsp.settings import SolidLSPSettings
+ log = logging.getLogger(__name__)
+ 
+ 
++class FedoraLanguageServerError(RuntimeError):
++    """Raised when the Fedora package would acquire a managed language server."""
++
++
+ class LanguageServerDependencyProvider(ABC):
+     """
+     Prepares dependencies for a language server (if any), ultimately enabling the launch command to be constructed
+@@ -226,17 +230,9 @@ class LanguageServerDependencyProviderUvx(LanguageServerDependencyProviderBaseCo
+         :param entrypoint: Console script provided by the package (e.g. ``"pyright-langserver"``).
+         :param python_version: Python interpreter version passed via ``-p`` (uv will fetch it if missing).
+         """
+-        base_args = ["-p", python_version, "--from", f"{package}=={version}", entrypoint]
+-
+-        uvx_path = os.environ.get("UVX") or shutil.which("uvx")
+-        if uvx_path is not None:
+-            return [uvx_path, *base_args]
+-
+-        uv_path = shutil.which("uv")
+-        if uv_path is not None:
+-            return [uv_path, "x", *base_args]
+-
+-        raise RuntimeError("Could not find 'uvx' or 'uv' in PATH. Install uv (https://docs.astral.sh/uv/).")
++        raise RuntimeError(
++            "Fedora Serena does not acquire language servers with uvx or uv; configure ls_path or ls_base_cmd."
++        )
+ 
+     def _create_default_base_command(self):
+         version = self._custom_settings.get(self._version_setting_key, self._default_version)
+diff --git a/src/solidlsp/language_servers/common.py b/src/solidlsp/language_servers/common.py
+index 4a28cca..0768f5b 100644
+--- a/src/solidlsp/language_servers/common.py
++++ b/src/solidlsp/language_servers/common.py
+@@ -86,18 +86,9 @@ class RuntimeDependencyCollection:
+ 
+         Returns a mapping from dependency id to the resolved binary path.
+         """
+-        os.makedirs(target_dir, exist_ok=True)
+-        results: dict[str, str] = {}
+-        for dep in self.get_dependencies_for_current_platform():
+-            if dep.url:
+-                self._install_from_url(dep, target_dir)
+-            if dep.command:
+-                self._run_command(dep.command, target_dir)
+-            if dep.binary_name:
+-                results[dep.id] = os.path.join(target_dir, dep.binary_name)
+-            else:
+-                results[dep.id] = target_dir
+-        return results
++        raise RuntimeError(
++            "Fedora Serena does not install managed language-server dependencies; configure ls_path or ls_base_cmd."
++        )
+ 
+     @staticmethod
+     def _run_command(command: str | list[str], cwd: str) -> None:
+diff --git a/src/solidlsp/language_servers/haxe_language_server.py b/src/solidlsp/language_servers/haxe_language_server.py
+index 3d4a154..36001fc 100644
+--- a/src/solidlsp/language_servers/haxe_language_server.py
++++ b/src/solidlsp/language_servers/haxe_language_server.py
+@@ -108,14 +108,8 @@ class HaxeLanguageServer(SolidLanguageServer):
+                     "  3. Set ls_path in serena_config.yml under ls_specific_settings.haxe"
+                 )
+ 
+-            downloaded_path = self._download_from_open_vsx(haxe_ls_dir, version)
+-            if downloaded_path:
+-                return downloaded_path
+-
+             raise FileNotFoundError(
+-                "Haxe Language Server not found. Install options:\n"
+-                "  1. Install the vshaxe VSCode extension: code --install-extension nadako.vshaxe\n"
+-                "  2. Set ls_path in serena_config.yml under ls_specific_settings.haxe"
++                "Haxe Language Server not found. Fedora Serena does not download it; configure ls_path or ls_base_cmd."
+             )
+ 
+         @staticmethod
+@@ -138,55 +132,9 @@ class HaxeLanguageServer(SolidLanguageServer):
+             """Download a vshaxe VSIX from Open VSX and extract server.js.
+             Verifies the download against a hardcoded SHA256 checksum when using the default version.
+             """
+-            try:
+-                download_url = f"https://open-vsx.org/api/nadako/vshaxe/{version}/file/nadako.vshaxe-{version}.vsix"
+-                log.info("Downloading Haxe Language Server v%s from Open VSX...", version)
+-                vsix_path = os.path.join(tempfile.gettempdir(), "vshaxe.vsix")
+-                urllib.request.urlretrieve(download_url, vsix_path)
+-
+-                # Verify SHA256 checksum only when the resolved version is one of our pinned ones (INITIAL or current DEFAULT)
+-                expected_sha = _vshaxe_sha(version)
+-                if expected_sha is not None:
+-                    sha256 = hashlib.sha256()
+-                    with open(vsix_path, "rb") as f:
+-                        for chunk in iter(lambda: f.read(8192), b""):
+-                            sha256.update(chunk)
+-                    if sha256.hexdigest().lower() != expected_sha:
+-                        os.remove(vsix_path)
+-                        raise RuntimeError(
+-                            f"SHA256 checksum mismatch for vshaxe VSIX. Expected {expected_sha}, "
+-                            f"got {sha256.hexdigest()}. The file may be corrupted or tampered with."
+-                        )
+-                    log.info("SHA256 checksum verified")
+-                else:
+-                    log.info("Using custom version %s — skipping SHA256 verification", version)
+-
+-                # VSIX files are ZIP archives — extract bin/ contents
+-                bin_dir = os.path.join(target_dir, "bin")
+-                os.makedirs(bin_dir, exist_ok=True)
+-                with zipfile.ZipFile(vsix_path, "r") as zf:
+-                    for entry in zf.namelist():
+-                        if "/bin/" in entry:
+-                            filename = entry.split("/bin/", 1)[-1]
+-                            if filename and ".." not in filename:
+-                                dest_path = os.path.join(bin_dir, filename)
+-                                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+-                                with zf.open(entry) as src, open(dest_path, "wb") as dst:
+-                                    dst.write(src.read())
+-
+-                os.remove(vsix_path)
+-
+-                server_js_path = os.path.join(bin_dir, "server.js")
+-                if os.path.exists(server_js_path):
+-                    log.info(f"Haxe Language Server v{version} installed to {server_js_path}")
+-                    return server_js_path
+-
+-                log.error("Downloaded VSIX but server.js not found after extraction")
+-                return None
+-
+-            except Exception:
+-                log.exception("Failed to download Haxe Language Server from Open VSX")
+-                return None
++            raise RuntimeError(
++                "Fedora Serena does not download the Haxe language server; configure ls_path or ls_base_cmd."
++            )
+ 
+         @override
+         def _create_launch_command(self, core_path: str) -> list[str]:
+diff --git a/src/solidlsp/language_servers/pascal_server.py b/src/solidlsp/language_servers/pascal_server.py
+index e27831f..e2fde3f 100644
+--- a/src/solidlsp/language_servers/pascal_server.py
++++ b/src/solidlsp/language_servers/pascal_server.py
+@@ -440,20 +440,7 @@ class PascalLanguageServer(SolidLanguageServer):
+     @classmethod
+     def _download_archive(cls, url: str, target_path: str) -> bool:
+         """Download archive to specified path."""
+-        try:
+-            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+-            req = urllib.request.Request(url, headers={"User-Agent": "Serena-LSP"})
+-            with urllib.request.urlopen(req, timeout=60) as response:
+-                with open(target_path, "wb") as f:
+-                    while True:
+-                        chunk = response.read(8192)
+-                        if not chunk:
+-                            break
+-                        f.write(chunk)
+-            return True
+-        except Exception as e:
+-            log.error(f"Failed to download {url}: {type(e).__name__}: {e}")
+-            return False
++        raise RuntimeError("Fedora Serena does not download pasls; configure ls_path or ls_base_cmd.")
+ 
+     @classmethod
+     def _is_safe_tar_member(cls, member: tarfile.TarInfo, target_dir: str) -> bool:
+diff --git a/src/solidlsp/ls_config.py b/src/solidlsp/ls_config.py
+index 2aa87fd..b52e1ce 100644
+--- a/src/solidlsp/ls_config.py
++++ b/src/solidlsp/ls_config.py
+@@ -148,12 +148,6 @@ class Language(str, Enum):
+     Requires MATLAB R2021b or later and Node.js.
+     Set MATLAB_PATH environment variable or configure matlab_path in ls_specific_settings.
+     """
+-    MSL = "msl"
+-    """mIRC Scripting Language (mSL) language server.
+-    Supports .mrc files used in mIRC and AdiIRC IRC clients.
+-    Uses a custom LSP server based on pygls. Automatically sets up
+-    a virtual environment with pygls dependencies on first use.
+-    """
+     BSL = "bsl"
+     """BSL Language Server for 1C:Enterprise and OneScript languages.
+     Uses bsl-language-server by 1c-syntax. Automatically downloads the JAR.
+@@ -554,8 +548,6 @@ class Language(str, Enum):
+                 return FilenameMatcher(".sol")
+             case self.ANSIBLE:
+                 return FilenameMatcher(".yaml", ".yml")
+-            case self.MSL:
+-                return FilenameMatcher(".mrc")
+             case self.BSL:
+                 return FilenameMatcher(".bsl", ".os")
+             case self.ADA:
+@@ -827,10 +819,6 @@ class Language(str, Enum):
+                 from solidlsp.language_servers.ansible_language_server import AnsibleLanguageServer
+ 
+                 return AnsibleLanguageServer
+-            case self.MSL:
+-                from solidlsp.language_servers.msl_language_server import MslLanguageServer
+-
+-                return MslLanguageServer
+             case self.BSL:
+                 from solidlsp.language_servers.bsl_language_server import BSLLanguageServer
+ 
+diff --git a/src/solidlsp/language_servers/pascal_server.py b/src/solidlsp/language_servers/pascal_server.py
+--- a/src/solidlsp/language_servers/pascal_server.py
++++ b/src/solidlsp/language_servers/pascal_server.py
+@@ -245,5 +245,8 @@ class PascalLanguageServer(SolidLanguageServer):
+     def _get_latest_version(cls) -> str | None:
+         """Get latest version from GitHub API, return None on failure."""
++        raise RuntimeError("Fedora Serena does not query or download pasls; configure ls_path or ls_base_cmd.")
++
++        # Kept below for upstream source correspondence; unreachable in Fedora.
+         try:
+             headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "Serena-LSP"}
+             # Support GITHUB_TOKEN for CI environments with rate limits
+@@ -312,5 +315,8 @@ class PascalLanguageServer(SolidLanguageServer):
+     def _get_checksums(cls) -> dict[str, str] | None:
+         """Download checksums file from GitHub, return {filename: sha256} dict."""
++        raise RuntimeError("Fedora Serena does not query pasls checksums; configure ls_path or ls_base_cmd.")
++
++        # Kept below for upstream source correspondence; unreachable in Fedora.
+         checksums_url = f"{cls.PASLS_RELEASES_URL}/checksums.sha256"
+         try:
+             req = urllib.request.Request(checksums_url, headers={"User-Agent": "Serena-LSP"})
+diff --git a/src/solidlsp/ls_utils.py b/src/solidlsp/ls_utils.py
+--- a/src/solidlsp/ls_utils.py
++++ b/src/solidlsp/ls_utils.py
+@@ -418,2 +418,5 @@ class FileUtils:
+     ) -> None:
++        raise RuntimeError(
++            "Fedora Serena does not download managed language-server files; configure ls_path or ls_base_cmd."
++        )
+         """
+diff --git a/src/serena/agent.py b/src/serena/agent.py
+--- a/src/serena/agent.py
++++ b/src/serena/agent.py
+@@ -19,7 +19,5 @@ from logging import Logger
+ from typing import TYPE_CHECKING, Optional, TypeVar
+ 
+-import requests
+-import webview
+ from sensai.util import logging
+ from sensai.util.helper import mark_used
+ from sensai.util.logging import LogTime
+@@ -40,6 +38,5 @@ from serena.config.serena_config import (
+     ToolInclusionDefinition,
+ )
+-from serena.dashboard import SerenaDashboardAPI, SerenaDashboardTrayManager, SerenaDashboardViewer, open_url_in_browser
+ from serena.jetbrains import jetbrains_plugin_client
+ from serena.ls_manager import LanguageServerManager
+ from serena.memories.memory_manager import MemoryManager
+@@ -398,8 +396,12 @@ class DashboardManager:
+             :return: whether the mode is supported on the current platform
+             """
+             if self == DashboardManager.Mode.WEBVIEW:
++                from serena.dashboard import SerenaDashboardViewer
++
+                 return SerenaDashboardViewer.is_current_platform_supported()
+             elif self == DashboardManager.Mode.TRAY_MANAGER:
++                from serena.dashboard import SerenaDashboardTrayManager
++
+                 return SerenaDashboardTrayManager.is_current_platform_supported()
+             else:
+                 return True

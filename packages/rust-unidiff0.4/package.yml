@@ -1,0 +1,27 @@
+name: rust-unidiff0.4
+status: enabled
+blockers: []
+validation:
+  fedora_43: clean Mock build passed
+  fedora_44: clean Mock build passed
+  tests: 19 published tests passed and one doctest remained ignored in each chroot
+  rpmlint: zero errors and zero warnings in both chroots
+artifacts:
+  spec_sha256: abb34a3bff33c95104b43c3a311b3362bde084dc695b21da05105b7cab5f71cd
+  fedora_43:
+    srpm_sha256: f15e06da7bf9b659db62068e3cbf08ac46f084318176714afa19275ef90ef957
+    devel_rpm_sha256: ab8f6fa36965c4e889d349eb528b8c35ead27895c077b20149bb5636415a61b7
+  fedora_44:
+    srpm_sha256: 05f7a80b4d39b60ddb206013331b5a7af5dc1dc97dce1debed574c3eb3bfa419
+    devel_rpm_sha256: 8d59e3d34ff5a5448e85978f158f48d3aee418d90816a37f6b77c3d758212d02
+upstream:
+  provider: crates_io
+  crate: unidiff
+  version_requirement: '= 0.4.0'
+  current_version: 0.4.0
+  source_url_template: https://static.crates.io/crates/unidiff/unidiff-{version}.crate
+  source_sha256: e3ae26d2e6582eb32eff85cffebf74d20b6510e8b558bbac3a23b48965cf952f
+copr:
+  enabled: true
+  subdir: packages/rust-unidiff0.4
+  spec: rust-unidiff0.4.spec

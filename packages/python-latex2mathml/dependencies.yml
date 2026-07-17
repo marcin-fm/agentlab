@@ -1,0 +1,27 @@
+schema: python-latex2mathml-dependencies/v1
+target_release: 3.81.0
+runtime_direct: []
+build_system:
+  upstream:
+    backend: uv_build
+    requirement: uv_build >= 0.10.11, < 0.11.0
+  fedora:
+    backend: hatchling.build
+    requirement: hatchling >= 1.27
+    reason: Fedora 43 has no uv_build release in the upstream-compatible range.
+build:
+  - pyproject-rpm-macros
+  - python3-devel
+  - python3dist(hatchling) >= 1.27
+runtime_data:
+  - path: latex2mathml/unimathsymbols.txt
+    purpose: Unicode to LaTeX math symbol mapping
+    license: LPPL-1.3c
+tests:
+  upstream_suite: absent from sdist
+  local:
+    - Convert a fraction through the installed Python library.
+    - Verify the installed Unicode symbol mapping and its LPPL notice.
+    - Run latex2mathml --version from the buildroot.
+    - Convert a fraction through the installed l2m console script.
+offline: required

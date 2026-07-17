@@ -1,0 +1,52 @@
+name: pdfium
+status: blocked
+blockers:
+  - The release-pinned subordinate PDFium commit policy boundary has not been approved for enablement.
+  - The generated Source0-Source4 inputs need immutable public hosting for COPR SCM builds.
+  - The package has only been proven on x86_64; aarch64 remains unverified.
+source_policy:
+  version_identity: Chromium release 146.0.7678.0
+  pdfium_revision: efbbd0fc95825e049ad790911356e0b689418899
+  provenance: PDFium revision pinned by the published Chromium release consumed by Kreuzberg 4.10.2
+  source_archive: deterministic git archive; Gitiles archive gzip bytes are not stable
+  network_builds: forbidden
+  prebuilt_toolchains: forbidden
+source_closure:
+  generated: true
+  deterministic_runs_compared: 2
+  source_count: 7
+  source_sha256: 1880e1d7d4659f589e63a319d8967cf5e584085e1e817667d51356ad6ad1b7ef
+  closure_sha256: 27749bcd3fab8c6dc5f621882823d6c43ca8c437193a56998a0c46b6be71a140
+  manifest_sha256: 9b5b8c2bb16092e4f47b60b95f758d56d6bef37fb78752c311845b6c85cbe538
+  policy_sha256: 6e376ca07511c8416a82c645c341d93b5f9d71833e8603e4803546c230d12ea4
+  receipt_sha256: 18196c6505b027d93b852151261e0e4e8a4ad76066993d954777bc76e531a4e0
+license_audit:
+  state: reviewed and verified in final Fedora 43 and 44 builds
+  aggregate_expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
+  installed_notices:
+    - LICENSE.pdfium
+    - LICENSE.icu
+    - AGG-LICENSE.txt
+    - THIRD-PARTY-NOTICES.txt
+build_validation:
+  architecture: x86_64
+  fedora_43: passed with embedded ICU data
+  fedora_44: passed with embedded ICU data
+  exported_fpdf_symbols: passed
+  c_api_smoke: passed
+  extracted_pkgconfig_consumer_smoke: passed
+  embedded_icu_data: passed without external icudtl.dat
+  rpmlint: zero errors; four expected local-source and devel warnings per chroot
+duplicate_check:
+  checked: "2026-07-15"
+  fedora_43_44: absent; deepin-pdfium is an incompatible wrapper API
+  rpm_fusion_43_44: absent
+upstream:
+  provider: static
+  current_version: 146.0.7678.0
+  source_url_template: pdfium-{version}.tar.gz
+  source_sha256: 1880e1d7d4659f589e63a319d8967cf5e584085e1e817667d51356ad6ad1b7ef
+copr:
+  enabled: false
+  subdir: packages/pdfium
+  spec: pdfium.spec

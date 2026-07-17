@@ -1,0 +1,21 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Limit the Fedora workspace to CLI and Node binding crates
+
+Avoid generating build requirements for unrelated language bindings and e2e
+harnesses. Keep every internal crate used by the CLI and Node binding.
+
+diff --git a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -8,11 +8,5 @@
+     "crates/kreuzberg-pdfium-render",
+-    "crates/kreuzberg-php",
+-    "crates/kreuzberg-py",
+     "crates/kreuzberg-tesseract",
+-    "crates/kreuzberg-wasm",
+-    "e2e/rust",
+-    "packages/elixir/native/kreuzberg_rustler",
+ ]
+-exclude = ["packages/r/src/rust", "packages/ruby/ext/kreuzberg_rb/native", "test_apps/elixir", "test_apps/rust"]
+ default-members = ["crates/kreuzberg", "crates/kreuzberg-cli"]
+ resolver = "2"

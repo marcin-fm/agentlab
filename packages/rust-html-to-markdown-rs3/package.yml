@@ -1,0 +1,17 @@
+status: blocked
+name: rust-html-to-markdown-rs3
+blockers:
+  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - COPR enablement and package publication approval are not finalized.
+  - Fedora/RPM Fusion duplicate and license review is still required.
+upstream:
+  provider: crates_io
+  crate: html-to-markdown-rs
+  version_requirement: = 3.8.3
+  current_version: 3.8.3
+  source_url_template: https://static.crates.io/crates/html-to-markdown-rs/html-to-markdown-rs-{version}.crate
+  source_sha256: c5b47de513bfcc3312a7521bd52ca1a287b0f85614d839c23b9873ff5c1465b7
+copr:
+  enabled: false
+  subdir: packages/rust-html-to-markdown-rs3
+  spec: rust-html-to-markdown-rs3.spec

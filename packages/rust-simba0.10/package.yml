@@ -1,0 +1,5 @@
+name: rust-simba0.10
+status: blocked
+blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
+upstream: {provider: crates_io, crate: simba, version_requirement: '= 0.10.0', current_version: 0.10.0, source_sha256: 8f45c644a9f3a386f9288625d9f0c1e999e1acf07a37df35d0516c7f199d9cb2, source_url_template: 'https://static.crates.io/crates/simba/simba-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-simba0.10, spec: rust-simba0.10.spec}

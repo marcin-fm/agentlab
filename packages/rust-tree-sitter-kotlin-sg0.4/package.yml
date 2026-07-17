@@ -1,0 +1,14 @@
+name: rust-tree-sitter-kotlin-sg0.4
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: tree-sitter-kotlin-sg
+  version_requirement: = 0.4.1
+  current_version: 0.4.1
+  source_url_template: https://static.crates.io/crates/tree-sitter-kotlin-sg/tree-sitter-kotlin-sg-{version}.crate
+  source_sha256: c06ec43ae3c12165d4ac08afe4e1f5fc6757ffe274fa7bd5af9007ef11ba4319
+copr:
+  enabled: true
+  subdir: packages/rust-tree-sitter-kotlin-sg0.4
+  spec: rust-tree-sitter-kotlin-sg0.4.spec

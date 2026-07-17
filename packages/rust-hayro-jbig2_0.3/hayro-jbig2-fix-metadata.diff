@@ -1,0 +1,12 @@
+--- hayro-jbig2-0.3.0/Cargo.toml
++++ hayro-jbig2-0.3.0/Cargo.toml
+@@ -73,4 +73,0 @@
+-[dev-dependencies.criterion]
+-version = "0.5"
+-features = ["html_reports"]
+-
+@@ -82,4 +78,0 @@
+-[dev-dependencies.indicatif]
+-version = "0.17"
+-features = ["rayon"]
+-

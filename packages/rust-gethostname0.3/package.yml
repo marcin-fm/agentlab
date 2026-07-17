@@ -1,0 +1,14 @@
+name: rust-gethostname0.3
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: gethostname
+  version_requirement: = 0.3.0
+  current_version: 0.3.0
+  source_url_template: https://static.crates.io/crates/gethostname/gethostname-{version}.crate
+  source_sha256: bb65d4ba3173c56a500b555b532f72c42e8d1fe64962b518897f8959fae2c177
+copr:
+  enabled: true
+  subdir: packages/rust-gethostname0.3
+  spec: rust-gethostname0.3.spec

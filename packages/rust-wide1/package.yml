@@ -1,0 +1,5 @@
+name: rust-wide1
+status: blocked
+blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
+upstream: {provider: crates_io, crate: wide, version_requirement: '= 1.5.0', current_version: 1.5.0, source_sha256: dfdfe6a32973f2d1b268b8895845a8a96cac2f0191e72c27cc929036060dbf89, source_url_template: 'https://static.crates.io/crates/wide/wide-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-wide1, spec: rust-wide1.spec}

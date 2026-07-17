@@ -1,0 +1,170 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "etc"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "uri"
+require_relative "lib/agentlab"
+
+package = Agentlab.package_named("bun")
+build_plan = package.data.fetch("build_plan")
+zig = build_plan.dig("source_inputs", "zig") || {}
+workdir = "/srv/tmp/agentlab-bun-zig-proof"
+source_path = nil
+jobs = Etc.nprocessors
+force = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/prove-bun-zig-bootstrap [options]"
+  parser.on("--source PATH", "Use an existing pinned Zig source archive") { |path| source_path = path }
+  parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--jobs COUNT", Integer, "Parallel build jobs") { |count| jobs = count }
+  parser.on("--force", "Replace an existing proof directory") { force = true }
+end.parse!
+
+workdir = File.expand_path(workdir)
+source_path = File.expand_path(source_path) if source_path
+unless workdir.start_with?("/srv/tmp/")
+  raise Agentlab::Error, "proof workdir must be below /srv/tmp"
+end
+raise Agentlab::Error, "jobs must be positive" unless jobs.positive?
+expected_release_pin = "bun-v#{package.upstream.fetch('current_version')}"
+unless build_plan["source_inputs_reconciled"] == true && zig["release_pin"] == expected_release_pin
+  raise Agentlab::Error, "Bun subordinate source inputs are not reconciled for #{expected_release_pin}"
+end
+
+marker = File.join(workdir, ".agentlab-bun-zig-proof")
+if Dir.exist?(workdir)
+  raise Agentlab::Error, "proof directory exists; pass --force to replace it" unless force
+  raise Agentlab::Error, "refusing to replace unmarked proof directory #{workdir}" unless File.file?(marker)
+end
+if force && source_path&.start_with?("#{workdir}/")
+  raise Agentlab::Error, "source archive must be outside the replaced proof directory"
+end
+
+FileUtils.rm_rf(workdir) if force
+FileUtils.mkdir_p(workdir)
+File.write(marker, "agentlab bun zig proof\n")
+
+source_path ||= File.join(workdir, "zig-#{zig.fetch('commit')}.tar.gz")
+unless File.file?(source_path)
+  File.binwrite(source_path, Agentlab.download(zig.fetch("url")))
+end
+
+actual_sha256 = Digest::SHA256.file(source_path).hexdigest
+unless actual_sha256 == zig.fetch("sha256")
+  raise Agentlab::Error, "Zig source SHA-256 #{actual_sha256} does not match #{zig.fetch('sha256')}"
+end
+
+def run!(environment, argv, chdir:)
+  puts "$ #{Agentlab.command_string(argv)}"
+  return if system(environment, *argv, chdir: chdir)
+
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}"
+end
+
+source_parent = File.join(workdir, "source")
+FileUtils.mkdir_p(source_parent)
+run!({}, ["tar", "-xf", File.expand_path(source_path), "-C", source_parent], chdir: Agentlab::ROOT)
+source_root = Dir.glob(File.join(source_parent, "zig-*")).select { |path| File.directory?(path) }
+raise Agentlab::Error, "expected one extracted Zig source directory" unless source_root.length == 1
+
+source_root = source_root.fetch(0)
+patch_path = File.join(package.directory, zig.fetch("patch"))
+run!({}, ["patch", "-d", source_root, "-p1", "-i", patch_path], chdir: Agentlab::ROOT)
+
+build = File.join(workdir, "build")
+home = File.join(workdir, "home")
+cache = File.join(workdir, "cache")
+root = File.join(workdir, "bun-zig")
+FileUtils.mkdir_p([home, cache])
+environment = { "HOME" => home, "XDG_CACHE_HOME" => cache }
+
+run!(environment, [
+  "cmake", "-S", source_root, "-B", build, "-G", "Ninja",
+  "-DCMAKE_BUILD_TYPE=Release",
+  "-DCMAKE_C_COMPILER=/usr/bin/clang-20",
+  "-DCMAKE_CXX_COMPILER=/usr/bin/clang++-20",
+  "-DCMAKE_PREFIX_PATH=/usr/lib64/llvm20",
+  "-DCMAKE_INSTALL_PREFIX=#{File.join(build, 'stage3')}",
+  "-DZIG_VERSION=#{zig.fetch('version_metadata')}",
+  "-DZIG_TARGET_TRIPLE=native",
+  "-DZIG_TARGET_MCPU=baseline",
+  "-DZIG_STATIC=OFF",
+  "-DZIG_USE_LLVM_CONFIG=ON",
+  "-DZIG_SHARED_LLVM=ON",
+  "-DZIG_STATIC_LLVM=OFF",
+  "-DZIG_STATIC_ZLIB=OFF",
+  "-DZIG_STATIC_ZSTD=OFF",
+  "-DZIG_NO_LIB=OFF"
+], chdir: Agentlab::ROOT)
+run!(environment, ["cmake", "--build", build, "--target", "stage3", "--parallel", jobs.to_s], chdir: Agentlab::ROOT)
+
+FileUtils.mkdir_p(root)
+FileUtils.install(File.join(build, "stage3", "bin", "zig"), File.join(root, "zig"), mode: 0o755)
+FileUtils.cp_r(File.join(build, "stage3", "lib", "zig"), File.join(root, "lib"))
+
+raise Agentlab::Error, "missing Bun Zig executable" unless File.executable?(File.join(root, "zig"))
+raise Agentlab::Error, "missing Bun Zig standard library" unless File.file?(File.join(root, "lib", "std", "std.zig"))
+
+version, stderr, status = Open3.capture3(environment, File.join(root, "zig"), "version", chdir: workdir)
+raise Agentlab::Error, "Zig version check failed: #{stderr.strip}" unless status.success?
+raise Agentlab::Error, "unexpected Zig version #{version.strip}" unless version.strip == zig.fetch("version_metadata")
+
+run!(environment, [File.join(root, "zig"), "env"], chdir: workdir)
+probe = File.join(workdir, "probe.zig")
+File.write(probe, <<~ZIG)
+  const std = @import("std");
+
+  pub fn main() void {
+      std.debug.print("zig-bun-proof\\n", .{});
+  }
+ZIG
+run!(environment, [File.join(root, "zig"), "run", probe], chdir: workdir)
+
+def tool_version(environment, argv, chdir:)
+  stdout, stderr, status = Open3.capture3(environment, *argv, chdir: chdir)
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}: #{stderr.strip}" unless status.success?
+
+  stdout.lines.first.to_s.strip
+end
+
+receipt = {
+  "schema" => 1,
+  "package_release" => expected_release_pin,
+  "proof_platform" => package.data.dig("build_plan", "stages", "zig_source_bootstrap", "proof_platform"),
+  "proof_date" => Time.now.utc.strftime("%Y-%m-%d"),
+  "source" => {
+    "commit" => zig.fetch("commit"),
+    "sha256" => actual_sha256
+  },
+  "patch" => {
+    "path" => zig.fetch("patch"),
+    "sha256" => Digest::SHA256.file(patch_path).hexdigest
+  },
+  "toolchain" => {
+    "cmake" => tool_version(environment, ["cmake", "--version"], chdir: workdir).delete_prefix("cmake version "),
+    "clang" => tool_version(environment, ["clang-20", "--version"], chdir: workdir)[/\d+\.\d+\.\d+/],
+    "llvm" => tool_version(environment, ["llvm-config-20", "--version"], chdir: workdir),
+    "target" => "native",
+    "cpu" => "baseline",
+    "shared_llvm" => true
+  },
+  "output" => {
+    "version" => version.strip,
+    "executable_sha256" => Digest::SHA256.file(File.join(root, "zig")).hexdigest,
+    "bun_layout_verified" => true,
+    "source_execution_verified" => true,
+    "external_zig_binary_used" => false
+  },
+  "scope" => "local source-bootstrap proof only; not Fedora approval or a complete Bun RPM build"
+}
+receipt_path = File.join(workdir, "proof-receipt.json")
+File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
+
+puts "Verified Bun-compatible source-built Zig root: #{root}"
+puts "Proof receipt: #{receipt_path}"

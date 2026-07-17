@@ -1,0 +1,32 @@
+release: 0.0.78
+status: blocked
+release_identity:
+  upstream_tag: v0.0.78
+  upstream_commit: 5f8fc00210b27b4407c375b59cda4838045d429c
+  npm_tarball: https://registry.npmjs.org/@playwright/mcp/-/mcp-0.0.78.tgz
+  npm_sha256: cfff0fd8eae3ac3bcb39827861298cb6b483a8d72e3c558e7991658ed3d22562
+  npm_integrity: sha512-XLTUeA6mEN9sQ+hJ4dfG8EIkDbxS0K3Trc2RBkUJuf02TgE2FQRNTMtq/aJfhyRMINsRl/Ybc4sxcWLtFn4/TQ==
+  source_tag_archive: https://codeload.github.com/microsoft/playwright-mcp/tar.gz/refs/tags/v0.0.78
+  source_tag_archive_sha256: 9f4b1c550c24aaf202b422c568c105a6c29e4c3d10735cc317c56aa650cda3d7
+runtime_sources:
+  playwright:
+    version: 1.62.0-alpha-1783623505000
+    sha256: 738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a
+  playwright_core:
+    version: 1.62.0-alpha-1783623505000
+    sha256: a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c
+  source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
+  requested_chromium: 151.0.7922.10
+  fedora_chromium_observed: 150.0.7871.114
+evidence:
+  npm_provenance_attestation: https://registry.npmjs.org/-/npm/v1/attestations/@playwright%2fmcp@0.0.78
+  npm_to_source_correspondence_reproduced: true
+  correspondence_audit_sha256: e35a16efe0a6fe753e1ee2142647069eaa310c3d2485c2576a7b4d06c50649f6
+  closure_archive_hosted_immutably: false
+  production_closure_audited: false
+  test_closure_audited: false
+  generated_assets_proven: false
+  native_payload_inventory: no native, WASM, shared-library, or executable payloads in the three npm tarballs
+  system_chromium_smoke_passed: false
+  offline_build_passed: false
+  rpm_produced: false

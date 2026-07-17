@@ -1,0 +1,8 @@
+--- lopdf-0.44.0/Cargo.toml
++++ lopdf-0.44.0/Cargo.toml
+@@ -435,5 +435,0 @@
+-[dev-dependencies.wasm-bindgen-test]
+-version = "0.3"
+-
+-[target.'cfg(not(target_family="wasm"))'.dev-dependencies.criterion]
+-version = "0.8"

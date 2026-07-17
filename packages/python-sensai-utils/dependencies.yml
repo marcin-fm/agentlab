@@ -1,0 +1,16 @@
+target_release: 1.5.0
+runtime:
+  - python3dist(typing-extensions) >= 4.6
+build:
+  - pyproject-rpm-macros
+  - python3-devel
+  - python3dist(setuptools)
+  - python3dist(wheel)
+test:
+  - python3dist(pytest)
+tests:
+  published:
+    - tests/test_import.py
+  coverage: Imports the 16 public sensai.util modules without optional dependencies.
+consumers:
+  - python-serena-agent

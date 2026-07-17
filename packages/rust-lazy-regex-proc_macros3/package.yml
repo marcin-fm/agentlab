@@ -1,0 +1,14 @@
+name: rust-lazy-regex-proc_macros3
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: lazy-regex-proc_macros
+  version_requirement: = 3.4.1
+  current_version: 3.4.1
+  source_url_template: https://static.crates.io/crates/lazy-regex-proc_macros/lazy-regex-proc_macros-{version}.crate
+  source_sha256: 4ba01db5ef81e17eb10a5e0f2109d1b3a3e29bac3070fdbd7d156bf7dbd206a1
+copr:
+  enabled: true
+  subdir: packages/rust-lazy-regex-proc_macros3
+  spec: rust-lazy-regex-proc_macros3.spec

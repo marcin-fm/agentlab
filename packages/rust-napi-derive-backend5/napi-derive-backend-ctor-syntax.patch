@@ -1,0 +1,74 @@
+--- a/src/codegen/enum.rs
++++ b/src/codegen/enum.rs
+@@ -287,8 +287,8 @@
+       napi::ctor::declarative::ctor! {
+         #[allow(non_snake_case)]
+         #[allow(clippy::all)]
+-        #[ctor(unsafe)]
+-        fn #register_name() {
++        #[ctor]
++        unsafe fn #register_name() {
+           napi::bindgen_prelude::register_module_export(#js_mod_ident, #js_name_lit, #callback_name);
+         }
+       }
+--- a/src/codegen/const.rs
++++ b/src/codegen/const.rs
+@@ -41,8 +41,8 @@
+       napi::ctor::declarative::ctor! {
+         #[allow(non_snake_case)]
+         #[allow(clippy::all)]
+-        #[ctor(unsafe)]
+-        fn #register_name() {
++        #[ctor]
++        unsafe fn #register_name() {
+           napi::bindgen_prelude::register_module_export(#js_mod_ident, #js_name_lit, #cb_name);
+         }
+       }
+--- a/src/codegen/fn.rs
++++ b/src/codegen/fn.rs
+@@ -874,8 +874,8 @@
+             #[doc(hidden)]
+             #[allow(clippy::all)]
+             #[allow(non_snake_case)]
+-            #[ctor(unsafe)]
+-            fn #module_register_name() {
++            #[ctor]
++            unsafe fn #module_register_name() {
+               napi::bindgen_prelude::register_module_export_hook(#cb_name);
+             }
+           }
+@@ -899,8 +899,8 @@
+             #[doc(hidden)]
+             #[allow(clippy::all)]
+             #[allow(non_snake_case)]
+-            #[ctor(unsafe)]
+-            fn #module_register_name() {
++            #[ctor]
++            unsafe fn #module_register_name() {
+               napi::bindgen_prelude::register_module_export(#js_mod_ident, #js_name, #cb_name);
+             }
+           }
+--- a/src/codegen/struct.rs
++++ b/src/codegen/struct.rs
+@@ -1048,8 +1048,8 @@
+       napi::ctor::declarative::ctor! {
+         #[allow(non_snake_case)]
+         #[allow(clippy::all)]
+-        #[ctor(unsafe)]
+-        fn #struct_register_name() {
++        #[ctor]
++        unsafe fn #struct_register_name() {
+           napi::__private::register_class(std::any::TypeId::of::<#name>(), #js_mod_ident, #js_name, vec![#(#props),*], #implement_iterator);
+         }
+       }
+@@ -1714,8 +1714,8 @@
+ 
+         #[cfg(all(not(test), not(target_family = "wasm")))]
+         napi::ctor::declarative::ctor! {
+-          #[ctor(unsafe)]
+-          fn #register_name() {
++          #[ctor]
++          unsafe fn #register_name() {
+             napi::__private::register_class(std::any::TypeId::of::<#name>(), #js_mod_ident, #js_name, vec![#(#props),*], false);
+           }
+         }

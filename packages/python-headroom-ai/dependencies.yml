@@ -1,0 +1,36 @@
+target_release: 0.31.0
+production_runtime:
+  python:
+    - tiktoken >= 0.5.0
+    - pydantic >= 2.0.0
+    - click >= 8.1.0
+    - opentelemetry-api >= 1.24.0
+    - mcp >= 1.0.0
+  rust_selected:
+    - pyo3 >= 0.27.2, < 0.28 with abi3-py310 and extension-module
+    - pyo3-log >= 0.13, < 0.14
+    - tokenizers >= 0.22, < 0.23
+    - rusqlite >= 0.31, < 0.32 using system SQLite
+    - unidiff >= 0.4, < 0.5 using rust-unidiff0.4
+    - Fedora-provided serde, serde_json, bytes, thiserror, tracing, digest, compression, regex, rayon, toml, and blake3 branches
+excluded_runtime:
+  rust:
+    - fastembed, magika, ort, ort-sys, hf-hub, tiktoken-rs, and redis
+  python:
+    - litellm, rich, ast-grep-cli, httpx direct dependency, proxy/model extras, and sqlite-vec
+build_runtime:
+  backend: maturin >= 1.5, < 2.0
+  native_extension: crates/headroom-py via PyO3 feature extension-module,mcp-minimal
+  system_libraries:
+    - pkgconfig(sqlite3)
+  local_packages:
+    - rust-unidiff0.4 = 0.4.0
+validation:
+  fedora_43:
+    mock: passed
+    native_tests: 836 library, 7 CCR backend, and 2 tokenizer property tests passed; 1 ignored
+    mcp: initialize, exact three-tool list, compression, retrieval, local miss, and statistics passed
+  fedora_44:
+    mock: passed
+    native_tests: 836 library, 7 CCR backend, and 2 tokenizer property tests passed; 1 ignored
+    mcp: initialize, exact three-tool list, compression, retrieval, local miss, and statistics passed

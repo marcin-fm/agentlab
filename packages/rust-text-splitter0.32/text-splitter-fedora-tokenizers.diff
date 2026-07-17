@@ -1,0 +1,8 @@
+--- text-splitter-0.32.0/Cargo.toml
++++ text-splitter-0.32.0/Cargo.toml
+@@ -130 +130 @@
+-version = "0.23"
++version = "0.22.2"
+@@ -161 +161 @@
+-version = "0.23"
++version = "0.22.2"

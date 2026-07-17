@@ -1,0 +1,5 @@
+name: rust-fmt2io1
+status: blocked
+blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+upstream: {provider: crates_io, crate: fmt2io, version_requirement: '= 1.0.0', current_version: 1.0.0, source_sha256: 6b6129284da9f7e5296cc22183a63f24300e945e297705dcc0672f7df01d62c8, source_url_template: 'https://static.crates.io/crates/fmt2io/fmt2io-{version}.crate'}
+copr: {enabled: false, subdir: packages/rust-fmt2io1, spec: rust-fmt2io1.spec}

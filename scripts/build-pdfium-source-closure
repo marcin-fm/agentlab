@@ -1,0 +1,164 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require_relative "lib/agentlab"
+
+begin
+workdir = "/srv/tmp/agentlab-pdfium/closure-build"
+output_dir = "/srv/tmp/agentlab-pdfium/closure-output"
+force = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/build-pdfium-source-closure [options]"
+  parser.on("--workdir PATH", "Transient checkout and staging directory") { |value| workdir = value }
+  parser.on("--output-dir PATH", "Generated closure output directory") { |value| output_dir = value }
+  parser.on("--force", "Replace script-owned transient directories") { force = true }
+end.parse!
+
+marker = ".agentlab-pdfium-source-closure"
+[workdir, output_dir].each do |path|
+  expanded = File.expand_path(path)
+  raise Agentlab::Error, "path must be below /srv/tmp: #{expanded}" unless expanded.start_with?("/srv/tmp/")
+
+  next unless File.exist?(expanded)
+  next unless force
+
+  marker_path = File.join(expanded, marker)
+  raise Agentlab::Error, "refusing to replace unmarked directory #{expanded}" unless File.file?(marker_path)
+
+  FileUtils.rm_rf(expanded)
+end
+
+
+[workdir, output_dir].each do |path|
+  FileUtils.mkdir_p(path)
+  File.write(File.join(path, marker), "agentlab pdfium closure\n")
+end
+
+manifest_path = File.join(Agentlab::ROOT, "packages", "pdfium", "source-closure.yml")
+manifest = Agentlab.load_yaml(manifest_path)
+version = manifest.fetch("version")
+staging = File.join(workdir, "staging")
+archives = File.join(workdir, "archives")
+repositories = File.join(workdir, "repositories")
+FileUtils.mkdir_p([staging, archives, repositories])
+
+manifest.fetch("fedora_patches").each do |patch|
+  patch_path = File.join(Agentlab::ROOT, "packages", "pdfium", patch.fetch("file"))
+  raise Agentlab::Error, "missing Fedora patch #{patch_path}" unless File.file?(patch_path)
+
+  actual = Digest::SHA256.file(patch_path).hexdigest
+  expected = patch.fetch("sha256")
+  raise Agentlab::Error, "Fedora patch SHA-256 mismatch for #{patch.fetch('id')}: #{actual}" unless actual == expected
+end
+
+def run!(*command)
+  success = system(*command)
+  raise Agentlab::Error, "command failed: #{command.join(' ')}" unless success
+end
+
+def git_archive(repository, output, prefix: nil, gzip: false)
+  command = ["git", "-C", repository, "archive", "--format=tar"]
+  command << "--prefix=#{prefix}" if prefix
+  command << "FETCH_HEAD"
+  commands = [command]
+  commands << ["gzip", "-n"] if gzip
+  statuses = Open3.pipeline(*commands, out: output)
+  raise Agentlab::Error, "git archive failed for #{repository}" unless statuses.all?(&:success?)
+end
+
+records = manifest.fetch("sources").map do |source|
+  id = source.fetch("id")
+  repository = File.join(repositories, id)
+  FileUtils.mkdir_p(repository)
+  run!("git", "init", "--quiet", repository)
+  run!("git", "-C", repository, "remote", "add", "origin", source.fetch("git_url"))
+  run!("git", "-C", repository, "fetch", "--quiet", "--depth=1", "origin", source.fetch("revision"))
+  resolved_commit, status = Open3.capture2("git", "-C", repository, "rev-parse", "FETCH_HEAD")
+  raise Agentlab::Error, "cannot resolve fetched commit for #{id}" unless status.success?
+  resolved_commit = resolved_commit.strip
+  unless resolved_commit == source.fetch("revision")
+    raise Agentlab::Error, "resolved commit mismatch for #{id}: #{resolved_commit}"
+  end
+
+  archive = File.join(archives, "#{id}.tar")
+  git_archive(repository, archive)
+
+  unless source.fetch("path") == "."
+    destination = File.join(staging, source.fetch("path"))
+    FileUtils.mkdir_p(destination)
+    run!("tar", "-xf", archive, "-C", destination)
+  end
+
+  source.merge(
+    "archive_sha256" => Digest::SHA256.file(archive).hexdigest,
+    "resolved_commit" => resolved_commit
+  )
+end
+
+pdfium_repository = File.join(repositories, "pdfium")
+source_archive = File.join(output_dir, "pdfium-#{version}.tar.gz")
+git_archive(pdfium_repository, source_archive, prefix: "pdfium-#{version}/", gzip: true)
+source_sha256 = Digest::SHA256.file(source_archive).hexdigest
+package_manifest = Agentlab.load_yaml(File.join(Agentlab::ROOT, "packages", "pdfium", "package.yml"))
+expected_source_sha256 = package_manifest.dig("upstream", "source_sha256")
+unless source_sha256 == expected_source_sha256
+  raise Agentlab::Error,
+        "generated Source0 SHA-256 #{source_sha256} does not match package metadata #{expected_source_sha256}"
+end
+
+gclient_args = File.join(staging, "build", "config", "gclient_args.gni")
+FileUtils.mkdir_p(File.dirname(gclient_args))
+File.write(gclient_args, <<~GN)
+  build_with_chromium = false
+  checkout_android = false
+  checkout_skia = false
+GN
+
+closure_json = File.join(output_dir, "pdfium-#{version}-source-closure.json")
+File.write(closure_json, JSON.pretty_generate({
+  "schema" => 1,
+  "package" => manifest.fetch("package"),
+  "version" => version,
+  "consumer" => manifest.fetch("consumer"),
+  "chromium" => manifest.fetch("chromium"),
+  "pdfium" => manifest.fetch("pdfium"),
+  "target" => manifest.fetch("target"),
+  "build_policy" => manifest.fetch("build_policy"),
+  "sources" => records,
+  "system_libraries" => manifest.fetch("system_libraries"),
+  "fedora_patches" => manifest.fetch("fedora_patches"),
+  "excluded_sources" => manifest.fetch("excluded_sources")
+}) + "\n")
+
+closure_archive = File.join(output_dir, "pdfium-#{version}-source-closure.tar.zst")
+tar_command = [
+  "tar", "--sort=name", "--mtime=UTC 1970-01-01", "--owner=0", "--group=0",
+  "--numeric-owner", "--pax-option=delete=atime,delete=ctime", "-C", staging,
+  "-cf", "-", "."
+]
+statuses = Open3.pipeline(tar_command, ["zstd", "-19", "-T0", "-q"], out: closure_archive)
+raise Agentlab::Error, "closure archive was not created" unless statuses.all?(&:success?)
+
+receipt = {
+  "schema" => 1,
+  "package" => manifest.fetch("package"),
+  "version" => version,
+  "source_count" => records.length,
+  "source_sha256" => source_sha256,
+  "closure_sha256" => Digest::SHA256.file(closure_archive).hexdigest,
+  "manifest_sha256" => Digest::SHA256.file(closure_json).hexdigest,
+  "source_policy_sha256" => Digest::SHA256.file(manifest_path).hexdigest
+}
+File.write(File.join(output_dir, "pdfium-#{version}-closure-receipt.json"), JSON.pretty_generate(receipt) + "\n")
+
+puts JSON.pretty_generate(receipt)
+rescue Agentlab::Error, KeyError => e
+  warn "error: #{e.message}"
+  exit 1
+end

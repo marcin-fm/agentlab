@@ -1,0 +1,257 @@
+--- nalgebra-0.35.0/Cargo.toml	2006-07-24T01:21:28+00:00
++++ nalgebra-0.35.0/Cargo.toml	2026-07-16T00:40:05.059495+00:00
+@@ -58,79 +58,14 @@
+ status = "actively-developed"
+ 
+ [features]
+-alloc = []
+-arbitrary = ["quickcheck"]
+-compare = ["matrixcompare-core"]
+-convert-bytemuck = [
+-    "bytemuck",
+-    "num-complex/bytemuck",
+-]
+-convert-glam030 = ["glam030"]
+-convert-glam031 = ["glam031"]
+-convert-glam032 = ["glam032"]
+-convert-glam033 = ["glam033"]
+-convert-mint = ["mint"]
+-debug = [
+-    "approx/num-complex",
+-    "rand",
+-]
+-default = [
+-    "std",
+-    "macros",
+-]
+-io = [
+-    "pest",
+-    "pest_derive",
+-]
+-libm = [
+-    "simba/libm",
+-    "glam030?/libm",
+-    "glam031?/libm",
+-    "glam032?/libm",
+-    "glam033?/libm",
+-]
+-libm-force = ["simba/libm_force"]
+-macros = ["nalgebra-macros"]
+-proptest-support = ["proptest"]
+-rand = [
+-    "rand-no-std",
+-    "rand-package/std",
+-    "rand-package/std_rng",
+-    "rand-package/thread_rng",
+-    "rand_distr",
+-]
+-rand-no-std = ["rand-package"]
+-rkyv-safe-deser = [
+-    "rkyv-serialize",
+-    "rkyv/validation",
+-]
+-rkyv-serialize = [
+-    "rkyv-serialize-no-std",
+-    "rkyv/std",
+-    "rkyv/validation",
+-]
+-rkyv-serialize-no-std = ["rkyv/size_32"]
+-serde-serialize = [
+-    "serde-serialize-no-std",
+-    "serde/std",
+-]
+-serde-serialize-no-std = [
+-    "serde",
+-    "num-complex/serde",
+-]
+-slow-tests = []
+-sparse = []
++default = ["std"]
+ std = [
+-    "matrixmultiply",
++    "dep:matrixmultiply",
+     "num-traits/std",
+     "num-complex/std",
+     "num-rational/std",
+     "approx/std",
+     "simba/std",
+-    "glam030?/std",
+-    "glam031?/std",
+-    "glam032?/std",
+-    "glam033?/std",
+ ]
+ 
+ [lib]
+@@ -152,11 +87,6 @@
+ [[example]]
+ name = "matrix_construction"
+ path = "examples/matrix_construction.rs"
+-
+-[[example]]
+-name = "matrixcompare"
+-path = "examples/matrixcompare.rs"
+-required-features = ["compare"]
+ 
+ [[example]]
+ name = "mvp"
+@@ -206,80 +136,12 @@
+ name = "unit_wrapper"
+ path = "examples/unit_wrapper.rs"
+ 
+-[[test]]
+-name = "lib"
+-path = "tests/lib.rs"
+-
+-[[bench]]
+-name = "nalgebra_bench"
+-path = "benches/lib.rs"
+-harness = false
+-required-features = ["rand"]
+-
+-[dependencies.alga]
+-version = "0.9"
+-optional = true
+-default-features = false
+-
+ [dependencies.approx]
+ version = "0.5"
+ default-features = false
+ 
+-[dependencies.bytemuck]
+-version = "1.5"
+-optional = true
+-
+-[dependencies.defmt]
+-version = "1.0.1"
+-optional = true
+-
+-[dependencies.encase]
+-version = "0.12"
+-optional = true
+-
+-[dependencies.glam030]
+-version = "0.30"
+-optional = true
+-default-features = false
+-package = "glam"
+-
+-[dependencies.glam031]
+-version = "0.31"
+-optional = true
+-default-features = false
+-package = "glam"
+-
+-[dependencies.glam032]
+-version = "0.32"
+-optional = true
+-default-features = false
+-package = "glam"
+-
+-[dependencies.glam033]
+-version = "0.33"
+-features = [
+-    "f64",
+-    "i32",
+-    "u32",
+-]
+-optional = true
+-default-features = false
+-package = "glam"
+-
+-[dependencies.matrixcompare-core]
+-version = "0.1"
+-optional = true
+-
+ [dependencies.matrixmultiply]
+ version = "0.3"
+-optional = true
+-
+-[dependencies.mint]
+-version = "0.5"
+-optional = true
+-
+-[dependencies.nalgebra-macros]
+-version = "0.3.0"
+ optional = true
+ 
+ [dependencies.num-complex]
+@@ -294,50 +156,6 @@
+ version = "0.2"
+ default-features = false
+ 
+-[dependencies.pest]
+-version = "2"
+-optional = true
+-
+-[dependencies.pest_derive]
+-version = "2"
+-optional = true
+-
+-[dependencies.proptest]
+-version = "1"
+-features = ["std"]
+-optional = true
+-default-features = false
+-
+-[dependencies.quickcheck]
+-version = "1"
+-optional = true
+-
+-[dependencies.rand-package]
+-version = "0.10"
+-optional = true
+-default-features = false
+-package = "rand"
+-
+-[dependencies.rand_distr]
+-version = "0.6"
+-optional = true
+-default-features = false
+-
+-[dependencies.rayon]
+-version = "1.6"
+-optional = true
+-
+-[dependencies.rkyv]
+-version = "0.7.41"
+-optional = true
+-default-features = false
+-
+-[dependencies.serde]
+-version = "1.0"
+-features = ["derive"]
+-optional = true
+-default-features = false
+-
+ [dependencies.simba]
+ version = "0.10"
+ default-features = false
+@@ -345,28 +163,6 @@
+ [dependencies.typenum]
+ version = "1.12"
+ 
+-[dev-dependencies.cool_asserts]
+-version = "2.0.3"
+-
+-[dev-dependencies.criterion]
+-version = "0.7"
+-features = ["html_reports"]
+-
+-[dev-dependencies.itertools]
+-version = "0.14"
+-
+-[dev-dependencies.matrixcompare]
+-version = "0.3.0"
+-
+-[dev-dependencies.rand_xorshift]
+-version = "0.5"
+-
+-[dev-dependencies.serde_json]
+-version = "1.0"
+-
+-[dev-dependencies.trybuild]
+-version = "1.0.90"
+-
+ [profile.bench]
+ lto = true
+ codegen-units = 1

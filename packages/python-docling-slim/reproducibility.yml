@@ -1,0 +1,45 @@
+schema: python-docling-slim-reproducibility/v1
+package: python-docling-slim
+version: 2.113.0-1
+source:
+  url: https://files.pythonhosted.org/packages/22/35/149f23813b0df840945c99a2789f0a749431a23a6846d4da132de4bbda40/docling_slim-2.113.0.tar.gz
+  sha256: 34135ce73e82cce494483133752f54d97391351d4faa49fbf66c6058eb18329d
+  release_tag: v2.113.0
+  release_commit: 53a6fa5e829745cc9bf3dbf6b324d65408562bc5
+patches:
+  service_client_api_only:
+    path: docling-slim-service-client-api-only.patch
+    sha256: 89a19e07fe9c16eed200da92c5aeb41db376c0554ddf83760d6028a404b84f47
+    purpose: Remove command-only Typer, Rich, and dotenv dependencies from the service-client extra.
+prerequisites:
+  python-docling-core:
+    version: 2.87.1-1
+    fedora_43_44: clean builds passed
+validation:
+  static:
+    source_sha256: verified
+    spec_parse: passed
+    package_manifest: passed
+  fedora_43_x86_64:
+    mock_build: passed
+    smokes: base import, service-client construction, loopback health
+    rpmlint: zero errors and zero warnings
+    srpm_sha256: fa731d63806dfde2784950bacfa2d08ebbc6ea34864d8aa549235dd9623cca2c
+    rpm_sha256: 23032c73f1afff13cdd2359383e47f950a602b422abad0a152f4e8dd9846eec4
+  fedora_44_x86_64:
+    mock_build: passed
+    smokes: base import, service-client construction, loopback health
+    rpmlint: zero errors and zero warnings
+    srpm_sha256: a3bf8ed78e9d803ec070ce09171790dd512764ff0c10f348ad0cb0df87ccce10
+    rpm_sha256: 6459493f59c314274f652859e8e7265ee023583b96c6d643859259f215abf062
+artifacts:
+  spec_sha256: 326a46cd6dd53ea079f7e59696e25b1cad224f55ec6d71f80661c13dd0a4385c
+limitations:
+  - The PyPI sdist excludes the upstream test tree.
+  - The service client is useful only when an administrator explicitly configures a remote Docling service.
+  - Local conversion, model execution, and parser branches are deliberately not provided.
+  - Upstream command wrappers are removed because they import the excluded local PDF backend at startup.
+  - The service-client extra is patched to represent its API-only imports; the omitted CLI remains a separate unsupported surface.
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false
