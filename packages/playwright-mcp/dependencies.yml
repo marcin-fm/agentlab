@@ -41,6 +41,24 @@ build_closure:
     fedora_43_provider: 0.24.2
     fedora_44_provider: 0.27.2
     exact_provider_available: false
+  rolldown:
+    version: 1.1.3
+    source_tag_archive_sha256: 343c933d7826428704d75700e32ff1bfa75c82d89f7383471e979d6d4df520e8
+    npm_package_sha256: 226cd0767228ad5c955d5e3e551ff3031dceb24701a2656f4832b1acf9063684
+    source_build_path: Rust N-API binding plus generated JavaScript glue
+    cargo_lock_packages: 411
+    fedora_43_44_provider: absent
+  lightningcss:
+    version: 1.32.0
+    source_tag_archive_sha256: ca67b9ba532d439f5f91d23debfc2543d6decac130ee88bc4c66202fc7173ad9
+    npm_package_sha256: c83e81ea213c9e419c5877460a6788f0d0931d58a4aa9fea92fac1a99a1550e8
+    source_build_path: Rust N-API binding plus published JavaScript loader
+    cargo_lock_packages: 209
+    fedora_43_44_provider: absent
+  excluded_platform_edges:
+    fsevents: Darwin-only
+    duckdb_node_binding: Referenced only by test and result-database utilities, not the normal build
+    browser_packages: Install scripts remain present but honor PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 test_closure:
   status: audited-blocked
   direct_dependencies:
@@ -68,6 +86,7 @@ closure_audit:
 gates:
   - Vendor the exact root and stable-test-runner production, build, and test closures from original source tarballs without networked lifecycle execution.
   - Package exact esbuild 0.28.1 from source using the upstream/Fedora Go-binary and JavaScript-module layout; do not use the prebuilt platform payload.
+  - Package exact Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API bindings from released source after their Cargo closures and aggregate licenses pass review.
   - Reproduce every generated bundle, Vite asset, type, browser descriptor, and copied executable from the pinned source commit.
   - Complete aggregate SPDX accounting and retain applicable license texts for the shipped bundled closure.
   - Repeat the no-download Fedora chromium-headless operation smoke through the packaged MCP on Fedora 43 and Fedora 44.

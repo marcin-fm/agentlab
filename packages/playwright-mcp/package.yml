@@ -4,6 +4,7 @@ blockers:
   - The generated Playwright runtime requires the full pinned monorepo closure: 679 integrity-pinned registry tarballs plus a separate stable-test-runner lock.
   - Playwright exposes no package or MCP-only build target; the normal monorepo build cannot skip the separate stable-test-runner npm ci.
   - Exact source-built esbuild 0.28.1 is feasible through the upstream and Fedora packaging pattern, but Fedora 43/44 provide only 0.24.2/0.27.2 and no exact compatibility provider exists yet.
+  - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers; Fedora 43/44 provide neither and their 411/209-package Cargo locks are unaudited.
   - Bundled modules, Vite outputs, copied xdg-open, generated browser metadata, and aggregate SPDX accounting remain unresolved.
   - The audited immutable closure has not been hosted for offline COPR SCM builds.
   - RPM Fusion updates duplicate availability has not been conclusively checked.
@@ -14,6 +15,8 @@ source_policy:
   generated_build: Full Playwright monorepo build with esbuild, Vite, generated types/assets, copied xdg-open, and a separate stable-test-runner install.
   narrow_build_target: none; --disable-install only affects browser installation in watch mode
   esbuild_source_path: Exact 0.28.1 Go binary and neutral npm module can be source-built; Fedora uses the same binary plus JavaScript/platform-module layout for older releases.
+  required_native_build_tools: Exact source-built esbuild 0.28.1, Rolldown 1.1.3, and Lightning CSS 1.32.0; optional DuckDB and Darwin fsevents are excluded.
+  browser_install_scripts: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 is an upstream-supported no-download path.
   bundle_license_sidecars: Five published sidecars map 213 bundled package entries to exact root-lock versions.
   browser: Fedora chromium-headless only
   browser_compatibility: Exact MCP wrapper ran over stdio with Fedora 44 chromium-headless 150.0.7871.114, listed 24 tools, and passed local data-URL navigation and evaluation; repeat from packaged RPMs in F43/F44 after source closure.

@@ -50,6 +50,24 @@ build_mapping:
     fedora_43_version: 0.24.2
     fedora_44_version: 0.27.2
     exact_fedora_provider: false
+  rolldown:
+    version: 1.1.3
+    source_tag_archive_sha256: 343c933d7826428704d75700e32ff1bfa75c82d89f7383471e979d6d4df520e8
+    npm_package_sha256: 226cd0767228ad5c955d5e3e551ff3031dceb24701a2656f4832b1acf9063684
+    cargo_lock_packages: 411
+    source_build_supported: true
+    exact_fedora_provider: false
+  lightningcss:
+    version: 1.32.0
+    source_tag_archive_sha256: ca67b9ba532d439f5f91d23debfc2543d6decac130ee88bc4c66202fc7173ad9
+    npm_package_sha256: c83e81ea213c9e419c5877460a6788f0d0931d58a4aa9fea92fac1a99a1550e8
+    cargo_lock_packages: 209
+    source_build_supported: true
+    exact_fedora_provider: false
+  lifecycle_edges:
+    browser_workspace_scripts: skipped by upstream-supported PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+    fsevents: Darwin-only and excluded
+    duckdb_native_binding: not imported by the normal build
   published_license_sidecars:
     playwright_core_utils_bundle: 91
     playwright_core_server_registry: 14

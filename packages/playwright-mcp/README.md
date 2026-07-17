@@ -46,6 +46,16 @@ JavaScript/platform-module layout for esbuild `0.24.2` on Fedora 43 and `0.27.2`
 on Fedora 44. An exact `0.28.1` compatibility provider is still missing, but the
 prebuilt binary is no longer an architectural blocker.
 
+The remaining Linux native build edges are Vite's required Rolldown `1.1.3`
+and Lightning CSS `1.32.0` bindings. Both have exact released source tags and
+N-API source-build paths, but Fedora 43/44 provide neither. Their pinned Cargo
+locks contain 411 and 209 packages respectively, so their reusable source
+closures must be reviewed before a Playwright build is attempted. The optional
+DuckDB binding is referenced only by test/result-database utilities and is not
+part of the normal generated-runtime build. Darwin-only `fsevents` is excluded,
+and Playwright's browser-package install scripts honor
+`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
+
 The published payloads contain 7 MCP files, 62 Playwright files, and 104
 Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
 package entries to exact root-lock versions, but aggregate SPDX accounting and
