@@ -70,6 +70,13 @@ build_mapping:
     normal_build_requires_dashboard_sources: true
     default_surface_binary_omission_safe: true
     distribution_review_complete: false
+  generated_javascript:
+    esbuild_node_defaults: platform=node; format=cjs; release sourcemap=false; minify unset
+    node_runtime_minified: false
+    published_readability_markers: multiline formatting, named helpers, and source-path comments
+    browser_vite_assets_minified: true
+    browser_assets_policy_class: browser-targeted generated output with corresponding source
+    copied_xdg_open_type: POSIX shell script
   nested_stable_test_runner_lock:
     required_by_normal_build: true
     skippable_by_upstream_flag: false
@@ -178,6 +185,7 @@ evidence:
   exact_source_to_generated_output_mapping_reviewed: true
   published_sidecar_entries_matched_to_root_lock: true
   browser_logo_distribution_reviewed: false
+  local_node_javascript_minification_gate_passed: true
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

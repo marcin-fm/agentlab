@@ -116,6 +116,16 @@ default surface can therefore omit generated dashboard files, but Playwright's
 normal build still compiles the dashboard unconditionally and still needs the
 logo source inputs. Binary omission narrows runtime payload, not source closure.
 
+The local-JavaScript minification gate is resolved. Playwright's common esbuild
+step emits Node/CJS with source maps disabled in release mode and does not set
+`minify`, so `coreBundle.js`, `utilsBundle.js`, `serverRegistry.js`, and the
+Playwright Node bundles are bundled/transpiled but not minified. The exact
+published files retain multiline formatting, named helpers, and source-path
+comments. Production Vite output for dashboard/reporter/recorder/trace assets
+is minified browser-targeted content and remains subject to generated-source and
+license review. The copied `xdg-open` payload is a licensed POSIX shell script,
+not JavaScript.
+
 ## Intentional Failure
 
 `playwright-mcp.spec` exits in `%prep` before unpacking or building. It must

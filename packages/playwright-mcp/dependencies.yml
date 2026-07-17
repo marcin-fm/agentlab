@@ -50,6 +50,11 @@ build_closure:
       runtime_scope: Default MCP excludes devtools; browser_annotate under --caps=devtools requires dashboardApp.js and lib/vite/dashboard.
       binary_omission: Safe for an explicitly selected default MCP surface, but it does not remove the logo inputs from the unconditional normal source build.
       decision: Explicit redistribution/trademark review or an upstream-supported dashboard/logo omission is required.
+    generated_javascript:
+      node_runtime: esbuild platform=node, format=cjs, minify unset; published output is readable and unminified
+      browser_assets: production Vite dashboard, reporter, recorder, and trace assets are minified browser-targeted output
+      copied_xdg_open: POSIX shell script, not JavaScript
+      local_javascript_minification_gate: resolved
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1

@@ -69,6 +69,8 @@ Additional Playwright distribution gate: ten browser-logo packages in the active
 
 Dashboard scope correction: those logo packages are used only by `packages/dashboard`. Default MCP tools do not enable `devtools`; only the opt-in `browser_annotate` path requires the generated dashboard. A default-surface binary can omit that output, but the normal upstream build has no dashboard-exclusion flag and still requires the logo source inputs.
 
+Generated-JavaScript correction: Playwright's Node-executed esbuild outputs are bundled/transpiled CJS with minification disabled by default and retain readable source markers. Minified outputs are browser-targeted Vite assets, so local Node JavaScript minification is not a blocker; browser generated-source and license gates remain.
+
 ## Historical Docling Validation
 
 The Docling remote-conversion package passed the following historical gates.
