@@ -1,10 +1,10 @@
 # Disabled by package.yml until Bun and the audited npm source closure are
 # available. Do not replace these inputs with upstream platform binaries.
-%global source_sha256 bcaabb54915ba5497259bb9b4790096ebb4cacdf631a4ea66c278183402659c5
+%global source_sha256 494041aedd7407079f91fd694de355f4ff022ba6bf876e09ff30983bbdc70ae1
 
 Name:           opencode
-Version:        1.18.1
-Release:        0.0.2%{?dist}
+Version:        1.18.3
+Release:        0.1%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -83,6 +83,8 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.1
+- Refresh the blocked source-build draft to released version 1.18.3.
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 1.18.1-0.0.2
 - Correct the Node application bundling model and reserve manual bundled(nodejs-...) metadata.
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 1.18.1-0.0.1

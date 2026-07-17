@@ -1,4 +1,4 @@
-target_release: 1.18.1
+target_release: 1.18.3
 closure_audit:
   audited_release:
   production_build_sources_verified: false
@@ -15,6 +15,13 @@ historical_audit:
   resolved_npm_package_ids: 809
   licenses_resolved: 807
   licenses_missing: 2
+current_lock_snapshot:
+  release: 1.18.3
+  bun: 1.3.14
+  workspace_records: 37
+  package_records: 3215
+  selected_production_closure: false
+  note: Lockfile-wide counts include unrelated workspaces, development inputs, and platform variants.
 rpm_subpackages: []
 closure_entry_schema:
   required:
@@ -42,12 +49,20 @@ native_or_platform_sensitive:
   - tree-sitter-bash
   - tree-sitter-powershell
   - web-tree-sitter
+current_sensitive_versions:
+  "@opentui/core": 0.4.3
+  "@parcel/watcher": 2.5.1
+  "@ff-labs/fff-bun": 0.9.4
+  "@silvia-odwyer/photon-node": 0.3.4
+  tree-sitter-bash: 0.25.0
+  tree-sitter-powershell: 0.25.10
+  web-tree-sitter: 0.25.10
 source_closure_files:
-  production_build_archive: opencode-1.18.1-nm-prod-build.tar.zst
-  test_archive: opencode-1.18.1-nm-dev-test.tar.zst
-  closure_manifest: opencode-1.18.1-closure.json
-  bundled_licenses: opencode-1.18.1-bundled-licenses.txt
-  native_manifest: opencode-1.18.1-native.json
+  production_build_archive: opencode-1.18.3-nm-prod-build.tar.zst
+  test_archive: opencode-1.18.3-nm-dev-test.tar.zst
+  closure_manifest: opencode-1.18.3-closure.json
+  bundled_licenses: opencode-1.18.3-bundled-licenses.txt
+  native_manifest: opencode-1.18.3-native.json
 gates:
   - Recompute the complete closure and all counts for target_release before enabling.
   - Parse the tagged release bun.lock without resolving new versions.
