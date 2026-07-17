@@ -99,6 +99,17 @@ Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled
 package entries to exact root-lock versions, but aggregate SPDX accounting and
 the full immutable source/build/test closure remain incomplete.
 
+The Linux/x86_64 root lock has license metadata for 614 of 624 active entries.
+The ten exceptions are the Chrome, Chrome Beta, Chrome Canary, Chrome Dev,
+Chromium, Edge, Firefox, Firefox Beta, Firefox Nightly, and Safari logo
+packages used by the dashboard. Their npm tarballs contain no license or
+notice, and their exact source repository states that all logos and trademarks
+belong to their respective owners while only everything else is MIT-licensed.
+All ten assets ship in the published dashboard: six are Vite-inlined SVG data
+URIs and four are standalone SVG files. Packaging therefore requires explicit
+redistribution/trademark review or an upstream-supported build that omits the
+dashboard/logo payload; the repository MIT text does not clear the marks.
+
 ## Intentional Failure
 
 `playwright-mcp.spec` exits in `%prep` before unpacking or building. It must

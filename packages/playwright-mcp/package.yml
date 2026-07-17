@@ -6,6 +6,7 @@ blockers:
   - Exact source-built esbuild 0.28.1 is feasible through the upstream and Fedora packaging pattern, but Fedora 43/44 provide only 0.24.2/0.27.2 and no exact compatibility provider exists yet.
   - Vite 8.1 requires source-built Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API providers. Their actual Linux roots require 239/92 registry crates; semver- and feature-aware Fedora comparison leaves 80-81/20 unresolved provider edges.
   - Candidate aggregate SPDX expressions are derived for the actual Rolldown and Lightning CSS roots. Repository or canonical texts resolve 59 of 62 crate-archive omissions; exhaustive history and release checks confirm that base-encode, json-escape-simd, and parcel_sourcemap still lack the required MIT notice.
+  - Ten browser-logo dependencies have no npm license metadata or tarball notice. Their exact source repository excludes the logos from its MIT grant, and all ten marks ship in the generated Playwright Core dashboard; explicit redistribution/trademark review or an upstream-supported omission is required.
   - The audited immutable closure has not been hosted for offline COPR SCM builds.
 source_policy:
   npm_package: "@playwright/mcp"
@@ -21,6 +22,7 @@ source_policy:
   native_license_candidates: Rolldown is Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib; Lightning CSS is Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0. Immutable repository or canonical texts cover 59 of 62 active crate-archive omissions; three MIT-only notices remain unresolved.
   browser_install_scripts: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 is an upstream-supported no-download path.
   bundle_license_sidecars: Five published sidecars map 213 bundled package entries to exact root-lock versions.
+  browser_logo_assets: Ten active root-lock packages lack license metadata; their exact source legal statement reserves the marks to their owners and excludes them from the repository MIT grant. Six logos are inlined and four are separate SVGs in the published dashboard, so distribution remains review-blocked.
   browser: Fedora chromium-headless only
   browser_compatibility: Exact MCP wrapper ran over stdio with Fedora 44 chromium-headless 150.0.7871.114, listed 24 tools, and passed local data-URL navigation and evaluation; repeat from packaged RPMs in F43/F44 after source closure.
   browser_downloads: forbidden

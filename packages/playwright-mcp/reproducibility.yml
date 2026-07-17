@@ -41,6 +41,30 @@ build_mapping:
   root_lock_fedora_43_44_exact_locked_providers: 0
   root_lock_fedora_43_44_different_version_names: colors, esbuild, punycode, undici
   root_lock_rpm_fusion_43_44_npm_providers: 0
+  root_lock_license_metadata_entries: 614
+  root_lock_missing_license_metadata_entries: 10
+  browser_logo_assets:
+    exact_source_commits:
+      chrome_2_0_0: 7173185f6715f5f1e9be8b6654d8f3e3815f669b
+      chrome_beta_3_0_0: 00f6b65525fe5782a58a7be4bacfa35ef5c43ed9
+      chrome_canary_2_0_0: b3719bfefab530402d67f423bd645e9f58a47b8a
+      chrome_dev_3_0_0: 596ef692d239c56d86556f5fc71f361e07d713b3
+      chromium_2_0_1: 7ddc4a12a1d444c091e7f04cb0127cbfd5906dd5
+      edge_2_0_7: 0bc9e70998eccde0b98507500416a1edffa09c5c
+      firefox_3_0_10: 19cee34d76160b7854ba88d57b524dde4b89df92
+      firefox_beta_4_1_4: bb44e026d9a26907bfd57de823001ce6acb654d0
+      firefox_nightly_3_0_6: a9050dd6b924b1902e63e64cb20258cc372b9463
+      safari_2_1_0: daaae8a5f0531386dd4864bbc89fb0ffaf1cc268
+    repository_license_sha256: a8fa11ef7da0447b701294ffa4c9649670f33bd727ceac0ac47f7e0cce4087c4
+    exact_legal_readme_sha256:
+      chrome_and_canary: c12aba9c3c7709f0ae717cefad92cf1b922087737ee8413e95eba617f49fe2da
+      chrome_beta_and_dev: 5f5ecdb8276d5777c998fd7b1d9ee0775e7f9026c3f8c00851c02cab335ad389
+      chromium_and_edge: a842ee3cc4bb52664f4765389a85a276c8647793e24451a69340eef80fa42f67
+      firefox_family: 961d834e39df97ce137a7747a92e2c12f89b2f3c368e8a030f6e3b59c2f82ba4
+      safari: e58efc2e5add4d5e8f0162960f7764939f94b86d3e89a848306e8fb54bc46f10
+    legal_scope: Repository MIT text covers everything else, while logos and trademarks remain property of their respective owners.
+    published_dashboard_mapping: six SVGs inlined by Vite and four byte-identical standalone SVGs; all ten assets verified present
+    distribution_review_complete: false
   nested_stable_test_runner_lock:
     required_by_normal_build: true
     skippable_by_upstream_flag: false
@@ -148,6 +172,7 @@ evidence:
   npm_to_source_correspondence_reproduced: true
   exact_source_to_generated_output_mapping_reviewed: true
   published_sidecar_entries_matched_to_root_lock: true
+  browser_logo_distribution_reviewed: false
   closure_archive_hosted_immutably: false
   production_closure_audited: false
   test_closure_audited: false

@@ -38,6 +38,15 @@ build_closure:
     fedora_43_44_exact_locked_providers: 0
     fedora_43_44_different_version_names: colors, esbuild, punycode, undici
     rpm_fusion_43_44_npm_providers: 0
+    license_metadata_entries: 614
+    missing_license_metadata_entries: 10
+    browser_logo_assets:
+      packages: "@browser-logos/chrome@2.0.0, @browser-logos/chrome-beta@3.0.0, @browser-logos/chrome-canary@2.0.0, @browser-logos/chrome-dev@3.0.0, @browser-logos/chromium@2.0.1, @browser-logos/edge@2.0.7, @browser-logos/firefox@3.0.10, @browser-logos/firefox-beta@4.1.4, @browser-logos/firefox-nightly@3.0.6, @browser-logos/safari@2.1.0"
+      npm_license_metadata: absent
+      npm_tarball_license_notice: absent
+      source_repository_legal_statement: All logos and trademarks are the property of their respective owners; everything else is MIT-licensed.
+      published_dashboard_mapping: six Vite-inlined SVG data URIs and four standalone SVG files
+      decision: Explicit redistribution/trademark review or an upstream-supported dashboard/logo omission is required.
   reason: The MCP build script is a no-op. The exact runtime requires the monorepo-wide Playwright build, generated esbuild/Vite outputs, copied xdg-open, and a separate stable-test-runner install. Upstream exposes no package or MCP-only build target.
   esbuild:
     version: 0.28.1
@@ -176,5 +185,6 @@ gates:
   - Package exact Rolldown 1.1.3 and Lightning CSS 1.32.0 N-API bindings from released source after their Cargo closures and aggregate licenses pass review.
   - Reproduce every generated bundle, Vite asset, type, browser descriptor, and copied executable from the pinned source commit.
   - Complete aggregate SPDX accounting and retain applicable license texts for the shipped bundled closure.
+  - Resolve distribution of the ten shipped browser-logo assets or use an upstream-supported build that omits them.
   - Repeat the no-download Fedora chromium-headless operation smoke through the packaged MCP on Fedora 43 and Fedora 44.
   - Host the complete checksummed closure at immutable URLs usable by COPR SCM.
