@@ -810,6 +810,52 @@ module Agentlab
         errors << "#{prefix} spec does not apply the FFF disable patch"
       end
 
+      parcel_identity = "@parcel/watcher-linux-x64-glibc@2.5.1"
+      parcel = components.find { |component| component["package"] == parcel_identity }
+      expected_parcel_build = {
+        "source_package" => "@parcel/watcher@2.5.1",
+        "source_url" => "https://registry.npmjs.org/@parcel/watcher/-/watcher-2.5.1.tgz",
+        "source_sha256" => "bf7a6b5577a287153c9a6bf7be953556b998f2a57706eb7a5371ec7eb0088d41",
+        "source_commit" => "119f1ff04bb41c2369929e37274900c61b0a9f49",
+        "node_addon_api_package" => "node-addon-api@7.1.1",
+        "node_addon_api_sha256" => "b10455d15a977c0cd17a1cb0eb679e03d939f8ef8d4302eb33e1f78dacc71f82",
+        "command" => "node-24 /usr/lib/node_modules_24/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --nodedir=/usr",
+        "output" => "build/Release/watcher.node",
+        "platform_package" => "@parcel/watcher-linux-x64-glibc@2.5.1",
+        "platform_payload" => "watcher.node",
+        "published_payload_sha256" => "e58979069d4f71d2e36f7dc130d6dbc671e63666fe3943fd2ed481519cbf374c",
+        "local_output_sha256" => "35cfe2dd72ae617c39054653dcda7fd830485f193d01d20120b2897f8488c589",
+        "local_rebuilds" => 2,
+        "local_rebuilds_byte_identical" => true,
+        "napi_exports" => %w[getEventsSince subscribe unsubscribe writeSnapshot],
+        "dynamic_libraries" => %w[libstdc++.so.6 libm.so.6 libgcc_s.so.1 libc.so.6],
+        "inotify_smoke_verified" => true,
+        "platform_package_load_verified" => true,
+        "final_bun_embedding_verified" => false,
+        "local_proof_only" => true
+      }
+      expected_parcel_disable = {
+        "flag" => "OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER",
+        "watcher_service_when_disabled" => "empty",
+        "git_head_subscription_disabled" => true,
+        "branch_update_events_preserved" => false
+      }
+      unless parcel&.dig("provenance", "source_build") == expected_parcel_build
+        errors << "#{prefix} Parcel watcher source-build evidence does not match"
+      end
+      unless parcel&.dig("provenance", "disable_assessment") == expected_parcel_disable
+        errors << "#{prefix} Parcel watcher disable assessment does not match"
+      end
+      errors << "#{prefix} Parcel watcher must be rebuilt" unless parcel&.dig("decision", "action") == "rebuild"
+      [
+        "BuildRequires:  nodejs24-devel",
+        "BuildRequires:  nodejs24-npm",
+        "node-gyp/bin/node-gyp.js rebuild --nodedir=/usr",
+        "--skip-install --skip-embed-web-ui"
+      ].each do |snippet|
+        errors << "#{prefix} spec is missing Parcel watcher build requirement #{snippet}" unless opencode_spec.include?(snippet)
+      end
+
       photon_identity = "@silvia-odwyer/photon-node@0.3.4"
       photon = components.find { |component| component["package"] == photon_identity }
       photon_source = sources.find do |source|

@@ -4,7 +4,7 @@
 
 Name:           opencode
 Version:        1.18.3
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -30,8 +30,8 @@ ExclusiveArch:  x86_64
 BuildRequires:  bun = 1.3.14
 BuildRequires:  gcc-c++
 BuildRequires:  make
-BuildRequires:  nodejs-devel
-BuildRequires:  nodejs-packaging
+BuildRequires:  nodejs24-devel
+BuildRequires:  nodejs24-npm
 BuildRequires:  python3
 BuildRequires:  coreutils
 BuildRequires:  tar
@@ -69,9 +69,20 @@ export CI=1
 export OPENCODE_DISABLE_AUTOUPDATE=1
 export BUN_INSTALL_CACHE_DIR="$PWD/.bun-cache"
 
+# Rebuild the required Parcel watcher from the authenticated main-package
+# sources and replace the published platform payload before Bun embeds it.
+pushd packages/opencode >/dev/null
+parcel_source="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("@parcel/watcher/package.json")))')"
+parcel_platform="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("@parcel/watcher-linux-x64-glibc/package.json")))')"
+popd >/dev/null
+pushd "$parcel_source" >/dev/null
+node-24 /usr/lib/node_modules_24/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --nodedir=/usr
+popd >/dev/null
+install -pm0755 "$parcel_source/build/Release/watcher.node" "$parcel_platform/watcher.node"
+
 # The source closure is reconstructed before this point. Network-backed
 # package resolution and lifecycle scripts are not permitted here.
-bun run packages/opencode/script/build.ts --single
+bun run packages/opencode/script/build.ts --single --skip-install --skip-embed-web-ui
 
 %check
 test -f %{SOURCE2}
@@ -90,6 +101,8 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.3
+- Rebuild the Parcel watcher from source before compiling the selected CLI.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.2
 - Omit the FFF native accelerator and use the system-ripgrep fallback.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.1

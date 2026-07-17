@@ -79,7 +79,11 @@ bundled executables, and tree-sitter-bash must omit all Node prebuilds while
 rebuilding its functional WASM. OpenTUI and bun-pty require native source
 builds. The Fedora patch binds FFF to OpenCode's existing no-FFF adapter, so the
 required system ripgrep provides find, glob, and grep without `libfff_c.so`.
-Parcel watcher still requires a source build or a behavior-preserving fallback.
+Parcel watcher cannot be disabled without losing Git branch-update events. The
+draft recipe therefore rebuilds `watcher.node` from the authenticated main npm
+package with Fedora Node 24 headers and replaces the published platform payload
+before Bun compilation. Two local rebuilds were byte-identical and an inotify
+smoke passed, but final Bun embedding and F43/F44 reproduction remain unproven.
 
 All functional WASM remains fail-closed. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp

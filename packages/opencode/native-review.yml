@@ -129,12 +129,38 @@ components:
       peeled_commit: 664695dbb2488d53f782c3e2b8791c4c114731fb
       package_version_at_source: "2.5.1"
       correspondence: The registry gitHead differs only by a Windows C++17 binding option; Linux source is unchanged.
+      source_build:
+        source_package: "@parcel/watcher@2.5.1"
+        source_url: https://registry.npmjs.org/@parcel/watcher/-/watcher-2.5.1.tgz
+        source_sha256: bf7a6b5577a287153c9a6bf7be953556b998f2a57706eb7a5371ec7eb0088d41
+        source_commit: 119f1ff04bb41c2369929e37274900c61b0a9f49
+        node_addon_api_package: node-addon-api@7.1.1
+        node_addon_api_sha256: b10455d15a977c0cd17a1cb0eb679e03d939f8ef8d4302eb33e1f78dacc71f82
+        command: node-24 /usr/lib/node_modules_24/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --nodedir=/usr
+        output: build/Release/watcher.node
+        platform_package: "@parcel/watcher-linux-x64-glibc@2.5.1"
+        platform_payload: watcher.node
+        published_payload_sha256: e58979069d4f71d2e36f7dc130d6dbc671e63666fe3943fd2ed481519cbf374c
+        local_output_sha256: 35cfe2dd72ae617c39054653dcda7fd830485f193d01d20120b2897f8488c589
+        local_rebuilds: 2
+        local_rebuilds_byte_identical: true
+        napi_exports: [getEventsSince, subscribe, unsubscribe, writeSnapshot]
+        dynamic_libraries: [libstdc++.so.6, libm.so.6, libgcc_s.so.1, libc.so.6]
+        inotify_smoke_verified: true
+        platform_package_load_verified: true
+        final_bun_embedding_verified: false
+        local_proof_only: true
+      disable_assessment:
+        flag: OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER
+        watcher_service_when_disabled: empty
+        git_head_subscription_disabled: true
+        branch_update_events_preserved: false
     decision:
-      action: pending_rebuild_or_supported_disable
+      action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Rebuild watcher.node or prove the upstream file-watcher disable switch preserves the selected CLI behavior.
+      reason: Rebuild watcher.node from the authenticated main package sources and replace the platform payload before Bun compilation; disabling the watcher removes Git HEAD subscriptions and branch-update events.
   - package: "bun-pty@0.4.8"
     npm_name: bun-pty
     version: "0.4.8"
