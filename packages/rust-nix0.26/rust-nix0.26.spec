@@ -7,7 +7,7 @@
 
 Name:           rust-nix0.26
 Version:        0.26.4
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Rust friendly bindings to Unix APIs
 
 License:        MIT
@@ -115,10 +115,12 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 
 %if %{with check}
 %check
-# Fedora also excludes this assertion because kernel queue accounting is flaky.
+# Fedora also excludes the AF_ALG cipher test as hardware-dependent and the
+# queue-accounting assertion because it is flaky.
 # The kmod and process-accounting tests require host kernel build files or
 # privileges that are intentionally unavailable inside Mock.
 %{cargo_test -- -- %{shrink:
+    --skip sys::test_socket::test_af_alg_cipher
     --skip sys::test_socket::test_recvmsg_rxq_ovfl
     --skip test_kmod::test_delete_module_not_loaded
     --skip test_kmod::test_finit_and_delete_module
@@ -132,6 +134,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.26.4-0.2
+- Skip the hardware-dependent AF_ALG cipher test excluded by Fedora.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.26.4-0.1
 - Add the Rawhide compatibility crate required by x11rb 0.12.
 - Remove a FreeBSD-only test dependency from the Linux build graph.
