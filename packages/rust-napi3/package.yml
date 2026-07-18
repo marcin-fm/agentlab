@@ -9,6 +9,7 @@ validation:
   duplicate_audit: No crate(napi) = 3.10.3 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion free/nonfree repositories as checked on 2026-07-18.
   source_delivery: The direct static registry URL serves the pinned crate bytes without relying on the crates.io API redirect in isolated COPR source builders.
   local_validation: Both patches applied with fuzz 0; a fresh Fedora 44 x86_64 Mock build passed the selected feature build and its one test, all 50 source/binary RPMs passed digest verification and rpmlint, and an offline Mock consumer compiled the selected napi/derive macro surface.
+  copr_validation: Configured SCM build 10740937 produced 3.10.3-0.3 and succeeded in all six Fedora 43, Fedora 44, and Rawhide x86_64/aarch64 cells; all 150 downloaded x86_64 source/binary RPMs passed digest verification and artifact rpmlint, and LICENSE-MIT is marked as an RPM license file.
 upstream:
   provider: crates_io
   crate: napi

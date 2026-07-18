@@ -53,8 +53,8 @@ special:
   published_napi_license_sources:
     rust-napi-sys3: {commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, tag: napi-sys-v3.2.2, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740891, state: exact_release_source_verified_six_cell_copr_success}
     rust-napi-derive-backend5: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, tag: napi-derive-backend-v5.1.1, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740892, state: exact_release_source_verified_six_cell_copr_success}
-    rust-napi3: {commit: 1ac467e06e71f78b983630926c7908894d08e496, tag: napi-v3.10.3, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, state: exact_release_source_verified_local_clean_build}
-    rust-napi-derive3: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, tag: napi-derive-v3.5.9, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, state: exact_release_source_verified_local_clean_build}
+    rust-napi3: {commit: 1ac467e06e71f78b983630926c7908894d08e496, tag: napi-v3.10.3, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740937, state: exact_release_source_verified_six_cell_copr_success}
+    rust-napi-derive3: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, tag: napi-derive-v3.5.9, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740942, state: exact_release_source_verified_six_cell_copr_success}
 validation:
   package_records_verified: 63
   declared_patch_members_checked: 40
@@ -65,8 +65,8 @@ validation:
   exact_package_chroot_pairs: 252
   exact_package_chroot_pairs_succeeded: 252
   supplemental_f43_provider_chroot_pairs_succeeded: 4
-  published_napi_chroot_pairs_succeeded: 12
-  published_napi_x86_64_artifacts_verified: 66
+  published_napi_chroot_pairs_succeeded: 24
+  published_napi_x86_64_artifacts_verified: 246
   checked: "2026-07-18"
 rows:
   - {package: rust-biblatex0.12, source_manifest_row: 2, crate_version: 0.12.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
@@ -104,9 +104,9 @@ rows:
   - {package: rust-nalgebra0.35, source_manifest_row: 36, crate_version: 0.35.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_nalgebra-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-napi-build2, source_manifest_row: 37, crate_version: 2.3.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-napi-derive-backend5, source_manifest_row: 38, crate_version: 5.1.1, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: private_semver_and_ctor_repairs_applied_fuzz_zero, current_spec_state: copr_build_10740892_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
-  - {package: rust-napi-derive3, source_manifest_row: 39, crate_version: 3.5.9, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: ctor_0_6_repair_applied_fuzz_zero, current_spec_state: fedora_44_local_clean_build_rpmlint_and_offline_consumer_succeeded, blocker_codes: []}
+  - {package: rust-napi-derive3, source_manifest_row: 39, crate_version: 3.5.9, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: ctor_0_6_repair_applied_fuzz_zero, current_spec_state: copr_build_10740942_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
   - {package: rust-napi-sys3, source_manifest_row: 40, crate_version: 3.2.2, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: none_declared, current_spec_state: copr_build_10740891_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
-  - {package: rust-napi3, source_manifest_row: 41, crate_version: 3.10.3, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: split_ctor_and_wasm_metadata_repairs_applied_fuzz_zero, current_spec_state: fedora_44_local_clean_build_rpmlint_and_offline_consumer_succeeded, blocker_codes: []}
+  - {package: rust-napi3, source_manifest_row: 41, crate_version: 3.10.3, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: split_ctor_and_wasm_metadata_repairs_applied_fuzz_zero, current_spec_state: copr_build_10740937_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
   - {package: rust-oem_cp1, source_manifest_row: 42, crate_version: 1.3.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_oem_cp-fix-metadata-auto.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-org0.3, source_manifest_row: 43, crate_version: 0.3.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-ort-sys, source_manifest_row: 44, crate_version: 2.0.0-rc.12, source_status: offline_system_onnx_runtime, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: offline_system_provider_not_rebuilt, blocker_codes: [ORT_OFFLINE, BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}

@@ -79,7 +79,7 @@ supplemental_license_sources:
       rust-napi-sys3: 129774a4c41b3814c1f6c5e12e64bc22dc854953acba755de08a1a208593bf48
       rust-napi-derive3: b4444774885adb0a33a18f42eb5df97410ff094410ed4c848f3bed1de75845c8
       rust-napi-derive-backend5: 992c728cea16c32537b75518c942316e9cd202542ebde542a6d20344a07859b4
-    validation: immutable URLs fetched and checksums verified; the lower N-API pair passed all six COPR chroots, while rust-napi3 and rust-napi-derive3 passed fresh Fedora 44 local clean builds, artifact rpmlint, and an offline selected-feature consumer compile
+    validation: immutable URLs fetched and checksums verified; all four N-API packages passed all six COPR chroots, downloaded x86_64 artifacts passed digest verification and rpmlint, and the upper pair also passed a fresh offline selected-feature consumer compile
 dependency_patch_audit:
   package_records: 63
   declared_patch_members: 40

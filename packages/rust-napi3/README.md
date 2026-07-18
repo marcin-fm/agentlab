@@ -8,4 +8,6 @@ The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch
 
 A fresh Fedora 44 x86_64 Mock build passed its selected feature build and one test. All 50 source/binary RPMs passed digest verification and `rpmlint` with zero errors or warnings, and a separate offline Mock consumer compiled the selected `napi` and `napi-derive` macro surface.
 
+Configured SCM build `10740937` produced `3.10.3-0.3` successfully in all six Fedora 43, Fedora 44, and Rawhide x86_64/aarch64 cells. All 150 downloaded x86_64 source/binary RPMs passed digest verification and artifact `rpmlint` with zero errors or warnings, and RPM metadata marks `LICENSE-MIT` as `%license`.
+
 The Fedora patches independently select ctor 0.6.3 and omit only the WASM-specific Tokio dependency. The published crate omits its license file; the spec installs the pinned immutable upstream copy.

@@ -8,4 +8,6 @@ The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch
 
 A fresh Fedora 44 x86_64 Mock build completed with no runnable unit tests and two upstream-ignored doctests. All 10 source/binary RPMs passed digest verification and `rpmlint` with zero errors or warnings, and a separate offline Mock consumer compiled emitted module registration tokens with Fedora ctor 0.6.3.
 
+Configured SCM build `10740942` produced `3.5.9-0.2` successfully in all six Fedora 43, Fedora 44, and Rawhide x86_64/aarch64 cells. All 30 downloaded x86_64 source/binary RPMs passed digest verification and artifact `rpmlint` with zero errors or warnings, and RPM metadata marks `LICENSE-MIT` as `%license`.
+
 The Fedora patch changes only ctor dependency metadata and generated registration syntax for ctor 0.6.3. The published crate omits its license file; the spec installs the pinned immutable upstream copy.
