@@ -8,12 +8,16 @@
 
 Name:           rust-ort2
 Version:        2.0.0~rc.12
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Safe Rust wrapper for ONNX Runtime
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/ort
 Source:         %{crates_source %{crate} %{crate_version}}
+# Select Fedora's available ndarray 0.16 compatibility branch.
+# Fedora-specific; not submitted upstream because the released crate selects ndarray 0.17.
 Patch:          ort-fedora-ndarray.diff
+# Adapt the optimization-level enum to Fedora's system ONNX Runtime API.
+# Fedora-specific system-library compatibility change; not submitted upstream.
 Patch1:         ort-system-onnxruntime.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -118,29 +122,29 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %cargo_prep
 
 %generate_buildrequires
-export CARGO_NET_OFFLINE=true
 export ORT_OFFLINE=1
 export ORT_SKIP_DOWNLOAD=1
-/usr/bin/cargo2rpm --path Cargo.toml buildrequires --no-default-features --features api-18,load-dynamic,ndarray,std --with-check
+%cargo_generate_buildrequires -n -f api-18,load-dynamic,ndarray,std
 
 %build
-export CARGO_NET_OFFLINE=true
 export ORT_OFFLINE=1
 export ORT_SKIP_DOWNLOAD=1
-/usr/bin/env CARGO_HOME=.cargo RUSTC_BOOTSTRAP=1 /usr/bin/cargo build -j%{_smp_build_ncpus} -Z avoid-dev-deps --profile rpm --no-default-features --features api-18,load-dynamic,ndarray,std
+%cargo_build -n -f api-18,load-dynamic,ndarray,std
 
 %install
-%cargo_install
+%cargo_install -n -f api-18,load-dynamic,ndarray,std
 
 %if %{with check}
 %check
-export CARGO_NET_OFFLINE=true
 export ORT_OFFLINE=1
 export ORT_SKIP_DOWNLOAD=1
 export ORT_DYLIB_PATH=%{_libdir}/libonnxruntime.so
-/usr/bin/env CARGO_HOME=.cargo RUSTC_BOOTSTRAP=1 /usr/bin/cargo test -j%{_smp_build_ncpus} -Z avoid-dev-deps --profile rpm --no-fail-fast --lib --no-default-features --features api-18,load-dynamic,ndarray,std -- --skip operator::tests::test_custom_ops
+%cargo_test -n -f api-18,load-dynamic,ndarray,std -- --lib -- --skip operator::tests::test_custom_ops
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.3
+- Use Fedora Cargo macros for dependency generation, build, install, and tests.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.2
 - Build the offline system-ONNX Runtime feature surface.
