@@ -1,7 +1,13 @@
 # rust-biblatex0.12
 
-Final staged Fedora Rust package for biblatex 0.12.0. Source SHA-256 is recorded in `package.yml`. This draft remains blocked pending publication approval and duplicate/license review.
+Fedora Rust package for `biblatex 0.12.0`. The canonical crates.io archive is
+pinned by SHA-256, fetched from the immutable static registry endpoint, and
+includes the declared MIT and Apache-2.0 license files.
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. No exact `biblatex 0.12.0` provider exists in Fedora 43, Fedora 44,
+Rawhide, or matching RPM Fusion repositories. Fedora supplies the external
+dependency branches, and Agentlab supplies the exact `roman-numerals-rs 3.1.0`
+branch required by the crate.

@@ -4,15 +4,19 @@
 
 %global crate roman-numerals-rs
 %global source_sha256 c85cd47a33a4510b1424fe796498e174c6a9cf94e606460ef022a19f3e4ff85e
+%global license_commit ec81337f99d8b557a6fce10f674c054050551444
+%global license_sha256 c744ffc7e120b22e6620b613298dc003a2613c0ae489ee414fb1d473f24f916f
 
 Name:           rust-roman-numerals-rs3
 Version:        3.1.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Manipulate well-formed Roman numerals
 
 License:        0BSD OR CC0-1.0
 URL:            https://crates.io/crates/roman-numerals-rs
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# The registry archive omits the project license text; pin the release commit.
+Source1:        https://raw.githubusercontent.com/AA-Turner/roman-numerals/%{license_commit}/LICENCE.rst#/%{crate}-%{version}-LICENCE.rst
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -31,7 +35,7 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENCE.rst
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
 
@@ -61,7 +65,9 @@ use the "std" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_sha256}  %{SOURCE1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm 0644 %{SOURCE1} LICENCE.rst
 %cargo_prep
 
 %generate_buildrequires
@@ -79,5 +85,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 3.1.0-0.2
+- Enable configured SCM publication with the immutable upstream license text.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.1.0-0.1
 - Add the initial repository packaging changelog.

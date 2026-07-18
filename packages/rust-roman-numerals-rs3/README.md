@@ -1,7 +1,13 @@
 # rust-roman-numerals-rs3
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256 and fetched
+directly from the immutable static registry endpoint.
 
-Blocked import of the staged `roman-numerals-rs` 3.1.0 compatibility package. The spec is retained for later Fedora validation and immutable hosting review.
+The registry archive omits project license text, so the spec also pins and
+verifies `LICENCE.rst` from the exact upstream `v3.1.0` commit. No exact
+`roman-numerals-rs 3.1.0` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. The crate has no external dependencies and
+supplies the exact branch required by `biblatex 0.12`.

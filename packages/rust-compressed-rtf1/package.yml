@@ -1,5 +1,21 @@
 name: rust-compressed-rtf1
-status: blocked
-blockers: ["Staged supplemental Microsoft MIT license is retained but immutable source hosting and final audit remain.", "Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass."]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses immutable crate and supplemental-license sources and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256; the archive omits license text, so the spec pins and verifies the MIT license from the exact trusted-publishing commit recorded by crates.io.
+  dependency_evidence: Fedora supplies byteorder 1 and thiserror 2 in every selected release; the crate declares Rust 1.82, below every selected Fedora toolchain.
+  duplicate_audit: No crate(compressed-rtf) = 1.0.1 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: compressed-rtf, version_requirement: '= 1.0.1', current_version: 1.0.1, source_sha256: 51b7f2aaf6791c6517669240b82ef12c1283b39772f0cad3bc5c73f19f6e7f16, source_url_template: 'https://static.crates.io/crates/compressed-rtf/compressed-rtf-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-compressed-rtf1, spec: rust-compressed-rtf1.spec}
+supplemental: {license_url: 'https://raw.githubusercontent.com/microsoft/outlook-pst-rs/1397836e73b690dbb09663f66056012fced45ff9/LICENSE', license_commit: 1397836e73b690dbb09663f66056012fced45ff9, license_sha256: c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383, install_name: LICENSE}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-compressed-rtf1
+  spec: rust-compressed-rtf1.spec

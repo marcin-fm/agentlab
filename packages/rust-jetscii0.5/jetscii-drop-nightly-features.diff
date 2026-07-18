@@ -1,0 +1,9 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -39,6 +39,2 @@
+ [dev-dependencies.region]
+ version = "3.0.0"
+-
+-[features]
+-benchmarks = []
+-pattern = []

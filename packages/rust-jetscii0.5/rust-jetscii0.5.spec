@@ -7,13 +7,18 @@
 
 Name:           rust-jetscii0.5
 Version:        0.5.3
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Search strings and byte slices for ASCII values
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/jetscii
-Source:         %{crates_source}
-Patch:          jetscii-fix-metadata.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora carries the maintained memmap2 replacement for the unmaintained memmap.
+# Downstream-only registry integration metadata; not submitted upstream.
+Patch0:         jetscii-fix-metadata.diff
+# Stable Fedora Rust cannot build these unselected nightly-only interfaces.
+# Downstream-only feature pruning; not submitted upstream.
+Patch1:         jetscii-drop-nightly-features.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -51,30 +56,6 @@ use the "default" feature of the "%{crate}" crate.
 %files       -n %{name}+default-devel
 %ghost %{crate_instdir}/Cargo.toml
 
-%package     -n %{name}+benchmarks-devel
-Summary:        %{summary}
-BuildArch:      noarch
-
-%description -n %{name}+benchmarks-devel %{_description}
-
-This package contains library source intended for building other packages which
-use the "benchmarks" feature of the "%{crate}" crate.
-
-%files       -n %{name}+benchmarks-devel
-%ghost %{crate_instdir}/Cargo.toml
-
-%package     -n %{name}+pattern-devel
-Summary:        %{summary}
-BuildArch:      noarch
-
-%description -n %{name}+pattern-devel %{_description}
-
-This package contains library source intended for building other packages which
-use the "pattern" feature of the "%{crate}" crate.
-
-%files       -n %{name}+pattern-devel
-%ghost %{crate_instdir}/Cargo.toml
-
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
@@ -95,5 +76,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.5.3-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+- Remove unselected nightly-only feature interfaces.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.5.3-0.1
 - Shorten the package summary for RPM metadata.

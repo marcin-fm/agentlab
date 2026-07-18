@@ -4,16 +4,19 @@
 
 %global crate compressed-rtf
 %global source_sha256 51b7f2aaf6791c6517669240b82ef12c1283b39772f0cad3bc5c73f19f6e7f16
+%global license_commit 1397836e73b690dbb09663f66056012fced45ff9
+%global license_sha256 c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383
 
 Name:           rust-compressed-rtf1
 Version:        1.0.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        [MS-OXRTFCP]: Rich Text Format (RTF) Compression Algorithm
 
 License:        MIT
 URL:            https://crates.io/crates/compressed-rtf
-Source:         %{crates_source}
-Source1:        compressed-rtf-LICENSE
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# The registry archive omits the project license text; pin its publishing commit.
+Source1:        https://raw.githubusercontent.com/microsoft/outlook-pst-rs/%{license_commit}/LICENSE#/compressed-rtf-LICENSE
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -51,7 +54,9 @@ use the "default" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_sha256}  %{SOURCE1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm 0644 %{SOURCE1} LICENSE
 %cargo_prep
 
 %generate_buildrequires
@@ -62,7 +67,6 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 
 %install
 %cargo_install
-install -pm 0644 %{SOURCE1} %{buildroot}%{crate_instdir}/LICENSE
 
 %if %{with check}
 %check
@@ -70,5 +74,8 @@ install -pm 0644 %{SOURCE1} %{buildroot}%{crate_instdir}/LICENSE
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.2
+- Enable configured SCM publication with the immutable upstream license text.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.1
 - Add the initial repository packaging changelog.

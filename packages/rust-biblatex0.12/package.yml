@@ -1,9 +1,11 @@
-status: blocked
 name: rust-biblatex0.12
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT and Apache-2.0 license files.
+  dependency_evidence: Agentlab supplies roman-numerals-rs 3.1.0 in all six chroots; Fedora supplies paste 1, strum 0.27 with derive, unicode-normalization 0.1, unscanny 0.1, serde 1 with derive, and unic-langid 0.9.6 with macros in every selected release.
+  duplicate_audit: No crate(biblatex) = 0.12.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: biblatex
@@ -12,6 +14,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/biblatex/biblatex-{version}.crate
   source_sha256: 591eba69b7c085632e22ca03606f0bbea68d53bbe26c8962e2d549af20c6a561
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-biblatex0.12
   spec: rust-biblatex0.12.spec
