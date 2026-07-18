@@ -201,7 +201,10 @@ packages.each do |package|
       begin
         receipt = JSON.parse(File.read(receipt_path))
         errors << "#{package.name}: selected lock receipt release does not match" unless receipt["release"].to_s == manifest_version
-        errors << "#{package.name}: selected lock receipt schema is invalid" unless receipt["schema"] == "opencode-selected-lock-audit/v1"
+        expected_schema = receipt_config.fetch("schema", "opencode-selected-lock-audit/v1")
+        errors << "#{package.name}: selected lock receipt schema is invalid" unless receipt["schema"] == expected_schema
+        errors << "#{package.name}: selected lock receipt source tag does not match" unless receipt["source_tag"] == package.upstream["source_tag"]
+        errors << "#{package.name}: selected lock receipt source commit does not match" unless receipt["source_commit"] == package.upstream["source_commit"]
         errors << "#{package.name}: selected lock receipt performed dependency resolution" unless receipt.dig("validation", "no_dependency_resolution_performed") == true
         errors << "#{package.name}: selected lock receipt incorrectly claims source verification" unless receipt.dig("validation", "source_archives_verified") == false
         errors << "#{package.name}: selected lock receipt incorrectly claims license verification" unless receipt.dig("validation", "licenses_verified") == false
@@ -215,10 +218,18 @@ packages.each do |package|
           "github_packages" => receipt.dig("selection", "origins", "github"),
           "platform_excluded" => receipt.dig("selection", "platform_excluded")
         }
+        expected_counts["test_packages"] = receipt.dig("selection", "roles", "test") if receipt_config.key?("test_packages")
+        expected_counts["policy_excluded"] = receipt.dig("selection", "policy_excluded") if receipt_config.key?("policy_excluded")
         expected_counts.each do |key, value|
           errors << "#{package.name}: selected lock receipt #{key} does not match" unless value == receipt_config[key]
         end
         errors << "#{package.name}: selected lock receipt lock SHA-256 does not match" unless receipt.dig("lockfile", "sha256") == receipt_config["lock_sha256"]
+        Hash(receipt_config["validation"]).each do |key, value|
+          errors << "#{package.name}: selected lock receipt validation #{key} does not match" unless receipt.dig("validation", key) == value
+        end
+        Hash(receipt_config["source_identity"]).each do |key, value|
+          errors << "#{package.name}: selected lock receipt source identity #{key} does not match" unless receipt.dig("source_identity", key) == value
+        end
       rescue JSON::ParserError => e
         errors << "#{package.name}: invalid selected lock receipt #{receipt_filename}: #{e.message}"
       end

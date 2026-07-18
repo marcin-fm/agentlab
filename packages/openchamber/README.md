@@ -44,3 +44,25 @@ The draft remains blocked until:
 `openchamber.spec` therefore verifies only `Source0` and aborts unconditionally
 in `%prep`. Do not replace missing closure inputs with upstream AppImages,
 Electron bundles, npm installs, or platform-native package binaries.
+
+## Deterministic Lock Selection
+
+`openchamber-1.16.1-selected-lock-audit.json` is generated directly from the
+released `bun.lock` by `scripts/audit-openchamber-lock-closure`; it performs no
+dependency resolution. For the Linux x86_64 glibc Node target it records 934
+selected packages: 221 runtime, 666 build, and 47 test records. All selected
+sources are registry records, 76 incompatible platform records are excluded,
+and the checked `@tanstack/virtual-core@3.17.3` patch is linked to its selected
+package record.
+
+The receipt enforces the Node PTY boundary: `node-pty` is selected once and
+`bun-pty` is present only as an explicit policy exclusion. It also verifies
+that the root, `packages/web`, and `packages/ui` dependency maps in `bun.lock`
+match their release manifests.
+
+This is not yet the authoritative closure. The lock omits the root importer
+version and reports `1.14.1` for both `packages/web` and `packages/ui`, while
+all three manifests report `1.16.1`. The current build selection also includes
+all `packages/ui` dependencies as a conservative source-alias boundary until
+exact Vite entrypoint reachability is proven. The receipt records both gates
+as false instead of normalizing or hiding them.

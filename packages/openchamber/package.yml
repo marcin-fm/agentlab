@@ -3,7 +3,8 @@ name: openchamber
 status: blocked
 blockers:
 - Fedora-source-built Bun 1.3.14 is unavailable.
-- The selected packages/web production, build, and test source closure has not been derived from bun.lock or acquired as immutable sources.
+- The released bun.lock importer versions are absent or stale for the root, packages/web, and packages/ui even though their dependency maps match the 1.16.1 manifests.
+- The deterministic 934-record lock selection still uses all packages/ui dependencies as a conservative build boundary; exact source-import reachability and immutable source acquisition are unverified.
 - Native and platform payloads, including better-sqlite3, node-pty, and sherpa-onnx-node, have not been rebuilt from corresponding source.
 - Vite-generated browser assets, aggregate licenses, and final bundled Node Provides have not been verified.
 - The separately packaged OpenCode CLI runtime provider remains blocked.
@@ -22,6 +23,12 @@ source_policy:
   dependency_resolution_in_rpm: forbidden
   prebuilt_native_payloads: forbidden
   generated_browser_assets: rebuild and source-correspondence review required
+  selected_lock_receipt: openchamber-1.16.1-selected-lock-audit.json
+  selected_lock_packages: 934
+  selected_runtime_packages: 221
+  selected_build_packages: 666
+  selected_test_packages: 47
+  selected_lock_authoritative: false
 upstream:
   provider: github
   repository: openchamber/openchamber

@@ -5,6 +5,7 @@ require "fileutils"
 require "tmpdir"
 require "yaml"
 require_relative "../scripts/lib/agentlab"
+load File.expand_path("../scripts/audit-openchamber-lock-closure", __dir__)
 
 class AgentlabTest < Minitest::Test
   def registry_entry(overrides = {})
@@ -41,6 +42,143 @@ class AgentlabTest < Minitest::Test
     assert_equal("https://example.test/a//b", parsed.fetch("url"))
     assert_equal(%w[one two], parsed.fetch("items"))
     assert_equal(true, parsed.dig("nested", "enabled"))
+  end
+
+  def test_openchamber_lock_selector_preserves_role_precedence_and_platform_filters
+    integrity = "sha512-fixture"
+    workspaces = {
+      "packages/web" => {
+        "name" => "@openchamber/web",
+        "dependencies" => { "runtime-root" => "1", "bun-pty" => "1" },
+        "devDependencies" => { "build-root" => "1", "test-root" => "1" }
+      },
+      "packages/ui" => {
+        "name" => "@openchamber/ui",
+        "dependencies" => { "ui-root" => "1" }
+      }
+    }
+    packages = {
+      "runtime-root" => ["runtime-root@1.0.0", "", { "dependencies" => { "shared" => "1" } }, integrity],
+      "build-root" => [
+        "build-root@1.0.0",
+        "",
+        { "dependencies" => { "shared" => "1", "platform-addon" => "1", "musl-addon" => "1" } },
+        integrity
+      ],
+      "test-root" => [
+        "test-root@1.0.0",
+        "",
+        {
+          "dependencies" => { "shared" => "1" },
+          "peerDependencies" => { "missing-optional" => "*" },
+          "peerDependenciesMeta" => { "missing-optional" => { "optional" => true } }
+        },
+        integrity
+      ],
+      "ui-root" => ["ui-root@1.0.0", "", {}, integrity],
+      "shared" => ["shared@1.0.0", "", {}, integrity],
+      "platform-addon" => ["platform-addon@1.0.0", "", { "os" => "darwin" }, integrity],
+      "musl-addon" => ["@img/sharp-linuxmusl-x64@0.35.2", "", { "os" => "linux", "cpu" => "x64" }, integrity],
+      "bun-pty" => ["bun-pty@0.4.8", "", {}, integrity]
+    }
+    selector = OpenChamberLockAudit::Selector.new(
+      workspaces: workspaces,
+      packages: packages,
+      target: { "os" => "linux", "cpu" => "x64", "libc" => "glibc" },
+      forbidden_names: ["bun-pty"]
+    )
+
+    selector.select_root(workspace_path: "packages/web", dependency_group: "devDependencies", dependency_name: "test-root", role: "test")
+    selector.select_root(workspace_path: "packages/web", dependency_group: "devDependencies", dependency_name: "build-root", role: "build")
+    selector.select_root(workspace_path: "packages/ui", dependency_group: "dependencies", dependency_name: "ui-root", role: "build")
+    selector.select_root(workspace_path: "packages/web", dependency_group: "dependencies", dependency_name: "runtime-root", role: "runtime")
+    selector.run
+
+    assert_equal("runtime", selector.package_roles.fetch("shared"))
+    assert_equal("build", selector.package_roles.fetch("build-root"))
+    assert_equal("test", selector.package_roles.fetch("test-root"))
+    assert_equal("build", selector.workspace_roles.fetch("packages/ui"))
+    assert_equal("runtime", selector.workspace_roles.fetch("packages/web"))
+    assert_equal("os", selector.platform_excluded.dig("platform-addon", "reason"))
+    assert_equal("musl", selector.platform_excluded.dig("musl-addon", "reason"))
+    refute(selector.package_roles.key?("platform-addon"))
+    refute(selector.package_roles.key?("musl-addon"))
+  end
+
+  def test_openchamber_source_identity_rejects_another_commit
+    error = assert_raises(Agentlab::Error) do
+      OpenChamberLockAudit.verify_source_identity(File.expand_path("..", __dir__), "0" * 40, "unused-tag")
+    end
+
+    assert_match(/source checkout commit .* does not match/, error.message)
+  end
+
+  def test_openchamber_source_identity_rejects_missing_tag
+    repository = File.expand_path("..", __dir__)
+    commit, status = Open3.capture2("git", "-C", repository, "rev-parse", "HEAD")
+    assert(status.success?)
+
+    error = assert_raises(Agentlab::Error) do
+      OpenChamberLockAudit.verify_source_identity(repository, commit.strip, "agentlab-missing-test-tag")
+    end
+
+    assert_match(/source tag .* cannot be resolved/, error.message)
+  end
+
+  def test_openchamber_source_identity_does_not_accept_branch_as_tag
+    Dir.mktmpdir do |directory|
+      File.write(File.join(directory, "fixture"), "content\n")
+      _stdout, stderr, status = Open3.capture3("git", "init", "--quiet", directory)
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3("git", "-C", directory, "add", "fixture")
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3(
+        "git", "-C", directory,
+        "-c", "user.name=Agentlab Test",
+        "-c", "user.email=agentlab-test@example.invalid",
+        "commit", "--quiet", "-m", "fixture"
+      )
+      assert(status.success?, stderr)
+      commit, stderr, status = Open3.capture3("git", "-C", directory, "rev-parse", "HEAD")
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3("git", "-C", directory, "branch", "v1.16.1")
+      assert(status.success?, stderr)
+
+      error = assert_raises(Agentlab::Error) do
+        OpenChamberLockAudit.verify_source_identity(directory, commit.strip, "v1.16.1")
+      end
+
+      assert_match(/source tag .* cannot be resolved/, error.message)
+    end
+  end
+
+  def test_openchamber_lock_selector_rejects_bun_pty_on_selected_node_path
+    workspaces = {
+      "packages/web" => {
+        "name" => "@openchamber/web",
+        "dependencies" => { "bun-pty" => "^0.4.5" }
+      }
+    }
+    packages = {
+      "bun-pty" => ["bun-pty@0.4.8", "", {}, "sha512-fixture"]
+    }
+    selector = OpenChamberLockAudit::Selector.new(
+      workspaces: workspaces,
+      packages: packages,
+      target: { "os" => "linux", "cpu" => "x64", "libc" => "glibc" },
+      forbidden_names: ["bun-pty"]
+    )
+
+    error = assert_raises(Agentlab::Error) do
+      selector.select_root(
+        workspace_path: "packages/web",
+        dependency_group: "dependencies",
+        dependency_name: "bun-pty",
+        role: "runtime"
+      )
+    end
+
+    assert_match(/forbidden package bun-pty selected through packages\/web -> bun-pty/, error.message)
   end
 
   def test_rejects_invalid_jsonc

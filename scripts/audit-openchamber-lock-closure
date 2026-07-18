@@ -1,0 +1,625 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require "set"
+require_relative "lib/agentlab"
+
+module OpenChamberLockAudit
+  ROLE_RANK = { "test" => 0, "build" => 1, "runtime" => 2 }.freeze
+  DEPENDENCY_GROUPS = %w[dependencies optionalDependencies peerDependencies].freeze
+
+  module_function
+
+  def deep_sort(value)
+    case value
+    when Hash
+      value.keys.sort.to_h { |key| [key, deep_sort(value.fetch(key))] }
+    when Array
+      value.map { |entry| deep_sort(entry) }
+    else
+      value
+    end
+  end
+
+  def update_role!(roles, key, role)
+    previous = roles[key]
+    return false if previous && ROLE_RANK.fetch(previous) >= ROLE_RANK.fetch(role)
+
+    roles[key] = role
+    true
+  end
+
+  def package_identity(identifier)
+    separator = if identifier.start_with?("@")
+                  slash = identifier.index("/")
+                  slash && identifier.index("@", slash)
+                else
+                  identifier.index("@")
+                end
+    raise Agentlab::Error, "invalid Bun lock package identity #{identifier.inspect}" unless separator
+
+    [identifier[0...separator], identifier[(separator + 1)..]]
+  end
+
+  def package_origin(resolution)
+    case resolution
+    when /\A(?:git\+|git:)/ then "git"
+    when /\Agithub:/ then "github"
+    when /\Ahttps?:/ then "url"
+    when /\Afile:/ then "file"
+    else "registry"
+    end
+  end
+
+  def registry_source_url(name, version)
+    basename = name.split("/").last
+    "https://registry.npmjs.org/#{name}/-/#{basename}-#{version}.tgz"
+  end
+
+  def allowed_selector?(selector, target)
+    values = Array(selector)
+    return true if values.empty?
+
+    excluded = values.filter_map { |value| value.delete_prefix("!") if value.start_with?("!") }
+    return false if excluded.include?(target)
+
+    included = values.reject { |value| value.start_with?("!") }
+    included.empty? || included.include?(target)
+  end
+
+  def platform_allowed?(package_key, identifier, metadata, target)
+    return [false, "os"] unless allowed_selector?(metadata["os"], target.fetch("os"))
+    return [false, "cpu"] unless allowed_selector?(metadata["cpu"], target.fetch("cpu"))
+
+    libc = metadata["libc"]
+    if libc && !allowed_selector?(libc, target.fetch("libc")) && !allowed_selector?(libc, "gnu")
+      return [false, "libc"]
+    end
+
+    if target.fetch("libc") == "glibc" && [package_key, identifier].any? { |value| value.match?(/(?:\A|[-_\/]|linux)musl(?:\z|[-_\/])/) }
+      return [false, "musl"]
+    end
+
+    [true, nil]
+  end
+
+  def resolve_package_key(packages, current_key, dependency_name)
+    if current_key
+      direct = "#{current_key}/#{dependency_name}"
+      return direct if packages.key?(direct)
+
+      nested = packages.keys.filter_map do |candidate|
+        suffix = "/#{dependency_name}"
+        next unless candidate.end_with?(suffix)
+
+        parent = candidate.delete_suffix(suffix)
+        next unless current_key == parent || current_key.start_with?("#{parent}/")
+
+        [parent.length, candidate]
+      end
+      return nested.max_by(&:first)&.last if nested.any?
+    end
+
+    return dependency_name if packages.key?(dependency_name)
+
+    nil
+  end
+
+  def optional_peers(metadata)
+    peers = Set.new(Array(metadata["optionalPeers"]))
+    Hash(metadata["peerDependenciesMeta"]).each do |name, peer_metadata|
+      peers << name if Hash(peer_metadata)["optional"] == true
+    end
+    peers
+  end
+
+  def verify_source_identity(source_dir, expected_commit, expected_tag)
+    stdout, stderr, status = Open3.capture3("git", "-C", source_dir, "rev-parse", "HEAD")
+    unless status.success?
+      raise Agentlab::Error, "source directory is not a Git checkout; exact commit verification is required: #{stderr.strip}"
+    end
+
+    commit = stdout.strip
+    unless commit == expected_commit
+      raise Agentlab::Error, "source checkout commit #{commit.inspect} does not match #{expected_commit}"
+    end
+
+    stdout, stderr, status = Open3.capture3("git", "-C", source_dir, "rev-parse", "refs/tags/#{expected_tag}^{commit}")
+    unless status.success?
+      raise Agentlab::Error, "source tag #{expected_tag.inspect} cannot be resolved: #{stderr.strip}"
+    end
+    tag_commit = stdout.strip
+    unless tag_commit == expected_commit
+      raise Agentlab::Error, "source tag #{expected_tag.inspect} resolves to #{tag_commit.inspect}, expected #{expected_commit}"
+    end
+
+    stdout, stderr, status = Open3.capture3("git", "-C", source_dir, "status", "--porcelain=v1", "--untracked-files=no")
+    raise Agentlab::Error, "cannot verify source checkout cleanliness: #{stderr.strip}" unless status.success?
+    raise Agentlab::Error, "source checkout has tracked modifications" unless stdout.empty?
+
+    {
+      "method" => "clean_git_checkout",
+      "commit" => commit,
+      "tag" => expected_tag,
+      "tag_commit" => tag_commit,
+      "tracked_worktree_clean" => true
+    }
+  end
+
+  def root_names(workspace, group, specification)
+    available = Hash(workspace[group])
+    names = case specification
+            when Array
+              specification
+            when Hash
+              unless specification["include"] == "all"
+                raise Agentlab::Error, "dependency root #{group} must be an array or use include: all"
+              end
+
+              excluded = Array(specification["exclude"])
+              missing = excluded - available.keys
+              raise Agentlab::Error, "excluded #{group} roots are absent: #{missing.sort.inspect}" if missing.any?
+
+              available.keys - excluded
+            else
+              raise Agentlab::Error, "invalid dependency root selection for #{group}"
+            end
+    duplicates = names.group_by(&:itself).select { |_name, entries| entries.length > 1 }.keys
+    raise Agentlab::Error, "duplicate dependency roots: #{duplicates.sort.inspect}" if duplicates.any?
+
+    missing = names - available.keys
+    raise Agentlab::Error, "selected #{group} roots are absent: #{missing.sort.inspect}" if missing.any?
+
+    names.sort
+  end
+
+  class Selector
+    attr_reader :workspace_roles, :package_roles, :platform_excluded, :dependency_paths
+
+    def initialize(workspaces:, packages:, target:, forbidden_names: [])
+      @workspaces = workspaces
+      @packages = packages
+      @target = target
+      @forbidden_names = Set.new(forbidden_names)
+      @workspace_paths_by_name = Hash.new { |hash, key| hash[key] = [] }
+      workspaces.each do |path, workspace|
+        name = workspace["name"]
+        @workspace_paths_by_name[name] << path if name
+      end
+      @workspace_roles = {}
+      @package_roles = {}
+      @workspace_queue = []
+      @package_queue = []
+      @platform_excluded = {}
+      @dependency_paths = {}
+    end
+
+    def select_root(workspace_path:, dependency_group:, dependency_name:, role:)
+      workspace = @workspaces.fetch(workspace_path) do
+        raise Agentlab::Error, "unknown selected workspace #{workspace_path.inspect}"
+      end
+      requirement = Hash(workspace[dependency_group])[dependency_name]
+      unless requirement
+        raise Agentlab::Error, "#{workspace_path.inspect} #{dependency_group} root #{dependency_name.inspect} is absent"
+      end
+
+      OpenChamberLockAudit.update_role!(@workspace_roles, workspace_path, role)
+      enqueue_dependency(dependency_name, requirement, role, nil, [workspace_path, dependency_name])
+    end
+
+    def run
+      until @workspace_queue.empty? && @package_queue.empty?
+        process_workspaces
+        process_packages
+      end
+      self
+    end
+
+    private
+
+    def enqueue_workspace(path, role, trail)
+      raise Agentlab::Error, "lock references unknown workspace #{path}" unless @workspaces.key?(path)
+
+      if OpenChamberLockAudit.update_role!(@workspace_roles, path, role)
+        @workspace_queue << path
+        @dependency_paths[path] = trail
+      end
+    end
+
+    def enqueue_package(package_key, role, dependency_name, trail)
+      tuple = @packages.fetch(package_key)
+      identifier = tuple.fetch(0)
+      name, = OpenChamberLockAudit.package_identity(identifier)
+      if @forbidden_names.include?(name)
+        raise Agentlab::Error, "forbidden package #{name} selected through #{trail.join(' -> ')}"
+      end
+
+      metadata = tuple.find { |entry| entry.is_a?(Hash) } || {}
+      allowed, reason = OpenChamberLockAudit.platform_allowed?(package_key, identifier, metadata, @target)
+      unless allowed
+        record = @platform_excluded[package_key] ||= {
+          "package_path" => package_key,
+          "dependency_name" => dependency_name,
+          "reason" => reason,
+          "role" => role
+        }
+        OpenChamberLockAudit.update_role!(record, "role", role)
+        return
+      end
+
+      if OpenChamberLockAudit.update_role!(@package_roles, package_key, role)
+        @package_queue << package_key
+        @dependency_paths[package_key] = trail
+      end
+    end
+
+    def enqueue_dependency(dependency_name, requirement, role, current_key, trail)
+      workspace_paths = @workspace_paths_by_name[dependency_name]
+      if requirement.to_s.start_with?("workspace:")
+        unless workspace_paths.length == 1
+          raise Agentlab::Error, "workspace dependency #{dependency_name} resolves to #{workspace_paths.inspect}"
+        end
+
+        enqueue_workspace(workspace_paths.first, role, trail)
+        return
+      end
+
+      package_key = OpenChamberLockAudit.resolve_package_key(@packages, current_key, dependency_name)
+      raise Agentlab::Error, "cannot resolve #{dependency_name.inspect} from #{current_key || 'workspace root'}" unless package_key
+
+      identifier = @packages.fetch(package_key).fetch(0)
+      _resolved_name, resolution = OpenChamberLockAudit.package_identity(identifier)
+      if resolution.start_with?("workspace:")
+        enqueue_workspace(resolution.delete_prefix("workspace:"), role, trail)
+      else
+        enqueue_package(package_key, role, dependency_name, trail)
+      end
+    end
+
+    def process_workspaces
+      until @workspace_queue.empty?
+        path = @workspace_queue.shift
+        role = @workspace_roles.fetch(path)
+        workspace = @workspaces.fetch(path)
+        optional = OpenChamberLockAudit.optional_peers(workspace)
+        DEPENDENCY_GROUPS.each do |group|
+          Hash(workspace[group]).sort.each do |dependency_name, requirement|
+            next if group == "peerDependencies" && optional.include?(dependency_name)
+
+            trail = Array(@dependency_paths[path]) + [dependency_name]
+            enqueue_dependency(dependency_name, requirement, role, nil, trail)
+          end
+        end
+      end
+    end
+
+    def process_packages
+      until @package_queue.empty?
+        package_key = @package_queue.shift
+        role = @package_roles.fetch(package_key)
+        tuple = @packages.fetch(package_key)
+        metadata = tuple.find { |entry| entry.is_a?(Hash) } || {}
+        optional = OpenChamberLockAudit.optional_peers(metadata)
+        DEPENDENCY_GROUPS.each do |group|
+          Hash(metadata[group]).sort.each do |dependency_name, requirement|
+            next if group == "peerDependencies" && optional.include?(dependency_name)
+
+            trail = Array(@dependency_paths[package_key]) + [dependency_name]
+            enqueue_dependency(dependency_name, requirement, role, package_key, trail)
+          end
+        end
+      end
+    end
+  end
+
+  def run_cli(argv = ARGV)
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    version = package.upstream.fetch("current_version").to_s
+    selection = dependencies.fetch("selected_lock_audit")
+    source_dir = nil
+    check = false
+    output = File.join(package.directory, dependencies.dig("source_closure_files", "selected_lock_audit"))
+
+    OptionParser.new do |parser|
+      parser.banner = "Usage: scripts/audit-openchamber-lock-closure --source-dir PATH [--output PATH] [--check]"
+      parser.on("--source-dir PATH", "Extracted OpenChamber release source") { |path| source_dir = path }
+      parser.on("--output PATH", "Receipt path") { |path| output = path }
+      parser.on("--check", "Verify that the existing receipt is current") { check = true }
+    end.parse!(argv)
+
+    raise Agentlab::Error, "--source-dir is required" unless source_dir
+
+    source_dir = File.realpath(source_dir)
+    source_identity = verify_source_identity(
+      source_dir,
+      package.upstream.fetch("source_commit"),
+      package.upstream.fetch("source_tag")
+    )
+    lock_path = File.join(source_dir, "bun.lock")
+    raise Agentlab::Error, "missing Bun lock: #{lock_path}" unless File.file?(lock_path)
+
+    lock = Agentlab.load_jsonc(lock_path)
+    workspaces = lock.fetch("workspaces")
+    packages = lock.fetch("packages")
+    snapshot = dependencies.fetch("current_lock_snapshot")
+    raise Agentlab::Error, "current lock snapshot release does not match #{version}" unless snapshot.fetch("release").to_s == version
+    raise Agentlab::Error, "Bun lock SHA-256 does not match recorded snapshot" unless Digest::SHA256.file(lock_path).hexdigest == snapshot.fetch("sha256")
+    unless workspaces.length == Integer(snapshot.fetch("workspace_records"))
+      raise Agentlab::Error, "workspace count #{workspaces.length} does not match recorded snapshot"
+    end
+    unless packages.length == Integer(snapshot.fetch("package_records"))
+      raise Agentlab::Error, "package count #{packages.length} does not match recorded snapshot"
+    end
+
+    manifest_records = selection.fetch("workspace_manifests").sort.map do |workspace_path, manifest_relative_path|
+      workspace = workspaces.fetch(workspace_path) do
+        raise Agentlab::Error, "missing selected workspace #{workspace_path.inspect}"
+      end
+      manifest_path = File.join(source_dir, manifest_relative_path)
+      raise Agentlab::Error, "missing workspace manifest #{manifest_relative_path}" unless File.file?(manifest_path)
+
+      manifest = JSON.parse(File.read(manifest_path))
+      unless manifest.fetch("name") == workspace.fetch("name")
+        raise Agentlab::Error, "workspace name mismatch for #{workspace_path.inspect}"
+      end
+      Array(selection.fetch("manifest_dependency_groups")).each do |group|
+        expected = Hash(manifest[group]).sort.to_h
+        actual = Hash(workspace[group]).sort.to_h
+        next if actual == expected
+
+        missing = expected.keys - actual.keys
+        extra = actual.keys - expected.keys
+        changed = expected.keys.select { |name| actual.key?(name) && actual[name] != expected[name] }
+        raise Agentlab::Error,
+              "#{workspace_path.inspect} #{group} differs from manifest: missing=#{missing.sort.inspect} extra=#{extra.sort.inspect} changed=#{changed.sort.inspect}"
+      end
+      {
+        "workspace_path" => workspace_path,
+        "manifest_path" => manifest_relative_path,
+        "name" => manifest.fetch("name"),
+        "manifest_version" => manifest["version"],
+        "lock_version" => workspace["version"],
+        "manifest_sha256" => Digest::SHA256.file(manifest_path).hexdigest,
+        "dependency_groups_match" => true
+      }
+    rescue JSON::ParserError => e
+      raise Agentlab::Error, "invalid JSON in #{manifest_relative_path}: #{e.message}"
+    end
+
+    observed_mismatches = manifest_records.filter_map do |record|
+      next if record["lock_version"].to_s == record["manifest_version"].to_s && record["manifest_version"].to_s == version
+
+      [record.fetch("workspace_path"), {
+        "lock" => record["lock_version"],
+        "manifest" => record["manifest_version"],
+        "release" => version
+      }]
+    end.to_h
+    expected_mismatches = selection.fetch("known_workspace_version_mismatches")
+    unless deep_sort(observed_mismatches) == deep_sort(expected_mismatches)
+      raise Agentlab::Error,
+            "workspace version mismatches differ: expected #{deep_sort(expected_mismatches).inspect}, got #{deep_sort(observed_mismatches).inspect}"
+    end
+
+    policy_exclusions = Array(selection.fetch("policy_exclusions"))
+    exclusion_index = policy_exclusions.to_h do |record|
+      key = [record.fetch("workspace"), record.fetch("dependency_group"), record.fetch("name")]
+      [key, record]
+    end
+    forbidden_names = policy_exclusions.map { |record| record.fetch("name") }
+    selector = Selector.new(
+      workspaces: workspaces,
+      packages: packages,
+      target: selection.fetch("target"),
+      forbidden_names: forbidden_names
+    )
+    root_records = []
+    selection.fetch("dependency_roots").sort_by { |role, _workspaces| ROLE_RANK.fetch(role) }.each do |role, role_workspaces|
+      role_workspaces.sort.each do |workspace_path, groups|
+        workspace = workspaces.fetch(workspace_path)
+        groups.sort.each do |group, specification|
+          excluded = specification.is_a?(Hash) ? Array(specification["exclude"]) : []
+          excluded.each do |name|
+            key = [workspace_path, group, name]
+            raise Agentlab::Error, "missing policy exclusion for #{key.inspect}" unless exclusion_index.key?(key)
+          end
+          root_names(workspace, group, specification).each do |dependency_name|
+            selector.select_root(
+              workspace_path: workspace_path,
+              dependency_group: group,
+              dependency_name: dependency_name,
+              role: role
+            )
+            root_records << {
+              "workspace_path" => workspace_path,
+              "dependency_group" => group,
+              "dependency_name" => dependency_name,
+              "requirement" => Hash(workspace[group]).fetch(dependency_name),
+              "role" => role
+            }
+          end
+        end
+      end
+    end
+    selector.run
+
+    expected_workspaces = Array(selection.fetch("expected_workspaces")).sort
+    actual_workspaces = selector.workspace_roles.keys.sort
+    unless actual_workspaces == expected_workspaces
+      raise Agentlab::Error, "selected workspaces differ: expected #{expected_workspaces.inspect}, got #{actual_workspaces.inspect}"
+    end
+
+    workspace_records = selector.workspace_roles.sort.map do |path, role|
+      workspace = workspaces.fetch(path)
+      {
+        "path" => path,
+        "name" => workspace.fetch("name"),
+        "version" => workspace["version"],
+        "role" => role
+      }
+    end
+
+    package_records = selector.package_roles.sort.map do |package_key, role|
+      tuple = packages.fetch(package_key)
+      identifier = tuple.fetch(0)
+      name, resolution = package_identity(identifier)
+      metadata = tuple.find { |entry| entry.is_a?(Hash) } || {}
+      integrity = tuple.reverse.find { |entry| entry.is_a?(String) && entry.start_with?("sha") }
+      origin = package_origin(resolution)
+      if origin == "registry" && !integrity.to_s.start_with?("sha512-")
+        raise Agentlab::Error, "registry package #{package_key} lacks sha512 integrity"
+      end
+
+      record = {
+        "package_path" => package_key,
+        "npm_name" => name,
+        "version" => resolution,
+        "origin" => origin,
+        "role" => role,
+        "candidate_for_binary" => role == "runtime",
+        "integrity" => integrity,
+        "platform" => metadata.slice("os", "cpu", "libc")
+      }
+      if origin == "registry"
+        record["source_url"] = registry_source_url(name, resolution)
+      else
+        source = selection.fetch("git_sources", {})[name]
+        raise Agentlab::Error, "missing immutable source record for #{name}" unless source
+
+        short_commit = resolution.split("#", 2)[1]
+        commit = source.fetch("commit")
+        if short_commit && !commit.start_with?(short_commit)
+          raise Agentlab::Error, "source commit for #{name} does not match lock resolution #{resolution}"
+        end
+        record["source_url"] = source.fetch("source_url")
+        record["source_commit"] = commit
+      end
+      record
+    end
+
+    selected_nonregistry_names = package_records.reject { |record| record.fetch("origin") == "registry" }
+                                                .map { |record| record.fetch("npm_name") }.sort
+    configured_nonregistry_names = selection.fetch("git_sources", {}).keys.sort
+    unless selected_nonregistry_names == configured_nonregistry_names
+      raise Agentlab::Error,
+            "selected immutable non-registry sources differ: expected #{configured_nonregistry_names.inspect}, got #{selected_nonregistry_names.inspect}"
+    end
+
+    exclusion_records = policy_exclusions.sort_by { |record| [record.fetch("workspace"), record.fetch("dependency_group"), record.fetch("name")] }.map do |record|
+      workspace = workspaces.fetch(record.fetch("workspace"))
+      requirement = Hash(workspace[record.fetch("dependency_group")]).fetch(record.fetch("name"))
+      package_key = resolve_package_key(packages, nil, record.fetch("name"))
+      raise Agentlab::Error, "cannot resolve policy exclusion #{record.fetch('name')}" unless package_key
+
+      identifier = packages.fetch(package_key).fetch(0)
+      name, resolution = package_identity(identifier)
+      raise Agentlab::Error, "policy exclusion resolved to #{name}, expected #{record.fetch('name')}" unless name == record.fetch("name")
+
+      record.merge(
+        "requirement" => requirement,
+        "resolved_package_path" => package_key,
+        "resolved_version" => resolution,
+        "selected" => false
+      )
+    end
+
+    root_manifest = JSON.parse(File.read(File.join(source_dir, selection.fetch("workspace_manifests").fetch(""))))
+    patched_dependencies = Hash(root_manifest["patchedDependencies"]).sort.to_h
+    expected_patches = Hash(selection.fetch("patched_dependencies")).sort.to_h
+    unless patched_dependencies == expected_patches
+      raise Agentlab::Error, "patched dependencies differ: expected #{expected_patches.inspect}, got #{patched_dependencies.inspect}"
+    end
+    patch_records = patched_dependencies.map do |identity, relative_path|
+      name, version_requirement = package_identity(identity)
+      selected = package_records.select do |record|
+        record.fetch("npm_name") == name && record.fetch("version") == version_requirement
+      end
+      raise Agentlab::Error, "patched dependency #{identity} is absent from selected closure" if selected.empty?
+
+      patch_path = File.join(source_dir, relative_path)
+      raise Agentlab::Error, "missing dependency patch #{relative_path}" unless File.file?(patch_path)
+
+      {
+        "identity" => identity,
+        "path" => relative_path,
+        "sha256" => Digest::SHA256.file(patch_path).hexdigest,
+        "selected_package_paths" => selected.map { |record| record.fetch("package_path") }.sort
+      }
+    end
+
+    origin_counts = %w[file git github registry url].to_h { |origin| [origin, 0] }.merge(
+      package_records.group_by { |record| record.fetch("origin") }.transform_values(&:length)
+    ).sort.to_h
+    role_counts = ROLE_RANK.keys.to_h { |role| [role, 0] }.merge(
+      package_records.group_by { |record| record.fetch("role") }.transform_values(&:length)
+    ).sort.to_h
+    receipt = {
+      "schema" => selection.fetch("schema"),
+      "package" => package.name,
+      "release" => version,
+      "source_tag" => package.upstream.fetch("source_tag"),
+      "source_commit" => package.upstream.fetch("source_commit"),
+      "source_identity" => source_identity,
+      "lockfile" => {
+        "path" => "bun.lock",
+        "sha256" => Digest::SHA256.file(lock_path).hexdigest,
+        "bun" => snapshot.fetch("bun").to_s,
+        "workspace_records" => workspaces.length,
+        "package_records" => packages.length
+      },
+      "selection" => {
+        "config_sha256" => Digest::SHA256.hexdigest(JSON.generate(deep_sort(selection))),
+        "target" => selection.fetch("target"),
+        "feature_surface" => selection.fetch("feature_surface"),
+        "selected_workspaces" => workspace_records.length,
+        "selected_packages" => package_records.length,
+        "roles" => role_counts,
+        "origins" => origin_counts,
+        "platform_excluded" => selector.platform_excluded.length,
+        "policy_excluded" => exclusion_records.length
+      },
+      "manifests" => manifest_records.sort_by { |record| record.fetch("workspace_path") },
+      "known_workspace_version_mismatches" => observed_mismatches,
+      "roots" => root_records.sort_by { |record| [record.fetch("workspace_path"), record.fetch("dependency_group"), record.fetch("dependency_name"), record.fetch("role")] },
+      "workspaces" => workspace_records,
+      "packages" => package_records,
+      "platform_excluded" => selector.platform_excluded.values.sort_by { |record| record.fetch("package_path") },
+      "policy_exclusions" => exclusion_records,
+      "patched_dependencies" => patch_records,
+      "validation" => {
+        "selection_is_subset_of_lock" => true,
+        "records_sorted" => true,
+        "no_dependency_resolution_performed" => true,
+        "source_identity_verified" => true,
+        "manifest_dependency_groups_match" => true,
+        "workspace_versions_match" => observed_mismatches.empty?,
+        "known_workspace_version_mismatches_match" => true,
+        "node_runtime_exclusions_enforced" => true,
+        "source_import_reachability_verified" => false,
+        "authoritative_closure_verified" => false,
+        "source_archives_verified" => false,
+        "licenses_verified" => false,
+        "binary_inclusion_verified" => false,
+        "bundled_provides_generated" => false
+      }
+    }
+
+    content = JSON.pretty_generate(receipt) + "\n"
+    if check
+      raise Agentlab::Error, "missing selected lock receipt #{output}" unless File.file?(output)
+      raise Agentlab::Error, "selected lock receipt is stale: #{output}" unless File.binread(output) == content
+
+      puts "Verified #{package_records.length} selected package records across #{workspace_records.length} workspaces."
+    else
+      Agentlab.atomic_write(output, content)
+      puts "Wrote #{package_records.length} selected package records across #{workspace_records.length} workspaces to #{output}."
+    end
+  end
+end
+
+OpenChamberLockAudit.run_cli if $PROGRAM_NAME == __FILE__

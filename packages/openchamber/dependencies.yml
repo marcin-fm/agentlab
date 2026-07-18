@@ -20,8 +20,133 @@ current_lock_snapshot:
   lockfile_version: 1
   bun: 1.3.14
   sha256: 1cd16b6c7ac6368b63194ca7aa0125c8a4acf80fc57f77a9fe30e7be7c9980e1
+  workspace_records: 6
+  package_records: 1891
   selected_production_closure: false
-  note: Lockfile-wide package records are not valid bundled Provides or proof of the packages/web runtime closure.
+  note: The selected receipt is deterministic but not authoritative while workspace versions are stale and UI source-import reachability is unverified.
+selected_lock_audit:
+  schema: openchamber-selected-lock-audit/v1
+  target:
+    os: linux
+    cpu: x64
+    libc: glibc
+  feature_surface:
+    runtime: packages/web Node CLI and local server
+    browser_build: packages/web Vite and PWA output with packages/ui source aliases
+    validation: packages/web Vitest suite and web/UI TypeScript inputs
+    ui_root_strategy: all packages/ui dependencies until source-import reachability is proven
+  manifest_dependency_groups:
+  - dependencies
+  - devDependencies
+  workspace_manifests:
+    "": package.json
+    packages/ui: packages/ui/package.json
+    packages/web: packages/web/package.json
+  known_workspace_version_mismatches:
+    "":
+      lock:
+      manifest: 1.16.1
+      release: 1.16.1
+    packages/ui:
+      lock: 1.14.1
+      manifest: 1.16.1
+      release: 1.16.1
+    packages/web:
+      lock: 1.14.1
+      manifest: 1.16.1
+      release: 1.16.1
+  dependency_roots:
+    runtime:
+      packages/web:
+        dependencies:
+          include: all
+          exclude:
+          - bun-pty
+    build:
+      "":
+        devDependencies:
+        - "@tailwindcss/postcss"
+        - babel-plugin-react-compiler
+      packages/ui:
+        dependencies:
+          include: all
+      packages/web:
+        devDependencies:
+        - "@base-ui/react"
+        - "@remixicon/react"
+        - "@simplewebauthn/browser"
+        - "@tailwindcss/postcss"
+        - "@vitejs/plugin-react"
+        - class-variance-authority
+        - clsx
+        - ghostty-web
+        - react
+        - react-dom
+        - sonner
+        - tailwind-merge
+        - tailwindcss
+        - tw-animate-css
+        - vite
+        - vite-plugin-pwa
+        - workbox-window
+        - zustand
+    test:
+      "":
+        devDependencies:
+        - "@types/dom-speech-recognition"
+      packages/ui:
+        devDependencies:
+        - "@types/qrcode"
+      packages/web:
+        devDependencies:
+        - "@types/node"
+        - "@types/react"
+        - "@types/react-dom"
+        - "@types/supertest"
+        - supertest
+        - typescript
+        - vitest
+  policy_exclusions:
+  - name: bun-pty
+    workspace: packages/web
+    dependency_group: dependencies
+    target: node
+    evidence: packages/web/server/lib/terminal/runtime.js:42-64
+    reason: The selected Node runtime loads node-pty; bun-pty is used only by the Bun branch.
+  expected_workspaces:
+  - ""
+  - packages/ui
+  - packages/web
+  patched_dependencies:
+    "@tanstack/virtual-core@3.17.3": patches/@tanstack%2Fvirtual-core@3.17.3.patch
+  git_sources: {}
+selected_lock_receipt:
+  schema: openchamber-selected-lock-audit/v1
+  sha256: 735139c5e47fa731749e77506526e44d75bfea78ae4d2df3aa5612245fd6aa55
+  lock_sha256: 1cd16b6c7ac6368b63194ca7aa0125c8a4acf80fc57f77a9fe30e7be7c9980e1
+  selected_workspaces: 3
+  selected_packages: 934
+  runtime_packages: 221
+  build_packages: 666
+  test_packages: 47
+  registry_packages: 934
+  github_packages: 0
+  platform_excluded: 76
+  policy_excluded: 1
+  source_identity:
+    method: clean_git_checkout
+    commit: ee10f85d9ca866387abf7285985b268c8e3fa601
+    tag: v1.16.1
+    tag_commit: ee10f85d9ca866387abf7285985b268c8e3fa601
+    tracked_worktree_clean: true
+  validation:
+    source_identity_verified: true
+    manifest_dependency_groups_match: true
+    workspace_versions_match: false
+    known_workspace_version_mismatches_match: true
+    node_runtime_exclusions_enforced: true
+    source_import_reachability_verified: false
+    authoritative_closure_verified: false
 closure_audit:
   audited_release:
   production_build_sources_verified: false
@@ -38,6 +163,7 @@ source_closure_files:
   closure_manifest: openchamber-1.16.1-closure.json
   license_inventory: openchamber-1.16.1-bundled-licenses.txt
   native_manifest: openchamber-1.16.1-native.json
+  selected_lock_audit: openchamber-1.16.1-selected-lock-audit.json
 runtime_provider:
   package: opencode
   resolution: PATH or OPENCODE_BINARY

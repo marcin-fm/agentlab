@@ -4,7 +4,7 @@
 
 Name:           openchamber
 Version:        1.16.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -41,5 +41,8 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.16.1-0.2
+- Add a deterministic Node-target lock selection while retaining fail-closed provenance and source-reachability gates.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.16.1-0.1
 - Add a fail-closed draft for the released OpenChamber web CLI and PWA server.
