@@ -615,7 +615,15 @@ class AgentlabTest < Minitest::Test
       closure_path = File.join(directory, "source-closure.json")
       npm_proof_path = File.join(directory, "npm-proof.json")
       cargo_proof_path = File.join(directory, "cargo-proof.json")
-      File.write(closure_path, "{}\n")
+      File.write(closure_path, JSON.dump(
+        "schema" => "bun-release-local-source-closure/v2",
+        "package" => "bun",
+        "release" => version,
+        "existing_local_sources" => [
+          { "symbol" => "webkit", "immutable_public_url" => nil }
+        ],
+        "validation" => { "immutable_public_hosting_verified" => false }
+      ))
       File.write(npm_proof_path, "{}\n")
       File.write(cargo_proof_path, "{}\n")
       closure_sha256 = Digest::SHA256.file(closure_path).hexdigest
@@ -730,6 +738,7 @@ class AgentlabTest < Minitest::Test
       stages.fetch("dependency_closure").merge!(
         "proof_receipt" => File.basename(closure_path),
         "proof_receipt_sha256" => closure_sha256,
+        "cargo_vendor_archive_hosted" => false,
         "npm_install_proof_receipt" => File.basename(npm_proof_path),
         "npm_install_proof_receipt_sha256" => npm_proof_sha256,
         "cargo_build_proof_receipt" => File.basename(cargo_proof_path),
@@ -749,6 +758,7 @@ class AgentlabTest < Minitest::Test
       data = {
         "name" => "bun",
         "status" => "blocked",
+        "blockers" => ["The checked dependency archives still need immutable public hosting."],
         "upstream" => {
           "current_version" => version,
           "source_commit" => source_commit,
@@ -774,6 +784,7 @@ class AgentlabTest < Minitest::Test
               "acquisition" => "deterministic_git_archive",
               "submodules" => false,
               "source_tree_complete" => true,
+              "archive_url" => nil,
               "sha256" => webkit_sha256,
               "patch" => "webkit.patch",
               "patch_sha256" => patch_sha256.fetch("webkit.patch")
@@ -820,13 +831,91 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_validates_bun_dependency_closure_hosting_state
+    Dir.mktmpdir do |directory|
+      receipt_path = File.join(directory, "source-closure.json")
+      receipt = {
+        "schema" => "bun-release-local-source-closure/v2",
+        "package" => "bun",
+        "release" => "1.3.14",
+        "existing_local_sources" => [
+          { "symbol" => "webkit", "immutable_public_url" => nil }
+        ],
+        "validation" => { "immutable_public_hosting_verified" => false }
+      }
+      dependency_stage = {
+        "proof_receipt" => File.basename(receipt_path),
+        "cargo_vendor_archive_hosted" => false
+      }
+      write_receipt = lambda do
+        File.write(receipt_path, JSON.dump(receipt))
+        dependency_stage["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      end
+      write_receipt.call
+      package = Agentlab::Package.new(
+        directory: directory,
+        manifest_path: "unused",
+        data: {
+          "name" => "bun",
+          "status" => "blocked",
+          "blockers" => ["Immutable public hosting is not verified."],
+          "upstream" => { "current_version" => "1.3.14" },
+          "copr" => { "enabled" => false }
+        }
+      )
+      webkit = { "archive_url" => nil }
+
+      assert_empty(Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14"))
+
+      dependency_stage["proof_receipt_sha256"] = "0" * 64
+      assert_equal(
+        ["bun: dependency-closure proof receipt is missing or has wrong SHA-256"],
+        Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
+      )
+
+      receipt["schema"] = "bun-release-local-source-closure/v1"
+      write_receipt.call
+      errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
+      assert_includes(errors, "bun: unsupported dependency-closure proof receipt schema")
+
+      receipt["schema"] = "bun-release-local-source-closure/v2"
+      { "package" => "other", "release" => "1.3.15" }.each do |field, value|
+        original = receipt.fetch(field)
+        receipt[field] = value
+        write_receipt.call
+        errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
+        assert_includes(errors, "bun: dependency-closure proof #{field} mismatch")
+        receipt[field] = original
+      end
+
+      receipt.fetch("validation")["immutable_public_hosting_verified"] = true
+      write_receipt.call
+      errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
+      assert_includes(errors, "bun: dependency-closure proof incorrectly claims immutable public hosting")
+
+      receipt.fetch("validation")["immutable_public_hosting_verified"] = false
+      write_receipt.call
+      dependency_stage["cargo_vendor_archive_hosted"] = true
+      errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
+      assert_includes(errors, "bun: dependency-closure Cargo vendor archive hosting state is invalid")
+
+      hosted_url = "https://sources.example.invalid/WebKit.tar.gz"
+      package.data["blockers"] = []
+      receipt.fetch("validation")["immutable_public_hosting_verified"] = true
+      receipt.fetch("existing_local_sources").first["immutable_public_url"] = hosted_url
+      webkit["archive_url"] = hosted_url
+      write_receipt.call
+      assert_empty(Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14"))
+    end
+  end
+
   def test_validates_bun_self_rebuild_receipts
     source_package = Agentlab.package_named("bun")
     Dir.mktmpdir do |directory|
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[first-source-build-proof.json relink-materials-proof.json self-rebuild-proof.json zig-reproducibility-proof.json].each do |name|
+      %w[bun-1.3.14-release-local-source-closure.json first-source-build-proof.json relink-materials-proof.json self-rebuild-proof.json zig-reproducibility-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -883,6 +972,8 @@ class AgentlabTest < Minitest::Test
       self_stage.delete("zig_reproducibility_proof_receipt")
       receipt_name = data.dig("build_plan", "stages", "seed_build", "relink_materials_audit", "proof_receipt")
       FileUtils.cp(File.join(source_package.directory, receipt_name), File.join(directory, receipt_name))
+      closure_name = data.dig("build_plan", "stages", "dependency_closure", "proof_receipt")
+      FileUtils.cp(File.join(source_package.directory, closure_name), File.join(directory, closure_name))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
 
       assert(File.executable?(File.expand_path("../scripts/audit-bun-relink-materials", __dir__)))

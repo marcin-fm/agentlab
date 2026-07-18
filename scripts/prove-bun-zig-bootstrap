@@ -15,12 +15,14 @@ build_plan = package.data.fetch("build_plan")
 zig = build_plan.dig("source_inputs", "zig") || {}
 workdir = "/srv/tmp/agentlab-bun-zig-proof"
 source_path = nil
+diagnostic_patches = []
 jobs = Etc.nprocessors
 force = false
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prove-bun-zig-bootstrap [options]"
   parser.on("--source PATH", "Use an existing pinned Zig source archive") { |path| source_path = path }
+  parser.on("--extra-patch PATH", "Apply an additional diagnostic patch (repeatable)") { |path| diagnostic_patches << path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--jobs COUNT", Integer, "Parallel build jobs") { |count| jobs = count }
   parser.on("--force", "Replace an existing proof directory") { force = true }
@@ -28,6 +30,7 @@ end.parse!
 
 workdir = File.expand_path(workdir)
 source_path = File.expand_path(source_path) if source_path
+diagnostic_patches.map! { |path| File.expand_path(path) }
 unless workdir.start_with?("/srv/tmp/")
   raise Agentlab::Error, "proof workdir must be below /srv/tmp"
 end
@@ -42,8 +45,13 @@ if Dir.exist?(workdir)
   raise Agentlab::Error, "proof directory exists; pass --force to replace it" unless force
   raise Agentlab::Error, "refusing to replace unmarked proof directory #{workdir}" unless File.file?(marker)
 end
-if force && source_path&.start_with?("#{workdir}/")
-  raise Agentlab::Error, "source archive must be outside the replaced proof directory"
+if force
+  [source_path, *diagnostic_patches].compact.each do |path|
+    raise Agentlab::Error, "proof input must be outside the replaced proof directory: #{path}" if path.start_with?("#{workdir}/")
+  end
+end
+diagnostic_patches.each do |path|
+  raise Agentlab::Error, "missing diagnostic patch: #{path}" unless File.file?(path)
 end
 
 FileUtils.rm_rf(workdir) if force
@@ -75,7 +83,19 @@ raise Agentlab::Error, "expected one extracted Zig source directory" unless sour
 
 source_root = source_root.fetch(0)
 patch_path = File.join(package.directory, zig.fetch("patch"))
-run!({}, ["patch", "-d", source_root, "-p1", "-i", patch_path], chdir: Agentlab::ROOT)
+apply_patch = lambda do |path|
+  arguments = ["patch", "--batch", "--fuzz=0", "-d", source_root, "-p1", "-i", path]
+  run!({}, arguments.dup.insert(3, "--dry-run"), chdir: Agentlab::ROOT)
+  run!({}, arguments, chdir: Agentlab::ROOT)
+end
+apply_patch.call(patch_path)
+diagnostic_patch_receipts = diagnostic_patches.map do |path|
+  apply_patch.call(path)
+  {
+    "path" => path,
+    "sha256" => Digest::SHA256.file(path).hexdigest
+  }
+end
 
 build = File.join(workdir, "build")
 home = File.join(workdir, "home")
@@ -163,6 +183,7 @@ receipt = {
   },
   "scope" => "local source-bootstrap proof only; not Fedora approval or a complete Bun RPM build"
 }
+receipt["diagnostic_patches"] = diagnostic_patch_receipts unless diagnostic_patch_receipts.empty?
 receipt_path = File.join(workdir, "proof-receipt.json")
 File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
 

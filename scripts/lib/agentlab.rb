@@ -682,6 +682,54 @@ module Agentlab
     errors << "rust-v8: invalid evidence receipt: #{e.message}"
   end
 
+  def validate_bun_dependency_closure(package, dependency_stage, webkit, version)
+    return [] unless package.name == "bun" && dependency_stage.is_a?(Hash)
+
+    receipt_name = dependency_stage["proof_receipt"]
+    return [] unless receipt_name.is_a?(String) && !receipt_name.empty?
+
+    errors = []
+    receipt_path = File.join(package.directory, receipt_name)
+    expected_sha256 = dependency_stage["proof_receipt_sha256"]
+    valid_receipt = File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+                    Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+    errors << "bun: dependency-closure proof receipt is missing or has wrong SHA-256" unless valid_receipt
+    return errors unless valid_receipt
+
+    receipt = JSON.parse(File.read(receipt_path))
+    errors << "bun: unsupported dependency-closure proof receipt schema" unless receipt["schema"] == "bun-release-local-source-closure/v2"
+    errors << "bun: dependency-closure proof package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: dependency-closure proof release mismatch" unless receipt["release"].to_s == version
+
+    immutable_hosting_blocked = Array(package.data["blockers"]).any? do |blocker|
+      normalized = blocker.to_s.downcase
+      normalized.include?("immutable") && normalized.include?("hosting")
+    end
+    hosting_verified = receipt.dig("validation", "immutable_public_hosting_verified")
+    local_webkit = Array(receipt["existing_local_sources"]).find { |source| source.is_a?(Hash) && source["symbol"] == "webkit" }
+    if immutable_hosting_blocked
+      errors << "bun: dependency-closure proof incorrectly claims immutable public hosting" unless hosting_verified == false
+      errors << "bun: dependency-closure proof has hosted WebKit archive" unless webkit.is_a?(Hash) && webkit["archive_url"].nil?
+      errors << "bun: dependency-closure proof hosted local-source record" unless local_webkit.is_a?(Hash) && local_webkit["immutable_public_url"].nil?
+      errors << "bun: dependency-closure Cargo vendor archive hosting state is invalid" unless dependency_stage["cargo_vendor_archive_hosted"] == false
+    else
+      errors << "bun: dependency-closure proof does not verify immutable public hosting" unless hosting_verified == true
+      hosted_webkit_url = webkit.is_a?(Hash) && webkit["archive_url"]
+      local_webkit_url = local_webkit.is_a?(Hash) && local_webkit["immutable_public_url"]
+      valid_hosted_webkit = begin
+        hosted_webkit_url == local_webkit_url && URI(hosted_webkit_url).is_a?(URI::HTTPS)
+      rescue URI::InvalidURIError, TypeError
+        false
+      end
+      errors << "bun: dependency-closure hosted WebKit source mapping is invalid" unless valid_hosted_webkit
+      errors << "bun: dependency-closure Cargo vendor archive hosting state is invalid" unless dependency_stage["cargo_vendor_archive_hosted"] == true
+    end
+
+    errors
+  rescue JSON::ParserError => e
+    errors << "bun: invalid dependency-closure proof receipt: #{e.message}"
+  end
+
   def validate_bun_build_plan(package, spec)
     return [] unless package.name == "bun"
 
@@ -757,6 +805,8 @@ module Agentlab
     elsif stages.dig("webkit_source_build", "state") == "verified"
       errors << "bun: verified WebKit stage requires source input metadata"
     end
+
+    errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
 
     if seed.is_a?(Hash)
       errors << "bun: seed source must match the Bun release" unless seed["release_pin"] == "bun-v#{version}"
