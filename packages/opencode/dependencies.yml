@@ -143,6 +143,7 @@ source_acquisition_findings:
     source_mappings_unresolved: 1
     native_sources_verified: false
     opentui_native_source_build_verified: true
+    tree_sitter_wasm_source_builds_verified: 3
     wasm_sources_verified: false
   install_phase_scripts:
     - "@parcel/watcher@2.5.1"
@@ -184,12 +185,12 @@ source_acquisition_findings:
         phase: install
         script: node-gyp-build
         action: skip_native_loader_rebuild_wasm
-        reason: Node prebuilds are omitted; the required grammar WASM remains a separate source-build gate.
+        reason: Node prebuilds are omitted; the required grammar WASM is rebuilt offline and behavior-tested by the spec.
       - package: tree-sitter-powershell@0.25.10
         phase: install
         script: node-gyp-build
         action: skip_native_loader_rebuild_wasm
-        reason: The selected shell parser consumes the grammar WASM, whose source build remains a separate gate.
+        reason: The selected shell parser consumes the grammar WASM, which is rebuilt offline and behavior-tested by the spec.
   native_payload_sources:
     - "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
     - "@lydell/node-pty-linux-x64@1.2.0-beta.12"

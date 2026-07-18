@@ -16,10 +16,28 @@
 %global yoga_zig_hash N-V-__8AAOYl0gAU76B1VRPFD9AWvy2VkOef2jN0B3sISTeO
 %global zig_commit 04e7f6ac1e009525bc00934f20199c68f04e0a24
 %global zig_source_sha256 b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d
+%global tree_sitter_version 0.25.10
+%global tree_sitter_source_sha256 ad5040537537012b16ef6e1210a572b927c7cdc2b99d1ee88d44a7dcdc3ff44c
+%global emscripten_version 4.0.4
+%global emscripten_source_sha256 02214fec16769fd5761585baf0038d08c3c1f33d2b7b179953c6fb7e4e04470e
+%global binaryen_version 121
+%global binaryen_source_sha256 93f3b3d62def4aee6d09b11e6de75b955d29bc37878117e4ed30c3057a2ca4b4
+%global esbuild_version 0.24.2
+%global esbuild_source_sha256 171e1b0cd4c64222a1953203f6b3dab3c7a3f95b8939a72b4ebbd024302513b4
+%global x_sys_version v0.0.0-20220715151400-c0bba94af5f8
+%global x_sys_source_sha256 3b180937216e93559f16b6076d09baf54a5707378f11b867b6eb914c56b09b91
+%global acorn_source_sha256 04c1f5545e4e9140e288bb56b4cbbc4ffd730213e6331330e2bcefc649462104
+%global esbuild_npm_source_sha256 873e6170dc7f8bdd0e7a84daf2dfcec4744831271929bca044d6b7216ff86b47
+%global tree_sitter_runtime_helper_sha256 2e143b7c1a115e2effef7d6fc3f282023b8e25fda8fe2a0cd947ffe14e5c952a
+%global tree_sitter_validator_sha256 57a6b7e6c3b2e2322baf037369fb38012a76c47d3f251187678b13da05eccefc
+%global bash_published_wasm_sha256 364f0a2cd385c792239423026ef442dbd073d34c396b7bc9e5932426b8e4aa5d
+%global powershell_published_wasm_sha256 1d30b5a21866354aa2eb94845556f1e19126ff00e3335048719a0e6435b1c154
+%global web_tree_sitter_published_wasm_sha256 f38dcc4b43b818f9a0785bc1c6d5611a75ac4cdd428ff3f02757c34ca4e46d7f
+%global web_tree_sitter_published_aux_wasm_sha256 2b8b96e0f0f4624c4f885d40d76e25a25d9c58d40fe8ff4ab9563ee0297eed5e
 
 Name:           opencode
 Version:        1.18.3
-Release:        0.6%{?dist}
+Release:        0.7%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -39,6 +57,15 @@ Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentu
 Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz#/%{name}-%{version}-uucode-%{uucode_commit}.tar.gz
 Source11:       https://codeload.github.com/facebook/yoga/tar.gz/%{yoga_commit}#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz
 Source12:       https://codeload.github.com/oven-sh/zig/tar.gz/%{zig_commit}#/%{name}-%{version}-zig-%{zig_commit}.tar.gz
+Source13:       https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v%{tree_sitter_version}.tar.gz#/%{name}-%{version}-tree-sitter-%{tree_sitter_version}.tar.gz
+Source14:       https://github.com/emscripten-core/emscripten/archive/refs/tags/%{emscripten_version}.tar.gz#/%{name}-%{version}-emscripten-%{emscripten_version}.tar.gz
+Source15:       https://github.com/WebAssembly/binaryen/archive/refs/tags/version_%{binaryen_version}.tar.gz#/%{name}-%{version}-binaryen-%{binaryen_version}.tar.gz
+Source16:       https://github.com/evanw/esbuild/archive/refs/tags/v%{esbuild_version}.tar.gz#/%{name}-%{version}-esbuild-%{esbuild_version}.tar.gz
+Source17:       https://proxy.golang.org/golang.org/x/sys/@v/%{x_sys_version}.zip#/%{name}-%{version}-x-sys-%{x_sys_version}.zip
+Source18:       https://registry.npmjs.org/acorn/-/acorn-8.14.0.tgz#/%{name}-%{version}-acorn-8.14.0.tgz
+Source19:       https://registry.npmjs.org/esbuild/-/esbuild-%{esbuild_version}.tgz#/%{name}-%{version}-esbuild-npm-%{esbuild_version}.tgz
+Source20:       opencode-build-web-tree-sitter-runtime.py
+Source21:       opencode-validate-tree-sitter.mjs
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -62,9 +89,11 @@ BuildRequires:  clang20-devel
 BuildRequires:  clang20-libs
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
+BuildRequires:  golang
 BuildRequires:  file
 BuildRequires:  libxml2-devel
 BuildRequires:  libzstd-devel
+BuildRequires:  lld20
 BuildRequires:  lld20-devel
 BuildRequires:  lld20-libs
 BuildRequires:  llvm20-devel
@@ -79,6 +108,7 @@ BuildRequires:  pkgconfig
 BuildRequires:  python3
 BuildRequires:  coreutils
 BuildRequires:  tar
+BuildRequires:  tree-sitter-cli >= 0.26.9
 BuildRequires:  zlib-ng-compat-devel
 BuildRequires:  zstd
 Requires:       ripgrep
@@ -102,6 +132,15 @@ echo "%{opentui_source_sha256}  %{SOURCE9}" | sha256sum -c -
 echo "%{uucode_source_sha256}  %{SOURCE10}" | sha256sum -c -
 echo "%{yoga_source_sha256}  %{SOURCE11}" | sha256sum -c -
 echo "%{zig_source_sha256}  %{SOURCE12}" | sha256sum -c -
+echo "%{tree_sitter_source_sha256}  %{SOURCE13}" | sha256sum -c -
+echo "%{emscripten_source_sha256}  %{SOURCE14}" | sha256sum -c -
+echo "%{binaryen_source_sha256}  %{SOURCE15}" | sha256sum -c -
+echo "%{esbuild_source_sha256}  %{SOURCE16}" | sha256sum -c -
+echo "%{x_sys_source_sha256}  %{SOURCE17}" | sha256sum -c -
+echo "%{acorn_source_sha256}  %{SOURCE18}" | sha256sum -c -
+echo "%{esbuild_npm_source_sha256}  %{SOURCE19}" | sha256sum -c -
+echo "%{tree_sitter_runtime_helper_sha256}  %{SOURCE20}" | sha256sum -c -
+echo "%{tree_sitter_validator_sha256}  %{SOURCE21}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
 
@@ -116,6 +155,15 @@ test -f %{SOURCE9}
 test -f %{SOURCE10}
 test -f %{SOURCE11}
 test -f %{SOURCE12}
+test -f %{SOURCE13}
+test -f %{SOURCE14}
+test -f %{SOURCE15}
+test -f %{SOURCE16}
+test -f %{SOURCE17}
+test -f %{SOURCE18}
+test -f %{SOURCE19}
+test -f %{SOURCE20}
+test -f %{SOURCE21}
 echo "%{bun_pty_source_sha256}  %{SOURCE6}" | sha256sum -c -
 echo "%{bun_pty_vendor_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{bun_pty_vendor_manifest_sha256}  %{SOURCE8}" | sha256sum -c -
@@ -123,6 +171,59 @@ python3 -m json.tool %{SOURCE3} >/dev/null
 python3 -m json.tool %{SOURCE5} >/dev/null
 cp -p %{SOURCE4} .
 tar --extract --zstd --file %{SOURCE1}
+
+# Materialize only corresponding source and the two minimal registry build
+# inputs. No package-manager resolution or dependency lifecycle script runs.
+mkdir -p \
+  .build-tools/tree-sitter \
+  .build-tools/emscripten \
+  .build-tools/binaryen \
+  .build-tools/esbuild \
+  .build-tools/x-sys \
+  .build-tools/emscripten/node_modules/acorn \
+  .build-tools/tree-sitter/lib/binding_web/node_modules/esbuild
+tar --extract --gzip --file %{SOURCE13} --strip-components=1 --directory .build-tools/tree-sitter
+tar --extract --gzip --file %{SOURCE14} --strip-components=1 --directory .build-tools/emscripten
+tar --extract --gzip --file %{SOURCE15} --strip-components=1 --directory .build-tools/binaryen
+tar --extract --gzip --file %{SOURCE16} --strip-components=1 --directory .build-tools/esbuild
+python3 -m zipfile -e %{SOURCE17} .build-tools/x-sys
+tar --extract --gzip --file %{SOURCE18} --strip-components=1 --directory .build-tools/emscripten/node_modules/acorn
+tar --extract --gzip --file %{SOURCE19} --strip-components=1 --directory .build-tools/tree-sitter/lib/binding_web/node_modules/esbuild
+mkdir -p .build-tools/esbuild/vendor/golang.org/x
+cp -a \
+  .build-tools/x-sys/golang.org/x/sys@%{x_sys_version} \
+  .build-tools/esbuild/vendor/golang.org/x/sys
+cat > .build-tools/esbuild/vendor/modules.txt <<'EOF'
+# golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+EOF
+
+pushd packages/opencode >/dev/null
+bash_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-bash/package.json")))')"
+powershell_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-powershell/package.json")))')"
+web_tree_sitter="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(fileURLToPath(import.meta.resolve("web-tree-sitter"))))')"
+popd >/dev/null
+printf '%s\n' "$web_tree_sitter" > .build-tools/web-tree-sitter-root
+echo "%{bash_published_wasm_sha256}  $bash_parser/tree-sitter-bash.wasm" | sha256sum -c -
+echo "%{powershell_published_wasm_sha256}  $powershell_parser/tree-sitter-powershell.wasm" | sha256sum -c -
+echo "%{web_tree_sitter_published_wasm_sha256}  $web_tree_sitter/tree-sitter.wasm" | sha256sum -c -
+echo "%{web_tree_sitter_published_aux_wasm_sha256}  $web_tree_sitter/lib/tree-sitter.wasm" | sha256sum -c -
+echo "%{web_tree_sitter_published_aux_wasm_sha256}  $web_tree_sitter/debug/tree-sitter.wasm" | sha256sum -c -
+test "$(find "$bash_parser/prebuilds" -type f -name '*.node' | wc -l)" -eq 6
+rm -rf "$bash_parser/prebuilds"
+rm -f "$bash_parser/tree-sitter-bash.wasm" "$powershell_parser/tree-sitter-powershell.wasm"
+rm -f \
+  "$web_tree_sitter/tree-sitter.js" \
+  "$web_tree_sitter/tree-sitter.js.map" \
+  "$web_tree_sitter/tree-sitter.cjs" \
+  "$web_tree_sitter/tree-sitter.cjs.map" \
+  "$web_tree_sitter/tree-sitter.wasm" \
+  "$web_tree_sitter/tree-sitter.wasm.map" \
+  "$web_tree_sitter/lib/tree-sitter.cjs" \
+  "$web_tree_sitter/lib/tree-sitter.wasm" \
+  "$web_tree_sitter/lib/tree-sitter.wasm.map"
+rm -rf "$web_tree_sitter/debug"
 
 # Materialize the exact OpenTUI source and its two Zig package dependencies.
 # The package cache is complete before the build phase, so Zig cannot resolve them from
@@ -182,6 +283,55 @@ export HOME="$PWD/.build-home"
 export XDG_CACHE_HOME="$PWD/.build-cache"
 mkdir -p "$HOME" "$XDG_CACHE_HOME"
 
+# Build exact esbuild from Go source and the pinned x/sys module. The npm
+# package contributes only the JavaScript API and cannot select a platform
+# binary because ESBUILD_BINARY_PATH is set below.
+export GOCACHE="$PWD/.build-cache/go"
+mkdir -p "$GOCACHE"
+pushd .build-tools/esbuild >/dev/null
+CGO_ENABLED=0 GOPROXY=off GOSUMDB=off \
+  go build -mod=vendor -trimpath -ldflags='-s -w' \
+  -o "$OLDPWD/.build-tools/esbuild-bin" ./cmd/esbuild
+popd >/dev/null
+test "$(.build-tools/esbuild-bin --version)" = "%{esbuild_version}"
+
+# Emscripten 4.0.4 requires Binaryen 121. Build the exact release privately
+# with Fedora clang and expose only the installed tools to Emscripten.
+cmake -S .build-tools/binaryen -B .build-tools/binaryen-build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=/usr/bin/clang-20 \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++-20 \
+  -DCMAKE_INSTALL_PREFIX="$PWD/.build-tools/binaryen-install" \
+  -DBUILD_EMSCRIPTEN_TOOLS_ONLY=ON \
+  -DBUILD_STATIC_LIB=ON \
+  -DBUILD_TESTS=OFF \
+  -DENABLE_WERROR=OFF
+cmake --build .build-tools/binaryen-build --parallel 4
+cmake --install .build-tools/binaryen-build
+
+cat > .build-tools/emscripten-config.py <<EOF
+LLVM_ROOT = '/usr/lib64/llvm20/bin'
+BINARYEN_ROOT = '$PWD/.build-tools/binaryen-install'
+NODE_JS = '/usr/bin/node-24'
+CACHE = '$PWD/.build-tools/emscripten-cache'
+EOF
+EM_CONFIG="$PWD/.build-tools/emscripten-config.py" \
+  python3 %{SOURCE20} \
+  --emcc "$PWD/.build-tools/emscripten/emcc" \
+  --source "$PWD/.build-tools/tree-sitter"
+
+tree_sitter_source="$PWD/.build-tools/tree-sitter"
+esbuild_binary="$PWD/.build-tools/esbuild-bin"
+pushd "$tree_sitter_source/lib/binding_web" >/dev/null
+ESBUILD_BINARY_PATH="$esbuild_binary" node-24 script/build.js
+popd >/dev/null
+web_tree_sitter="$(cat .build-tools/web-tree-sitter-root)"
+install -pm0644 "$tree_sitter_source/lib/binding_web/tree-sitter.js" "$web_tree_sitter/tree-sitter.js"
+install -pm0644 "$tree_sitter_source/lib/binding_web/tree-sitter.js.map" "$web_tree_sitter/tree-sitter.js.map"
+install -pm0644 "$tree_sitter_source/lib/binding_web/tree-sitter.wasm" "$web_tree_sitter/tree-sitter.wasm"
+install -pm0644 "$tree_sitter_source/lib/binding_web/tree-sitter.wasm.map" "$web_tree_sitter/tree-sitter.wasm.map"
+cp -p "$tree_sitter_source/LICENSE" web-tree-sitter-LICENSE
+
 cmake -S .build-tools/zig -B .build-tools/zig-build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER=/usr/bin/clang-20 \
@@ -206,6 +356,34 @@ install -Dpm0755 \
   .build-tools/bun-zig/zig
 cp -a .build-tools/zig-build/stage3/lib/zig .build-tools/bun-zig/lib
 test "$(.build-tools/bun-zig/zig version)" = "0.15.2"
+
+# Fedora tree-sitter-cli compiles the reviewed npm parser/scanner sources. The
+# private WASI SDK wrapper supplies the complete Bun-Zig WASI header stack.
+wasi_sdk="$PWD/.build-tools/tree-sitter-wasi-sdk"
+mkdir -p "$wasi_sdk/bin"
+cat > "$wasi_sdk/bin/clang" <<EOF
+#!/bin/sh
+exec /usr/bin/clang-20 \
+  -isystem "$PWD/.build-tools/bun-zig/lib/include" \
+  -isystem "$PWD/.build-tools/bun-zig/lib/libc/include/wasm-wasi-musl" \
+  -isystem "$PWD/.build-tools/bun-zig/lib/libc/include/generic-musl" \
+  -isystem "$PWD/.build-tools/bun-zig/lib/libc/include/wasm32-wasi-any" \
+  -isystem "$PWD/.build-tools/bun-zig/lib/libc/include/any-wasi-any" \
+  "\$@"
+EOF
+chmod 0755 "$wasi_sdk/bin/clang"
+pushd packages/opencode >/dev/null
+bash_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-bash/package.json")))')"
+powershell_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-powershell/package.json")))')"
+popd >/dev/null
+TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm \
+  --output "$PWD/.build-tools/tree-sitter-bash.wasm" "$bash_parser"
+TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm \
+  --output "$PWD/.build-tools/tree-sitter-powershell.wasm" "$powershell_parser"
+install -pm0644 .build-tools/tree-sitter-bash.wasm "$bash_parser/tree-sitter-bash.wasm"
+install -pm0644 .build-tools/tree-sitter-powershell.wasm "$powershell_parser/tree-sitter-powershell.wasm"
+cp -p "$bash_parser/LICENSE" tree-sitter-bash-LICENSE
+cp -p "$powershell_parser/LICENSE" tree-sitter-powershell-LICENSE
 
 # Build the required OpenTUI library from its release source and exact package
 # cache, strip non-runtime metadata, and replace the removed npm payload.
@@ -304,6 +482,23 @@ bun -e '
   lib.destroyRenderer(renderer)
 '
 popd >/dev/null
+pushd packages/opencode >/dev/null
+bash_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-bash/package.json")))')"
+powershell_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-powershell/package.json")))')"
+popd >/dev/null
+web_tree_sitter="$(cat .build-tools/web-tree-sitter-root)"
+test ! -e "$bash_parser/prebuilds"
+test -f "$bash_parser/tree-sitter-bash.wasm"
+test -f "$powershell_parser/tree-sitter-powershell.wasm"
+test -f "$web_tree_sitter/tree-sitter.js"
+test -f "$web_tree_sitter/tree-sitter.wasm"
+test "$(sha256sum "$bash_parser/tree-sitter-bash.wasm" | cut -d' ' -f1)" != "%{bash_published_wasm_sha256}"
+test "$(sha256sum "$powershell_parser/tree-sitter-powershell.wasm" | cut -d' ' -f1)" != "%{powershell_published_wasm_sha256}"
+test "$(sha256sum "$web_tree_sitter/tree-sitter.wasm" | cut -d' ' -f1)" != "%{web_tree_sitter_published_wasm_sha256}"
+node-24 %{SOURCE21} \
+  "$web_tree_sitter" \
+  "$bash_parser/tree-sitter-bash.wasm" \
+  "$powershell_parser/tree-sitter-powershell.wasm"
 packages/opencode/dist/opencode-linux-x64/bin/opencode --version
 
 %install
@@ -315,10 +510,13 @@ install -Dpm0755 \
 %license LICENSE %{name}-%{version}-bundled-licenses.txt
 %license bun-pty-LICENSE.dependencies bun-pty-cargo-vendor.txt
 %license opentui-LICENSE opentui-uucode-LICENSE.md opentui-yoga-LICENSE
+%license web-tree-sitter-LICENSE tree-sitter-bash-LICENSE tree-sitter-powershell-LICENSE
 %doc README.md
 %{_bindir}/opencode
 
 %changelog
+* Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.7
+- Rebuild the selected Tree-sitter runtime and shell grammars from source.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.6
 - Rebuild OpenTUI from exact source with the Bun-pinned Zig toolchain.
 - Record fail-closed lifecycle-script dispositions for the selected closure.

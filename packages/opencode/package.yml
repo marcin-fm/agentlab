@@ -6,7 +6,7 @@ blockers:
 - Final applicable license texts and the aggregate expression await source and binary payload mapping; the three raw declaration omissions are resolved in license-review.yml.
 - The release does not pin the models.dev snapshot embedded during the standalone build.
 - The native review classifies all 22 prebuilt payloads. OpenTUI, bun-pty, and Parcel have source-build recipes, but final Bun embedding and F43/F44 builds are not verified; bun-pty also still needs immutable vendor hosting. FFF is omitted through the documented system-ripgrep fallback patch.
-- The WASM review classifies all 14 payloads; corresponding-source pins and reproducible rebuilds remain incomplete.
+- The WASM review classifies all 14 payloads. Tree-sitter Bash, PowerShell, and web-tree-sitter now have verified offline source-build replacements; the other WASM rebuilds and byte reproducibility remain incomplete.
 - Offline OpenCode build and test execution has not been demonstrated.
 artifacts:
   selected_lock_audit: opencode-1.18.3-selected-lock-audit.json

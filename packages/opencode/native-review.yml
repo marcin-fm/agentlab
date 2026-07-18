@@ -299,12 +299,29 @@ components:
       peeled_commit: 56b54c61fb48bce0c63e3dfa2240b5d274384763
       package_version_at_source: "0.25.0"
       correspondence: Use the exact registry gitHead; its generated parser metadata differs from the release tag.
+      source_build:
+        source_package: tree-sitter-bash@0.25.0
+        source_url: https://registry.npmjs.org/tree-sitter-bash/-/tree-sitter-bash-0.25.0.tgz
+        source_sha256: 9c9460cebe00ec6859f9ba710f7c0bf00ad4fbd7ab72d74e666341491ae2b93d
+        compiler: tree-sitter-cli-0.26.9
+        wasi_headers: Bun-pinned Zig 0.15.2 source build
+        command: TREE_SITTER_WASI_SDK_PATH=.build-tools/tree-sitter-wasi-sdk tree-sitter build --wasm
+        published_payload_sha256: 364f0a2cd385c792239423026ef442dbd073d34c396b7bc9e5932426b8e4aa5d
+        local_recipe_output_sha256:
+          - 1e50bfe57d9480c218bb67356faeb1cbbc9358b6918c411a50e76e1d386687c6
+          - 4aa19addda7141b77caaa3465a74c1f5f7f9479f15d16dedfb1957a147321907
+        local_rebuilds: 2
+        local_rebuilds_byte_identical: false
+        offline_build_verified: true
+        parser_smoke_verified: true
+        published_payload_discarded: true
+        local_proof_only: true
     decision:
       action: omit_native_rebuild_wasm
       retain_prebuilt_payloads: false
       source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Omit all Node prebuilds and rebuild the functional grammar WASM from the included C sources.
+      reason: Omit all Node prebuilds and rebuild the functional grammar WASM offline from the included C sources; representative parsing passes, while repeated outputs are not byte-identical.
   - package: "@opentui/core@0.4.3"
     npm_name: "@opentui/core"
     version: "0.4.3"
@@ -491,12 +508,29 @@ components:
       peeled_commit: 7212f47716ced384ac012b2cc428fd9f52f7c5d4
       package_version_at_source: "0.25.10"
       correspondence: The registry gitHead differs from the tag only in Cargo and npm metadata; parser sources are unchanged.
+      source_build:
+        source_package: tree-sitter-powershell@0.25.10
+        source_url: https://registry.npmjs.org/tree-sitter-powershell/-/tree-sitter-powershell-0.25.10.tgz
+        source_sha256: feb79f695aeda8e1835cac98e0b2eed76e2874b6ef1ea197f7cba4c535a6976f
+        compiler: tree-sitter-cli-0.26.9
+        wasi_headers: Bun-pinned Zig 0.15.2 source build
+        command: TREE_SITTER_WASI_SDK_PATH=.build-tools/tree-sitter-wasi-sdk tree-sitter build --wasm
+        published_payload_sha256: 1d30b5a21866354aa2eb94845556f1e19126ff00e3335048719a0e6435b1c154
+        local_recipe_output_sha256:
+          - 00eb80611bfadcd9c617d79f581bad39f7594d7550210a50d1fddcfe73fa1a14
+          - 2be91a5244d44b52616ca0810cfc98efe5e128fa4c9d2b98f412cde7760fe938
+        local_rebuilds: 2
+        local_rebuilds_byte_identical: false
+        offline_build_verified: true
+        parser_smoke_verified: true
+        published_payload_discarded: true
+        local_proof_only: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Rebuild the grammar WASM from the included parser and scanner sources.
+      reason: Rebuild the grammar WASM offline from the included parser and scanner sources; representative parsing passes, while repeated outputs are not byte-identical.
   - package: "undici@5.29.0"
     npm_name: undici
     version: "5.29.0"
@@ -563,12 +597,32 @@ components:
       peeled_commit: da6fe9beb4f7f67beb75914ca8e0d48ae48d6406
       package_version_at_source: "0.25.10"
       correspondence: The annotated release tag peels to the registry gitHead and the npm source contains the C runtime sources.
+      source_build:
+        runtime_source_url: https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v0.25.10.tar.gz
+        runtime_source_sha256: ad5040537537012b16ef6e1210a572b927c7cdc2b99d1ee88d44a7dcdc3ff44c
+        emscripten_source_url: https://github.com/emscripten-core/emscripten/archive/refs/tags/4.0.4.tar.gz
+        emscripten_source_sha256: 02214fec16769fd5761585baf0038d08c3c1f33d2b7b179953c6fb7e4e04470e
+        binaryen_source_url: https://github.com/WebAssembly/binaryen/archive/refs/tags/version_121.tar.gz
+        binaryen_source_sha256: 93f3b3d62def4aee6d09b11e6de75b955d29bc37878117e4ed30c3057a2ca4b4
+        esbuild_source_url: https://github.com/evanw/esbuild/archive/refs/tags/v0.24.2.tar.gz
+        esbuild_source_sha256: 171e1b0cd4c64222a1953203f6b3dab3c7a3f95b8939a72b4ebbd024302513b4
+        esbuild_x_sys_source_sha256: 3b180937216e93559f16b6076d09baf54a5707378f11b867b6eb914c56b09b91
+        acorn_source_sha256: 04c1f5545e4e9140e288bb56b4cbbc4ffd730213e6331330e2bcefc649462104
+        esbuild_npm_source_sha256: 873e6170dc7f8bdd0e7a84daf2dfcec4744831271929bca044d6b7216ff86b47
+        helper_sha256: 2e143b7c1a115e2effef7d6fc3f282023b8e25fda8fe2a0cd947ffe14e5c952a
+        validator_sha256: 57a6b7e6c3b2e2322baf037369fb38012a76c47d3f251187678b13da05eccefc
+        published_payload_sha256: f38dcc4b43b818f9a0785bc1c6d5611a75ac4cdd428ff3f02757c34ca4e46d7f
+        local_recipe_output_sha256: d649036ed74633a1995b9409cb060aa3255a399b96085bfcc465dc8d5e8d8e31
+        offline_build_verified: true
+        bash_and_powershell_parser_smoke_verified: true
+        published_payload_discarded: true
+        local_proof_only: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
       reproducible_build_verified: false
-      reason: Rebuild the runtime WASM; omit only copies proven unused or byte-identical by the final import trace.
+      reason: Rebuild the runtime WASM offline with pinned Emscripten, Binaryen, and source-built esbuild inputs; representative Bash and PowerShell parsing passes, but independent byte reproducibility is not claimed.
 validation:
   exact_native_wasm_source_coverage: true
   registry_git_heads_checked: true

@@ -721,14 +721,14 @@ module Agentlab
           "phase" => "install",
           "script" => "node-gyp-build",
           "action" => "skip_native_loader_rebuild_wasm",
-          "reason" => "Node prebuilds are omitted; the required grammar WASM remains a separate source-build gate."
+          "reason" => "Node prebuilds are omitted; the required grammar WASM is rebuilt offline and behavior-tested by the spec."
         },
         {
           "package" => "tree-sitter-powershell@0.25.10",
           "phase" => "install",
           "script" => "node-gyp-build",
           "action" => "skip_native_loader_rebuild_wasm",
-          "reason" => "The selected shell parser consumes the grammar WASM, whose source build remains a separate gate."
+          "reason" => "The selected shell parser consumes the grammar WASM, which is rebuilt offline and behavior-tested by the spec."
         }
       ]
     }
@@ -988,7 +988,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.6%{?dist}",
+        "Release:        0.7%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://codeload.github.com/facebook/yoga/tar.gz/%{yoga_commit}",
@@ -1008,6 +1008,112 @@ module Agentlab
         "resolveRenderLib"
       ].each do |snippet|
         errors << "#{prefix} spec is missing OpenTUI build requirement #{snippet}" unless opencode_spec.include?(snippet)
+      end
+
+      expected_tree_sitter_builds = {
+        "tree-sitter-bash@0.25.0" => {
+          "source_package" => "tree-sitter-bash@0.25.0",
+          "source_url" => "https://registry.npmjs.org/tree-sitter-bash/-/tree-sitter-bash-0.25.0.tgz",
+          "source_sha256" => "9c9460cebe00ec6859f9ba710f7c0bf00ad4fbd7ab72d74e666341491ae2b93d",
+          "compiler" => "tree-sitter-cli-0.26.9",
+          "wasi_headers" => "Bun-pinned Zig 0.15.2 source build",
+          "command" => "TREE_SITTER_WASI_SDK_PATH=.build-tools/tree-sitter-wasi-sdk tree-sitter build --wasm",
+          "published_payload_sha256" => "364f0a2cd385c792239423026ef442dbd073d34c396b7bc9e5932426b8e4aa5d",
+          "local_recipe_output_sha256" => %w[
+            1e50bfe57d9480c218bb67356faeb1cbbc9358b6918c411a50e76e1d386687c6
+            4aa19addda7141b77caaa3465a74c1f5f7f9479f15d16dedfb1957a147321907
+          ],
+          "local_rebuilds" => 2,
+          "local_rebuilds_byte_identical" => false,
+          "offline_build_verified" => true,
+          "parser_smoke_verified" => true,
+          "published_payload_discarded" => true,
+          "local_proof_only" => true
+        },
+        "tree-sitter-powershell@0.25.10" => {
+          "source_package" => "tree-sitter-powershell@0.25.10",
+          "source_url" => "https://registry.npmjs.org/tree-sitter-powershell/-/tree-sitter-powershell-0.25.10.tgz",
+          "source_sha256" => "feb79f695aeda8e1835cac98e0b2eed76e2874b6ef1ea197f7cba4c535a6976f",
+          "compiler" => "tree-sitter-cli-0.26.9",
+          "wasi_headers" => "Bun-pinned Zig 0.15.2 source build",
+          "command" => "TREE_SITTER_WASI_SDK_PATH=.build-tools/tree-sitter-wasi-sdk tree-sitter build --wasm",
+          "published_payload_sha256" => "1d30b5a21866354aa2eb94845556f1e19126ff00e3335048719a0e6435b1c154",
+          "local_recipe_output_sha256" => %w[
+            00eb80611bfadcd9c617d79f581bad39f7594d7550210a50d1fddcfe73fa1a14
+            2be91a5244d44b52616ca0810cfc98efe5e128fa4c9d2b98f412cde7760fe938
+          ],
+          "local_rebuilds" => 2,
+          "local_rebuilds_byte_identical" => false,
+          "offline_build_verified" => true,
+          "parser_smoke_verified" => true,
+          "published_payload_discarded" => true,
+          "local_proof_only" => true
+        },
+        "web-tree-sitter@0.25.10" => {
+          "runtime_source_url" => "https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v0.25.10.tar.gz",
+          "runtime_source_sha256" => "ad5040537537012b16ef6e1210a572b927c7cdc2b99d1ee88d44a7dcdc3ff44c",
+          "emscripten_source_url" => "https://github.com/emscripten-core/emscripten/archive/refs/tags/4.0.4.tar.gz",
+          "emscripten_source_sha256" => "02214fec16769fd5761585baf0038d08c3c1f33d2b7b179953c6fb7e4e04470e",
+          "binaryen_source_url" => "https://github.com/WebAssembly/binaryen/archive/refs/tags/version_121.tar.gz",
+          "binaryen_source_sha256" => "93f3b3d62def4aee6d09b11e6de75b955d29bc37878117e4ed30c3057a2ca4b4",
+          "esbuild_source_url" => "https://github.com/evanw/esbuild/archive/refs/tags/v0.24.2.tar.gz",
+          "esbuild_source_sha256" => "171e1b0cd4c64222a1953203f6b3dab3c7a3f95b8939a72b4ebbd024302513b4",
+          "esbuild_x_sys_source_sha256" => "3b180937216e93559f16b6076d09baf54a5707378f11b867b6eb914c56b09b91",
+          "acorn_source_sha256" => "04c1f5545e4e9140e288bb56b4cbbc4ffd730213e6331330e2bcefc649462104",
+          "esbuild_npm_source_sha256" => "873e6170dc7f8bdd0e7a84daf2dfcec4744831271929bca044d6b7216ff86b47",
+          "helper_sha256" => "2e143b7c1a115e2effef7d6fc3f282023b8e25fda8fe2a0cd947ffe14e5c952a",
+          "validator_sha256" => "57a6b7e6c3b2e2322baf037369fb38012a76c47d3f251187678b13da05eccefc",
+          "published_payload_sha256" => "f38dcc4b43b818f9a0785bc1c6d5611a75ac4cdd428ff3f02757c34ca4e46d7f",
+          "local_recipe_output_sha256" => "d649036ed74633a1995b9409cb060aa3255a399b96085bfcc465dc8d5e8d8e31",
+          "offline_build_verified" => true,
+          "bash_and_powershell_parser_smoke_verified" => true,
+          "published_payload_discarded" => true,
+          "local_proof_only" => true
+        }
+      }
+      expected_tree_sitter_builds.each do |identity, expected_build|
+        component = components.find { |entry| entry["package"] == identity }
+        unless component&.dig("provenance", "source_build") == expected_build
+          errors << "#{prefix} Tree-sitter source-build evidence does not match for #{identity}"
+        end
+        expected_action = identity == "tree-sitter-bash@0.25.0" ? "omit_native_rebuild_wasm" : "rebuild"
+        errors << "#{prefix} Tree-sitter source-build action does not match for #{identity}" unless component&.dig("decision", "action") == expected_action
+        errors << "#{prefix} Tree-sitter reproducibility must remain false for #{identity}" unless component&.dig("decision", "reproducible_build_verified") == false
+      end
+
+      {
+        "opencode-build-web-tree-sitter-runtime.py" => expected_tree_sitter_builds.dig("web-tree-sitter@0.25.10", "helper_sha256"),
+        "opencode-validate-tree-sitter.mjs" => expected_tree_sitter_builds.dig("web-tree-sitter@0.25.10", "validator_sha256")
+      }.each do |filename, expected_sha256|
+        path = File.join(package.directory, filename)
+        errors << "#{prefix} Tree-sitter helper #{filename} is missing" unless File.file?(path)
+        if File.file?(path)
+          errors << "#{prefix} Tree-sitter helper #{filename} SHA-256 does not match" unless Digest::SHA256.file(path).hexdigest == expected_sha256
+        end
+      end
+
+      [
+        "Source13:       https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v%{tree_sitter_version}.tar.gz",
+        "Source14:       https://github.com/emscripten-core/emscripten/archive/refs/tags/%{emscripten_version}.tar.gz",
+        "Source15:       https://github.com/WebAssembly/binaryen/archive/refs/tags/version_%{binaryen_version}.tar.gz",
+        "Source16:       https://github.com/evanw/esbuild/archive/refs/tags/v%{esbuild_version}.tar.gz",
+        "Source17:       https://proxy.golang.org/golang.org/x/sys/@v/%{x_sys_version}.zip",
+        "Source18:       https://registry.npmjs.org/acorn/-/acorn-8.14.0.tgz",
+        "Source19:       https://registry.npmjs.org/esbuild/-/esbuild-%{esbuild_version}.tgz",
+        "Source20:       opencode-build-web-tree-sitter-runtime.py",
+        "Source21:       opencode-validate-tree-sitter.mjs",
+        "BuildRequires:  lld20",
+        "BuildRequires:  tree-sitter-cli >= 0.26.9",
+        "rm -rf \"$bash_parser/prebuilds\"",
+        "python3 %{SOURCE20}",
+        "ESBUILD_BINARY_PATH=\"$esbuild_binary\" node-24 script/build.js",
+        "TREE_SITTER_WASI_SDK_PATH=\"$wasi_sdk\" tree-sitter build --wasm",
+        "node-24 %{SOURCE21}",
+        "web-tree-sitter-LICENSE",
+        "tree-sitter-bash-LICENSE",
+        "tree-sitter-powershell-LICENSE"
+      ].each do |snippet|
+        errors << "#{prefix} spec is missing Tree-sitter build requirement #{snippet}" unless opencode_spec.include?(snippet)
       end
 
       parcel_identity = "@parcel/watcher-linux-x64-glibc@2.5.1"

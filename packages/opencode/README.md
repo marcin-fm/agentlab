@@ -1,6 +1,6 @@
 # OpenCode Packaging Status
 
-OpenCode `1.18.3` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.3`; final binary inclusion, generated bundled Provides, aggregate licensing, native and WASM rebuilds, and an offline build remain unverified.
+OpenCode `1.18.3` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.3`; final binary inclusion, generated bundled Provides, aggregate licensing, the remaining native and WASM rebuilds, and a complete offline build remain unverified.
 
 The immutable `v1.18.3` tag resolves to commit
 `127bdb30784d508cc556c71a0f32b508a3061517`, and its source archive has
@@ -55,7 +55,7 @@ It records these unresolved gates:
   binary inclusion rather than automatic payload copies.
 - 73 lifecycle-script sources, including 5 install or postinstall scripts.
 - 8 sources containing 22 prebuilt native payloads.
-- 7 sources containing 14 WASM payloads.
+- 7 sources containing 14 WASM payloads; the three selected Tree-sitter package identities now have source-build replacements for their required WASMs.
 - Only 7 source archives with directly visible native source files.
 
 No lifecycle script was executed. The lifecycle review now requires dependency
@@ -65,7 +65,7 @@ steps whose released outputs are already present, without waiving separate
 generated-output review. Parcel's install hook is replaced by the explicit
 watcher source build; msgpackr's optional native hook is omitted; protobufjs's
 postinstall only emits a version-scheme warning; and the tree-sitter Bash and
-PowerShell native hooks are skipped while their WASM rebuilds remain open.
+PowerShell native hooks are skipped while their required WASMs are rebuilt explicitly.
 
 Native payloads include platform packages for
 OpenTUI, Parcel watcher, node-pty, msgpackr, tree-sitter, and fff-bun, plus
@@ -121,8 +121,17 @@ only unresolved WASM source mapping: its authenticated npm 0.3.4 tarball differs
 from both the registry `gitHead` and the nearest generated `compiled-wasm`
 commit in WASM bytes, JavaScript, declarations, package identity, version, and
 filenames. No exact generated package exists in the checked immutable refs, so
-the prebuilt payload remains unusable. Tree-sitter Bash, PowerShell, and
-web-tree-sitter also still need reproducible build evidence.
+the prebuilt payload remains unusable.
+
+Tree-sitter Bash, PowerShell, and web-tree-sitter now have a complete offline
+replacement recipe. The spec removes the published WASMs and Bash Node
+prebuilds before the application build, builds the runtime with Emscripten
+`4.0.4`, Binaryen `121`, and esbuild `0.24.2` from pinned sources, and compiles
+both grammar WASMs with Fedora `tree-sitter-cli` and the Bun-pinned Zig WASI
+headers. The rebuilt runtime parsed representative Bash and PowerShell inputs
+without errors. Repeated grammar builds were not byte-identical, so
+reproducibility remains honestly false and non-blocking; clean F43/F44 package
+builds and final Bun embedding are still unverified.
 
 ```bash
 scripts/acquire-opencode-sources --plan
