@@ -1,0 +1,910 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "base64"
+require "digest"
+require "fileutils"
+require "json"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "set"
+require "tempfile"
+require "thread"
+require "zlib"
+require_relative "lib/agentlab"
+
+TARGET = { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }.freeze
+CAPTURE_SUFFIXES = %w[
+  Cargo.lock
+  c-api/Cargo.toml
+  rust-toolchain
+  rust-toolchain.toml
+  include/node/node_version.h
+].freeze
+
+def capture!(text, pattern, label)
+  match = text.match(pattern)
+  raise Agentlab::Error, "cannot reconcile #{label}" unless match
+
+  match[1]
+end
+
+def safe_archive_path(path)
+  clean = Pathname(path).cleanpath.to_s
+  return nil if Pathname(path).absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def safe_link?(path, target)
+  return false if target.to_s.empty? || Pathname(target).absolute?
+
+  resolved = Pathname(File.join(File.dirname(path), target)).cleanpath.to_s
+  resolved != ".." && !resolved.start_with?("../")
+end
+
+def parse_pax_headers(data)
+  offset = 0
+  headers = {}
+  while offset < data.bytesize
+    space = data.index(" ", offset)
+    raise Agentlab::Error, "invalid PAX header length" unless space
+
+    length = data.byteslice(offset, space - offset).to_i
+    raise Agentlab::Error, "invalid PAX header record" unless length.positive? && offset + length <= data.bytesize
+
+    record = data.byteslice(space + 1, length - (space - offset) - 1).delete_suffix("\n")
+    key, value = record.split("=", 2)
+    raise Agentlab::Error, "invalid PAX header value" unless key && value
+
+    headers[key] = value
+    offset += length
+  end
+  headers
+end
+
+def tar_header_path(header)
+  name = header.name.to_s.split("\0", 2).first
+  prefix = header.prefix.to_s.split("\0", 2).first
+  prefix.to_s.empty? ? name : "#{prefix}/#{name}"
+end
+
+def inspect_archive(path, capture_suffixes: CAPTURE_SUFFIXES)
+  paths = Set.new
+  roots = Set.new
+  captured = {}
+  file_count = 0
+  unpacked_size = 0
+  symlink_count = 0
+  hardlink_count = 0
+  long_name = nil
+  long_link = nil
+  local_pax = {}
+  global_pax = {}
+
+  Zlib::GzipReader.open(path) do |gzip|
+    Gem::Package::TarReader.new(gzip) do |tar|
+      tar.each do |entry|
+        case entry.header.typeflag
+        when "L"
+          long_name = entry.read.delete_suffix("\0")
+          next
+        when "K"
+          long_link = entry.read.delete_suffix("\0")
+          next
+        when "x"
+          local_pax = parse_pax_headers(entry.read)
+          next
+        when "g"
+          global_pax.merge!(parse_pax_headers(entry.read))
+          next
+        end
+
+        entry_name = local_pax["path"] || global_pax["path"] || long_name || tar_header_path(entry.header)
+        link_name = local_pax["linkpath"] || global_pax["linkpath"] || long_link || entry.header.linkname.to_s.split("\0", 2).first
+        clean = safe_archive_path(entry_name)
+        raise Agentlab::Error, "archive path escapes root: #{entry_name}" unless clean
+        raise Agentlab::Error, "archive contains duplicate path: #{clean}" unless paths.add?(clean)
+
+        root = clean.split("/", 2).first
+        roots << root unless root.nil? || root.empty? || root == "."
+
+        if entry.file?
+          file_count += 1
+          unpacked_size += entry.header.size
+          suffix = capture_suffixes.find { |candidate| clean == candidate || clean.end_with?("/#{candidate}") }
+          captured[clean] = entry.read if suffix
+        elsif entry.directory?
+          next
+        elsif entry.header.typeflag == "2"
+          raise Agentlab::Error, "archive symlink escapes root: #{clean} -> #{link_name}" unless safe_link?(clean, link_name)
+          symlink_count += 1
+        elsif entry.header.typeflag == "1"
+          raise Agentlab::Error, "archive hardlink escapes root: #{clean} -> #{link_name}" unless safe_link?(clean, link_name)
+          hardlink_count += 1
+        else
+          raise Agentlab::Error, "archive contains unsupported entry type #{entry.header.typeflag.inspect}: #{clean}"
+        end
+        long_name = nil
+        long_link = nil
+        local_pax = {}
+      end
+    end
+  end
+
+  raise Agentlab::Error, "archive does not contain exactly one top-level root: #{roots.to_a.sort.inspect}" unless roots.length == 1
+
+  {
+    "root" => roots.first,
+    "file_count" => file_count,
+    "unpacked_size_bytes" => unpacked_size,
+    "symlink_count" => symlink_count,
+    "hardlink_count" => hardlink_count,
+    "captured" => captured
+  }
+rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+  raise Agentlab::Error, "cannot inspect #{path}: #{e.message}"
+end
+
+def download_with_retries(url, label)
+  attempts = 0
+  begin
+    attempts += 1
+    Agentlab.download(url)
+  rescue StandardError => e
+    raise Agentlab::Error, "#{label}: download failed after #{attempts} attempts: #{e.message}" if attempts >= 3
+
+    sleep(attempts)
+    retry
+  end
+end
+
+def archive_filename(name, url)
+  safe_name = name.gsub(/[^A-Za-z0-9_.-]+/, "-")
+  "#{safe_name}-#{Digest::SHA256.hexdigest(url)[0, 16]}.tar.gz"
+end
+
+def integrity_bytes(integrity, label)
+  algorithm, encoded = integrity.to_s.split("-", 2)
+  raise Agentlab::Error, "#{label}: unsupported integrity algorithm #{algorithm.inspect}" unless algorithm == "sha512"
+  raise Agentlab::Error, "#{label}: malformed integrity" unless encoded
+
+  Base64.strict_decode64(encoded)
+rescue ArgumentError => e
+  raise Agentlab::Error, "#{label}: malformed integrity: #{e.message}"
+end
+
+def verify_npm_integrity!(bytes, source)
+  expected = integrity_bytes(source.fetch("integrity"), source.fetch("npm_name"))
+  actual = Digest::SHA512.digest(bytes)
+  raise Agentlab::Error, "#{source.fetch('npm_name')}: sha512 integrity mismatch" unless actual == expected
+end
+
+def write_cached_archive(path, bytes, prefix)
+  Tempfile.create([prefix, ".tmp"], File.dirname(path)) do |file|
+    file.binmode
+    file.write(bytes)
+    file.flush
+    file.fsync
+    File.chmod(0o644, file.path)
+    File.rename(file.path, path)
+  end
+end
+
+def npm_source_identity(source)
+  case source.fetch("origin")
+  when "registry"
+    ["registry", source.fetch("source_url"), source.fetch("integrity")]
+  when "github"
+    ["github", source.fetch("source_url"), source.fetch("source_commit")]
+  else
+    raise Agentlab::Error, "unsupported npm source origin #{source.fetch('origin').inspect}"
+  end
+end
+
+def npm_archive_filename(source)
+  case source.fetch("origin")
+  when "registry"
+    "sha512-#{integrity_bytes(source.fetch('integrity'), source.fetch('npm_name')).unpack1('H*')}.tgz"
+  when "github"
+    "git-#{source.fetch('source_commit')}.tar.gz"
+  end
+end
+
+def acquire_npm_archive(source, archives_dir, check:)
+  filename = npm_archive_filename(source)
+  path = File.join(archives_dir, filename)
+  if File.file?(path)
+    bytes = File.binread(path)
+    verify_npm_integrity!(bytes, source) if source.fetch("origin") == "registry"
+  else
+    raise Agentlab::Error, "missing cached npm archive #{path}" if check
+
+    bytes = download_with_retries(source.fetch("source_url"), source.fetch("npm_name"))
+    verify_npm_integrity!(bytes, source) if source.fetch("origin") == "registry"
+    write_cached_archive(path, bytes, ".bun-npm-source-")
+  end
+
+  inspection = inspect_archive(path, capture_suffixes: ["package.json"])
+  expected_name = source.fetch("source_name", source.fetch("npm_name"))
+  expected_version = source["source_version"]
+  package_json = inspection.fetch("captured").filter_map do |entry_path, content|
+    data = JSON.parse(content)
+    { "path" => entry_path, "data" => data } if data["name"] == expected_name && (!expected_version || data["version"].to_s == expected_version)
+  rescue JSON::ParserError => e
+    raise Agentlab::Error, "#{source.fetch('npm_name')}: invalid #{entry_path}: #{e.message}"
+  end.first
+  raise Agentlab::Error, "#{source.fetch('npm_name')}: matching package.json is absent" unless package_json
+
+  {
+    "archive" => filename,
+    "sha256" => Digest::SHA256.hexdigest(bytes),
+    "size_bytes" => bytes.bytesize,
+    "archive_root" => inspection.fetch("root"),
+    "file_count" => inspection.fetch("file_count"),
+    "unpacked_size_bytes" => inspection.fetch("unpacked_size_bytes"),
+    "symlink_count" => inspection.fetch("symlink_count"),
+    "hardlink_count" => inspection.fetch("hardlink_count"),
+    "package_json" => package_json.fetch("path"),
+    "package_name" => package_json.dig("data", "name"),
+    "package_version" => package_json.dig("data", "version")
+  }
+end
+
+def acquire_cargo_archive(source, archives_dir, check:)
+  filename = "sha256-#{source.fetch('checksum')}.crate"
+  path = File.join(archives_dir, filename)
+  if File.file?(path)
+    bytes = File.binread(path)
+  else
+    raise Agentlab::Error, "missing cached Cargo archive #{path}" if check
+
+    bytes = download_with_retries(source.fetch("source_url"), "#{source.fetch('name')} #{source.fetch('version')}")
+    write_cached_archive(path, bytes, ".bun-cargo-source-")
+  end
+  actual_sha256 = Digest::SHA256.hexdigest(bytes)
+  unless actual_sha256 == source.fetch("checksum")
+    raise Agentlab::Error, "#{source.fetch('name')} #{source.fetch('version')}: Cargo checksum mismatch"
+  end
+
+  inspection = inspect_archive(path, capture_suffixes: ["Cargo.toml", "Cargo.toml.orig", ".cargo_vcs_info.json"])
+  expected_root = "#{source.fetch('name')}-#{source.fetch('version')}"
+  unless inspection.fetch("root") == expected_root
+    raise Agentlab::Error, "#{source.fetch('name')} #{source.fetch('version')}: unexpected Cargo archive root #{inspection.fetch('root')}"
+  end
+  manifest_path = "#{expected_root}/Cargo.toml"
+  manifest = inspection.fetch("captured")[manifest_path]
+  raise Agentlab::Error, "#{source.fetch('name')} #{source.fetch('version')}: Cargo.toml is absent" unless manifest
+  package_block = manifest[/^\[package\]\s*$\n(.*?)(?=^\[|\z)/m, 1]
+  raise Agentlab::Error, "#{source.fetch('name')} #{source.fetch('version')}: cannot parse Cargo.toml package" unless package_block
+  manifest_name = package_block[/^name\s*=\s*"([^"]+)"/, 1]
+  manifest_version = package_block[/^version\s*=\s*"([^"]+)"/, 1]
+  unless manifest_name == source.fetch("name") && manifest_version == source.fetch("version")
+    raise Agentlab::Error, "#{source.fetch('name')} #{source.fetch('version')}: Cargo.toml identity mismatch"
+  end
+
+  {
+    "archive" => filename,
+    "sha256" => actual_sha256,
+    "size_bytes" => bytes.bytesize,
+    "archive_root" => inspection.fetch("root"),
+    "file_count" => inspection.fetch("file_count"),
+    "unpacked_size_bytes" => inspection.fetch("unpacked_size_bytes"),
+    "symlink_count" => inspection.fetch("symlink_count"),
+    "hardlink_count" => inspection.fetch("hardlink_count"),
+    "manifest" => "Cargo.toml",
+    "manifest_sha256" => Digest::SHA256.hexdigest(manifest)
+  }
+end
+
+def acquire_archive(source, archives_dir, check:)
+  filename = archive_filename(source.fetch("name"), source.fetch("url"))
+  path = File.join(archives_dir, filename)
+  unless File.file?(path)
+    raise Agentlab::Error, "missing cached archive #{path}" if check
+
+    bytes = download_with_retries(source.fetch("url"), source.fetch("name"))
+    Tempfile.create([".bun-source-", ".tmp"], archives_dir) do |file|
+      file.binmode
+      file.write(bytes)
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+
+  inspection = inspect_archive(path)
+  {
+    "archive" => filename,
+    "sha256" => Digest::SHA256.file(path).hexdigest,
+    "size_bytes" => File.size(path),
+    "archive_root" => inspection.fetch("root"),
+    "file_count" => inspection.fetch("file_count"),
+    "unpacked_size_bytes" => inspection.fetch("unpacked_size_bytes"),
+    "symlink_count" => inspection.fetch("symlink_count"),
+    "hardlink_count" => inspection.fetch("hardlink_count"),
+    "captured" => inspection.fetch("captured")
+  }
+end
+
+def require_workdir(path, check:)
+  expanded = File.expand_path(path)
+  raise Agentlab::Error, "workdir must be below /srv/tmp" unless expanded.start_with?("/srv/tmp/")
+
+  marker = File.join(expanded, ".agentlab-bun-release-local-sources")
+  if Dir.exist?(expanded)
+    raise Agentlab::Error, "refusing unmarked workdir #{expanded}" unless File.file?(marker)
+  elsif check
+    raise Agentlab::Error, "missing source acquisition workdir #{expanded}"
+  else
+    FileUtils.mkdir_p(expanded)
+    File.write(marker, "agentlab bun release-local source acquisition\n")
+  end
+  %w[archives npm cargo].each { |directory| FileUtils.mkdir_p(File.join(expanded, directory)) } unless check
+  expanded
+end
+
+def allowed_selector?(selector, target)
+  values = Array(selector)
+  return true if values.empty?
+
+  excluded = values.filter_map { |value| value.delete_prefix("!") if value.start_with?("!") }
+  return false if excluded.include?(target)
+
+  included = values.reject { |value| value.start_with?("!") }
+  included.empty? || included.include?(target)
+end
+
+def platform_allowed?(package_key, identifier, metadata)
+  return false unless allowed_selector?(metadata["os"], TARGET.fetch("os"))
+  return false unless allowed_selector?(metadata["cpu"], TARGET.fetch("cpu"))
+
+  libc = metadata["libc"]
+  return false if libc && !allowed_selector?(libc, TARGET.fetch("libc")) && !allowed_selector?(libc, "gnu")
+  return false if [package_key, identifier].any? { |value| value.match?(/(?:\A|[-_\/])musl(?:\z|[-_\/])/) }
+
+  true
+end
+
+def package_identity(identifier)
+  separator = if identifier.start_with?("@")
+                slash = identifier.index("/")
+                slash && identifier.index("@", slash)
+              else
+                identifier.index("@")
+              end
+  raise Agentlab::Error, "invalid Bun lock package identity #{identifier.inspect}" unless separator
+
+  [identifier[0...separator], identifier[(separator + 1)..]]
+end
+
+def registry_source(name, resolution)
+  if resolution.start_with?("npm:")
+    source_name, source_version = package_identity(resolution.delete_prefix("npm:"))
+  else
+    source_name = name
+    source_version = resolution
+  end
+  basename = source_name.split("/").last
+  {
+    "source_name" => source_name,
+    "source_version" => source_version,
+    "source_url" => "https://registry.npmjs.org/#{source_name}/-/#{basename}-#{source_version}.tgz"
+  }
+end
+
+def npm_lock_receipt(source_dir, relative_dir)
+  root = File.join(source_dir, relative_dir)
+  package_path = File.join(root, "package.json")
+  lock_path = File.join(root, "bun.lock")
+  raise Agentlab::Error, "missing npm package manifest #{package_path}" unless File.file?(package_path)
+  raise Agentlab::Error, "missing npm lock #{lock_path}" unless File.file?(lock_path)
+
+  package_json = JSON.parse(File.read(package_path))
+  lock = Agentlab.load_jsonc(lock_path)
+  declarations = %w[dependencies devDependencies optionalDependencies].each_with_object({}) do |group, merged|
+    merged.merge!(Hash(package_json[group]))
+  end
+  selected = []
+  excluded = []
+
+  lock.fetch("packages").sort.each do |package_key, tuple|
+    identifier = tuple.fetch(0)
+    name, resolution = package_identity(identifier)
+    next if resolution.start_with?("workspace:")
+
+    metadata = tuple.find { |entry| entry.is_a?(Hash) } || {}
+    unless platform_allowed?(package_key, identifier, metadata)
+      excluded << package_key
+      next
+    end
+
+    integrity = tuple.reverse.find { |entry| entry.is_a?(String) && entry.start_with?("sha512-") }
+    record = {
+      "package_path" => package_key,
+      "npm_name" => name,
+      "resolution" => resolution,
+      "platform" => metadata.slice("os", "cpu", "libc")
+    }
+    if resolution.start_with?("github:")
+      declared = declarations[name]
+      match = declared.to_s.match(/\Agithub:([^#]+)#([0-9a-f]{40})\z/)
+      raise Agentlab::Error, "cannot reconcile full GitHub npm source for #{name}" unless match
+      short_commit = resolution.split("#", 2).fetch(1)
+      commit = match[2]
+      raise Agentlab::Error, "GitHub npm source for #{name} does not match lock" unless commit.start_with?(short_commit)
+
+      record.merge!(
+        "origin" => "github",
+        "source_name" => name,
+        "source_commit" => commit,
+        "source_url" => "https://github.com/#{match[1]}/archive/#{commit}.tar.gz"
+      )
+    else
+      raise Agentlab::Error, "registry package #{package_key} lacks sha512 integrity" unless integrity
+
+      record.merge!("origin" => "registry", "integrity" => integrity).merge!(registry_source(name, resolution))
+    end
+    selected << record
+  end
+
+  origin_counts = { "github" => 0, "registry" => 0 }.merge(
+    selected.group_by { |record| record.fetch("origin") }.transform_values(&:length)
+  ).sort.to_h
+  {
+    "path" => relative_dir.empty? ? "." : relative_dir,
+    "package_name" => package_json.fetch("name"),
+    "package_json_sha256" => Digest::SHA256.file(package_path).hexdigest,
+    "lockfile_sha256" => Digest::SHA256.file(lock_path).hexdigest,
+    "workspace_records" => lock.fetch("workspaces").length,
+    "lock_package_records" => lock.fetch("packages").length,
+    "target_selected_sources" => selected.length,
+    "platform_excluded_sources" => excluded.length,
+    "origins" => origin_counts,
+    "sources" => selected.sort_by { |record| record.fetch("package_path") }
+  }
+end
+
+def deduplicate_npm_sources(roots)
+  unique = {}
+  roots.each do |root|
+    root.fetch("sources").each do |source|
+      identity = npm_source_identity(source)
+      record = unique[identity] ||= source.slice(
+        "origin", "npm_name", "source_name", "source_version", "source_url", "integrity", "source_commit"
+      ).merge("references" => [])
+      comparable = source.slice(
+        "origin", "npm_name", "source_name", "source_version", "source_url", "integrity", "source_commit"
+      )
+      unless record.slice(*comparable.keys) == comparable
+        raise Agentlab::Error, "one npm source identity maps to conflicting package identities: #{identity.inspect}"
+      end
+      record.fetch("references") << {
+        "install_root" => root.fetch("path"),
+        "package_path" => source.fetch("package_path")
+      }
+    end
+  end
+  unique.values.each { |source| source["references"] = source.fetch("references").uniq.sort_by { |ref| [ref.fetch("install_root"), ref.fetch("package_path")] } }
+  unique.values.sort_by { |source| [source.fetch("origin"), source.fetch("source_name"), source["source_version"].to_s] }
+end
+
+def parse_selected_dependencies(source_dir)
+  deps_dir = File.join(source_dir, "scripts/build/deps")
+  index_path = File.join(deps_dir, "index.ts")
+  index = File.read(index_path)
+  imports = index.scan(/^import \{ (\w+) \} from "\.\/([^"]+)";/).to_h
+  list = capture!(index, /export const allDeps:[^=]+= \[(.*?)^\];/m, "scripts/build/deps/index.ts allDeps")
+  symbols = list.scan(/^\s{2}(\w+),\s*$/).flatten
+  raise Agentlab::Error, "expected 23 Bun dependency definitions, found #{symbols.length}" unless symbols.length == 23
+  raise Agentlab::Error, "Bun dependency list contains duplicates" unless symbols.uniq.length == symbols.length
+
+  records = symbols.map do |symbol|
+    relative_file = imports.fetch(symbol) { raise Agentlab::Error, "missing dependency import for #{symbol}" }
+    path = File.join(deps_dir, relative_file)
+    text = File.read(path)
+    name = capture!(text, /\bname: "([^"]+)"/, "#{relative_file} dependency name")
+    base = {
+      "symbol" => symbol,
+      "name" => name,
+      "definition" => "scripts/build/deps/#{relative_file}",
+      "definition_sha256" => Digest::SHA256.file(path).hexdigest
+    }
+
+    case symbol
+    when "libuv"
+      raise Agentlab::Error, "libuv selection predicate changed" unless text.include?("enabled: cfg => cfg.windows")
+      base.merge("selected" => false, "reason" => "windows-only")
+    when "nodejsHeaders"
+      version = capture!(text, /NODEJS_VERSION = "([^"]+)"/, "Node.js header version")
+      abi = capture!(text, /NODEJS_ABI_VERSION = "([^"]+)"/, "Node.js ABI version")
+      base.merge(
+        "selected" => true,
+        "source_kind" => "node-headers",
+        "version" => version,
+        "abi" => abi,
+        "url" => "https://nodejs.org/dist/v#{version}/node-v#{version}-headers.tar.gz"
+      )
+    when "sqlite"
+      raise Agentlab::Error, "SQLite source selection changed" unless text.include?("enabled: cfg => cfg.staticSqlite")
+      source_path = capture!(text, /kind: "in-tree",\s*path: "([^"]+)"/m, "SQLite in-tree source")
+      base.merge("selected" => true, "source_kind" => "in-tree", "path" => source_path, "build_strategy" => "direct")
+    when "webkit"
+      commit = capture!(text, /WEBKIT_VERSION = "([0-9a-f]{40})"/, "WebKit commit")
+      base.merge("selected" => true, "source_kind" => "existing-local", "commit" => commit, "build_strategy" => "nested-cmake")
+    else
+      constants = text.scan(/(?:export )?const (\w+) = "([^"]+)";/).to_h
+      repo = capture!(text, /repo: "([^"]+)"/, "#{relative_file} repository")
+      commit_expression = capture!(text, /commit: (\w+|"[^"]+")/, "#{relative_file} commit")
+      commit = if commit_expression.start_with?("\"")
+                 commit_expression.delete_prefix("\"").delete_suffix("\"")
+               else
+                 constants.fetch(commit_expression) { raise Agentlab::Error, "missing #{commit_expression} in #{relative_file}" }
+               end
+      patches_block = text[/patches:\s*\[(.*?)\],/m, 1]
+      patch_paths = patches_block ? patches_block.scan(/"([^"]+)"/).flatten : []
+      patches = patch_paths.map do |relative|
+        patch_path = File.join(source_dir, relative)
+        raise Agentlab::Error, "missing Bun dependency patch #{relative}" unless File.file?(patch_path)
+        {
+          "path" => relative,
+          "sha256" => Digest::SHA256.file(patch_path).hexdigest,
+          "size_bytes" => File.size(patch_path),
+          "kind" => relative.end_with?(".patch") ? "patch" : "overlay"
+        }
+      end
+      identity = Digest::SHA256.new
+      identity.update(commit)
+      patches.each do |patch|
+        content = File.binread(File.join(source_dir, patch.fetch("path"))).gsub("\r\n", "\n")
+        identity.update("\0")
+        identity.update(content)
+      end
+      base.merge(
+        "selected" => true,
+        "source_kind" => "github-archive",
+        "repository" => repo,
+        "commit" => commit,
+        "url" => "https://github.com/#{repo}/archive/#{commit}.tar.gz",
+        "patches" => patches,
+        "upstream_source_identity" => identity.hexdigest[0, 16],
+        "build_strategy" => text.include?('kind: "cargo"') ? "cargo" : "direct"
+      )
+    end
+  end
+
+  [records, index_path]
+end
+
+def cargo_registry_sources(lock)
+  records = lock.split(/^\[\[package\]\]\s*$\n/).drop(1).filter_map do |block|
+    source = block[/^source = "([^"]+)"$/, 1]
+    next unless source&.start_with?("registry+")
+
+    name = capture!(block, /^name = "([^"]+)"$/, "Cargo package name")
+    version = capture!(block, /^version = "([^"]+)"$/, "Cargo package version")
+    checksum = capture!(block, /^checksum = "([0-9a-f]{64})"$/, "Cargo package checksum")
+    {
+      "name" => name,
+      "version" => version,
+      "registry" => source.delete_prefix("registry+"),
+      "checksum" => checksum,
+      "source_url" => "https://crates.io/api/v1/crates/#{name}/#{version}/download"
+    }
+  end
+  raise Agentlab::Error, "lol-html Cargo lock contains duplicate registry packages" unless records.uniq { |record| [record.fetch("name"), record.fetch("version")] }.length == records.length
+
+  records.sort_by { |record| [record.fetch("name"), record.fetch("version")] }
+end
+
+def cargo_receipt(lolhtml, source_dir)
+  captured = lolhtml.fetch("captured")
+  manifest_path = captured.keys.find { |path| path.end_with?("/c-api/Cargo.toml") }
+  lock_path = captured.keys.find { |path| path.end_with?("/c-api/Cargo.lock") }
+  raise Agentlab::Error, "lol-html c-api/Cargo.toml is absent from the selected archive" unless manifest_path
+  raise Agentlab::Error, "lol-html Cargo.lock is absent from the selected archive" unless lock_path
+
+  lock = captured.fetch(lock_path)
+  registry_sources = cargo_registry_sources(lock)
+  rust_toolchain_path = File.join(source_dir, "rust-toolchain.toml")
+  raise Agentlab::Error, "Bun rust-toolchain.toml is absent" unless File.file?(rust_toolchain_path)
+  rust_toolchain = File.read(rust_toolchain_path)
+  channel = capture!(rust_toolchain, /^channel = "([^"]+)"$/, "Bun Rust channel")
+  components = rust_toolchain.scan(/^components = \[(.*?)\]$/).flatten.flat_map { |list| list.scan(/"([^"]+)"/).flatten }
+  raise Agentlab::Error, "Bun Rust toolchain does not require rust-src" unless components.include?("rust-src")
+
+  {
+    "dependency" => "lolhtml",
+    "source_archive" => lolhtml.fetch("archive"),
+    "source_sha256" => lolhtml.fetch("sha256"),
+    "manifest" => {
+      "path" => manifest_path.sub(%r{\A[^/]+/}, ""),
+      "sha256" => Digest::SHA256.hexdigest(captured.fetch(manifest_path))
+    },
+    "lockfile" => {
+      "path" => lock_path.sub(%r{\A[^/]+/}, ""),
+      "sha256" => Digest::SHA256.hexdigest(lock),
+      "version" => lock[/^version = (\d+)$/, 1]&.to_i,
+      "package_records" => lock.scan(/^\[\[package\]\]$/).length,
+      "registry_sources" => registry_sources.length,
+      "git_sources" => lock.scan(/^source = "git\+/).length,
+      "checksums" => lock.scan(/^checksum = "/).length
+    },
+    "rust_toolchain" => {
+      "path" => "rust-toolchain.toml",
+      "sha256" => Digest::SHA256.file(rust_toolchain_path).hexdigest,
+      "channel" => channel,
+      "components" => components,
+      "pin_verified" => true
+    },
+    "crate_sources" => registry_sources,
+    "crate_archives_verified" => false,
+    "git_sources_verified" => false,
+    "nightly_toolchain_verified" => false,
+    "rust_src_verified" => false,
+    "offline_cargo_verified" => false
+  }
+end
+
+package = Agentlab.package_named("bun")
+version = package.upstream.fetch("current_version").to_s
+source_dir = nil
+workdir = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
+output = File.join(package.directory, "bun-#{version}-release-local-source-closure.json")
+jobs = 4
+plan = false
+check = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/acquire-bun-release-local-sources --source-dir PATH [options]"
+  parser.on("--source-dir PATH", "Extracted Bun release source") { |path| source_dir = path }
+  parser.on("--workdir PATH", "Marked resumable work directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--output PATH", "Canonical source-closure receipt") { |path| output = path }
+  parser.on("--jobs N", Integer, "Concurrent downloads (1-4)") { |value| jobs = value }
+  parser.on("--plan", "Print selected source counts without downloading") { plan = true }
+  parser.on("--check", "Verify cached archives and the checked receipt without downloading") { check = true }
+end.parse!
+
+raise Agentlab::Error, "--source-dir is required" unless source_dir
+raise Agentlab::Error, "--jobs must be between 1 and 4" unless (1..4).cover?(jobs)
+
+source_dir = File.realpath(source_dir)
+package_json_path = File.join(source_dir, "package.json")
+raise Agentlab::Error, "missing Bun package.json in #{source_dir}" unless File.file?(package_json_path)
+source_package = JSON.parse(File.read(package_json_path))
+raise Agentlab::Error, "source tree is not Bun #{version}" unless source_package["name"] == "bun" && source_package["version"].to_s == version
+
+dependencies, index_path = parse_selected_dependencies(source_dir)
+github_sources = dependencies.select { |record| record["selected"] && record["source_kind"] == "github-archive" }
+node_source = dependencies.find { |record| record["source_kind"] == "node-headers" }
+sqlite = dependencies.find { |record| record["source_kind"] == "in-tree" }
+webkit = dependencies.find { |record| record["source_kind"] == "existing-local" }
+raise Agentlab::Error, "expected 19 selected GitHub archives, found #{github_sources.length}" unless github_sources.length == 19
+raise Agentlab::Error, "missing selected Node.js headers" unless node_source
+raise Agentlab::Error, "missing selected in-tree SQLite" unless sqlite
+raise Agentlab::Error, "missing selected local WebKit" unless webkit
+
+webkit_metadata = package.data.dig("build_plan", "source_inputs", "webkit") || {}
+unless webkit.fetch("commit") == webkit_metadata.fetch("commit")
+  raise Agentlab::Error, "Bun source WebKit commit does not match package metadata"
+end
+
+if plan
+  puts JSON.pretty_generate(
+    "package" => "bun",
+    "release" => version,
+    "profile" => "release-local",
+    "target" => TARGET,
+    "all_dependencies" => dependencies.length,
+    "selected_github_archives" => github_sources.length,
+    "selected_node_header_archives" => 1,
+    "selected_in_tree_sources" => 1,
+    "selected_existing_local_sources" => 1,
+    "excluded_dependencies" => dependencies.count { |record| !record.fetch("selected") }
+  )
+  exit 0
+end
+
+workdir = require_workdir(workdir, check: check)
+archives_dir = File.join(workdir, "archives")
+npm_archives_dir = File.join(workdir, "npm")
+cargo_archives_dir = File.join(workdir, "cargo")
+FileUtils.mkdir_p(archives_dir) unless check
+queue = Queue.new
+(github_sources + [node_source]).each { |source| queue << source }
+results = []
+errors = []
+mutex = Mutex.new
+
+workers = jobs.times.map do
+  Thread.new do
+    loop do
+      source = queue.pop(true)
+      acquired = acquire_archive(source, archives_dir, check: check)
+      mutex.synchronize { results << source.merge(acquired) }
+    rescue ThreadError
+      break
+    rescue StandardError => e
+      mutex.synchronize { errors << "#{source&.fetch('name', 'unknown')}: #{e.message}" }
+    end
+  end
+end
+workers.each(&:join)
+unless errors.empty?
+  raise Agentlab::Error, "Bun source acquisition failed for #{errors.length} source(s):\n#{errors.sort.join("\n")}"
+end
+
+acquired = results.to_h { |record| [record.fetch("symbol"), record] }
+native_records = github_sources.map do |source|
+  record = acquired.fetch(source.fetch("symbol")).dup
+  record.delete("captured") unless source.fetch("symbol") == "lolhtml"
+  record
+end
+node_record = acquired.fetch(node_source.fetch("symbol"))
+node_version_path = node_record.fetch("captured").keys.find { |path| path.end_with?("/include/node/node_version.h") }
+raise Agentlab::Error, "Node.js headers omit include/node/node_version.h" unless node_version_path
+node_version_header = node_record.fetch("captured").fetch(node_version_path)
+unless node_version_header.match?(/^#define NODE_MODULE_VERSION\s+#{Regexp.escape(node_source.fetch('abi'))}$/)
+  raise Agentlab::Error, "Node.js headers do not provide ABI #{node_source.fetch('abi')}"
+end
+node_record = node_record.reject { |key, _value| key == "captured" }.merge(
+  "node_version_header" => node_version_path.sub(%r{\A[^/]+/}, ""),
+  "node_version_header_sha256" => Digest::SHA256.hexdigest(node_version_header),
+  "abi_verified" => true
+)
+
+lolhtml_record = acquired.fetch("lolhtml")
+cargo = cargo_receipt(lolhtml_record, source_dir)
+native_records.find { |record| record.fetch("symbol") == "lolhtml" }.delete("captured")
+
+sqlite_dir = File.join(source_dir, sqlite.fetch("path"))
+sqlite_file = File.join(sqlite_dir, "sqlite3.c")
+raise Agentlab::Error, "missing selected in-tree SQLite source #{sqlite_file}" unless File.file?(sqlite_file)
+
+npm_roots = ["", "packages/bun-error", "src/node-fallbacks"].map do |relative|
+  npm_lock_receipt(source_dir, relative)
+end
+npm_sources = deduplicate_npm_sources(npm_roots)
+cargo_sources = cargo.fetch("crate_sources")
+
+payload_queue = Queue.new
+npm_sources.each { |source| payload_queue << ["npm", source] }
+cargo_sources.each { |source| payload_queue << ["cargo", source] }
+payload_results = []
+payload_errors = []
+payload_mutex = Mutex.new
+
+payload_workers = jobs.times.map do
+  Thread.new do
+    loop do
+      kind, source = payload_queue.pop(true)
+      archive = if kind == "npm"
+                  acquire_npm_archive(source, npm_archives_dir, check: check)
+                else
+                  acquire_cargo_archive(source, cargo_archives_dir, check: check)
+                end
+      payload_mutex.synchronize { payload_results << [kind, source, archive] }
+    rescue ThreadError
+      break
+    rescue StandardError => e
+      label = source && (source["npm_name"] || "#{source['name']} #{source['version']}")
+      payload_mutex.synchronize { payload_errors << "#{kind || 'payload'} #{label || 'unknown'}: #{e.message}" }
+    end
+  end
+end
+payload_workers.each(&:join)
+unless payload_errors.empty?
+  raise Agentlab::Error, "Bun npm/Cargo source acquisition failed for #{payload_errors.length} source(s):\n#{payload_errors.sort.first(30).join("\n")}"
+end
+
+npm_acquired = {}
+cargo_acquired = {}
+payload_results.each do |kind, source, archive|
+  if kind == "npm"
+    npm_acquired[npm_source_identity(source)] = archive
+  else
+    cargo_acquired[[source.fetch("name"), source.fetch("version")]] = archive
+  end
+end
+npm_records = npm_sources.map { |source| source.merge(npm_acquired.fetch(npm_source_identity(source))) }
+cargo_records = cargo_sources.map do |source|
+  source.merge(cargo_acquired.fetch([source.fetch("name"), source.fetch("version")]))
+end
+cargo["crate_sources"] = cargo_records
+cargo["crate_archives_verified"] = true
+cargo["git_sources_verified"] = cargo.dig("lockfile", "git_sources").zero?
+
+npm_origin_counts = { "github" => 0, "registry" => 0 }.merge(
+  npm_records.group_by { |record| record.fetch("origin") }.transform_values(&:length)
+).sort.to_h
+npm_summary = {
+  "install_roots" => npm_roots.length,
+  "lock_package_records" => npm_roots.sum { |root| root.fetch("lock_package_records") },
+  "target_selected_sources" => npm_roots.sum { |root| root.fetch("target_selected_sources") },
+  "platform_excluded_sources" => npm_roots.sum { |root| root.fetch("platform_excluded_sources") },
+  "registry_sources" => npm_roots.sum { |root| root.dig("origins", "registry") },
+  "github_sources" => npm_roots.sum { |root| root.dig("origins", "github") },
+  "unique_sources" => npm_records.length,
+  "unique_origins" => npm_origin_counts,
+  "archive_bytes" => npm_records.sum { |record| record.fetch("size_bytes") },
+  "source_archives_verified" => true,
+  "offline_install_verified" => false
+}
+
+receipt = {
+  "schema" => "bun-release-local-source-closure/v2",
+  "package" => package.name,
+  "release" => version,
+  "profile" => "release-local",
+  "target" => TARGET,
+  "source_tree" => {
+    "source_sha256" => package.upstream.fetch("source_sha256"),
+    "package_json_sha256" => Digest::SHA256.file(package_json_path).hexdigest,
+    "bun_lock_sha256" => Digest::SHA256.file(File.join(source_dir, "bun.lock")).hexdigest,
+    "dependency_index_sha256" => Digest::SHA256.file(index_path).hexdigest,
+    "codegen_definition_sha256" => Digest::SHA256.file(File.join(source_dir, "scripts/build/codegen.ts")).hexdigest,
+    "dependency_records" => dependencies.length
+  },
+  "selection" => {
+    "selected_github_archives" => native_records.length,
+    "selected_node_header_archives" => 1,
+    "selected_in_tree_sources" => 1,
+    "selected_existing_local_sources" => 1,
+    "excluded_dependencies" => dependencies.count { |record| !record.fetch("selected") },
+    "excluded" => dependencies.reject { |record| record.fetch("selected") }
+  },
+  "native_github_sources" => native_records.sort_by { |record| record.fetch("name") },
+  "node_headers" => node_record,
+  "in_tree_sources" => [
+    sqlite.merge(
+      "source_file" => "#{sqlite.fetch('path')}/sqlite3.c",
+      "source_file_sha256" => Digest::SHA256.file(sqlite_file).hexdigest,
+      "source_file_size_bytes" => File.size(sqlite_file)
+    )
+  ],
+  "existing_local_sources" => [
+    webkit.merge(
+      "archive" => webkit_metadata.fetch("archive_filename"),
+      "sha256" => webkit_metadata.fetch("sha256"),
+      "immutable_public_url" => webkit_metadata["archive_url"],
+      "source_build_verified" => package.data.dig("build_plan", "stages", "webkit_source_build", "source_build_verified") == true
+    )
+  ],
+  "npm" => {
+    "summary" => npm_summary,
+    "install_roots" => npm_roots,
+    "source_archives" => npm_records
+  },
+  "cargo" => cargo,
+  "validation" => {
+    "upstream_dependency_definitions_reconciled" => true,
+    "selected_native_archive_paths_verified" => true,
+    "selected_native_archive_sha256_recorded" => true,
+    "selected_native_patch_hashes_recorded" => true,
+    "node_headers_abi_verified" => true,
+    "github_sources_verified" => true,
+    "github_sources_scope" => "selected native dependency archives; the full-commit npm GitHub source is independently covered by npm_sources_verified=true",
+    "node_headers_verified" => true,
+    "npm_sources_verified" => true,
+    "npm_sources_scope" => "all target-selected archives from the three frozen Bun install roots",
+    "cargo_crate_sources_verified" => true,
+    "cargo_sources_verified" => false,
+    "offline_materialization_verified" => false,
+    "immutable_public_hosting_verified" => false,
+    "dependency_resolution_performed" => false,
+    "build_executed" => false
+  },
+  "scope" => "checksummed local acquisition of selected Linux x86_64 release-local native, Node.js header, npm, and lol-html Cargo crate archives; the pinned nightly Rust toolchain, rust-src payload, immutable hosting, and complete offline materialization remain blocked"
+}
+content = JSON.pretty_generate(receipt) + "\n"
+
+if check
+  raise Agentlab::Error, "missing Bun source-closure receipt #{output}" unless File.file?(output)
+  raise Agentlab::Error, "Bun source-closure receipt is stale: #{output}" unless File.binread(output) == content
+  puts "Verified #{native_records.length} native GitHub archives, Node.js #{node_source.fetch('version')} headers, #{npm_records.length} npm archives, and #{cargo_records.length} Cargo crates."
+else
+  Agentlab.atomic_write(output, content)
+  puts "Wrote #{native_records.length} native GitHub archives, Node.js #{node_source.fetch('version')} headers, #{npm_records.length} npm archives, and #{cargo_records.length} Cargo crates to #{output}."
+end

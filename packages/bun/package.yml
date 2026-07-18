@@ -2,9 +2,10 @@ name: bun
 status: blocked
 blockers:
   - The checked temporary Bun seed has not yet driven the first isolated source build.
-  - The pinned WebKit/JavaScriptCore archive checksum, source build, Arch correctness patch, and relink plan are not verified.
-  - Offline native, npm, Cargo, Node-header, and GitHub source closures are incomplete.
-  - LGPL relink objects for statically linked WebKit/JavaScriptCore are not packaged.
+  - The checked WebKit archive still needs immutable public hosting.
+  - The checked native, Node.js header, npm, and Cargo crate archives still need immutable RPM-consumable hosting.
+  - The checked lol-html Cargo vendor and npm source closures are not integrated as immutable RPM sources, and complete offline Bun/native materialization remains incomplete.
+  - Complete LGPL relink objects for the final statically linked Bun executable are not packaged.
   - The immediate offline self-rebuild and seed-contamination checks have not passed.
 upstream:
   provider: github
@@ -36,7 +37,38 @@ build_plan:
       acquisition: deterministic_git_archive
       submodules: false
       source_tree_complete: true
-      sha256: null
+      archive_filename: WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b.tar.gz
+      archive_prefix: WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b/
+      archive_size_bytes: 1976477934
+      archive_url: null
+      archive_recipe: git archive --format=tar --prefix=WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b/ 5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b | gzip -n
+      sha256: c48d419170205210dc40eb70c2c4bf91e5d50db91a2739d13030965c08d31d3c
+      gitlink_count: 0
+      embedded_gitmodules_count: 4
+      patch: bun-webkit-typed-array-int32-conversion.patch
+      patch_sha256: 023a4686ba96eb6ace658bef0226ba8b2968b57075ad11813918da93ed3c14e3
+      patch_provenance: https://gitlab.archlinux.org/archlinux/packaging/packages/bun/-/commit/e6f882caed2016f0aadfe1d2af821c42b74d5840
+      patch_issue: https://github.com/oven-sh/bun/issues/28607
+    lolhtml:
+      relationship: pinned_by_bun_release
+      release_pin: bun-v1.3.14
+      repository: cloudflare/lol-html
+      commit: 77127cd2b8545998756e8d64e36ee2313c4bb312
+      source_receipt: bun-1.3.14-release-local-source-closure.json
+      patch: bun-lolhtml-fedora-stable-rust.patch
+      patch_sha256: 1d530ec7a177285f0e6e819359547b9360b86e930968c4dadc196cce10425055
+      upstream_size_optimization_commit: 7e57e529bf4fe8afdbfed245d6f20d9b18f61913
+      upstream_standalone_path_removal_commit: 86d32c8bb66d503ccbcc1d2e40d25b11679eeede
+      fedora_stable_rust_path: true
+    npm_lock:
+      relationship: fedora_target_correction
+      release_pin: bun-v1.3.14
+      patch: bun-lightningcss-fedora-glibc-lock.patch
+      patch_sha256: 0ae29543c765ffa18aabd181b8fcc24245e88701f4792b424690f719aef18b80
+      upstream_lock_sha256: c2b2b9f35811aa0a7ad59d8a0b60f6c847348a72afb70ba425beea988a2e4446
+      patched_lock_sha256: fc6170ac30572ab73baa58ef32777cfe4c7f685cfa096fccae8c3463387006b4
+      lightningcss_gnu_enabled: true
+      lightningcss_musl_enabled: false
     bootstrap_seed:
       relationship: temporary_bootstrap_only
       state: acquired_local
@@ -45,9 +77,12 @@ build_plan:
       filename: bun-seed-1.3.14-linux-x64.zip
       url: https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-x64.zip
       sha256: 951ee2aee855f08595aeec6225226a298d3fea83a3dcd6465c09cbccdf7e848f
+      binary_sha256: 9fd36f87e4b90b07632b987a2e4ec81ca15a62c81bf983190cea6d715be2ad74
+      binary_size_bytes: 92752752
       bootstrap_only: true
       final_payload_allowed: false
       final_runtime_dependency_allowed: false
+      npm_install_proof_only: true
   stages:
     zig_source_bootstrap:
       state: verified
@@ -59,16 +94,70 @@ build_plan:
       proof_receipt: zig-bootstrap-proof.json
     webkit_source_build:
       state: blocked
-      recursive_source_verified: false
-      source_build_verified: false
+      recursive_source_verified: true
+      source_build_verified: true
+      static_archives_verified: true
+      generated_headers_retained: true
+      build_metadata_retained: true
+      jsc_runtime_verified: true
+      isolated_buildroot_verified: true
       relink_objects_verified: false
+      proof_platform: fedora-44-x86_64
+      proof_date: "2026-07-18"
+      proof_receipt: webkit-source-build-proof.json
+      isolated_buildroot_proof_receipt: webkit-mock-build-proof.json
     dependency_closure:
       state: blocked
-      npm_sources_verified: false
-      cargo_sources_verified: false
-      github_sources_verified: false
-      node_headers_verified: false
+      npm_sources_verified: true
+      npm_github_source_verified: true
+      cargo_sources_verified: true
+      cargo_crate_sources_verified: true
+      rust_toolchain_pin_verified: true
+      nightly_toolchain_required: false
+      nightly_toolchain_verified: false
+      rust_src_required: false
+      rust_src_verified: false
+      fedora_stable_rust_verified: true
+      cargo_vendor_materialization_verified: true
+      cargo_offline_build_verified: true
+      lolhtml_static_library_verified: true
+      github_sources_verified: true
+      github_sources_scope: selected_native_dependency_archives
+      node_headers_verified: true
       offline_materialization_verified: false
+      npm_cache_materialization_verified: true
+      npm_offline_install_verified: true
+      npm_frozen_lockfile_verified: true
+      npm_ignore_scripts_verified: true
+      npm_network_namespace_verified: true
+      npm_lock_inventory_verified: true
+      cargo_lock_inventory_verified: true
+      selected_github_archives: 19
+      selected_node_header_archives: 1
+      selected_npm_source_records: 251
+      unique_npm_source_archives: 236
+      npm_cache_entries: 236
+      npm_cache_tree_sha256: 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
+      npm_root_installed_packages: 230
+      npm_bun_error_installed_packages: 1
+      npm_node_fallbacks_installed_packages: 121
+      selected_lolhtml_cargo_packages: 45
+      selected_lolhtml_cargo_crates: 43
+      cargo_vendor_manifest: lolhtml-cargo-vendor.txt
+      cargo_vendor_manifest_sha256: 7728706170a520d53a1f33e4814f0abcf07edd5ea69db5af623a8a0579edcd5b
+      cargo_vendor_archive_filename: bun-1.3.14-lolhtml-cargo-vendor.tar.gz
+      cargo_vendor_archive_bytes: 4126499
+      cargo_vendor_archive_sha256: 299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57
+      cargo_vendor_archive_hosted: false
+      npm_archive_bytes: 30079735
+      cargo_crate_archive_bytes: 3972319
+      locally_acquired_archive_bytes: 142382337
+      proof_receipt: bun-1.3.14-release-local-source-closure.json
+      proof_receipt_sha256: ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
+      cargo_build_proof_receipt: lolhtml-offline-build-proof.json
+      cargo_build_proof_receipt_sha256: 05785f79c560ce5953500acc7c9dea283a53b18240e59b62c84f57ab02eb5cce
+      npm_install_proof_receipt: npm-offline-install-proof.json
+      npm_install_proof_receipt_sha256: 61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f
     seed_build:
       state: blocked
       bootstrap_seed_verified: false

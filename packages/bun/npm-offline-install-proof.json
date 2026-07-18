@@ -1,0 +1,177 @@
+{
+  "schema": "bun-npm-offline-install-proof/v1",
+  "package": "bun",
+  "release": "1.3.14",
+  "target": {
+    "os": "linux",
+    "cpu": "x64",
+    "libc": "glibc"
+  },
+  "source_closure": {
+    "path": "bun-1.3.14-release-local-source-closure.json",
+    "sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0",
+    "bun_source_archive_sha256": "112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e",
+    "root_lock": {
+      "upstream_sha256": "c2b2b9f35811aa0a7ad59d8a0b60f6c847348a72afb70ba425beea988a2e4446",
+      "fedora_patch": "bun-lightningcss-fedora-glibc-lock.patch",
+      "fedora_patch_sha256": "0ae29543c765ffa18aabd181b8fcc24245e88701f4792b424690f719aef18b80",
+      "patched_sha256": "fc6170ac30572ab73baa58ef32777cfe4c7f685cfa096fccae8c3463387006b4",
+      "lightningcss_gnu_enabled": true,
+      "lightningcss_musl_enabled": false
+    }
+  },
+  "bootstrap_seed": {
+    "filename": "bun-seed-1.3.14-linux-x64.zip",
+    "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-x64.zip",
+    "archive_sha256": "951ee2aee855f08595aeec6225226a298d3fea83a3dcd6465c09cbccdf7e848f",
+    "binary_sha256": "9fd36f87e4b90b07632b987a2e4ec81ca15a62c81bf983190cea6d715be2ad74",
+    "binary_size_bytes": 92752752,
+    "version": "1.3.14",
+    "bootstrap_only": true,
+    "final_payload_allowed": false,
+    "final_runtime_dependency_allowed": false
+  },
+  "cache": {
+    "version": 1,
+    "source_archives": 236,
+    "registry_archives": 235,
+    "github_archives": 1,
+    "materialized_entries": 236,
+    "github_tag": "bun.report-912ca63e26c51429d3e6799aa2a6ab079b188fd8",
+    "semver_hashes": {
+      "0": "b8f8325b21a8a1e5",
+      "cjs.1": "ec7b5e1ef906f68d",
+      "cjs.2": "0e40aeb971250b85",
+      "patch.1": "505c8ed44add284c"
+    },
+    "tree": {
+      "entries": 4613,
+      "files": 3855,
+      "directories": 758,
+      "symlinks": 0,
+      "file_bytes": 121972064,
+      "sha256": "50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214"
+    }
+  },
+  "install": {
+    "network_namespace": true,
+    "frozen_lockfile": true,
+    "ignore_scripts": true,
+    "serialized": true,
+    "install_roots": [
+      {
+        "path": ".",
+        "package_name": "bun",
+        "package_json_sha256": "264facb9a70541c21e258c241a78f3f99884b7573e7562f21ca768b2407d6590",
+        "upstream_lockfile_sha256": "c2b2b9f35811aa0a7ad59d8a0b60f6c847348a72afb70ba425beea988a2e4446",
+        "lockfile_sha256": "fc6170ac30572ab73baa58ef32777cfe4c7f685cfa096fccae8c3463387006b4",
+        "direct_dependencies_verified": [
+          "@lezer/common",
+          "@lezer/cpp",
+          "@types/bun",
+          "bun-tracestrings",
+          "esbuild",
+          "mitata",
+          "peechy",
+          "prettier",
+          "prettier-plugin-organize-imports",
+          "react",
+          "react-dom",
+          "source-map-js",
+          "typescript"
+        ],
+        "required_artifacts_verified": [
+          ".bin/esbuild",
+          "@lezer/cpp/package.json",
+          "bun-tracestrings/package.json",
+          "@types/bun/package.json",
+          "@types/bun/node_modules/bun-types/package.json"
+        ],
+        "node_modules": {
+          "entries": 3419,
+          "files": 2336,
+          "directories": 731,
+          "symlinks": 352,
+          "file_bytes": 105021112,
+          "sha256": "8e0c5c17602075e33f33e1a541cb89d62375a1dd9078e589218a0ff3b4750265"
+        }
+      },
+      {
+        "path": "packages/bun-error",
+        "package_name": "bun-error",
+        "package_json_sha256": "2bda7b22f38560c30f2cfc94418846964e190bbc6af1ccacf0a22feb0b64ab7b",
+        "upstream_lockfile_sha256": "e5f358227dd67c5c14ddbe5fe3348e2fbffb1399382909eda00e606b178a313d",
+        "lockfile_sha256": "e5f358227dd67c5c14ddbe5fe3348e2fbffb1399382909eda00e606b178a313d",
+        "direct_dependencies_verified": [
+          "preact"
+        ],
+        "required_artifacts_verified": [
+          "preact/package.json"
+        ],
+        "node_modules": {
+          "entries": 153,
+          "files": 131,
+          "directories": 22,
+          "symlinks": 0,
+          "file_bytes": 1548326,
+          "sha256": "63843e706a0356f5194ad38807f54fb67e115c45f36189012eb7d79ebba89f6f"
+        }
+      },
+      {
+        "path": "src/node-fallbacks",
+        "package_name": "fallbacks",
+        "package_json_sha256": "5193c0695ffc4b26a38944da292aa1b5992c4f4d06a9cc33a2d48acfd51d83b5",
+        "upstream_lockfile_sha256": "b0bbc37db785d93e2167a7e223404e0a9c64d0ba8fed4afe48e6c37e66537a56",
+        "lockfile_sha256": "b0bbc37db785d93e2167a7e223404e0a9c64d0ba8fed4afe48e6c37e66537a56",
+        "direct_dependencies_verified": [
+          "assert",
+          "browserify-zlib",
+          "buffer",
+          "console-browserify",
+          "constants-browserify",
+          "crypto-browserify",
+          "domain-browser",
+          "esbuild",
+          "events",
+          "https-browserify",
+          "os-browserify",
+          "path-browserify",
+          "process",
+          "punycode",
+          "querystring-es3",
+          "react-refresh",
+          "readable-stream",
+          "stream-http",
+          "string_decoder",
+          "timers-browserify",
+          "tty-browserify",
+          "url",
+          "util",
+          "vm-browserify"
+        ],
+        "required_artifacts_verified": [
+          ".bin/esbuild",
+          "react-refresh/cjs/react-refresh-runtime.development.js"
+        ],
+        "node_modules": {
+          "entries": 1808,
+          "files": 1457,
+          "directories": 348,
+          "symlinks": 3,
+          "file_bytes": 16069461,
+          "sha256": "376a33bdfaef99e95c9295489d08eb1b9da37275f6a6dab554fc31b976842a7b"
+        }
+      }
+    ]
+  },
+  "validation": {
+    "source_files_unchanged": true,
+    "seed_absent_from_node_modules": true,
+    "npm_cache_materialization_verified": true,
+    "npm_offline_install_verified": true,
+    "complete_bun_offline_materialization_verified": false,
+    "dependency_resolution_performed": false,
+    "full_bun_build_performed": false
+  },
+  "scope": "network-isolated frozen installs for Bun 1.3.14's three codegen npm roots; native integration, the first source build, self-rebuild, final payload, and RPM remain blocked"
+}

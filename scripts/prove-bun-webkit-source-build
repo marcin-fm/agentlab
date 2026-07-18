@@ -1,0 +1,243 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "etc"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require_relative "lib/agentlab"
+
+package = Agentlab.package_named("bun")
+build_plan = package.data.fetch("build_plan")
+webkit = build_plan.dig("source_inputs", "webkit") || {}
+workdir = "/srv/tmp/agentlab-bun-webkit-proof"
+source_path = File.join("/srv/tmp", webkit.fetch("archive_filename"))
+jobs = [Etc.nprocessors, 4].min
+force = false
+resume = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/prove-bun-webkit-source-build [options]"
+  parser.on("--source PATH", "Use an existing pinned WebKit source archive") { |path| source_path = path }
+  parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--jobs COUNT", Integer, "Parallel build jobs, maximum 4") { |count| jobs = count }
+  parser.on("--resume", "Resume an existing marked proof directory") { resume = true }
+  parser.on("--force", "Replace an existing proof directory") { force = true }
+end.parse!
+
+workdir = File.expand_path(workdir)
+source_path = File.expand_path(source_path)
+raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+raise Agentlab::Error, "jobs must be between 1 and 4" unless jobs.between?(1, 4)
+raise Agentlab::Error, "missing WebKit source archive #{source_path}" unless File.file?(source_path)
+raise Agentlab::Error, "--resume and --force are mutually exclusive" if resume && force
+
+expected_release_pin = "bun-v#{package.upstream.fetch('current_version')}"
+unless build_plan["source_inputs_reconciled"] == true && webkit["release_pin"] == expected_release_pin
+  raise Agentlab::Error, "Bun subordinate source inputs are not reconciled for #{expected_release_pin}"
+end
+
+marker = File.join(workdir, ".agentlab-bun-webkit-proof")
+if Dir.exist?(workdir)
+  raise Agentlab::Error, "refusing to use unmarked proof directory #{workdir}" unless File.file?(marker)
+  unless force || resume
+    raise Agentlab::Error, "proof directory exists; pass --resume to continue or --force to replace it"
+  end
+elsif resume
+  raise Agentlab::Error, "cannot resume missing proof directory #{workdir}"
+end
+if force && source_path.start_with?("#{workdir}/")
+  raise Agentlab::Error, "source archive must be outside the replaced proof directory"
+end
+
+actual_source_sha256 = Digest::SHA256.file(source_path).hexdigest
+unless actual_source_sha256 == webkit.fetch("sha256")
+  raise Agentlab::Error, "WebKit source SHA-256 #{actual_source_sha256} does not match #{webkit.fetch('sha256')}"
+end
+
+patch_path = File.join(package.directory, webkit.fetch("patch"))
+actual_patch_sha256 = Digest::SHA256.file(patch_path).hexdigest
+unless actual_patch_sha256 == webkit.fetch("patch_sha256")
+  raise Agentlab::Error, "WebKit patch SHA-256 #{actual_patch_sha256} does not match #{webkit.fetch('patch_sha256')}"
+end
+
+def run!(environment, argv, chdir:)
+  puts "$ #{Agentlab.command_string(argv)}"
+  return if system(environment, *argv, chdir: chdir)
+
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}"
+end
+
+def tool_path(*candidates)
+  candidates.find { |path| File.executable?(path) } || raise(Agentlab::Error, "missing tool: #{candidates.join(' or ')}")
+end
+
+def tool_version(environment, argv, chdir:)
+  stdout, stderr, status = Open3.capture3(environment, *argv, chdir: chdir)
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}: #{stderr.strip}" unless status.success?
+
+  stdout.lines.first.to_s.strip
+end
+
+def file_receipt(path, base)
+  {
+    "path" => path.delete_prefix("#{base}/"),
+    "size_bytes" => File.size(path),
+    "sha256" => Digest::SHA256.file(path).hexdigest
+  }
+end
+
+%w[bison cmake flex gperf ninja patch perl python3 ruby tar].each do |command|
+  raise Agentlab::Error, "missing tool: #{command}" unless Agentlab.command_available?(command)
+end
+run!({}, ["perl", "-MEnglish", "-MFindBin", "-MJSON::PP", "-Mbigint", "-e", "1"], chdir: Agentlab::ROOT)
+run!({}, ["ruby", "-rgetoptlong", "-e", "exit"], chdir: Agentlab::ROOT)
+
+clang = tool_path("/usr/bin/clang-21", "/usr/lib64/llvm21/bin/clang")
+clangxx = tool_path("/usr/bin/clang++-21", "/usr/lib64/llvm21/bin/clang++")
+llvm_ar = tool_path("/usr/bin/llvm-ar-21", "/usr/lib64/llvm21/bin/llvm-ar")
+llvm_ranlib = tool_path("/usr/bin/llvm-ranlib-21", "/usr/lib64/llvm21/bin/llvm-ranlib")
+lld = tool_path("/usr/bin/ld.lld-21", "/usr/lib64/llvm21/bin/ld.lld")
+llvm_config = tool_path("/usr/bin/llvm-config-21", "/usr/lib64/llvm21/bin/llvm-config")
+
+FileUtils.rm_rf(workdir) if force
+FileUtils.mkdir_p(workdir)
+File.write(marker, "agentlab bun webkit proof\n") unless File.file?(marker)
+
+source_parent = File.join(workdir, "source")
+FileUtils.mkdir_p(source_parent)
+source_root = File.join(source_parent, "WebKit-#{webkit.fetch('commit')}")
+unless resume
+  run!({}, ["tar", "-xf", source_path, "-C", source_parent], chdir: Agentlab::ROOT)
+  raise Agentlab::Error, "missing expected WebKit source root #{source_root}" unless Dir.exist?(source_root)
+  run!({}, ["patch", "-d", source_root, "-p1", "-i", patch_path], chdir: Agentlab::ROOT)
+end
+raise Agentlab::Error, "missing expected WebKit source root #{source_root}" unless Dir.exist?(source_root)
+typed_array_adaptors = File.join(source_root, "Source", "JavaScriptCore", "runtime", "TypedArrayAdaptors.h")
+patched_conversion = "return static_cast<Type>(toInt32(value));"
+unless File.read(typed_array_adaptors).include?(patched_conversion)
+  raise Agentlab::Error, "WebKit typed-array correctness patch is not present"
+end
+
+build = File.join(workdir, "build")
+home = File.join(workdir, "home")
+cache = File.join(workdir, "cache")
+FileUtils.mkdir_p([home, cache])
+environment = {
+  "HOME" => home,
+  "XDG_CACHE_HOME" => cache,
+  "PATH" => [File.dirname(clang), "/usr/lib64/llvm21/bin", ENV.fetch("PATH")].uniq.join(":"),
+  "CC" => clang,
+  "CXX" => clangxx
+}
+
+cmake_options = {
+  "CMAKE_BUILD_TYPE" => "RelWithDebInfo",
+  "CMAKE_C_COMPILER" => clang,
+  "CMAKE_CXX_COMPILER" => clangxx,
+  "CMAKE_AR" => llvm_ar,
+  "CMAKE_RANLIB" => llvm_ranlib,
+  "CMAKE_EXE_LINKER_FLAGS" => "--ld-path=#{lld}",
+  "CMAKE_SHARED_LINKER_FLAGS" => "--ld-path=#{lld}",
+  "CMAKE_C_FLAGS" => "-march=haswell",
+  "CMAKE_CXX_FLAGS" => "-march=haswell",
+  "CMAKE_EXPORT_COMPILE_COMMANDS" => "ON",
+  "BUILD_SHARED_LIBS" => "OFF",
+  "PORT" => "JSCOnly",
+  "ENABLE_STATIC_JSC" => "ON",
+  "USE_THIN_ARCHIVES" => "OFF",
+  "ENABLE_FTL_JIT" => "ON",
+  "USE_BUN_JSC_ADDITIONS" => "ON",
+  "USE_BUN_EVENT_LOOP" => "ON",
+  "ENABLE_BUN_SKIP_FAILING_ASSERTIONS" => "ON",
+  "ALLOW_LINE_AND_COLUMN_NUMBER_IN_BUILTINS" => "ON",
+  "ENABLE_REMOTE_INSPECTOR" => "ON",
+  "ENABLE_MEDIA_SOURCE" => "OFF",
+  "ENABLE_MEDIA_STREAM" => "OFF",
+  "ENABLE_WEB_RTC" => "OFF"
+}
+configure = ["cmake", "-S", source_root, "-B", build, "-G", "Ninja"]
+cmake_options.each { |key, value| configure << "-D#{key}=#{value}" }
+run!(environment, configure, chdir: Agentlab::ROOT)
+run!(environment, ["cmake", "--build", build, "--target", "jsc", "--parallel", jobs.to_s], chdir: Agentlab::ROOT)
+
+archive_paths = %w[libWTF.a libJavaScriptCore.a libbmalloc.a].map { |name| File.join(build, "lib", name) }
+archive_paths.each do |path|
+  raise Agentlab::Error, "missing WebKit static archive #{path}" unless File.file?(path) && File.size(path).positive?
+end
+
+metadata_paths = [File.join(build, "CMakeCache.txt"), File.join(build, "compile_commands.json")]
+metadata_paths.each do |path|
+  raise Agentlab::Error, "missing WebKit build metadata #{path}" unless File.file?(path) && File.size(path).positive?
+end
+
+header_dirs = [
+  File.join(build, "JavaScriptCore", "Headers"),
+  File.join(build, "JavaScriptCore", "PrivateHeaders"),
+  File.join(build, "WTF", "Headers"),
+  File.join(build, "bmalloc", "Headers")
+]
+header_counts = header_dirs.to_h do |path|
+  count = Dir.glob(File.join(path, "**", "*")).count { |entry| File.file?(entry) }
+  raise Agentlab::Error, "missing generated WebKit headers below #{path}" if count.zero?
+
+  [path.delete_prefix("#{build}/"), count]
+end
+
+jsc = File.join(build, "bin", "jsc")
+raise Agentlab::Error, "missing jsc proof executable #{jsc}" unless File.executable?(jsc)
+jsc_stdout, jsc_stderr, jsc_status = Open3.capture3(environment, jsc, "-e", "print('agentlab-webkit-proof')", chdir: workdir)
+unless jsc_status.success? && jsc_stdout.strip == "agentlab-webkit-proof"
+  raise Agentlab::Error, "jsc runtime probe failed: #{jsc_stderr.strip}"
+end
+
+receipt = {
+  "schema" => 1,
+  "package_release" => expected_release_pin,
+  "proof_platform" => "fedora-44-x86_64",
+  "proof_date" => Time.now.strftime("%Y-%m-%d"),
+  "isolated_buildroot" => false,
+  "source" => {
+    "commit" => webkit.fetch("commit"),
+    "archive_filename" => File.basename(source_path),
+    "sha256" => actual_source_sha256,
+    "source_tree_complete" => webkit.fetch("source_tree_complete"),
+    "gitlink_count" => webkit.fetch("gitlink_count"),
+    "embedded_gitmodules_count" => webkit.fetch("embedded_gitmodules_count")
+  },
+  "patch" => {
+    "path" => webkit.fetch("patch"),
+    "sha256" => actual_patch_sha256,
+    "provenance" => webkit.fetch("patch_provenance"),
+    "issue" => webkit.fetch("patch_issue")
+  },
+  "toolchain" => {
+    "cmake" => tool_version(environment, ["cmake", "--version"], chdir: workdir).delete_prefix("cmake version "),
+    "clang" => tool_version(environment, [clang, "--version"], chdir: workdir)[/\d+\.\d+\.\d+/],
+    "llvm" => tool_version(environment, [llvm_config, "--version"], chdir: workdir),
+    "ninja" => tool_version(environment, ["ninja", "--version"], chdir: workdir),
+    "jobs" => jobs,
+    "cpu" => "haswell"
+  },
+  "cmake_options" => cmake_options,
+  "output" => {
+    "static_archives" => archive_paths.to_h { |path| [File.basename(path), file_receipt(path, workdir)] },
+    "jsc" => file_receipt(jsc, workdir).merge("runtime_probe_verified" => true),
+    "metadata" => metadata_paths.to_h { |path| [File.basename(path), file_receipt(path, workdir)] },
+    "generated_header_counts" => header_counts
+  },
+  "relink_materials" => {
+    "webkit_static_archives_verified" => true,
+    "generated_headers_retained" => true,
+    "compile_commands_retained" => true,
+    "complete_bun_relink_materials_verified" => false
+  },
+  "scope" => "local WebKit source-build proof only; not Fedora approval, a complete Bun LGPL relink set, or a Bun RPM build"
+}
+receipt_path = File.join(workdir, "proof-receipt.json")
+File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
+
+puts "Verified Bun-pinned WebKit static source build: #{build}"
+puts "Proof receipt: #{receipt_path}"

@@ -1,0 +1,481 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "set"
+require "zlib"
+require_relative "lib/agentlab"
+
+package = Agentlab.package_named("bun")
+version = package.upstream.fetch("current_version").to_s
+closure_path = File.join(package.directory, "bun-#{version}-release-local-source-closure.json")
+cache_dir = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
+source_dir = "/srv/tmp/oven-sh-bun-bun-v#{version}"
+workdir = "/srv/tmp/agentlab-bun-lolhtml-offline-proof"
+output = File.join(package.directory, "lolhtml-offline-build-proof.json")
+vendor_manifest_output = File.join(package.directory, "lolhtml-cargo-vendor.txt")
+jobs = 4
+force = false
+check = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/prove-bun-lolhtml-offline-build [options]"
+  parser.on("--cache-dir PATH", "Checked Bun dependency-source cache") { |path| cache_dir = path }
+  parser.on("--source-dir PATH", "Extracted Bun release source") { |path| source_dir = path }
+  parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--output PATH", "Canonical package proof receipt") { |path| output = path }
+  parser.on("--jobs COUNT", Integer, "Parallel Cargo jobs, maximum 4") { |count| jobs = count }
+  parser.on("--force", "Replace an existing marked proof directory") { force = true }
+  parser.on("--check", "Rebuild offline and compare the checked receipt") { check = true }
+end.parse!
+
+cache_dir = File.expand_path(cache_dir)
+source_dir = File.realpath(source_dir)
+workdir = File.expand_path(workdir)
+output = File.expand_path(output)
+raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+raise Agentlab::Error, "jobs must be between 1 and 4" unless jobs.between?(1, 4)
+raise Agentlab::Error, "missing source-closure receipt #{closure_path}" unless File.file?(closure_path)
+
+marker = File.join(workdir, ".agentlab-bun-lolhtml-offline-proof")
+if Dir.exist?(workdir)
+  marker_content = File.file?(marker) && File.read(marker)
+  unless marker_content == "agentlab bun lol-html offline proof\n"
+    raise Agentlab::Error, "refusing to replace unmarked proof directory #{workdir}"
+  end
+  raise Agentlab::Error, "proof directory exists; pass --force or --check to replace it" unless force || check
+end
+FileUtils.rm_rf(workdir) if Dir.exist?(workdir)
+FileUtils.mkdir_p(workdir)
+File.write(marker, "agentlab bun lol-html offline proof\n")
+
+def run!(environment, argv, chdir:, log: nil)
+  puts "$ #{Agentlab.command_string(argv)}"
+  if log
+    File.open(log, "ab") do |file|
+      Open3.popen2e(environment, *argv, chdir: chdir) do |stdin, output, wait|
+        stdin.close
+        output.each do |line|
+          $stdout.write(line)
+          file.write(line)
+        end
+        raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}" unless wait.value.success?
+      end
+    end
+  elsif !system(environment, *argv, chdir: chdir)
+    raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}"
+  end
+end
+
+def capture!(environment, argv, chdir:)
+  stdout, stderr, status = Open3.capture3(environment, *argv, chdir: chdir)
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}: #{stderr.strip}" unless status.success?
+
+  stdout
+end
+
+def file_receipt(path, base)
+  {
+    "path" => path.delete_prefix("#{base}/"),
+    "size_bytes" => File.size(path),
+    "sha256" => Digest::SHA256.file(path).hexdigest
+  }
+end
+
+def safe_relative_path(path)
+  pathname = Pathname(path)
+  clean = pathname.cleanpath.to_s
+  return nil if pathname.absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def parse_pax_headers(data)
+  offset = 0
+  headers = {}
+  while offset < data.bytesize
+    space = data.index(" ", offset)
+    raise Agentlab::Error, "invalid PAX header length" unless space
+
+    length = data.byteslice(offset, space - offset).to_i
+    raise Agentlab::Error, "invalid PAX header record" unless length.positive? && offset + length <= data.bytesize
+
+    record = data.byteslice(space + 1, length - (space - offset) - 1).delete_suffix("\n")
+    key, value = record.split("=", 2)
+    raise Agentlab::Error, "invalid PAX header value" unless key && value
+
+    headers[key] = value
+    offset += length
+  end
+  headers
+end
+
+def tar_header_path(header)
+  name = header.name.to_s.split("\0", 2).first
+  prefix = header.prefix.to_s.split("\0", 2).first
+  prefix.to_s.empty? ? name : "#{prefix}/#{name}"
+end
+
+def extract_checked_tar!(archive, destination, expected_root)
+  roots = []
+  paths = Set.new
+  long_name = nil
+  local_pax = {}
+  global_pax = {}
+  Zlib::GzipReader.open(archive) do |gzip|
+    Gem::Package::TarReader.new(gzip) do |tar|
+      tar.each do |entry|
+        case entry.header.typeflag
+        when "L"
+          long_name = entry.read.delete_suffix("\0")
+          next
+        when "K"
+          entry.read
+          next
+        when "x"
+          local_pax = parse_pax_headers(entry.read)
+          next
+        when "g"
+          global_pax.merge!(parse_pax_headers(entry.read))
+          next
+        end
+
+        entry_name = local_pax["path"] || global_pax["path"] || long_name || tar_header_path(entry.header)
+        path = safe_relative_path(entry_name)
+        raise Agentlab::Error, "archive path escapes root: #{entry_name}" unless path
+
+        root = path.split("/", 2).first
+        roots << root unless root.nil? || root.empty? || root == "."
+        raise Agentlab::Error, "unexpected archive root #{root.inspect}, expected #{expected_root}" unless root == expected_root
+        raise Agentlab::Error, "archive contains duplicate path: #{path}" unless paths.add?(path)
+
+        target = File.join(destination, path)
+        if entry.directory?
+          FileUtils.mkdir_p(target)
+        elsif entry.file?
+          FileUtils.mkdir_p(File.dirname(target))
+          File.open(target, "wb", entry.header.mode & 0o777) { |file| IO.copy_stream(entry, file) }
+        else
+          raise Agentlab::Error, "unsupported archive entry #{entry.header.typeflag.inspect}: #{path}"
+        end
+        long_name = nil
+        local_pax = {}
+      end
+    end
+  end
+  raise Agentlab::Error, "archive root mismatch for #{archive}" unless roots.uniq == [expected_root]
+rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+  raise Agentlab::Error, "cannot extract #{archive}: #{e.message}"
+end
+
+def regular_files(root)
+  Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).select do |path|
+    File.file?(path) && ![".", ".."].include?(File.basename(path))
+  end.sort
+end
+
+def vendor_tree_digest(root)
+  digest = Digest::SHA256.new
+  regular_files(root).each do |path|
+    relative = path.delete_prefix("#{root}/")
+    digest.update(relative)
+    digest.update("\0")
+    digest.update(Digest::SHA256.file(path).hexdigest)
+    digest.update("\0")
+  end
+  digest.hexdigest
+end
+
+def deterministic_tar_gz!(source_parent, root_name, output, workdir)
+  tar_path = File.join(workdir, "#{root_name}.tar")
+  run!({}, ["tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--format=gnu", "-cf", tar_path, "-C", source_parent, root_name], chdir: workdir)
+  Zlib::GzipWriter.open(output) do |gzip|
+    gzip.mtime = 0
+    File.open(tar_path, "rb") { |tar| IO.copy_stream(tar, gzip) }
+  end
+  FileUtils.rm_f(tar_path)
+end
+
+closure_bytes = File.binread(closure_path)
+closure_sha256 = Digest::SHA256.hexdigest(closure_bytes)
+expected_closure_sha256 = package.data.dig("build_plan", "stages", "dependency_closure", "proof_receipt_sha256")
+unless closure_sha256 == expected_closure_sha256
+  raise Agentlab::Error, "source-closure receipt SHA-256 #{closure_sha256} does not match package metadata"
+end
+closure = JSON.parse(closure_bytes)
+raise Agentlab::Error, "unsupported source-closure schema" unless closure["schema"] == "bun-release-local-source-closure/v2"
+raise Agentlab::Error, "source closure is not Bun #{version}" unless closure["package"] == "bun" && closure["release"] == version
+
+source_tree = closure.fetch("source_tree")
+source_files = {
+  "package.json" => source_tree.fetch("package_json_sha256"),
+  "bun.lock" => source_tree.fetch("bun_lock_sha256"),
+  "scripts/build/deps/index.ts" => source_tree.fetch("dependency_index_sha256"),
+  "scripts/build/codegen.ts" => source_tree.fetch("codegen_definition_sha256")
+}
+source_files.each do |relative, expected_sha256|
+  path = File.join(source_dir, relative)
+  raise Agentlab::Error, "missing Bun release file #{path}" unless File.file?(path)
+  unless Digest::SHA256.file(path).hexdigest == expected_sha256
+    raise Agentlab::Error, "Bun release file checksum mismatch: #{relative}"
+  end
+end
+
+cargo = closure.fetch("cargo")
+lolhtml = closure.fetch("native_github_sources").find { |record| record["symbol"] == "lolhtml" }
+raise Agentlab::Error, "lol-html source is absent from the closure" unless lolhtml
+raise Agentlab::Error, "lol-html Cargo closure contains Git sources" unless cargo.dig("lockfile", "git_sources").zero?
+crate_sources = cargo.fetch("crate_sources")
+raise Agentlab::Error, "expected 43 lol-html registry crates, found #{crate_sources.length}" unless crate_sources.length == 43
+crate_identities = crate_sources.map { |crate| [crate.fetch("name"), crate.fetch("version")] }
+crate_roots = crate_sources.map { |crate| crate.fetch("archive_root") }
+raise Agentlab::Error, "lol-html Cargo closure contains duplicate crate identities" unless crate_identities.uniq.length == crate_sources.length
+raise Agentlab::Error, "lol-html Cargo closure contains duplicate archive roots" unless crate_roots.uniq.length == crate_sources.length
+
+patch_path = File.join(package.directory, "bun-lolhtml-fedora-stable-rust.patch")
+raise Agentlab::Error, "missing Fedora stable-Rust patch #{patch_path}" unless File.file?(patch_path)
+patch_sha256 = Digest::SHA256.file(patch_path).hexdigest
+
+definition_source = File.join(source_dir, "scripts", "build", "deps", "lolhtml.ts")
+raise Agentlab::Error, "missing Bun lol-html definition #{definition_source}" unless File.file?(definition_source)
+unless Digest::SHA256.file(definition_source).hexdigest == lolhtml.fetch("definition_sha256")
+  raise Agentlab::Error, "Bun lol-html definition does not match the checked release source"
+end
+patched_root = File.join(workdir, "patched-bun")
+patched_definition = File.join(patched_root, "scripts", "build", "deps", "lolhtml.ts")
+FileUtils.mkdir_p(File.dirname(patched_definition))
+FileUtils.cp(definition_source, patched_definition)
+run!({}, ["patch", "-d", patched_root, "-p1", "-i", patch_path], chdir: workdir)
+patched_text = File.read(patched_definition)
+stable_flags = ["-Cpanic=abort", "-Cdebuginfo=0", "-Cforce-unwind-tables=no", "-Copt-level=s"]
+unless patched_text.include?("const canBuildStdImmediateAbort = cfg.darwin || cfg.freebsd;") &&
+       stable_flags.all? { |flag| patched_text.include?(%Q{"#{flag}"}) }
+  raise Agentlab::Error, "Fedora stable-Rust patch does not preserve the expected Linux flags"
+end
+
+source_archive = File.join(cache_dir, "archives", cargo.fetch("source_archive"))
+raise Agentlab::Error, "missing cached lol-html source #{source_archive}" unless File.file?(source_archive)
+unless Digest::SHA256.file(source_archive).hexdigest == cargo.fetch("source_sha256")
+  raise Agentlab::Error, "cached lol-html source checksum mismatch"
+end
+source_parent = File.join(workdir, "source")
+FileUtils.mkdir_p(source_parent)
+extract_checked_tar!(source_archive, source_parent, lolhtml.fetch("archive_root"))
+source_root = File.join(source_parent, lolhtml.fetch("archive_root"))
+manifest_path = File.join(source_root, cargo.dig("manifest", "path"))
+lock_path = File.join(source_root, cargo.dig("lockfile", "path"))
+unless Digest::SHA256.file(manifest_path).hexdigest == cargo.dig("manifest", "sha256") &&
+       Digest::SHA256.file(lock_path).hexdigest == cargo.dig("lockfile", "sha256")
+  raise Agentlab::Error, "lol-html Cargo manifest or lockfile checksum mismatch"
+end
+
+vendor_root = File.join(workdir, "cargo-vendor")
+FileUtils.mkdir_p(vendor_root)
+crate_sources.each do |crate|
+  archive = File.join(cache_dir, "cargo", crate.fetch("archive"))
+  raise Agentlab::Error, "missing cached crate #{archive}" unless File.file?(archive)
+  unless Digest::SHA256.file(archive).hexdigest == crate.fetch("checksum")
+    raise Agentlab::Error, "crate checksum mismatch: #{crate.fetch('name')} #{crate.fetch('version')}"
+  end
+  unless crate.fetch("symlink_count").zero? && crate.fetch("hardlink_count").zero?
+    raise Agentlab::Error, "crate archive contains links: #{crate.fetch('name')} #{crate.fetch('version')}"
+  end
+
+  extract_checked_tar!(archive, vendor_root, crate.fetch("archive_root"))
+  crate_root = File.join(vendor_root, crate.fetch("archive_root"))
+  files = regular_files(crate_root)
+  raise Agentlab::Error, "crate file count mismatch: #{crate.fetch('name')}" unless files.length == crate.fetch("file_count")
+  manifest = File.join(crate_root, crate.fetch("manifest"))
+  unless Digest::SHA256.file(manifest).hexdigest == crate.fetch("manifest_sha256")
+    raise Agentlab::Error, "crate manifest mismatch: #{crate.fetch('name')} #{crate.fetch('version')}"
+  end
+  checksum = {
+    "files" => files.to_h { |path| [path.delete_prefix("#{crate_root}/"), Digest::SHA256.file(path).hexdigest] },
+    "package" => crate.fetch("checksum")
+  }
+  File.write(File.join(crate_root, ".cargo-checksum.json"), JSON.generate(checksum) + "\n")
+end
+
+vendor_manifest = File.join(workdir, "cargo-vendor.txt")
+manifest_content = crate_sources.map { |crate| "#{crate.fetch('name')} v#{crate.fetch('version')}" }.sort.join("\n") + "\n"
+File.write(vendor_manifest, manifest_content)
+raise Agentlab::Error, "cargo vendor manifest must contain 43 crates" unless File.readlines(vendor_manifest).length == 43
+vendor_directories = Dir.children(vendor_root).select { |entry| File.directory?(File.join(vendor_root, entry)) }.sort
+unless vendor_directories == crate_roots.sort
+  raise Agentlab::Error, "materialized Cargo vendor directory set does not match the checked closure"
+end
+
+vendor_digest_before = vendor_tree_digest(vendor_root)
+vendor_archive = File.join(workdir, "bun-#{version}-lolhtml-cargo-vendor.tar.gz")
+deterministic_tar_gz!(workdir, File.basename(vendor_root), vendor_archive, workdir)
+
+cargo_home = File.join(workdir, "cargo-home")
+target_dir = File.join(workdir, "target")
+FileUtils.mkdir_p(cargo_home)
+config = <<~TOML
+  [net]
+  offline = true
+
+  [source.crates-io]
+  replace-with = "vendored-sources"
+
+  [source.vendored-sources]
+  directory = #{vendor_root.dump}
+TOML
+File.write(File.join(cargo_home, "config.toml"), config)
+
+%w[cargo nm patch rpm rustc tar unshare].each do |command|
+  raise Agentlab::Error, "missing tool: #{command}" unless Agentlab.command_available?(command)
+end
+run!({}, ["unshare", "--net", "true"], chdir: workdir)
+rustc_version = capture!({}, ["/usr/bin/rustc", "--version", "--verbose"], chdir: workdir)
+cargo_version = capture!({}, ["/usr/bin/cargo", "--version", "--verbose"], chdir: workdir)
+unless rustc_version.lines.first.to_s.match?(/\Arustc \d+\.\d+\.\d+ /) &&
+       cargo_version.lines.first.to_s.match?(/\Acargo \d+\.\d+\.\d+ /)
+  raise Agentlab::Error, "lol-html proof requires Fedora stable Rust and Cargo"
+end
+rustc_package = capture!({}, ["rpm", "-qf", "--qf", "%{NAME}-%{VERSION}-%{RELEASE}\\n", "/usr/bin/rustc"], chdir: workdir).strip
+cargo_package = capture!({}, ["rpm", "-qf", "--qf", "%{NAME}-%{VERSION}-%{RELEASE}\\n", "/usr/bin/cargo"], chdir: workdir).strip
+unless rustc_package.start_with?("rust-") && cargo_package.start_with?("cargo-")
+  raise Agentlab::Error, "Rust and Cargo are not owned by Fedora rust/cargo packages"
+end
+
+environment = {
+  "CARGO_HOME" => cargo_home,
+  "CARGO_NET_OFFLINE" => "true",
+  "CARGO_TARGET_DIR" => target_dir,
+  "CARGO_INCREMENTAL" => "0",
+  "CARGO_TERM_COLOR" => "never",
+  "CARGO_ENCODED_RUSTFLAGS" => stable_flags.join("\x1f"),
+  "RUSTC" => "/usr/bin/rustc",
+  "SOURCE_DATE_EPOCH" => "0"
+}
+manifest_argument = File.join(source_root, "c-api", "Cargo.toml")
+metadata_command = ["unshare", "--net", "--", "/usr/bin/cargo", "metadata", "--locked", "--offline", "--format-version", "1", "--manifest-path", manifest_argument]
+metadata_raw = capture!(environment, metadata_command, chdir: source_root)
+File.write(File.join(workdir, "cargo-metadata.json"), metadata_raw)
+metadata = JSON.parse(metadata_raw)
+metadata_summary = {
+  "packages" => metadata.fetch("packages").map do |record|
+    {
+      "name" => record.fetch("name"),
+      "version" => record.fetch("version"),
+      "source" => record["source"]
+    }
+  end.sort_by { |record| [record.fetch("name"), record.fetch("version")] },
+  "resolve_nodes" => metadata.dig("resolve", "nodes")&.length,
+  "workspace_members" => metadata.fetch("workspace_members").length
+}
+metadata_summary_path = File.join(workdir, "cargo-metadata-summary.json")
+File.write(metadata_summary_path, JSON.pretty_generate(metadata_summary) + "\n")
+unless metadata_summary.fetch("packages").length == cargo.dig("lockfile", "package_records")
+  raise Agentlab::Error, "offline Cargo metadata package count does not match Cargo.lock"
+end
+
+build_log = File.join(workdir, "cargo-build.log")
+build_command = ["unshare", "--net", "--", "/usr/bin/cargo", "build", "--locked", "--offline", "--release", "--jobs", jobs.to_s, "--manifest-path", manifest_argument]
+run!(environment, build_command, chdir: source_root, log: build_log)
+raise Agentlab::Error, "Cargo.lock changed during offline proof" unless Digest::SHA256.file(lock_path).hexdigest == cargo.dig("lockfile", "sha256")
+raise Agentlab::Error, "vendored Cargo tree changed during build" unless vendor_tree_digest(vendor_root) == vendor_digest_before
+
+library = File.join(target_dir, "release", "liblolhtml.a")
+raise Agentlab::Error, "missing lol-html static library #{library}" unless File.file?(library) && File.size(library).positive?
+symbols = capture!({}, ["nm", "-g", "--defined-only", library], chdir: workdir).lines.map(&:strip).reject(&:empty?).sort
+lolhtml_symbols = symbols.grep(/lol_html_/)
+raise Agentlab::Error, "lol-html static library exports no C API symbols" if lolhtml_symbols.empty?
+symbol_path = File.join(workdir, "lolhtml-exported-symbols.txt")
+File.write(symbol_path, lolhtml_symbols.join("\n") + "\n")
+
+receipt = {
+  "schema" => "bun-lolhtml-offline-build-proof/v1",
+  "package" => "bun",
+  "release" => version,
+  "profile" => "release-local",
+  "target" => "x86_64-unknown-linux-gnu",
+  "source_closure" => {
+    "path" => File.basename(closure_path),
+    "sha256" => closure_sha256
+  },
+  "lolhtml" => {
+    "repository" => lolhtml.fetch("repository"),
+    "commit" => lolhtml.fetch("commit"),
+    "source_archive" => cargo.fetch("source_archive"),
+    "source_sha256" => cargo.fetch("source_sha256"),
+    "manifest_sha256" => cargo.dig("manifest", "sha256"),
+    "lockfile_sha256" => cargo.dig("lockfile", "sha256")
+  },
+  "fedora_patch" => {
+    "path" => File.basename(patch_path),
+    "sha256" => patch_sha256,
+    "upstream_size_optimization_commit" => "7e57e529bf4fe8afdbfed245d6f20d9b18f61913",
+    "upstream_standalone_path_removal_commit" => "86d32c8bb66d503ccbcc1d2e40d25b11679eeede",
+    "stable_linux_path_verified" => true
+  },
+  "vendor" => {
+    "crate_count" => crate_sources.length,
+    "archive_inputs_sha256_verified" => true,
+    "cargo_checksums_generated" => crate_sources.length,
+    "tree_sha256" => vendor_digest_before,
+    "manifest" => {
+      "path" => File.basename(vendor_manifest_output),
+      "size_bytes" => File.size(vendor_manifest),
+      "sha256" => Digest::SHA256.file(vendor_manifest).hexdigest
+    },
+    "archive" => file_receipt(vendor_archive, workdir)
+  },
+  "toolchain" => {
+    "rustc" => rustc_version.lines.first.to_s.strip,
+    "cargo" => cargo_version.lines.first.to_s.strip,
+    "rustc_package" => rustc_package,
+    "cargo_package" => cargo_package,
+    "cargo_rustc" => environment.fetch("RUSTC"),
+    "stable_verified" => true,
+    "nightly_required" => false,
+    "rust_src_required" => false
+  },
+  "build" => {
+    "locked" => true,
+    "offline" => true,
+    "network_namespace" => true,
+    "jobs" => jobs,
+    "rustflags" => stable_flags,
+    "unstable_flags_used" => false,
+    "metadata" => file_receipt(metadata_summary_path, workdir),
+    "static_library" => file_receipt(library, workdir),
+    "exported_c_api_symbols" => {
+      "count" => lolhtml_symbols.length,
+      "sha256" => Digest::SHA256.file(symbol_path).hexdigest
+    }
+  },
+  "validation" => {
+    "cargo_crate_sources_verified" => true,
+    "cargo_vendor_materialization_verified" => true,
+    "stable_rust_verified" => true,
+    "offline_cargo_verified" => true,
+    "lolhtml_static_library_verified" => true,
+    "complete_bun_offline_materialization_verified" => false
+  },
+  "scope" => "standalone Fedora stable-Rust and network-isolated offline Cargo proof for Bun's pinned lol-html C API; not a full Bun build, final license review, or complete Bun dependency materialization"
+}
+content = JSON.pretty_generate(receipt) + "\n"
+
+if check
+  raise Agentlab::Error, "missing checked proof receipt #{output}" unless File.file?(output)
+  raise Agentlab::Error, "lol-html offline proof receipt is stale: #{output}" unless File.binread(output) == content
+  raise Agentlab::Error, "missing checked Cargo vendor manifest #{vendor_manifest_output}" unless File.file?(vendor_manifest_output)
+  unless File.binread(vendor_manifest_output) == manifest_content
+    raise Agentlab::Error, "lol-html Cargo vendor manifest is stale: #{vendor_manifest_output}"
+  end
+  puts "Verified Bun lol-html with Fedora stable Rust and 43 vendored crates in network-isolated offline mode."
+else
+  Agentlab.atomic_write(output, content)
+  Agentlab.atomic_write(vendor_manifest_output, manifest_content)
+  puts "Verified Bun lol-html with Fedora stable Rust and 43 vendored crates in network-isolated offline mode."
+  puts "Proof receipt: #{output}"
+end

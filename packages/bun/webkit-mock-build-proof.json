@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "package_release": "bun-v1.3.14",
+  "rpm_nvr": "bun-1.3.14-0.0.6.fc44",
+  "proof_platform": "fedora-44-x86_64",
+  "proof_date": "2026-07-18",
+  "isolated_buildroot": true,
+  "mock": {
+    "version": "6.7",
+    "chroot": "fedora-44-x86_64",
+    "unique_ext": "agentlab-bun-webkit-proof",
+    "copr_repository": "https://download.copr.fedorainfracloud.org/results/marcin/agentlab/fedora-44-x86_64/",
+    "rpmbuild_networking": false,
+    "jobs": 4
+  },
+  "inputs": {
+    "spec_sha256": "895d97dc784490a574486bb8f2449d5da0362434d9faf7e3211419ad0c4b8a10",
+    "sources": {
+      "bun-v1.3.14.tar.gz": "112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e",
+      "bun-1.3.14-zig-04e7f6ac1e009525bc00934f20199c68f04e0a24.tar.gz": "b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d",
+      "WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b.tar.gz": "c48d419170205210dc40eb70c2c4bf91e5d50db91a2739d13030965c08d31d3c"
+    },
+    "patches": {
+      "zig-fedora-lib64.patch": "77be015e0b2a83e6d287cfa832fa190dcfe7296320d111e0b129e11a418161fc",
+      "bun-webkit-typed-array-int32-conversion.patch": "023a4686ba96eb6ace658bef0226ba8b2968b57075ad11813918da93ed3c14e3"
+    },
+    "srpm": {
+      "filename": "bun-1.3.14-0.0.6.fc44.src.rpm",
+      "size_bytes": 2043860035,
+      "sha256": "47db0f927fea01e4792c7698f629d4870596b17d628d6205c993f093ce9152be"
+    }
+  },
+  "result": {
+    "mock_exit_status": 1,
+    "expected_check_failure": true,
+    "zig_source_execution_verified": true,
+    "webkit_static_build_verified": true,
+    "jsc_runtime_probe_verified": true,
+    "intentional_stop_verified": true,
+    "binary_rpm_produced": false,
+    "logs": {
+      "build.log": {
+        "size_bytes": 2413013,
+        "sha256": "77eff77111b8d38f0683b04055f66f16707bc1fccb5262a4ed55ea955db18549"
+      },
+      "hw_info.log": {
+        "size_bytes": 4112,
+        "sha256": "6ce252a13783fb92e241f90e03a7cfae0acc0ca08a63e898ccd87d2dafcbe916"
+      },
+      "installed_pkgs.log": {
+        "size_bytes": 15364,
+        "sha256": "74f2b2bd04e23466fe3bc215f68478809c05446ae30d5da37abcfeb2418a8140"
+      },
+      "root.log": {
+        "size_bytes": 284033,
+        "sha256": "ccadd5dbd02be3602e7b9a3ef6c83a0be409be855ff4cad52a09beafb9cc2887"
+      },
+      "state.log": {
+        "size_bytes": 1439,
+        "sha256": "736134e328c8a769ef470e20b34f3fe811aae17571bd4ce5f424b30071908293"
+      }
+    }
+  },
+  "scope": "isolated Fedora 44 x86_64 Zig and WebKit source-build proof; the Bun dependency closure, seed build, self-rebuild, and final RPM remain blocked"
+}

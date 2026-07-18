@@ -1,0 +1,88 @@
+{
+  "schema": "bun-lolhtml-offline-build-proof/v1",
+  "package": "bun",
+  "release": "1.3.14",
+  "profile": "release-local",
+  "target": "x86_64-unknown-linux-gnu",
+  "source_closure": {
+    "path": "bun-1.3.14-release-local-source-closure.json",
+    "sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0"
+  },
+  "lolhtml": {
+    "repository": "cloudflare/lol-html",
+    "commit": "77127cd2b8545998756e8d64e36ee2313c4bb312",
+    "source_archive": "lolhtml-929339b1d898e66b.tar.gz",
+    "source_sha256": "2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379",
+    "manifest_sha256": "feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03",
+    "lockfile_sha256": "02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d"
+  },
+  "fedora_patch": {
+    "path": "bun-lolhtml-fedora-stable-rust.patch",
+    "sha256": "1d530ec7a177285f0e6e819359547b9360b86e930968c4dadc196cce10425055",
+    "upstream_size_optimization_commit": "7e57e529bf4fe8afdbfed245d6f20d9b18f61913",
+    "upstream_standalone_path_removal_commit": "86d32c8bb66d503ccbcc1d2e40d25b11679eeede",
+    "stable_linux_path_verified": true
+  },
+  "vendor": {
+    "crate_count": 43,
+    "archive_inputs_sha256_verified": true,
+    "cargo_checksums_generated": 43,
+    "tree_sha256": "28d05e1cc1221039862f7c793d2d703f24cb79e5108065bfebc0584b56b0e521",
+    "manifest": {
+      "path": "lolhtml-cargo-vendor.txt",
+      "size_bytes": 786,
+      "sha256": "7728706170a520d53a1f33e4814f0abcf07edd5ea69db5af623a8a0579edcd5b"
+    },
+    "archive": {
+      "path": "bun-1.3.14-lolhtml-cargo-vendor.tar.gz",
+      "size_bytes": 4126499,
+      "sha256": "299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57"
+    }
+  },
+  "toolchain": {
+    "rustc": "rustc 1.96.1 (31fca3adb 2026-06-26) (Fedora 1.96.1-1.fc44)",
+    "cargo": "cargo 1.96.1 (356927216 2026-06-26) (Fedora 1.96.1-1.fc44)",
+    "rustc_package": "rust-1.96.1-1.fc44",
+    "cargo_package": "cargo-1.96.1-1.fc44",
+    "cargo_rustc": "/usr/bin/rustc",
+    "stable_verified": true,
+    "nightly_required": false,
+    "rust_src_required": false
+  },
+  "build": {
+    "locked": true,
+    "offline": true,
+    "network_namespace": true,
+    "jobs": 4,
+    "rustflags": [
+      "-Cpanic=abort",
+      "-Cdebuginfo=0",
+      "-Cforce-unwind-tables=no",
+      "-Copt-level=s"
+    ],
+    "unstable_flags_used": false,
+    "metadata": {
+      "path": "cargo-metadata-summary.json",
+      "size_bytes": 6239,
+      "sha256": "fce0f63fe8ed6be2df24e2dfd7f9fa7c4f0417c294daa1ad467e57567c95e13b"
+    },
+    "static_library": {
+      "path": "target/release/liblolhtml.a",
+      "size_bytes": 46769250,
+      "sha256": "ee6d7a989973f1c1294c0a796086e48913277b925b4d421bbb21ed9cfa11d982"
+    },
+    "exported_c_api_symbols": {
+      "count": 97,
+      "sha256": "e27bce50176d5cd8a6861a760adcc324101b1eaec087027fa48691380df2cd70"
+    }
+  },
+  "validation": {
+    "cargo_crate_sources_verified": true,
+    "cargo_vendor_materialization_verified": true,
+    "stable_rust_verified": true,
+    "offline_cargo_verified": true,
+    "lolhtml_static_library_verified": true,
+    "complete_bun_offline_materialization_verified": false
+  },
+  "scope": "standalone Fedora stable-Rust and network-isolated offline Cargo proof for Bun's pinned lol-html C API; not a full Bun build, final license review, or complete Bun dependency materialization"
+}

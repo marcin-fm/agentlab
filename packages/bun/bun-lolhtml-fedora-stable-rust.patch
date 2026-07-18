@@ -1,0 +1,17 @@
+diff --git a/scripts/build/deps/lolhtml.ts b/scripts/build/deps/lolhtml.ts
+index 507ae14..203dd76 100644
+--- a/scripts/build/deps/lolhtml.ts
++++ b/scripts/build/deps/lolhtml.ts
+@@ -78,7 +78,6 @@ export const lolhtml: Dependency = {
+-    // Requires nightly + rust-src; only enable where CI's Rust toolchain is
+-    // known to have both and -Zbuild-std for the target is verified
+-    // (linux-gnu, darwin, freebsd). musl/android keep the prebuilt-std
+-    // -Cpanic=abort path.
+-    const canBuildStdImmediateAbort =
+-      cfg.darwin || cfg.freebsd || (cfg.linux && cfg.abi !== "musl" && cfg.abi !== "android");
++    // Requires nightly + rust-src. Fedora builds native Linux with its stable
++    // Rust toolchain and keeps the existing prebuilt-std -Cpanic=abort path;
++    // upstream introduced the immediate-abort branch only as a size
++    // optimization. Darwin and FreeBSD retain the upstream build-std path.
++    const canBuildStdImmediateAbort = cfg.darwin || cfg.freebsd;
+     if (cfg.release && canBuildStdImmediateAbort) {

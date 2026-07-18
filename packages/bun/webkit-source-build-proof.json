@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "package_release": "bun-v1.3.14",
+  "proof_platform": "fedora-44-x86_64",
+  "proof_date": "2026-07-18",
+  "isolated_buildroot": false,
+  "source": {
+    "commit": "5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b",
+    "archive_filename": "WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b.tar.gz",
+    "sha256": "c48d419170205210dc40eb70c2c4bf91e5d50db91a2739d13030965c08d31d3c",
+    "source_tree_complete": true,
+    "gitlink_count": 0,
+    "embedded_gitmodules_count": 4
+  },
+  "patch": {
+    "path": "bun-webkit-typed-array-int32-conversion.patch",
+    "sha256": "023a4686ba96eb6ace658bef0226ba8b2968b57075ad11813918da93ed3c14e3",
+    "provenance": "https://gitlab.archlinux.org/archlinux/packaging/packages/bun/-/commit/e6f882caed2016f0aadfe1d2af821c42b74d5840",
+    "issue": "https://github.com/oven-sh/bun/issues/28607"
+  },
+  "toolchain": {
+    "cmake": "4.3.0",
+    "clang": "21.1.8",
+    "llvm": "21.1.8",
+    "ninja": "1.13.2",
+    "jobs": 4,
+    "cpu": "haswell"
+  },
+  "cmake_options": {
+    "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+    "CMAKE_C_COMPILER": "/usr/bin/clang-21",
+    "CMAKE_CXX_COMPILER": "/usr/bin/clang++-21",
+    "CMAKE_AR": "/usr/bin/llvm-ar-21",
+    "CMAKE_RANLIB": "/usr/bin/llvm-ranlib-21",
+    "CMAKE_EXE_LINKER_FLAGS": "--ld-path=/usr/bin/ld.lld-21",
+    "CMAKE_SHARED_LINKER_FLAGS": "--ld-path=/usr/bin/ld.lld-21",
+    "CMAKE_C_FLAGS": "-march=haswell",
+    "CMAKE_CXX_FLAGS": "-march=haswell",
+    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+    "BUILD_SHARED_LIBS": "OFF",
+    "PORT": "JSCOnly",
+    "ENABLE_STATIC_JSC": "ON",
+    "USE_THIN_ARCHIVES": "OFF",
+    "ENABLE_FTL_JIT": "ON",
+    "USE_BUN_JSC_ADDITIONS": "ON",
+    "USE_BUN_EVENT_LOOP": "ON",
+    "ENABLE_BUN_SKIP_FAILING_ASSERTIONS": "ON",
+    "ALLOW_LINE_AND_COLUMN_NUMBER_IN_BUILTINS": "ON",
+    "ENABLE_REMOTE_INSPECTOR": "ON",
+    "ENABLE_MEDIA_SOURCE": "OFF",
+    "ENABLE_MEDIA_STREAM": "OFF",
+    "ENABLE_WEB_RTC": "OFF"
+  },
+  "output": {
+    "static_archives": {
+      "libWTF.a": {
+        "path": "build/lib/libWTF.a",
+        "size_bytes": 50478760,
+        "sha256": "9b840ba5b9a15ed3271ee0e141d03611e6263b73d227c0e29f8d22c11c5be4f7"
+      },
+      "libJavaScriptCore.a": {
+        "path": "build/lib/libJavaScriptCore.a",
+        "size_bytes": 590692204,
+        "sha256": "d8783315814d53e4ab5ed219fa4e78ed2f67b0bc9ee9ccb6031a690f653207cc"
+      },
+      "libbmalloc.a": {
+        "path": "build/lib/libbmalloc.a",
+        "size_bytes": 9509868,
+        "sha256": "9b75fce5cba688a662bbe42daa97b0afd2168b1180660d2b0b3de9194a8bd4f1"
+      }
+    },
+    "jsc": {
+      "path": "build/bin/jsc",
+      "size_bytes": 291657144,
+      "sha256": "81de254529a79df41d36c5d670d744a346598573dcb06ee3f9a64aa75a4b77ba",
+      "runtime_probe_verified": true
+    },
+    "metadata": {
+      "CMakeCache.txt": {
+        "path": "build/CMakeCache.txt",
+        "size_bytes": 65741,
+        "sha256": "6f712671d2086fbf7633f4ea18cb62fb88137814c1e70bda640705b8e07eb6c7"
+      },
+      "compile_commands.json": {
+        "path": "build/compile_commands.json",
+        "size_bytes": 2618647,
+        "sha256": "f8c4511a059cc88ff33dd39ec80fc97afb23a33fa03ec7610782a6e109312d12"
+      }
+    },
+    "generated_header_counts": {
+      "JavaScriptCore/Headers": 9,
+      "JavaScriptCore/PrivateHeaders": 1415,
+      "WTF/Headers": 510,
+      "bmalloc/Headers": 360
+    }
+  },
+  "relink_materials": {
+    "webkit_static_archives_verified": true,
+    "generated_headers_retained": true,
+    "compile_commands_retained": true,
+    "complete_bun_relink_materials_verified": false
+  },
+  "scope": "local WebKit source-build proof only; not Fedora approval, a complete Bun LGPL relink set, or a Bun RPM build"
+}

@@ -1,0 +1,229 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "time"
+require "uri"
+require "zlib"
+require_relative "lib/agentlab"
+
+CHROOT = "fedora-44-x86_64"
+COPR_REPOSITORY = "https://download.copr.fedorainfracloud.org/results/marcin/agentlab/#{CHROOT}/"
+UNIQUE_EXT = "agentlab-bun-webkit-proof"
+
+package = Agentlab.package_named("bun")
+build_plan = package.data.fetch("build_plan")
+webkit = build_plan.dig("source_inputs", "webkit") || {}
+zig = build_plan.dig("source_inputs", "zig") || {}
+version = package.upstream.fetch("current_version")
+workdir = "/srv/tmp/agentlab-bun-webkit-mock-proof"
+webkit_source = File.join("/srv/tmp", webkit.fetch("archive_filename"))
+jobs = 4
+force = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/prove-bun-webkit-mock-build [options]"
+  parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--webkit-source PATH", "Existing deterministic WebKit archive") { |path| webkit_source = path }
+  parser.on("--jobs COUNT", Integer, "Parallel build jobs, maximum 4") { |count| jobs = count }
+  parser.on("--force", "Replace an existing marked proof directory") { force = true }
+end.parse!
+
+workdir = File.expand_path(workdir)
+webkit_source = File.expand_path(webkit_source)
+raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+raise Agentlab::Error, "jobs must be between 1 and 4" unless jobs.between?(1, 4)
+raise Agentlab::Error, "missing WebKit source archive #{webkit_source}" unless File.file?(webkit_source)
+
+expected_release_pin = "bun-v#{version}"
+unless build_plan["source_inputs_reconciled"] == true &&
+       zig["release_pin"] == expected_release_pin &&
+       webkit["release_pin"] == expected_release_pin
+  raise Agentlab::Error, "Bun subordinate sources are not reconciled for #{expected_release_pin}"
+end
+
+marker = File.join(workdir, ".agentlab-bun-webkit-mock-proof")
+if Dir.exist?(workdir)
+  raise Agentlab::Error, "refusing to use unmarked proof directory #{workdir}" unless File.file?(marker)
+  raise Agentlab::Error, "proof directory exists; pass --force to replace it" unless force
+end
+if force && webkit_source.start_with?("#{workdir}/")
+  raise Agentlab::Error, "WebKit archive must be outside the replaced proof directory"
+end
+
+def download!(url, destination)
+  return if File.file?(destination)
+
+  puts "Downloading #{url}"
+  File.binwrite(destination, Agentlab.download(url))
+end
+
+def verify_sha256!(path, expected)
+  actual = Digest::SHA256.file(path).hexdigest
+  raise Agentlab::Error, "SHA-256 mismatch for #{path}: #{actual} != #{expected}" unless actual == expected
+
+  actual
+end
+
+def run!(argv, chdir: Agentlab::ROOT)
+  puts "$ #{Agentlab.command_string(argv)}"
+  return if system(*argv, chdir: chdir)
+
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}"
+end
+
+def run_status(argv, chdir: Agentlab::ROOT)
+  puts "$ #{Agentlab.command_string(argv)}"
+  system(*argv, chdir: chdir)
+  $?
+end
+
+def command_output!(*argv)
+  stdout, stderr, status = Open3.capture3(*argv)
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}: #{stderr.strip}" unless status.success?
+
+  stdout.strip
+end
+
+def read_log(path)
+  return Zlib::GzipReader.open(path, &:read) if path.end_with?(".gz")
+
+  File.read(path)
+end
+
+FileUtils.rm_rf(workdir) if force
+FileUtils.mkdir_p(workdir)
+File.write(marker, "agentlab bun webkit mock proof\n")
+
+sources = File.join(workdir, "sources")
+srpm_result = File.join(workdir, "srpm-result")
+build_result = File.join(workdir, "build-result")
+FileUtils.mkdir_p([sources, srpm_result, build_result])
+
+bun_source_url = Agentlab.source_url(package, version)
+bun_source = File.join(sources, File.basename(URI(bun_source_url).path))
+zig_source = File.join(sources, "bun-#{version}-zig-#{zig.fetch('commit')}.tar.gz")
+staged_webkit_source = File.join(sources, webkit.fetch("archive_filename"))
+spec = File.join(package.directory, package.data.fetch("copr").fetch("spec"))
+patches = [zig.fetch("patch"), webkit.fetch("patch")].map { |name| File.join(package.directory, name) }
+
+download!(bun_source_url, bun_source)
+download!(zig.fetch("url"), zig_source)
+unless File.file?(staged_webkit_source)
+  begin
+    File.link(webkit_source, staged_webkit_source)
+  rescue Errno::EXDEV
+    FileUtils.cp(webkit_source, staged_webkit_source)
+  end
+end
+patches.each { |path| FileUtils.cp(path, sources) }
+
+source_hashes = {
+  File.basename(bun_source) => verify_sha256!(bun_source, package.upstream.fetch("source_sha256")),
+  File.basename(zig_source) => verify_sha256!(zig_source, zig.fetch("sha256")),
+  File.basename(staged_webkit_source) => verify_sha256!(staged_webkit_source, webkit.fetch("sha256"))
+}
+patch_hashes = patches.to_h { |path| [File.basename(path), Digest::SHA256.file(path).hexdigest] }
+unless patch_hashes.fetch(webkit.fetch("patch")) == webkit.fetch("patch_sha256")
+  raise Agentlab::Error, "WebKit patch does not match package metadata"
+end
+
+common_mock = [
+  "mock", "-r", CHROOT,
+  "--uniqueext", UNIQUE_EXT,
+  "--addrepo", COPR_REPOSITORY,
+  "--config-opts", "rpmbuild_networking=False",
+  "--define", "_smp_build_ncpus #{jobs}"
+]
+buildsrpm = common_mock + [
+  "--buildsrpm",
+  "--spec", spec,
+  "--sources", sources,
+  "--resultdir", srpm_result
+]
+run!(buildsrpm)
+
+srpms = Dir.glob(File.join(srpm_result, "*.src.rpm"))
+raise Agentlab::Error, "expected one generated source RPM, found #{srpms.length}" unless srpms.length == 1
+
+srpm = srpms.fetch(0)
+rebuild = common_mock + [
+  "--clean",
+  "--rebuild", srpm,
+  "--resultdir", build_result,
+  "--rpmbuild_timeout", "28800"
+]
+build_status = run_status(rebuild)
+raise Agentlab::Error, "Bun draft unexpectedly built successfully" if build_status.success?
+
+build_logs = Dir.glob(File.join(build_result, "build.log*"))
+raise Agentlab::Error, "missing Mock build log" unless build_logs.length == 1
+
+build_log = build_logs.fetch(0)
+log_text = read_log(build_log)
+markers = {
+  "no_payload_install" => "No Bun payload is staged before the final self-rebuild gate passes",
+  "zig_source_execution" => "zig-bun-proof",
+  "jsc_runtime_probe" => "agentlab-webkit-proof",
+  "intentional_stop" => "Remaining Bun source-build stages are incomplete; see package.yml"
+}
+markers.each do |name, text|
+  raise Agentlab::Error, "Mock build did not reach #{name}: #{text}" unless log_text.include?(text)
+end
+unless log_text.match?(/Bad exit status from .+ \(%check\)/)
+  raise Agentlab::Error, "Mock build did not fail at the intentional %check stop"
+end
+
+binary_rpms = Dir.glob(File.join(build_result, "*.rpm")).reject { |path| path.end_with?(".src.rpm") }
+raise Agentlab::Error, "Mock produced an unexpected binary RPM" unless binary_rpms.empty?
+
+log_receipts = Dir.glob(File.join(build_result, "*.log*"), File::FNM_CASEFOLD).sort.to_h do |path|
+  [File.basename(path), { "size_bytes" => File.size(path), "sha256" => Digest::SHA256.file(path).hexdigest }]
+end
+
+receipt = {
+  "schema" => 1,
+  "package_release" => expected_release_pin,
+  "rpm_nvr" => command_output!("rpm", "-qp", "--qf", "%{NAME}-%{VERSION}-%{RELEASE}", srpm),
+  "proof_platform" => CHROOT,
+  "proof_date" => Time.now.strftime("%Y-%m-%d"),
+  "isolated_buildroot" => true,
+  "mock" => {
+    "version" => command_output!("mock", "--version"),
+    "chroot" => CHROOT,
+    "unique_ext" => UNIQUE_EXT,
+    "copr_repository" => COPR_REPOSITORY,
+    "rpmbuild_networking" => false,
+    "jobs" => jobs
+  },
+  "inputs" => {
+    "spec_sha256" => Digest::SHA256.file(spec).hexdigest,
+    "sources" => source_hashes,
+    "patches" => patch_hashes,
+    "srpm" => {
+      "filename" => File.basename(srpm),
+      "size_bytes" => File.size(srpm),
+      "sha256" => Digest::SHA256.file(srpm).hexdigest
+    }
+  },
+  "result" => {
+    "mock_exit_status" => build_status.exitstatus,
+    "expected_check_failure" => true,
+    "zig_source_execution_verified" => true,
+    "webkit_static_build_verified" => true,
+    "jsc_runtime_probe_verified" => true,
+    "intentional_stop_verified" => true,
+    "binary_rpm_produced" => false,
+    "logs" => log_receipts
+  },
+  "scope" => "isolated Fedora 44 x86_64 Zig and WebKit source-build proof; the Bun dependency closure, seed build, self-rebuild, and final RPM remain blocked"
+}
+receipt_path = File.join(workdir, "proof-receipt.json")
+File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
+
+puts "Verified isolated Bun Zig and WebKit stages through the intentional %check stop"
+puts "Proof receipt: #{receipt_path}"
