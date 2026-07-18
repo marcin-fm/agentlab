@@ -1,7 +1,15 @@
 # rust-infer0.19
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT license file.
 
-Final direct-v4 metadata-fixes package for infer 0.19.0. Final F43/F44 rebuild, hosting, duplicate, and license review remain blockers.
+No exact `infer 0.19.0` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. The default `std` feature enables `cfb 0.7`:
+Fedora 43 supplies exact `cfb 0.7.3`, while `rust-cfb0.7` supplies Fedora 44 and
+Rawhide. Publication is therefore serialized after the four-cell
+`rust-cfb0.7` build. The retained patch only ignores doctests that reference
+fixtures omitted from the published crate archive.

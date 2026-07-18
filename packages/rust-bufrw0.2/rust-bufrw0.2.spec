@@ -7,12 +7,12 @@
 
 Name:           rust-bufrw0.2
 Version:        0.2.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Single adapter that buffers reads and writes on the same stream
 
 License:        MIT
 URL:            https://crates.io/crates/bufrw
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # Omit the benchmark-only Criterion dependency from Fedora's library build graph.
 # Fedora-specific; not submitted because upstream intentionally retains the benchmark.
 Patch:          bufrw-fix-metadata.diff
@@ -72,6 +72,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.3
+- Enable configured SCM publication from the immutable crates.io source.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.2
 - Document the benchmark-only dependency pruning patch.
 

@@ -1,7 +1,11 @@
 name: rust-serde_yaml_ng0.10
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: The normalized crate manifest requires indexmap 2, itoa 1, ryu 1, serde 1, and unsafe-libyaml 0.2, all provided by Fedora in the selected chroots.
+  duplicate_audit: No crate(serde_yaml_ng) = 0.10.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: serde_yaml_ng
@@ -10,6 +14,13 @@ upstream:
   source_sha256: 7b4db627b98b36d4203a7b458cf3573730f2bb591b28871d916dfa9efabfd41f
   source_url_template: https://static.crates.io/crates/serde_yaml_ng/serde_yaml_ng-{version}.crate
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-serde_yaml_ng0.10
   spec: rust-serde_yaml_ng0.10.spec

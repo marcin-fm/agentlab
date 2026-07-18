@@ -1,9 +1,11 @@
-status: blocked
+status: enabled
 name: rust-infer0.19
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: The default std feature requires cfb 0.7; Fedora 43 supplies exact 0.7.3 and rust-cfb0.7 supplies Fedora 44 and Rawhide. The retained patch only ignores doctests whose fixtures are absent from the published crate.
+  duplicate_audit: No crate(infer) = 0.19.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: infer
@@ -12,6 +14,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/infer/infer-{version}.crate
   source_sha256: a588916bfdfd92e71cacef98a63d9b1f0d74d6599980d11894290e7ddefffcf7
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-infer0.19
   spec: rust-infer0.19.spec

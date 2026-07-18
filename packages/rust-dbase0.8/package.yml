@@ -1,9 +1,11 @@
-status: blocked
+status: enabled
 name: rust-dbase0.8
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: The default library requires bufrw 0.2 plus Fedora-provided byteorder 1 and time 0.3; optional feature dependencies are not enabled by the default build.
+  duplicate_audit: No crate(dbase) = 0.8.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: dbase
@@ -12,6 +14,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/dbase/dbase-{version}.crate
   source_sha256: abde818b4b82df61e01348c2b4610c221bcecb97cb7f567da086edf295d8d126
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-dbase0.8
   spec: rust-dbase0.8.spec

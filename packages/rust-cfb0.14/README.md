@@ -1,7 +1,14 @@
 # rust-cfb0.14
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT license file.
 
-Final cfb 0.14.0 package inputs, including the reviewed metadata patch. The crate hash is in `package.yml`; publication approval and duplicate/license review remain blockers.
+No exact `cfb 0.14.0` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. Fedora provides its required `fnv`, `uuid`,
+and `web-time` dependencies in all selected chroots. The retained patch removes
+benchmark-only Criterion metadata and guards a debug-only panic test from
+optimized builds; it does not alter runtime library behavior.

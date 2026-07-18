@@ -1,7 +1,14 @@
 # rust-jotdown0.10
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT license file.
 
-Final jotdown 0.10.0 package inputs. Final F43/F44 rebuild, public hosting, duplicate, and license review remain blockers.
+No exact `jotdown 0.10.0` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. Its default `html` feature has no external
+dependencies; the optional CLI feature uses Fedora's `clap 4.5` provider.
+Configured publication therefore targets all six selected chroots without
+another Agentlab prerequisite.

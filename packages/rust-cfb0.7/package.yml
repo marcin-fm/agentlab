@@ -1,5 +1,18 @@
 name: rust-cfb0.7
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication only where Fedora lacks the exact crate.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: The normalized crate manifest requires byteorder 1, fnv 1, and uuid 1, all provided by Fedora in the selected chroots.
+  duplicate_audit: Fedora 43 provides exact crate(cfb) = 0.7.3, so configured publication excludes Fedora 43; Fedora 44, Rawhide, and matching RPM Fusion repositories provide no exact package as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: cfb, version_requirement: '= 0.7.3', current_version: 0.7.3, source_sha256: d38f2da7a0a2c4ccf0065be06397cc26a81f4e528be095826eee9d4adbb8c60f, source_url_template: 'https://static.crates.io/crates/cfb/cfb-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-cfb0.7, spec: rust-cfb0.7.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-cfb0.7
+  spec: rust-cfb0.7.spec
