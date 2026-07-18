@@ -2,9 +2,10 @@ name: rust-biblib0.7
 status: enabled
 blockers: []
 validation:
-  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  enablement_release: Release 0.3 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
   source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT and Apache-2.0 license files.
   dependency_evidence: Fedora provides every selected default and test dependency, including compact_str 0.9, csv 1.4, quick-xml 0.41, rayon 1, rstest 0.26, and thiserror 2; the Fedora-only patches omit unselected diagnostics support requiring unavailable ariadne 0.6 and align test-only rstest.
+  packaging_normalization: Prep normalizes mixed CRLF line endings in the packaged upstream README and changelog; source code and library behavior are unchanged.
   duplicate_audit: No crate(biblib) = 0.7.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io

@@ -11,4 +11,5 @@ No exact `biblib 0.7.2` provider exists in Fedora 43, Fedora 44, Rawhide, or
 matching RPM Fusion repositories. Fedora provides every selected default and
 test dependency. Separate Fedora-only metadata patches omit the unselected
 `diagnostics` feature, whose `ariadne 0.6` dependency is unavailable, and align
-the test-only `rstest` dependency with Fedora's 0.26 branch.
+the test-only `rstest` dependency with Fedora's 0.26 branch. Package preparation
+also normalizes mixed CRLF line endings in the upstream README and changelog.

@@ -7,7 +7,7 @@
 
 Name:           rust-biblib0.7
 Version:        0.7.2
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Parse, manage, and deduplicate academic citations
 
 License:        MIT OR Apache-2.0
@@ -143,6 +143,8 @@ use the "xml" feature of the "%{crate}" crate.
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+# Normalize mixed upstream line endings in the packaged documentation.
+sed -i 's/\r$//' README.md CHANGELOG.md
 %cargo_prep
 
 %generate_buildrequires
@@ -160,6 +162,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.7.2-0.3
+- Normalize mixed line endings in the packaged README and changelog.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.7.2-0.2
 - Enable configured SCM publication from the immutable crates.io source.
 - Omit unavailable optional diagnostics support and align test-only rstest.
