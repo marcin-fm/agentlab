@@ -1,7 +1,11 @@
 name: rust-serde_toon_format0.1
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: Fedora provides every normalized runtime and test dependency; the Fedora-only metadata patch removes examples and benchmark-only dependencies and aligns dev-only rstest with Fedora's 0.26 branch without changing library sources.
+  duplicate_audit: No crate(serde_toon_format) = 0.1.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: serde_toon_format
@@ -10,6 +14,13 @@ upstream:
   source_sha256: 45abc88be1b465c1676fbbe94f866e872d3e9c22b3c10de6e1d90ae76dd45d51
   source_url_template: https://static.crates.io/crates/serde_toon_format/serde_toon_format-{version}.crate
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-serde_toon_format0.1
   spec: rust-serde_toon_format0.1.spec

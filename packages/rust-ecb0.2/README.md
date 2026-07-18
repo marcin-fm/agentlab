@@ -1,7 +1,12 @@
 # rust-ecb0.2
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT license file.
 
-Blocked import of the staged `ecb` 0.2.0 compatibility package.
+Fedora provides only incompatible `ecb 0.1.2`, not the selected `0.2.0` branch,
+and matching RPM Fusion repositories provide no exact crate. Fedora provides
+`cipher 0.5`, test-only `aes 0.9`, and `hex-literal 1` in every selected chroot.

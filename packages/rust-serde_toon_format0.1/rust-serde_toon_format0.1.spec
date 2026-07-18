@@ -7,12 +7,12 @@
 
 Name:           rust-serde_toon_format0.1
 Version:        0.1.2
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Serde-compatible TOON v3.0 encoder/decoder
 
 License:        MIT
 URL:            https://crates.io/crates/serde_toon_format
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 Patch:          serde_toon_format-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -82,5 +82,8 @@ chmod 0755 benchmarks/flamegraph_to_csv.py
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.1.2-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.1.2-0.1
 - Preserve executable mode for the benchmark Python helper.

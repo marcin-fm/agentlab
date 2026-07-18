@@ -1,5 +1,20 @@
 name: rust-lru0.18
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: Fedora provides default hashbrown 0.17 and the test-only scoped_threadpool 0.1 and stats_alloc 0.1 dependencies in every selected chroot.
+  duplicate_audit: Fedora 43, Fedora 44, and Rawhide provide only incompatible lru 0.16.4; no crate(lru) = 0.18.1 provider was found there or in matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: lru, version_requirement: '= 0.18.1', current_version: 0.18.1, source_sha256: 0b6180140927ee907000b0aa540091f6ea512ead4447c92b8fc35bc72788a5a6, source_url_template: 'https://static.crates.io/crates/lru/lru-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-lru0.18, spec: rust-lru0.18.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-lru0.18
+  spec: rust-lru0.18.spec

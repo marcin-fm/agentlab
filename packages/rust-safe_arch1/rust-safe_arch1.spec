@@ -7,12 +7,12 @@
 
 Name:           rust-safe_arch1
 Version:        1.0.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Safe access to core architecture features
 
 License:        Zlib OR Apache-2.0 OR MIT
 URL:            https://crates.io/crates/safe_arch
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -83,5 +83,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.0.0-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.0.0-0.1
 - Clarify the compile-time architecture feature description.

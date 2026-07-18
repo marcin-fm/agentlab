@@ -1,5 +1,20 @@
 name: rust-safe_arch1
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared Zlib, Apache-2.0, and MIT license files.
+  dependency_evidence: Fedora provides optional bytemuck 1 in every selected chroot, and the target Rust toolchains exceed the crate's Rust 1.89 minimum.
+  duplicate_audit: Fedora 43, Fedora 44, and Rawhide provide only incompatible safe_arch 0.7.4; no crate(safe_arch) = 1.0.0 provider was found there or in matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: safe_arch, version_requirement: '= 1.0.0', current_version: 1.0.0, source_sha256: 1f7caad094bd561859bcd467734a720c3c1f5d1f338995351fefe2190c45efed, source_url_template: 'https://static.crates.io/crates/safe_arch/safe_arch-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-safe_arch1, spec: rust-safe_arch1.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-safe_arch1
+  spec: rust-safe_arch1.spec

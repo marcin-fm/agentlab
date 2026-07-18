@@ -1,5 +1,20 @@
 name: rust-codepage-strings1
-status: blocked
-blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: Fedora provides codepage 0.1, encoding_rs 0.8, and test-only version-sync 0.9; Agentlab provides oem_cp 1.1 across the selected chroots.
+  duplicate_audit: No crate(codepage-strings) = 1.0.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: codepage-strings, version_requirement: '= 1.0.2', current_version: 1.0.2, source_sha256: 96e0dcc0fce1af8fe139537bcd0c2522296a701bf11eb6b143ca88ff8c742523, source_url_template: 'https://static.crates.io/crates/codepage-strings/codepage-strings-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-codepage-strings1, spec: rust-codepage-strings1.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-codepage-strings1
+  spec: rust-codepage-strings1.spec

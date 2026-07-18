@@ -7,12 +7,12 @@
 
 Name:           rust-org0.3
 Version:        0.3.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Library for handling org-mode files
 
 License:        MIT
 URL:            https://crates.io/crates/org
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -68,5 +68,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.3.1-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.3.1-0.1
 - Add the initial repository packaging changelog.

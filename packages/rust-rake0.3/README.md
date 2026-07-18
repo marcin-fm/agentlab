@@ -1,8 +1,12 @@
 # rust-rake0.3
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT and Apache-2.0 license files.
 
-Final direct-v3 Rust package import for `rake 0.3.6`. Blocked pending
-repository/source approval.
+No exact `rake 0.3.6` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. Fedora provides the required `lazy_static 1`,
+`regex 1`, and `serde 1` dependencies in every selected chroot.
