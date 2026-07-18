@@ -7,7 +7,7 @@
 
 Name:           rust-sevenz-rust2_0.20
 Version:        0.20.2
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Rust library for 7z archive compression and extraction
 
 License:        Apache-2.0
@@ -18,6 +18,10 @@ Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.cra
 # compression backends. Not submitted upstream because this is a distribution
 # dependency selection.
 Patch0:         sevenz-rust2-fix-metadata-auto.diff
+# Fedora-specific: reuse the byte-identical packaged project license as the test
+# payload so the crate-devel package does not ship a duplicate license fixture.
+# Not submitted upstream because this is a distribution payload cleanup.
+Patch1:         sevenz-rust2-reuse-license-fixture.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -153,6 +157,7 @@ use the "zstd" feature of the "%{crate}" crate.
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+%{__rm} -f tests/resources/apache2.txt
 %cargo_prep
 
 %generate_buildrequires
@@ -172,6 +177,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.20.2-0.3
+- Reuse the project license as the test fixture and omit its duplicate copy.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.20.2-0.2
 - Enable configured SCM publication with the supported native feature surface.
 

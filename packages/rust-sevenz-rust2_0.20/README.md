@@ -11,4 +11,5 @@ or matching RPM Fusion repositories. Fedora supplies the complete native
 default dependency closure plus the retained Brotli, deflate, and Zstandard
 optional surfaces. The Fedora-only patch omits unavailable WASM, LZ4, and
 NT-time interfaces and their stale documentation while preserving native
-default compression and extraction behavior.
+default compression and extraction behavior. Package tests reuse the root
+project license instead of installing a byte-identical duplicate fixture.

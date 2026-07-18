@@ -1,0 +1,22 @@
+--- sevenz-rust2-0.20.2/tests/compress_tests.rs
++++ sevenz-rust2-0.20.2/tests/compress_tests.rs
+@@ -407,7 +407,7 @@
+ #[cfg(all(feature = "compress", feature = "aes256"))]
+ #[test]
+ fn encrypted_file_header_requires_password_to_read() {
+-    let content = std::fs::read("tests/resources/apache2.txt").unwrap();
++    let content = std::fs::read("LICENSE").unwrap();
+ 
+     let mut bytes = Vec::new();
+ 
+--- sevenz-rust2-0.20.2/tests/decompression_tests.rs
++++ sevenz-rust2-0.20.2/tests/decompression_tests.rs
+@@ -165,7 +165,7 @@
+     decompress_file(source_file, target).unwrap();
+     let decompressed_content = read_to_string(file1_path).unwrap();
+ 
+-    let expected = read_to_string("tests/resources/apache2.txt").unwrap();
++    let expected = read_to_string("LICENSE").unwrap();
+ 
+     assert_eq!(decompressed_content, expected);
+ }
