@@ -1,7 +1,13 @@
 # rust-simba0.10
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256 and includes
+the declared Apache-2.0 license file.
 
-Blocked import of the staged Fedora 44 release-2 `simba` 0.10.0 compatibility package. Its feature-pruning patch is retained.
+No exact `simba 0.10.0` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. Fedora supplies `approx 0.5`, `num-complex
+0.4`, and `num-traits 0.2`; Agentlab supplies `wide 1` in all six selected
+chroots. The Fedora-only patch retains the stable default/`std` surface required
+by `nalgebra` and omits unselected optional branches.

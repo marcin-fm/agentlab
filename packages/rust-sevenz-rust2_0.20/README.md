@@ -1,8 +1,14 @@
 # rust-sevenz-rust2_0.20
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256 and includes
+the declared Apache-2.0 license file.
 
-Final direct-v3 Rust package import for `sevenz-rust2 0.20.2`, including its
-metadata patch. Blocked pending repository/source approval.
+No exact `sevenz-rust2 0.20.2` provider exists in Fedora 43, Fedora 44, Rawhide,
+or matching RPM Fusion repositories. Fedora supplies the complete native
+default dependency closure plus the retained Brotli, deflate, and Zstandard
+optional surfaces. The Fedora-only patch omits unavailable WASM, LZ4, and
+NT-time interfaces and their stale documentation while preserving native
+default compression and extraction behavior.

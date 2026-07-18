@@ -1,10 +1,12 @@
-status: blocked
 name: rust-hayro-jbig2_0.3
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
-  - The Fedora 43 no-fearless-simd compatibility patch requires fresh repository validation.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT and Apache-2.0 license files.
+  dependency_evidence: Agentlab supplies hayro-ccitt 0.3 in all six chroots; Fedora supplies image 0.25 and the selected test dependencies in every target release.
+  patch_scope: Fedora-only patches remove benchmark/progress development metadata and unavailable fearless_simd acceleration while preserving the scalar std/image default decoder used by Kreuzberg.
+  duplicate_audit: No crate(hayro-jbig2) = 0.3.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: hayro-jbig2
@@ -13,6 +15,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/hayro-jbig2/hayro-jbig2-{version}.crate
   source_sha256: 69374b3668dd45aeb3d3145cda68f2c7b4f223aaa2511e67d076f1c7d741388d
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-hayro-jbig2_0.3
   spec: rust-hayro-jbig2_0.3.spec

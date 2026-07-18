@@ -1,5 +1,21 @@
 name: rust-nalgebra0.35
-status: blocked
-blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.3 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared Apache-2.0 license file.
+  dependency_evidence: Fedora provides approx 0.5, matrixmultiply 0.3, num-complex 0.4, num-rational 0.4, num-traits 0.2, and typenum 1; Agentlab provides simba 0.10 in all six chroots. Rust 1.89 is below every selected toolchain.
+  patch_scope: The Fedora-only metadata patch retains the default/std surface requested by imageproc and omits unselected optional conversion, macro, random, serialization, and glam branches.
+  duplicate_audit: No crate(nalgebra) = 0.35.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: nalgebra, version_requirement: '= 0.35.0', current_version: 0.35.0, source_sha256: adc43a60c217b0c6ff46e47f26911015ad8d2e5a8be1af668c67e370d99a4346, source_url_template: 'https://static.crates.io/crates/nalgebra/nalgebra-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-nalgebra0.35, spec: rust-nalgebra0.35.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-nalgebra0.35
+  spec: rust-nalgebra0.35.spec

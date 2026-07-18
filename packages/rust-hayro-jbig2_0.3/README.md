@@ -1,7 +1,14 @@
 # rust-hayro-jbig2_0.3
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256 and includes
+the declared MIT and Apache-2.0 license files.
 
-Blocked import of the finalized F43 `hayro-jbig2` 0.3.0 package. The F43 patch removes unavailable `fearless_simd` while retaining the scalar decoder.
+No exact `hayro-jbig2 0.3.0` provider exists in Fedora 43, Fedora 44, Rawhide,
+or matching RPM Fusion repositories. Agentlab supplies `hayro-ccitt 0.3`, and
+Fedora supplies `image 0.25` plus the selected test dependencies. The
+Fedora-only patches omit benchmark/progress metadata and unavailable
+`fearless_simd` acceleration while retaining the scalar `std`/`image` default
+decoder used by Kreuzberg.

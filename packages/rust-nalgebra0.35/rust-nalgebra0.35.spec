@@ -7,17 +7,17 @@
 
 Name:           rust-nalgebra0.35
 Version:        0.35.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        General-purpose linear algebra library
 
 License:        Apache-2.0
 URL:            https://crates.io/crates/nalgebra
-Source:         %{crates_source}
-# Manually created patch for downstream crate metadata changes
-# * Limit this compatibility package to the base/default/std surface requested
-#   by imageproc. Remove all optional conversion, macro, random, serialization,
-#   and glam compatibility branches.
-Patch:          nalgebra-fix-metadata.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: limit this compatibility package to the base/default/std
+# surface requested by imageproc. Remove optional conversion, macro, random,
+# serialization, and glam branches. Not submitted upstream because this is a
+# distribution feature selection.
+Patch0:         nalgebra-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -87,9 +87,12 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 #   debug, compare, rand, and macros features and their development
 #   dependencies.
 %cargo_test -n -f std -- --lib
-%{__cargo} test %{__cargo_common_opts} --profile rpm --no-fail-fast --no-default-features --features std --examples
+%cargo_test -n -f std -- --examples
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.35.0-0.3
+- Enable configured SCM publication for the selected default and std features.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.35.0-0.2
 - Initial Fedora 44 compatibility package

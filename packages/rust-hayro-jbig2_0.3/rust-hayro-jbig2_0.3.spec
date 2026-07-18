@@ -7,13 +7,19 @@
 
 Name:           rust-hayro-jbig2_0.3
 Version:        0.3.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Memory-safe, pure-Rust JBIG2 decoder
 
 License:        Apache-2.0 OR MIT
 URL:            https://crates.io/crates/hayro-jbig2
-Source:         %{crates_source}
-Patch:          hayro-jbig2-fix-metadata.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: remove benchmark/progress-only development dependencies that
+# are not needed for the selected library tests. Not submitted upstream because
+# this is a distribution test-dependency selection.
+Patch0:         hayro-jbig2-fix-metadata.diff
+# Fedora-specific: omit optional fearless_simd acceleration, which has no
+# selected Fedora provider, while preserving the scalar std/image default path.
+# Not submitted upstream because this is a distribution dependency selection.
 Patch1:         hayro-jbig2-f43-no-fearless-simd.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -94,5 +100,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.3.0-0.2
+- Enable configured SCM publication with the scalar Fedora feature surface.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.3.0-0.1
 - Add the initial repository packaging changelog.

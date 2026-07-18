@@ -7,14 +7,17 @@
 
 Name:           rust-sevenz-rust2_0.20
 Version:        0.20.2
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Rust library for 7z archive compression and extraction
 
 License:        Apache-2.0
 URL:            https://crates.io/crates/sevenz-rust2
-Source:         %{crates_source}
-# Automatically generated patch to strip dependencies and normalize metadata
-Patch:          sevenz-rust2-fix-metadata-auto.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: omit unsupported WASM, LZ4, and NT-time feature surfaces while
+# preserving the complete native default feature set and available optional
+# compression backends. Not submitted upstream because this is a distribution
+# dependency selection.
+Patch0:         sevenz-rust2-fix-metadata-auto.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -63,18 +66,6 @@ use the "aes256" feature of the "%{crate}" crate.
 %files       -n %{name}+aes256-devel
 %ghost %{crate_instdir}/Cargo.toml
 
-%package     -n %{name}+aes256_wasm-devel
-Summary:        %{summary}
-BuildArch:      noarch
-
-%description -n %{name}+aes256_wasm-devel %{_description}
-
-This package contains library source intended for building other packages which
-use the "aes256_wasm" feature of the "%{crate}" crate.
-
-%files       -n %{name}+aes256_wasm-devel
-%ghost %{crate_instdir}/Cargo.toml
-
 %package     -n %{name}+brotli-devel
 Summary:        %{summary}
 BuildArch:      noarch
@@ -111,18 +102,6 @@ use the "compress" feature of the "%{crate}" crate.
 %files       -n %{name}+compress-devel
 %ghost %{crate_instdir}/Cargo.toml
 
-%package     -n %{name}+default_wasm-devel
-Summary:        %{summary}
-BuildArch:      noarch
-
-%description -n %{name}+default_wasm-devel %{_description}
-
-This package contains library source intended for building other packages which
-use the "default_wasm" feature of the "%{crate}" crate.
-
-%files       -n %{name}+default_wasm-devel
-%ghost %{crate_instdir}/Cargo.toml
-
 %package     -n %{name}+deflate-devel
 Summary:        %{summary}
 BuildArch:      noarch
@@ -133,30 +112,6 @@ This package contains library source intended for building other packages which
 use the "deflate" feature of the "%{crate}" crate.
 
 %files       -n %{name}+deflate-devel
-%ghost %{crate_instdir}/Cargo.toml
-
-%package     -n %{name}+lz4-devel
-Summary:        %{summary}
-BuildArch:      noarch
-
-%description -n %{name}+lz4-devel %{_description}
-
-This package contains library source intended for building other packages which
-use the "lz4" feature of the "%{crate}" crate.
-
-%files       -n %{name}+lz4-devel
-%ghost %{crate_instdir}/Cargo.toml
-
-%package     -n %{name}+nt-time-devel
-Summary:        %{summary}
-BuildArch:      noarch
-
-%description -n %{name}+nt-time-devel %{_description}
-
-This package contains library source intended for building other packages which
-use the "nt-time" feature of the "%{crate}" crate.
-
-%files       -n %{name}+nt-time-devel
 %ghost %{crate_instdir}/Cargo.toml
 
 %package     -n %{name}+ppmd-devel
@@ -217,5 +172,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.20.2-0.2
+- Enable configured SCM publication with the supported native feature surface.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.20.2-0.1
 - Package the published library crate without an empty binary package.

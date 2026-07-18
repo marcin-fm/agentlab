@@ -1,5 +1,20 @@
 name: rust-hayro-ccitt0.3
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT and Apache-2.0 license files.
+  dependency_evidence: The published crate has no external Cargo dependencies, and its edition 2024 source is compatible with every selected Fedora toolchain.
+  duplicate_audit: No crate(hayro-ccitt) = 0.3.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: hayro-ccitt, version_requirement: '= 0.3.0', current_version: 0.3.0, source_sha256: 9f4d0e94ddd48749f06bbe4e5389fb9799a0c45bcaf00495042076ef05e3241a, source_url_template: 'https://static.crates.io/crates/hayro-ccitt/hayro-ccitt-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-hayro-ccitt0.3, spec: rust-hayro-ccitt0.3.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-hayro-ccitt0.3
+  spec: rust-hayro-ccitt0.3.spec

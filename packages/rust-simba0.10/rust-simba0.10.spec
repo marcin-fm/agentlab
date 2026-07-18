@@ -7,17 +7,17 @@
 
 Name:           rust-simba0.10
 Version:        0.10.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        SIMD algebra for Rust
 
 License:        Apache-2.0
 URL:            https://crates.io/crates/simba
-Source:         %{crates_source}
-# Manually created patch for downstream crate metadata changes
-# * Limit this compatibility package to the base/default/std surface needed by
-#   nalgebra. The internal optional wide feature remains hidden because std
-#   activates it transitively.
-Patch:          simba-fix-metadata.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: limit this compatibility package to the stable default/std
+# surface needed by nalgebra. The internal optional wide feature remains hidden
+# because std activates it transitively. Not submitted upstream because this is
+# a distribution feature selection.
+Patch0:         simba-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -85,5 +85,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.10.0-0.3
+- Enable configured SCM publication for the selected default and std features.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.10.0-0.2
 - Initial Fedora 44 compatibility package

@@ -1,7 +1,12 @@
 name: rust-sevenz-rust2_0.20
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared Apache-2.0 license file.
+  dependency_evidence: Fedora supplies every native default dependency and the retained brotli, deflate, and zstd optional surfaces in all selected releases; Rust 1.85 is below every target toolchain.
+  patch_scope: The Fedora-only metadata patch omits unsupported WASM, LZ4, and NT-time interfaces and their stale README section without changing the native default compression or extraction behavior.
+  duplicate_audit: No crate(sevenz-rust2) = 0.20.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: sevenz-rust2
@@ -10,6 +15,13 @@ upstream:
   source_sha256: 29225600349ef74beda5a9fffb36ac660a24613c0bde9315d0c49be1d51e9c24
   source_url_template: https://static.crates.io/crates/sevenz-rust2/sevenz-rust2-{version}.crate
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-sevenz-rust2_0.20
   spec: rust-sevenz-rust2_0.20.spec
