@@ -5,6 +5,7 @@ validation:
   proof_release: 0.1
   evidence_release_delta: Release 0.2 changed only the release, changelog, and retained evidence records; prep, build, install, and check behavior remained unchanged.
   enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication for the selected Fedora 43 and Fedora 44 Kreuzberg dependency targets without changing package build behavior; live results are retained in the project playbook.
+  scm_source_release: Release 0.4 replaces the crates.io API redirect with the immutable static registry archive after live build 10740215 received HTTP 403 before SRPM creation; the pinned source hash and package build behavior are unchanged.
   downloaded_srpm_spec_sha256: 673383f1f50f21161f395386a7542b00279087d2890310964cad513a34b87066
   source_identity: Fedora 43 and Fedora 44 SRPMs contain the pinned crates.io archive with the recorded source SHA-256.
   duplicate_audit: No crate(maybe-owned) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories on 2026-07-18.

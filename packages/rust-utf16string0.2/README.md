@@ -20,3 +20,9 @@ filtering only the transient COPR signing key absent from the host keyring. RPM
 digests verified independently. Releases `0.2` and `0.3` change only retained
 evidence, publication status, release, and changelog; package build behavior is
 unchanged. Current live build results are retained in the project playbook.
+
+Before this package's first live submission, the identical `%{crates_source}`
+transport failed before SRPM creation in `rust-maybe-owned0.3` build `10740215`
+with HTTP 403 from the crates.io API redirect. Release `0.4` uses the immutable
+`static.crates.io` archive directly with the same pinned source hash; crate
+build behavior is unchanged.

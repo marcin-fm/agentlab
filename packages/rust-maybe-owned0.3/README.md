@@ -20,3 +20,9 @@ filtering only the transient COPR signing key absent from the host keyring. RPM
 digests verified independently. Releases `0.2` and `0.3` change only retained
 evidence, publication status, release, and changelog; package build behavior is
 unchanged. Current live build results are retained in the project playbook.
+
+The first live SCM attempt, build `10740215`, stopped before SRPM creation when
+the source builder received HTTP 403 from the crates.io API redirect generated
+by `%{crates_source}`. Release `0.4` uses the immutable `static.crates.io`
+archive directly with the same pinned source hash; crate build behavior is
+unchanged.

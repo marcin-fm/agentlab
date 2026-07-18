@@ -7,12 +7,12 @@
 
 Name:           rust-utf16string0.2
 Version:        0.2.0
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        String types to work directly with UTF-16 encoded strings
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/utf16string
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -68,6 +68,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.4
+- Use the immutable static crates.io archive for SCM source generation.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.3
 - Enable the independently eligible leaf crate for SCM COPR publication.
 
