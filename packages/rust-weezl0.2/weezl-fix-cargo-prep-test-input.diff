@@ -1,0 +1,11 @@
+--- a/src/encode.rs
++++ b/src/encode.rs
+@@ -1126,7 +1126,7 @@
+ 
+     fn make_decoded() -> Vec<u8> {
+         const FILE: &'static [u8] =
+-            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.lock"));
++            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"));
+         return Vec::from(FILE);
+     }
+ 

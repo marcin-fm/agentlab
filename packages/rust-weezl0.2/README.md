@@ -10,6 +10,7 @@ MIT and Apache-2.0 license files.
 No exact `weezl 0.2.1` provider exists in Fedora 43, Fedora 44, Rawhide, or
 matching RPM Fusion repositories. The default library has no external
 dependency; Fedora provides the optional async and test branches. Separate
-Fedora-only patches remove benchmark-only dependencies and replace only the LZW
-test fixture omitted from the published archive, without changing production
-source.
+Fedora-only patches remove benchmark-only dependencies, replace the LZW test
+fixture omitted from the published archive, and replace a `Cargo.lock` test
+input that Fedora's `%cargo_prep` deliberately removes. Production source is
+unchanged.
