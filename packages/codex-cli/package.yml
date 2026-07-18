@@ -2,9 +2,8 @@
 name: codex-cli
 status: blocked
 blockers:
-- A target-aware production Linux dependency closure for the selected codex-cli workspace member has not been generated.
-- Seven Git-sourced package records in the preliminary selected graph need immutable source inputs or acceptable Fedora providers.
-- The Linux sandbox compiles vendored Bubblewrap 0.11.2 sources; the system-source and license treatment is unresolved.
+- The selected 879 registry packages and six packages from five Git repositories need a reviewed immutable source model or acceptable Fedora providers.
+- Selected crate v8 149.2.0 has no compatible Fedora provider. A local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but it relies on unsubmitted upstream changes and lacks an immutable, license-complete, network-isolated Fedora 43/44 package proof.
 - npm and GitHub self-update checks plus npm and brew update recommendations need a Fedora-specific offline policy.
 - Offline Fedora 43 and Fedora 44 builds, tests, linked-license evidence, and payload validation have not been completed.
 source_policy:
@@ -13,6 +12,16 @@ source_policy:
   upstream_prebuilt_binaries: forbidden
   selected_workspace_member: codex-cli
   target: x86_64-unknown-linux-gnu
+  selected_closure_receipt: codex-cli-0.144.5-selected-cargo-closure.json
+  selected_closure_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
+  lock_normalization: verified-prep-transform
+  lock_normalization_records: 132
+  source_lock_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
+  normalized_lock_sha256: 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
+  rusty_v8_prototype: local-source-build-and-runtime-smoke-passed
+  rusty_v8_archive_bytes: 160316016
+  rusty_v8_archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
+  rusty_v8_upstream_submission: not-submitted
 upstream:
   provider: github
   repository: openai/codex

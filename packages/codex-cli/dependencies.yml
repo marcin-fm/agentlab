@@ -18,40 +18,133 @@ dynamic_buildrequires_probe:
   production_usable: false
   limitation: cargo2rpm treats the member manifest as the full workspace and does not filter target expressions.
 selected_graph:
-  status: pending
-  reason: The workspace-wide probe includes unrelated members, test helpers, and non-Linux target dependencies.
+  status: verified
+  receipt: codex-cli-0.144.5-selected-cargo-closure.json
+  receipt_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
+  generator: scripts/audit-codex-cargo-closure
+  cargo: cargo 1.96.1 (Fedora 1.96.1-1.fc44)
+  method: Package-scoped cargo tree for codex-cli with the Linux target and normal/build edges, followed by a normal-only role pass.
+  offline_check: passed
+  selected_packages: 1004
+  runtime_packages: 984
+  build_only_packages: 20
+  workspace_path_packages: 119
+  registry_packages: 879
+  git_packages: 6
+  selected_git_repositories: 5
+  excluded_git_repositories: 2
+  notable_selected:
+  - v8 149.2.0
+  - wiremock 0.6.5
+  - codex-windows-sandbox 0.144.5
+  - windows 0.58.0
+  notable_excluded:
+  - codex-bwrap and codex-rs/vendor/bubblewrap
+  - rules_rust runfiles through development-only codex-utils-cargo-bin
+  - rust-sdks libwebrtc from the non-selected realtime WebRTC member
+lock_normalization:
+  status: verified-prep-transform
+  source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
+  normalized_sha256: 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
+  local_package_records: 132
+  from_version: 0.0.0
+  to_version: 0.144.5
+  dependency_records_changed: false
+  method: Hash-guarded exact-count sed transformation in %prep.
+  command: sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
+  verification: source-hash-exact-count-and-normalized-hash
+  upstream_status: Release-specific packaging fix; upstream main retains workspace version 0.0.0 and has no corresponding lock repair.
+  reason: Cargo 1.96.1 rejects the released lockfile under --locked until only source-less local package versions are aligned with the release workspace version.
 workspace_lock_git_sources:
 - repository: https://github.com/nornagon/crossterm
   commit: 87db8bfa6dc99427fd3b071681b07fc31c6ce995
-  selected_for_linux_cli: pending
+  selected_for_linux_cli: true
+  packages:
+  - crossterm 0.28.1
 - repository: https://github.com/nornagon/ratatui
   commit: 9b2ad1298408c45918ee9f8241a6f95498cdbed2
-  selected_for_linux_cli: pending
+  selected_for_linux_cli: true
+  packages:
+  - ratatui 0.29.0
 - repository: https://github.com/openai-oss-forks/tokio-tungstenite
   commit: 0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186
-  selected_for_linux_cli: pending
+  selected_for_linux_cli: true
+  packages:
+  - tokio-tungstenite 0.28.0
 - repository: https://github.com/openai-oss-forks/tungstenite-rs
   commit: 4fffad30fe373adbdcffab9545e9e9bf4f2fc19f
-  selected_for_linux_cli: pending
+  selected_for_linux_cli: true
+  packages:
+  - tungstenite 0.27.0
 - repository: https://github.com/dzbarsky/rules_rust
   commit: b56cbaa8465e74127f1ea216f813cd377295ad81
-  selected_for_linux_cli: pending
+  selected_for_linux_cli: false
+  exclusion: development-only through codex-utils-cargo-bin
 - repository: https://github.com/helix-editor/nucleo.git
   commit: 4253de9faabb4e5c6d81d946a5e35a90f87347ee
-  selected_for_linux_cli: pending
+  selected_for_linux_cli: true
+  packages:
+  - nucleo 0.5.0
+  - nucleo-matcher 0.3.1
 - repository: https://github.com/juberti-oai/rust-sdks.git
   commit: e2d1d1d230c6fc9df171ccb181423f957bb3c1f0
-  selected_for_linux_cli: unproven-workspace-member
+  selected_for_linux_cli: false
+  exclusion: libwebrtc is confined to the non-selected realtime WebRTC workspace member and macOS path.
 vendored_native_sources:
 - component: bubblewrap
   version: 0.11.2
   license: LGPL-2.0-or-later
   path: codex-rs/vendor/bubblewrap
-  status: system-source-treatment-pending
+  status: excluded-from-selected-closure
+selected_special_sources:
+- component: rusty_v8
+  crate: v8 149.2.0
+  status: local-source-build-prototype-passed-package-integration-pending
+  upstream_v8: 14.9.207.2
+  upstream_tag_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
+  compile_time_opt_out: absent
+  fedora_crate_provider: absent
+  fedora_v8_providers: Node-derived v8-11.3-devel, v8-12.4-devel, and v8-13.6-devel are ABI-incompatible and do not provide the required static rusty_v8 archive.
+  existing_fedora_package_adaptation: rejected because replacing Node's V8 branch would be a major ABI upgrade rather than a narrow Rusty V8 integration.
+  default_behavior: Downloads a target-specific prebuilt static archive from GitHub unless RUSTY_V8_ARCHIVE or V8_FROM_SOURCE is set.
+  upstream_source_mode: System GN, Ninja, and clang can suppress some downloads, but Rusty V8 still unconditionally invokes download_rust_toolchain for the Chromium-pinned Rust toolchain.
+  chromium_rust_toolchain: Linux_x64/rust-toolchain-4c4205163abcbd08948b3efab796c543ba1ea687-2-llvmorg-23-init-10931-g20b6ec66.tar.xz
+  temporal_origin: Rusty V8 commit 1bc16604555847e020945abe39b8d4b2fec5dd9e restored V8 Temporal support and introduced the Chromium Rust-toolchain download; see upstream issue 1839.
+  local_prototype:
+    source_tag: v149.2.0
+    recursive_source_materialized: true
+    chromium_build_commit: fffa45f2e9df48c0230a4c799b7d12e7f83d8219
+    chromium_rust_sources_commit: 2b055f4ecac78bbf34a0d34217c699b7b09b44dd
+    v8_commit: 73d19698991616a34a00ca691a6e697dbb69e2ef
+    prebuilt_chromium_rust_toolchain_used: false
+    rust: Fedora 1.96.1-1.fc44
+    compiler: GCC 16.1.1
+    linker: LLD 22.1.8
+    gn: 2437 (5223a47630df)
+    ninja: 1.13.2
+    jobs: 4
+    temporal_rust_target: passed
+    archive_build: passed
+    archive_bytes: 160316016
+    archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
+    crate_link_smoke: passed-offline
+    crate_link_smoke_output: Fedora Rusty V8
+    generated_binding_input: published v8 149.2.0 crate
+    build_network_isolation: not-enforced
+    isolated_buildroot: false
+    upstream_changes_submitted: false
+    local_change_scope:
+    - Skip bundled Rust inputs and nightly-only flags for an explicit stable custom toolchain.
+    - Support Fedora's libclang layout and a stable-rustc allocator static library for C++ final links.
+    - Use system libstdc++, GCC, and LLD; fix two default-preserving V8 GCC/include portability defects.
+  upstreamable_path: Add an opt-in no-download system-toolchain mode that preserves current defaults, then upstream the stable custom-toolchain and V8 portability fixes proven by the local prototype.
+  separate_package_candidate: A new rust-v8 package is appropriate only after the prototype changes are upstreamed or reduced to reviewed patches and a complete immutable, license-audited, network-isolated Fedora 43/44 source build is proven.
+  distro_precedent: openSUSE rusty_v8 149.4.0 uses source mode with a 274625900-byte prebuilt Chromium Rust toolchain, which is forbidden by this package policy.
 closure_audit:
-  production_sources_verified: false
-  git_sources_verified: false
+  production_source_selection_verified: true
+  git_source_selection_verified: true
+  immutable_build_inputs_verified: false
   licenses_verified: false
-  native_sources_verified: false
+  special_sources_verified: false
   system_libraries_verified: false
   offline_verified: false

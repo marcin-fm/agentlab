@@ -1,0 +1,568 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "set"
+require "tmpdir"
+require "zlib"
+require_relative "lib/agentlab"
+
+def normalize_git_url(value)
+  value
+    .delete_prefix("git+")
+    .split("#", 2).first
+    .split("?", 2).first
+    .delete_suffix(".git")
+end
+
+def source_origin(source)
+  case source
+  when nil then "path"
+  when /\Aregistry\+/ then "registry"
+  when /\Agit\+/ then "git"
+  else "other"
+  end
+end
+
+def capture_command(environment, command, description, stdin_data: nil)
+  stdout, stderr, status = Open3.capture3(environment, *command, stdin_data:)
+  return stdout if status.success?
+
+  detail = stderr.lines.last(20).join
+  raise Agentlab::Error, "#{description} failed:\n#{detail}"
+end
+
+def parse_lock_packages(content)
+  content.scan(/^\[\[package\]\]\n(.*?)(?=^\[\[package\]\]|\z)/m).map do |body|
+    body = body.first
+    name = body.match(/^name = "([^"]+)"$/)&.captures&.first
+    version = body.match(/^version = "([^"]+)"$/)&.captures&.first
+    raise Agentlab::Error, "malformed Cargo.lock package record" unless name && version
+
+    {
+      "name" => name,
+      "version" => version,
+      "source" => body.match(/^source = "([^"]+)"$/)&.captures&.first,
+      "checksum" => body.match(/^checksum = "([^"]+)"$/)&.captures&.first
+    }.compact
+  end
+end
+
+def normalize_workspace_lock(content, version)
+  changed_packages = []
+  normalized = content.split(/(?=^\[\[package\]\]$)/).map do |block|
+    next block unless block.start_with?("[[package]]\n")
+
+    record = parse_lock_packages(block).first
+    next block unless record && !record.key?("source") && record.fetch("version") == "0.0.0"
+
+    changed_packages << record.fetch("name")
+    block.sub(/^version = "0\.0\.0"$/, "version = \"#{version}\"")
+  end.join
+
+  [normalized, changed_packages.sort]
+end
+
+def git_location_matches?(source, location)
+  source_url, source_commit = source.delete_prefix("git+").split("#", 2)
+  location_url, location_commit = location.split("#", 2)
+  source_url == location_url && source_commit&.start_with?(location_commit.to_s)
+end
+
+def resolve_tree_package(display, lock_by_name_version, source_dir)
+  display = display.gsub(" (proc-macro)", "")
+  match = display.match(/\A([^ ]+) v([^ ]+)(?: \((.+)\))?\z/)
+  raise Agentlab::Error, "cannot parse Cargo tree package: #{display}" unless match
+
+  name, version, location = match.captures
+  candidates = lock_by_name_version.fetch([name, version], [])
+  candidates = if location.nil?
+                 candidates.select { |record| record.fetch("source", "").start_with?("registry+") }
+               elsif location.match?(%r{\Ahttps?://})
+                 candidates.select do |record|
+                   source = record["source"]
+                   source&.start_with?("git+") && git_location_matches?(source, location)
+                 end
+               else
+                 source_prefix = "#{source_dir}/"
+                 expanded_location = File.expand_path(location)
+                 candidates.select do |record|
+                   !record.key?("source") &&
+                     (expanded_location == source_dir || expanded_location.start_with?(source_prefix))
+                 end
+               end
+
+  unless candidates.one?
+    raise Agentlab::Error,
+          "expected one Cargo.lock record for #{display}, found #{candidates.length}"
+  end
+
+  [candidates.first, location]
+end
+
+def parse_tree(output, lock_by_name_version, source_dir)
+  stack = []
+  selected = {}
+
+  output.each_line do |raw_line|
+    line = raw_line.strip.delete_suffix(" (*)")
+    next if line.empty?
+
+    match = line.match(/\A(\d+)(.+)\z/)
+    raise Agentlab::Error, "cannot parse Cargo tree depth: #{line}" unless match
+
+    depth = Integer(match[1], 10)
+    display, features_text = match[2].split("|", 2)
+    raise Agentlab::Error, "Cargo tree format is missing features: #{line}" unless features_text
+
+    lock_record, location = resolve_tree_package(display, lock_by_name_version, source_dir)
+    package_id = [
+      lock_record.fetch("name"),
+      lock_record.fetch("version"),
+      lock_record["source"]
+    ]
+    stack[depth] = package_id
+    stack.slice!(depth + 1, stack.length) if stack.length > depth + 1
+    dependency_path = stack.first(depth + 1).map(&:dup)
+    features = features_text.split(",").reject(&:empty?).sort
+    previous = selected[package_id]
+
+    if previous.nil? || dependency_path.length < previous.fetch("dependency_path").length
+      selected[package_id] = {
+        "lock_record" => lock_record,
+        "location" => location,
+        "features" => features,
+        "dependency_path" => dependency_path
+      }
+    elsif previous.fetch("features") != features
+      previous["features"] = (previous.fetch("features") + features).uniq.sort
+    end
+  end
+
+  selected
+end
+
+def stable_command(command, workspace_manifest)
+  command.map { |argument| argument == workspace_manifest ? "codex-rs/Cargo.toml" : argument }
+end
+
+def safe_archive_path(path)
+  pathname = Pathname(path)
+  clean = pathname.cleanpath.to_s
+  return nil if pathname.absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def tar_header_path(header)
+  name = header.name.to_s.split("\0", 2).first
+  prefix = header.prefix.to_s.split("\0", 2).first
+  prefix.to_s.empty? ? name : "#{prefix}/#{name}"
+end
+
+def parse_pax_headers(data)
+  offset = 0
+  headers = {}
+  while offset < data.bytesize
+    space = data.index(" ", offset)
+    raise Agentlab::Error, "invalid PAX header length" unless space
+
+    length = data.byteslice(offset, space - offset).to_i
+    raise Agentlab::Error, "invalid PAX header record" unless length.positive? && offset + length <= data.bytesize
+
+    key, value = data.byteslice(space + 1, length - (space - offset) - 1).delete_suffix("\n").split("=", 2)
+    raise Agentlab::Error, "invalid PAX header value" unless key && value
+
+    headers[key] = value
+    offset += length
+  end
+  headers
+end
+
+def cargo_archive_manifest!(archive, name, version)
+  expected_root = "#{name}-#{version}"
+  paths = Set.new
+  roots = Set.new
+  manifest = nil
+  long_name = nil
+  local_pax = {}
+  global_pax = {}
+
+  Zlib::GzipReader.open(archive) do |gzip|
+    Gem::Package::TarReader.new(gzip) do |tar|
+      tar.each do |entry|
+        case entry.header.typeflag
+        when "L"
+          long_name = entry.read.delete_suffix("\0")
+          next
+        when "K"
+          entry.read
+          next
+        when "x"
+          local_pax = parse_pax_headers(entry.read)
+          next
+        when "g"
+          global_pax.merge!(parse_pax_headers(entry.read))
+          next
+        end
+
+        entry_name = local_pax["path"] || global_pax["path"] || long_name || tar_header_path(entry.header)
+        path = safe_archive_path(entry_name)
+        raise Agentlab::Error, "archive path escapes root: #{entry_name}" unless path
+        raise Agentlab::Error, "archive contains duplicate path: #{path}" unless paths.add?(path)
+
+        root = path.split("/", 2).first
+        roots << root unless root.empty? || root == "."
+        unless entry.directory? || entry.file?
+          raise Agentlab::Error, "archive contains unsafe entry type #{entry.header.typeflag.inspect}: #{path}"
+        end
+        manifest = entry.read if entry.file? && path == "#{expected_root}/Cargo.toml"
+        long_name = nil
+        local_pax = {}
+      end
+    end
+  end
+  raise Agentlab::Error, "archive root mismatch for #{archive}" unless roots == Set[expected_root]
+  raise Agentlab::Error, "Cargo.toml is absent from #{archive}" unless manifest
+
+  package = manifest[/^\[package\]\s*$\n(.*?)(?=^\[|\z)/m, 1]
+  actual_name = package&.match(/^name\s*=\s*"([^"]+)"/)&.captures&.first
+  actual_version = package&.match(/^version\s*=\s*"([^"]+)"/)&.captures&.first
+  unless actual_name == name && actual_version == version
+    raise Agentlab::Error, "Cargo.toml identity mismatch in #{archive}: expected #{name} #{version}"
+  end
+rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+  raise Agentlab::Error, "cannot inspect #{archive}: #{e.message}"
+end
+
+def manifest_identity(path)
+  content = File.read(path)
+  package = content[/^\[package\]\s*$\n(.*?)(?=^\[|\z)/m, 1]
+  name = package&.match(/^name\s*=\s*"([^"]+)"/)&.captures&.first
+  version = package&.match(/^version\s*=\s*"([^"]+)"/)&.captures&.first
+  name && version ? [name, version] : nil
+end
+
+def git_resolves_commit?(path, commit)
+  stdout, = Open3.capture3("git", "-C", path, "rev-parse", "#{commit}^{commit}")
+  stdout.strip == commit
+end
+
+def verify_git_source!(cargo_home, repository, commit, packages)
+  git_root = File.join(cargo_home, "git")
+  database_matches = Dir.glob(File.join(git_root, "db", "*")).select do |path|
+    File.directory?(path) && git_resolves_commit?(path, commit)
+  end
+  raise Agentlab::Error, "expected one Git cache for #{repository} at #{commit}, found #{database_matches.length}" unless database_matches.one?
+
+  checkout_matches = Dir.glob(File.join(git_root, "checkouts", "*", "*")).select do |path|
+    next false unless File.directory?(path)
+
+    capture_command({}, ["git", "-C", path, "remote", "get-url", "origin"], "Git checkout URL query").strip == "file://#{database_matches.first}" &&
+      git_resolves_commit?(path, commit) && capture_command({}, ["git", "-C", path, "rev-parse", "HEAD"], "Git checkout commit query").strip == commit
+  end
+  raise Agentlab::Error, "expected one Git checkout for #{repository} at #{commit}, found #{checkout_matches.length}" unless checkout_matches.one?
+
+  identities = Dir.glob(File.join(checkout_matches.first, "**", "Cargo.toml")).filter_map { |path| manifest_identity(path) }
+  packages.each do |package|
+    identity = [package.fetch("name"), package.fetch("version")]
+    unless identities.count(identity) == 1
+      raise Agentlab::Error, "Git checkout identity mismatch for #{repository}: #{identity.join(' ')}"
+    end
+  end
+end
+
+def verify_selected_sources!(receipt, source_lock, cargo_home)
+  packages = receipt.fetch("packages")
+  counts = receipt.fetch("counts")
+  raise Agentlab::Error, "receipt selected package count mismatch" unless packages.length == counts.fetch("selected_packages")
+  raise Agentlab::Error, "receipt has duplicate selected packages" unless packages.map { |package| package.values_at("name", "version", "source") }.uniq.length == packages.length
+
+  lock_records = parse_lock_packages(source_lock)
+  selected_registry = packages.select { |package| package.fetch("origin") == "registry" }
+  selected_registry.each do |package|
+    lock_matches = lock_records.select do |record|
+      record.values_at("name", "version", "source", "checksum") == package.values_at("name", "version", "source", "checksum")
+    end
+    raise Agentlab::Error, "lock/receipt mismatch for #{package.fetch('name')} #{package.fetch('version')}" unless lock_matches.one?
+
+    archives = Dir.glob(File.join(cargo_home, "registry", "cache", "*", "#{package.fetch('name')}-#{package.fetch('version')}.crate")).select { |path| File.file?(path) }
+    raise Agentlab::Error, "expected one cached crate for #{package.fetch('name')} #{package.fetch('version')}, found #{archives.length}" unless archives.one?
+    archive = archives.first
+    unless Digest::SHA256.file(archive).hexdigest == package.fetch("checksum")
+      raise Agentlab::Error, "Cargo checksum mismatch: #{package.fetch('name')} #{package.fetch('version')}"
+    end
+    cargo_archive_manifest!(archive, package.fetch("name"), package.fetch("version"))
+  end
+
+  selected_git = packages.select { |package| package.fetch("origin") == "git" }.group_by do |package|
+    normalize_git_url(package.fetch("source"))
+  end
+  selected_git.values.flatten.each do |package|
+    matches = lock_records.select { |record| record.values_at("name", "version", "source") == package.values_at("name", "version", "source") }
+    raise Agentlab::Error, "lock/receipt mismatch for Git package #{package.fetch('name')} #{package.fetch('version')}" unless matches.one?
+  end
+  expected_git = receipt.fetch("git_sources").select { |source| source.fetch("selected") }.to_h do |source|
+    [normalize_git_url(source.fetch("repository")), source]
+  end
+  unless selected_git.keys.sort == expected_git.keys.sort
+    raise Agentlab::Error, "selected Git sources do not match the receipt Git-source plan"
+  end
+  selected_git.each do |repository, git_packages|
+    expected = expected_git.fetch(repository)
+    expected_packages = expected.fetch("packages").map { |package| package.values_at("name", "version") }.sort
+    actual_packages = git_packages.map { |package| package.values_at("name", "version") }.sort
+    raise Agentlab::Error, "selected Git package set mismatch for #{repository}" unless actual_packages == expected_packages
+    commits = git_packages.map { |package| package.fetch("source").split("#", 2)[1] }.uniq
+    raise Agentlab::Error, "selected Git commit mismatch for #{repository}" unless commits == [expected.fetch("commit")]
+
+    verify_git_source!(cargo_home, repository, expected.fetch("commit"), git_packages)
+  end
+
+  extras = lock_records.reject do |record|
+    packages.any? { |package| package.values_at("name", "version", "source") == record.values_at("name", "version", "source") }
+  end.group_by { |record| source_origin(record["source"]) }.transform_values(&:length)
+  vendor_manifest = packages.select { |package| %w[registry git].include?(package.fetch("origin")) }.map do |package|
+    if package.fetch("origin") == "git"
+      "#{package.fetch('name')} v#{package.fetch('version')} (#{package.fetch('source').delete_prefix('git+')})"
+    else
+      "#{package.fetch('name')} v#{package.fetch('version')}"
+    end
+  end.sort
+  raise Agentlab::Error, "vendor plan has duplicate source entries" unless vendor_manifest.uniq.length == vendor_manifest.length
+
+  provides_status = "not checked (cargo2rpm unavailable)"
+  if Agentlab.command_available?("cargo2rpm")
+    provides = capture_command({}, ["cargo2rpm", "-p", "/dev/stdin", "parse-vendor-manifest"], "Cargo vendor manifest parse", stdin_data: vendor_manifest.join("\n") + "\n").lines(chomp: true)
+    raise Agentlab::Error, "cargo2rpm bundled Provides are not unique" unless provides.uniq.length == provides.length && provides.length == vendor_manifest.length
+
+    provides_status = "#{provides.length} unique (cargo2rpm)"
+  end
+
+  puts "Verified selected Cargo sources: #{selected_registry.length} registry archives, #{selected_git.values.sum(&:length)} Git packages from #{selected_git.length} repositories"
+  puts "Full lock extras (not selected): #{extras.fetch('registry', 0)} registry, #{extras.fetch('git', 0)} Git, #{extras.fetch('path', 0)} path"
+  puts "Vendor plan: #{vendor_manifest.length} entries, SHA-256 #{Digest::SHA256.hexdigest(vendor_manifest.join("\n") + "\n")}; bundled Provides #{provides_status}"
+end
+
+package = Agentlab.package_named("codex-cli")
+dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+version = package.upstream.fetch("current_version").to_s
+target = dependencies.fetch("target_triple")
+source_dir = nil
+cargo_home = nil
+work_dir_root = ENV.fetch("TMPDIR", Dir.tmpdir)
+output = File.join(package.directory, "codex-cli-#{version}-selected-cargo-closure.json")
+check = false
+bootstrap_online = false
+verify_sources = false
+cargo_home_explicit = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/audit-codex-cargo-closure --source-dir PATH [options]"
+  parser.on("--source-dir PATH", "Extracted Codex release source") { |path| source_dir = path }
+  parser.on("--cargo-home PATH", "Cargo cache containing registry and Git sources") { |path| cargo_home = path; cargo_home_explicit = true }
+  parser.on("--work-dir-root PATH", "Parent directory for the isolated source copy") { |path| work_dir_root = path }
+  parser.on("--output PATH", "Receipt path") { |path| output = path }
+  parser.on("--online", "Allow the first selected-tree pass to populate the Cargo cache") { bootstrap_online = true }
+  parser.on("--check", "Verify that the existing receipt is current") { check = true }
+  parser.on("--verify-sources", "Read-only verify selected cached sources and vendor plan") { verify_sources = true }
+end.parse!
+
+raise Agentlab::Error, "--source-dir is required" unless source_dir
+
+source_dir = File.realpath(source_dir)
+cargo_home = File.realpath(cargo_home) if cargo_home
+work_dir_root = File.realpath(work_dir_root)
+source_lock_path = File.join(source_dir, "codex-rs", "Cargo.lock")
+source_manifest = File.join(source_dir, "codex-rs", "Cargo.toml")
+raise Agentlab::Error, "missing Codex workspace manifest: #{source_manifest}" unless File.file?(source_manifest)
+raise Agentlab::Error, "missing Codex lockfile: #{source_lock_path}" unless File.file?(source_lock_path)
+
+source_lock = File.read(source_lock_path)
+normalized_lock, normalized_local_packages = normalize_workspace_lock(source_lock, version)
+source_lock_sha256 = Digest::SHA256.hexdigest(source_lock)
+normalized_lock_sha256 = Digest::SHA256.hexdigest(normalized_lock)
+environment = {}
+environment["CARGO_HOME"] = cargo_home if cargo_home
+
+if verify_sources
+  raise Agentlab::Error, "--verify-sources requires explicit --cargo-home" unless cargo_home_explicit
+  raise Agentlab::Error, "missing receipt: #{output}" unless File.file?(output)
+
+  receipt = JSON.parse(File.read(output))
+  release = receipt.fetch("release")
+  raise Agentlab::Error, "receipt source Cargo.lock hash mismatch" unless release.fetch("source_cargo_lock_sha256") == source_lock_sha256
+  raise Agentlab::Error, "receipt normalized Cargo.lock hash mismatch" unless release.fetch("normalized_cargo_lock_sha256") == normalized_lock_sha256
+  verify_selected_sources!(receipt, normalized_lock, cargo_home)
+  exit 0
+end
+
+receipt = nil
+Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
+  metadata_source_dir = File.join(temporary_directory, "source")
+  FileUtils.cp_r(source_dir, metadata_source_dir, preserve: true)
+  workspace_manifest = File.join(metadata_source_dir, "codex-rs", "Cargo.toml")
+  lock_path = File.join(metadata_source_dir, "codex-rs", "Cargo.lock")
+  File.write(lock_path, normalized_lock)
+
+  tree_base = [
+    "cargo", "tree",
+    "--manifest-path", workspace_manifest,
+    "--locked",
+    "--target", target,
+    "--package", "codex-cli",
+    "--prefix", "depth",
+    "--format", "{p}|{f}"
+  ]
+  selected_tree_command = tree_base + ["--edges", "normal,build"]
+  if bootstrap_online
+    capture_command(environment, selected_tree_command, "Cargo selected-tree cache bootstrap")
+  end
+
+  selected_tree_command += ["--offline"]
+  runtime_tree_command = tree_base + ["--edges", "normal", "--offline"]
+  selected_tree_output = capture_command(environment, selected_tree_command, "Cargo selected tree")
+  runtime_tree_output = capture_command(environment, runtime_tree_command, "Cargo runtime tree")
+
+  normalized_lock_records = parse_lock_packages(normalized_lock)
+  lock_by_name_version = normalized_lock_records.group_by do |record|
+    [record.fetch("name"), record.fetch("version")]
+  end
+  selected_tree = parse_tree(selected_tree_output, lock_by_name_version, metadata_source_dir)
+  runtime_tree = parse_tree(runtime_tree_output, lock_by_name_version, metadata_source_dir)
+  missing_runtime_packages = runtime_tree.keys - selected_tree.keys
+  unless missing_runtime_packages.empty?
+    raise Agentlab::Error, "runtime tree is not a subset of the selected tree"
+  end
+
+  root_records = selected_tree.values.select do |record|
+    package_record = record.fetch("lock_record")
+    package_record.fetch("name") == "codex-cli" &&
+      record.fetch("location") == File.join(metadata_source_dir, "codex-rs", "cli")
+  end
+  raise Agentlab::Error, "expected one codex-cli tree root, found #{root_records.length}" unless root_records.one?
+
+  selected_records = selected_tree.map do |package_id, tree_record|
+    package_record = tree_record.fetch("lock_record")
+    source = package_record["source"]
+    location = tree_record["location"]
+    record = {
+      "name" => package_record.fetch("name"),
+      "version" => package_record.fetch("version"),
+      "origin" => source_origin(source),
+      "source" => source,
+      "checksum" => package_record["checksum"],
+      "role" => runtime_tree.key?(package_id) ? "runtime" : "build",
+      "features" => tree_record.fetch("features"),
+      "dependency_path" => tree_record.fetch("dependency_path").map(&:first)
+    }.compact
+
+    if source.nil?
+      source_prefix = "#{metadata_source_dir}/"
+      unless location&.start_with?(source_prefix)
+        raise Agentlab::Error, "path package is outside the release source: #{location}"
+      end
+      record["manifest_path"] = "#{location.delete_prefix(source_prefix)}/Cargo.toml"
+      record["workspace_path_package"] = true
+    else
+      record["workspace_path_package"] = false
+    end
+    record
+  end.sort_by { |record| [record.fetch("name"), record.fetch("version"), record.fetch("source", "")] }
+
+  expected_git_sources = dependencies.fetch("workspace_lock_git_sources")
+  expected_by_repository = expected_git_sources.to_h do |record|
+    [normalize_git_url(record.fetch("repository")), record]
+  end
+  selected_git_packages = selected_records.select { |record| record.fetch("origin") == "git" }
+  selected_git_groups = selected_git_packages.group_by do |record|
+    normalize_git_url(record.fetch("source"))
+  end
+  unexpected_git_sources = selected_git_groups.keys - expected_by_repository.keys
+  unless unexpected_git_sources.empty?
+    raise Agentlab::Error, "selected graph contains unrecorded Git sources: #{unexpected_git_sources.sort.join(', ')}"
+  end
+
+  git_sources = expected_by_repository.sort.map do |repository, expected|
+    selected = selected_git_groups.fetch(repository, [])
+    selected.each do |record|
+      actual_commit = record.fetch("source").split("#", 2)[1]
+      expected_commit = expected.fetch("commit")
+      unless actual_commit == expected_commit
+        raise Agentlab::Error, "Git source #{repository} resolved #{actual_commit}, expected #{expected_commit}"
+      end
+    end
+    {
+      "repository" => expected.fetch("repository"),
+      "commit" => expected.fetch("commit"),
+      "selected" => !selected.empty?,
+      "packages" => selected.map do |record|
+        record.slice("name", "version", "role", "features", "dependency_path")
+      end
+    }
+  end
+
+  cargo_version = capture_command(environment, ["cargo", "--version"], "Cargo version query").strip
+  counts = {
+    "selected_packages" => selected_records.length,
+    "runtime_packages" => selected_records.count { |record| record.fetch("role") == "runtime" },
+    "build_packages" => selected_records.count { |record| record.fetch("role") == "build" },
+    "workspace_path_packages" => selected_records.count { |record| record.fetch("workspace_path_package") },
+    "registry_packages" => selected_records.count { |record| record.fetch("origin") == "registry" },
+    "git_packages" => selected_git_packages.length,
+    "selected_git_repositories" => git_sources.count { |record| record.fetch("selected") },
+    "excluded_git_repositories" => git_sources.count { |record| !record.fetch("selected") }
+  }
+
+  receipt = {
+    "schema_version" => 2,
+    "release" => {
+      "version" => version,
+      "source_tag" => package.upstream.fetch("source_tag"),
+      "source_commit" => package.upstream.fetch("source_commit"),
+      "source_sha256" => package.upstream.fetch("source_sha256"),
+      "source_cargo_lock_sha256" => source_lock_sha256,
+      "normalized_cargo_lock_sha256" => normalized_lock_sha256,
+      "lock_normalization" => {
+        "required" => !normalized_local_packages.empty?,
+        "from_version" => "0.0.0",
+        "to_version" => version,
+        "local_package_count" => normalized_local_packages.length,
+        "local_packages" => normalized_local_packages
+      }
+    },
+    "selection" => {
+      "root_package" => "codex-cli",
+      "root_manifest" => "codex-rs/cli/Cargo.toml",
+      "target_triple" => target,
+      "included_dependency_kinds" => %w[normal build],
+      "excluded_dependency_kinds" => ["dev"]
+    },
+    "generator" => {
+      "cargo_version" => cargo_version,
+      "offline_verification" => true,
+      "selected_tree_command" => stable_command(selected_tree_command, workspace_manifest),
+      "runtime_tree_command" => stable_command(runtime_tree_command, workspace_manifest)
+    },
+    "counts" => counts,
+    "git_sources" => git_sources,
+    "packages" => selected_records
+  }
+end
+
+rendered = "#{JSON.pretty_generate(receipt)}\n"
+if check
+  raise Agentlab::Error, "missing receipt: #{output}" unless File.file?(output)
+  raise Agentlab::Error, "Codex Cargo closure receipt is stale" unless File.read(output) == rendered
+
+  puts "Codex Cargo closure receipt is current: #{receipt.fetch('counts').fetch('selected_packages')} packages"
+else
+  File.write(output, rendered)
+  puts "Wrote #{output}: #{receipt.fetch('counts').fetch('selected_packages')} packages"
+end

@@ -14,6 +14,67 @@ source_probe:
   generated_requirements: 400
   production_usable: false
   reason: The generator expanded the full workspace and retained non-Linux target dependencies.
+selected_cargo_closure:
+  receipt: codex-cli-0.144.5-selected-cargo-closure.json
+  receipt_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
+  generator: scripts/audit-codex-cargo-closure
+  cargo: cargo 1.96.1 (Fedora 1.96.1-1.fc44)
+  target: x86_64-unknown-linux-gnu
+  dependency_kinds:
+  - normal
+  - build
+  excluded_dependency_kinds:
+  - dev
+  generated: passed
+  offline_check: passed
+  counts:
+    selected_packages: 1004
+    runtime_packages: 984
+    build_only_packages: 20
+    workspace_path_packages: 119
+    registry_packages: 879
+    git_packages: 6
+    selected_git_repositories: 5
+    excluded_git_repositories: 2
+  cargo_lock:
+    source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
+    normalized_sha256: 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
+    normalization_required: true
+    normalized_local_package_records: 132
+    dependency_records_changed: false
+    normalization_method: prep-sed
+    command: sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
+    verification: source-hash-exact-count-and-normalized-hash
+    normalized_lock_matches_receipt_input: true
+special_source_audit:
+  rusty_v8:
+    crate: v8 149.2.0
+    upstream_v8: 14.9.207.2
+    compile_time_opt_out: absent
+    compatible_fedora_provider: absent
+    existing_fedora_package_adaptation: rejected-incompatible-node-v8-abi
+    upstream_system_toolchain_mode: not-implemented
+    local_source_build_prototype:
+      status: passed
+      source_tag_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
+      recursive_source_materialized: true
+      prebuilt_chromium_rust_toolchain_used: false
+      rust: Fedora 1.96.1-1.fc44
+      compiler: GCC 16.1.1
+      linker: LLD 22.1.8
+      jobs: 4
+      temporal_rust_target: passed
+      archive_build: passed
+      archive_bytes: 160316016
+      archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
+      crate_link_smoke: passed-offline
+      crate_link_smoke_output: Fedora Rusty V8
+      build_network_isolation: not-enforced
+      isolated_buildroot: false
+      upstream_changes_submitted: false
+    separate_rust_v8_package: deferred-until-upstream-source-closure-license-and-isolated-build-proof
+    source_build_offline: local-consumer-only
+    chromium_rust_toolchain_source_build: replaced-by-system-fedora-rust-in-local-prototype
 builds:
   fedora_43_x86_64:
     status: not-run-blocked
