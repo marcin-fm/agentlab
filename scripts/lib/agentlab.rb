@@ -1297,7 +1297,7 @@ module Agentlab
       static_archives = build.dig("output", "static_archives")
       valid_file = lambda do |entry|
         entry.is_a?(Hash) && entry["path"].is_a?(String) && !entry["path"].empty? &&
-          !Pathname(entry["path"]).absolute? && !Pathname(entry["path"]).each_filename.include?("..") &&
+          !Pathname.new(entry["path"]).absolute? && !Pathname.new(entry["path"]).each_filename.include?("..") &&
           entry["size_bytes"].is_a?(Integer) && entry["size_bytes"].positive? &&
           entry["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
       end
@@ -1531,7 +1531,7 @@ module Agentlab
           output_receipts = %w[bun_profile bun linker_map].map { |key| [key, receipt.dig("build", key)] }
           output_receipts.each do |key, output|
             valid_output = output.is_a?(Hash) && output["path"].is_a?(String) && !output["path"].empty? &&
-              !Pathname(output["path"]).absolute? && !Pathname(output["path"]).each_filename.include?("..") &&
+              !Pathname.new(output["path"]).absolute? && !Pathname.new(output["path"]).each_filename.include?("..") &&
               output["size_bytes"].is_a?(Integer) && output["size_bytes"].positive? &&
               output["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
             errors << "bun: seed-build proof has an invalid #{key} receipt" unless valid_output
@@ -1595,7 +1595,7 @@ module Agentlab
             archives = receipt.dig("final_link", "direct_archives")
             valid_archives = archives.is_a?(Array) && archives.length == audit["direct_archive_count"] && archives.all? do |entry|
               path = entry.is_a?(Hash) && entry["path"]
-              path.is_a?(String) && !path.empty? && !Pathname(path).absolute? && !Pathname(path).each_filename.include?("..") &&
+              path.is_a?(String) && !path.empty? && !Pathname.new(path).absolute? && !Pathname.new(path).each_filename.include?("..") &&
                 entry["size_bytes"].is_a?(Integer) && entry["size_bytes"].positive? &&
                 entry["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && entry["kind"] == "archive"
             end
@@ -1682,7 +1682,7 @@ module Agentlab
             valid_records = %w[payload_manifest link_command relink_script readme response_file].all? do |key|
               record = kit.is_a?(Hash) && kit[key]
               path = record.is_a?(Hash) && record["path"]
-              path.is_a?(String) && !path.empty? && !Pathname(path).absolute? && !Pathname(path).each_filename.include?("..") &&
+              path.is_a?(String) && !path.empty? && !Pathname.new(path).absolute? && !Pathname.new(path).each_filename.include?("..") &&
                 record["size_bytes"].is_a?(Integer) && record["size_bytes"].positive? &&
                 record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
             end
@@ -1793,7 +1793,7 @@ module Agentlab
           output_receipts = %w[bun_profile bun linker_map].map { |key| [key, receipt.dig("build", key)] }
           output_receipts.each do |key, output|
             valid_output = output.is_a?(Hash) && output["path"].is_a?(String) && !output["path"].empty? &&
-              !Pathname(output["path"]).absolute? && !Pathname(output["path"]).each_filename.include?("..") &&
+              !Pathname.new(output["path"]).absolute? && !Pathname.new(output["path"]).each_filename.include?("..") &&
               output["size_bytes"].is_a?(Integer) && output["size_bytes"].positive? &&
               output["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
             errors << "bun: self-rebuild proof has an invalid #{key} receipt" unless valid_output

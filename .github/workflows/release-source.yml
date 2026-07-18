@@ -54,6 +54,7 @@ jobs:
             request = YAML.safe_load_file(".github/source-release/bun.yml")
             expected_request = {
               "schema" => "agentlab-source-release-request/v1",
+              "attempt" => 2,
               "package" => "bun",
               "version" => version,
               "webkit_commit" => commit,
