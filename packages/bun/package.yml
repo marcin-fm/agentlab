@@ -182,6 +182,21 @@ build_plan:
       proof_date: "2026-07-18"
       proof_receipt: first-source-build-proof.json
       proof_receipt_sha256: fda7910119f4c11a2b7b11f19dc1f04a2315d580c192e4a007d6e654f27804eb
+      relink_materials_audit:
+        proof_receipt: relink-materials-proof.json
+        proof_receipt_sha256: cc8acb65b728cac6e867f01b6e5c461e91879b28c420789a140f9663cec7b068
+        direct_object_count: 1162
+        direct_object_bytes: 1463081632
+        direct_object_inventory_sha256: 0d96014958e82f1f3b88763f74f0f4ba5d6ebf82f484b1ea0a921a09fd3bd1f0
+        direct_archive_count: 4
+        zig_object_count: 32
+        tinycc_object_count: 10
+        generated_webkit_header_count: 2294
+        link_manifest_sha256: 25b436a72a4ca33817919dc756d3063504b94e7c41c3d59eac8d80d984194823
+        rspfile_declared: true
+        response_files_retained: false
+        bootstrap_seed_wrapper_invoked: true
+        complete_lgpl_relink_materials_verified: false
     self_rebuild:
       state: blocked
       source_built_driver_verified: true

@@ -1,0 +1,144 @@
+{
+  "schema": "bun-relink-materials-audit/v2",
+  "package": "bun",
+  "version": "1.3.14",
+  "date": "2026-07-18",
+  "final_link": {
+    "output": "build/release-local/bun-profile",
+    "rule_sha256": "06b32e9b3bd90e83b6592df56032ed806494b9659c3181e60354b663b45268bf",
+    "edge_sha256": "5339f40b603df895e973bec4b6fe37546bd591c080283ba74d6fbcc2a6cbe53f",
+    "ldflags_sha256": "8f823556c12e535e5d782300a9057ab9d6b2ad670098fa34cfd7ef14162986a8",
+    "link_manifest_sha256": "25b436a72a4ca33817919dc756d3063504b94e7c41c3d59eac8d80d984194823",
+    "command_sha256": "feeefe1c62fa06576d00f5f75cedc0ea81d02a0bbccf80b7c765f084d36d9131",
+    "direct_object_count": 1162,
+    "direct_object_bytes": 1463081632,
+    "direct_object_inventory_sha256": "0d96014958e82f1f3b88763f74f0f4ba5d6ebf82f484b1ea0a921a09fd3bd1f0",
+    "direct_archive_count": 4,
+    "direct_archives": [
+      {
+        "path": "build/release-local/deps/WebKit/lib/libJavaScriptCore.a",
+        "size_bytes": 591020756,
+        "sha256": "e85e3a7cc676067c209cc85a1e15322c80c5c1e63913db95c07c24b0fcc4c0b0",
+        "kind": "archive"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/lib/libWTF.a",
+        "size_bytes": 50528536,
+        "sha256": "96e702644799dbbd0877b79ab3ca47a1711ecf9b32d2fbe46948e117036a525d",
+        "kind": "archive"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/lib/libbmalloc.a",
+        "size_bytes": 9526220,
+        "sha256": "0ff5269b47ebb8f4739d2052c889ced4e9497cdf50d06c41a7e7ecadb2212245",
+        "kind": "archive"
+      },
+      {
+        "path": "build/release-local/deps/lolhtml/release/liblolhtml.a",
+        "size_bytes": 46763906,
+        "sha256": "6fc56ea67f57991f7c27a7f18c407d90630f7e08caf78a8c05bc412426d2641a",
+        "kind": "archive"
+      }
+    ],
+    "link_scripts": [
+      {
+        "path": "source/src/linker.lds",
+        "size_bytes": 6073,
+        "sha256": "a365da6e5ee059e4debb1a605bd9433e1cd334ea26f0c142a968757c7d657345"
+      },
+      {
+        "path": "source/src/symbols.dyn",
+        "size_bytes": 15297,
+        "sha256": "8834b6d026b2a359ac99e3a539051f4cad0b3b11d9880e5e8e71d9d5456864c1"
+      }
+    ],
+    "rspfile_declared": true,
+    "response_file_count": 0,
+    "response_files_retained": false,
+    "bootstrap_seed_wrapper_invoked": true
+  },
+  "object_roles": {
+    "zig_object_count": 32,
+    "tinycc_object_count": 10
+  },
+  "generated_webkit_headers": {
+    "count": 2294,
+    "trees": [
+      {
+        "path": "build/release-local/deps/WebKit/JavaScriptCore/Headers",
+        "count": 9,
+        "tree_sha256": "c3ff1f8432ff106acfdaf6211de3a9c40000aaf42bc6eee8ebdad3fc343cb13b"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/JavaScriptCore/PrivateHeaders",
+        "count": 1415,
+        "tree_sha256": "155aa209a2daae68540cdc2c9665274c92336b88792ca630fb79f02118534d22"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/WTF/Headers",
+        "count": 510,
+        "tree_sha256": "48bc5ba87dc4d98077e7e0ac01d288e8f4469d7c13fdfd231c6ea031505d9c31"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/bmalloc/Headers",
+        "count": 360,
+        "tree_sha256": "3f7870a4a26e84aa3c3eae2bc2c6217b9641b81bd5c636a89300304c20b49483"
+      }
+    ]
+  },
+  "retained_files": {
+    "linker_map": {
+      "path": "build/release-local/bun-profile.linker-map",
+      "size_bytes": 69757833,
+      "sha256": "fd0c8b561c464914938a15ba0220580554d887e17738e81d6f100a8c8e030004"
+    },
+    "build_ninja": {
+      "path": "build/release-local/build.ninja",
+      "size_bytes": 2469966,
+      "sha256": "d60af78f11f7a815874de7198ea848544afd81625aacfdf5b284372b60bbc97f"
+    },
+    "compile_commands": {
+      "path": "build/release-local/compile_commands.json",
+      "size_bytes": 5668367,
+      "sha256": "6d0916e12e396c8d3d038ffeb001c675ed630a0f009366056a66b69de9142ee9"
+    },
+    "configure": {
+      "path": "build/release-local/configure.json",
+      "size_bytes": 220,
+      "sha256": "756da63575ff1fbccda7d68133189c5270bb60e1e0f21e99b48fbba0ed3a4923"
+    }
+  },
+  "lgpl_markers": {
+    "webkit_jsc": {
+      "path": "source/LICENSE.md",
+      "size_bytes": 5376,
+      "sha256": "2c6160ec8fb853f7e8f97d9b249e756c9b0ac44860a68b6bf4f1b0bcbc5c3741"
+    },
+    "tinycc": {
+      "path": "source/vendor/tinycc/COPYING",
+      "size_bytes": 26428,
+      "sha256": "512d2d21b6b3384ba64781abb0208a1b87740bc31e2df48e2b206ddb7e4d5779"
+    }
+  },
+  "presence": {
+    "direct_objects_present": true,
+    "direct_archives_present": true,
+    "link_scripts_present": true,
+    "linker_map_present": true,
+    "build_ninja_present": true,
+    "compile_commands_present": true,
+    "configure_present": true,
+    "generated_webkit_headers_present": true,
+    "response_files_retained": false,
+    "bootstrap_seed_wrapper_invoked": true,
+    "relink_kit_payload_present": false
+  },
+  "blockers": {
+    "bootstrap_seed_wrapper_invoked": true,
+    "response_files_not_retained": true,
+    "relink_kit_payload_present": false
+  },
+  "complete_lgpl_relink_materials_verified": false,
+  "final_license_audit_verified": false,
+  "final_rpm_verified": false
+}

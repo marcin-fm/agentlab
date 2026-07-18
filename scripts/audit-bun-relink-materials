@@ -1,0 +1,330 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "fileutils"
+require "json"
+require "optparse"
+require "pathname"
+
+File.umask(0o022)
+
+root = nil
+output = nil
+check = false
+receipt = nil
+audit_date = nil
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/audit-bun-relink-materials --root PATH --date YYYY-MM-DD [--output PATH | --check --receipt PATH]"
+  parser.on("--root PATH", "Successful Bun proof root") { |path| root = path }
+  parser.on("--output PATH", "Deterministic JSON audit receipt") { |path| output = path }
+  parser.on("--date YYYY-MM-DD", "Evidence date") { |date| audit_date = date }
+  parser.on("--check", "Compare the generated receipt with --receipt") { check = true }
+  parser.on("--receipt PATH", "Existing receipt for --check") { |path| receipt = path }
+end.parse!
+
+raise "--root is required" unless root
+raise "--date is required" unless audit_date
+raise "--output is required unless --check" unless output || check
+raise "--receipt is required with --check" if check && !receipt
+raise "--receipt is only valid with --check" if receipt && !check
+begin
+  parsed_date = Date.strptime(audit_date, "%Y-%m-%d")
+  raise unless parsed_date.strftime("%Y-%m-%d") == audit_date
+rescue ArgumentError
+  raise "--date must be a valid YYYY-MM-DD date"
+end
+
+root = File.realpath(root)
+build_root = File.join(root, "build", "release-local")
+build_ninja_path = File.join(build_root, "build.ninja")
+raise "missing proof build root #{build_root}" unless Dir.exist?(build_root)
+raise "missing build.ninja #{build_ninja_path}" unless File.file?(build_ninja_path)
+
+def inside_root?(path, root)
+  path == root || path.start_with?("#{root}/")
+end
+
+def safe_path!(relative, base, root)
+  raise "unsafe absolute path #{relative.inspect}" if relative.start_with?("/")
+
+  candidate = Pathname(File.join(base, relative)).cleanpath.to_s
+  raise "unsafe path #{relative.inspect}" unless inside_root?(candidate, root)
+  real = File.realpath(candidate)
+  raise "path escapes proof root #{relative.inspect}" unless inside_root?(real, root)
+
+  [candidate, real]
+end
+
+def sha256(path)
+  Digest::SHA256.file(path).hexdigest
+end
+
+def file_record(path, root)
+  {
+    "path" => path.delete_prefix("#{root}/"),
+    "size_bytes" => File.size(path),
+    "sha256" => sha256(path)
+  }
+end
+
+def inventory_digest(records)
+  serialized = records.sort_by { |record| record.fetch("path") }.map do |record|
+    JSON.generate(record.sort.to_h)
+  end.join("\n") + "\n"
+  Digest::SHA256.hexdigest(serialized)
+end
+
+def header_tree_records(directory, root)
+  paths = Dir.glob(File.join(directory, "**", "*"), File::FNM_DOTMATCH).sort
+  paths.filter_map do |path|
+    next if [".", ".."].include?(File.basename(path))
+
+    stat = File.lstat(path)
+    relative = path.delete_prefix("#{root}/")
+    if stat.symlink?
+      target = File.readlink(path)
+      if target.start_with?("/")
+        target_real = File.realpath(target)
+        raise "unsafe absolute header symlink target #{relative}" unless inside_root?(target_real, root)
+
+        normalized_target = Pathname(target_real).relative_path_from(Pathname(File.dirname(path))).to_s
+      else
+        normalized_target = Pathname(target).cleanpath.to_s
+        target_path = Pathname(File.join(File.dirname(path), normalized_target)).cleanpath.to_s
+        raise "unsafe header symlink target #{relative}" unless inside_root?(target_path, root)
+
+        target_real = File.realpath(target_path)
+      end
+      raise "header symlink target escapes proof root #{relative}" unless inside_root?(target_real, root)
+      raise "header symlink target is not a file #{relative}" unless File.file?(target_real)
+
+      {
+        "path" => relative,
+        "kind" => "symlink",
+        "target" => normalized_target,
+        "target_size_bytes" => File.size(target_real),
+        "target_sha256" => sha256(target_real)
+      }
+    elsif stat.file?
+      {
+        "path" => relative,
+        "kind" => "file",
+        "size_bytes" => stat.size,
+        "sha256" => sha256(path)
+      }
+    elsif stat.directory?
+      nil
+    else
+      raise "unsupported generated WebKit header entry #{relative}"
+    end
+  end
+end
+
+def normalized_text(text, root)
+  text.gsub(root, "<PROOF_ROOT>")
+end
+
+build_ninja = File.binread(build_ninja_path)
+lines = build_ninja.lines
+
+link_edge_indexes = lines.each_index.select { |index| lines[index].match?(/\Abuild bun-profile: link(?:\s|$)/) }
+raise "expected exactly one final bun-profile link edge, found #{link_edge_indexes.length}" unless link_edge_indexes.length == 1
+
+edge_start = link_edge_indexes.fetch(0)
+block_end = ((edge_start + 1)...lines.length).find { |index| lines[index].match?(/\A\S/) } || lines.length
+block_lines = lines[edge_start...block_end]
+ldflags_indexes = block_lines.each_index.select { |index| block_lines[index].start_with?("  ldflags =") }
+raise "expected exactly one final bun-profile ldflags assignment, found #{ldflags_indexes.length}" unless ldflags_indexes.length == 1
+
+ldflags_index = ldflags_indexes.fetch(0)
+edge_lines = block_lines[0...ldflags_index]
+ldflags_line = block_lines.fetch(ldflags_index)
+edge_text = edge_lines.join
+edge_tokens = edge_lines.join(" ").gsub("$", " ").split
+link_token = edge_tokens.index("link")
+raise "final bun-profile link edge is malformed" unless link_token
+
+inputs = []
+link_scripts = []
+section = :inputs
+edge_tokens[(link_token + 1)..].each do |token|
+  case token
+  when "|"
+    section = :implicit
+  when "||"
+    section = :order_only
+  else
+    next unless section == :inputs || section == :implicit
+    next unless token.end_with?(".o", ".a", ".lds", ".dyn")
+
+    section == :inputs ? inputs << token : link_scripts << token
+  end
+end
+
+raise "final link edge has no direct inputs" if inputs.empty?
+raise "final link edge has no linker scripts" if link_scripts.empty?
+raise "ambiguous duplicate direct link inputs" unless inputs.uniq.length == inputs.length
+raise "ambiguous duplicate linker scripts" unless link_scripts.uniq.length == link_scripts.length
+
+rule_indexes = lines.each_index.select { |index| lines[index].match?(/\Arule link\s*$/) }
+raise "expected exactly one link rule, found #{rule_indexes.length}" unless rule_indexes.length == 1
+
+rule_start = rule_indexes.fetch(0)
+rule_end = ((rule_start + 1)...lines.length).find { |index| lines[index].match?(/\A(?:rule|build|include|subninja|pool)\b/) } || lines.length
+rule_lines = lines[rule_start...rule_end]
+rule_text = rule_lines.join
+command_line = rule_lines.find { |line| line.start_with?("  command =") }
+raise "link rule has no command" unless command_line
+raise "link rule does not retain a response-file declaration" unless rule_lines.any? { |line| line.start_with?("  rspfile =") }
+
+direct_records = inputs.map do |input|
+  path, real = safe_path!(input, build_root, root)
+  raise "missing direct link input #{input}" unless File.file?(real)
+
+  file_record(real, root).merge("kind" => input.end_with?(".a") ? "archive" : "object")
+end
+
+script_records = link_scripts.map do |script|
+  path, real = safe_path!(script, build_root, root)
+  raise "missing linker-script input #{script}" unless File.file?(real)
+
+  file_record(real, root)
+end
+
+objects = direct_records.select { |record| record.fetch("kind") == "object" }
+archives = direct_records.select { |record| record.fetch("kind") == "archive" }
+raise "direct object count is inconsistent" unless objects.length == inputs.count { |input| input.end_with?(".o") }
+raise "direct archive count is inconsistent" unless archives.length == inputs.count { |input| input.end_with?(".a") }
+
+header_directories = %w[
+  deps/WebKit/JavaScriptCore/Headers
+  deps/WebKit/JavaScriptCore/PrivateHeaders
+  deps/WebKit/WTF/Headers
+  deps/WebKit/bmalloc/Headers
+].map { |relative| File.join(build_root, relative) }
+expected_header_counts = [9, 1415, 510, 360]
+header_trees = header_directories.zip(expected_header_counts).map do |directory, expected_count|
+  raise "missing generated WebKit header directory #{directory}" unless Dir.exist?(directory)
+
+  records = header_tree_records(directory, root)
+  raise "generated WebKit header count mismatch for #{directory}: #{records.length} != #{expected_count}" unless records.length == expected_count
+
+  {
+    "path" => directory.delete_prefix("#{root}/"),
+    "count" => records.length,
+    "tree_sha256" => inventory_digest(records)
+  }
+end
+raise "generated WebKit header tree is empty" if header_trees.empty?
+
+marker_specs = {
+  "webkit_jsc" => [File.join(root, "source", "LICENSE.md"), /JavaScriptCore.*LGPL-2/m],
+  "tinycc" => [File.join(root, "source", "vendor", "tinycc", "COPYING"), /LESSER GENERAL PUBLIC LICENSE.*Version 2\.1/m]
+}
+marker_records = marker_specs.map do |name, (path, pattern)|
+  raise "missing #{name} LGPL marker file #{path}" unless File.file?(path)
+  raise "#{name} LGPL marker text not found in #{path}" unless File.read(path).match?(pattern)
+
+  [name, file_record(path, root)]
+end.to_h
+
+package_path = File.join(root, "source", "package.json")
+raise "missing Bun package manifest #{package_path}" unless File.file?(package_path)
+package = JSON.parse(File.read(package_path))
+raise "proof source is not Bun" unless package.fetch("name") == "bun"
+version = package.fetch("version").to_s
+
+response_files = Dir.glob(File.join(build_root, "**", "*.{rsp,response}"), File::FNM_DOTMATCH).select do |path|
+  File.file?(path) && !File.symlink?(path)
+end
+
+tracked_paths = {
+  "linker_map" => File.join(build_root, "bun-profile.linker-map"),
+  "build_ninja" => build_ninja_path,
+  "compile_commands" => File.join(build_root, "compile_commands.json"),
+  "configure" => File.join(build_root, "configure.json")
+}
+tracked_records = tracked_paths.map do |name, path|
+  raise "missing retained #{name} #{path}" unless File.file?(path)
+
+  [name, file_record(path, root)]
+end.to_h
+
+canonical_edge = normalized_text(edge_text, root)
+canonical_rule = normalized_text(rule_text, root)
+canonical_command = normalized_text(command_line.strip, root)
+canonical_ldflags = normalized_text(ldflags_line.strip, root)
+rspfile_declared = rule_lines.any? { |line| line.start_with?("  rspfile =") }
+bootstrap_seed_wrapper_invoked = canonical_command.match?(%r{(?:^|/)seed/bun(?:\s|$)})
+link_manifest_sha256 = Digest::SHA256.hexdigest([canonical_rule, canonical_edge, canonical_ldflags].join("\0"))
+
+receipt_data = {
+  "schema" => "bun-relink-materials-audit/v2",
+  "package" => "bun",
+  "version" => version,
+  "date" => audit_date,
+  "final_link" => {
+    "output" => "build/release-local/bun-profile",
+    "rule_sha256" => Digest::SHA256.hexdigest(canonical_rule),
+    "edge_sha256" => Digest::SHA256.hexdigest(canonical_edge),
+    "ldflags_sha256" => Digest::SHA256.hexdigest(canonical_ldflags),
+    "link_manifest_sha256" => link_manifest_sha256,
+    "command_sha256" => Digest::SHA256.hexdigest(canonical_command),
+    "direct_object_count" => objects.length,
+    "direct_object_bytes" => objects.sum { |record| record.fetch("size_bytes") },
+    "direct_object_inventory_sha256" => inventory_digest(objects),
+    "direct_archive_count" => archives.length,
+    "direct_archives" => archives.sort_by { |record| record.fetch("path") },
+    "link_scripts" => script_records.sort_by { |record| record.fetch("path") },
+    "rspfile_declared" => rspfile_declared,
+    "response_file_count" => response_files.length,
+    "response_files_retained" => response_files.length.positive?,
+    "bootstrap_seed_wrapper_invoked" => bootstrap_seed_wrapper_invoked
+  },
+  "object_roles" => {
+    "zig_object_count" => objects.count { |record| File.basename(record.fetch("path")).match?(/\Abun-zig\.\d+\.o\z/) },
+    "tinycc_object_count" => objects.count { |record| record.fetch("path").include?("/obj/vendor/tinycc/") }
+  },
+  "generated_webkit_headers" => {
+    "count" => header_trees.sum { |tree| tree.fetch("count") },
+    "trees" => header_trees
+  },
+  "retained_files" => tracked_records,
+  "lgpl_markers" => marker_records,
+  "presence" => {
+    "direct_objects_present" => objects.length == inputs.count { |input| input.end_with?(".o") },
+    "direct_archives_present" => archives.length == inputs.count { |input| input.end_with?(".a") },
+    "link_scripts_present" => script_records.length == link_scripts.length,
+    "linker_map_present" => tracked_records.fetch("linker_map").fetch("size_bytes").positive?,
+    "build_ninja_present" => true,
+    "compile_commands_present" => true,
+    "configure_present" => true,
+    "generated_webkit_headers_present" => header_trees.sum { |tree| tree.fetch("count") }.positive?,
+    "response_files_retained" => response_files.length.positive?,
+    "bootstrap_seed_wrapper_invoked" => bootstrap_seed_wrapper_invoked,
+    "relink_kit_payload_present" => false
+  },
+  "blockers" => {
+    "bootstrap_seed_wrapper_invoked" => bootstrap_seed_wrapper_invoked,
+    "response_files_not_retained" => response_files.empty?,
+    "relink_kit_payload_present" => false
+  },
+  "complete_lgpl_relink_materials_verified" => false,
+  "final_license_audit_verified" => false,
+  "final_rpm_verified" => false
+}
+
+content = JSON.pretty_generate(receipt_data) + "\n"
+if check
+  expected = File.binread(File.expand_path(receipt))
+  raise "receipt differs from generated audit" unless expected == content
+
+  puts "Verified #{receipt}"
+else
+  FileUtils.mkdir_p(File.dirname(File.expand_path(output)))
+  File.binwrite(File.expand_path(output), content)
+  puts "Wrote #{output}"
+end

@@ -10,7 +10,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.11%{?dist}
+Release:        0.0.12%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -229,6 +229,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.12
+- Audit the retained final-link inputs and record the incomplete LGPL relink kit.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.11
 - Prove the seed-free offline self-rebuild and record the clean-cache Zig reproducibility blocker.
 

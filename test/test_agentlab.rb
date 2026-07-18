@@ -826,7 +826,7 @@ class AgentlabTest < Minitest::Test
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[first-source-build-proof.json self-rebuild-proof.json zig-reproducibility-proof.json].each do |name|
+      %w[first-source-build-proof.json relink-materials-proof.json self-rebuild-proof.json zig-reproducibility-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -870,6 +870,33 @@ class AgentlabTest < Minitest::Test
 
       errors = Agentlab.validate_bun_build_plan(package, spec)
       assert_includes(errors, "bun: Zig reproducibility proof clean-cache result mismatch")
+    end
+  end
+
+  def test_validates_bun_relink_materials_receipt
+    source_package = Agentlab.package_named("bun")
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(source_package.data))
+      data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
+      self_stage = data.dig("build_plan", "stages", "self_rebuild")
+      self_stage.delete("proof_receipt")
+      self_stage.delete("zig_reproducibility_proof_receipt")
+      receipt_name = data.dig("build_plan", "stages", "seed_build", "relink_materials_audit", "proof_receipt")
+      FileUtils.cp(File.join(source_package.directory, receipt_name), File.join(directory, receipt_name))
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      assert(File.executable?(File.expand_path("../scripts/audit-bun-relink-materials", __dir__)))
+      assert_empty(Agentlab.validate_bun_build_plan(package, File.read(File.join(source_package.directory, "bun.spec"))))
+
+      receipt_path = File.join(directory, receipt_name)
+      receipt = JSON.parse(File.read(receipt_path))
+      receipt.fetch("final_link")["response_file_count"] = 1
+      File.write(receipt_path, JSON.dump(receipt))
+      audit = data.dig("build_plan", "stages", "seed_build", "relink_materials_audit")
+      audit["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, File.read(File.join(source_package.directory, "bun.spec")))
+      assert_includes(errors, "bun: relink-materials proof response-file retention mismatch")
     end
   end
 

@@ -674,6 +674,80 @@ module Agentlab
       end
     end
 
+    seed_stage = stages["seed_build"]
+    if seed_stage.is_a?(Hash) && seed_stage.key?("relink_materials_audit")
+      audit = seed_stage["relink_materials_audit"]
+      unless audit.is_a?(Hash)
+        errors << "bun: relink-materials audit metadata must be an object"
+      else
+        receipt_name = audit["proof_receipt"]
+        receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+        unless receipt_path && File.file?(receipt_path)
+          errors << "bun: relink-materials proof receipt is missing: #{receipt_name.inspect}"
+        else
+          begin
+            receipt = JSON.parse(File.read(receipt_path))
+            expected_sha256 = audit["proof_receipt_sha256"]
+            errors << "bun: relink-materials proof receipt SHA-256 mismatch" unless expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+            errors << "bun: unsupported relink-materials proof receipt schema" unless receipt["schema"] == "bun-relink-materials-audit/v2"
+            errors << "bun: relink-materials proof package mismatch" unless receipt["package"] == "bun"
+            errors << "bun: relink-materials proof release mismatch" unless receipt["version"] == version
+            errors << "bun: relink-materials proof date mismatch" unless receipt["date"] == seed_stage["proof_date"]
+
+            scalar_fields = {
+              ["final_link", "direct_object_count"] => "direct_object_count",
+              ["final_link", "direct_object_bytes"] => "direct_object_bytes",
+              ["final_link", "direct_object_inventory_sha256"] => "direct_object_inventory_sha256",
+              ["final_link", "direct_archive_count"] => "direct_archive_count",
+              ["final_link", "link_manifest_sha256"] => "link_manifest_sha256",
+              ["object_roles", "zig_object_count"] => "zig_object_count",
+              ["object_roles", "tinycc_object_count"] => "tinycc_object_count",
+              ["generated_webkit_headers", "count"] => "generated_webkit_header_count"
+            }
+            scalar_fields.each do |receipt_keys, metadata_key|
+              errors << "bun: relink-materials proof #{metadata_key} mismatch" unless receipt.dig(*receipt_keys) == audit[metadata_key]
+            end
+
+            archives = receipt.dig("final_link", "direct_archives")
+            valid_archives = archives.is_a?(Array) && archives.length == audit["direct_archive_count"] && archives.all? do |entry|
+              path = entry.is_a?(Hash) && entry["path"]
+              path.is_a?(String) && !path.empty? && !Pathname(path).absolute? && !Pathname(path).each_filename.include?("..") &&
+                entry["size_bytes"].is_a?(Integer) && entry["size_bytes"].positive? &&
+                entry["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && entry["kind"] == "archive"
+            end
+            errors << "bun: relink-materials proof archive inventory is invalid" unless valid_archives
+
+            expected_headers = {
+              "build/release-local/deps/WebKit/JavaScriptCore/Headers" => 9,
+              "build/release-local/deps/WebKit/JavaScriptCore/PrivateHeaders" => 1415,
+              "build/release-local/deps/WebKit/WTF/Headers" => 510,
+              "build/release-local/deps/WebKit/bmalloc/Headers" => 360
+            }
+            header_trees = receipt.dig("generated_webkit_headers", "trees")
+            actual_headers = header_trees.is_a?(Array) && header_trees.length == expected_headers.length && header_trees.to_h do |entry|
+              [entry.is_a?(Hash) && entry["path"], entry.is_a?(Hash) && entry["count"]]
+            end
+            errors << "bun: relink-materials proof generated-header inventory mismatch" unless actual_headers == expected_headers
+            valid_header_digests = header_trees.is_a?(Array) && header_trees.all? { |entry| entry.is_a?(Hash) && entry["tree_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) }
+            errors << "bun: relink-materials proof generated-header digest is invalid" unless valid_header_digests
+
+            errors << "bun: relink-materials proof rspfile declaration mismatch" unless receipt.dig("final_link", "rspfile_declared") == audit["rspfile_declared"] && receipt.dig("final_link", "rspfile_declared") == true
+            errors << "bun: relink-materials proof response-file retention mismatch" unless receipt.dig("final_link", "response_file_count") == 0 && receipt.dig("final_link", "response_files_retained") == audit["response_files_retained"]
+            errors << "bun: relink-materials proof bootstrap-wrapper result mismatch" unless receipt.dig("final_link", "bootstrap_seed_wrapper_invoked") == audit["bootstrap_seed_wrapper_invoked"] && receipt.dig("final_link", "bootstrap_seed_wrapper_invoked") == true
+            errors << "bun: relink-materials proof presence checks are incomplete" unless %w[direct_objects_present direct_archives_present link_scripts_present linker_map_present build_ninja_present compile_commands_present configure_present generated_webkit_headers_present].all? { |key| receipt.dig("presence", key) == true }
+            errors << "bun: relink-materials proof response-file blocker mismatch" unless receipt.dig("blockers", "response_files_not_retained") == true
+            errors << "bun: relink-materials proof bootstrap-wrapper blocker mismatch" unless receipt.dig("blockers", "bootstrap_seed_wrapper_invoked") == true
+            errors << "bun: relink-materials proof incorrectly claims a relink kit" unless receipt.dig("presence", "relink_kit_payload_present") == false
+            errors << "bun: relink-materials proof incorrectly claims complete LGPL materials" unless receipt["complete_lgpl_relink_materials_verified"] == audit["complete_lgpl_relink_materials_verified"] && receipt["complete_lgpl_relink_materials_verified"] == false
+            errors << "bun: relink-materials proof incorrectly claims a final license audit" unless receipt["final_license_audit_verified"] == false
+            errors << "bun: relink-materials proof incorrectly claims a final RPM" unless receipt["final_rpm_verified"] == false
+          rescue JSON::ParserError => e
+            errors << "bun: invalid relink-materials proof receipt: #{e.message}"
+          end
+        end
+      end
+    end
+
     self_stage = stages["self_rebuild"]
     if self_stage.is_a?(Hash) && self_stage["proof_receipt"]
       self_receipt = nil
