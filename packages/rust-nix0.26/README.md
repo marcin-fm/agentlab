@@ -10,10 +10,12 @@ Generated with rust2rpm 28. The package exposes the `fs`, `poll`, `socket`, and
 FreeBSD-only `sysctl` test dependency from Fedora's Linux build graph.
 
 The package retains upstream tests while excluding the hardware-dependent
-AF_ALG cipher test and one socket queue assertion that Fedora also excludes,
+AF_ALG cipher test and two flaky socket assertions that Fedora also excludes,
 plus the kernel-module and process-accounting tests that require facilities or
 privileges unavailable inside Mock.
 A clean Rawhide x86_64 Mock build passed that focused suite, followed by the
 complete local chain through `ast-grep`. COPR build `10739331` passed x86_64;
 its aarch64 cell compiled successfully and failed only the AF_ALG test before
-the Fedora-aligned exclusion was added for the `0.2` rebuild.
+the Fedora-aligned exclusion was added for the `0.2` rebuild. Build `10739336`
+then passed aarch64 and failed x86_64 only in the Fedora-classified flaky
+`test_recvmm2` ancillary-data timing assertion before its `0.3` exclusion.

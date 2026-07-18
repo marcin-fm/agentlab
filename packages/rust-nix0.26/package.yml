@@ -15,8 +15,8 @@ duplicate_check:
   fedora_rawhide: incompatible nix 0.27 and newer branches only
   rpm_fusion_rawhide: absent
 validation:
-  rawhide_x86_64: clean Mock build and COPR build 10739331 passed focused upstream tests
-  rawhide_aarch64: COPR build 10739331 compiled and failed only the Fedora-excluded hardware-dependent AF_ALG test; 0.2 rebuild pending
+  rawhide_x86_64: clean Mock build and COPR build 10739331 passed; build 10739336 failed only the Fedora-excluded flaky recvmm2 timing test; 0.3 rebuild pending
+  rawhide_aarch64: COPR build 10739336 passed focused upstream tests
   downstream_chain: x11rb protocol through ast-grep passed in dependency order
 copr:
   enabled: true
