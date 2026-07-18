@@ -7,12 +7,12 @@
 
 Name:           rust-phf_macros0.14
 Version:        0.14.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Macros to generate types in the phf crate
 
 License:        MIT
 URL:            https://crates.io/crates/phf_macros
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -128,5 +128,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.2
+- Enable the independently eligible leaf for six-cell SCM COPR publication.
+- Use the immutable static crates.io archive for source generation.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.1
 - Add the initial repository packaging changelog.

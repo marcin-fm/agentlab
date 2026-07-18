@@ -1,5 +1,26 @@
 name: rust-phf0.14
-status: blocked
-blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
-upstream: {provider: crates_io, crate: phf, version_requirement: '= 0.14.0', current_version: 0.14.0, source_sha256: 010378780309880b08997fae13be7834dba947d36393bd372f2b1556deb2a2f6, source_url_template: 'https://static.crates.io/crates/phf/phf-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-phf0.14, spec: rust-phf0.14.spec}
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 replaces the crates.io API redirect with the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live build results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256.
+  dependency_evidence: The configured macros-feature build requires phf_shared 0.14 and phf_macros 0.14; phf_shared is published and phf_macros publication is serialized immediately before this package.
+  duplicate_audit: Fedora 43 provides phf 0.11 and 0.13, while Fedora 44 and Rawhide provide 0.13; none satisfies crate(phf) = 0.14.0, and matching RPM Fusion repositories provide no compatible package as checked on 2026-07-18.
+upstream:
+  provider: crates_io
+  crate: phf
+  version_requirement: = 0.14.0
+  current_version: 0.14.0
+  source_sha256: 010378780309880b08997fae13be7834dba947d36393bd372f2b1556deb2a2f6
+  source_url_template: https://static.crates.io/crates/phf/phf-{version}.crate
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-phf0.14
+  spec: rust-phf0.14.spec

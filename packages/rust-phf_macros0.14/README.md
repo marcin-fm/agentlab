@@ -1,7 +1,21 @@
 # rust-phf_macros0.14
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. Its relationship to the blocked Kreuzberg package is dependency
+context, not a package-specific publication blocker. The canonical crates.io
+archive is pinned by SHA-256 and fetched directly from the immutable static
+registry endpoint.
 
-Blocked import of the staged `phf_macros` 0.14.0 compatibility package.
+Fedora 43 provides `phf_macros` 0.11 and 0.13, while Fedora 44 and Rawhide
+provide 0.13. None satisfies Kreuzberg's exact `crate(phf_macros) = 0.14.0`
+requirement, and matching RPM Fusion repositories provide no compatible
+package. Configured publication therefore targets Fedora 43, Fedora 44, and
+Rawhide on x86_64 and aarch64.
+
+The crate requires `phf_generator` 0.14.0 and `phf_shared` 0.14. Their exact
+providers succeeded in all six configured chroots as builds `10740368` and
+`10740364`, respectively. Exact-current six-cell build and artifact-lint
+results for this package are retained in the project playbook after configured
+SCM publication.
