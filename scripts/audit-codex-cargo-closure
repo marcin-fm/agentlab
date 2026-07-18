@@ -45,12 +45,15 @@ def parse_lock_packages(content)
     version = body.match(/^version = "([^"]+)"$/)&.captures&.first
     raise Agentlab::Error, "malformed Cargo.lock package record" unless name && version
 
-    {
+    record = {
       "name" => name,
       "version" => version,
       "source" => body.match(/^source = "([^"]+)"$/)&.captures&.first,
       "checksum" => body.match(/^checksum = "([^"]+)"$/)&.captures&.first
     }.compact
+    dependencies = body[/^dependencies = \[\n(.*?)^\]$/m, 1].to_s.scan(/^ "([^"]+)",$/).flatten
+    record["dependencies"] = dependencies unless dependencies.empty?
+    record
   end
 end
 
@@ -148,6 +151,95 @@ def parse_tree(output, lock_by_name_version, source_dir)
   selected
 end
 
+def resolve_lock_dependency(reference, lock_by_name)
+  match = reference.match(/\A([^ ]+)(?: ([^ ]+)(?: \((.+)\))?)?\z/)
+  raise Agentlab::Error, "cannot parse Cargo.lock dependency reference: #{reference}" unless match
+
+  name, version, source = match.captures
+  candidates = lock_by_name.fetch(name, [])
+  candidates = candidates.select { |record| record.fetch("version") == version } if version
+  candidates = candidates.select { |record| record["source"] == source } if source
+  unless candidates.one?
+    raise Agentlab::Error, "expected one Cargo.lock dependency for #{reference}, found #{candidates.length}"
+  end
+
+  candidates.first
+end
+
+def identity_record(package_id)
+  {
+    "name" => package_id[0],
+    "version" => package_id[1],
+    "source" => package_id[2]
+  }.compact
+end
+
+def resolver_fixed_point(selected_tree, lock_records, workspace_packages)
+  lock_by_id = lock_records.to_h do |record|
+    [record.values_at("name", "version", "source"), record]
+  end
+  lock_by_name = lock_records.group_by { |record| record.fetch("name") }
+  paths = selected_tree.to_h do |package_id, tree_record|
+    [package_id, tree_record.fetch("dependency_path").map(&:dup)]
+  end
+  references = {}
+  pending = paths.keys.dup
+
+  until pending.empty?
+    pending.sort_by! { |package_id| [paths.fetch(package_id).length, JSON.generate(package_id)] }
+    package_id = pending.shift
+    package = lock_by_id.fetch(package_id)
+    dependency_references = package.fetch("dependencies", [])
+    # External package lock records omit dev dependencies; workspace records do not.
+    if package["source"].nil?
+      metadata = workspace_packages.fetch(package_id) do
+        raise Agentlab::Error, "workspace metadata is missing #{package.fetch('name')} #{package.fetch('version')}"
+      end
+      nondevelopment_names = metadata.fetch("dependencies").reject do |dependency|
+        dependency["kind"] == "dev"
+      end.map { |dependency| dependency.fetch("name") }.to_set
+      resolved_by_name = dependency_references.group_by do |reference|
+        resolve_lock_dependency(reference, lock_by_name).fetch("name")
+      end
+      nondevelopment_names.each do |name|
+        matches = resolved_by_name.fetch(name, [])
+        unless matches.one?
+          raise Agentlab::Error,
+                "expected one non-development lock dependency #{name} for #{package.fetch('name')}, found #{matches.length}"
+        end
+      end
+      dependency_references = dependency_references.select do |reference|
+        dependency = resolve_lock_dependency(reference, lock_by_name)
+        nondevelopment_names.include?(dependency.fetch("name"))
+      end
+    end
+
+    dependency_references.sort.each do |reference|
+      dependency = resolve_lock_dependency(reference, lock_by_name)
+      dependency_id = dependency.values_at("name", "version", "source")
+      candidate_path = paths.fetch(package_id) + [dependency_id]
+      previous_path = paths[dependency_id]
+      if previous_path
+        previous_key = [previous_path.length, JSON.generate(previous_path)]
+        candidate_key = [candidate_path.length, JSON.generate(candidate_path)]
+        next if (previous_key <=> candidate_key) <= 0
+      end
+
+      paths[dependency_id] = candidate_path
+      references[dependency_id] = {
+        "required_by" => identity_record(package_id),
+        "lock_reference" => reference
+      }
+      pending << dependency_id
+    end
+  end
+
+  {
+    "paths" => paths,
+    "references" => references
+  }
+end
+
 def stable_command(command, workspace_manifest)
   command.map { |argument| argument == workspace_manifest ? "codex-rs/Cargo.toml" : argument }
 end
@@ -183,6 +275,27 @@ def parse_pax_headers(data)
     offset += length
   end
   headers
+end
+
+def cargo_package_metadata(manifest, name, version)
+  package = manifest[/^\[package\]\s*$\n(.*?)(?=^\[|\z)/m, 1]
+  actual_name = package&.match(/^name\s*=\s*"([^"]+)"/)&.captures&.first
+  actual_version = package&.match(/^version\s*=\s*"([^"]+)"/)&.captures&.first
+  unless actual_name == name && actual_version == version
+    raise Agentlab::Error, "Cargo.toml identity mismatch: expected #{name} #{version}"
+  end
+
+  license = package.match(/^license\s*=\s*"([^"]+)"$/)&.captures&.first
+  license_file = package.match(/^license-file\s*=\s*"([^"]+)"$/)&.captures&.first
+  raise Agentlab::Error, "Cargo.toml records both license and license-file: #{name} #{version}" if license && license_file
+
+  if license
+    { "expression" => license }
+  elsif license_file
+    { "file" => license_file }
+  else
+    {}
+  end
 end
 
 def cargo_archive_manifest!(archive, name, version)
@@ -231,14 +344,30 @@ def cargo_archive_manifest!(archive, name, version)
   raise Agentlab::Error, "archive root mismatch for #{archive}" unless roots == Set[expected_root]
   raise Agentlab::Error, "Cargo.toml is absent from #{archive}" unless manifest
 
-  package = manifest[/^\[package\]\s*$\n(.*?)(?=^\[|\z)/m, 1]
-  actual_name = package&.match(/^name\s*=\s*"([^"]+)"/)&.captures&.first
-  actual_version = package&.match(/^version\s*=\s*"([^"]+)"/)&.captures&.first
-  unless actual_name == name && actual_version == version
-    raise Agentlab::Error, "Cargo.toml identity mismatch in #{archive}: expected #{name} #{version}"
-  end
+  cargo_package_metadata(manifest, name, version)
 rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
   raise Agentlab::Error, "cannot inspect #{archive}: #{e.message}"
+end
+
+def registry_archive_record!(cargo_home, package)
+  archives = Dir.glob(File.join(cargo_home, "registry", "cache", "*", "#{package.fetch('name')}-#{package.fetch('version')}.crate")).select do |path|
+    File.file?(path)
+  end
+  unless archives.one?
+    raise Agentlab::Error,
+          "expected one cached crate for #{package.fetch('name')} #{package.fetch('version')}, found #{archives.length}"
+  end
+
+  archive = archives.first
+  unless Digest::SHA256.file(archive).hexdigest == package.fetch("checksum")
+    raise Agentlab::Error, "Cargo checksum mismatch: #{package.fetch('name')} #{package.fetch('version')}"
+  end
+
+  {
+    "package" => package,
+    "archive" => archive,
+    "license" => cargo_archive_manifest!(archive, package.fetch("name"), package.fetch("version"))
+  }
 end
 
 def extract_cargo_archive!(archive, destination, expected_root)
@@ -505,6 +634,19 @@ def verify_git_source!(cargo_home, repository, commit, packages)
   checkout_matches.first
 end
 
+def cargo_vendor_manifest(packages)
+  manifest = packages.select { |package| %w[registry git].include?(package.fetch("origin")) }.map do |package|
+    if package.fetch("origin") == "git"
+      "#{package.fetch('name')} v#{package.fetch('version')} (#{package.fetch('source').delete_prefix('git+')})"
+    else
+      "#{package.fetch('name')} v#{package.fetch('version')}"
+    end
+  end.sort
+  raise Agentlab::Error, "vendor plan has duplicate source entries" unless manifest.uniq.length == manifest.length
+
+  manifest
+end
+
 def verify_selected_sources!(receipt, source_lock, cargo_home)
   packages = receipt.fetch("packages")
   counts = receipt.fetch("counts")
@@ -520,14 +662,7 @@ def verify_selected_sources!(receipt, source_lock, cargo_home)
     end
     raise Agentlab::Error, "lock/receipt mismatch for #{package.fetch('name')} #{package.fetch('version')}" unless lock_matches.one?
 
-    archives = Dir.glob(File.join(cargo_home, "registry", "cache", "*", "#{package.fetch('name')}-#{package.fetch('version')}.crate")).select { |path| File.file?(path) }
-    raise Agentlab::Error, "expected one cached crate for #{package.fetch('name')} #{package.fetch('version')}, found #{archives.length}" unless archives.one?
-    archive = archives.first
-    unless Digest::SHA256.file(archive).hexdigest == package.fetch("checksum")
-      raise Agentlab::Error, "Cargo checksum mismatch: #{package.fetch('name')} #{package.fetch('version')}"
-    end
-    cargo_archive_manifest!(archive, package.fetch("name"), package.fetch("version"))
-    registry_plan << { "package" => package, "archive" => archive }
+    registry_plan << registry_archive_record!(cargo_home, package)
   end
 
   selected_git = packages.select { |package| package.fetch("origin") == "git" }.group_by do |package|
@@ -564,14 +699,7 @@ def verify_selected_sources!(receipt, source_lock, cargo_home)
   extras = lock_records.reject do |record|
     packages.any? { |package| package.values_at("name", "version", "source") == record.values_at("name", "version", "source") }
   end.group_by { |record| source_origin(record["source"]) }.transform_values(&:length)
-  vendor_manifest = packages.select { |package| %w[registry git].include?(package.fetch("origin")) }.map do |package|
-    if package.fetch("origin") == "git"
-      "#{package.fetch('name')} v#{package.fetch('version')} (#{package.fetch('source').delete_prefix('git+')})"
-    else
-      "#{package.fetch('name')} v#{package.fetch('version')}"
-    end
-  end.sort
-  raise Agentlab::Error, "vendor plan has duplicate source entries" unless vendor_manifest.uniq.length == vendor_manifest.length
+  vendor_manifest = cargo_vendor_manifest(packages)
 
   provides_status = "not checked (cargo2rpm unavailable)"
   if Agentlab.command_available?("cargo2rpm")
@@ -588,6 +716,48 @@ def verify_selected_sources!(receipt, source_lock, cargo_home)
     "registry" => registry_plan,
     "git" => git_plan.sort_by { |record| normalize_git_url(record.fetch("repository")) },
     "manifest" => vendor_manifest
+  }
+end
+
+def verify_resolver_sources!(supplement, selected_receipt, source_lock, cargo_home)
+  packages = supplement.fetch("packages")
+  counts = supplement.fetch("counts")
+  unless packages.length == counts.fetch("resolver_only_packages")
+    raise Agentlab::Error, "resolver supplement package count mismatch"
+  end
+  identities = packages.map { |package| package.values_at("name", "version", "source") }
+  raise Agentlab::Error, "resolver supplement has duplicate packages" unless identities.uniq.length == identities.length
+
+  selected_identities = selected_receipt.fetch("packages").map do |package|
+    package.values_at("name", "version", "source")
+  end
+  overlap = identities & selected_identities
+  raise Agentlab::Error, "resolver supplement overlaps the authoritative selected closure" unless overlap.empty?
+  unless packages.all? { |package| package.fetch("origin") == "registry" }
+    raise Agentlab::Error, "current resolver supplement must contain only registry packages"
+  end
+
+  lock_records = parse_lock_packages(source_lock)
+  registry_plan = packages.map do |package|
+    lock_matches = lock_records.select do |record|
+      record.values_at("name", "version", "source", "checksum") == package.values_at("name", "version", "source", "checksum")
+    end
+    unless lock_matches.one?
+      raise Agentlab::Error, "lock/resolver mismatch for #{package.fetch('name')} #{package.fetch('version')}"
+    end
+
+    archive_record = registry_archive_record!(cargo_home, package)
+    unless archive_record.fetch("license") == package.fetch("license") && !package.fetch("license").empty?
+      raise Agentlab::Error, "resolver license metadata mismatch for #{package.fetch('name')} #{package.fetch('version')}"
+    end
+    archive_record
+  end
+  manifest = cargo_vendor_manifest(packages)
+  puts "Verified resolver-only Cargo sources: #{registry_plan.length} registry archives"
+  {
+    "registry" => registry_plan,
+    "git" => [],
+    "manifest" => manifest
   }
 end
 
@@ -667,6 +837,38 @@ def cargo_vendor_config(receipt, vendor_root_name)
   <<~TOML
     # Selected Linux build-closure evidence only. Cargo directory-source
     # resolution also requests inactive-target dependencies absent by design.
+    [net]
+    offline = true
+
+    [source.crates-io]
+    replace-with = "vendored-sources"
+
+    #{source_blocks.join}
+    [source.vendored-sources]
+    directory = #{vendor_root_name.dump}
+  TOML
+end
+
+def cargo_resolver_vendor_config(receipt, vendor_root_name)
+  git_sources = receipt.fetch("packages").select { |package| package.fetch("origin") == "git" }.group_by do |package|
+    package.fetch("source").split("#", 2).first
+  end
+  source_blocks = git_sources.sort.map do |source, packages|
+    commits = packages.map { |package| package.fetch("source").split("#", 2).last }.uniq
+    raise Agentlab::Error, "Git source has multiple commits: #{source}" unless commits.one?
+
+    url = source.delete_prefix("git+").split("?", 2).first
+    <<~TOML
+      [source.#{source.dump}]
+      git = #{url.dump}
+      rev = #{commits.first.dump}
+      replace-with = "vendored-sources"
+
+    TOML
+  end
+  <<~TOML
+    # Authoritative selected Linux sources plus a separately recorded
+    # resolver-only all-target normal/build supplement.
     [net]
     offline = true
 
@@ -791,6 +993,255 @@ def materialize_vendor!(receipt, closure_receipt_path, normalized_lock, cargo_ho
   end
 end
 
+def stable_resolution_command(command, workspace_manifest, config_path)
+  command.map do |argument|
+    if argument == workspace_manifest
+      "codex-rs/Cargo.toml"
+    elsif argument == config_path
+      File.basename(config_path)
+    else
+      argument
+    end
+  end
+end
+
+def verify_resolver_vendor_resolution!(
+  source_dir,
+  normalized_lock,
+  target,
+  selected_receipt,
+  resolver_supplement,
+  config_path,
+  vendor_root,
+  workdir
+)
+  resolution_source = File.join(workdir, "resolution-source")
+  resolution_cargo_home = File.join(workdir, "resolution-cargo-home")
+  FileUtils.cp_r(source_dir, resolution_source, preserve: true)
+  FileUtils.mkdir_p(resolution_cargo_home)
+  workspace_manifest = File.join(resolution_source, "codex-rs", "Cargo.toml")
+  File.write(File.join(resolution_source, "codex-rs", "Cargo.lock"), normalized_lock)
+  proof_config_path = File.join(workdir, File.basename(config_path))
+  portable_directory = "directory = #{File.basename(vendor_root).dump}"
+  proof_config = File.read(config_path)
+  unless proof_config.scan(portable_directory).length == 1
+    raise Agentlab::Error, "resolver Cargo configuration directory is not an exact portable path"
+  end
+  File.write(proof_config_path, proof_config.sub(portable_directory, "directory = #{vendor_root.dump}"))
+  environment = {
+    "CARGO_HOME" => resolution_cargo_home,
+    "RUSTC_BOOTSTRAP" => "1"
+  }
+  command_base = [
+    "cargo", "tree",
+    "--manifest-path", workspace_manifest,
+    "--locked",
+    "--package", "codex-cli",
+    "-Z", "avoid-dev-deps",
+    "--prefix", "depth",
+    "--format", "{p}|{f}",
+    "--edges", "normal,build",
+    "--offline",
+    "--config", proof_config_path
+  ]
+  selected_command = command_base + ["--target", target]
+  all_targets_command = command_base + ["--target", "all"]
+  selected_output = capture_command(environment, selected_command, "combined vendor selected-target Cargo resolution")
+  all_targets_output = capture_command(environment, all_targets_command, "combined vendor all-target Cargo resolution")
+
+  lock_by_name_version = parse_lock_packages(normalized_lock).group_by do |record|
+    [record.fetch("name"), record.fetch("version")]
+  end
+  selected_tree = parse_tree(selected_output, lock_by_name_version, resolution_source)
+  all_targets_tree = parse_tree(all_targets_output, lock_by_name_version, resolution_source)
+  expected_selected = selected_receipt.fetch("packages").map do |package|
+    package.values_at("name", "version", "source")
+  end.to_set
+  active_resolver_packages = resolver_supplement.fetch("packages").select do |package|
+    package.fetch("active_in_all_target_graph")
+  end
+  expected_all_targets = (selected_receipt.fetch("packages") + active_resolver_packages).map do |package|
+    package.values_at("name", "version", "source")
+  end.to_set
+  unless selected_tree.keys.to_set == expected_selected
+    raise Agentlab::Error, "combined vendor selected-target resolution differs from the authoritative closure"
+  end
+  unless all_targets_tree.keys.to_set == expected_all_targets
+    raise Agentlab::Error, "combined vendor all-target resolution differs from the resolver fixed point"
+  end
+
+  {
+    "selected_target" => {
+      "verified" => true,
+      "packages" => selected_tree.length,
+      "command" => stable_resolution_command(selected_command, workspace_manifest, proof_config_path)
+    },
+    "all_targets" => {
+      "verified" => true,
+      "packages" => all_targets_tree.length,
+      "command" => stable_resolution_command(all_targets_command, workspace_manifest, proof_config_path)
+    },
+    "empty_cargo_home" => true,
+    "portable_directory_path_rewritten_for_proof" => true,
+    "fedora_avoid_dev_deps" => true
+  }
+end
+
+def materialize_resolver_vendor!(
+  receipt,
+  resolver_supplement,
+  closure_receipt_path,
+  resolver_supplement_path,
+  source_dir,
+  normalized_lock,
+  cargo_home,
+  output_root,
+  external_receipt,
+  check,
+  work_dir_root
+)
+  raise Agentlab::Error, "missing tool: tar" unless Agentlab.command_available?("tar")
+
+  output_root = File.expand_path(output_root)
+  output_root_created = !File.exist?(output_root)
+  FileUtils.mkdir_p(output_root)
+  vendor_root_name = "codex-cli-#{receipt.dig('release', 'version')}-resolver-cargo-vendor"
+  vendor_root = File.join(output_root, vendor_root_name)
+  archive_path = File.join(output_root, "#{vendor_root_name}.tar.gz")
+  manifest_path = File.join(output_root, "#{vendor_root_name}.txt")
+  config_path = File.join(output_root, "#{vendor_root_name}.config.toml")
+  receipt_path = File.join(output_root, "#{vendor_root_name}-receipt.json")
+  [vendor_root, archive_path, manifest_path, config_path, receipt_path].each do |path|
+    raise Agentlab::Error, "refusing to replace existing vendor output: #{path}" if File.exist?(path)
+  end
+
+  begin
+    selected_plan = verify_selected_sources!(receipt, normalized_lock, cargo_home)
+    resolver_plan = verify_resolver_sources!(resolver_supplement, receipt, normalized_lock, cargo_home)
+    combined_packages = receipt.fetch("packages") + resolver_supplement.fetch("packages")
+    expected_directories = combined_packages.select do |package|
+      %w[registry git].include?(package.fetch("origin"))
+    end.map { |package| "#{package.fetch('name')}-#{package.fetch('version')}" }.sort
+    unless expected_directories.uniq.length == expected_directories.length
+      raise Agentlab::Error, "combined Cargo vendor plan has colliding package directories"
+    end
+
+    FileUtils.mkdir_p(vendor_root)
+    (selected_plan.fetch("registry") + resolver_plan.fetch("registry")).each do |record|
+      package = record.fetch("package")
+      root_name = "#{package.fetch('name')}-#{package.fetch('version')}"
+      target_root = File.join(vendor_root, root_name)
+      raise Agentlab::Error, "duplicate Cargo vendor directory: #{target_root}" if File.exist?(target_root)
+
+      extract_cargo_archive!(record.fetch("archive"), vendor_root, root_name)
+      write_cargo_checksum!(target_root, package.fetch("checksum"))
+      verify_cargo_checksum!(target_root, package.fetch("checksum"))
+    end
+
+    Dir.mktmpdir("agentlab-codex-resolver-vendor-", work_dir_root) do |workdir|
+      materialize_git_packages!(selected_plan.fetch("git"), cargo_home, vendor_root, workdir)
+      actual_directories = Dir.children(vendor_root).select do |entry|
+        File.directory?(File.join(vendor_root, entry))
+      end.sort
+      unless actual_directories == expected_directories
+        raise Agentlab::Error, "combined Cargo vendor directory set differs from the selected closure plus resolver supplement"
+      end
+
+      manifest = cargo_vendor_manifest(combined_packages).join("\n") + "\n"
+      config = cargo_resolver_vendor_config(receipt, vendor_root_name)
+      File.write(manifest_path, manifest)
+      File.write(config_path, config)
+      resolution = verify_resolver_vendor_resolution!(
+        source_dir,
+        normalized_lock,
+        receipt.dig("selection", "target_triple"),
+        receipt,
+        resolver_supplement,
+        config_path,
+        vendor_root,
+        workdir
+      )
+      tree = vendor_tree_receipt(vendor_root)
+      deterministic_tar_gz!(output_root, vendor_root_name, archive_path, workdir)
+      cargo_version = capture_command({ "CARGO_HOME" => cargo_home }, ["cargo", "--version"], "Cargo version query").strip
+      selected_external = receipt.fetch("packages").count { |package| %w[registry git].include?(package.fetch("origin")) }
+      resolver_external = resolver_supplement.fetch("packages").count do |package|
+        %w[registry git].include?(package.fetch("origin"))
+      end
+      vendor_receipt = {
+        "schema" => "agentlab-codex-resolver-cargo-vendor/v1",
+        "release" => receipt.fetch("release").slice("version", "source_tag", "source_commit", "source_sha256", "normalized_cargo_lock_sha256"),
+        "selection" => receipt.fetch("selection"),
+        "closure_receipt" => {
+          "name" => File.basename(closure_receipt_path),
+          "sha256" => Digest::SHA256.file(closure_receipt_path).hexdigest
+        },
+        "resolver_supplement" => {
+          "name" => File.basename(resolver_supplement_path),
+          "sha256" => Digest::SHA256.file(resolver_supplement_path).hexdigest
+        },
+        "counts" => {
+          "vendor_directories" => expected_directories.length,
+          "selected_vendor_directories" => selected_external,
+          "resolver_only_vendor_directories" => resolver_external,
+          "registry_packages" => selected_plan.fetch("registry").length + resolver_plan.fetch("registry").length,
+          "git_packages" => selected_plan.fetch("git").sum { |source| source.fetch("packages").length },
+          "git_repositories" => selected_plan.fetch("git").length
+        },
+        "generator" => {
+          "script" => "scripts/audit-codex-cargo-closure",
+          "cargo_version" => cargo_version,
+          "registry_materialization" => "checked archive extraction with generated Cargo checksums",
+          "git_materialization" => "Cargo package-normalized selected Git packages with restored pinned selected-source dependencies",
+          "resolver_strategy" => "non-development workspace-manifest and external lock dependency fixed point, with Cargo all-target resolution as the active-target witness",
+          "transient_dependency_directories_archived" => false
+        },
+        "resolution" => {
+          "standalone_offline_directory_source_verified" => true,
+          "proof" => resolution,
+          "authoritative_linux_closure_unchanged" => true,
+          "resolver_only_sources_linked_on_authoritative_target" => false
+        },
+        "vendor_tree" => tree.merge("root" => vendor_root_name),
+        "vendor_manifest" => {
+          "name" => File.basename(manifest_path),
+          "entries" => expected_directories.length,
+          "sha256" => Digest::SHA256.file(manifest_path).hexdigest
+        },
+        "cargo_config" => {
+          "name" => File.basename(config_path),
+          "purpose" => "offline source replacement for the authoritative Linux closure plus the separate resolver-only supplement",
+          "sha256" => Digest::SHA256.file(config_path).hexdigest
+        },
+        "archive" => {
+          "name" => File.basename(archive_path),
+          "size_bytes" => File.size(archive_path),
+          "sha256" => Digest::SHA256.file(archive_path).hexdigest
+        },
+        "scope" => "resolver-complete Cargo directory-source evidence; not a Codex build proof, selected linked-license closure, or publication artifact"
+      }
+      rendered = JSON.pretty_generate(vendor_receipt) + "\n"
+      Agentlab.atomic_write(receipt_path, rendered)
+      if external_receipt
+        if check
+          raise Agentlab::Error, "missing resolver vendor receipt: #{external_receipt}" unless File.file?(external_receipt)
+          raise Agentlab::Error, "Codex resolver Cargo vendor receipt is stale" unless File.read(external_receipt) == rendered
+        else
+          FileUtils.mkdir_p(File.dirname(external_receipt))
+          Agentlab.atomic_write(external_receipt, rendered)
+        end
+      end
+
+      puts "Materialized #{expected_directories.length} resolver-complete Cargo sources: tree #{tree.fetch('sha256')}, archive #{vendor_receipt.dig('archive', 'sha256')}"
+    end
+  rescue StandardError
+    FileUtils.rm_rf(vendor_root)
+    [archive_path, manifest_path, config_path, receipt_path].each { |path| FileUtils.rm_f(path) }
+    Dir.rmdir(output_root) if output_root_created && Dir.exist?(output_root) && Dir.empty?(output_root)
+    raise
+  end
+end
+
 package = Agentlab.package_named("codex-cli")
 dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
 version = package.upstream.fetch("current_version").to_s
@@ -799,12 +1250,15 @@ source_dir = nil
 cargo_home = nil
 work_dir_root = ENV.fetch("TMPDIR", Dir.tmpdir)
 output = File.join(package.directory, "codex-cli-#{version}-selected-cargo-closure.json")
+resolver_output = File.join(package.directory, "codex-cli-#{version}-cargo-resolver-supplement.json")
 check = false
 bootstrap_online = false
 verify_sources = false
 cargo_home_explicit = false
 materialize_vendor = nil
 vendor_receipt = nil
+materialize_resolver_vendor = nil
+resolver_vendor_receipt = nil
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/audit-codex-cargo-closure --source-dir PATH [options]"
@@ -812,20 +1266,34 @@ OptionParser.new do |parser|
   parser.on("--cargo-home PATH", "Cargo cache containing registry and Git sources") { |path| cargo_home = path; cargo_home_explicit = true }
   parser.on("--work-dir-root PATH", "Parent directory for the isolated source copy") { |path| work_dir_root = path }
   parser.on("--output PATH", "Receipt path") { |path| output = path }
+  parser.on("--resolver-output PATH", "Resolver-only supplement receipt path") { |path| resolver_output = path }
   parser.on("--online", "Allow the first selected-tree pass to populate the Cargo cache") { bootstrap_online = true }
   parser.on("--check", "Verify that the existing receipt is current") { check = true }
-  parser.on("--verify-sources", "Read-only verify selected cached sources and vendor plan") { verify_sources = true }
+  parser.on("--verify-sources", "Read-only verify selected and resolver-only cached sources") { verify_sources = true }
   parser.on("--materialize-vendor PATH", "Create the deterministic selected-only Cargo vendor artifacts under PATH") { |path| materialize_vendor = path }
   parser.on("--vendor-receipt PATH", "Write or check the deterministic vendor receipt at PATH") { |path| vendor_receipt = path }
+  parser.on("--materialize-resolver-vendor PATH", "Create the deterministic resolver-complete Cargo vendor artifacts under PATH") do |path|
+    materialize_resolver_vendor = path
+  end
+  parser.on("--resolver-vendor-receipt PATH", "Write or check the deterministic resolver-complete vendor receipt at PATH") do |path|
+    resolver_vendor_receipt = path
+  end
 end.parse!
 
 raise Agentlab::Error, "--source-dir is required" unless source_dir
 if materialize_vendor && check && !vendor_receipt
   raise Agentlab::Error, "--check with --materialize-vendor requires --vendor-receipt"
 end
+if materialize_resolver_vendor && check && !resolver_vendor_receipt
+  raise Agentlab::Error, "--check with --materialize-resolver-vendor requires --resolver-vendor-receipt"
+end
+if materialize_vendor && materialize_resolver_vendor
+  raise Agentlab::Error, "selected-only and resolver-complete vendor materialization must run separately"
+end
 
 source_dir = File.realpath(source_dir)
 cargo_home = File.realpath(cargo_home) if cargo_home
+effective_cargo_home = File.expand_path(cargo_home || ENV.fetch("CARGO_HOME", File.join(Dir.home, ".cargo")))
 work_dir_root = File.realpath(work_dir_root)
 source_lock_path = File.join(source_dir, "codex-rs", "Cargo.lock")
 source_manifest = File.join(source_dir, "codex-rs", "Cargo.toml")
@@ -839,26 +1307,56 @@ normalized_lock_sha256 = Digest::SHA256.hexdigest(normalized_lock)
 environment = {}
 environment["CARGO_HOME"] = cargo_home if cargo_home
 
-if verify_sources || materialize_vendor
+if verify_sources || materialize_vendor || materialize_resolver_vendor
   raise Agentlab::Error, "source verification and vendoring require explicit --cargo-home" unless cargo_home_explicit
   raise Agentlab::Error, "missing receipt: #{output}" unless File.file?(output)
+  needs_resolver_supplement = verify_sources || materialize_resolver_vendor
+  if needs_resolver_supplement && !File.file?(resolver_output)
+    raise Agentlab::Error, "missing resolver supplement: #{resolver_output}"
+  end
   raise Agentlab::Error, "--vendor-receipt requires --materialize-vendor" if vendor_receipt && !materialize_vendor
+  if resolver_vendor_receipt && !materialize_resolver_vendor
+    raise Agentlab::Error, "--resolver-vendor-receipt requires --materialize-resolver-vendor"
+  end
 
   receipt = JSON.parse(File.read(output))
+  resolver_supplement = JSON.parse(File.read(resolver_output)) if needs_resolver_supplement
   release = receipt.fetch("release")
   raise Agentlab::Error, "receipt source Cargo.lock hash mismatch" unless release.fetch("source_cargo_lock_sha256") == source_lock_sha256
   raise Agentlab::Error, "receipt normalized Cargo.lock hash mismatch" unless release.fetch("normalized_cargo_lock_sha256") == normalized_lock_sha256
+  if resolver_supplement && resolver_supplement.dig("authoritative_closure", "sha256") != Digest::SHA256.file(output).hexdigest
+    raise Agentlab::Error, "resolver supplement authoritative closure hash mismatch"
+  end
   if materialize_vendor
     materialize_vendor!(receipt, output, normalized_lock, cargo_home, materialize_vendor, vendor_receipt, check, work_dir_root)
+  elsif materialize_resolver_vendor
+    materialize_resolver_vendor!(
+      receipt,
+      resolver_supplement,
+      output,
+      resolver_output,
+      source_dir,
+      normalized_lock,
+      cargo_home,
+      materialize_resolver_vendor,
+      resolver_vendor_receipt,
+      check,
+      work_dir_root
+    )
   else
     verify_selected_sources!(receipt, normalized_lock, cargo_home)
+    verify_resolver_sources!(resolver_supplement, receipt, normalized_lock, cargo_home)
   end
   exit 0
 end
 
 raise Agentlab::Error, "--vendor-receipt requires --materialize-vendor" if vendor_receipt
+if resolver_vendor_receipt
+  raise Agentlab::Error, "--resolver-vendor-receipt requires --materialize-resolver-vendor"
+end
 
 receipt = nil
+resolver_supplement = nil
 Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
   metadata_source_dir = File.join(temporary_directory, "source")
   FileUtils.cp_r(source_dir, metadata_source_dir, preserve: true)
@@ -876,24 +1374,51 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
     "--format", "{p}|{f}"
   ]
   selected_tree_command = tree_base + ["--edges", "normal,build"]
+  resolver_tree_command = tree_base.dup
+  resolver_tree_command[resolver_tree_command.index(target)] = "all"
+  resolver_tree_command += ["-Z", "avoid-dev-deps", "--edges", "normal,build"]
+  resolver_environment = environment.merge("RUSTC_BOOTSTRAP" => "1")
   if bootstrap_online
     capture_command(environment, selected_tree_command, "Cargo selected-tree cache bootstrap")
+    capture_command(resolver_environment, resolver_tree_command, "Cargo resolver-tree cache bootstrap")
   end
 
   selected_tree_command += ["--offline"]
+  resolver_tree_command += ["--offline"]
   runtime_tree_command = tree_base + ["--edges", "normal", "--offline"]
   selected_tree_output = capture_command(environment, selected_tree_command, "Cargo selected tree")
+  resolver_tree_output = capture_command(resolver_environment, resolver_tree_command, "Cargo resolver tree")
   runtime_tree_output = capture_command(environment, runtime_tree_command, "Cargo runtime tree")
 
   normalized_lock_records = parse_lock_packages(normalized_lock)
   lock_by_name_version = normalized_lock_records.group_by do |record|
     [record.fetch("name"), record.fetch("version")]
   end
+  workspace_metadata_command = [
+    "cargo", "metadata",
+    "--manifest-path", workspace_manifest,
+    "--locked",
+    "--format-version", "1",
+    "--no-deps",
+    "--offline"
+  ]
+  workspace_metadata = JSON.parse(
+    capture_command(environment, workspace_metadata_command, "Cargo workspace dependency metadata")
+  )
+  workspace_packages = workspace_metadata.fetch("packages").to_h do |workspace_package|
+    package_id = [workspace_package.fetch("name"), workspace_package.fetch("version"), workspace_package["source"]]
+    [package_id, workspace_package]
+  end
   selected_tree = parse_tree(selected_tree_output, lock_by_name_version, metadata_source_dir)
+  resolver_tree = parse_tree(resolver_tree_output, lock_by_name_version, metadata_source_dir)
   runtime_tree = parse_tree(runtime_tree_output, lock_by_name_version, metadata_source_dir)
   missing_runtime_packages = runtime_tree.keys - selected_tree.keys
   unless missing_runtime_packages.empty?
     raise Agentlab::Error, "runtime tree is not a subset of the selected tree"
+  end
+  missing_selected_packages = selected_tree.keys - resolver_tree.keys
+  unless missing_selected_packages.empty?
+    raise Agentlab::Error, "selected tree is not a subset of the all-target resolver tree"
   end
 
   root_records = selected_tree.values.select do |record|
@@ -930,6 +1455,38 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
     end
     record
   end.sort_by { |record| [record.fetch("name"), record.fetch("version"), record.fetch("source", "")] }
+
+  fixed_point = resolver_fixed_point(selected_tree, normalized_lock_records, workspace_packages)
+  resolver_records = (fixed_point.fetch("paths").keys - selected_tree.keys).map do |package_id|
+    package_record = normalized_lock_records.find do |record|
+      record.values_at("name", "version", "source") == package_id
+    end
+    raise Agentlab::Error, "resolver fixed point package is absent from Cargo.lock: #{package_id.inspect}" unless package_record
+
+    source = package_record["source"]
+    unless source_origin(source) == "registry"
+      raise Agentlab::Error,
+            "current resolver-only fixed point contains unsupported #{source_origin(source)} source: #{package_record.fetch('name')} #{package_record.fetch('version')}"
+    end
+
+    active_tree_record = resolver_tree[package_id]
+    record = {
+      "name" => package_record.fetch("name"),
+      "version" => package_record.fetch("version"),
+      "origin" => "registry",
+      "source" => source,
+      "checksum" => package_record.fetch("checksum"),
+      "license" => registry_archive_record!(effective_cargo_home, package_record).fetch("license"),
+      "active_in_all_target_graph" => !active_tree_record.nil?,
+      "dependency_path" => fixed_point.fetch("paths").fetch(package_id).map { |dependency_id| identity_record(dependency_id) },
+      "inclusion" => fixed_point.fetch("references").fetch(package_id)
+    }
+    record["features"] = active_tree_record.fetch("features") if active_tree_record
+    if record.fetch("license").empty?
+      raise Agentlab::Error, "resolver-only package lacks Cargo license metadata: #{record.fetch('name')} #{record.fetch('version')}"
+    end
+    record
+  end.sort_by { |record| [record.fetch("name"), record.fetch("version"), record.fetch("source")] }
 
   expected_git_sources = dependencies.fetch("workspace_lock_git_sources")
   expected_by_repository = expected_git_sources.to_h do |record|
@@ -1009,15 +1566,72 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
     "git_sources" => git_sources,
     "packages" => selected_records
   }
+
+  selected_rendered = JSON.pretty_generate(receipt) + "\n"
+  resolver_supplement = {
+    "schema" => "agentlab-codex-cargo-resolver-supplement/v1",
+    "release" => receipt.fetch("release").slice(
+      "version",
+      "source_tag",
+      "source_commit",
+      "source_sha256",
+      "source_cargo_lock_sha256",
+      "normalized_cargo_lock_sha256"
+    ),
+    "authoritative_closure" => {
+      "name" => File.basename(output),
+      "sha256" => Digest::SHA256.hexdigest(selected_rendered),
+      "packages" => selected_records.length,
+      "target_triple" => target
+    },
+    "resolution" => {
+      "root_package" => "codex-cli",
+      "root_manifest" => "codex-rs/cli/Cargo.toml",
+      "active_target_witness" => "all",
+      "included_dependency_kinds" => %w[normal build],
+      "excluded_dependency_kinds" => ["dev"],
+      "feature_policy" => "Cargo-selected features from codex-cli; --all-features is not used",
+      "dev_dependency_avoidance" => "RUSTC_BOOTSTRAP=1 cargo -Z avoid-dev-deps, matching Fedora cargo-rpm-macros behavior",
+      "fixed_point" => "Starting from the authoritative selected identities, follow every non-development normal/build Cargo.lock dependency of external packages and every non-development workspace dependency declaration, regardless of target predicate or optional activation.",
+      "reason_model" => "Each resolver-only package records a deterministic dependency_path plus the immediate lock reference that requires its source metadata."
+    },
+    "generator" => {
+      "cargo_version" => cargo_version,
+      "offline_verification" => true,
+      "resolver_tree_command" => stable_command(resolver_tree_command, workspace_manifest),
+      "workspace_metadata_command" => stable_command(workspace_metadata_command, workspace_manifest),
+      "license_metadata" => "normalized Cargo package manifest from the checksum-verified registry archive"
+    },
+    "counts" => {
+      "directory_resolution_packages" => fixed_point.fetch("paths").length,
+      "all_target_graph_packages" => resolver_tree.length,
+      "authoritative_packages" => selected_records.length,
+      "resolver_only_packages" => resolver_records.length,
+      "active_all_target_resolver_only_packages" => resolver_records.count { |record| record.fetch("active_in_all_target_graph") },
+      "inactive_optional_resolver_only_packages" => resolver_records.count { |record| !record.fetch("active_in_all_target_graph") },
+      "registry_packages" => resolver_records.count { |record| record.fetch("origin") == "registry" },
+      "git_packages" => resolver_records.count { |record| record.fetch("origin") == "git" },
+      "workspace_path_packages" => resolver_records.count { |record| record.fetch("origin") == "path" }
+    },
+    "packages" => resolver_records,
+    "scope" => "resolver-only source and license metadata required by Cargo directory-source resolution; not part of the authoritative Linux build graph or linked-license closure"
+  }
 end
 
 rendered = "#{JSON.pretty_generate(receipt)}\n"
+resolver_rendered = "#{JSON.pretty_generate(resolver_supplement)}\n"
 if check
   raise Agentlab::Error, "missing receipt: #{output}" unless File.file?(output)
   raise Agentlab::Error, "Codex Cargo closure receipt is stale" unless File.read(output) == rendered
+  raise Agentlab::Error, "missing resolver supplement: #{resolver_output}" unless File.file?(resolver_output)
+  unless File.read(resolver_output) == resolver_rendered
+    raise Agentlab::Error, "Codex Cargo resolver supplement is stale"
+  end
 
-  puts "Codex Cargo closure receipt is current: #{receipt.fetch('counts').fetch('selected_packages')} packages"
+  puts "Codex Cargo closure receipt is current: #{receipt.fetch('counts').fetch('selected_packages')} packages; resolver supplement #{resolver_supplement.fetch('counts').fetch('resolver_only_packages')} packages"
 else
   File.write(output, rendered)
+  File.write(resolver_output, resolver_rendered)
   puts "Wrote #{output}: #{receipt.fetch('counts').fetch('selected_packages')} packages"
+  puts "Wrote #{resolver_output}: #{resolver_supplement.fetch('counts').fetch('resolver_only_packages')} resolver-only packages"
 end

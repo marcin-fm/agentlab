@@ -60,7 +60,50 @@ selected_vendor_evidence:
   standalone_offline_directory_source_verified: false
   production_build_input: false
   immutable_hosting: false
-  resolver_blocker: Cargo resolves inactive-target dependency metadata from selected package manifests and requests sources outside the checked Linux closure, including chrono's js-sys dependency. Adding them would broaden the authoritative source and license scope.
+  standalone_limitation: Cargo directory-source resolution requires source metadata outside the checked Linux closure. Those identities remain excluded here and are recorded separately in resolver_supplement_evidence.
+resolver_supplement_evidence:
+  status: reproducible-nondevelopment-resolver-supplement
+  receipt: codex-cli-0.144.5-cargo-resolver-supplement.json
+  receipt_sha256: a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff
+  directory_resolution_packages: 1243
+  authoritative_packages: 1004
+  resolver_only_packages: 239
+  active_all_target_resolver_only_packages: 157
+  inactive_optional_resolver_only_packages: 82
+  registry_packages: 239
+  git_packages: 0
+  workspace_path_packages: 0
+  dependency_kinds:
+  - normal
+  - build
+  excluded_dependency_kinds:
+  - dev
+  dev_dependency_avoidance: RUSTC_BOOTSTRAP=1 cargo -Z avoid-dev-deps, matching Fedora cargo-rpm-macros behavior.
+  identity_evidence: Cargo.lock source and checksum plus checksum-verified normalized Cargo manifest license metadata.
+  authoritative_linux_closure_changed: false
+resolver_vendor_evidence:
+  status: reproducible-resolver-complete-directory-source-evidence
+  receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
+  receipt_sha256: fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b
+  independent_runs: 2
+  byte_identical_receipts: true
+  vendor_directories: 1124
+  selected_vendor_directories: 885
+  resolver_only_vendor_directories: 239
+  registry_packages: 1118
+  git_packages: 6
+  git_repositories: 5
+  tree_sha256: c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe
+  manifest_sha256: 5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8
+  config_sha256: 5d5df5008cf7389f8da7b690846f72eecda85b6cac6570506b3cd479dc5ffa27
+  archive_sha256: 7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b
+  archive_bytes: 231939492
+  selected_target_offline_packages: 1004
+  all_target_offline_packages: 1161
+  empty_cargo_home_resolution: true
+  standalone_offline_directory_source_verified: true
+  production_build_input: false
+  immutable_hosting: false
 lock_normalization:
   status: verified-prep-transform
   source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e

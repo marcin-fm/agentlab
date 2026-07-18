@@ -2,7 +2,7 @@
 name: codex-cli
 status: blocked
 blockers:
-- The exact 885 selected Cargo sources materialize reproducibly, but Cargo directory-source resolution also requires inactive-target sources outside that Linux graph. A reviewed resolver-complete, immutable, license-accounted source model or acceptable Fedora providers is still required.
+- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement materialize and resolve reproducibly, but the 1,124-source combined archive is evidence only. It still needs maintainer review, immutable RPM hosting, selected-aware license integration, and Fedora macro integration.
 - Selected crate v8 149.2.0 has no compatible Fedora provider. A local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but it relies on unsubmitted upstream changes and lacks an immutable, license-complete, network-isolated Fedora 43/44 package proof.
 - npm and GitHub self-update checks plus npm and brew update recommendations need a Fedora-specific offline policy.
 - Offline Fedora 43 and Fedora 44 builds, tests, linked-license evidence, and payload validation have not been completed.
@@ -22,6 +22,22 @@ source_policy:
   selected_vendor_archive_sha256: 06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9
   selected_vendor_reproducible: true
   selected_vendor_standalone_resolvable: false
+  resolver_supplement: codex-cli-0.144.5-cargo-resolver-supplement.json
+  resolver_supplement_sha256: a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff
+  resolver_only_packages: 239
+  resolver_active_all_target_packages: 157
+  resolver_inactive_optional_packages: 82
+  resolver_vendor_receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
+  resolver_vendor_receipt_sha256: fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b
+  resolver_vendor_directories: 1124
+  resolver_vendor_tree_sha256: c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe
+  resolver_vendor_manifest_sha256: 5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8
+  resolver_vendor_config_sha256: 5d5df5008cf7389f8da7b690846f72eecda85b6cac6570506b3cd479dc5ffa27
+  resolver_vendor_archive_sha256: 7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b
+  resolver_vendor_archive_bytes: 231939492
+  resolver_vendor_reproducible: true
+  resolver_vendor_standalone_resolvable: true
+  resolver_vendor_production_build_input: false
   lock_normalization: verified-prep-transform
   lock_normalization_records: 132
   source_lock_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e

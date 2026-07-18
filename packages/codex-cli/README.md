@@ -80,13 +80,47 @@ Two independent output roots produced byte-identical receipts and these hashes:
 - archive: `06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9`
 - receipt: `57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef`
 
-This is selected-source evidence, not a complete Cargo directory source. Cargo
-resolves dependency metadata for inactive targets in selected registry
-manifests and requests sources outside the checked Linux graph; the first
-concrete blocker was `chrono` requesting `js-sys`. Adding those resolver-only
-sources would broaden the authoritative source and license scope. The checked
-configuration is therefore prospective evidence only, and the spec remains
-fail-closed pending a reviewed resolver-complete model.
+This remains selected-source evidence, not a complete Cargo directory source.
+Cargo resolves non-development metadata outside the checked Linux graph; the
+first concrete blocker was `chrono` requesting `js-sys`. Those identities are
+not folded into the authoritative selected closure and are instead recorded by
+the separate resolver supplement below.
+
+## Resolver-Only Source Supplement
+
+The audit now computes the directory-resolution fixed point without development
+dependencies. It starts from the authoritative 1,004 identities, uses Cargo's
+workspace dependency kinds for path packages, follows every external package's
+locked normal/build dependencies regardless of target predicate or optional
+activation, and uses `RUSTC_BOOTSTRAP=1 cargo -Z avoid-dev-deps` to match Fedora
+Cargo macro behavior. The result contains 239 resolver-only registry crates, no
+resolver-only Git or path package, and no `rules_rust` or `rust-sdks` source.
+
+The 239 sources split into 157 packages active in Cargo's all-target graph and
+82 inactive optional metadata packages, including `quinn`. Each record in
+`codex-cli-0.144.5-cargo-resolver-supplement.json` retains the immutable lockfile
+source, checksum, normalized manifest license metadata, immediate lock
+reference, and deterministic dependency path. The receipt SHA-256 is
+`a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff`.
+
+Two independent combined materializations produced byte-identical receipts and
+1,124 vendor directories: 885 authoritative selected sources and 239
+resolver-only sources. Both the 1,004-package selected target and the
+1,161-package active all-target graph resolved offline from an empty Cargo home.
+
+- vendor tree: `c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe`
+- vendor manifest: `5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8`
+- Cargo configuration: `5d5df5008cf7389f8da7b690846f72eecda85b6cac6570506b3cd479dc5ffa27`
+- archive: `7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b`
+- archive size: `231,939,492` bytes
+- receipt: `fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b`
+
+This proves the source model, not its final packaging integration. The archive
+is not immutably hosted, the resolver-only license metadata has not been
+approved as part of the RPM source inventory, and `%cargo_vendor_manifest`,
+complete `bundled(crate(...))` metadata, aggregate linked-license accounting,
+and the no-crate-devel application layout remain later gates. The spec remains
+fail-closed.
 
 ## V8 Source Gate
 
@@ -136,10 +170,10 @@ supplies a prohibited 274,625,900-byte prebuilt Chromium Rust toolchain.
 
 ## Remaining Gates
 
-1. Choose a reviewed resolver-complete Cargo source model without obscuring the
-   exact selected Linux build closure or its broader resolver-only license scope.
+1. Review the separate resolver-only source and license model without obscuring
+   the exact selected Linux build closure.
 2. Publish immutable, checksummed RPM inputs for the accepted registry, Git, and
-   any resolver-only sources, or use acceptable Fedora providers.
+   resolver-only sources, then integrate Fedora vendoring metadata.
 3. Upstream or review the V8 system-toolchain changes, materialize every
    recursive source and license input immutably, and reproduce the build without
    networking in Fedora 43 and Fedora 44 buildroots.
