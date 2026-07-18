@@ -1,7 +1,14 @@
 name: rust-napi-derive3
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  source_identity: The static crates.io archive matches the pinned SHA-256 and embeds exact release commit 2785de583a97e49adea8194090fca2ee12f067c8, also peeled from tag napi-derive-v3.5.9.
+  license_evidence: The published crate omits its declared MIT license, so the spec verifies and installs the immutable workspace LICENSE from the exact release commit.
+  dependency_evidence: Fedora supplies proc-macro2 1, quote 1, syn 2, and ctor 0.6.3 in every selected release; Agentlab supplies convert_case 0.11 and napi-derive-backend 5.1.1 with the selected feature interfaces across all six chroots.
+  patch_evidence: The compatibility patch changes only ctor dependency metadata and generated registration syntax for Fedora's ctor 0.6.3.
+  duplicate_audit: No crate(napi-derive) = 3.5.9 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion free/nonfree repositories as checked on 2026-07-18.
+  source_delivery: The direct static registry URL serves the pinned crate bytes without relying on the crates.io API redirect in isolated COPR source builders.
+  local_validation: The patch applied with fuzz 0; a fresh Fedora 44 x86_64 Mock build completed with no runnable unit tests and two upstream-ignored doctests, all 10 source/binary RPMs passed digest verification and rpmlint, and an offline Mock consumer compiled emitted module registration tokens with Fedora ctor 0.6.3.
 upstream:
   provider: crates_io
   crate: napi-derive
@@ -9,7 +16,19 @@ upstream:
   current_version: 3.5.9
   source_sha256: d4ba572deef53e2c386759a8c2014175a62679d74ff83adc205c8bc0e0285727
   source_url_template: https://static.crates.io/crates/napi-derive/napi-derive-{version}.crate
+supplemental:
+  license_url: https://raw.githubusercontent.com/napi-rs/napi-rs/2785de583a97e49adea8194090fca2ee12f067c8/LICENSE
+  license_commit: 2785de583a97e49adea8194090fca2ee12f067c8
+  license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
+  install_name: LICENSE-MIT
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-napi-derive3
   spec: rust-napi-derive3.spec

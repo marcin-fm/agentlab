@@ -4,20 +4,22 @@
 
 %global crate napi
 %global source_sha256 0c71997d6f7ad4a756966e452426848ac27d3b37a295302d63afbbcce0270f93
-%global license_commit dea608eae7481a47d64aab563a2ab5cdd8eda03c
+%global license_commit 1ac467e06e71f78b983630926c7908894d08e496
 %global license_sha256 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
 
 Name:           rust-napi3
 Version:        3.10.3
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        N-API bindings
 
 License:        MIT
 URL:            https://crates.io/crates/napi
-Source:         %{crates_source}
-Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/napi-rs-LICENSE
-# Automatically generated patch to strip dependencies and normalize metadata
-Patch:          napi-fix-metadata-auto.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/%{crate}-%{version}-LICENSE
+# Fedora-only compatibility repair; upstream release 3.10.3 requires ctor 1 while Fedora supplies ctor 0.6.3.
+Patch0:         napi-ctor0.6.diff
+# Fedora-only target cleanup; the removed dependency is selected only for WASM, while this package targets Fedora Linux.
+Patch1:         napi-no-wasm-tokio.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -625,19 +627,23 @@ install -pm 0644 %{SOURCE1} LICENSE-MIT
 %cargo_prep
 
 %generate_buildrequires
-%cargo_generate_buildrequires
+%cargo_generate_buildrequires -n -f napi8,async,serde-json
 
 %build
-%cargo_build
+%cargo_build -n -f napi8,async,serde-json
 
 %install
-%cargo_install
+%cargo_install -n -f napi8,async,serde-json
 
 %if %{with check}
 %check
-%cargo_test
+%cargo_test -n -f napi8,async,serde-json
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 3.10.3-0.3
+- Enable the package with exact-release source and license provenance.
+- Build and test Kreuzberg's selected Fedora Linux feature surface.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 3.10.3-0.2
 - Install the pinned upstream MIT license omitted from the published crate.

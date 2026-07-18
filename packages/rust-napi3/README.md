@@ -1,10 +1,11 @@
 # rust-napi3
 
-The package retains the pinned supplemental MIT license from napi-rs commit `dea608eae7481a47d64aab563a2ab5cdd8eda03c` with SHA-256 `3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215`; current static repair is recorded, and the package remains unrebuilt.
+The package retains the pinned supplemental MIT license from exact `napi-v3.10.3` release commit `1ac467e06e71f78b983630926c7908894d08e496` with SHA-256 `3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215`.
 
 ## Finalization status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64. It builds and tests Kreuzberg's selected `napi8`, `async`, and `serde-json` feature surface without default features.
 
-Final direct-v3 Rust package import for `napi 3.10.3`, including its Fedora
-metadata patch. The published crate omits its license file; the current spec installs the pinned immutable upstream copy. Publication approval remains blocked.
+A fresh Fedora 44 x86_64 Mock build passed its selected feature build and one test. All 50 source/binary RPMs passed digest verification and `rpmlint` with zero errors or warnings, and a separate offline Mock consumer compiled the selected `napi` and `napi-derive` macro surface.
+
+The Fedora patches independently select ctor 0.6.3 and omit only the WASM-specific Tokio dependency. The published crate omits its license file; the spec installs the pinned immutable upstream copy.

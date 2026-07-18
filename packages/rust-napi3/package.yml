@@ -1,8 +1,14 @@
 name: rust-napi3
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but the supplemental-license repair has not received a new serialized clean-build/rpmlint validation.
-  - COPR enablement and Fedora/RPM Fusion duplicate/license approval are not finalized.
+status: enabled
+blockers: []
+validation:
+  source_identity: The static crates.io archive matches the pinned SHA-256 and embeds exact release commit 1ac467e06e71f78b983630926c7908894d08e496, also peeled from tag napi-v3.10.3.
+  license_evidence: The published crate omits its declared MIT license, so the spec verifies and installs the immutable workspace LICENSE from the exact release commit.
+  dependency_evidence: Fedora 43, Fedora 44, and Rawhide provide all 30 external all-feature requirements; Agentlab provides napi-build 2 and napi-sys 3.2.2 with every required feature across all six chroots.
+  patch_evidence: One metadata patch selects Fedora ctor 0.6.3; the other removes only a WASM-specific Tokio dependency while retaining the Fedora Linux Tokio target.
+  duplicate_audit: No crate(napi) = 3.10.3 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion free/nonfree repositories as checked on 2026-07-18.
+  source_delivery: The direct static registry URL serves the pinned crate bytes without relying on the crates.io API redirect in isolated COPR source builders.
+  local_validation: Both patches applied with fuzz 0; a fresh Fedora 44 x86_64 Mock build passed the selected feature build and its one test, all 50 source/binary RPMs passed digest verification and rpmlint, and an offline Mock consumer compiled the selected napi/derive macro surface.
 upstream:
   provider: crates_io
   crate: napi
@@ -11,11 +17,18 @@ upstream:
   source_sha256: 0c71997d6f7ad4a756966e452426848ac27d3b37a295302d63afbbcce0270f93
   source_url_template: https://static.crates.io/crates/napi/napi-{version}.crate
 supplemental:
-  license_url: https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE
-  license_commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c
+  license_url: https://raw.githubusercontent.com/napi-rs/napi-rs/1ac467e06e71f78b983630926c7908894d08e496/LICENSE
+  license_commit: 1ac467e06e71f78b983630926c7908894d08e496
   license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
   install_name: LICENSE-MIT
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-napi3
   spec: rust-napi3.spec

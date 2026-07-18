@@ -4,16 +4,20 @@
 
 %global crate napi-derive
 %global source_sha256 d4ba572deef53e2c386759a8c2014175a62679d74ff83adc205c8bc0e0285727
+%global license_commit 2785de583a97e49adea8194090fca2ee12f067c8
+%global license_sha256 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
 
 Name:           rust-napi-derive3
 Version:        3.5.9
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        N-API procedural macros
 
 License:        MIT
 URL:            https://crates.io/crates/napi-derive
-Source:         %{crates_source}
-Patch:          napi-derive-fedora-crates.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/%{crate}-%{version}-LICENSE
+# Fedora-only ctor 0.6.3 compatibility repair; upstream release 3.5.9 uses ctor 1 metadata and attribute syntax.
+Patch0:         napi-derive-fedora-crates.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -32,7 +36,7 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENSE-MIT
 %doc %{crate_instdir}/CHANGELOG.md
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
@@ -135,23 +139,29 @@ use the "type-def" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_sha256}  %{SOURCE1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm 0644 %{SOURCE1} LICENSE-MIT
 %cargo_prep
 
 %generate_buildrequires
-%cargo_generate_buildrequires
+%cargo_generate_buildrequires -n -f strict,type-def
 
 %build
-%cargo_build
+%cargo_build -n -f strict,type-def
 
 %install
-%cargo_install
+%cargo_install -n -f strict,type-def
 
 %if %{with check}
 %check
-%cargo_test
+%cargo_test -n -f strict,type-def
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 3.5.9-0.2
+- Enable the package with exact-release source and license provenance.
+- Build and test the selected strict and type-def feature surface.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.5.9-0.1
 - Add the initial repository packaging changelog.

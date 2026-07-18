@@ -58,29 +58,36 @@ patches:
     effect: Remove unavailable arbtest dev-dependency.
   - path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/napi/napi-fix-metadata-auto.diff
     sha256: 32652bc96458568267d5d1062977425be66a870e5d1f9771ea60a148ae10dedc
-    effect: Use Fedora ctor 0.6.3 and remove WASM-only Tokio dependency.
+    effect: Historical retained-proof patch that used Fedora ctor 0.6.3 and removed the WASM-only Tokio dependency.
+    superseded_by: [napi-ctor0.6.diff, napi-no-wasm-tokio.diff]
   - path: /srv/tmp/agentlab-kreuzberg/final-validation/license-fixes/html-to-markdown-rs/html-to-markdown-rs-fedora-crates.diff
     sha256: a6627da78e25885d0eda3bc6242ed533813b54651aea2ae07832495838522847
     effect: Pin Fedora regex 1.12.4 and disable fixture-dependent test targets.
 supplemental_license_sources:
   napi_rs_mit:
-    packages: [rust-napi3, rust-napi-sys3, rust-napi-derive-backend5]
+    packages: [rust-napi3, rust-napi-sys3, rust-napi-derive3, rust-napi-derive-backend5]
     commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c
     url: https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE
     sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
     installed_as: LICENSE-MIT
     exact_release_override:
+      rust-napi3: {commit: 1ac467e06e71f78b983630926c7908894d08e496, url: https://raw.githubusercontent.com/napi-rs/napi-rs/1ac467e06e71f78b983630926c7908894d08e496/LICENSE, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215}
+      rust-napi-derive3: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, url: https://raw.githubusercontent.com/napi-rs/napi-rs/2785de583a97e49adea8194090fca2ee12f067c8/LICENSE, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215}
       rust-napi-derive-backend5: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, url: https://raw.githubusercontent.com/napi-rs/napi-rs/2785de583a97e49adea8194090fca2ee12f067c8/LICENSE, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215}
     current_spec_sha256:
-      rust-napi3: f67d4cbc132969d48ab17bf072b9883741567cf9ab1b008a9217ab4dc7541672
+      rust-napi3: 484d95839650cd073269339928b461fd3aeaf1685d5cefa2a77eaea114f5a902
       rust-napi-sys3: 129774a4c41b3814c1f6c5e12e64bc22dc854953acba755de08a1a208593bf48
+      rust-napi-derive3: b4444774885adb0a33a18f42eb5df97410ff094410ed4c848f3bed1de75845c8
       rust-napi-derive-backend5: 992c728cea16c32537b75518c942316e9cd202542ebde542a6d20344a07859b4
-    validation: immutable URLs fetched and checksums verified; rust-napi-sys3 build 10740891 and rust-napi-derive-backend5 build 10740892 passed all six COPR chroots, downloaded x86_64 artifacts passed digest verification and rpmlint, and rust-napi3 remains blocked
+    validation: immutable URLs fetched and checksums verified; the lower N-API pair passed all six COPR chroots, while rust-napi3 and rust-napi-derive3 passed fresh Fedora 44 local clean builds, artifact rpmlint, and an offline selected-feature consumer compile
 dependency_patch_audit:
   package_records: 63
   declared_patch_members: 40
   result: every repository patch byte-matches the corresponding retained successful SRPM member
   compatibility_repairs:
+    napi-ctor0.6.diff: 2f463e692a77f8f53fd536e6b23ad19ad04f704f22b521e2821e5ca0c58cb1ad
+    napi-no-wasm-tokio.diff: 5c338b771a819652ef3875b503d05974ebed43ce1f0ebfdd10479af0b32241ed
+    napi-derive-fedora-crates.diff: 6f78d7ddd4c4f3065a0fb2a2ecce098fdee46ecb55ac2af1def788f1fabeef7b
     napi-derive-backend-ctor-syntax.patch: f63c371fc549712674d7905c007f3fe3b01c550bb7f1b493fed421748f219d98
     lopdf-time-0.3.47-compat.diff: 2d34079b7f130bda07297dafd8b02d79e76825c29ab4e6716cfbcb07adaac9c3
 import_policy: Final package specs and patches are imported under packages/rust-*; upstream crate archives, RPMs, SRPMs, Mock roots, logs, and caches remain excluded.

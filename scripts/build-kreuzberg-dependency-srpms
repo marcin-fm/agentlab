@@ -104,14 +104,21 @@ def materialize_package_sources(package_dir, spec, targets, sources, missing)
   end
 
   supplemental = metadata["supplemental"]
-  return records unless supplemental.is_a?(Hash) && missing.include?("napi-rs-LICENSE")
+  return records unless supplemental.is_a?(Hash)
 
   url = supplemental.fetch("license_url")
   expected_sha256 = supplemental.fetch("license_sha256")
+  filenames = targets.flat_map { |target| expanded_source_entries(spec, target) }
+    .select { |entry| entry.fetch(:url) == url }
+    .map { |entry| entry.fetch(:filename) }
+    .uniq
+  return records if (filenames & missing).empty?
+  abort "expected one supplemental source member for #{url}, found #{filenames.length}" unless filenames.one?
+
   content, actual_sha256 = download_verified_source(url, expected_sha256)
 
-  File.binwrite(File.join(sources, "napi-rs-LICENSE"), content)
-  records << "napi-rs-LICENSE=#{actual_sha256}@#{url}"
+  File.binwrite(File.join(sources, filenames.first), content)
+  records << "#{filenames.first}=#{actual_sha256}@#{url}"
   records
 end
 
