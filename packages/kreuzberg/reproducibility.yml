@@ -5,11 +5,11 @@ source_inputs:
   source0:
     url: https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v4.10.2.tar.gz
     sha256: 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
-    observed_path: /srv/tmp/agentlab-kreuzberg/final-validation/f44/SOURCES/v4.10.2.tar.gz
+    observed_path: /srv/tmp/agentlab-kreuzberg/current-application-srpms/sources-0.0.5/v4.10.2.tar.gz
   source1:
     url: https://registry.npmjs.org/@kreuzberg/node/-/node-4.10.2.tgz
     sha256: 44e344738f22c6d864046e14fd5a04c63f4f1451a6275934410bfa1f428f4025
-    observed_path: /srv/tmp/agentlab-kreuzberg/final-validation/f44/SOURCES/node-4.10.2.tgz
+    observed_path: /srv/tmp/agentlab-kreuzberg/current-application-srpms/sources-0.0.5/node-4.10.2.tgz
 repositories:
   f44:
     rpm_count: 371
@@ -27,42 +27,150 @@ repositories:
     source_manifest_sha256: 4a75226ee0a0187d12f7c5f5e2e3a4ae3ac7a634f3fe77d3eebbe19791a8a6d0
     evidence_only: true
 srpms:
-  f44_kreuzberg:
-    path: /srv/tmp/agentlab-kreuzberg/final-validation/f44/SRPMS/kreuzberg-4.10.2-0.1.fc44.src.rpm
-    historical_validated_sha256: e4b62e0e01598695cd53b69c7fd3a5546fea269986a16ae606cf14f1a62a6e6e
-    historical_validation: Fedora 44 v19 functional and rpmlint result
-    current_path_sha256: c6f1dade2e1cd5b4af23996ca97e133e4cfb3473a3b22d061e1447cb9b11cc8c
-    current_embedded_collector_sha256: 0702d4dc8befe78f74fa997793cb959d65c2d3ec443077990dcbd10a8a5e1a60
-    current_candidate_validation: not equivalent to the historical v19 artifact and not validated in this pass
-    path_content_drift: true
-    distributable: false
+  payload_sha256: a855c5db001accb88229a9ece9c63c54c1de12c9a0d6a1098ccb1fb5b525e90c
+  payload_reproducible_across_two_builds_and_targets: true
+  whole_srpm_reproducible: false
+  whole_srpm_difference_scope: RPM header bytes; extracted cpio payloads are identical
   f43_kreuzberg:
-    path: /srv/tmp/agentlab-kreuzberg/final-f43/kreuzberg/SRPMS/kreuzberg-4.10.2-0.1.fc43.src.rpm
-    sha256: 8e430e529e574675ff4205c48b444642774de9adfa1b8b1ad328890ca15df84
+    path: /srv/tmp/agentlab-kreuzberg/current-application-srpms/fedora-43-v005/kreuzberg-4.10.2-0.0.5.fc43.src.rpm
+    sha256: be81d64c7f73103718d4e592f4e2fa784730206f3cb12e9ce2405f6bbf7cfda2
+    independent_rebuild_path: /srv/tmp/agentlab-kreuzberg/repro-check-0.0.5/f43/kreuzberg-4.10.2-0.0.5.fc43.src.rpm
+    independent_rebuild_sha256: 8119cb6f2c53522cb5f2498bb48e6255746848678c2ee98ad8159f4b6b9b42f7
     distributable: false
+  f44_kreuzberg:
+    path: /srv/tmp/agentlab-kreuzberg/current-application-srpms/fedora-44-v005/kreuzberg-4.10.2-0.0.5.fc44.src.rpm
+    sha256: 08e3131babe4cc8846f9d107a0f37327a8c8410353d385d829159221d80c733b
+    independent_rebuild_path: /srv/tmp/agentlab-kreuzberg/repro-check-0.0.5/f44/kreuzberg-4.10.2-0.0.5.fc44.src.rpm
+    independent_rebuild_sha256: 5d0c917dbe39119f6db8eabf638f98a4e94dba096f20a84c1f519d166bf1bec0
+    distributable: false
+current_spec_sha256: 79dfba6fc5c15eca31c6ddaece5a38288fdaad1ecb5e093b207d754ca2c06c84
 final_patches:
-  kreuzberg-ctor-features.patch: 8bae856d718e529d9d80634a6348c33ce410967df740e789eacb03bacef338ab
-  kreuzberg-fedora-crates.patch: 6283ec9746acc4b08a22d2707bb7600f99758430df27ca8df17c63a73e5830f9
-  kreuzberg-fedora-runtime.patch: 4bb47a02cad897ac33eb645c14cec903f783edab6f9b15ed45612767a67b1ca4
+  kreuzberg-system-pdfium.patch: 7684d6b56ec021df8f8abf1598db4b2a5b6978375266732937c373f51c5c8253
+  kreuzberg-ort-dynamic.patch: 34088e228751de9273a19f734c0554604374779759d7a04e5be670bdf440f91c
+  kreuzberg-system-tesseract-feature.patch: 77cd61e02f03ba4e267d0ba5be2d4aa337fadd9ddb95b9a14e89658d191435ab
+  kreuzberg-node-cli-cleanup.patch: 821cc5182321588391500d104918cae96f6dc01ea5f5fc30133d19cf9066bba6
+  kreuzberg-node-workspace.patch: f4c3e365d4a5c403db3ab7c3e40acc7593d180e482742598b3c367fc94420ac4
   kreuzberg-native-targets.patch: 7d974c4e0ac3d289b4e707e1312ed93c8dc537e87ca132d4ecdbda5411bd9bef
+  kreuzberg-ctor-compat.patch: a400a563f4e78eecf91528ce97e30745745ab44c69e975f145bd7977ec5b5f73
+  kreuzberg-tokio-pin.patch: 71a649ab8f05dc0c7d4d028a676505ef82b3694cdec3bb062dc8bd3ca7cfa07a
+  kreuzberg-no-mimalloc.patch: 184375981957e4b3819f440981361d8e8772954ae971295095dd74172efc2a16
+  kreuzberg-ndarray-compat.patch: a1082ed0df3503ccba28395455cb9da7af0b08b354499a3b511ee007d8123664
+  kreuzberg-fedora-version-pins.patch: f0542a3d99400af8237589b9e8f45d332cfa30a9c0e78fc3cc7fda2aa2edde30
+  kreuzberg-calamine-compat.patch: d9476932793267cf42de5311602b774212f5028ca19fcbe132efed1e10f34e87
+  kreuzberg-chardetng-compat.patch: d50aa62d9e31c5fff585ba7321be9c32795fb680d283d4d57c3b2cf7fa34f0bc
+  kreuzberg-tokenizers-compat.patch: 0519ebebe1185f0fb57a20efdbcf20a9bceb2bc31f7d93ae42b387c707156014
+  kreuzberg-hf-hub-compat.patch: 2850d2f53899df0db527c46171865dbdc028d58b72d9d51d72996aef6082ac21
+  kreuzberg-onnxruntime-path.patch: 71628566f7841d0266d735f44488d6529bc3b2fb4a901ed7c6d9d458dced0397
+  kreuzberg-pdfium-runtime-path.patch: 31101d66fd2e02e5c76838159e40e9a4ef02dcd7ba516ee92e3d2bb6530d4ddc
+  kreuzberg-system-tesseract.patch: c244ccba940c38dbf2eba988535022bc12436164eda4cad828a667cdfc63659c
   kreuzberg-node-no-ffi-artifacts.patch: 950fd7e5bcada794a96cd52935ccd61e4b8bcd8f3750b51ad6a759338b3e028b
   kreuzberg-node-no-napi-type-def.patch: ebf73498eb3646e8e718a72de1a38b7599c64464b32b0a8bc6020b3a53713f44
-  kreuzberg-node-workspace.patch: f4c3e365d4a5c403db3ab7c3e40acc7593d180e482742598b3c367fc94420ac4
   kreuzberg-node-wrapper-fedora.patch: 1815f59e2f2c024d2e1f3e6a6ed5b9a2dcbd5c2a059f2001b0c74f77a55e6d09
-  kreuzberg-system-libraries.patch: 76ee68ac201c0ddd8ad3b5a44d329ce6a09707165b822e82488921b5f81abf65
-  kreuzberg-system-tesseract.patch: 0fb948eecbb55f3456144d08c44d0fde245cab0656a004492f4f21ed7397ad20
-collector:
+patch_series_validation:
+  patch_count: 20
+  wrapper_patch_count: 1
+  ordered_zero_fuzz: true
+  former_applied_tree_equivalent: true
+  comparison: regular file SHA-256 and symlink target, excluding patch backup artifacts
+  log: /srv/tmp/agentlab-kreuzberg/current-serialized-v1/patch-split-verification-v20.log
+  log_sha256: 077dbef06382653f981733dc28d36a0bfc574d47e38d50b6743ab94718543fb6
+  provenance:
+    hf_hub: Fedora API adaptation records Na'aman Hirschfeld and upstream commit 8fa32df7d7960652a0cd3d9bbee9915c047e5125; not an exact backport
+    calamine: Fedora API reversal records Na'aman Hirschfeld and upstream context commit 1b63779dd38cf042007739ccb3d1d2f3aacb697d; not a backport
+license_accounting:
+  custom_collector_removed: true
+  runtime_forensic_corpus_removed: true
+  retained: aggregate SPDX, upstream LICENSE, and generated LICENSE.dependencies
   historical_receipt_sha256: 95cdcf18a4d0387ce2a8a6fbe306816b0d56fe49c6a150e349dd6f1e9c826a44
-  current_repository_sha256: c6b273d9a9961ab6ffa3bf0b4936f23c89b60ca782ca10949ab6fecc1dc1fb5a
-  current_repository_state: multiple RPM owners handled individually; full application rebuild not run in this pass
+  removed_collector_sha256: c6b273d9a9961ab6ffa3bf0b4936f23c89b60ca782ca10949ab6fecc1dc1fb5a
+  standard_macro_flow: configured in release 0.0.5 for the narrowed, system-library workspace
+  exact_build_inventory: generated and required nonempty in native F43/F44 builds
+current_dependency_validation:
+  manifest:
+    path: /srv/tmp/agentlab-kreuzberg/current-proof-srpms/manifest.tsv
+    records: 126
+    sha256: fb2c05b87255e450a523ba5ca63af99c5e4adfdb71e8cc08acdcf2a61d29ee5b
+    aggregate_srpm_sha256: 3881074390d84906555428543ebdf08a232eb5425c46f63c341742ca5a989fd6
+  copr_project: marcin/agentlab-aarch64-proof-20260717-v1
+  chroots: [fedora-43-x86_64, fedora-43-aarch64, fedora-44-x86_64, fedora-44-aarch64]
+  exact_package_chroot_pairs: 252
+  exact_package_chroot_pairs_succeeded: 252
+  supplemental_f43_provider_builds:
+    rust-fearless_simd: {x86_64: 10738548, aarch64: 10738498, state: succeeded}
+    rust-hayro-jpeg2000: {x86_64: 10738550, aarch64: 10738502, state: succeeded}
+  package_rpmlint: not retained as a complete 63-package evidence set
+current_application_validation:
+  copr_project: marcin/agentlab-aarch64-proof-20260717-v1
+  nvr: kreuzberg-4.10.2-0.0.5
+  rpm_installation_performed: false
+  builds:
+    f43:
+      id: 10739044
+      state: succeeded
+      x86_64: {ended_on: 1784333125, builder_log: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/logs/fedora-43-x86_64/builder-live.log.gz, builder_log_sha256: 22f84e1d32ae14cdd3b28e5a69ee598517f83017f0c33959505f37f7296728d0}
+      aarch64: {ended_on: 1784334829, builder_log: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/logs/fedora-43-aarch64/builder-live.log.gz, builder_log_sha256: 97e8134998c1b71fe83c6719bc3dac615bfd0dc2c5bf4b174e3d120777ff9937}
+    f44:
+      id: 10739040
+      state: succeeded
+      x86_64: {ended_on: 1784332176, builder_log: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/logs/fedora-44-x86_64/builder-live.log.gz, builder_log_sha256: aa8defd188e54630dab9c48d5e17e5d567b8e528b3db3dd34561564af67c6cb8}
+      aarch64: {ended_on: 1784337658, builder_log: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/logs/fedora-44-aarch64/builder-live.log.gz, builder_log_sha256: 46595d2203d97e82cdc96db1484e5bade24d6b3b417fe5326301143f5846241a}
+  native_checks:
+    cli_binary_tests: 39_passed
+    selected_cli_integration_suites: [2_passed, 16_passed, 1_passed]
+    cli_smokes: [version, mime_text, text_extraction, pdf_extraction]
+    node_napi_smoke: passed_with_target_native_addon_in_all_four_chroots
+  selected_artifacts:
+    f44_x86_64:
+      cli_rpm: {path: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/rpms/fedora-44-x86_64/fedora-44-x86_64/kreuzberg-4.10.2-0.0.5.fc44.x86_64.rpm, sha256: 4fb9b249b4ce2269c1775caae570fd9533e250fd77358be8b33a8354befbd121, size: 38099820}
+      node_rpm: {path: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/rpms/fedora-44-x86_64/fedora-44-x86_64/nodejs-kreuzberg-4.10.2-0.0.5.fc44.x86_64.rpm, sha256: c965607624282278f94aba415b6652e28b72eb5aef7806a79f6ba3ae8be23851, size: 44839143}
+      cli_payload: [/usr/bin/kreuzberg, README.md, LICENSE, LICENSE.dependencies, build-id]
+      node_payload: [generated JavaScript, CommonJS, ESM, declarations, package metadata, README, kreuzberg-node.linux-x64-gnu.node]
+      cli_provides: [kreuzberg = 4.10.2-0.0.5.fc44, kreuzberg(x86-64) = 4.10.2-0.0.5.fc44]
+      cli_capability_requires: [onnxruntime(x86-64) >= 1.18, pdfium(x86-64) >= 146.0.7678.0, tesseract(x86-64)]
+      node_provides: [nodejs-kreuzberg = 4.10.2-0.0.5.fc44, npm(@kreuzberg/node) = 4.10.2]
+      node_package_requires: [/usr/bin/node, nodejs >= 22, kreuzberg(x86-64) = 4.10.2-0.0.5.fc44]
+      cli_payload_sha256: 70ff0d7fe38e069a88b0b4da8785afe4094aa0b39a3551e232d94cf7236d0eaf
+      addon_payload_sha256: 38c7a88ae5363656eb58e0ce1ae8151b58e88039806053cf973a5d9860470dab
+      elf_machine: Advanced Micro Devices X86-64
+      rpath_runpath: absent_from_cli_and_addon
+      license_dependencies: {rows: 394, sha256: 3fb493c67dcf335d0a7cc6a49ad390b5d9597893e3b46dc053677e542185f18f, ahash: v0.8.12}
+    f43_aarch64:
+      cli_rpm: {path: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/rpms/fedora-43-aarch64/fedora-43-aarch64/kreuzberg-4.10.2-0.0.5.fc43.aarch64.rpm, sha256: 4a9f4846a436c13ee82bc8dff5f13ed35310b2367c2e46dc727ad2e12ebf5ff5, size: 33862388}
+      node_rpm: {path: /srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044/rpms/fedora-43-aarch64/fedora-43-aarch64/nodejs-kreuzberg-4.10.2-0.0.5.fc43.aarch64.rpm, sha256: 43c4764a20a75698fc80db7af7c945ca7de3807b83a5936859176ad90be63a71, size: 39859360}
+      cli_payload: [/usr/bin/kreuzberg, README.md, LICENSE, LICENSE.dependencies, build-id]
+      node_payload: [generated JavaScript, CommonJS, ESM, declarations, package metadata, README, kreuzberg-node.linux-arm64-gnu.node]
+      cli_provides: [kreuzberg = 4.10.2-0.0.5.fc43, kreuzberg(aarch-64) = 4.10.2-0.0.5.fc43]
+      cli_capability_requires: [onnxruntime(aarch-64) >= 1.18, pdfium(aarch-64) >= 146.0.7678.0, tesseract(aarch-64)]
+      node_provides: [nodejs-kreuzberg = 4.10.2-0.0.5.fc43, npm(@kreuzberg/node) = 4.10.2]
+      node_package_requires: [/usr/bin/node, nodejs >= 22, kreuzberg(aarch-64) = 4.10.2-0.0.5.fc43]
+      cli_payload_sha256: f713590ca62e19bd807e9fc7e75d1a47dfe7d883f9ee57778b2974962190911d
+      addon_payload_sha256: 74627d3efad5bbe94420807644454e45bac8ce0029e6aac1482bbf5aec9f9106
+      elf_machine: AArch64
+      rpath_runpath: absent_from_cli_and_addon
+      license_dependencies: {rows: 394, sha256: cf0995a3d08bc32f73b286547804d4a6b4046aefc09b9a170b1347f55799f047, ahash: v0.8.12}
+  common_native_requires: [libstdc++.so.6, libm.so.6, libtesseract.so.5.5, libleptonica.so.6, libpolyclipping.so.22, libonig.so.5, libzstd.so.1, libgcc_s.so.1, libc.so.6]
+  rpm_license_metadata_matches_reviewed_aggregate: true
+  node_wrapper:
+    dist_cli_sha256: d8021aa8ba18e33662ad55a972995d7ec85f6b10a2fef404836ea05682999260
+    index_js_sha256: 7491de9ca3d46dbbc506462a06996ded172230f5014753383c63e506bc093e28
+    hardcoded_cli_path: /usr/bin/kreuzberg
+    native_library_override: NAPI_RS_NATIVE_LIBRARY_PATH
+    local_x86_64_node: v22.22.2
+    local_direct_api_smoke: passed_with_extracted_exact_f44_polyclipping_library_via_ld_preload
+    local_read_only_namespace_wrapper_smoke: passed
+    local_aarch64_execution: not_attempted_on_x86_64_host
+    native_aarch64_execution: passed_in_both_copr_builder_logs
+  package_rpmlint: not retained as a complete application-package evidence set
 dependency_finalization:
   path: dependency-finalization.yml
   package_records: 63
-  excluded_later_f43_providers: [rust-hayro-jpeg2000, rust-fearless_simd]
+  inventory_exclusions_supplied_for_f43_proof: [rust-hayro-jpeg2000, rust-fearless_simd]
   declared_patch_members_checked: 40
   retained_srpm_patch_bytes: all_match
-  exact_spec_build_state: not rebuilt in this pass
+  exact_spec_build_state: succeeded in all four COPR chroots
 scripts:
+  - path: scripts/build-kreuzberg-dependency-srpms
+    sha256: d6b8965c50fcbd4d1adf323b5ad51537151a870a12d4d39452f85872aaf3737d
   - path: /srv/tmp/agentlab-kreuzberg/final-f44/assemble-repo.sh
     sha256: fe0c5039709bfc12a2fb9acf3a5a6881f9fc584c0f276b288df8b7037168014d
   - path: /srv/tmp/agentlab-kreuzberg/final-f43/generate-manifest.rb

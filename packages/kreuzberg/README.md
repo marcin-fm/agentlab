@@ -9,24 +9,40 @@ published npm artifact is used only for the generated JavaScript loader,
 declarations, and source maps; upstream platform `.node` packages are never
 used. The native addon and CLI must be compiled with Fedora's Rust toolchain.
 
-The completed local validation builds PDFium and the selected Rust closure from
-source. F44 application validation passed with the 371-record closure; F43
-reached the final Node executable correction. The linked license aggregate was
-audited and the tree-sitter parser subset is static. No generated RPMs were
-installed and no COPR state changed.
+Exact-current dependency proof succeeded for all 252 package/chroot pairs in
+Fedora 43 and 44 on x86_64 and aarch64. Application builds `10739044` and
+`10739040` then succeeded in all four native chroots with CLI, text, PDF, and
+real Node N-API checks. Representative x86_64 and aarch64 RPM pairs were
+downloaded and extracted without installation; both inspected CLIs and addons
+have the expected ELF architecture and no RPATH or RUNPATH.
 
-The package remains blocked. Remaining gates are immutable public hosting for
-the generated PDFium/Rust closure, parser subset, and fixture sources; final
-serialized F43/F44 validation after the collector and Node BuildRequires
-corrections; release-boundary approval; and aarch64 proof. Fedora's
-`deepin-pdfium` remains incompatible with Kreuzberg's FPDF API.
+The mechanical patch split, Fedora macro conversion, and license-payload rework
+are complete in the `0.0.5` draft. The former nine-patch stack is split into 20
+single-concern Fedora integration and compatibility patches with adjacent
+purpose and upstream-status comments. The hf-hub and calamine adaptations now
+record the exact later upstream commits and original author whose work they
+incorporate or reverse; they are not represented as exact backports. The ordered
+series applies with zero fuzz and reproduces the former applied `v4.10.2` source
+tree. The custom provider-license collector and `THIRD-PARTY-LICENSES` payload
+were removed; the aggregate SPDX expression, project license, and Fedora Cargo
+`LICENSE.dependencies` inventory remain. Exact built inventories contain 394
+dependency rows, including the previously unavailable `ahash` record.
+
+The package remains blocked. Remaining gates are reproducible generation of the
+published Node loader and declarations from the tagged TypeScript source (or
+omission of that subpackage); immutable public hosting for the generated
+PDFium/Rust closure, parser subset, and fixture sources; full third-party
+license-text evidence; final ONNX
+Runtime/PDFium ABI and runtime review; hf-hub model-download and calamine date
+behavior review; release-boundary approval; and complete retained package-level
+rpmlint evidence. Fedora's `deepin-pdfium` remains incompatible with
+Kreuzberg's FPDF API.
 
 The 63 imported Rust dependency records are finalized in
 `dependency-finalization.yml`. All 40 declared patch files byte-match their
 retained successful SRPM members, including the preserved F43 `comrak` and
-`hayro-jbig2` corrections. This is static and retained-artifact evidence only:
-the corrected exact specs were not rebuilt and package-level `rpmlint` evidence
-is not retained.
+`hayro-jbig2` corrections. The exact-current source-package and binary build
+receipts now cover both stable releases and both architectures.
 
 Compact receipts and audit notes are in `dependency-finalization.yml`,
 `reproducibility.yml`, `validation-summary.md`, `license-review.md`, and

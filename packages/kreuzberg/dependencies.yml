@@ -68,10 +68,16 @@ closure_audit:
   native_sources_verified: true
   generated_sources_verified: true
   offline_verified: true
-  fedora_43_verified: final_node_executable_correction_reached
-  fedora_44_verified: true
-  current_node_buildrequires_correction: recorded_not_rebuilt
-  current_collector_owner_query_correction: recorded_not_rebuilt
+  fedora_43_application: build_10739044_succeeded_x86_64_and_aarch64
+  fedora_44_application: build_10739040_succeeded_x86_64_and_aarch64
+  current_dependency_receipts: exact_current_252_of_252_package_chroot_pairs_succeeded
+  current_node_buildrequires_correction: proven_in_all_four_application_chroots
+  aarch64_application: native_checks_and_node_napi_smokes_succeeded_on_f43_and_f44
+  inspected_payloads: representative_x86_64_and_aarch64_cli_node_pairs_have_expected_architecture_and_no_rpath_or_runpath
+  license_accounting: aggregate_spdx_and_exact_build_generated_394_row_inventories
+  package_rpmlint: complete_evidence_not_retained
+  forensic_license_collector: removed
+  application_patch_stack: 20_single_concern_patches_zero_fuzz_equivalent
   imported_dependency_records: 63
   imported_dependency_patch_members_verified: 40
   imported_dependency_matrix: dependency-finalization.yml
@@ -82,6 +88,6 @@ closure_audit:
   receipt: reproducibility.yml
 gates:
   - Host the generated PDFium, Rust closure, parser subset, and fixture sources immutably for SCM/COPR.
-  - Rerun final serialized F43/F44 application validation after the collector and Node BuildRequires corrections.
   - Approve the Chromium-pinned PDFium release boundary.
-  - Prove the package on aarch64.
+  - Complete final ABI/runtime review for system ONNX Runtime and PDFium plus hf-hub model-download and calamine date behavior.
+  - Publish or otherwise resolve the outstanding third-party license texts and retain complete package-level rpmlint evidence.

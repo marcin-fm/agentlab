@@ -1,0 +1,24 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Select dynamic system Tesseract linking
+
+Select Kreuzberg's existing dynamic-linking feature for the Fedora-provided
+Tesseract and Leptonica libraries.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -229,7 +229,13 @@
+ jotdown = "0.10"
+ kamadak-exif = { version = "0.6.1", optional = true }
+ 
+-kreuzberg-tesseract = { path = "../kreuzberg-tesseract", version = "4.10.2", optional = true }
++kreuzberg-tesseract = {
++    path = "../kreuzberg-tesseract",
++    version = "4.10.2",
++    optional = true,
++    default-features = false,
++    features = ["dynamic-linking"],
++}
+ libc = { workspace = true }
+ liter-llm = { workspace = true, optional = true }
+ log = { workspace = true }

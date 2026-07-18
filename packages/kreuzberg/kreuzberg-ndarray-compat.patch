@@ -1,0 +1,17 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use Fedora's ndarray compatibility version
+
+Align Kreuzberg and Paddle OCR with the packaged ndarray version.
+
+diff --git a/crates/kreuzberg-paddle-ocr/Cargo.toml b/crates/kreuzberg-paddle-ocr/Cargo.toml
+--- a/crates/kreuzberg-paddle-ocr/Cargo.toml
++++ b/crates/kreuzberg-paddle-ocr/Cargo.toml
+@@ -34 +34 @@ image = { workspace = true }
+-ndarray = "0.17"
++ndarray = "0.16.1"
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -240 +240 @@ log = { workspace = true }
+-ndarray = { version = "0.17", optional = true }
++ndarray = { version = "0.16.1", optional = true }

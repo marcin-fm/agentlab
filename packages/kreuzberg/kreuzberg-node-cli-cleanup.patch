@@ -1,0 +1,45 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use the RPM-owned CLI from Node sources
+
+Remove source-level Node CLI dependencies and invoke the source-built RPM CLI
+at its Fedora installation path.
+
+diff --git a/crates/kreuzberg-node/package.json b/crates/kreuzberg-node/package.json
+--- a/crates/kreuzberg-node/package.json
++++ b/crates/kreuzberg-node/package.json
+@@ -102,8 +102,4 @@
+     "typescript": "^5.9.3",
+     "vitest": "^4.1.10"
+-  },
+-  "dependencies": {
+-    "@emnapi/runtime": "1.11.2",
+-    "which": "^7.0.0"
+   }
+ }
+diff --git a/crates/kreuzberg-node/typescript/cli.ts b/crates/kreuzberg-node/typescript/cli.ts
+--- a/crates/kreuzberg-node/typescript/cli.ts
++++ b/crates/kreuzberg-node/typescript/cli.ts
+@@ -9,9 +9,8 @@
+ import { spawnSync } from "node:child_process";
+ import { existsSync } from "node:fs";
+ import { dirname, join } from "node:path";
+ import { fileURLToPath } from "node:url";
+-import which from "which";
+ 
+ declare global {
+   var __filename: string | undefined;
+   var __dirname: string | undefined;
+@@ -32,12 +31,8 @@ function main(argv: string[]): number {
+   const args = argv.slice(2);
+ 
+-  let cliPath: string | undefined;
+-  try {
+-    cliPath = which.sync("kreuzberg-cli");
+-  } catch {}
+-
++  let cliPath: string | undefined = "/usr/bin/kreuzberg";
+   if (!cliPath) {
+     const __dirname = getDirectory();
+     const devBinary = join(__dirname, "..", "..", "..", "target", "release", "kreuzberg");
+     if (existsSync(devBinary)) {
+       cliPath = devBinary;

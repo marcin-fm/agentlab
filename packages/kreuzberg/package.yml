@@ -1,10 +1,11 @@
 name: kreuzberg
 status: blocked
 blockers:
+  - The published Node loader and declarations must be reproduced from the tagged TypeScript source with pinned offline tooling, or the nodejs-kreuzberg subpackage must be omitted.
   - Public immutable hosting for the generated PDFium/Rust closure, 295-record parser subset, and external fixture sources is not available for SCM/COPR consumption.
-  - Final serialized F43/F44 application validation after the cargo-license collector owner-query and Node BuildRequires corrections has not been rerun.
   - Release-boundary approval is pending for the Chromium-pinned PDFium source package.
-  - aarch64 has not been proven; completed validation is x86_64 only.
+  - Final system-library ABI/runtime review remains for ONNX Runtime and PDFium; the retained smokes do not close hf-hub model-download or calamine date-behavior review.
+  - Full third-party license-text publication and a complete retained package-level rpmlint evidence set remain unresolved.
 source_policy:
   rust_and_typescript_source: published v4.10.2 GitHub tag archive
   generated_node_wrapper: published @kreuzberg/node 4.10.2 npm artifact with matching preferred source in Source0
@@ -32,9 +33,20 @@ copr:
 validation:
   pdfium_local_build: true
   rust_closure_local_build: true
-  f44_application: passed
-  f43_application: final_node_executable_correction_reached
-  linked_license_aggregate: audited
+  current_dependency_receipts: exact_current_252_of_252_package_chroot_pairs_succeeded
+  f44_application: build_10739040_succeeded_x86_64_and_aarch64
+  f43_application: build_10739044_succeeded_x86_64_and_aarch64
+  application_builder_logs: four_retained_with_successful_native_checks
+  application_artifact_inspection: representative_x86_64_and_aarch64_cli_node_pairs_extracted_without_installation
+  architecture: x86_64_and_aarch64_proven_by_native_copr_checks_and_elf_headers
+  rpath_runpath: absent_from_inspected_cli_and_native_addon_on_both_architectures
+  license_accounting: exact_build_generated_394_row_inventories_and_aggregate_spdx
+  cargo_macro_remediation: selected_package_buildrequires_and_standard_build_test_license_flow_proven
+  node_native_macro_remediation: exact_current_build_and_runtime_smokes_proven
+  package_rpmlint: complete_evidence_not_retained
+  compatibility_patch_provenance: hf_hub_and_calamine_upstream_context_recorded
+  forensic_license_collector: removed
+  patch_stack: 20_single_concern_patches_zero_fuzz_equivalent
   parser_subset: static
   receipt: validation-summary.md
   reproducibility: reproducibility.yml

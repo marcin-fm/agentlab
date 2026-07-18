@@ -3,35 +3,76 @@
 Paths under `/srv/tmp` below are transient evidence references only and are not
 distributable source locations.
 
-## Fedora 44
+## Current COPR Application Proof
 
-- Local PDFium and the 371-record Rust compatibility repository were used.
-- The current source patches applied with zero fuzz.
-- CLI unit, environment, contract, log, MIME, text, PDF, and N-API extraction checks passed.
-- The five produced artifacts had zero technical `rpmlint` errors and one expected no-upstream-manpage warning.
-- The historically validated v19 source RPM had SHA-256 `e4b62e0e01598695cd53b69c7fd3a5546fea269986a16ae606cf14f1a62a6e6e`. The file currently at `/srv/tmp/agentlab-kreuzberg/final-validation/f44/SRPMS/kreuzberg-4.10.2-0.1.fc44.src.rpm` is a different, unvalidated candidate with SHA-256 `c6f1dade2e1cd5b4af23996ca97e133e4cfb3473a3b22d061e1447cb9b11cc8c`; it must not be treated as the v19 receipt.
-- F44 manifest evidence: `/srv/tmp/agentlab-kreuzberg/final-f44/manifest.tsv`, 371 records, SHA-256 `57875ef73b20eee11166dab63a3db6d768c08a81c6703b73338fce109fb0986a`.
+The exact `4.10.2-0.0.5` application builds succeeded in the transient COPR
+project `marcin/agentlab-aarch64-proof-20260717-v1`:
 
-## Fedora 43
+- F43 x86_64: build `10739044`; builder-log SHA-256 `22f84e1d32ae14cdd3b28e5a69ee598517f83017f0c33959505f37f7296728d0`.
+- F43 aarch64: build `10739044`; builder-log SHA-256 `97e8134998c1b71fe83c6719bc3dac615bfd0dc2c5bf4b174e3d120777ff9937`.
+- F44 x86_64: build `10739040`; builder-log SHA-256 `aa8defd188e54630dab9c48d5e17e5d567b8e528b3db3dd34561564af67c6cb8`.
+- F44 aarch64: build `10739040`; builder-log SHA-256 `46595d2203d97e82cdc96db1484e5bade24d6b3b417fe5326301143f5846241a`.
 
-- The local repository contains 379 RPM records and the final recursive closure includes the F43 `comrak` and `hayro-jbig2` corrections plus released `fearless_simd` and `hayro-jpeg2000` sources.
-- The retained F43 SRPM passed source patching, optimized compilation, CLI tests, CLI MIME/text/PDF smokes, and N-API test compilation.
-- Historical application validation stopped because that retained SRPM required `nodejs-devel` but not `nodejs`; F43 `nodejs-devel` does not install the `node` executable. No final F43 RPM, runtime smoke, or post-build lint result is claimed.
-- The repository now declares both `BuildRequires: nodejs >= 22` and `BuildRequires: nodejs-devel >= 22`, but that correction has not received a new full application rebuild.
-- F43 repository evidence: `/srv/tmp/agentlab-kreuzberg/final-f43/repo-manifest.tsv`, 379 records, SHA-256 `9f058637d8362435a37d95ba8d79ae670ce8d003feec4960d3068dfebd33b13a`; not distributable.
+Every native `%check` ran the CLI binary suite with 39 passes, the selected
+config/environment/contract/log suites with 2, 16, and 1 passes, the Node crate
+suite, CLI MIME/text/PDF smokes, and a real Node N-API extraction smoke. The
+text and PDF assertions found `Hamburgers are delicious` and `Simple document`.
+No complete package-level rpmlint evidence set was retained.
+
+## Extracted RPM Proof
+
+No RPM was installed. The selected non-debug artifacts were queried and
+extracted under
+`/srv/tmp/agentlab-kreuzberg/final-proof-10739040-10739044`:
+
+- F44 x86_64 CLI RPM SHA-256 `4fb9b249b4ce2269c1775caae570fd9533e250fd77358be8b33a8354befbd121`; Node RPM SHA-256 `c965607624282278f94aba415b6652e28b72eb5aef7806a79f6ba3ae8be23851`.
+- F43 aarch64 CLI RPM SHA-256 `4a9f4846a436c13ee82bc8dff5f13ed35310b2367c2e46dc727ad2e12ebf5ff5`; Node RPM SHA-256 `43c4764a20a75698fc80db7af7c945ca7de3807b83a5936859176ad90be63a71`.
+- F44 x86_64 CLI/addon SHA-256 values are `70ff0d7fe38e069a88b0b4da8785afe4094aa0b39a3551e232d94cf7236d0eaf` and `38c7a88ae5363656eb58e0ce1ae8151b58e88039806053cf973a5d9860470dab`.
+- F43 aarch64 CLI/addon SHA-256 values are `f713590ca62e19bd807e9fc7e75d1a47dfe7d883f9ee57778b2974962190911d` and `74627d3efad5bbe94420807644454e45bac8ce0029e6aac1482bbf5aec9f9106`.
+- `file` and `readelf` identify the selected payloads as ELF64 x86-64 and
+  AArch64 respectively. Neither CLI nor addon has an RPATH or RUNPATH.
+- The F43 inventory is identical across the inspected x86_64 and aarch64
+  payloads, has 394 nonblank rows, and hashes to
+  `cf0995a3d08bc32f73b286547804d4a6b4046aefc09b9a170b1347f55799f047`.
+  The F44 x86_64 inventory also has 394 rows and hashes to
+  `3fb493c67dcf335d0a7cc6a49ad390b5d9597893e3b46dc053677e542185f18f`.
+
+Host Node `v22.22.2` loaded the extracted x86_64 addon through
+`NAPI_RS_NATIVE_LIBRARY_PATH`. The host lacked `libpolyclipping.so.22`, so an
+already extracted exact F44 proof library was supplied with `LD_PRELOAD`; no
+package was installed. The API smoke returned version `4.10.2`, detected and
+extracted `text/plain`, and found the fixture text. A read-only Bubblewrap
+namespace overlaid the extracted CLI at `/usr/bin/kreuzberg`; the shipped
+hardcoded wrapper reported `kreuzberg 4.10.2` and extracted the same fixture.
+Local aarch64 execution was not attempted on the x86_64 host; both aarch64 COPR
+builder logs provide native CLI and Node N-API execution evidence.
 
 ## Final Gates
 
-The current repository collector SHA-256 is
-`c6b273d9a9961ab6ffa3bf0b4936f23c89b60ca782ca10949ab6fecc1dc1fb5a`.
-It handles newline-separated RPM owners individually without weakening
-fail-closed missing-evidence behavior, but still needs a later serialized full
-application rebuild. The 63 imported package records were statically finalized;
-all 40 declared patch files byte-match their retained successful SRPM members.
-Package-level `rpmlint` evidence is not retained, current corrected specs were
-not rebuilt in this pass, and aarch64 remains unproven. Immutable fixture/parser
-and PDFium/Rust closure hosting plus PDFium release-boundary approval remain
-external publication blockers.
+The custom full-text collector and `THIRD-PARTY-LICENSES` payload were removed
+under the current Fedora-standard accounting policy. The spec retains the
+aggregate SPDX expression, upstream project license, and generated
+`LICENSE.dependencies` inventory. The former nine-patch application stack is
+split into 20 single-concern patches with adjacent purpose/upstream-status
+comments; every patch is below 200 changed lines, and the ordered series applies
+with zero fuzz and reproduces the former applied source tree.
+
+The current `0.0.5` draft defines the Fedora check bcond, generates selected
+package build requirements, uses Fedora Cargo build/test and workspace license
+macros, preserves Fedora Rust flags, installs the N-API package through the
+native Node path and filter, and removes RPATH/RUNPATH from both native outputs.
+Exact native target builds generated and verified the final inventories.
+The hf-hub and calamine patch headers now record the exact later upstream commits
+and Na'aman Hirschfeld's authorship without claiming exact backports; behavioral
+review beyond the retained test and smoke coverage remains pending.
+
+The 63 imported package records were finalized, all 40 dependency patch files
+byte-match their retained successful SRPM members, and all 252 exact current
+package/chroot pairs succeeded before the application builds. Immutable
+fixture/parser and PDFium/Rust closure hosting, full third-party license-text
+evidence, supplemental N-API license publication, ONNX Runtime/PDFium ABI and
+runtime review, PDFium release-boundary approval, and complete retained
+package-level rpmlint evidence remain blockers.
 
 ## Parser Accounting
 
@@ -40,21 +81,3 @@ records. The archive itself is omitted; the static F44 closure is retained only
 as exact RPM hashes in `license-review.md`. Upstream Kreuzberg documentation
 describes 248 programming languages, which is a separate language count and is
 not replaced by the 295-record archive accounting.
-
-## Later Serialized Rebuild Commands
-
-Run these only after fresh current-spec F43/F44 SRPMs have been staged in the
-shell variables and result directories have been approved. They were not run in
-this finalization pass.
-
-```bash
-nice -n 10 rtk mock -r /srv/tmp/agentlab-kreuzberg/final-f43/fedora-43-kreuzberg.cfg --clean \
-  --addrepo file:///srv/tmp/agentlab-kreuzberg/final-f43/repo \
-  --addrepo file:///srv/tmp/agentlab-kreuzberg/repos/f43 \
-  --rebuild "$F43_SRPM" --resultdir "$F43_RESULTDIR"
-
-nice -n 10 rtk mock -r fedora-44-x86_64.cfg --clean \
-  --addrepo file:///srv/tmp/agentlab-kreuzberg/final-f44/repo \
-  --addrepo file:///srv/tmp/agentlab-kreuzberg/repos/f44 \
-  --rebuild "$F44_SRPM" --resultdir "$F44_RESULTDIR"
-```

@@ -1,0 +1,22 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Discover Fedora's versioned PDFium runtime library
+
+Try the versioned Fedora runtime library before the generic system lookup.
+
+diff --git a/crates/kreuzberg/src/pdf/bindings.rs b/crates/kreuzberg/src/pdf/bindings.rs
+--- a/crates/kreuzberg/src/pdf/bindings.rs
++++ b/crates/kreuzberg/src/pdf/bindings.rs
+@@ -96,6 +96,13 @@
+         }
+     }
+ 
++    #[cfg(all(feature = "system-pdfium", target_os = "linux"))]
++    for path in ["/usr/lib64/libpdfium.so.146", "/usr/lib/libpdfium.so.146"] {
++        if let Ok(bindings) = Pdfium::bind_to_library(path) {
++            return Ok(bindings);
++        }
++    }
++
+     Pdfium::bind_to_system_library().map_err(|e| format!("Failed to bind to system Pdfium library: {}", e))
+ }
+ 

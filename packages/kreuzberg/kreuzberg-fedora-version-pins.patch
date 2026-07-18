@@ -1,0 +1,17 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use available Fedora crate versions
+
+Use compatible Fedora versions for unchanged bitvec, memchr, and regex APIs.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -195 +195 @@ biblib = { version = "0.7", default-features = false, features = ["ris", "pubmed", "xml"], optional = true }
+-bitvec = "1.1"
++bitvec = "1.0.1"
+@@ -240 +240 @@ log = { workspace = true }
+-memchr = "2.8.3"
++memchr = "2.8.2"
+@@ -259 +259 @@ quick-xml = { version = "0.41.0", features = ["serialize"], optional = true }
+-regex = "1.13.0"
++regex = "1.12.4"

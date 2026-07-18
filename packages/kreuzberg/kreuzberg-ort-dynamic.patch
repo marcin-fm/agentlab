@@ -1,0 +1,21 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use dynamic ONNX Runtime feature edges
+
+Keep ONNX Runtime loading dynamic so Fedora supplies the runtime library rather
+than the upstream bundled artifact.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -105,8 +105,8 @@
+-auto-rotate = ["dep:ort", "dep:ndarray", "dep:hf-hub", "dep:sha2", "dep:image", "dep:ureq", "ort-bundled"]
+-layout-detection = ["dep:ort", "dep:ndarray", "dep:hf-hub", "dep:sha2", "dep:image", "tokio-runtime", "ort-bundled"]
++auto-rotate = ["dep:ort", "dep:ndarray", "dep:hf-hub", "dep:sha2", "dep:image", "dep:ureq", "ort-dynamic"]
++layout-detection = ["dep:ort", "dep:ndarray", "dep:hf-hub", "dep:sha2", "dep:image", "tokio-runtime", "ort-dynamic"]
+ language-detection = ["dep:whatlang"]
+ chunking = ["dep:text-splitter"]
+ chunking-tokenizers = ["chunking", "dep:tokenizers", "text-splitter/tokenizers"]
+-embeddings = ["dep:hf-hub", "dep:ort", "dep:ndarray", "dep:tokenizers", "chunking", "tokio-runtime", "ort-bundled"]
++embeddings = ["dep:hf-hub", "dep:ort", "dep:ndarray", "dep:tokenizers", "chunking", "tokio-runtime", "ort-dynamic"]
+ stopwords = []
+ quality = ["dep:unicode-normalization", "dep:chardetng", "stopwords"]

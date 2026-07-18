@@ -1,0 +1,130 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Select the Fedora CLI, Node, and FFI feature surface
+
+Use system PDFium and the released CLI, Node, and FFI features selected for
+the Fedora package instead of bundled PDFium and broad defaults.
+
+diff --git a/crates/kreuzberg-node/Cargo.toml b/crates/kreuzberg-node/Cargo.toml
+--- a/crates/kreuzberg-node/Cargo.toml
++++ b/crates/kreuzberg-node/Cargo.toml
+@@ -22,7 +22,31 @@
+ bytes = { workspace = true }
+ ctor = { workspace = true }
+ html-to-markdown-rs = { workspace = true }
+-kreuzberg = { workspace = true, features = ["bundled-pdfium", "full"] }
++kreuzberg = { workspace = true, features = [
++    "system-pdfium",
++    "pdf",
++    "excel",
++    "office",
++    "hwp",
++    "iwork",
++    "email",
++    "html",
++    "xml",
++    "archives",
++    "language-detection",
++    "quality",
++    "keywords",
++    "mdx",
++    "chunking-tokenizers",
++    "ocr",
++    "paddle-ocr",
++    "layout-detection",
++    "embeddings",
++    "tree-sitter",
++    "ort-dynamic",
++    "tokio-runtime",
++    "simd-utf8",
++] }
+ kreuzberg-ffi = { workspace = true }
+ napi = { version = "3", default-features = false, features = ["napi8", "async", "serde-json"] }
+ napi-derive = "3"
+diff --git a/crates/kreuzberg-ffi/Cargo.toml b/crates/kreuzberg-ffi/Cargo.toml
+--- a/crates/kreuzberg-ffi/Cargo.toml
++++ b/crates/kreuzberg-ffi/Cargo.toml
+@@ -30,6 +30,30 @@
+ ctor = { workspace = true }
+ html-to-markdown-rs = { workspace = true }
+-kreuzberg = { workspace = true, features = ["bundled-pdfium", "full"] }
++kreuzberg = { workspace = true, features = [
++    "system-pdfium",
++    "pdf",
++    "excel",
++    "office",
++    "hwp",
++    "iwork",
++    "email",
++    "html",
++    "xml",
++    "archives",
++    "language-detection",
++    "quality",
++    "keywords",
++    "mdx",
++    "chunking-tokenizers",
++    "ocr",
++    "paddle-ocr",
++    "layout-detection",
++    "embeddings",
++    "tree-sitter",
++    "ort-dynamic",
++    "tokio-runtime",
++    "simd-utf8",
++] }
+ log = { workspace = true }
+ rayon = { workspace = true, optional = true }
+ serde = { workspace = true }
+diff --git a/crates/kreuzberg-cli/Cargo.toml b/crates/kreuzberg-cli/Cargo.toml
+--- a/crates/kreuzberg-cli/Cargo.toml
++++ b/crates/kreuzberg-cli/Cargo.toml
+@@ -21,21 +21,22 @@
+ 
+ [features]
+ default = [
+-    "bundled-pdfium",
++    "system-pdfium",
+     "embeddings",
+     "html",
+-    "liter-llm",
+     "ocr",
+     "paddle-ocr",
+     "layout-detection",
+     "chunking-tokenizers",
+     "tree-sitter",
+ ]
+ 
+ bundled-pdfium = ["kreuzberg/bundled-pdfium"]
++system-pdfium = ["kreuzberg/system-pdfium"]
+ static-pdfium = ["kreuzberg/static-pdfium"]
+ ort-bundled = ["kreuzberg/ort-bundled"]
++ort-dynamic = ["kreuzberg/ort-dynamic"]
+ 
+ ocr = ["kreuzberg/ocr"]
+ 
+ api = ["kreuzberg/api"]
+@@ -68,7 +69,23 @@
+ base64 = { workspace = true }
+ clap = { workspace = true }
+ clap_complete = "4.6"
+-kreuzberg = { workspace = true, features = ["formats", "tokio-runtime", "simd-utf8"] }
++kreuzberg = { workspace = true, features = [
++    "pdf",
++    "excel",
++    "office",
++    "hwp",
++    "iwork",
++    "email",
++    "html",
++    "xml",
++    "archives",
++    "language-detection",
++    "quality",
++    "keywords",
++    "mdx",
++    "tokio-runtime",
++    "simd-utf8",
++] }
+ serde_json = { workspace = true }
+ serde_toon_format = { workspace = true }
+ tokio = { workspace = true }

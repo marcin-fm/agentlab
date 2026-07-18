@@ -1,0 +1,260 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "csv"
+require "digest"
+require "fileutils"
+require "open-uri"
+require "open3"
+require "optparse"
+require "shellwords"
+require "uri"
+require "yaml"
+
+REPO_ROOT = File.expand_path("..", __dir__)
+DEFAULT_OUTPUT = "/srv/tmp/agentlab-kreuzberg/current-proof-srpms"
+DEFAULT_SOURCE_MANIFEST = "/srv/tmp/agentlab-kreuzberg/final-f43/source-manifest.tsv"
+FINALIZATION = File.join(REPO_ROOT, "packages/kreuzberg/dependency-finalization.yml")
+
+def run!(*command, env: {}, chdir: nil)
+  spawn_options = chdir ? {chdir: chdir} : {}
+  stdout, stderr, status = Open3.capture3(env, *command, **spawn_options)
+  return stdout if status.success?
+
+  abort <<~ERROR
+    command failed: #{command.shelljoin}
+    #{stdout}#{stderr}
+  ERROR
+end
+
+def extract_srpm(source, destination)
+  FileUtils.mkdir_p(destination)
+  statuses = Open3.pipeline(
+    ["rpm2cpio", source],
+    ["cpio", "-idm", "--quiet"],
+    chdir: destination
+  )
+  pipe_signal = Signal.list.fetch("PIPE")
+  producer_statuses = statuses[0...-1]
+  return if statuses.last&.success? && producer_statuses.all? { |status| status.success? || status.termsig == pipe_signal }
+
+  details = statuses.map { |status| status.exited? ? "exit=#{status.exitstatus}" : "signal=#{status.termsig}" }
+  abort "failed to extract #{source}: #{details.join(", ")}"
+end
+
+def rpm_query(path, format)
+  run!("rpm", "-qp", "--qf", format, path).strip
+end
+
+def expanded_source_entries(spec, target)
+  expanded = run!(
+    "rpmspec", "-P",
+    "--define", "fedora #{target}",
+    "--define", "dist .fc#{target}",
+    spec
+  )
+
+  expanded.lines.filter_map do |line|
+    value = line[/^\s*(?:Source|Patch)\d*:\s*(\S+)/, 1]
+    next unless value
+
+    uri = URI.parse(value)
+    path = uri.fragment.to_s.empty? ? uri.path : uri.fragment
+    {
+      filename: File.basename(path.empty? ? value : path),
+      url: value.split("#", 2).first
+    }
+  rescue URI::InvalidURIError
+    {filename: File.basename(value), url: value}
+  end.uniq.sort_by { |entry| [entry.fetch(:filename), entry.fetch(:url)] }
+end
+
+def expanded_source_members(spec, target)
+  expanded_source_entries(spec, target).map { |entry| entry.fetch(:filename) }.uniq.sort
+end
+
+def download_verified_source(url, expected_sha256)
+  content = URI.open(url, "rb", open_timeout: 30, read_timeout: 30, &:read)
+  actual_sha256 = Digest::SHA256.hexdigest(content)
+  abort "supplemental source hash mismatch for #{url}" unless actual_sha256 == expected_sha256
+
+  [content, actual_sha256]
+end
+
+def materialize_package_sources(package_dir, spec, targets, sources, missing)
+  records = []
+
+  metadata_path = File.join(package_dir, "package.yml")
+  return records unless File.file?(metadata_path)
+
+  metadata = YAML.safe_load(File.read(metadata_path))
+  fixtures = metadata["fixtures"]
+  if fixtures.is_a?(Hash)
+    url = fixtures.fetch("source_url")
+    expected_sha256 = fixtures.fetch("source_sha256")
+    filenames = targets.flat_map { |target| expanded_source_entries(spec, target) }
+      .select { |entry| entry.fetch(:url) == url }
+      .map { |entry| entry.fetch(:filename) }
+      .uniq
+    abort "expected one fixture source member for #{url}, found #{filenames.length}" unless filenames.one?
+
+    content, actual_sha256 = download_verified_source(url, expected_sha256)
+    File.binwrite(File.join(sources, filenames.first), content)
+    records << "#{filenames.first}=#{actual_sha256}@#{url}"
+  end
+
+  supplemental = metadata["supplemental"]
+  return records unless supplemental.is_a?(Hash) && missing.include?("napi-rs-LICENSE")
+
+  url = supplemental.fetch("license_url")
+  expected_sha256 = supplemental.fetch("license_sha256")
+  content, actual_sha256 = download_verified_source(url, expected_sha256)
+
+  File.binwrite(File.join(sources, "napi-rs-LICENSE"), content)
+  records << "napi-rs-LICENSE=#{actual_sha256}@#{url}"
+  records
+end
+
+options = {
+  output: DEFAULT_OUTPUT,
+  source_manifest: DEFAULT_SOURCE_MANIFEST,
+  packages: [],
+  targets: []
+}
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: #{File.basename($PROGRAM_NAME)} [options]"
+  parser.on("--output DIR", "Output root (default: #{DEFAULT_OUTPUT})") { |value| options[:output] = value }
+  parser.on("--source-manifest FILE", "Retained SRPM manifest") { |value| options[:source_manifest] = value }
+  parser.on("--package NAME", "Build only NAME; repeatable") { |value| options[:packages] << value }
+  parser.on("--target RELEASE", Integer, "Fedora release; repeatable (default: 43 and 44)") do |value|
+    options[:targets] << value
+  end
+end.parse!
+
+options[:targets] = [43, 44] if options[:targets].empty?
+options[:targets].uniq!
+abort "only Fedora 43 and 44 are supported" unless (options[:targets] - [43, 44]).empty?
+
+output = File.expand_path(options[:output])
+allowed_root = "/srv/tmp/agentlab-kreuzberg/"
+abort "output must be below #{allowed_root}" unless output.start_with?(allowed_root) && output != allowed_root.delete_suffix("/")
+
+finalization = YAML.safe_load(File.read(FINALIZATION))
+rows = finalization.fetch("rows")
+expected_count = Integer(finalization.fetch("package_count"))
+abort "expected #{expected_count} package rows, found #{rows.length}" unless rows.length == expected_count
+
+requested = options[:packages].uniq
+known_packages = rows.map { |row| row.fetch("package") }
+unknown = requested - known_packages
+abort "unknown packages: #{unknown.join(", ")}" unless unknown.empty?
+rows = rows.select { |row| requested.include?(row.fetch("package")) } unless requested.empty?
+
+source_manifest = CSV.read(options[:source_manifest], col_sep: "\t", headers: true)
+work_root = File.join(output, "work")
+manifest_path = File.join(output, "manifest.tsv")
+target_roots = options[:targets].to_h { |target| [target, File.join(output, "fedora-#{target}")] }
+
+FileUtils.mkdir_p(output)
+FileUtils.rm_rf(work_root)
+target_roots.each_value { |path| FileUtils.rm_rf(path) }
+FileUtils.rm_f(manifest_path)
+FileUtils.mkdir_p(work_root)
+target_roots.each_value { |path| FileUtils.mkdir_p(path) }
+
+manifest_rows = []
+
+rows.each do |row|
+  package = row.fetch("package")
+  source_row = source_manifest[Integer(row.fetch("source_manifest_row")) - 2]
+  abort "missing retained source-manifest row for #{package}" unless source_row
+
+  retained_srpm = source_row.fetch("SourcePath")
+  retained_sha256 = source_row.fetch("SHA256")
+  abort "missing retained SRPM for #{package}: #{retained_srpm}" unless File.file?(retained_srpm)
+  actual_retained_sha256 = Digest::SHA256.file(retained_srpm).hexdigest
+  abort "retained SRPM hash mismatch for #{package}" unless actual_retained_sha256 == retained_sha256
+  abort "retained SRPM package mismatch for #{package}" unless rpm_query(retained_srpm, "%{NAME}") == package
+
+  package_dir = File.join(REPO_ROOT, "packages", package)
+  spec = File.join(package_dir, "#{package}.spec")
+  abort "missing current spec for #{package}: #{spec}" unless File.file?(spec)
+
+  package_work = File.join(work_root, package)
+  sources = File.join(package_work, "SOURCES")
+  FileUtils.rm_rf(package_work)
+  extract_srpm(retained_srpm, sources)
+
+  Dir.children(package_dir).sort.each do |entry|
+    source = File.join(package_dir, entry)
+    FileUtils.cp(source, sources, preserve: true) if File.file?(source)
+  end
+
+  current_spec = File.join(sources, File.basename(spec))
+  current_spec_sha256 = Digest::SHA256.file(spec).hexdigest
+  abort "current spec overlay failed for #{package}" unless Digest::SHA256.file(current_spec).hexdigest == current_spec_sha256
+
+  required_members = options[:targets].flat_map { |target| expanded_source_members(current_spec, target) }.uniq.sort
+  missing_members = required_members.reject { |member| File.file?(File.join(sources, member)) }
+  supplemental_sources = materialize_package_sources(
+    package_dir,
+    current_spec,
+    options[:targets],
+    sources,
+    missing_members
+  )
+
+  options[:targets].each do |target|
+    missing = expanded_source_members(current_spec, target).reject { |member| File.file?(File.join(sources, member)) }
+    abort "missing Fedora #{target} source members for #{package}: #{missing.join(", ")}" unless missing.empty?
+
+    target_root = target_roots.fetch(target)
+    run!(
+      "rpmbuild", "-bs",
+      "--define", "_sourcedir #{sources}",
+      "--define", "_srcrpmdir #{target_root}",
+      "--define", "_buildhost agentlab.invalid",
+      "--define", "fedora #{target}",
+      "--define", "dist .fc#{target}",
+      "--define", "source_date_epoch_from_changelog 1",
+      "--define", "use_source_date_epoch_as_buildtime 1",
+      "--define", "clamp_mtime_to_source_date_epoch 1",
+      current_spec,
+      env: {"LC_ALL" => "C"}
+    )
+
+    candidates = Dir.glob(File.join(target_root, "#{package}-*.src.rpm"))
+    candidates.select! { |path| rpm_query(path, "%{NAME}") == package }
+    abort "expected one Fedora #{target} SRPM for #{package}, found #{candidates.length}" unless candidates.one?
+    built_srpm = candidates.first
+
+    check_dir = File.join(package_work, "check-f#{target}")
+    FileUtils.rm_rf(check_dir)
+    extract_srpm(built_srpm, check_dir)
+    embedded_spec = File.join(check_dir, File.basename(spec))
+    abort "missing embedded spec for #{package} Fedora #{target}" unless File.file?(embedded_spec)
+    abort "embedded spec differs for #{package} Fedora #{target}" unless File.binread(embedded_spec) == File.binread(spec)
+
+    manifest_rows << [
+      target,
+      package,
+      rpm_query(built_srpm, "%{VERSION}"),
+      rpm_query(built_srpm, "%{RELEASE}"),
+      built_srpm,
+      Digest::SHA256.file(built_srpm).hexdigest,
+      retained_srpm,
+      retained_sha256,
+      current_spec_sha256,
+      supplemental_sources.join(",")
+    ]
+    puts "Fedora #{target}: #{package} -> #{built_srpm}"
+  end
+end
+
+CSV.open(manifest_path, "w", col_sep: "\t") do |csv|
+  csv << %w[Target Package Version Release SourceRPM SHA256 RetainedSourceRPM RetainedSHA256 CurrentSpecSHA256 SupplementalSources]
+  manifest_rows.sort_by { |target, package,| [target, package] }.each { |manifest_row| csv << manifest_row }
+end
+
+puts "Wrote #{manifest_rows.length} records to #{manifest_path}"

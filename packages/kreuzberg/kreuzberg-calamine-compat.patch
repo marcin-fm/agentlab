@@ -1,0 +1,28 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Adapt spreadsheet dates to Fedora calamine
+Upstream-context-author: Na'aman Hirschfeld <nhirschfeld@gmail.com>
+Upstream-context: https://github.com/kreuzberg-dev/kreuzberg/commit/1b63779dd38cf042007739ccb3d1d2f3aacb697d
+
+Use Fedora's calamine release and its DateTime conversion API. The upstream
+commit above introduced the newer to_ymd_hms_milli() call carried by v4.10.2;
+this Fedora-specific compatibility patch reverses only that API selection and
+is not a backport of the upstream commit.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -195 +195 @@ bytes = { workspace = true }
+-calamine = { version = "0.36.0", features = ["dates"], optional = true }
++calamine = { version = "0.24.0", features = ["dates"], optional = true }
+diff --git a/crates/kreuzberg/src/extraction/excel.rs b/crates/kreuzberg/src/extraction/excel.rs
+--- a/crates/kreuzberg/src/extraction/excel.rs
++++ b/crates/kreuzberg/src/extraction/excel.rs
+@@ -594,4 +594,4 @@ fn format_cell_to_string(data: &Data) -> String {
+-        Data::DateTime(dt) => {
+-            let (year, month, day, hour, min, sec, _milli) = dt.to_ymd_hms_milli();
+-            format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}", year, month, day, hour, min, sec)
+-        }
++        Data::DateTime(dt) => dt
++            .as_datetime()
++            .map(|value| value.format("%Y-%m-%d %H:%M:%S").to_string())
++            .unwrap_or_else(|| dt.as_f64().to_string()),

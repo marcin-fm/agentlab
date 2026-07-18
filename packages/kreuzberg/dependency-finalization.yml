@@ -1,24 +1,35 @@
 schema: kreuzberg-dependency-finalization/v1
-generated: "2026-07-16"
+generated: "2026-07-17"
 package_count: 63
-exclusions: [rust-hayro-jpeg2000, rust-fearless_simd]
+inventory_exclusions: [rust-hayro-jpeg2000, rust-fearless_simd]
+supplemental_f43_providers:
+  - {package: rust-fearless_simd, version_release: 0.4.0-1.fc43, x86_64_build: 10738548, aarch64_build: 10738498, state: succeeded}
+  - {package: rust-hayro-jpeg2000, version_release: 0.3.5-1.fc43, x86_64_build: 10738550, aarch64_build: 10738502, state: succeeded}
 evidence:
   f43_source_manifest: {path: /srv/tmp/agentlab-kreuzberg/final-f43/source-manifest.tsv, sha256: 4a75226ee0a0187d12f7c5f5e2e3a4ae3ac7a634f3fe77d3eebbe19791a8a6d0}
   f43_repo_manifest: {path: /srv/tmp/agentlab-kreuzberg/final-f43/repo-manifest.tsv, sha256: 9f058637d8362435a37d95ba8d79ae670ce8d003feec4960d3068dfebd33b13a}
   f44_manifest: {path: /srv/tmp/agentlab-kreuzberg/final-f44/manifest.tsv, sha256: 57875ef73b20eee11166dab63a3db6d768c08a81c6703b73338fce109fb0986a}
-  architecture: x86_64-only
+  current_srpm_manifest: {path: /srv/tmp/agentlab-kreuzberg/current-proof-srpms/manifest.tsv, records: 126, sha256: fb2c05b87255e450a523ba5ca63af99c5e4adfdb71e8cc08acdcf2a61d29ee5b}
+  current_srpm_aggregate_sha256: 3881074390d84906555428543ebdf08a232eb5425c46f63c341742ca5a989fd6
+  copr_project: marcin/agentlab-aarch64-proof-20260717-v1
+  copr_chroots: [fedora-43-x86_64, fedora-43-aarch64, fedora-44-x86_64, fedora-44-aarch64]
+  architecture: x86_64-and-aarch64
 defaults:
   status: blocked
   copr: disabled
   retained_manifest_artifacts: [f43, f44]
-  current_exact_spec_clean_build: not_run_in_this_pass
+  current_exact_spec_clean_build: succeeded_in_all_four_copr_chroots
   package_rpmlint: not_retained
-  aarch64: unproven
+  aarch64: proven
   source_status: retained_f43_f44_srpm_evidence
   license_status: spec_declared_aggregate_reviewed_full_texts_missing
-  patch_status: repository_recorded_not_rebuilt
-  current_spec_state: exact_spec_not_rebuilt_in_this_pass
-  blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]
+  patch_status: exact_current_srpm_and_native_build_succeeded
+  current_spec_state: exact_current_copr_build_succeeded
+  blocker_codes: [RPMLINT_UNRETAINED]
+row_baseline:
+  state: retained_pre_proof_finalization_metadata
+  superseded_blocker_codes: [BUILD_NOT_RUN, AARCH64_UNPROVEN, F43_PATCH, LOPDF_REPAIRED, NAPI_UNBUILT, NAPI_CTOR, PRERELEASE_MAPPING]
+  note: Row source, license, fixture, parser, and hosting blockers remain current; the current proof overlay supersedes only build and architecture state recorded before the rebuild.
 blocker_codes:
   BUILD_NOT_RUN: current exact package specs were not clean-built in this pass
   RPMLINT_UNRETAINED: package-level rpmlint evidence is not retained
@@ -39,13 +50,17 @@ blocker_codes:
   NAPI_CTOR: NAPI backend ctor patch is preserved but unbuilt
 special:
   parser: {package: rust-tree-sitter-language-pack1, licensed_records: 295, exclusions: 11, subset_sha256: ebf1abc89cc4bef5a8d9c07e896796ddaa7aff68cb56143485bab94c47af846a, blocker_codes: [PARSER_HOSTING]}
-  napi_license_source: {packages: [rust-napi-derive-backend5, rust-napi-sys3, rust-napi3], commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, state: repaired_unbuilt, blocker_codes: [NAPI_LICENSE, NAPI_UNBUILT]}
+  napi_license_source: {packages: [rust-napi-derive-backend5, rust-napi-sys3, rust-napi3], commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, state: exact_current_build_succeeded_license_hosting_unresolved, blocker_codes: [NAPI_LICENSE]}
 validation:
   package_records_verified: 63
   declared_patch_members_checked: 40
   retained_srpm_patch_bytes: all_match
-  repository_package_check: passed_112_packages
-  current_exact_specs_rebuilt: false
+  repository_package_check: passed_120_packages
+  current_exact_specs_rebuilt: true
+  exact_package_target_pairs: 126
+  exact_package_chroot_pairs: 252
+  exact_package_chroot_pairs_succeeded: 252
+  supplemental_f43_provider_chroot_pairs_succeeded: 4
   checked: "2026-07-17"
 rows:
   - {package: rust-biblatex0.12, source_manifest_row: 2, crate_version: 0.12.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}

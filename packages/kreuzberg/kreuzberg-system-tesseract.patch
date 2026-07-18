@@ -1,3 +1,8 @@
+--- a/crates/kreuzberg-tesseract/Cargo.toml
++++ b/crates/kreuzberg-tesseract/Cargo.toml
+@@ -31 +31 @@
+-default = ["static-linking"]
++default = ["dynamic-linking"]
 --- a/crates/kreuzberg-tesseract/src/api.rs
 +++ b/crates/kreuzberg-tesseract/src/api.rs
 @@ -76,7 +76,7 @@
