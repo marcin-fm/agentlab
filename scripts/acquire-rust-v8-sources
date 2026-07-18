@@ -325,7 +325,7 @@ verify_spec_sources = false
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/acquire-rust-v8-sources --root-archive PATH --reference-tree PATH [options]"
   parser.on("--root-archive PATH", "Previously verified Rusty V8 root archive") { |path| root_archive = path }
-  parser.on("--reference-tree PATH", "Clean exact-tag recursive Git checkout") { |path| reference_tree = path }
+  parser.on("--reference-tree PATH", "Clean exact-tag recursive Git submodule checkout") { |path| reference_tree = path }
   parser.on("--workdir PATH", "Marked resumable work directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Generated source-closure receipt") { |path| output = path }
   parser.on("--check", "Verify cached archives and the checked receipt without downloading") { check = true }
@@ -454,6 +454,13 @@ end
 manifest = compare_trees!(reconstructed, reference_tree)
 tree_sha256 = Digest::SHA256.hexdigest(JSON.generate(manifest))
 receipt["components"] = records
+receipt["closure_scope"] = {
+  "kind" => "exact-git-submodule-closure",
+  "git_components" => records.length,
+  "git_submodules" => records.length - 1,
+  "full_deps_checkout_claimed" => false,
+  "selected_build_dependency_closure_claimed" => false
+}
 receipt["source_summary"] = {
   "component_archives" => records.length,
   "submodule_archives" => records.length - 1,
@@ -476,17 +483,20 @@ receipt.fetch("validation").merge!(
   "recursive_component_archive_trees_match_git" => true,
   "recursive_source_tree_reconstructed" => true,
   "recursive_source_tree_matches_git" => true,
-  "immutable_recursive_rpm_source_verified" => verify_spec_sources
+  "immutable_recursive_rpm_source_verified" => verify_spec_sources,
+  "exact_git_submodule_closure_verified" => true,
+  "full_deps_checkout_verified" => false,
+  "selected_build_dependency_closure_verified" => false
 )
 content = JSON.pretty_generate(receipt) + "\n"
 
 if check
   raise Agentlab::Error, "missing checked source-closure receipt #{output}" unless File.file?(output)
   raise Agentlab::Error, "Rusty V8 source-closure receipt is stale: #{output}" unless File.binread(output) == content
-  puts "Verified #{records.length} Rusty V8 source archives and #{manifest.length} reconstructed file records."
+  puts "Verified #{records.length} Rusty V8 Git source archives and #{manifest.length} reconstructed file records."
 else
   Agentlab.atomic_write(output, content)
-  puts "Wrote #{records.length} Rusty V8 source archives and #{manifest.length} reconstructed file records to #{output}."
+  puts "Wrote #{records.length} Rusty V8 Git source archives and #{manifest.length} reconstructed file records to #{output}."
 end
 rescue Agentlab::Error, JSON::ParserError, KeyError, SystemCallError => e
   warn "error: #{e.message}"

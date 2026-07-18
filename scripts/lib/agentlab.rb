@@ -484,10 +484,18 @@ module Agentlab
     source = JSON.parse(File.read(source_path))
     errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v1"
     errors << "rust-v8: recursive-source release does not match" unless source.dig("release", "version").to_s == version
+    closure_scope = source.fetch("closure_scope", {})
+    errors << "rust-v8: source receipt does not identify the exact Git submodule closure" unless closure_scope["kind"] == "exact-git-submodule-closure"
+    errors << "rust-v8: source receipt overclaims a full DEPS checkout" unless closure_scope["full_deps_checkout_claimed"] == false
+    unless closure_scope["selected_build_dependency_closure_claimed"] == false
+      errors << "rust-v8: source receipt overclaims selected-build dependency closure"
+    end
     components = source["components"]
     unless components.is_a?(Array) && components.length == 21
       return errors << "rust-v8: recursive-source receipt must contain 21 components"
     end
+    errors << "rust-v8: source receipt Git component count does not match" unless closure_scope["git_components"] == components.length
+    errors << "rust-v8: source receipt Git submodule count does not match" unless closure_scope["git_submodules"] == components.length - 1
 
     paths = components.map { |component| component["path"] }
     errors << "rust-v8: recursive-source component paths are not unique" unless paths.uniq.length == paths.length
@@ -523,8 +531,12 @@ module Agentlab
       recursive_source_tree_reconstructed
       recursive_source_tree_matches_git
       immutable_recursive_rpm_source_verified
+      exact_git_submodule_closure_verified
     ].each do |flag|
       errors << "rust-v8: recursive-source validation #{flag} is not true" unless source.dig("validation", flag) == true
+    end
+    %w[full_deps_checkout_verified selected_build_dependency_closure_verified].each do |flag|
+      errors << "rust-v8: recursive-source validation overclaims #{flag}" unless source.dig("validation", flag) == false
     end
 
     macros = {
@@ -559,8 +571,13 @@ module Agentlab
     patch_lines.each do |line|
       errors << "rust-v8: spec does not apply #{line.split.last}" unless spec.lines.map(&:strip).include?(line)
     end
-    final_stop = spec.index("echo 'rust-v8 sources are complete")
-    errors << "rust-v8: deliberate remaining-gates stop is missing" unless final_stop && spec.index("exit 1", final_stop)
+    expected_stop_block = <<~SPEC
+      echo 'rust-v8 Git submodule sources are complete; DEPS selection, licensing, and Fedora build gates remain blocked' >&2
+      exit 1
+
+      %build
+    SPEC
+    errors << "rust-v8: deliberate remaining-gates stop is missing" unless spec.include?(expected_stop_block)
 
     license = JSON.parse(File.read(license_path))
     errors << "rust-v8: license-audit schema is invalid" unless license["schema"] == "rust-v8-license-audit/v1"
@@ -570,6 +587,55 @@ module Agentlab
     errors << "rust-v8: license component paths do not match the source receipt" unless Array(license_components).map { |component| component["path"] } == paths
     license_files = Array(license_components).flat_map { |component| Array(component["license_files"]) }
     readme_records = Array(license_components).flat_map { |component| Array(component["readme_chromium"]) }
+    recognized_syntax_classes = %w[
+      missing
+      legacy-bsd-label
+      ambiguous-comma-list
+      legacy-slash-alternative
+      spdx-expression-syntax
+      spdx-identifier-syntax
+      unclassified
+    ]
+    expected_syntax = lambda do |raw, allow_slash|
+      if raw.nil?
+        ["missing", nil, nil, "missing"]
+      elsif raw == "BSD"
+        ["legacy-bsd-label", nil, nil, "unresolved"]
+      elsif raw.include?(",")
+        ["ambiguous-comma-list", nil, nil, "ambiguous"]
+      elsif allow_slash && raw.include?("/")
+        operands = raw.split("/").map(&:strip)
+        proposed = if operands.length > 1 && operands.all? { |operand| operand.match?(/\A[A-Za-z0-9][A-Za-z0-9.+-]*\z/) }
+                     operands.join(" OR ")
+                   end
+        ["legacy-slash-alternative", nil, proposed, proposed ? "proposed" : "unresolved"]
+      elsif raw.match?(/\b(?:AND|OR|WITH)\b|[()]/)
+        ["spdx-expression-syntax", raw, nil, "syntax-only"]
+      elsif raw.match?(/\A[A-Za-z0-9][A-Za-z0-9.+-]*\z/)
+        ["spdx-identifier-syntax", raw, nil, "syntax-only"]
+      else
+        ["unclassified", nil, nil, "unresolved"]
+      end
+    end
+    validate_syntax = lambda do |record, raw, allow_slash, label|
+      expected = expected_syntax.call(raw, allow_slash)
+      actual = [
+        record["syntax_class"],
+        record["normalized_expression"],
+        record["proposed_expression"],
+        record["normalization_status"]
+      ]
+      errors << "rust-v8: license syntax metadata is inconsistent for #{label}" unless actual == expected
+      errors << "rust-v8: license syntax rationale is missing for #{label}" if record["normalization_reason"].to_s.empty?
+    end
+    readme_records.each do |record|
+      errors << "rust-v8: README.chromium raw license does not match" unless record["raw_license"] == record["license"]
+      errors << "rust-v8: README.chromium license syntax is unclassified" unless recognized_syntax_classes.include?(record["syntax_class"])
+      validate_syntax.call(record, record["license"], false, record["path"])
+      Array(record["license_file_records"]).each do |declared_path|
+        errors << "rust-v8: declared license text incorrectly claims semantic review" unless declared_path["semantic_review_verified"] == false
+      end
+    end
     license_files.each do |record|
       errors << "rust-v8: license candidate #{record['path']} has an invalid SHA-256" unless record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
@@ -582,6 +648,27 @@ module Agentlab
     source_packages = vendored.reject { |record| record["placeholder"] == true }
     errors << "rust-v8: vendored Rust source declaration inventory is incomplete" unless source_packages.all? { |record| record["manifest_license"] || record["manifest_license_file"] }
     errors << "rust-v8: vendored Rust candidate-text inventory is incomplete" unless source_packages.all? { |record| record["license_file_count"].to_i.positive? }
+    errors << "rust-v8: vendored Rust license syntax inventory is incomplete" unless source_packages.all? { |record| recognized_syntax_classes.include?(record["syntax_class"]) }
+    vendored.each do |record|
+      errors << "rust-v8: vendored Rust raw license does not match #{record['path']}" unless record["raw_license"] == record["manifest_license"]
+      validate_syntax.call(record, record["manifest_license"], true, record["path"])
+      license_paths = Array(record["license_files"]).map { |license_file| license_file["path"] }
+      errors << "rust-v8: vendored Rust license files are not sorted for #{record['path']}" unless license_paths == license_paths.sort
+    end
+    unmaterialized_deps = Array(license["unmaterialized_deps_declarations"])
+    expected_unmaterialized_deps = [
+      {
+        "source_path" => "v8/third_party/googletest/src",
+        "declared_license_path" => "v8/third_party/googletest/src/LICENSE",
+        "readme_chromium" => "v8/third_party/googletest/README.chromium",
+        "archive_url" => "https://chromium.googlesource.com/external/github.com/google/googletest/+archive/4fe3307fb2d9f86d19777c7eb0e4809e9694dde7.tar.gz",
+        "commit" => "4fe3307fb2d9f86d19777c7eb0e4809e9694dde7",
+        "readme_shipped" => "no",
+        "source_materialized" => false,
+        "declared_text_resolvable" => false
+      }
+    ]
+    errors << "rust-v8: unmaterialized DEPS declaration inventory does not match" unless unmaterialized_deps == expected_unmaterialized_deps
     license_summary = license.fetch("summary", {})
     expected_license_summary = {
       "components" => components.length,
@@ -590,22 +677,34 @@ module Agentlab
       "license_candidate_files" => license_files.length,
       "readme_chromium_records" => readme_records.length,
       "readme_chromium_with_license" => readme_records.count { |record| record.key?("license") },
+      "readme_chromium_without_license" => readme_records.count { |record| record["raw_license"].nil? },
+      "readme_chromium_ambiguous_comma_licenses" => readme_records.count { |record| record["syntax_class"] == "ambiguous-comma-list" },
+      "readme_chromium_legacy_bsd_licenses" => readme_records.count { |record| record["syntax_class"] == "legacy-bsd-label" },
       "readme_chromium_with_declared_license_file" => readme_records.count { |record| record["license_file"] },
       "readme_chromium_with_verified_declared_license_file" => readme_records.count { |record| record["license_file_verified"] == true },
       "readme_chromium_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).length },
       "readme_chromium_verified_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).count { |path| path["verified"] == true } },
+      "readme_chromium_unmaterialized_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).count { |path| path["declared_text_scope"] == "unmaterialized-deps-source" } },
+      "readme_chromium_semantically_verified_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).count { |path| path["semantic_review_verified"] == true } },
       "vendored_rust_packages" => vendored.length,
       "vendored_rust_source_packages" => source_packages.length,
       "vendored_rust_placeholders" => placeholders.length,
       "vendored_rust_source_packages_with_manifest_license" => source_packages.count { |record| record["manifest_license"] },
       "vendored_rust_source_packages_with_manifest_license_file" => source_packages.count { |record| record["manifest_license_file"] },
       "vendored_rust_source_packages_with_verified_manifest_license_file" => source_packages.count { |record| record["manifest_license_file_verified"] == true },
-      "vendored_rust_source_packages_with_candidate_texts" => source_packages.count { |record| record["license_file_count"].to_i.positive? }
+      "vendored_rust_source_packages_with_candidate_texts" => source_packages.count { |record| record["license_file_count"].to_i.positive? },
+      "vendored_rust_legacy_slash_license_expressions" => source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" }
     }
     errors << "rust-v8: license-audit summary is inconsistent" unless license_summary == expected_license_summary
-    missing_declared_license_paths = readme_records.flat_map do |record|
-      Array(record["license_file_records"]).reject { |path| path["verified"] == true }.map { |path| path["path"] }
+    unmaterialized_declared_license_paths = readme_records.flat_map do |record|
+      Array(record["license_file_records"]).select do |path|
+        path["declared_text_scope"] == "unmaterialized-deps-source"
+      end.map { |path| path["path"] }
     end.sort
+    unresolved_declared_license_paths = readme_records.flat_map do |record|
+      Array(record["license_file_records"]).select { |path| path["declared_text_scope"] == "unresolved" }.map { |path| path["path"] }
+    end.sort
+    errors << "rust-v8: unresolved materialized declared-license paths remain" unless unresolved_declared_license_paths.empty?
     package_license = package.data.fetch("license_audit", {})
     dependency_license = dependencies.fetch("license_audit", {})
     {
@@ -614,13 +713,18 @@ module Agentlab
       "vendored_rust_source_packages" => "vendored_rust_source_packages",
       "vendored_rust_placeholders" => "vendored_rust_placeholders",
       "readme_chromium_declared_license_paths" => "readme_chromium_declared_license_paths",
-      "readme_chromium_verified_declared_license_paths" => "readme_chromium_verified_declared_license_paths"
+      "readme_chromium_verified_declared_license_paths" => "readme_chromium_verified_declared_license_paths",
+      "readme_chromium_ambiguous_comma_licenses" => "readme_chromium_ambiguous_comma_licenses",
+      "readme_chromium_legacy_bsd_licenses" => "readme_chromium_legacy_bsd_licenses",
+      "readme_chromium_unmaterialized_declared_license_paths" => "readme_chromium_unmaterialized_declared_license_paths",
+      "readme_chromium_semantically_verified_declared_license_paths" => "readme_chromium_semantically_verified_declared_license_paths",
+      "vendored_rust_legacy_slash_license_expressions" => "vendored_rust_legacy_slash_license_expressions"
     }.each do |metadata_key, summary_key|
       errors << "rust-v8: package license metadata #{metadata_key} does not match" unless package_license[metadata_key] == license_summary[summary_key]
       errors << "rust-v8: dependency license metadata #{metadata_key} does not match" unless dependency_license[metadata_key] == license_summary[summary_key]
     end
-    errors << "rust-v8: package missing declared-license paths do not match" unless package_license["missing_declared_license_paths"] == missing_declared_license_paths
-    errors << "rust-v8: dependency missing declared-license paths do not match" unless dependency_license["missing_declared_license_paths"] == missing_declared_license_paths
+    errors << "rust-v8: package unmaterialized declared-license paths do not match" unless package_license["unmaterialized_declared_license_paths"] == unmaterialized_declared_license_paths
+    errors << "rust-v8: dependency unmaterialized declared-license paths do not match" unless dependency_license["unmaterialized_declared_license_paths"] == unmaterialized_declared_license_paths
     component_text_gaps = Array(license_components).select { |record| record["license_file_count"].to_i.zero? }.map { |record| record["path"] }
     errors << "rust-v8: package component-local text gaps do not match" unless package_license["component_local_text_gaps"] == component_text_gaps
     errors << "rust-v8: dependency component-local text gaps do not match" unless dependency_license["components_without_local_license_files"] == component_text_gaps
@@ -631,6 +735,8 @@ module Agentlab
       candidate_license_files_hashed
       readme_chromium_metadata_inventoried
       declared_license_file_paths_inventoried
+      declared_license_syntax_classified
+      unmaterialized_deps_declarations_classified
       vendored_rust_manifests_inventoried
       vendored_rust_placeholders_classified
       vendored_rust_source_package_declarations_complete
@@ -640,6 +746,7 @@ module Agentlab
     end
     %w[
       license_expressions_normalized
+      declared_license_text_semantic_review_complete
       required_license_texts_verified
       fedora_allowed_spdx_verified
       source_package_license_complete
@@ -658,6 +765,12 @@ module Agentlab
     errors << "rust-v8: dependency source archive total does not match" unless dependencies.dig("source_closure", "archive_bytes") == summary["archive_bytes"]
     errors << "rust-v8: package reconstructed file count does not match" unless package.data.dig("source_policy", "reconstructed_file_records") == source.dig("reconstruction", "file_records")
     errors << "rust-v8: dependency reconstructed tree SHA-256 does not match" unless dependencies.dig("source_closure", "reconstructed_tree_sha256") == source.dig("reconstruction", "tree_sha256")
+    errors << "rust-v8: package source closure kind does not match" unless package.data.dig("source_policy", "closure_kind") == closure_scope["kind"]
+    errors << "rust-v8: dependency source closure kind does not match" unless dependencies.dig("source_closure", "closure_kind") == closure_scope["kind"]
+    errors << "rust-v8: package metadata overclaims a full DEPS checkout" unless package.data.dig("source_policy", "full_deps_checkout_verified") == false
+    errors << "rust-v8: dependency metadata overclaims a full DEPS checkout" unless dependencies.dig("source_closure", "full_deps_checkout_verified") == false
+    errors << "rust-v8: package metadata overclaims selected-build dependency closure" unless package.data.dig("source_policy", "selected_build_dependency_closure_verified") == false
+    errors << "rust-v8: dependency metadata overclaims selected-build dependency closure" unless dependencies.dig("source_closure", "selected_build_dependency_closure_verified") == false
 
     reproducibility_path = File.join(package.directory, "reproducibility.yml")
     if File.file?(reproducibility_path)
@@ -666,13 +779,22 @@ module Agentlab
       errors << "rust-v8: reproducibility license receipt SHA-256 does not match" unless reproducibility.dig("licenses", "receipt_sha256") == license_sha256
       errors << "rust-v8: reproducibility archive total does not match" unless reproducibility.dig("recursive_source", "archive_bytes") == summary["archive_bytes"]
       errors << "rust-v8: reproducibility tree SHA-256 does not match" unless reproducibility.dig("recursive_source", "reconstructed_tree_sha256") == source.dig("reconstruction", "tree_sha256")
+      errors << "rust-v8: reproducibility source closure kind does not match" unless reproducibility.dig("recursive_source", "closure_kind") == closure_scope["kind"]
+      errors << "rust-v8: reproducibility metadata overclaims a full DEPS checkout" unless reproducibility.dig("recursive_source", "full_deps_checkout_verified") == false
+      unless reproducibility.dig("recursive_source", "selected_build_dependency_closure_verified") == false
+        errors << "rust-v8: reproducibility metadata overclaims selected-build dependency closure"
+      end
       errors << "rust-v8: reproducibility metadata incorrectly claims a generated recursive archive" unless reproducibility.dig("recursive_source", "recursive_rpm_source_generated") == false
       errors << "rust-v8: reproducibility license candidate count does not match" unless reproducibility.dig("licenses", "candidate_license_files") == license_summary["license_candidate_files"]
       errors << "rust-v8: reproducibility vendored Rust source count does not match" unless reproducibility.dig("licenses", "vendored_rust_source_packages") == license_summary["vendored_rust_source_packages"]
       errors << "rust-v8: reproducibility vendored Rust placeholder count does not match" unless reproducibility.dig("licenses", "vendored_rust_placeholders") == license_summary["vendored_rust_placeholders"]
       errors << "rust-v8: reproducibility declared license-path count does not match" unless reproducibility.dig("licenses", "readme_chromium_declared_license_paths") == license_summary["readme_chromium_declared_license_paths"]
       errors << "rust-v8: reproducibility verified license-path count does not match" unless reproducibility.dig("licenses", "readme_chromium_verified_declared_license_paths") == license_summary["readme_chromium_verified_declared_license_paths"]
-      errors << "rust-v8: reproducibility recursive license inventory is incomplete" unless reproducibility.dig("licenses", "recursive_inventory_complete") == true
+      errors << "rust-v8: reproducibility ambiguous-license count does not match" unless reproducibility.dig("licenses", "readme_chromium_ambiguous_comma_licenses") == license_summary["readme_chromium_ambiguous_comma_licenses"]
+      errors << "rust-v8: reproducibility legacy-BSD count does not match" unless reproducibility.dig("licenses", "readme_chromium_legacy_bsd_licenses") == license_summary["readme_chromium_legacy_bsd_licenses"]
+      errors << "rust-v8: reproducibility unmaterialized license-path count does not match" unless reproducibility.dig("licenses", "readme_chromium_unmaterialized_declared_license_paths") == license_summary["readme_chromium_unmaterialized_declared_license_paths"]
+      errors << "rust-v8: reproducibility legacy-slash count does not match" unless reproducibility.dig("licenses", "vendored_rust_legacy_slash_license_expressions") == license_summary["vendored_rust_legacy_slash_license_expressions"]
+      errors << "rust-v8: reproducibility Git-component license inventory is incomplete" unless reproducibility.dig("licenses", "git_component_inventory_complete") == true
     else
       errors << "rust-v8: reproducibility metadata is missing"
     end

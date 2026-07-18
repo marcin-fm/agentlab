@@ -3,7 +3,7 @@ name: rust-v8
 status: blocked
 blockers:
 - The stable Fedora Rust and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream.
-- Candidate legal texts and all 216 real vendored Rust source packages are inventoried, but `v8/third_party/googletest/src/LICENSE` is absent, two Chromium tooling components lack component-local texts, and required-text decisions, Fedora SPDX review, system-library decisions, and the final aggregate License expression remain unresolved.
+- Candidate legal texts and all 216 real vendored Rust source packages are inventoried. One `Shipped: no` googletest declaration points into an intentionally unmaterialized test-only DEPS source, two Chromium tooling components require scoped parent-license review, three comma lists and one bare BSD label are ambiguous, eight Cargo slash alternatives remain proposed-only, and semantic text review, Fedora SPDX review, system-library decisions, and the final aggregate License expression remain unresolved.
 - Network-isolated Fedora 43, Fedora 44, and Rawhide builds have not been run. The successful prototype is Fedora 44 x86_64 evidence only, and aarch64 is unverified.
 source_policy:
   rpm_build_network: forbidden
@@ -13,8 +13,11 @@ source_policy:
   recursive_component_commits_recorded: true
   recursive_component_archives_verified: true
   immutable_recursive_rpm_source_verified: true
+  closure_kind: exact-git-submodule-closure
+  full_deps_checkout_verified: false
+  selected_build_dependency_closure_verified: false
   source_closure_receipt: rust-v8-149.2.0-source-closure.json
-  source_closure_receipt_sha256: 8bc2852dbfc829ab83ee33c526c3356e0ec124485a1944a80f0b35ff3ec42752
+  source_closure_receipt_sha256: bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de
   recursive_components: 21
   direct_public_rpm_sources: 21
   source_archive_bytes: 153497693
@@ -66,7 +69,7 @@ patches:
     upstream_status: not-submitted
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 8ef742e096806101fcb464f7bb34ab5b7c2231d4857a0bfd9a02799001631eb6
+  receipt_sha256: 3e832a5a1d7d0078c155c9fa454b37db52b44d60e494d8aa66f531e6d1a35389
   candidate_license_files: 415
   readme_chromium_records: 231
   vendored_rust_entries: 268
@@ -76,12 +79,18 @@ license_audit:
   vendored_rust_source_candidate_texts_present: true
   readme_chromium_declared_license_paths: 229
   readme_chromium_verified_declared_license_paths: 228
-  missing_declared_license_paths:
+  readme_chromium_ambiguous_comma_licenses: 3
+  readme_chromium_legacy_bsd_licenses: 1
+  readme_chromium_unmaterialized_declared_license_paths: 1
+  readme_chromium_semantically_verified_declared_license_paths: 0
+  vendored_rust_legacy_slash_license_expressions: 8
+  unmaterialized_declared_license_paths:
   - v8/third_party/googletest/src/LICENSE
   component_local_text_gaps:
   - tools/clang
   - tools/win
   required_texts_verified: false
+  declared_text_semantic_review_complete: false
   fedora_allowed_spdx_verified: false
   final_static_archive_license_complete: false
 upstream:

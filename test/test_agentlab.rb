@@ -1231,8 +1231,22 @@ class AgentlabTest < Minitest::Test
     package = Agentlab.package_named("rust-v8")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
     spec = File.read(package.spec_path)
+    license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("license_audit", "receipt"))))
 
     assert_empty(Agentlab.validate_rust_v8_evidence(package, dependencies, spec))
+    assert_equal(1, license.fetch("unmaterialized_deps_declarations").length)
+    googletest = license.fetch("unmaterialized_deps_declarations").fetch(0)
+    assert_equal("v8/third_party/googletest/src", googletest.fetch("source_path"))
+    assert_equal("4fe3307fb2d9f86d19777c7eb0e4809e9694dde7", googletest.fetch("commit"))
+    assert_equal("no", googletest.fetch("readme_shipped"))
+    refute(googletest.fetch("source_materialized"))
+    refute(googletest.fetch("declared_text_resolvable"))
+    assert_equal(3, license.dig("summary", "readme_chromium_ambiguous_comma_licenses"))
+    assert_equal(8, license.dig("summary", "vendored_rust_legacy_slash_license_expressions"))
+    license.dig("vendored_rust", "packages").each do |record|
+      paths = record.fetch("license_files").map { |license_file| license_file.fetch("path") }
+      assert_equal(paths.sort, paths)
+    end
   end
 
   def test_rejects_rust_v8_license_overclaim
@@ -1260,6 +1274,19 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
 
       assert_includes(errors, "rust-v8: license audit overclaims fedora_allowed_spdx_verified")
+
+      license.fetch("validation")["fedora_allowed_spdx_verified"] = false
+      license.fetch("validation")["declared_license_text_semantic_review_complete"] = true
+      File.write(license_path, JSON.pretty_generate(license) + "\n")
+      license_sha256 = Digest::SHA256.file(license_path).hexdigest
+      data.fetch("license_audit")["receipt_sha256"] = license_sha256
+      dependencies.fetch("license_audit")["receipt_sha256"] = license_sha256
+      spec = spec.sub(/^%global license_audit_sha256\s+\h{64}$/, "%global license_audit_sha256 #{license_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: license audit overclaims declared_license_text_semantic_review_complete")
     end
   end
 
@@ -1274,5 +1301,72 @@ class AgentlabTest < Minitest::Test
     errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
 
     assert_includes(errors, "rust-v8: flat archive extraction helper is invalid")
+  end
+
+  def test_rejects_rust_v8_license_syntax_contradiction
+    source_package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    data = Marshal.load(Marshal.dump(source_package.data))
+    spec = File.read(source_package.spec_path)
+
+    Dir.mktmpdir do |directory|
+      source_name = dependencies.dig("source_closure", "receipt")
+      license_name = dependencies.dig("license_audit", "receipt")
+      FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
+      FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
+      license_path = File.join(directory, license_name)
+      license = JSON.parse(File.read(license_path))
+      googletest = license.fetch("components").flat_map { |component| component.fetch("readme_chromium") }.find do |record|
+        record["path"] == "v8/third_party/googletest/README.chromium"
+      end
+      googletest["syntax_class"] = "spdx-identifier-syntax"
+      googletest["normalized_expression"] = "BSD"
+      googletest["normalization_status"] = "syntax-only"
+      File.write(license_path, JSON.pretty_generate(license) + "\n")
+      license_sha256 = Digest::SHA256.file(license_path).hexdigest
+      data.fetch("license_audit")["receipt_sha256"] = license_sha256
+      dependencies = Marshal.load(Marshal.dump(dependencies))
+      dependencies.fetch("license_audit")["receipt_sha256"] = license_sha256
+      spec = spec.sub(/^%global license_audit_sha256\s+\h{64}$/, "%global license_audit_sha256 #{license_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: license syntax metadata is inconsistent for v8/third_party/googletest/README.chromium")
+
+      googletest["syntax_class"] = "legacy-bsd-label"
+      googletest["normalized_expression"] = nil
+      googletest["normalization_status"] = "unresolved"
+      vendor = license.dig("vendored_rust", "packages").find do |record|
+        record["path"] == "third_party/rust/chromium_crates_io/vendor/android_system_properties-v0_1"
+      end
+      vendor["syntax_class"] = "spdx-expression-syntax"
+      vendor["normalized_expression"] = "MIT OR Apache-2.0"
+      vendor["proposed_expression"] = nil
+      vendor["normalization_status"] = "syntax-only"
+      File.write(license_path, JSON.pretty_generate(license) + "\n")
+      license_sha256 = Digest::SHA256.file(license_path).hexdigest
+      data.fetch("license_audit")["receipt_sha256"] = license_sha256
+      dependencies.fetch("license_audit")["receipt_sha256"] = license_sha256
+      spec = spec.sub(/^%global license_audit_sha256\s+\h{64}$/, "%global license_audit_sha256 #{license_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(
+        errors,
+        "rust-v8: license syntax metadata is inconsistent for third_party/rust/chromium_crates_io/vendor/android_system_properties-v0_1"
+      )
+    end
+  end
+
+  def test_rejects_rust_v8_nonterminal_fail_closed_stop
+    package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    spec = File.read(package.spec_path).sub("\nexit 1\n\n%build", "\n# exit 1\n\n%build")
+
+    errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+    assert_includes(errors, "rust-v8: deliberate remaining-gates stop is missing")
   end
 end

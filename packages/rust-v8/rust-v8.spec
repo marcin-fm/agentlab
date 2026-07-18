@@ -1,16 +1,16 @@
-# Disabled by package.yml. This spec reconstructs and patches the exact source,
-# then deliberately aborts until every license and offline build gate is complete.
+# Disabled by package.yml. This spec reconstructs and patches the exact Git
+# submodule source closure, then aborts until every remaining gate is complete.
 %bcond check 1
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 8bc2852dbfc829ab83ee33c526c3356e0ec124485a1944a80f0b35ff3ec42752
-%global license_audit_sha256 8ef742e096806101fcb464f7bb34ab5b7c2231d4857a0bfd9a02799001631eb6
+%global closure_sha256 bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de
+%global license_audit_sha256 3e832a5a1d7d0078c155c9fa454b37db52b44d60e494d8aa66f531e6d1a35389
 %global system_rust_patch_sha256 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # MIT covers Rusty V8 and BSD-3-Clause covers the original downstream allocator
@@ -64,12 +64,12 @@ BuildRequires:  rustfmt
 Rusty V8 provides Rust bindings to Google's V8 JavaScript engine. This source
 package builds the exact static archive consumed by the `v8 149.2.0` crate.
 
-This draft is intentionally blocked. The root and all 20 recursive component
-archives are immutable checked RPM inputs, reconstruct the exact recursive Git
-tree, and accept the Fedora stable-toolchain patches. A checked candidate-text
-and vendored-Rust license inventory is also present. Complete SPDX and required-
-text review, network-isolated Fedora builds, and architecture proof are not
-complete.
+This draft is intentionally blocked. The root and all 20 `.gitmodules`
+components are immutable checked RPM inputs, reconstruct the exact recursive
+Git tree, and accept the Fedora stable-toolchain patches. A full gclient/DEPS
+checkout is not claimed; unmaterialized test and tooling dependencies remain
+separately classified. Complete semantic license review, network-isolated
+Fedora builds, and architecture proof are not complete.
 
 %package static
 Summary:        Exact-version Rusty V8 static archive
@@ -102,14 +102,21 @@ components = receipt["components"]
 assert receipt["schema"] == "rust-v8-source-closure/v1"
 assert receipt["release"]["version"] == "%{version}"
 assert len(components) == len(sources) == 21
+assert receipt["closure_scope"]["kind"] == "exact-git-submodule-closure"
+assert receipt["closure_scope"]["full_deps_checkout_claimed"] is False
+assert receipt["validation"]["exact_git_submodule_closure_verified"] is True
+assert receipt["validation"]["full_deps_checkout_verified"] is False
 assert receipt["validation"]["immutable_recursive_rpm_source_verified"] is True
 assert receipt["validation"]["recursive_component_archive_trees_match_git"] is True
 assert receipt["validation"]["recursive_source_tree_matches_git"] is True
 assert license_audit["schema"] == "rust-v8-license-audit/v1"
 assert license_audit["source_closure"]["sha256"] == "%{closure_sha256}"
 assert license_audit["validation"]["all_source_components_inventoried"] is True
+assert license_audit["validation"]["declared_license_syntax_classified"] is True
+assert license_audit["validation"]["unmaterialized_deps_declarations_classified"] is True
 assert license_audit["validation"]["vendored_rust_source_package_declarations_complete"] is True
 assert license_audit["validation"]["vendored_rust_source_package_candidate_texts_present"] is True
+assert license_audit["validation"]["declared_license_text_semantic_review_complete"] is False
 assert license_audit["validation"]["required_license_texts_verified"] is False
 assert license_audit["validation"]["fedora_allowed_spdx_verified"] is False
 for index, (component, source) in enumerate(zip(components, sources)):
@@ -158,7 +165,7 @@ extract_wrapped v8 %{SOURCE20}
 patch --batch --fuzz=0 -p1 < %{PATCH0}
 patch --batch --fuzz=0 -p1 < %{PATCH1}
 
-echo 'rust-v8 sources are complete; licensing and Fedora build gates remain blocked' >&2
+echo 'rust-v8 Git submodule sources are complete; DEPS selection, licensing, and Fedora build gates remain blocked' >&2
 exit 1
 
 %build
@@ -172,6 +179,10 @@ install -Dpm0644 out/fedora/obj/librusty_v8.a \
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.3
+- Scope the immutable inputs explicitly to the exact Git submodule closure.
+- Classify unmaterialized DEPS declarations and ambiguous license syntax.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.2
 - Add all 20 immutable recursive component archives as checked RPM sources.
 - Reconstruct the exact Git tree and apply the Fedora toolchain patches.

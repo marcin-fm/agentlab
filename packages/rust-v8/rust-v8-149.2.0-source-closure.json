@@ -515,7 +515,10 @@
     "gitmodules_paths_and_urls_verified": true,
     "recursive_component_archive_trees_match_git": true,
     "recursive_source_tree_reconstructed": true,
-    "recursive_source_tree_matches_git": true
+    "recursive_source_tree_matches_git": true,
+    "exact_git_submodule_closure_verified": true,
+    "full_deps_checkout_verified": false,
+    "selected_build_dependency_closure_verified": false
   },
   "source_summary": {
     "component_archives": 21,
@@ -530,5 +533,12 @@
     "file_records": 60914,
     "tree_sha256": "4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07",
     "content_modes_and_symlinks_match_recursive_git": true
+  },
+  "closure_scope": {
+    "kind": "exact-git-submodule-closure",
+    "git_components": 21,
+    "git_submodules": 20,
+    "full_deps_checkout_claimed": false,
+    "selected_build_dependency_closure_claimed": false
   }
 }

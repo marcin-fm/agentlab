@@ -12,7 +12,7 @@ generated binding while consuming a separately built
 `/usr/lib64/rust-v8/149.2.0/librusty_v8.a`.
 
 This boundary is preferable to building V8 inside `codex-cli` because the V8
-producer owns a 21-repository recursive source tree, Chromium GN integration,
+producer owns a 21-component recursive Git submodule tree, Chromium GN integration,
 stable-system-Rust changes, architecture proof, and a large native/static
 license closure. Those concerns are independently reusable and should not be
 duplicated in each Rust application that selects the same crate version.
@@ -57,17 +57,22 @@ The root tag `v149.2.0` resolves to commit
 has SHA-256
 `8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a`.
 
-The root archive does not contain the required submodule contents. The spec now
-adds all 20 exact commit-addressed GitHub codeload or Chromium Gitiles archives
-as direct RPM inputs. The 153,497,693 bytes of checked archives reconstruct
+The root archive does not contain the required submodule contents. The spec adds
+all 20 exact commit-addressed GitHub codeload or Chromium Gitiles archives as
+direct RPM inputs. The 153,497,693 bytes of checked archives reconstruct
 60,914 file, mode, and symlink records and match the clean recursive Git tree at
 SHA-256
 `4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07`.
 
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
 archive hash, component-tree hash, and RPM source number. Its SHA-256 is
-`8bc2852dbfc829ab83ee33c526c3356e0ec124485a1944a80f0b35ff3ec42752`.
+`bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de`.
 No generated aggregate archive or separate hosting service is required.
+
+This receipt proves the exact `.gitmodules` closure, not a full `gclient sync`.
+V8's `DEPS` also names test, benchmark, and tooling sources that the direct
+`//:rusty_v8` build does not materialize. Those declarations are inventoried
+separately and are not silently promoted into RPM sources.
 
 ## Fedora Toolchain Patches
 
@@ -95,12 +100,16 @@ and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
 entries: 216 real source packages and 52 generated empty placeholders. Every
 real vendored source package has a manifest license declaration and at least one
 candidate text. The audit resolves 228 of 229 paths explicitly declared by
-`README.chromium`; the remaining missing path is
-`v8/third_party/googletest/src/LICENSE`. `tools/clang` and `tools/win` also lack
-component-local texts. Required-text, SPDX normalization, Fedora allowability,
-system-library, and final linked-archive decisions remain open. The receipt
+`README.chromium`. The sole unresolved path,
+`v8/third_party/googletest/src/LICENSE`, belongs to a `Shipped: no` test-only
+DEPS source that is intentionally not materialized. Three comma-separated
+declarations and one bare `BSD` label are ambiguous, and eight vendored Cargo
+slash alternatives remain proposed-only. `tools/clang` and `tools/win` also
+need scoped Chromium-parent text review. Semantic text review, SPDX
+normalization, Fedora allowability, system-library, and final linked-archive
+decisions remain open. The receipt
 SHA-256 is
-`8ef742e096806101fcb464f7bb34ab5b7c2231d4857a0bfd9a02799001631eb6`.
+`3e832a5a1d7d0078c155c9fa454b37db52b44d60e494d8aa66f531e6d1a35389`.
 
 ## Prototype Result
 
@@ -113,8 +122,8 @@ An offline Cargo consumer linked the archive and printed `Fedora Rusty V8`.
 
 ## Remaining Gates
 
-1. Resolve inherited or missing required texts, including `tools/clang` and `tools/win`.
-2. Normalize and review every SPDX expression and system-library decision for Fedora.
+1. Resolve scoped Chromium-parent text treatment for `tools/clang` and `tools/win`.
+2. Normalize ambiguous declarations and review every text, SPDX expression, and system-library decision for Fedora.
 3. Establish the final source-package and linked-static-archive license expressions.
 4. Run clean Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes.
 5. Prove aarch64 or retain an explicitly reviewed architecture restriction.

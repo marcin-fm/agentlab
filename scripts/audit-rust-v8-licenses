@@ -9,6 +9,17 @@ require "set"
 require_relative "lib/agentlab"
 
 LICENSE_BASENAME = /\A(?:licen[cs]e|copying|notice|copyright|credits|authors|patents|unlicense)(?:[._-].*)?\z/i
+UNMATERIALIZED_DEPS_DECLARATIONS = [
+  {
+    "source_path" => "v8/third_party/googletest/src",
+    "declared_license_path" => "v8/third_party/googletest/src/LICENSE",
+    "readme_chromium" => "v8/third_party/googletest/README.chromium",
+    "repository_suffix" => "/external/github.com/google/googletest.git",
+    "archive_url" => "https://chromium.googlesource.com/external/github.com/google/googletest/+archive/4fe3307fb2d9f86d19777c7eb0e4809e9694dde7.tar.gz",
+    "commit" => "4fe3307fb2d9f86d19777c7eb0e4809e9694dde7",
+    "expected_shipped" => "no"
+  }
+].freeze
 
 def tree_manifest(root)
   records = []
@@ -45,6 +56,63 @@ def owner_path(path, component_paths)
   end
 end
 
+def license_syntax_record(raw, allow_slash: false)
+  record = {
+    "raw_license" => raw,
+    "syntax_class" => "missing",
+    "normalized_expression" => nil,
+    "proposed_expression" => nil,
+    "normalization_status" => "missing",
+    "normalization_reason" => "no license declaration is present"
+  }
+  return record unless raw
+
+  if raw == "BSD"
+    record.merge(
+      "syntax_class" => "legacy-bsd-label",
+      "normalization_status" => "unresolved",
+      "normalization_reason" => "BSD does not identify a unique SPDX license"
+    )
+  elsif raw.include?(",")
+    record.merge(
+      "syntax_class" => "ambiguous-comma-list",
+      "normalization_status" => "ambiguous",
+      "normalization_reason" => "comma separation does not establish AND or OR semantics"
+    )
+  elsif allow_slash && raw.include?("/")
+    operands = raw.split("/").map(&:strip)
+    proposed = if operands.length > 1 && operands.all? { |operand| operand.match?(/\A[A-Za-z0-9][A-Za-z0-9.+-]*\z/) }
+                 operands.join(" OR ")
+               end
+    record.merge(
+      "syntax_class" => "legacy-slash-alternative",
+      "proposed_expression" => proposed,
+      "normalization_status" => proposed ? "proposed" : "unresolved",
+      "normalization_reason" => "slash alternatives require explicit semantic review before conversion to OR"
+    )
+  elsif raw.match?(/\b(?:AND|OR|WITH)\b|[()]/)
+    record.merge(
+      "syntax_class" => "spdx-expression-syntax",
+      "normalized_expression" => raw,
+      "normalization_status" => "syntax-only",
+      "normalization_reason" => "expression-shaped declaration is not yet semantically or Fedora reviewed"
+    )
+  elsif raw.match?(/\A[A-Za-z0-9][A-Za-z0-9.+-]*\z/)
+    record.merge(
+      "syntax_class" => "spdx-identifier-syntax",
+      "normalized_expression" => raw,
+      "normalization_status" => "syntax-only",
+      "normalization_reason" => "identifier-shaped declaration is not yet semantically or Fedora reviewed"
+    )
+  else
+    record.merge(
+      "syntax_class" => "unclassified",
+      "normalization_status" => "unresolved",
+      "normalization_reason" => "declaration syntax is not recognized"
+    )
+  end
+end
+
 def readme_chromium_metadata(path, source_dir)
   content = File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
   fields = {}
@@ -66,15 +134,32 @@ def readme_chromium_metadata(path, source_dir)
                  end
       within_source = declared.start_with?("#{source_dir}/")
       verified = within_source && File.file?(declared)
+      relative = within_source ? declared.delete_prefix("#{source_dir}/") : license_file
+      unmaterialized = UNMATERIALIZED_DEPS_DECLARATIONS.find do |candidate|
+        candidate.fetch("declared_license_path") == relative
+      end
+      if unmaterialized && fields["shipped"] != unmaterialized.fetch("expected_shipped")
+        raise Agentlab::Error, "unmaterialized DEPS declaration shipping metadata changed for #{relative}"
+      end
       {
-        "path" => within_source ? declared.delete_prefix("#{source_dir}/") : license_file,
+        "path" => relative,
         "verified" => verified,
+        "source_path_present" => within_source && File.exist?(File.dirname(declared)),
+        "declared_text_scope" => if verified
+                                   "materialized-source"
+                                 elsif unmaterialized
+                                   "unmaterialized-deps-source"
+                                 else
+                                   "unresolved"
+                                 end,
+        "semantic_review_verified" => false,
         "sha256" => verified ? Digest::SHA256.file(declared).hexdigest : nil
       }
     end
     fields["license_file_records"] = declared_records
     fields["license_file_verified"] = declared_records.all? { |record| record.fetch("verified") }
   end
+  fields.merge!(license_syntax_record(fields["license"]))
   fields
 end
 
@@ -114,6 +199,24 @@ expected_tree_sha256 = source_receipt.dig("reconstruction", "tree_sha256")
 actual_tree_sha256 = Digest::SHA256.hexdigest(JSON.generate(tree_manifest(source_dir)))
 unless actual_tree_sha256 == expected_tree_sha256
   raise Agentlab::Error, "source tree does not match the checked recursive-source receipt"
+end
+
+deps_content = File.read(File.join(source_dir, "v8", "DEPS"))
+unmaterialized_deps_declarations = UNMATERIALIZED_DEPS_DECLARATIONS.map do |declaration|
+  deps_path = declaration.fetch("source_path").delete_prefix("v8/")
+  needle = "  '#{deps_path}':\n" \
+           "    Var('chromium_url') + '#{declaration.fetch('repository_suffix')}' + '@' + " \
+           "'#{declaration.fetch('commit')}',"
+  raise Agentlab::Error, "V8 DEPS pin changed for #{deps_path}" unless deps_content.include?(needle)
+  if File.exist?(File.join(source_dir, declaration.fetch("source_path")))
+    raise Agentlab::Error, "expected unmaterialized V8 DEPS source is present: #{declaration.fetch('source_path')}"
+  end
+
+  declaration.reject { |key, _value| %w[repository_suffix expected_shipped].include?(key) }.merge(
+    "readme_shipped" => declaration.fetch("expected_shipped"),
+    "source_materialized" => false,
+    "declared_text_resolvable" => false
+  )
 end
 
 component_paths = source_receipt.fetch("components").map { |component| component.fetch("path") }
@@ -171,7 +274,7 @@ vendor_packages = Dir.glob(File.join(vendor_root, "*", "Cargo.toml")).sort.map d
   metadata = cargo_package_metadata(manifest_path)
   license_files = all_license_files.select do |record|
     record.fetch("path").start_with?("#{relative_root}/")
-  end
+  end.sort_by { |record| record.fetch("path") }
   manifest_license_path = if metadata["license_file"]
                             File.expand_path(metadata.fetch("license_file"), crate_root)
                           end
@@ -189,7 +292,7 @@ vendor_packages = Dir.glob(File.join(vendor_root, "*", "Cargo.toml")).sort.map d
     "placeholder" => metadata.fetch("placeholder"),
     "license_files" => license_files,
     "license_file_count" => license_files.length
-  }
+  }.merge(license_syntax_record(metadata["license"], allow_slash: true))
 end
 
 declared_candidates = component_records.values.flat_map do |component|
@@ -211,6 +314,7 @@ receipt = {
     "tree_sha256" => expected_tree_sha256
   },
   "components" => component_paths.map { |path| component_records.fetch(path) },
+  "unmaterialized_deps_declarations" => unmaterialized_deps_declarations,
   "vendored_rust" => {
     "root" => "third_party/rust/chromium_crates_io/vendor",
     "packages" => vendor_packages
@@ -223,17 +327,23 @@ receipt = {
     "license_candidate_files" => all_license_files.length,
     "readme_chromium_records" => readme_records.length,
     "readme_chromium_with_license" => readme_records.count { |record| record.key?("license") },
+    "readme_chromium_without_license" => readme_records.count { |record| record["raw_license"].nil? },
+    "readme_chromium_ambiguous_comma_licenses" => readme_records.count { |record| record["syntax_class"] == "ambiguous-comma-list" },
+    "readme_chromium_legacy_bsd_licenses" => readme_records.count { |record| record["syntax_class"] == "legacy-bsd-label" },
     "readme_chromium_with_declared_license_file" => readme_license_file_records.length,
     "readme_chromium_with_verified_declared_license_file" => readme_license_file_records.count { |record| record["license_file_verified"] == true },
     "readme_chromium_declared_license_paths" => readme_declared_license_paths.length,
     "readme_chromium_verified_declared_license_paths" => readme_declared_license_paths.count { |record| record.fetch("verified") },
+    "readme_chromium_unmaterialized_declared_license_paths" => readme_declared_license_paths.count { |record| record["declared_text_scope"] == "unmaterialized-deps-source" },
+    "readme_chromium_semantically_verified_declared_license_paths" => readme_declared_license_paths.count { |record| record["semantic_review_verified"] == true },
     "vendored_rust_packages" => vendor_packages.length,
     "vendored_rust_source_packages" => vendored_source_packages.length,
     "vendored_rust_placeholders" => vendor_packages.count { |record| record.fetch("placeholder") },
     "vendored_rust_source_packages_with_manifest_license" => vendored_source_packages.count { |record| record["manifest_license"] },
     "vendored_rust_source_packages_with_manifest_license_file" => vendored_source_packages.count { |record| record["manifest_license_file"] },
     "vendored_rust_source_packages_with_verified_manifest_license_file" => vendor_license_file_records.count { |record| record["manifest_license_file_verified"] == true },
-    "vendored_rust_source_packages_with_candidate_texts" => vendored_source_packages.count { |record| record.fetch("license_file_count").positive? }
+    "vendored_rust_source_packages_with_candidate_texts" => vendored_source_packages.count { |record| record.fetch("license_file_count").positive? },
+    "vendored_rust_legacy_slash_license_expressions" => vendored_source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" }
   },
   "validation" => {
     "source_closure_verified" => true,
@@ -242,17 +352,20 @@ receipt = {
     "candidate_license_files_hashed" => true,
     "readme_chromium_metadata_inventoried" => true,
     "declared_license_file_paths_inventoried" => true,
+    "declared_license_syntax_classified" => true,
+    "unmaterialized_deps_declarations_classified" => true,
     "vendored_rust_manifests_inventoried" => true,
     "vendored_rust_placeholders_classified" => true,
     "vendored_rust_source_package_declarations_complete" => vendored_source_packages.all? { |record| record["manifest_license"] || record["manifest_license_file"] },
     "vendored_rust_source_package_candidate_texts_present" => vendored_source_packages.all? { |record| record.fetch("license_file_count").positive? },
     "license_expressions_normalized" => false,
+    "declared_license_text_semantic_review_complete" => false,
     "required_license_texts_verified" => false,
     "fedora_allowed_spdx_verified" => false,
     "source_package_license_complete" => false,
     "final_static_archive_license_complete" => false
   },
-  "scope" => "candidate legal-text and declaration inventory for every recursive source component; SPDX normalization, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
+  "scope" => "candidate legal-text and declaration inventory for every exact Git component, including embedded metadata that names intentionally unmaterialized DEPS test/tool sources; SPDX normalization, semantic text review, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
 }
 content = JSON.pretty_generate(receipt) + "\n"
 
