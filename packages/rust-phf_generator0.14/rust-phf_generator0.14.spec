@@ -10,12 +10,12 @@
 
 Name:           rust-phf_generator0.14
 Version:        0.14.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        PHF generation logic
 
 License:        MIT
 URL:            https://crates.io/crates/phf_generator
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # Fedora packaging: omit the benchmark target and its Criterion-only
 # development dependency from the packaged crate graph.
 # Upstream status: not submitted because upstream intentionally retains the
@@ -88,6 +88,10 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.3
+- Enable the independently eligible leaf for six-cell SCM COPR publication.
+- Use the immutable static crates.io archive for source generation.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.2
 - Document the benchmark-pruning patch purpose and upstream status.
 

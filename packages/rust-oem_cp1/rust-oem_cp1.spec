@@ -7,12 +7,12 @@
 
 Name:           rust-oem_cp1
 Version:        1.3.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Rust library that handles OEM code pages
 
 License:        MIT
 URL:            https://crates.io/crates/oem_cp
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # Fedora packaging: remove Windows-only development dependencies from Fedora's
 # non-Windows crate graph.
 # Upstream status: not submitted because upstream supports Windows tests, while
@@ -73,6 +73,10 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.0-0.3
+- Enable the independently eligible leaf for six-cell SCM COPR publication.
+- Use the immutable static crates.io archive for source generation.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.0-0.2
 - Document the foreign-target patch purpose and upstream status.
 

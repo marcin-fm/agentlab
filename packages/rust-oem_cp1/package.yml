@@ -1,5 +1,25 @@
 name: rust-oem_cp1
-status: blocked
-blockers: [Final staged metadata patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
-upstream: {provider: crates_io, crate: oem_cp, version_requirement: '= 1.3.0', current_version: 1.3.0, source_sha256: a95602f5a6eec5b15394516448c0b6fc2f2ef4ca2a9ab2951a91a18cec516bf0, source_url_template: 'https://static.crates.io/crates/oem_cp/oem_cp-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-oem_cp1, spec: rust-oem_cp1.spec}
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.3 replaces the crates.io API redirect with the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live build results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256.
+  duplicate_audit: No crate(oem_cp) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
+upstream:
+  provider: crates_io
+  crate: oem_cp
+  version_requirement: = 1.3.0
+  current_version: 1.3.0
+  source_sha256: a95602f5a6eec5b15394516448c0b6fc2f2ef4ca2a9ab2951a91a18cec516bf0
+  source_url_template: https://static.crates.io/crates/oem_cp/oem_cp-{version}.crate
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-oem_cp1
+  spec: rust-oem_cp1.spec

@@ -1,7 +1,17 @@
 # rust-oem_cp1
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. Its relationship to the blocked Kreuzberg package is dependency
+context, not a package-specific publication blocker. The canonical crates.io
+archive is pinned by SHA-256 and fetched directly from the immutable static
+registry endpoint.
 
-Blocked import of the staged `oem_cp` 1.3.0 package. The staged metadata patch is retained for later Fedora validation.
+Fedora 43, Fedora 44, Rawhide, and matching RPM Fusion repositories provide no
+`crate(oem_cp)` package. Configured publication therefore targets Fedora 43,
+Fedora 44, and Rawhide on x86_64 and aarch64.
+
+The retained Fedora patch removes only Windows-target development dependencies
+from the non-Windows crate graph. Exact-current six-cell build and artifact-lint
+results are retained in the project playbook after configured SCM publication.

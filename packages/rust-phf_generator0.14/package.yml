@@ -1,5 +1,25 @@
 name: rust-phf_generator0.14
-status: blocked
-blockers: [Final staged benchmark-pruning patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
-upstream: {provider: crates_io, crate: phf_generator, version_requirement: '= 0.14.0', current_version: 0.14.0, source_sha256: aeb62e0959d5a1bebc965f4d15d9e2b7cea002b6b0f5ba8cde6cc26738467100, source_url_template: 'https://static.crates.io/crates/phf_generator/phf_generator-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-phf_generator0.14, spec: rust-phf_generator0.14.spec}
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.3 replaces the crates.io API redirect with the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live build results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256.
+  duplicate_audit: Fedora 43 provides phf_generator 0.11 and 0.13, while Fedora 44 and Rawhide provide 0.13; none satisfy crate(phf_generator) = 0.14.0, and matching RPM Fusion repositories provide no compatible package as checked on 2026-07-18.
+upstream:
+  provider: crates_io
+  crate: phf_generator
+  version_requirement: = 0.14.0
+  current_version: 0.14.0
+  source_sha256: aeb62e0959d5a1bebc965f4d15d9e2b7cea002b6b0f5ba8cde6cc26738467100
+  source_url_template: https://static.crates.io/crates/phf_generator/phf_generator-{version}.crate
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-phf_generator0.14
+  spec: rust-phf_generator0.14.spec
