@@ -1,0 +1,41 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -112,31 +112,12 @@
+ name = "yield_on_full_regression"
+ path = "tests/yield_on_full_regression.rs"
+ 
+-[[bench]]
+-name = "generators"
+-path = "benches/generators.rs"
+-
+-[[bench]]
+-name = "lowbit"
+-path = "benches/lowbit.rs"
+-harness = false
+-required-features = ["std"]
+-
+-[[bench]]
+-name = "msb8"
+-path = "benches/msb8.rs"
+-harness = false
+-required-features = ["std"]
+-
+ [dependencies.futures]
+ version = "0.3.12"
+ features = ["std"]
+ optional = true
+ default-features = false
+ 
+-[dev-dependencies.criterion]
+-version = "0.3.1"
+-
+ [dev-dependencies.tokio]
+ version = "1"
+ features = [
+@@ -152,6 +133,3 @@
+ version = "0.6.2"
+ features = ["compat"]
+ default-features = false
+-
+-[dev-dependencies.zenbench]
+-version = "0.1.3"

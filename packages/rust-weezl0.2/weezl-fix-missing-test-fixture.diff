@@ -1,0 +1,25 @@
+--- a/src/decode.rs
++++ b/src/decode.rs
+@@ -1723,7 +1723,7 @@
+     use crate::alloc::vec::Vec;
+     #[cfg(feature = "std")]
+     use crate::StreamBuf;
+-    use crate::{decode::Decoder, BitOrder};
++    use crate::{decode::Decoder, encode::Encoder, BitOrder};
+ 
+     #[test]
+     fn invalid_code_size_low() {
+@@ -1738,11 +1738,8 @@
+     }
+ 
+     fn make_encoded() -> Vec<u8> {
+-        const FILE: &'static [u8] = include_bytes!(concat!(
+-            env!("CARGO_MANIFEST_DIR"),
+-            "/benches/binary-8-msb.lzw"
+-        ));
+-        return Vec::from(FILE);
++        const INPUT: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"));
++        Encoder::new(BitOrder::Msb, 8).encode(INPUT).unwrap()
+     }
+ 
+     #[test]
