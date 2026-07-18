@@ -4,8 +4,10 @@ blockers: []
 validation:
   proof_release: 0.1
   evidence_release_delta: Release 0.2 changed only the release, changelog, and retained evidence records; prep, build, install, and check behavior remained unchanged.
-  enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication for the selected Fedora 43 and Fedora 44 Kreuzberg dependency targets without changing package build behavior; live results are retained in the project playbook.
+  enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication without changing package build behavior; live results are retained in the project playbook.
   scm_source_release: Release 0.4 replaces the crates.io API redirect with the immutable static registry archive after live build 10740215 received HTTP 403 before SRPM creation; the pinned source hash and package build behavior are unchanged.
+  target_scope_release: Release 0.5 includes Rawhide after the maintainer confirmed Kreuzberg will publish there; absence of earlier Rawhide proof was not evidence that the dependency was unnecessary.
+  scm_source_validation: Release 0.4 build 10740237 succeeded in Fedora 43 and Fedora 44 on x86_64 and aarch64 after the static registry correction; release 0.5 carries the same build behavior across the corrected six-cell target matrix.
   downloaded_srpm_spec_sha256: 673383f1f50f21161f395386a7542b00279087d2890310964cad513a34b87066
   source_identity: Fedora 43 and Fedora 44 SRPMs contain the pinned crates.io archive with the recorded source SHA-256.
   duplicate_audit: No crate(maybe-owned) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories on 2026-07-18.
@@ -33,7 +35,7 @@ copr:
     - fedora-43-aarch64
     - fedora-44-x86_64
     - fedora-44-aarch64
-  omitted_target_families:
-    rawhide: The selected Kreuzberg PDFium-render dependency scope currently targets Fedora 43 and Fedora 44 only.
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-maybe-owned0.3
   spec: rust-maybe-owned0.3.spec

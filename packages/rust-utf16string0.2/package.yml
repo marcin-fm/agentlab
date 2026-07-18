@@ -4,8 +4,9 @@ blockers: []
 validation:
   proof_release: 0.1
   evidence_release_delta: Release 0.2 changed only the release, changelog, and retained evidence records; prep, build, install, and check behavior remained unchanged.
-  enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication for the selected Fedora 43 and Fedora 44 Kreuzberg dependency targets without changing package build behavior; live results are retained in the project playbook.
+  enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication without changing package build behavior; live results are retained in the project playbook.
   scm_source_release: Release 0.4 replaces the crates.io API redirect with the immutable static registry archive after the identical transport failed before SRPM creation in rust-maybe-owned0.3 build 10740215; the pinned source hash and package build behavior are unchanged.
+  target_scope_release: Release 0.5 includes Rawhide after the maintainer confirmed Kreuzberg will publish there; absence of earlier Rawhide proof was not evidence that the dependency was unnecessary.
   downloaded_srpm_spec_sha256: 1867a1d70e57fb0b328e4839cc2630f329e8da57738edd2d2d61963bb08eaf55
   source_identity: Fedora 43 and Fedora 44 SRPMs contain the pinned crates.io archive with the recorded source SHA-256.
   duplicate_audit: No crate(utf16string) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories on 2026-07-18.
@@ -33,7 +34,7 @@ copr:
     - fedora-43-aarch64
     - fedora-44-x86_64
     - fedora-44-aarch64
-  omitted_target_families:
-    rawhide: The selected Kreuzberg PDFium-render dependency scope currently targets Fedora 43 and Fedora 44 only.
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-utf16string0.2
   spec: rust-utf16string0.2.spec
