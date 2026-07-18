@@ -9,13 +9,13 @@
 
 Name:           rust-napi-sys3
 Version:        3.2.2
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        NodeJS N-API raw binding
 
 License:        MIT
 URL:            https://crates.io/crates/napi-sys
-Source:         %{crates_source}
-Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/napi-rs-LICENSE
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/%{crate}-%{version}-LICENSE
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -217,6 +217,9 @@ install -pm 0644 LICENSE-MIT %{buildroot}%{crate_instdir}/LICENSE-MIT
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 3.2.2-0.4
+- Enable the package with a COPR-safe immutable registry source.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.2.2-0.3
 - Preserve the supplemental MIT license with the crate's explicit include list.
 

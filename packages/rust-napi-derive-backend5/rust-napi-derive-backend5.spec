@@ -4,19 +4,21 @@
 
 %global crate napi-derive-backend
 %global source_sha256 ddd961eb2aa8965e3f29722d754f3a86907eb1984e2fbcbe3fe87b9a02d6bfba
-%global license_commit dea608eae7481a47d64aab563a2ab5cdd8eda03c
+%global license_commit 2785de583a97e49adea8194090fca2ee12f067c8
 %global license_sha256 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
 
 Name:           rust-napi-derive-backend5
 Version:        5.1.1
-Release:        0.3%{?dist}
+Release:        0.5%{?dist}
 Summary:        Code generation backend for napi procedural macro
 
 License:        MIT
 URL:            https://crates.io/crates/napi-derive-backend
-Source:         %{crates_source}
-Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/napi-rs-LICENSE
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/%{crate}-%{version}-LICENSE
+# Fedora-only metadata repair; upstream release 5.1.1 retains the implicit optional-dependency feature syntax.
 Patch2:         napi-derive-backend-private-semver.diff
+# Fedora-only ctor 0.6.3 compatibility repair; upstream release 5.1.1 emits newer ctor attribute syntax.
 Patch3:         napi-derive-backend-ctor-syntax.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -53,6 +55,18 @@ use the "default" feature of the "%{crate}" crate.
 %files       -n %{name}+default-devel
 %ghost %{crate_instdir}/Cargo.toml
 
+%package     -n %{name}+noop-devel
+Summary:        %{summary}
+BuildArch:      noarch
+
+%description -n %{name}+noop-devel %{_description}
+
+This package contains library source intended for building other packages which
+use the "noop" feature of the "%{crate}" crate.
+
+%files       -n %{name}+noop-devel
+%ghost %{crate_instdir}/Cargo.toml
+
 %package     -n %{name}+strict-devel
 Summary:        %{summary}
 BuildArch:      noarch
@@ -63,6 +77,18 @@ This package contains library source intended for building other packages which
 use the "strict" feature of the "%{crate}" crate.
 
 %files       -n %{name}+strict-devel
+%ghost %{crate_instdir}/Cargo.toml
+
+%package     -n %{name}+tracing-devel
+Summary:        %{summary}
+BuildArch:      noarch
+
+%description -n %{name}+tracing-devel %{_description}
+
+This package contains library source intended for building other packages which
+use the "tracing" feature of the "%{crate}" crate.
+
+%files       -n %{name}+tracing-devel
 %ghost %{crate_instdir}/Cargo.toml
 
 %package     -n %{name}+type-def-devel
@@ -99,6 +125,13 @@ install -pm 0644 %{SOURCE1} LICENSE-MIT
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 5.1.1-0.5
+- Expose the upstream noop and tracing feature interfaces.
+
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 5.1.1-0.4
+- Enable the package with a COPR-safe immutable registry source.
+- Pin the supplemental MIT license to the exact release commit.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 5.1.1-0.3
 - Restore the retained ctor 0.6 compatibility patch.
 - Install the pinned upstream MIT license omitted from the published crate.

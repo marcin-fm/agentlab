@@ -1,8 +1,23 @@
 name: rust-napi-sys3
-status: blocked
-blockers:
-  - Published napi-sys 3.2.2 has no license file; the current spec pins and installs the immutable upstream MIT license but has not received a new serialized clean-build/rpmlint validation.
-  - COPR enablement and Fedora/RPM Fusion duplicate/license approval are not finalized.
+status: enabled
+blockers: []
+validation:
+  source_identity: The static crates.io archive matches the pinned SHA-256; tag napi-sys-v3.2.2 peels to the pinned supplemental-license commit.
+  license_evidence: The published crate omits its declared MIT license because of an explicit include list, so the spec verifies and installs the immutable workspace LICENSE from the exact release commit.
+  dependency_evidence: Fedora supplies libloading 0.9 in Fedora 43, Fedora 44, and Rawhide, and every selected toolchain satisfies the crate's Rust 1.88 minimum.
+  duplicate_audit: No crate(napi-sys) = 3.2.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion free/nonfree repositories as checked on 2026-07-18.
+  source_delivery: The direct static registry URL serves the same pinned crate bytes without the crates.io API endpoint's COPR source-builder HTTP 403.
+  local_validation: A fresh Fedora 44 x86_64 Mock build passed dynamic dependency generation, build, install, and tests; all 15 source/binary RPMs passed digest verification and rpmlint with zero errors or warnings.
 upstream: {provider: crates_io, crate: napi-sys, version_requirement: '= 3.2.2', current_version: 3.2.2, source_sha256: 1f5bcdf71abd3a50d00b49c1c2c75251cb3c913777d6139cd37dabc093a5e400, source_url_template: 'https://static.crates.io/crates/napi-sys/napi-sys-{version}.crate'}
 supplemental: {license_url: 'https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE', license_commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, install_name: LICENSE-MIT}
-copr: {enabled: false, subdir: packages/rust-napi-sys3, spec: rust-napi-sys3.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-napi-sys3
+  spec: rust-napi-sys3.spec

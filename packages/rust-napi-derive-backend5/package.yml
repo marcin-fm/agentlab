@@ -1,6 +1,24 @@
 name: rust-napi-derive-backend5
-status: blocked
-blockers: ["The pinned supplemental-license and retained ctor compatibility repairs have not received a new serialized clean-build/rpmlint validation.", "COPR enablement and Fedora/RPM Fusion duplicate/license approval are not finalized."]
+status: enabled
+blockers: []
+validation:
+  source_identity: The static crates.io archive matches the pinned SHA-256 and embeds exact release commit 2785de583a97e49adea8194090fca2ee12f067c8, also peeled from tag napi-derive-backend-v5.1.1.
+  license_evidence: The published crate omits its declared MIT license, so the spec verifies and installs the immutable workspace LICENSE from the exact release commit.
+  dependency_evidence: Fedora supplies proc-macro2 1, quote 1, semver 1, syn 2 with fold/full/extra-traits, and test-only serde_json 1 in every selected release; Agentlab supplies convert_case 0.11 across all six chroots.
+  patch_evidence: The metadata patch makes the optional semver dependency explicit; the compatibility patch changes generated ctor syntax only for Fedora's ctor 0.6.3.
+  duplicate_audit: No crate(napi-derive-backend) = 5.1.1 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion free/nonfree repositories as checked on 2026-07-18.
+  source_delivery: The direct static registry URL serves the same pinned crate bytes without the crates.io API endpoint's COPR source-builder HTTP 403.
+  local_validation: Both patches applied with fuzz 0; a fresh Fedora 44 x86_64 release 0.5 Mock build passed 11 tests, and all seven source/binary RPMs passed digest verification and rpmlint with zero errors or warnings.
 upstream: {provider: crates_io, crate: napi-derive-backend, version_requirement: '= 5.1.1', current_version: 5.1.1, source_sha256: ddd961eb2aa8965e3f29722d754f3a86907eb1984e2fbcbe3fe87b9a02d6bfba, source_url_template: 'https://static.crates.io/crates/napi-derive-backend/napi-derive-backend-{version}.crate'}
-supplemental: {license_url: 'https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE', license_commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, install_name: LICENSE-MIT}
-copr: {enabled: false, subdir: packages/rust-napi-derive-backend5, spec: rust-napi-derive-backend5.spec}
+supplemental: {license_url: 'https://raw.githubusercontent.com/napi-rs/napi-rs/2785de583a97e49adea8194090fca2ee12f067c8/LICENSE', license_commit: 2785de583a97e49adea8194090fca2ee12f067c8, license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, install_name: LICENSE-MIT}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-napi-derive-backend5
+  spec: rust-napi-derive-backend5.spec

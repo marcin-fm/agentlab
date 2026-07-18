@@ -69,11 +69,13 @@ supplemental_license_sources:
     url: https://raw.githubusercontent.com/napi-rs/napi-rs/dea608eae7481a47d64aab563a2ab5cdd8eda03c/LICENSE
     sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
     installed_as: LICENSE-MIT
+    exact_release_override:
+      rust-napi-derive-backend5: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, url: https://raw.githubusercontent.com/napi-rs/napi-rs/2785de583a97e49adea8194090fca2ee12f067c8/LICENSE, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215}
     current_spec_sha256:
       rust-napi3: f67d4cbc132969d48ab17bf072b9883741567cf9ab1b008a9217ab4dc7541672
-      rust-napi-sys3: 4d06ae78cfdac6b5af770f4b4dedc7bff1780c18c32e75342eb77330ee1c0e02
-      rust-napi-derive-backend5: 0e37b6767def3b729c1c745eb880cbea3c09e7de04157c06d19973a87ff500a2
-    validation: immutable URL fetched and checksum verified; corrected specs not rebuilt in this pass
+      rust-napi-sys3: 129774a4c41b3814c1f6c5e12e64bc22dc854953acba755de08a1a208593bf48
+      rust-napi-derive-backend5: 992c728cea16c32537b75518c942316e9cd202542ebde542a6d20344a07859b4
+    validation: immutable URLs fetched and checksums verified; rust-napi-sys3 and rust-napi-derive-backend5 passed fresh Fedora 44 local clean builds and artifact rpmlint, while rust-napi3 remains blocked
 dependency_patch_audit:
   package_records: 63
   declared_patch_members: 40
