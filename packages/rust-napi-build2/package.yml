@@ -1,7 +1,11 @@
 name: rust-napi-build2
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses immutable crate and supplemental-license sources and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256; the archive omits license text, so the spec pins and verifies the workspace LICENSE from the exact napi-build-v2.3.2 release commit.
+  dependency_evidence: The crate has no external Cargo dependencies and declares Rust 1.88, below every selected Fedora toolchain.
+  duplicate_audit: No crate(napi-build) = 2.3.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: napi-build
@@ -9,7 +13,19 @@ upstream:
   current_version: 2.3.2
   source_sha256: c9c366d2c8c60b86fa632df75f745509b52f9128f91a6bad4c796e44abb505e1
   source_url_template: https://static.crates.io/crates/napi-build/napi-build-{version}.crate
+supplemental:
+  license_url: https://raw.githubusercontent.com/napi-rs/napi-rs/e9c50bb430b7d34659c0541f600e1e323d37432a/LICENSE
+  license_commit: e9c50bb430b7d34659c0541f600e1e323d37432a
+  license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
+  install_name: LICENSE
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-napi-build2
   spec: rust-napi-build2.spec

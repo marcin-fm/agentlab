@@ -7,13 +7,15 @@
 
 Name:           rust-hashify0.2
 Version:        0.2.9
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Fast perfect hashing without dependencies
 
 License:        Apache-2.0 OR MIT
 URL:            https://crates.io/crates/hashify
-Source:         %{crates_source}
-Patch:          hashify-fix-metadata.diff
+Source0:        %{crates_source}
+# Fedora does not need the benchmark-only Criterion dependency.
+# Downstream-only registry integration metadata; not submitted upstream.
+Patch0:         hashify-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -32,7 +34,8 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENSES/Apache-2.0.txt
+%license %{crate_instdir}/LICENSES/MIT.txt
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
 
@@ -80,5 +83,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.9-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+- Mark both included project license texts as license files.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.2.9-0.1
 - Add the initial repository packaging changelog.

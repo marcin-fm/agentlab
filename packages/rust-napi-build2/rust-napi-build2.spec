@@ -4,15 +4,19 @@
 
 %global crate napi-build
 %global source_sha256 c9c366d2c8c60b86fa632df75f745509b52f9128f91a6bad4c796e44abb505e1
+%global license_commit e9c50bb430b7d34659c0541f600e1e323d37432a
+%global license_sha256 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215
 
 Name:           rust-napi-build2
 Version:        2.3.2
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        N-API build support
 
 License:        MIT
 URL:            https://crates.io/crates/napi-build
-Source:         %{crates_source}
+Source0:        %{crates_source}
+# The registry archive omits the workspace license; pin the release commit.
+Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/%{crate}-%{version}-LICENSE
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -31,7 +35,7 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENSE
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
 
@@ -49,7 +53,9 @@ use the "default" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_sha256}  %{SOURCE1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm 0644 %{SOURCE1} LICENSE
 %cargo_prep
 
 %generate_buildrequires
@@ -67,5 +73,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.3.2-0.2
+- Enable configured SCM publication with the immutable upstream license text.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.3.2-0.1
 - Add the initial repository packaging changelog.
