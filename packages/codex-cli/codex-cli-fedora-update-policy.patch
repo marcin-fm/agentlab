@@ -1,0 +1,174 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use Fedora-managed Codex updates
+
+Use a compile-time distribution channel to mark the Fedora RPM binary. Suppress
+upstream TUI update notices, direct `codex update` to DNF, and keep doctor from
+recommending npm, Homebrew, or the standalone installer. Unmarked upstream and
+test builds retain their existing behavior.
+---
+diff --git a/codex-rs/install-context/src/lib.rs b/codex-rs/install-context/src/lib.rs
+--- a/codex-rs/install-context/src/lib.rs
++++ b/codex-rs/install-context/src/lib.rs
+@@ -67,6 +67,15 @@ pub enum InstallMethod {
+     Other,
+ }
+ 
++/// Returns true when the binary was compiled for Fedora RPM distribution.
++pub fn is_fedora_package() -> bool {
++    is_fedora_distribution(option_env!("CODEX_DISTRIBUTION_CHANNEL"))
++}
++
++fn is_fedora_distribution(channel: Option<&str>) -> bool {
++    channel == Some("fedora")
++}
++
+ impl InstallContext {
+     pub fn from_exe(
+         is_macos: bool,
+@@ -612,4 +621,11 @@ mod tests {
+             }
+         );
+     }
++
++    #[test]
++    fn identifies_fedora_distribution_channel() {
++        assert!(is_fedora_distribution(Some("fedora")));
++        assert!(!is_fedora_distribution(Some("standalone")));
++        assert!(!is_fedora_distribution(None));
++    }
+ }
+diff --git a/codex-rs/tui/src/updates.rs b/codex-rs/tui/src/updates.rs
+--- a/codex-rs/tui/src/updates.rs
++++ b/codex-rs/tui/src/updates.rs
+@@ -13,6 +13,7 @@ use crate::updates_cache::read_version_info;
+ use crate::updates_cache::version_filepath;
+ use chrono::Duration;
+ use chrono::Utc;
++use codex_install_context::is_fedora_package;
+ use codex_login::default_client::create_client;
+ use serde::Deserialize;
+ use std::path::Path;
+@@ -22,7 +23,10 @@ use crate::version::CODEX_CLI_VERSION;
+ pub(crate) use crate::updates_cache::dismiss_version;
+ 
+ pub fn get_upgrade_version(config: &Config) -> Option<String> {
+-    if !config.check_for_update_on_startup || is_source_build_version(CODEX_CLI_VERSION) {
++    if is_fedora_package()
++        || !config.check_for_update_on_startup
++        || is_source_build_version(CODEX_CLI_VERSION)
++    {
+         return None;
+     }
+ 
+@@ -130,7 +134,10 @@ async fn fetch_latest_github_release_version() -> anyhow::Result<String> {
+ /// Returns the latest version to show in a popup, if it should be shown.
+ /// This respects the user's dismissal choice for the current latest version.
+ pub fn get_upgrade_version_for_popup(config: &Config) -> Option<String> {
+-    if !config.check_for_update_on_startup || is_source_build_version(CODEX_CLI_VERSION) {
++    if is_fedora_package()
++        || !config.check_for_update_on_startup
++        || is_source_build_version(CODEX_CLI_VERSION)
++    {
+         return None;
+     }
+ 
+diff --git a/codex-rs/cli/src/doctor/updates.rs b/codex-rs/cli/src/doctor/updates.rs
+--- a/codex-rs/cli/src/doctor/updates.rs
++++ b/codex-rs/cli/src/doctor/updates.rs
+@@ -10,6 +10,7 @@ use std::path::Path;
+ 
+ use codex_core::config::Config;
+ use codex_install_context::InstallContext;
+ use codex_install_context::InstallMethod;
++use codex_install_context::is_fedora_package;
+ use serde::Deserialize;
+ 
+@@ -38,7 +39,10 @@ pub(super) fn updates_check(config: &Config) -> DoctorCheck {
+             "check for update on startup: {}",
+             config.check_for_update_on_startup
+         ),
+-        format!("update action: {}", update_action_label(&install_context)),
++        format!(
++            "update action: {}",
++            update_action_label(&install_context, is_fedora_package())
++        ),
+     ];
+     let version_file = config.codex_home.join(VERSION_FILE_NAME);
+     push_cached_version_details(&mut details, &version_file);
+@@ -129,7 +133,11 @@ fn push_cached_version_details(details: &mut Vec<String>, version_file: &Path) {
+     }
+ }
+ 
+-fn update_action_label(context: &InstallContext) -> &'static str {
++fn update_action_label(context: &InstallContext, fedora_package: bool) -> &'static str {
++    if fedora_package {
++        return "dnf upgrade codex-cli";
++    }
++
+     match &context.method {
+         InstallMethod::Npm => "npm install -g @openai/codex",
+         InstallMethod::Bun => "bun install -g @openai/codex",
+@@ -219,25 +227,30 @@ mod tests {
+     #[test]
+     fn update_action_labels_install_contexts() {
++        let other = InstallContext {
++            method: InstallMethod::Other,
++            package_layout: None,
++        };
++        assert_eq!(update_action_label(&other, true), "dnf upgrade codex-cli");
+         assert_eq!(
+-            update_action_label(&InstallContext {
+-                method: InstallMethod::Npm,
+-                package_layout: None,
+-            }),
++            update_action_label(
++                &InstallContext {
++                    method: InstallMethod::Npm,
++                    package_layout: None,
++                },
++                false,
++            ),
+             "npm install -g @openai/codex"
+         );
+         assert_eq!(
+-            update_action_label(&InstallContext {
+-                method: InstallMethod::Pnpm,
+-                package_layout: None,
+-            }),
++            update_action_label(
++                &InstallContext {
++                    method: InstallMethod::Pnpm,
++                    package_layout: None,
++                },
++                false,
++            ),
+             "pnpm add -g @openai/codex"
+         );
+-        assert_eq!(
+-            update_action_label(&InstallContext {
+-                method: InstallMethod::Other,
+-                package_layout: None,
+-            }),
+-            "manual or unknown"
+-        );
++        assert_eq!(update_action_label(&other, false), "manual or unknown");
+     }
+ }
+diff --git a/codex-rs/cli/src/main.rs b/codex-rs/cli/src/main.rs
+--- a/codex-rs/cli/src/main.rs
++++ b/codex-rs/cli/src/main.rs
+@@ -806,6 +806,12 @@ fn run_update_command() -> anyhow::Result<()> {
+ 
+     #[cfg(not(debug_assertions))]
+     {
++        if codex_install_context::is_fedora_package() {
++            anyhow::bail!(
++                "Codex updates are managed by Fedora. Run `dnf upgrade codex-cli` to update."
++            );
++        }
++
+         let Some(action) = codex_tui::get_update_action() else {
+             anyhow::bail!(
+                 "Could not detect the Codex installation method. Please update manually: https://developers.openai.com/codex/cli/"
+-- 
+2.55.0

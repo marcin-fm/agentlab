@@ -1,0 +1,69 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Make doctor honor disabled update checks
+
+The startup update setting is intended for centrally managed installations, but
+`codex doctor` still performs a latest-version network probe when it is false.
+Keep the local cache and install-target diagnostics while suppressing only that
+probe.
+---
+diff --git a/codex-rs/cli/src/doctor/updates.rs b/codex-rs/cli/src/doctor/updates.rs
+--- a/codex-rs/cli/src/doctor/updates.rs
++++ b/codex-rs/cli/src/doctor/updates.rs
+@@ -85,15 +85,18 @@ pub(super) fn updates_check(config: &Config) -> DoctorCheck {
+         }
+     }
+ 
+-    match fetch_latest_version(&install_context) {
+-        Ok(latest_version) => {
++    match fetch_latest_version_if_enabled(config.check_for_update_on_startup, &install_context) {
++        Ok(Some(latest_version)) => {
+             details.push(format!("latest version: {latest_version}"));
+             if is_newer(&latest_version, env!("CARGO_PKG_VERSION")) == Some(true) {
+                 details.push("latest version status: newer version is available".to_string());
+             } else {
+                 details.push("latest version status: current version is not older".to_string());
+             }
+         }
++        Ok(None) => {
++            details.push("latest version probe: disabled by configuration".to_string());
++        }
+         Err(err) => {
+             status = status.max(CheckStatus::Warning);
+             details.push(format!("latest version probe: {err}"));
+@@ -140,6 +143,17 @@ fn update_action_label(context: &InstallContext) -> &'static str {
+     }
+ }
+ 
++fn fetch_latest_version_if_enabled(
++    enabled: bool,
++    context: &InstallContext,
++) -> Result<Option<String>, String> {
++    if !enabled {
++        return Ok(None);
++    }
++
++    fetch_latest_version(context).map(Some)
++}
++
+ fn fetch_latest_version(context: &InstallContext) -> Result<String, String> {
+     match &context.method {
+         InstallMethod::Brew => fetch_homebrew_cask_version(),
+@@ -209,6 +223,16 @@ struct VersionInfo {
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn disabled_update_checks_skip_latest_version_probe() {
++        let context = InstallContext {
++            method: InstallMethod::Other,
++            package_layout: None,
++        };
++
++        assert_eq!(fetch_latest_version_if_enabled(false, &context), Ok(None));
++    }
++
+     #[test]
+     fn is_newer_compares_plain_semver() {
+         assert_eq!(is_newer("1.2.4", "1.2.3"), Some(true));
+-- 
+2.55.0

@@ -1,6 +1,7 @@
 # Disabled by package.yml. This spec deliberately aborts before compilation
 # until the selected Linux source closure and Fedora integration are proven.
 %bcond check 1
+%global codex_distribution_channel fedora
 
 %global source_sha256 b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9
 %global closure_sha256 a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
@@ -13,7 +14,7 @@
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -25,6 +26,20 @@ Source1:        %{name}-%{version}-selected-cargo-closure.json
 Source2:        %{name}-%{version}-selected-cargo-vendor-receipt.json
 Source3:        %{name}-%{version}-cargo-resolver-supplement.json
 Source4:        %{name}-%{version}-resolver-cargo-vendor-receipt.json
+Source5:        %{name}-fedora-config.toml
+
+# Fedora packaging: make doctor suppress its network version probe when the
+# centrally managed update setting is disabled.
+# Upstream status: not submitted; suitable for a focused upstream fix.
+Patch0:         %{name}-doctor-update-setting.patch
+# Fedora packaging: mark this downstream build as RPM-managed and suppress
+# upstream self-update commands and recommendations.
+# Upstream status: not submitted; Fedora-specific integration.
+Patch1:         %{name}-fedora-update-policy.patch
+# Fedora packaging: prevent the RPM build from running the standalone daemon
+# installer and hourly downloader.
+# Upstream status: not submitted; Fedora-specific integration.
+Patch2:         %{name}-fedora-standalone-updater.patch
 
 ExclusiveArch:  x86_64
 
@@ -40,7 +55,7 @@ and separate resolver-only supplement materialize reproducibly and resolve
 offline as evidence, but the combined archive is not an immutable RPM source or
 approved license closure. The package must not produce an RPM until Cargo source
 publication and integration, upstreamable V8 integration, license evidence,
-Fedora update policy, and offline builds are proven.
+and offline builds are proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -49,6 +64,8 @@ echo "%{vendor_receipt_sha256}  %{SOURCE2}" | sha256sum -c -
 echo "%{resolver_supplement_sha256}  %{SOURCE3}" | sha256sum -c -
 echo "%{resolver_vendor_receipt_sha256}  %{SOURCE4}" | sha256sum -c -
 %autosetup -n codex-%{commit} -N
+%autopatch -p1
+test "$(grep -Fxc 'check_for_update_on_startup = false' %{SOURCE5})" -eq 1
 echo "%{source_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
 test "$(grep -cx 'version = "0\.0\.0"' codex-rs/Cargo.lock)" -eq 132
 sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
@@ -56,7 +73,20 @@ echo "%{normalized_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
 echo 'codex-cli is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
+%build
+export CODEX_DISTRIBUTION_CHANNEL=%{codex_distribution_channel}
+
+%install
+install -Dpm0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/codex/config.toml
+
+%files
+%config(noreplace) %{_sysconfdir}/codex/config.toml
+
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.5
+- Make doctor honor disabled update checks and install the Fedora default.
+- Disable upstream self-update recommendations and standalone daemon downloads in the Fedora build.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.4
 - Record the separate 239-crate resolver-only normal/build source and license supplement.
 - Reproduce the 1,124-source combined directory model and prove selected and all-target offline resolution.

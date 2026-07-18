@@ -168,6 +168,21 @@ buildroots. It is premature to add such a package now. openSUSE's nearby
 `rusty_v8 149.4.0` package demonstrates the scale of the source build but still
 supplies a prohibited 274,625,900-byte prebuilt Chromium Rust toolchain.
 
+## Fedora Update Policy
+
+The Fedora draft now installs `/etc/codex/config.toml` with
+`check_for_update_on_startup = false`. A focused generic patch makes `codex
+doctor` honor that setting by retaining local cache and install-target details
+without performing a latest-version network probe.
+
+Two Fedora-specific patches use the build-only
+`CODEX_DISTRIBUTION_CHANNEL=fedora` marker to identify the RPM binary. They
+suppress TUI update notices, direct `codex update` to `dnf upgrade codex-cli`,
+avoid npm/Homebrew/standalone recommendations, and reject the app-server
+daemon's standalone installer and hourly updater loop. Unmarked npm, Bun, pnpm,
+Homebrew, standalone, and test builds retain their upstream defaults. No
+upstream issue or pull request has been submitted.
+
 ## Remaining Gates
 
 1. Review the separate resolver-only source and license model without obscuring
@@ -177,9 +192,7 @@ supplies a prohibited 274,625,900-byte prebuilt Chromium Rust toolchain.
 3. Upstream or review the V8 system-toolchain changes, materialize every
    recursive source and license input immutably, and reproduce the build without
    networking in Fedora 43 and Fedora 44 buildroots.
-4. Disable or redirect npm/GitHub self-update checks and npm/brew update
-   recommendations for the Fedora package.
-5. Complete the linked-license review and clean offline Fedora 43 and Fedora 44
+4. Complete the linked-license review and clean offline Fedora 43 and Fedora 44
    builds, tests, lint, and extracted-payload validation.
 
 ## Intentional Failure

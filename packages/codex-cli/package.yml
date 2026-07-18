@@ -4,7 +4,6 @@ status: blocked
 blockers:
 - The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement materialize and resolve reproducibly, but the 1,124-source combined archive is evidence only. It still needs maintainer review, immutable RPM hosting, selected-aware license integration, and Fedora macro integration.
 - Selected crate v8 149.2.0 has no compatible Fedora provider. A local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but it relies on unsubmitted upstream changes and lacks an immutable, license-complete, network-isolated Fedora 43/44 package proof.
-- npm and GitHub self-update checks plus npm and brew update recommendations need a Fedora-specific offline policy.
 - Offline Fedora 43 and Fedora 44 builds, tests, linked-license evidence, and payload validation have not been completed.
 source_policy:
   npm_wrapper: forbidden platform-binary selector
@@ -46,6 +45,17 @@ source_policy:
   rusty_v8_archive_bytes: 160316016
   rusty_v8_archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
   rusty_v8_upstream_submission: not-submitted
+update_policy:
+  status: implemented-downstream-pending-build-integration
+  build_marker: CODEX_DISTRIBUTION_CHANNEL=fedora
+  system_config: /etc/codex/config.toml
+  check_for_update_on_startup: false
+  doctor_honors_setting: true
+  tui_update_checks: disabled
+  self_update_recommendation: dnf-upgrade-codex-cli
+  standalone_daemon_updater: disabled
+  upstream_package_manager_defaults_changed: false
+  upstream_submission: not-submitted
 upstream:
   provider: github
   repository: openai/codex

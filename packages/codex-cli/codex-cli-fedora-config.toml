@@ -1,0 +1,2 @@
+# Codex updates are supplied by Fedora/RPM repositories.
+check_for_update_on_startup = false

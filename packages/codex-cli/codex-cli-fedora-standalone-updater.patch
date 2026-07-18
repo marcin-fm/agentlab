@@ -1,0 +1,46 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Disable standalone daemon updater in Fedora
+
+The app-server daemon updater downloads and executes the standalone installer.
+That is correct for upstream standalone deployments but must never run from a
+binary compiled with the Fedora distribution channel. Reject both normal
+bootstrap and direct updater-loop entry.
+---
+diff --git a/codex-rs/app-server-daemon/src/lib.rs b/codex-rs/app-server-daemon/src/lib.rs
+--- a/codex-rs/app-server-daemon/src/lib.rs
++++ b/codex-rs/app-server-daemon/src/lib.rs
+@@ -34,6 +34,10 @@ const OPERATION_LOCK_FILE_NAME: &str = "daemon.lock";
+ const SETTINGS_FILE_NAME: &str = "settings.json";
+ const STATE_DIR_NAME: &str = "app-server-daemon";
+ 
++fn is_fedora_package() -> bool {
++    option_env!("CODEX_DISTRIBUTION_CHANNEL") == Some("fedora")
++}
++
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ pub enum LifecycleCommand {
+     Start,
+@@ -239,6 +243,10 @@ pub async fn set_remote_control(mode: RemoteControlMode) -> Result<RemoteControl
+ }
+ 
+ pub async fn run_pid_update_loop() -> Result<()> {
++    if is_fedora_package() {
++        anyhow::bail!("the standalone Codex updater is disabled in the Fedora package");
++    }
++
+     ensure_supported_platform()?;
+     update_loop::run().await
+ }
+@@ -590,6 +598,10 @@ impl Daemon {
+     }
+ 
+     async fn bootstrap_locked(&self, options: BootstrapOptions) -> Result<BootstrapOutput> {
++        if is_fedora_package() {
++            anyhow::bail!("standalone Codex daemon bootstrap is disabled in the Fedora package");
++        }
++
+         self.ensure_managed_codex_bin()?;
+ 
+         let settings = DaemonSettings {
+-- 
+2.55.0
