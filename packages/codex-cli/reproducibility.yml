@@ -46,6 +46,24 @@ selected_cargo_closure:
     command: sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
     verification: source-hash-exact-count-and-normalized-hash
     normalized_lock_matches_receipt_input: true
+selected_cargo_vendor_evidence:
+  status: passed-twice-byte-identical
+  receipt: codex-cli-0.144.5-selected-cargo-vendor-receipt.json
+  receipt_sha256: 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
+  counts:
+    vendor_directories: 885
+    registry_packages: 879
+    git_packages: 6
+    git_repositories: 5
+  vendor_tree_sha256: f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a
+  vendor_manifest_sha256: 5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c
+  cargo_config_sha256: 7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2
+  archive_sha256: 06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9
+  archive_bytes: 153678984
+  standalone_offline_directory_source_verified: false
+  resolver_blocker: Inactive-target dependency metadata in selected manifests requires sources outside the exact Linux build closure; adding those sources broadens source and license accounting.
+  immutable_hosting: false
+  production_build_input: false
 special_source_audit:
   rusty_v8:
     crate: v8 149.2.0

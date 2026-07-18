@@ -64,6 +64,30 @@ the generated 398-line patch it replaced. Upstream main intentionally retains
 workspace version `0.0.0`, and no upstream lock repair exists for this
 release-stamping defect.
 
+## Selected Source Materialization
+
+The audit script now materializes the exact 885 selected external Cargo sources:
+879 checked registry archives and six Cargo-normalized packages from five
+verified Git repositories. It generates Cargo checksums, a sorted vendor
+manifest, a prospective source-replacement configuration, a deterministic tree
+receipt, and a normalized archive without copying transient dependency trees.
+
+Two independent output roots produced byte-identical receipts and these hashes:
+
+- vendor tree: `f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a`
+- vendor manifest: `5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c`
+- Cargo configuration: `7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2`
+- archive: `06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9`
+- receipt: `57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef`
+
+This is selected-source evidence, not a complete Cargo directory source. Cargo
+resolves dependency metadata for inactive targets in selected registry
+manifests and requests sources outside the checked Linux graph; the first
+concrete blocker was `chrono` requesting `js-sys`. Adding those resolver-only
+sources would broaden the authoritative source and license scope. The checked
+configuration is therefore prospective evidence only, and the spec remains
+fail-closed pending a reviewed resolver-complete model.
+
 ## V8 Source Gate
 
 Selected crate `v8 149.2.0` defaults to downloading a target-specific prebuilt
@@ -112,10 +136,10 @@ supplies a prohibited 274,625,900-byte prebuilt Chromium Rust toolchain.
 
 ## Remaining Gates
 
-1. Choose one reviewed Cargo source model for the 879 registry packages and six
-   selected Git packages.
-2. Convert every selected Git dependency to an immutable, checksummed source
-   input or use an acceptable Fedora provider.
+1. Choose a reviewed resolver-complete Cargo source model without obscuring the
+   exact selected Linux build closure or its broader resolver-only license scope.
+2. Publish immutable, checksummed RPM inputs for the accepted registry, Git, and
+   any resolver-only sources, or use acceptable Fedora providers.
 3. Upstream or review the V8 system-toolchain changes, materialize every
    recursive source and license input immutably, and reproduce the build without
    networking in Fedora 43 and Fedora 44 buildroots.
@@ -126,12 +150,12 @@ supplies a prohibited 274,625,900-byte prebuilt Chromium Rust toolchain.
 
 ## Intentional Failure
 
-`codex-cli.spec` verifies the immutable release archive and closure receipt,
-extracts the source, verifies the original lock and exact mutation count,
-performs the anchored normalization, verifies the normalized lock, and then
-exits during `%prep`. It must
-remain fail-closed until the gates above are satisfied. No generated RPM was
-installed and COPR was not mutated during this probe.
+`codex-cli.spec` verifies the immutable release archive, closure receipt, and
+selected-source materialization receipt, extracts the source, verifies the
+original lock and exact mutation count, performs the anchored normalization,
+verifies the normalized lock, and then exits during `%prep`. It must remain
+fail-closed until the gates above are satisfied. No generated RPM was installed
+and COPR was not mutated during this probe.
 
 ## References
 

@@ -42,6 +42,25 @@ selected_graph:
   - codex-bwrap and codex-rs/vendor/bubblewrap
   - rules_rust runfiles through development-only codex-utils-cargo-bin
   - rust-sdks libwebrtc from the non-selected realtime WebRTC member
+selected_vendor_evidence:
+  status: reproducible-selected-source-evidence
+  receipt: codex-cli-0.144.5-selected-cargo-vendor-receipt.json
+  receipt_sha256: 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
+  independent_runs: 2
+  byte_identical_receipts: true
+  vendor_directories: 885
+  registry_packages: 879
+  git_packages: 6
+  git_repositories: 5
+  tree_sha256: f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a
+  manifest_sha256: 5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c
+  config_sha256: 7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2
+  archive_sha256: 06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9
+  archive_bytes: 153678984
+  standalone_offline_directory_source_verified: false
+  production_build_input: false
+  immutable_hosting: false
+  resolver_blocker: Cargo resolves inactive-target dependency metadata from selected package manifests and requests sources outside the checked Linux closure, including chrono's js-sys dependency. Adding them would broaden the authoritative source and license scope.
 lock_normalization:
   status: verified-prep-transform
   source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e

@@ -2,7 +2,7 @@
 name: codex-cli
 status: blocked
 blockers:
-- The selected 879 registry packages and six packages from five Git repositories need a reviewed immutable source model or acceptable Fedora providers.
+- The exact 885 selected Cargo sources materialize reproducibly, but Cargo directory-source resolution also requires inactive-target sources outside that Linux graph. A reviewed resolver-complete, immutable, license-accounted source model or acceptable Fedora providers is still required.
 - Selected crate v8 149.2.0 has no compatible Fedora provider. A local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but it relies on unsubmitted upstream changes and lacks an immutable, license-complete, network-isolated Fedora 43/44 package proof.
 - npm and GitHub self-update checks plus npm and brew update recommendations need a Fedora-specific offline policy.
 - Offline Fedora 43 and Fedora 44 builds, tests, linked-license evidence, and payload validation have not been completed.
@@ -14,6 +14,14 @@ source_policy:
   target: x86_64-unknown-linux-gnu
   selected_closure_receipt: codex-cli-0.144.5-selected-cargo-closure.json
   selected_closure_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
+  selected_vendor_receipt: codex-cli-0.144.5-selected-cargo-vendor-receipt.json
+  selected_vendor_receipt_sha256: 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
+  selected_vendor_tree_sha256: f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a
+  selected_vendor_manifest_sha256: 5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c
+  selected_vendor_config_sha256: 7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2
+  selected_vendor_archive_sha256: 06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9
+  selected_vendor_reproducible: true
+  selected_vendor_standalone_resolvable: false
   lock_normalization: verified-prep-transform
   lock_normalization_records: 132
   source_lock_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
