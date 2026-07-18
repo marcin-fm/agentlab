@@ -1,0 +1,5 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -50 +50 @@ dependencies = [
+-    'typer (>=0.12.5,<0.25.0)',
++    'typer (>=0.12.5,<0.27.0)',

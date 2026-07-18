@@ -6,6 +6,7 @@ source_policy:
   metadata_patches:
     - Declare the setuptools build backend omitted from the published pyproject metadata.
     - Add requests because the installed CLI imports docling_core.utils.file unconditionally.
+    - Accept Typer 0.26 from Fedora Rawhide while retaining the existing CLI implementation.
   test_scope: Run complete self-contained test files from the sdist; omit files requiring excluded test/data or optional dependencies.
 license_audit:
   expression: MIT
@@ -16,6 +17,8 @@ duplicate_check:
 validation:
   fedora_43: clean Mock build passed
   fedora_44: clean Mock build passed
+  rawhide_x86_64: clean Mock build passed with Fedora Typer 0.26.8
+  rawhide_chain: docling-core, docling-slim, and docling-mcp passed in dependency order
   rpmlint: zero errors and two expected no-manual-page warnings per chroot
   upstream_tests: 29 tests from six complete self-contained files passed per chroot
   installed_smoke: document creation, JSON roundtrip, DocLang serialization, and both CLI help commands passed

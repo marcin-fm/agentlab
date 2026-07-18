@@ -1,0 +1,26 @@
+name: rust-nix0.26
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: nix
+  version_requirement: = 0.26.4
+  current_version: 0.26.4
+  source_url_template: https://static.crates.io/crates/nix/nix-{version}.crate
+  source_sha256: 598beaf3cc6fdd9a5dfb1630c2800c7acd31df7aaf0f565796fba2b53ca1af1b
+source_policy:
+  metadata_patch: Remove only the FreeBSD-only sysctl test dependency from the Linux build graph.
+duplicate_check:
+  checked: "2026-07-18"
+  fedora_rawhide: incompatible nix 0.27 and newer branches only
+  rpm_fusion_rawhide: absent
+validation:
+  rawhide_x86_64: clean Mock build and focused upstream tests passed
+  downstream_chain: x11rb protocol through ast-grep passed in dependency order
+copr:
+  enabled: true
+  chroots:
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-nix0.26
+  spec: rust-nix0.26.spec

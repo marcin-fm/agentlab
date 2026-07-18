@@ -1,0 +1,24 @@
+name: rust-memoffset0.7
+status: enabled
+blockers: []
+upstream:
+  provider: crates_io
+  crate: memoffset
+  version_requirement: = 0.7.1
+  current_version: 0.7.1
+  source_url_template: https://static.crates.io/crates/memoffset/memoffset-{version}.crate
+  source_sha256: 5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4
+duplicate_check:
+  checked: "2026-07-18"
+  fedora_rawhide: incompatible memoffset 0.9 branch only
+  rpm_fusion_rawhide: absent
+validation:
+  rawhide_x86_64: clean Mock build and upstream tests passed
+  downstream_chain: nix 0.26 through ast-grep passed in dependency order
+copr:
+  enabled: true
+  chroots:
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-memoffset0.7
+  spec: rust-memoffset0.7.spec

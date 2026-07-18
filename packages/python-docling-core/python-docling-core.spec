@@ -2,7 +2,7 @@
 
 Name:           python-docling-core
 Version:        2.87.1
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Core document types and serialization for Docling
 License:        MIT
 URL:            https://github.com/docling-project/docling-core
@@ -13,6 +13,9 @@ Patch0:         docling-core-setuptools-backend.patch
 # Declare requests for the installed CLI file resolver's unconditional import.
 # Not submitted upstream; no matching issue or pull request found as of 2026-07-17.
 Patch1:         docling-core-add-requests.patch
+# Accept Fedora Rawhide's Typer 0.26 branch without changing the CLI surface.
+# Not submitted upstream; upstream main retains the older bound as of 2026-07-18.
+Patch2:         docling-core-typer-0.26.patch
 
 BuildArch:      noarch
 BuildRequires:  pyproject-rpm-macros
@@ -85,6 +88,9 @@ PY
 %{_bindir}/docling-view
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.87.1-0.3
+- Accept Typer 0.26 for Fedora Rawhide compatibility.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.87.1-0.2
 - Document the build metadata patches and their upstream status.
 

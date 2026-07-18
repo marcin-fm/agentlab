@@ -1,4 +1,5 @@
 target_release: 1.6.0
+python_requirement: '>= 3.11, < 3.16 via a conditional Fedora Rawhide compatibility patch'
 runtime:
   headless_direct:
     mcp: '>= 1.26, < 2'
@@ -30,6 +31,7 @@ validation:
   mcp_1_26_stdio_security_review: passed
   mcp_1_28_1_private_api_compatible: true
   fedora_43_44_mock: passed
+  rawhide_python_3_15_mock: passed on Python 3.15.0b3
   packaged_stdio_initialize_and_tools_list: passed
   managed_download_denial: passed
   project_jetbrains_override_denial: passed

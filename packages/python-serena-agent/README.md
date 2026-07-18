@@ -5,6 +5,12 @@ uses the released PyPI sdist, verified by the SHA-256 recorded in the spec and
 manifest; it does not package the moving Git source used by the current
 OpenCode MCP configuration.
 
+`serena-python-3.15.patch` changes only the Python metadata upper bound and
+classifier so the existing reduced surface can be tested on Fedora Rawhide.
+Upstream still caps support below Python 3.15. The patch is retained because a
+clean Rawhide build on Python 3.15.0b3 passed the existing compile, policy, and
+packaged stdio MCP checks without another source or dependency change.
+
 The current configuration launches Serena through the unpinned source
 `uvx --from git+https://github.com/oraios/serena serena start-mcp-server`. That
 command is not reproducible: both its Git revision and resolved Python closure
@@ -36,6 +42,9 @@ Clean Fedora 43 and 44 Mock builds passed. The packaged executable completed
 MCP `initialize` and `tools/list` over stdio in both chroots; dashboard and
 cross-project query tools were absent. `rpmlint` reported zero errors and only
 the three expected no-manual-page warnings for the installed commands.
+A clean Rawhide x86_64 Mock build passed the same policy assertions and MCP
+smoke on Python 3.15.0b3. Rawhide aarch64 and remote COPR results remain
+pending.
 
 This package is forcibly headless: its MCP path rejects dashboard, GUI log
 window, and JetBrains requests, even when an existing configuration enables

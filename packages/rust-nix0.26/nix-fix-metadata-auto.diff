@@ -1,0 +1,8 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -178,5 +178,3 @@
+ version = "0.7"
+ optional = true
+ 
+-[target."cfg(target_os = \"freebsd\")".dev-dependencies.sysctl]
+-version = "0.4"

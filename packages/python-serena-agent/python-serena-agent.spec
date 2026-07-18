@@ -2,7 +2,7 @@
 
 Name:           python-serena-agent
 Version:        1.6.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Headless MCP server for semantic code retrieval and editing
 License:        MIT
 URL:            https://github.com/oraios/serena
@@ -13,6 +13,9 @@ Patch0:         serena-headless-fedora.patch
 # Enforce stdio-only MCP and omit dashboard, project-server, JetBrains, and query surfaces.
 # Downstream security profile; not submitted because upstream does not enforce this boundary.
 Patch1:         serena-stdio-only-fedora.patch
+# Permit a focused Fedora Rawhide Python 3.15 compatibility build.
+# Not submitted upstream; upstream has no Python 3.15 support change as of 2026-07-18.
+Patch2:         serena-python-3.15.patch
 BuildArch:       noarch
 
 BuildRequires:  pyproject-rpm-macros
@@ -122,6 +125,9 @@ PY
 %{_bindir}/serena-hooks
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.6.0-0.3
+- Add a focused Python 3.15 metadata compatibility patch for Rawhide.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.6.0-0.2
 - Document the downstream security-profile patch purpose and status.
 

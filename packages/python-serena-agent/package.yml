@@ -2,6 +2,9 @@ name: python-serena-agent
 status: enabled
 blockers: []
 dependency_status:
+  python:
+    upstream: ">= 3.11, < 3.15"
+    downstream_rawhide: ">= 3.11, < 3.16; keep only if focused Python 3.15 checks pass"
   runtime:
     fedora_provider:
       - mcp >= 1.26, < 2; accepted only through the reviewed stdio/no-task boundary
@@ -18,25 +21,30 @@ duplicate_check:
   fedora_43_44: absent
   rpm_fusion_43_44: absent
 build_validation:
-  release: 1.6.0-1
+  release: 1.6.0-0.3
   mcp_1_26_stdio_security_review: passed-static-source-review
   mcp_1_28_1_static_api_audit: passed
   fedora_43: clean Mock build and packaged stdio MCP smoke passed
   fedora_44: clean Mock build and packaged stdio MCP smoke passed
+  rawhide_x86_64: clean Mock build and packaged stdio MCP smoke passed on Python 3.15.0b3
   boundary_tests: project JetBrains override and managed language-server downloads fail closed
   upstream_tests: not run; validation targets the packaged reduced surface
   rpmlint: zero errors and three expected no-manual-page warnings per chroot
 artifacts:
-  spec_sha256: 49ddc2acfb07833263915fbe2cfe7011c97fa8991c03c935af3b28c2a0ee1e8c
+  spec_sha256: e0f19777608c916edc436efd1935e2a4d3ace9e4b9a8f15bedf73166bf30121d
   patches:
     serena-headless-fedora.patch: 3f073edbcf2a5ef76311f2765ca56232507f3eb4ca4fa83eb21dc2ec2176b29f
     serena-stdio-only-fedora.patch: e17dde3096ad231b312bb024c5d36d662abb0ab7858aa7baef48513c48b81f49
+    serena-python-3.15.patch: 565937609f35d836826e96573d26e991869b7f6e3ab71a64e22f57958a30fe12
   fedora_43:
     srpm_sha256: a79aea943a002601076321049593fd6becb71009e6523620a7cfd86f8219f0f7
     rpm_sha256: b6925307f65a42a1210b2865cfcc02279f453ae83be0d7d5e71f733dcad15f5b
   fedora_44:
     srpm_sha256: 3f79e4ae71324f908fda106ef026c2fb507956c6236993d52a6cf046ed5a86f5
     rpm_sha256: fafad32626cb345e8fb0250c3907912e43f842c6d0ae07870acea5fa41d82398
+  rawhide_x86_64:
+    srpm_sha256: dc017cc27d773027f0b7e71cafc5df6b7d6d9183bf274dcffb1b5f967b5af86b
+    rpm_sha256: afc958d5b792a6cba532d5a403348369ea5e47088c769475e8d11864b2284ee8
 upstream:
   provider: pypi
   project: serena-agent
