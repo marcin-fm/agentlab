@@ -1,10 +1,10 @@
 name: rust-utf16string0.2
-status: blocked
-blockers:
-  - This leaf is selected only by the blocked Kreuzberg PDFium-render dependency group; keep it COPR-disabled until the parent selected closure and publication gates are resolved under rust-reducibility.md.
+status: enabled
+blockers: []
 validation:
   proof_release: 0.1
-  current_release_delta: Release 0.2 changes only the release, changelog, and retained evidence records; prep, build, install, and check behavior is unchanged.
+  evidence_release_delta: Release 0.2 changed only the release, changelog, and retained evidence records; prep, build, install, and check behavior remained unchanged.
+  enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication for the selected Fedora 43 and Fedora 44 Kreuzberg dependency targets without changing package build behavior; live results are retained in the project playbook.
   downloaded_srpm_spec_sha256: 1867a1d70e57fb0b328e4839cc2630f329e8da57738edd2d2d61963bb08eaf55
   source_identity: Fedora 43 and Fedora 44 SRPMs contain the pinned crates.io archive with the recorded source SHA-256.
   duplicate_audit: No crate(utf16string) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories on 2026-07-18.
@@ -26,6 +26,13 @@ upstream:
   source_sha256: 0b62a1e85e12d5d712bf47a85f426b73d303e2d00a90de5f3004df3596e9d216
   source_url_template: https://static.crates.io/crates/utf16string/utf16string-{version}.crate
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+  omitted_target_families:
+    rawhide: The selected Kreuzberg PDFium-render dependency scope currently targets Fedora 43 and Fedora 44 only.
   subdir: packages/rust-utf16string0.2
   spec: rust-utf16string0.2.spec

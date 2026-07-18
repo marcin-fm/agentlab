@@ -1,10 +1,10 @@
 name: rust-maybe-owned0.3
-status: blocked
-blockers:
-  - This leaf is selected only by the blocked Kreuzberg PDFium-render dependency group; keep it COPR-disabled until the parent selected closure and publication gates are resolved under rust-reducibility.md.
+status: enabled
+blockers: []
 validation:
   proof_release: 0.1
-  current_release_delta: Release 0.2 changes only the release, changelog, and retained evidence records; prep, build, install, and check behavior is unchanged.
+  evidence_release_delta: Release 0.2 changed only the release, changelog, and retained evidence records; prep, build, install, and check behavior remained unchanged.
+  enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication for the selected Fedora 43 and Fedora 44 Kreuzberg dependency targets without changing package build behavior; live results are retained in the project playbook.
   downloaded_srpm_spec_sha256: 673383f1f50f21161f395386a7542b00279087d2890310964cad513a34b87066
   source_identity: Fedora 43 and Fedora 44 SRPMs contain the pinned crates.io archive with the recorded source SHA-256.
   duplicate_audit: No crate(maybe-owned) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories on 2026-07-18.
@@ -26,6 +26,13 @@ upstream:
   source_sha256: 4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4
   source_url_template: https://static.crates.io/crates/maybe-owned/maybe-owned-{version}.crate
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+  omitted_target_families:
+    rawhide: The selected Kreuzberg PDFium-render dependency scope currently targets Fedora 43 and Fedora 44 only.
   subdir: packages/rust-maybe-owned0.3
   spec: rust-maybe-owned0.3.spec
