@@ -46,6 +46,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | Package | Version | State | Reason |
 |---|---:|---|---|
 | OpenCode | 1.18.3 | blocked | Requires a source-built Bun and an audited npm source closure |
+| OpenChamber | 1.16.1 | blocked | Web CLI draft requires Bun, an audited Node/native closure, and the OpenCode provider |
 | Bun | 1.3.14 | blocked | First isolated source build works; immutable RPM inputs, self-rebuild, relink, and final audits remain |
 | RTK | 0.43.0 | enabled | Current F43/F44 builds passed 2,287 tests, full linked-license/provider receipts, system-SQLite smokes, and rpmlint |
 | codex-cli | 0.144.5 | blocked | Immutable source is verified; selected Linux Cargo closure, Git sources, Bubblewrap treatment, and offline builds remain |

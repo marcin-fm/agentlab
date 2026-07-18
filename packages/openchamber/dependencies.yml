@@ -1,0 +1,57 @@
+target_release: 1.16.1
+selected_scope:
+  workspace: packages/web
+  npm_name: "@openchamber/web"
+  executable: packages/web/bin/cli.js
+  package_manifest: packages/web/package.json
+  package_manifest_sha256: 4938ecf000d2f26f1b7bfc6cef2e16e3a83994953f10bba4567e0d6c03886674
+  executable_sha256: 27db143b5c4a2415a45103aa308f2836a72f8c4ce50918699324893f16558f6c
+  runtime_engine: node
+  pty_backend: node-pty
+  bun_pty_selected: false
+  pty_boundary_source: packages/web/server/lib/terminal/runtime.js:42-64
+  pty_boundary_verified: false
+  desktop_workspace_included: false
+  mobile_workspace_included: false
+  vscode_workspace_included: false
+current_lock_snapshot:
+  release: 1.16.1
+  lockfile: bun.lock
+  lockfile_version: 1
+  bun: 1.3.14
+  sha256: 1cd16b6c7ac6368b63194ca7aa0125c8a4acf80fc57f77a9fe30e7be7c9980e1
+  selected_production_closure: false
+  note: Lockfile-wide package records are not valid bundled Provides or proof of the packages/web runtime closure.
+closure_audit:
+  audited_release:
+  production_build_sources_verified: false
+  test_sources_verified: false
+  licenses_verified: false
+  native_sources_verified: false
+  generated_sources_verified: false
+  bundled_provides_verified: false
+  upstream_contact_recorded: false
+  offline_verified: false
+source_closure_files:
+  production_build_closure: openchamber-1.16.1-nm-prod-build.tar.zst
+  test_closure: openchamber-1.16.1-nm-dev-test.tar.zst
+  closure_manifest: openchamber-1.16.1-closure.json
+  license_inventory: openchamber-1.16.1-bundled-licenses.txt
+  native_manifest: openchamber-1.16.1-native.json
+runtime_provider:
+  package: opencode
+  resolution: PATH or OPENCODE_BINARY
+  compatible_version_range: unverified
+  verified: false
+planned_runtime_checks:
+- Start the installed server under Node.js and prove the node-pty backend is selected.
+- Prove bun-pty is absent from the selected production closure and installed payload.
+- Prove OpenCode discovery through PATH and through OPENCODE_BINARY.
+native_or_platform_sensitive:
+- better-sqlite3
+- node-pty
+- sherpa-onnx-node
+generated_or_compiled:
+- packages/web/dist
+- Vite browser bundles
+- PWA service worker and manifest assets

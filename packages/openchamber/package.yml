@@ -1,0 +1,44 @@
+---
+name: openchamber
+status: blocked
+blockers:
+- Fedora-source-built Bun 1.3.14 is unavailable.
+- The selected packages/web production, build, and test source closure has not been derived from bun.lock or acquired as immutable sources.
+- Native and platform payloads, including better-sqlite3, node-pty, and sherpa-onnx-node, have not been rebuilt from corresponding source.
+- Vite-generated browser assets, aggregate licenses, and final bundled Node Provides have not been verified.
+- The separately packaged OpenCode CLI runtime provider remains blocked.
+- Offline Fedora builds and installed CLI/PWA smokes have not been demonstrated.
+source_policy:
+  selected_workspace: packages/web
+  published_package: "@openchamber/web"
+  selected_surface: Web CLI, PWA assets, and local server
+  desktop_surface: excluded
+  desktop_reason: The v1.16.1 Linux build and publish jobs are disabled and the release has no Linux desktop asset.
+  package_manager: Bun 1.3.14
+  runtime: Node.js 22 or newer
+  pty_backend: node-pty
+  bun_pty: Excluded by the Node runtime design in packages/web/server/lib/terminal/runtime.js; closure and installed-runtime verification remain required.
+  opencode_provider: A separately installed opencode executable is required on PATH or through OPENCODE_BINARY.
+  dependency_resolution_in_rpm: forbidden
+  prebuilt_native_payloads: forbidden
+  generated_browser_assets: rebuild and source-correspondence review required
+upstream:
+  provider: github
+  repository: openchamber/openchamber
+  tag_prefix: v
+  current_version: 1.16.1
+  source_url_template: https://github.com/openchamber/openchamber/archive/refs/tags/v{version}.tar.gz
+  source_sha256: 9457c4fa86ba5bf236c14648d94403af65915235fa9089ca9947a09532482018
+  source_tag: v1.16.1
+  source_commit: ee10f85d9ca866387abf7285985b268c8e3fa601
+  license: MIT
+duplicate_check:
+  checked: "2026-07-18"
+  fedora_43_44_rawhide: absent
+  epel: absent
+  rpm_fusion_43_44: absent
+  copr: absent
+copr:
+  enabled: false
+  subdir: packages/openchamber
+  spec: openchamber.spec
