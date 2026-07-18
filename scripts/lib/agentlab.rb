@@ -674,6 +674,134 @@ module Agentlab
       end
     end
 
+    self_stage = stages["self_rebuild"]
+    if self_stage.is_a?(Hash) && self_stage["proof_receipt"]
+      self_receipt = nil
+      receipt_name = self_stage["proof_receipt"]
+      receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+      unless receipt_path && File.file?(receipt_path)
+        errors << "bun: self-rebuild proof receipt is missing: #{receipt_name.inspect}"
+      else
+        begin
+          receipt = self_receipt = JSON.parse(File.read(receipt_path))
+          expected_sha256 = self_stage["proof_receipt_sha256"]
+          errors << "bun: self-rebuild proof receipt SHA-256 mismatch" unless expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+          errors << "bun: unsupported self-rebuild proof receipt schema" unless receipt["schema"] == "bun-self-rebuild-proof/v2"
+          errors << "bun: self-rebuild proof package mismatch" unless receipt["package"] == "bun"
+          errors << "bun: self-rebuild proof release mismatch" unless receipt["release"] == version
+          errors << "bun: self-rebuild proof profile mismatch" unless receipt["profile"] == "release-local"
+          errors << "bun: self-rebuild proof date mismatch" unless receipt["proof_date"] == self_stage["proof_date"]
+          errors << "bun: self-rebuild proof root is invalid" unless receipt["proof_root"].to_s.start_with?("/srv/tmp/")
+
+          driver = receipt["first_build"]
+          seed_stage = stages.fetch("seed_build")
+          errors << "bun: self-rebuild proof driver kind mismatch" unless driver.is_a?(Hash) && driver["driver_proof_kind"] == "first_build"
+          errors << "bun: self-rebuild proof driver receipt mismatch" unless driver.is_a?(Hash) && driver["driver_receipt"] == seed_stage["proof_receipt"] && driver["driver_receipt_sha256"] == seed_stage["proof_receipt_sha256"]
+          first_receipt_name = seed_stage["proof_receipt"]
+          first_receipt_path = first_receipt_name.is_a?(String) && File.join(package.directory, first_receipt_name)
+          if first_receipt_path && File.file?(first_receipt_path)
+            first_receipt = JSON.parse(File.read(first_receipt_path))
+            first_output = first_receipt.dig("build", "bun")
+            valid_driver_binary = driver.is_a?(Hash) && first_output.is_a?(Hash) &&
+                                  driver["sha256"] == first_output["sha256"] &&
+                                  driver["size_bytes"] == first_output["size_bytes"]
+            errors << "bun: self-rebuild proof driver binary mismatch" unless valid_driver_binary
+            valid_driver_path = driver.is_a?(Hash) && first_output.is_a?(Hash) &&
+                                driver["path"].to_s.end_with?("/#{first_output['path']}")
+            errors << "bun: self-rebuild proof driver path mismatch" unless valid_driver_path
+          else
+            errors << "bun: self-rebuild proof driver receipt is missing: #{first_receipt_name.inspect}"
+          end
+
+          dependency_stage = stages.fetch("dependency_closure")
+          errors << "bun: self-rebuild proof source-closure path mismatch" unless receipt.dig("source_closure", "path") == dependency_stage["proof_receipt"]
+          errors << "bun: self-rebuild proof source-closure SHA-256 mismatch" unless receipt.dig("source_closure", "sha256") == dependency_stage["proof_receipt_sha256"]
+          errors << "bun: self-rebuild proof source commit mismatch" unless receipt.dig("source_closure", "source_commit") == package.upstream["source_commit"]
+          errors << "bun: self-rebuild proof source SHA-256 mismatch" unless receipt.dig("source_closure", "source_archive_sha256") == package.upstream["source_sha256"]
+          errors << "bun: self-rebuild proof seed binary mismatch" unless receipt.dig("bootstrap_seed", "binary_sha256") == seed["binary_sha256"]
+          errors << "bun: self-rebuild proof seed size mismatch" unless receipt.dig("bootstrap_seed", "size_bytes") == seed["binary_size_bytes"]
+          errors << "bun: self-rebuild proof consumed the bootstrap seed" unless receipt.dig("bootstrap_seed", "consumed_by_self_rebuild") == false
+          errors << "bun: self-rebuild proof permits the seed in the payload" unless receipt.dig("bootstrap_seed", "payload_allowed") == false
+          errors << "bun: self-rebuild proof permits a seed runtime dependency" unless receipt.dig("bootstrap_seed", "runtime_dependency_allowed") == false
+
+          expected_driver_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+          errors << "bun: self-rebuild proof was not network isolated" unless receipt.dig("configure", "network_namespace") == true && receipt.dig("build", "network_namespace") == true
+          errors << "bun: self-rebuild proof did not revalidate prepared inputs" unless receipt.dig("configure", "prepared_inputs_revalidated") == true
+          errors << "bun: self-rebuild proof did not verify source-built driver scope" unless receipt.dig("configure", "source_built_driver_rule_scope_verified") == true
+          errors << "bun: self-rebuild proof source-built driver rule set mismatch" unless receipt.dig("configure", "source_built_driver_rules") == expected_driver_rules
+          errors << "bun: self-rebuild proof retained a bootstrap-seed identity" unless receipt.dig("configure", "bootstrap_seed_identity_absent") == true
+          errors << "bun: self-rebuild proof install-edge count mismatch" unless receipt.dig("configure", "install_edges") == 3
+          errors << "bun: self-rebuild proof native-fetch count mismatch" unless receipt.dig("configure", "native_fetch_edges") == dependency_stage["selected_github_archives"]
+          errors << "bun: self-rebuild proof Node-header fetch count mismatch" unless receipt.dig("configure", "node_header_fetch_edges") == dependency_stage["selected_node_header_archives"]
+          errors << "bun: self-rebuild proof did not use local WebKit" unless receipt.dig("configure", "local_webkit_verified") == true
+          errors << "bun: self-rebuild proof retained a Zig fetch edge" unless receipt.dig("configure", "zig_fetch_absent") == true
+          errors << "bun: self-rebuild proof did not verify the Zig source cwd" unless receipt.dig("configure", "zig_source_cwd_verified") == true
+          errors << "bun: self-rebuild proof did not verify stable lol-html Cargo" unless receipt.dig("configure", "stable_lolhtml_cargo_verified") == true
+          errors << "bun: self-rebuild proof contains unexpected URLs" unless receipt.dig("configure", "unexpected_urls_absent") == true
+          errors << "bun: self-rebuild proof output version mismatch" unless receipt.dig("build", "version") == version
+          errors << "bun: self-rebuild proof revision mismatch" unless receipt.dig("build", "revision") == "#{version}-canary.1+#{package.upstream['source_commit'].to_s[0, 9]}"
+          output_receipts = %w[bun_profile bun linker_map].map { |key| [key, receipt.dig("build", key)] }
+          output_receipts.each do |key, output|
+            valid_output = output.is_a?(Hash) && output["path"].is_a?(String) && !output["path"].empty? &&
+              !Pathname(output["path"]).absolute? && !Pathname(output["path"]).each_filename.include?("..") &&
+              output["size_bytes"].is_a?(Integer) && output["size_bytes"].positive? &&
+              output["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+            errors << "bun: self-rebuild proof has an invalid #{key} receipt" unless valid_output
+          end
+          profile_size = receipt.dig("build", "bun_profile", "size_bytes")
+          bun_size = receipt.dig("build", "bun", "size_bytes")
+          errors << "bun: self-rebuild proof stripped output is not smaller than bun-profile" unless profile_size.is_a?(Integer) && bun_size.is_a?(Integer) && bun_size < profile_size
+          errors << "bun: self-rebuild proof smoke failed" unless receipt.dig("build", "smoke_verified") == true
+          errors << "bun: self-rebuild proof did not verify stripped output" unless receipt.dig("build", "stripped_output_verified") == true
+          errors << "bun: self-rebuild proof did not verify Fedora's shared C++ runtime" unless receipt.dig("build", "fedora_shared_cxx_runtime_verified") == true
+          errors << "bun: self-rebuild proof shared-runtime library set mismatch" unless receipt.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6]
+          errors << "bun: self-rebuild proof found a seed payload" unless receipt.dig("seed_contamination", "payload_absent_verified") == true && receipt.dig("seed_contamination", "seed_hash_matches") == 0
+          errors << "bun: self-rebuild proof found a seed runtime dependency" unless receipt.dig("seed_contamination", "runtime_dependency_absent_verified") == true
+          errors << "bun: self-rebuild proof did not compare reproducibility" unless receipt.dig("reproducibility", "compared") == true
+          errors << "bun: self-rebuild proof fixed-point result mismatch" unless receipt.dig("reproducibility", "fixed_point_verified") == self_stage["source_rebuild_fixed_point_verified"]
+          errors << "bun: self-rebuild proof validation is incomplete" unless %w[source_built_driver_verified self_rebuild_performed offline_verified seed_payload_absent_verified seed_runtime_dependency_absent_verified reproducibility_compared].all? { |key| receipt.dig("validation", key) == true }
+          errors << "bun: self-rebuild proof fixed-point validation mismatch" unless receipt.dig("validation", "source_rebuild_fixed_point_verified") == self_stage["source_rebuild_fixed_point_verified"]
+          errors << "bun: self-rebuild proof incorrectly claims complete LGPL relink materials" unless receipt.dig("validation", "complete_lgpl_relink_materials_verified") == false
+          errors << "bun: self-rebuild proof incorrectly claims a final license audit" unless receipt.dig("validation", "final_license_audit_verified") == false
+          errors << "bun: self-rebuild proof incorrectly claims a final RPM" unless receipt.dig("validation", "final_rpm_verified") == false
+        rescue JSON::ParserError => e
+          errors << "bun: invalid self-rebuild proof receipt: #{e.message}"
+        end
+      end
+
+      zig_receipt_name = self_stage["zig_reproducibility_proof_receipt"]
+      zig_receipt_path = zig_receipt_name.is_a?(String) && File.join(package.directory, zig_receipt_name)
+      unless zig_receipt_path && File.file?(zig_receipt_path)
+        errors << "bun: Zig reproducibility proof receipt is missing: #{zig_receipt_name.inspect}"
+      else
+        begin
+          zig_receipt = JSON.parse(File.read(zig_receipt_path))
+          expected_sha256 = self_stage["zig_reproducibility_proof_receipt_sha256"]
+          errors << "bun: Zig reproducibility proof receipt SHA-256 mismatch" unless expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(zig_receipt_path).hexdigest == expected_sha256
+          errors << "bun: unsupported Zig reproducibility proof receipt schema" unless zig_receipt["schema"] == "bun-zig-reproducibility-proof/v1"
+          errors << "bun: Zig reproducibility proof package mismatch" unless zig_receipt["package"] == "bun"
+          errors << "bun: Zig reproducibility proof release mismatch" unless zig_receipt["release"] == version
+          errors << "bun: Zig reproducibility proof date mismatch" unless zig_receipt["proof_date"] == self_stage["proof_date"]
+          errors << "bun: Zig reproducibility proof platform mismatch" unless zig_receipt["platform"] == self_stage["proof_platform"]
+          errors << "bun: Zig reproducibility proof source commit mismatch" unless zig_receipt["source_commit"] == package.upstream["source_commit"]
+          valid_zig_identity = self_receipt && zig.is_a?(Hash) &&
+                               zig_receipt.dig("zig", "source_commit") == zig["commit"] &&
+                               zig_receipt.dig("zig", "executable_sha256") == self_receipt.dig("inputs", "zig", "executable_sha256")
+          errors << "bun: Zig reproducibility proof source identity mismatch" unless valid_zig_identity
+          errors << "bun: Zig reproducibility proof self-rebuild receipt mismatch" unless zig_receipt.dig("self_rebuild_proof", "path") == receipt_name && zig_receipt.dig("self_rebuild_proof", "sha256") == self_stage["proof_receipt_sha256"]
+          errors << "bun: Zig reproducibility proof object count mismatch" unless zig_receipt.dig("experiment", "object_count") == self_stage["zig_object_count"]
+          errors << "bun: Zig reproducibility proof retained-cache aggregate mismatch" unless zig_receipt.dig("experiment", "retained_cache", "before_aggregate_sha256") == self_stage["zig_retained_cache_aggregate_sha256"] && zig_receipt.dig("experiment", "retained_cache", "after_aggregate_sha256") == self_stage["zig_retained_cache_aggregate_sha256"]
+          errors << "bun: Zig reproducibility proof clean-cache aggregate mismatch" unless zig_receipt.dig("experiment", "clean_cache", "before_aggregate_sha256") == self_stage["zig_retained_cache_aggregate_sha256"] && zig_receipt.dig("experiment", "clean_cache", "after_aggregate_sha256") == self_stage["zig_clean_cache_aggregate_sha256"]
+          errors << "bun: Zig reproducibility proof retained-cache result mismatch" unless zig_receipt.dig("experiment", "retained_cache", "reproducible") == self_stage["zig_object_aggregate_reproducible_with_retained_cache"]
+          errors << "bun: Zig reproducibility proof clean-cache result mismatch" unless zig_receipt.dig("experiment", "clean_cache", "reproducible") == self_stage["zig_object_aggregate_reproducible_from_clean_cache"]
+          errors << "bun: Zig reproducibility proof did not serialize the target" unless zig_receipt.dig("experiment", "top_level_jobs") == 1 && zig_receipt.dig("experiment", "zig_parallel_sema") == 1
+          errors << "bun: Zig reproducibility proof fixed-point result mismatch" unless zig_receipt.dig("validation", "source_rebuild_fixed_point_verified") == self_stage["source_rebuild_fixed_point_verified"]
+        rescue JSON::ParserError => e
+          errors << "bun: invalid Zig reproducibility proof receipt: #{e.message}"
+        end
+      end
+    end
+
     if stages.dig("zig_source_bootstrap", "state") == "verified"
       unless zig.is_a?(Hash)
         errors << "bun: verified Zig stage requires source input metadata"

@@ -820,6 +820,59 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_validates_bun_self_rebuild_receipts
+    source_package = Agentlab.package_named("bun")
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(source_package.data))
+      data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
+      self_stage = data.dig("build_plan", "stages", "self_rebuild")
+      %w[first-source-build-proof.json self-rebuild-proof.json zig-reproducibility-proof.json].each do |name|
+        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
+      end
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+      spec = File.read(File.join(source_package.directory, "bun.spec"))
+
+      assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
+      self_receipt_path = File.join(directory, "self-rebuild-proof.json")
+      self_receipt = JSON.parse(File.read(self_receipt_path))
+      zig_receipt_path = File.join(directory, "zig-reproducibility-proof.json")
+      zig_receipt = JSON.parse(File.read(zig_receipt_path))
+      driver_sha256 = self_receipt.dig("first_build", "sha256")
+      self_receipt.fetch("first_build")["sha256"] = "0" * 64
+      File.write(self_receipt_path, JSON.dump(self_receipt))
+      self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
+      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
+      File.write(zig_receipt_path, JSON.dump(zig_receipt))
+      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: self-rebuild proof driver binary mismatch")
+
+      self_receipt.fetch("first_build")["sha256"] = driver_sha256
+      self_receipt.fetch("validation")["offline_verified"] = false
+      File.write(self_receipt_path, JSON.dump(self_receipt))
+      self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
+      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
+      File.write(zig_receipt_path, JSON.dump(zig_receipt))
+      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: self-rebuild proof validation is incomplete")
+
+      self_receipt.fetch("validation")["offline_verified"] = true
+      File.write(self_receipt_path, JSON.dump(self_receipt))
+      self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
+      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
+      zig_receipt.dig("experiment", "clean_cache")["reproducible"] = true
+      File.write(zig_receipt_path, JSON.dump(zig_receipt))
+      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: Zig reproducibility proof clean-cache result mismatch")
+    end
+  end
+
   def test_bun_release_change_invalidates_build_plan
     manifest = {
       "build_plan" => {

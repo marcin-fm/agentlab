@@ -10,7 +10,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.10%{?dist}
+Release:        0.0.11%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -83,8 +83,9 @@ Bun-pinned Zig fork without an external Zig executable, verifies and patches
 the complete pinned WebKit tree, builds its static JSC libraries with LLVM 21,
 and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
 three frozen npm installs are proven separately with networking unavailable.
-The RPM draft stops before dependency-source integration, the first Bun build,
-self-rebuild, and final LGPL relink-material stages.
+The RPM draft stops before dependency-source integration and the Bun build.
+Separate local proofs cover the first and seed-free offline self-builds, but
+clean-cache Zig reproducibility and final LGPL relink materials remain blocked.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -228,6 +229,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.11
+- Prove the seed-free offline self-rebuild and record the clean-cache Zig reproducibility blocker.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.10
 - Prove the first isolated source build with source-root Zig and Fedora's shared C++ runtime.
 

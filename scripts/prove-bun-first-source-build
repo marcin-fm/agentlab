@@ -20,6 +20,7 @@ closure_path = File.join(package_dir, "bun-#{version}-release-local-source-closu
 npm_receipt_path = File.join(package_dir, "npm-offline-install-proof.json")
 cargo_receipt_path = File.join(package_dir, "lolhtml-offline-build-proof.json")
 zig_canonical_receipt_path = File.join(package_dir, "zig-bootstrap-proof.json")
+first_receipt_path = File.join(package_dir, "first-source-build-proof.json")
 source_archive = "/srv/tmp/agentlab-bun/bun-v#{version}.tar.gz"
 seed_archive = "/srv/tmp/agentlab-bun/bun-seed-#{version}-linux-x64.zip"
 source_cache = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
@@ -28,8 +29,10 @@ cargo_vendor = "/srv/tmp/agentlab-bun-lolhtml-offline-proof/cargo-vendor"
 zig_root = "/srv/tmp/agentlab-bun-zig-proof/bun-zig"
 zig_receipt_path = "/srv/tmp/agentlab-bun-zig-proof/proof-receipt.json"
 webkit_archive = "/srv/tmp/WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b.tar.gz"
-workdir = "/srv/tmp/agentlab-bun-first-source-build-proof"
-output = File.join(package_dir, "first-source-build-proof.json")
+workdir = nil
+output = nil
+self_rebuild_from = nil
+driver_receipt_path = nil
 jobs = 4
 configure_only = false
 resume = false
@@ -47,6 +50,8 @@ OptionParser.new do |parser|
   parser.on("--webkit-archive PATH", "Checked WebKit source archive") { |path| webkit_archive = path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Canonical package proof receipt") { |path| output = path }
+  parser.on("--self-rebuild-from PATH", "Verified first source-build proof directory supplying the build driver") { |path| self_rebuild_from = path }
+  parser.on("--driver-receipt PATH", "Checked receipt for the source-built Bun driver") { |path| driver_receipt_path = path }
   parser.on("--jobs COUNT", Integer, "Parallel jobs, maximum 4") { |count| jobs = count }
   parser.on("--configure-only", "Prepare and inspect the isolated Ninja graph without compiling") { configure_only = true }
   parser.on("--resume", "Reuse an existing marked, configured proof tree") { resume = true }
@@ -56,6 +61,11 @@ end.parse!
 raise Agentlab::Error, "--resume and --force are mutually exclusive" if resume && force
 raise Agentlab::Error, "jobs must be between 1 and 4" unless jobs.between?(1, 4)
 
+self_rebuild = !self_rebuild_from.nil?
+workdir ||= self_rebuild ? "/srv/tmp/agentlab-bun-repro-source-build-proof" : "/srv/tmp/agentlab-bun-first-source-build-proof"
+output ||= self_rebuild ? File.join(package_dir, "self-rebuild-proof.json") : first_receipt_path
+driver_receipt_path ||= first_receipt_path if self_rebuild
+
 source_archive = File.expand_path(source_archive)
 seed_archive = File.expand_path(seed_archive)
 source_cache = File.expand_path(source_cache)
@@ -64,18 +74,21 @@ cargo_vendor = File.expand_path(cargo_vendor)
 zig_root = File.expand_path(zig_root)
 zig_receipt_path = File.expand_path(zig_receipt_path)
 webkit_archive = File.expand_path(webkit_archive)
+self_rebuild_from = File.expand_path(self_rebuild_from) if self_rebuild
+driver_receipt_path = File.expand_path(driver_receipt_path) if self_rebuild
 workdir = File.expand_path(workdir)
 output = File.expand_path(output)
 
 raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
-[source_archive, seed_archive, source_cache, npm_proof, cargo_vendor, zig_root, zig_receipt_path, webkit_archive].each do |path|
+[source_archive, seed_archive, source_cache, npm_proof, cargo_vendor, zig_root, zig_receipt_path, webkit_archive, self_rebuild_from, driver_receipt_path].compact.each do |path|
   if force && (path == workdir || path.start_with?("#{workdir}/"))
     raise Agentlab::Error, "proof input must be outside the replaced workdir: #{path}"
   end
 end
 
-marker = File.join(workdir, ".agentlab-bun-first-source-build-proof")
-marker_content = "agentlab bun first source build proof\n"
+proof_kind = self_rebuild ? "self rebuild" : "first source build"
+marker = File.join(workdir, self_rebuild ? ".agentlab-bun-self-rebuild-proof" : ".agentlab-bun-first-source-build-proof")
+marker_content = "agentlab bun #{proof_kind} proof\n"
 if Dir.exist?(workdir)
   stat = File.lstat(workdir)
   raise Agentlab::Error, "refusing symlinked proof directory #{workdir}" if stat.symlink?
@@ -286,6 +299,36 @@ def file_receipt(path, base)
   }
 end
 
+def normalized_text_sha256(path, replacements)
+  digest = Digest::SHA256.new
+  ordered = replacements.sort_by { |source, _replacement| -source.length }
+  File.foreach(path) do |line|
+    normalized = ordered.reduce(line) { |value, (source, replacement)| value.gsub(source, replacement) }
+    digest.update(normalized)
+  end
+  digest.hexdigest
+end
+
+def normalized_binary_sha256(path, replacements)
+  content = File.binread(path)
+  replacements.each do |source, replacement|
+    raise Agentlab::Error, "binary normalization replacements must have equal length" unless source.bytesize == replacement.bytesize
+
+    content.gsub!(source.b, replacement.b)
+  end
+  Digest::SHA256.hexdigest(content)
+end
+
+def elf_build_id(path)
+  stdout, stderr, status = Open3.capture3("readelf", "--notes", path)
+  raise Agentlab::Error, "cannot read ELF build ID for #{path}: #{stderr.strip}" unless status.success?
+
+  match = stdout.match(/Build ID: ([0-9a-f]+)/)
+  raise Agentlab::Error, "missing ELF build ID for #{path}" unless match
+
+  match[1]
+end
+
 def resource_snapshot
   meminfo = File.readlines("/proc/meminfo", chomp: true).to_h do |line|
     key, value = line.split(":", 2)
@@ -324,8 +367,8 @@ def stamp_path(build_dir, package_dir)
   File.join(build_dir, "stamps", "install_#{normalized.gsub(/[^A-Za-z0-9]+/, '_')}.stamp")
 end
 
-def replace_bun_install_rule!(ninja_path, seed_binary, receipt_path)
-  original_command = "  command = cd \$dir && #{seed_binary} install --frozen-lockfile && touch \$stamp"
+def replace_bun_install_rule!(ninja_path, build_driver, receipt_path)
+  original_command = "  command = cd \$dir && #{build_driver} install --frozen-lockfile && touch \$stamp"
   replacement_command = "  command = /usr/bin/test -f \$stamp"
   original_description = "  description = install \$dir"
   replacement_description = "  description = verify prevalidated install \$dir"
@@ -362,7 +405,7 @@ def replace_bun_install_rule!(ninja_path, seed_binary, receipt_path)
   receipt
 end
 
-def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir, webkit_dir, zig_dir, seed_binary, install_roots, native_sources, node_headers)
+def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir, webkit_dir, zig_dir, build_driver, install_roots, native_sources, node_headers, driver_kind:, forbidden_patterns:)
   raise Agentlab::Error, "missing generated Ninja graph #{ninja_path}" unless File.file?(ninja_path)
   raise Agentlab::Error, "missing configure record #{configure_path}" unless File.file?(configure_path)
   ninja = File.read(ninja_path)
@@ -384,18 +427,21 @@ def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir,
   raise Agentlab::Error, "generated graph still contains a live Bun package-manager install" if ninja.include?(" install --frozen-lockfile")
   raise Agentlab::Error, "generated graph lacks the checked prevalidated-install rule" unless ninja.include?("command = /usr/bin/test -f $stamp")
 
-  seed_rules = []
+  driver_rules = []
   current_rule = nil
   ninja.lines.each do |line|
     current_rule = line.split.fetch(1) if line.start_with?("rule ")
-    next unless line.start_with?("  command = ") && line.include?(seed_binary)
+    next unless line.start_with?("  command = ") && line.include?(build_driver)
 
-    raise Agentlab::Error, "bootstrap seed command is not attached to a named Ninja rule" unless current_rule
-    seed_rules << current_rule
+    raise Agentlab::Error, "build-driver command is not attached to a named Ninja rule" unless current_rule
+    driver_rules << current_rule
   end
-  expected_seed_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
-  raise Agentlab::Error, "bootstrap seed Ninja rule scope changed: #{seed_rules.sort.join(', ')}" unless seed_rules.sort == expected_seed_rules.sort
-  raise Agentlab::Error, "bootstrap seed appears in a Ninja build edge" if logical_lines.any? { |line| line.start_with?("build ") && line.include?(seed_binary) }
+  expected_driver_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+  raise Agentlab::Error, "build-driver Ninja rule scope changed: #{driver_rules.sort.join(', ')}" unless driver_rules.sort == expected_driver_rules.sort
+  raise Agentlab::Error, "build driver appears in a Ninja build edge" if logical_lines.any? { |line| line.start_with?("build ") && line.include?(build_driver) }
+  forbidden_patterns.each do |pattern|
+    raise Agentlab::Error, "generated graph contains forbidden bootstrap-seed identity #{pattern}" if ninja.include?(pattern) || File.read(configure_path).include?(pattern)
+  end
   raise Agentlab::Error, "generated graph activates the cross-target rustup Cargo rule" if logical_lines.any? { |line| line.match?(/: dep_cargo_cross(?:\s|$)/) }
   expected_stamps = install_roots.map { |root| stamp_path(build_dir, File.join(source_dir, root.fetch("path"))) }.sort
   unless expected_stamps.all? { |stamp| File.file?(stamp) }
@@ -442,6 +488,19 @@ def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir,
   end
   raise Agentlab::Error, "lol-html Ninja edge still uses -Zbuild-std" if lolhtml_context.include?("-Zbuild-std")
 
+  driver_scope = if driver_kind == :seed
+                   {
+                     "bootstrap_seed_rule_scope_verified" => true,
+                     "bootstrap_seed_rules" => driver_rules.sort
+                   }
+                 else
+                   {
+                     "source_built_driver_rule_scope_verified" => true,
+                     "source_built_driver_rules" => driver_rules.sort,
+                     "bootstrap_seed_identity_absent" => true
+                   }
+                 end
+
   {
     "profile" => "release-local",
     "configure_json_sha256" => sha256(configure_path),
@@ -450,16 +509,15 @@ def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir,
     "prevalidated_install_stamps" => expected_stamps.map { |path| path.delete_prefix("#{build_dir}/") },
     "native_fetch_edges" => native_edges.length,
     "node_header_fetch_edges" => node_edges.length,
-    "prepared_inputs_revalidated" => true,
-    "bootstrap_seed_rule_scope_verified" => true,
-    "bootstrap_seed_rules" => seed_rules.sort,
+    "prepared_inputs_revalidated" => true
+  }.merge(driver_scope).merge(
     "local_webkit_verified" => true,
     "zig_fetch_absent" => true,
     "zig_source_cwd_verified" => true,
     "fedora_shared_cxx_runtime_verified" => true,
     "stable_lolhtml_cargo_verified" => true,
     "unexpected_urls_absent" => true
-  }
+  )
 end
 
 def scan_seed_contamination!(roots, seed_path, seed_sha256, seed_size, workdir)
@@ -546,7 +604,7 @@ verify_file!(File.join(zig_root, "zig"), zig_receipt.dig("output", "executable_s
 raise Agentlab::Error, "source-built Zig standard library is missing" unless File.file?(File.join(zig_root, "lib", "std", "std.zig"))
 
 verify_file!(source_archive, closure.dig("source_tree", "source_sha256"), "Bun source archive")
-verify_file!(seed_archive, seed_metadata.fetch("sha256"), "bootstrap seed archive")
+verify_file!(seed_archive, seed_metadata.fetch("sha256"), "bootstrap seed archive") unless self_rebuild
 verify_file!(webkit_archive, webkit_metadata.fetch("sha256"), "WebKit source archive")
 zig_cwd_patch = File.join(package_dir, build_graph_metadata.fetch("patch"))
 verify_file!(zig_cwd_patch, build_graph_metadata.fetch("patch_sha256"), "Bun Zig build cwd patch")
@@ -561,6 +619,49 @@ raise Agentlab::Error, "Cargo vendor tree digest mismatch" unless vendor_tree_di
   raise Agentlab::Error, "missing tool: #{command}" unless Agentlab.command_available?(command)
 end
 run!({}, ["unshare", "--net", "true"], chdir: "/srv")
+
+first_build_receipt = nil
+first_build_receipt_sha256 = nil
+first_build_driver_relative = nil
+driver_proof_kind = nil
+baseline_proof_root = nil
+if self_rebuild
+  raise Agentlab::Error, "self-rebuild proof root must be below /srv/tmp" unless self_rebuild_from.start_with?("/srv/tmp/")
+  raise Agentlab::Error, "self-rebuild source proof cannot equal the destination workdir" if self_rebuild_from == workdir
+  unless self_rebuild_from.bytesize == workdir.bytesize
+    raise Agentlab::Error, "self-rebuild workdir must match the first proof-root length for path-normalized comparison"
+  end
+  first_stat = File.lstat(self_rebuild_from)
+  raise Agentlab::Error, "refusing symlinked first source-build proof #{self_rebuild_from}" if first_stat.symlink?
+  raise Agentlab::Error, "refusing first source-build proof owned by another user" unless first_stat.uid == Process.uid
+  raise Agentlab::Error, "first source-build proof path changed during validation" unless File.realpath(self_rebuild_from) == self_rebuild_from
+  first_build_receipt_sha256 = sha256(driver_receipt_path)
+  first_build_receipt = JSON.parse(File.read(driver_receipt_path))
+  driver_proof_kind = case first_build_receipt.fetch("schema")
+                      when "bun-first-source-build-proof/v1"
+                        raise Agentlab::Error, "first source-build driver is not verified" unless first_build_receipt.dig("validation", "source_build_verified") == true
+                        baseline_proof_root = self_rebuild_from
+                        :first_build
+                      when "bun-self-rebuild-proof/v2"
+                        raise Agentlab::Error, "self-rebuild driver is not verified" unless first_build_receipt.dig("validation", "self_rebuild_performed") == true
+                        baseline_proof_root = File.expand_path(first_build_receipt.fetch("proof_root"))
+                        :self_rebuild
+                      else
+                        raise Agentlab::Error, "unsupported source-built driver receipt schema"
+                      end
+  expected_marker = driver_proof_kind == :first_build ?
+    [".agentlab-bun-first-source-build-proof", "agentlab bun first source build proof\n"] :
+    [".agentlab-bun-self-rebuild-proof", "agentlab bun self rebuild proof\n"]
+  driver_marker = File.join(self_rebuild_from, expected_marker.fetch(0))
+  unless File.file?(driver_marker) && File.read(driver_marker) == expected_marker.fetch(1)
+    raise Agentlab::Error, "missing marked source-built driver proof #{self_rebuild_from}"
+  end
+  unless first_build_receipt.fetch("package") == "bun" && first_build_receipt.fetch("release") == version
+    raise Agentlab::Error, "checked source-built driver receipt is not for Bun #{version}"
+  end
+  first_build_driver_relative = safe_relative_path(first_build_receipt.dig("build", "bun", "path"))
+  raise Agentlab::Error, "unsafe first source-build driver path" unless first_build_driver_relative
+end
 
 FileUtils.rm_rf(workdir) if force && Dir.exist?(workdir)
 unless resume
@@ -584,20 +685,26 @@ cargo_home = File.join(workdir, "cargo-home")
 rustup_home = File.join(workdir, "rustup-home")
 seed_dir = File.join(workdir, "seed")
 seed_binary = File.join(seed_dir, "bun")
+build_driver = self_rebuild ? File.join(self_rebuild_from, first_build_driver_relative) : seed_binary
+seed_identity_path = if self_rebuild
+                       driver_proof_kind == :first_build ? File.join(self_rebuild_from, "seed", "bun") : first_build_receipt.dig("bootstrap_seed", "path")
+                     else
+                       seed_binary
+                     end
 
 unless resume
-  [build_dir, cache_dir, prefetch_dir, home_dir, tmp_dir, cargo_home, rustup_home, seed_dir].each { |path| FileUtils.mkdir_p(path) }
+  proof_directories = [build_dir, cache_dir, prefetch_dir, home_dir, tmp_dir, cargo_home, rustup_home]
+  proof_directories << seed_dir unless self_rebuild
+  proof_directories.each { |path| FileUtils.mkdir_p(path) }
 
-  zip_entries = capture!({}, ["unzip", "-Z1", seed_archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
-  zip_entries.each { |entry| raise Agentlab::Error, "unsafe seed ZIP entry #{entry}" unless safe_relative_path(entry) }
-  seed_member = "bun-linux-x64/bun"
-  raise Agentlab::Error, "seed archive lacks #{seed_member}" unless zip_entries.include?(seed_member)
-  extract_zip_member!(seed_archive, seed_member, seed_binary, workdir)
-  File.chmod(0o755, seed_binary)
-  verify_file!(seed_binary, seed_metadata.fetch("binary_sha256"), "bootstrap seed binary")
-  raise Agentlab::Error, "bootstrap seed size mismatch" unless File.size(seed_binary) == seed_metadata.fetch("binary_size_bytes")
-  seed_version = capture!({ "HOME" => home_dir }, [seed_binary, "--version"], chdir: workdir).strip
-  raise Agentlab::Error, "unexpected Bun seed version #{seed_version.inspect}" unless seed_version == version
+  unless self_rebuild
+    zip_entries = capture!({}, ["unzip", "-Z1", seed_archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
+    zip_entries.each { |entry| raise Agentlab::Error, "unsafe seed ZIP entry #{entry}" unless safe_relative_path(entry) }
+    seed_member = "bun-linux-x64/bun"
+    raise Agentlab::Error, "seed archive lacks #{seed_member}" unless zip_entries.include?(seed_member)
+    extract_zip_member!(seed_archive, seed_member, seed_binary, workdir)
+    File.chmod(0o755, seed_binary)
+  end
 
   extract_bun_source!(source_archive, source_dir, workdir)
   source_files = {
@@ -722,11 +829,19 @@ supplemental_npm.each do |relative, expected|
   raise Agentlab::Error, "prepared supplemental npm tree mismatch: #{relative}" unless Dir.exist?(destination) && tree_receipt(destination) == expected
 end
 
-raise Agentlab::Error, "resume tree lacks bootstrap seed" unless File.file?(seed_binary)
-verify_file!(seed_binary, seed_metadata.fetch("binary_sha256"), "bootstrap seed binary")
-raise Agentlab::Error, "bootstrap seed size mismatch" unless File.size(seed_binary) == seed_metadata.fetch("binary_size_bytes")
-seed_version = capture!({ "HOME" => home_dir }, [seed_binary, "--version"], chdir: workdir).strip
-raise Agentlab::Error, "unexpected Bun seed version #{seed_version.inspect}" unless seed_version == version
+if self_rebuild
+  first_driver = first_build_receipt.dig("build", "bun")
+  verify_file!(build_driver, first_driver.fetch("sha256"), "source-built Bun self-rebuild driver")
+  raise Agentlab::Error, "source-built Bun self-rebuild driver size mismatch" unless File.size(build_driver) == first_driver.fetch("size_bytes")
+  driver_version = capture!({ "HOME" => home_dir }, [build_driver, "--version"], chdir: workdir).strip
+  raise Agentlab::Error, "unexpected source-built Bun driver version #{driver_version.inspect}" unless driver_version == version
+else
+  raise Agentlab::Error, "resume tree lacks bootstrap seed" unless File.file?(seed_binary)
+  verify_file!(seed_binary, seed_metadata.fetch("binary_sha256"), "bootstrap seed binary")
+  raise Agentlab::Error, "bootstrap seed size mismatch" unless File.size(seed_binary) == seed_metadata.fetch("binary_size_bytes")
+  seed_version = capture!({ "HOME" => home_dir }, [seed_binary, "--version"], chdir: workdir).strip
+  raise Agentlab::Error, "unexpected Bun seed version #{seed_version.inspect}" unless seed_version == version
+end
 raise Agentlab::Error, "resume tree lacks prepared Bun source" unless File.file?(File.join(source_dir, "scripts", "build.ts"))
 {
   "package.json" => closure.dig("source_tree", "package_json_sha256"),
@@ -838,12 +953,12 @@ resume_graph_ready = resume && File.file?(ninja_path) && File.file?(configure_pa
                      !File.read(ninja_path).include?("-static-libstdc++") && revision_constants_ready
 unless resume_graph_ready
   configure_command = [
-    "unshare", "--net", "--", seed_binary, File.join(source_dir, "scripts", "build.ts"),
+    "unshare", "--net", "--", build_driver, File.join(source_dir, "scripts", "build.ts"),
     "--profile=release-local", "--build-dir=#{build_dir}", "--cache-dir=#{cache_dir}", "--configure-only", "-j#{jobs}"
   ]
   run!(environment, configure_command, chdir: source_dir, log: File.join(workdir, "configure.log"))
 end
-install_bypass = replace_bun_install_rule!(ninja_path, seed_binary, File.join(workdir, "install-rule-bypass.json"))
+install_bypass = replace_bun_install_rule!(ninja_path, build_driver, File.join(workdir, "install-rule-bypass.json"))
 
 FileUtils.mkdir_p(File.join(build_dir, "stamps"))
 expected_install_stamps = npm_install_roots.map do |root|
@@ -883,10 +998,12 @@ graph_receipt = inspect_graph!(
   cache_dir,
   webkit_root,
   proof_zig_root,
-  seed_binary,
+  build_driver,
   npm_install_roots,
   closure.fetch("native_github_sources"),
-  closure.fetch("node_headers")
+  closure.fetch("node_headers"),
+  driver_kind: self_rebuild ? :source_built : :seed,
+  forbidden_patterns: self_rebuild ? [seed_identity_path, "bun-seed", seed_metadata.fetch("binary_sha256")] : []
 )
 graph_receipt["install_rule_bypass"] = install_bypass
 install_targets = npm_install_roots.map do |root|
@@ -901,21 +1018,45 @@ npm_install_roots.each do |root|
   raise Agentlab::Error, "prevalidated npm install stamp is still dirty: #{stamp}" unless dry_run.include?("no work to do")
 end
 
+driver_receipt = if self_rebuild
+                   {
+                     "source_built_driver" => {
+                       "driver_proof_kind" => driver_proof_kind.to_s,
+                       "driver_receipt" => File.basename(driver_receipt_path),
+                       "driver_receipt_sha256" => first_build_receipt_sha256,
+                       "proof_root" => self_rebuild_from,
+                       "path" => build_driver,
+                       "size_bytes" => File.size(build_driver),
+                       "sha256" => sha256(build_driver),
+                       "version" => version
+                     },
+                     "forbidden_bootstrap_seed" => {
+                       "path" => seed_identity_path,
+                       "binary_sha256" => seed_metadata.fetch("binary_sha256"),
+                       "size_bytes" => seed_metadata.fetch("binary_size_bytes")
+                     }
+                   }
+                 else
+                   {
+                     "seed" => {
+                       "archive_sha256" => seed_metadata.fetch("sha256"),
+                       "binary_sha256" => seed_metadata.fetch("binary_sha256"),
+                       "size_bytes" => seed_metadata.fetch("binary_size_bytes"),
+                       "bootstrap_only" => true
+                     }
+                   }
+                 end
+
 configure_receipt = {
-  "schema" => "bun-first-source-build-configure-proof/v1",
+  "schema" => self_rebuild ? "bun-self-rebuild-configure-proof/v1" : "bun-first-source-build-configure-proof/v1",
   "package" => "bun",
   "release" => version,
   "profile" => "release-local",
   "source_closure_sha256" => closure_sha256,
   "source_commit" => source_commit,
   "npm_proof_sha256" => npm_receipt_sha256,
-  "cargo_proof_sha256" => sha256(cargo_receipt_path),
-  "seed" => {
-    "archive_sha256" => seed_metadata.fetch("sha256"),
-    "binary_sha256" => seed_metadata.fetch("binary_sha256"),
-    "size_bytes" => seed_metadata.fetch("binary_size_bytes"),
-    "bootstrap_only" => true
-  },
+  "cargo_proof_sha256" => sha256(cargo_receipt_path)
+}.merge(driver_receipt).merge(
   "zig" => {
     "source_commit" => zig_metadata.fetch("commit"),
     "source_sha256" => zig_metadata.fetch("sha256"),
@@ -946,11 +1087,11 @@ configure_receipt = {
   "network_namespace" => true,
   "jobs" => jobs,
   "source_build_performed" => false
-}
+)
 Agentlab.atomic_write(File.join(workdir, "configure-proof.json"), JSON.pretty_generate(configure_receipt) + "\n")
 
 if configure_only
-  puts "Verified the network-isolated Bun first-build graph without compiling."
+  puts "Verified the network-isolated Bun #{self_rebuild ? 'self-rebuild' : 'first-build'} graph without compiling."
   puts "Configure proof: #{File.join(workdir, 'configure-proof.json')}"
   exit
 end
@@ -965,6 +1106,9 @@ end
 
 build_command = ["nice", "-n", "10", "unshare", "--net", "--", "ninja", "-C", build_dir, "-j", jobs.to_s]
 run!(environment, build_command, chdir: source_dir, log: File.join(workdir, "build.log"))
+if self_rebuild
+  run!(environment, build_command, chdir: source_dir, log: File.join(workdir, "stabilize.log"))
+end
 after_resources = resource_snapshot
 %w[oom oom_kill oom_group_kill].each do |event|
   before = before_resources.fetch("memory_events", {}).fetch(event, 0)
@@ -975,7 +1119,7 @@ end
 bun_profile = File.join(build_dir, "bun-profile")
 bun = File.join(build_dir, "bun")
 linker_map = File.join(build_dir, "bun-profile.linker-map")
-[bun_profile, bun, linker_map].each { |path| raise Agentlab::Error, "missing first-build artifact #{path}" unless File.file?(path) && File.size(path).positive? }
+[bun_profile, bun, linker_map].each { |path| raise Agentlab::Error, "missing #{self_rebuild ? 'self-rebuild' : 'first-build'} artifact #{path}" unless File.file?(path) && File.size(path).positive? }
 raise Agentlab::Error, "stripped Bun is not smaller than bun-profile" unless File.size(bun) < File.size(bun_profile)
 profile_file = capture!({}, ["file", bun_profile], chdir: build_dir).strip
 bun_file = capture!({}, ["file", bun], chdir: build_dir).strip
@@ -988,9 +1132,10 @@ raise Agentlab::Error, "Bun output retains debug sections: #{bun_debug_sections.
 
 revision = capture!(environment, ["unshare", "--net", "--", bun_profile, "--revision"], chdir: build_dir).strip
 built_version = capture!(environment, ["unshare", "--net", "--", bun, "--version"], chdir: build_dir).strip
-smoke = capture!(environment, ["unshare", "--net", "--", bun, "-e", "console.log('agentlab-bun-first-build')"], chdir: build_dir).strip
+smoke_text = self_rebuild ? "agentlab-bun-self-rebuild" : "agentlab-bun-first-build"
+smoke = capture!(environment, ["unshare", "--net", "--", bun, "-e", "console.log('#{smoke_text}')"], chdir: build_dir).strip
 raise Agentlab::Error, "unexpected source-built Bun version #{built_version.inspect}" unless built_version == version
-raise Agentlab::Error, "source-built Bun smoke failed" unless smoke == "agentlab-bun-first-build"
+raise Agentlab::Error, "source-built Bun smoke failed" unless smoke == smoke_text
 
 node_identity = File.join(cache_dir, "nodejs-headers-#{closure.dig('node_headers', 'version')}", ".identity")
 raise Agentlab::Error, "Node header identity was not materialized" unless File.file?(node_identity) && File.read(node_identity).strip == closure.dig("node_headers", "version")
@@ -999,9 +1144,9 @@ raise Agentlab::Error, "Node header identity was not materialized" unless File.f
   raise Agentlab::Error, "conflicting Node header path was not removed: #{path}" if File.exist?(path) || File.symlink?(path)
 end
 
-contamination = scan_seed_contamination!([source_dir, cache_dir, build_dir], seed_binary, seed_metadata.fetch("binary_sha256"), seed_metadata.fetch("binary_size_bytes"), workdir)
+contamination = scan_seed_contamination!([source_dir, cache_dir, build_dir], seed_identity_path, seed_metadata.fetch("binary_sha256"), seed_metadata.fetch("binary_size_bytes"), workdir)
 ldd_output = capture!({}, ["ldd", bun], chdir: build_dir)
-raise Agentlab::Error, "source-built Bun has a runtime dependency on the seed" if ldd_output.include?(seed_binary) || ldd_output.include?("bun-seed")
+raise Agentlab::Error, "source-built Bun has a runtime dependency on the seed" if ldd_output.include?(seed_identity_path) || ldd_output.include?("bun-seed")
 raise Agentlab::Error, "source-built Bun does not use Fedora's shared libstdc++" unless ldd_output.include?("libstdc++.so.6")
 raise Agentlab::Error, "source-built Bun does not use Fedora's shared libgcc" unless ldd_output.include?("libgcc_s.so.1")
 
@@ -1009,7 +1154,169 @@ objects = Dir.glob(File.join(build_dir, "**", "*.o"), File::FNM_DOTMATCH).select
 archives = Dir.glob(File.join(build_dir, "**", "*.a"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
 response_files = Dir.glob(File.join(build_dir, "**", "*.rsp"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
 
-receipt = {
+build_receipt = {
+  "network_namespace" => true,
+  "nice_level" => 10,
+  "jobs" => jobs,
+  "nested_cmake_jobs" => jobs,
+  "cargo_jobs" => jobs,
+  "bun_profile" => file_receipt(bun_profile, workdir),
+  "bun" => file_receipt(bun, workdir),
+  "linker_map" => file_receipt(linker_map, workdir),
+  "revision" => revision,
+  "version" => built_version,
+  "build_id" => elf_build_id(bun),
+  "stabilization_passes" => self_rebuild ? 1 : 0,
+  "smoke_verified" => true,
+  "stripped_output_verified" => true,
+  "strip_verification" => {
+    "bun_profile_file" => profile_file,
+    "bun_file" => bun_file,
+    "bun_profile_debug_sections" => profile_debug_sections,
+    "bun_debug_sections" => bun_debug_sections,
+    "size_reduced" => true
+  },
+  "fedora_shared_cxx_runtime_verified" => true,
+  "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6]
+}
+
+relink_receipt = {
+  "object_files" => objects.length,
+  "static_archives" => archives.length,
+  "response_files" => response_files.length,
+  "compile_commands_retained" => File.file?(File.join(build_dir, "compile_commands.json")),
+  "build_ninja_retained" => true,
+  "linker_map_retained" => true,
+  "complete_lgpl_relink_materials_verified" => false
+}
+
+if self_rebuild
+  normalized_root = "$PROOF_ROOT".ljust(workdir.bytesize, "_")
+  normalized_driver_root = "$DRIVER_ROOT".ljust(workdir.bytesize, "_")
+  baseline_driver_root = driver_proof_kind == :first_build ? self_rebuild_from : first_build_receipt.dig("first_build", "proof_root")
+  comparisons = {
+    "bun_profile" => ["bun_profile", bun_profile],
+    "bun" => ["bun", bun],
+    "linker_map" => ["linker_map", linker_map]
+  }.to_h do |name, (first_key, rebuilt_path)|
+    first_record = first_build_receipt.dig("build", first_key)
+    first_path = File.join(self_rebuild_from, first_record.fetch("path"))
+    verify_file!(first_path, first_record.fetch("sha256"), "first-build comparison artifact #{name}")
+    comparison = {
+      "driver_build" => file_receipt(first_path, self_rebuild_from),
+      "self_rebuild" => file_receipt(rebuilt_path, workdir),
+      "size_equal" => File.size(first_path) == File.size(rebuilt_path),
+      "sha256_equal" => sha256(first_path) == sha256(rebuilt_path)
+    }
+    first_replacements = [[baseline_proof_root, normalized_root]]
+    first_replacements << [baseline_driver_root, normalized_driver_root] unless baseline_driver_root == baseline_proof_root
+    rebuilt_replacements = [[workdir, normalized_root]]
+    rebuilt_replacements << [self_rebuild_from, normalized_driver_root] unless self_rebuild_from == workdir
+    unless name == "linker_map"
+      first_build_id = elf_build_id(first_path)
+      rebuilt_build_id = elf_build_id(rebuilt_path)
+      first_replacements << [[first_build_id].pack("H*"), "\0" * (first_build_id.length / 2)]
+      rebuilt_replacements << [[rebuilt_build_id].pack("H*"), "\0" * (rebuilt_build_id.length / 2)]
+      comparison["driver_build_id"] = first_build_id
+      comparison["self_rebuild_build_id"] = rebuilt_build_id
+    end
+    first_normalized = normalized_binary_sha256(first_path, first_replacements)
+    rebuilt_normalized = normalized_binary_sha256(rebuilt_path, rebuilt_replacements)
+    comparison["normalized_first_sha256"] = first_normalized
+    comparison["normalized_self_rebuild_sha256"] = rebuilt_normalized
+    comparison["normalized_sha256_equal"] = first_normalized == rebuilt_normalized
+    [name, comparison]
+  end
+  first_ninja = File.join(self_rebuild_from, "build/release-local/build.ninja")
+  first_configure = File.join(self_rebuild_from, "build/release-local/configure.json")
+  first_stamp_root = baseline_proof_root.gsub(/[^A-Za-z0-9]+/, "_")
+  rebuilt_stamp_root = workdir.gsub(/[^A-Za-z0-9]+/, "_")
+  baseline_driver_path = if driver_proof_kind == :first_build
+                           File.join(self_rebuild_from, "seed", "bun")
+                         else
+                           first_build_receipt.dig("first_build", "path")
+                         end
+  graph_comparison = {
+    "build_ninja" => {
+      "driver_normalized_sha256" => normalized_text_sha256(first_ninja, baseline_driver_path => "$BUILD_DRIVER", first_stamp_root => "$PROOF_STAMP", baseline_proof_root => "$PROOF_ROOT"),
+      "self_rebuild_normalized_sha256" => normalized_text_sha256(ninja_path, build_driver => "$BUILD_DRIVER", rebuilt_stamp_root => "$PROOF_STAMP", workdir => "$PROOF_ROOT")
+    },
+    "configure_json" => {
+      "driver_normalized_sha256" => normalized_text_sha256(first_configure, baseline_proof_root => "$PROOF_ROOT"),
+      "self_rebuild_normalized_sha256" => normalized_text_sha256(configure_path, workdir => "$PROOF_ROOT")
+    }
+  }
+  graph_comparison.each_value do |record|
+    record["normalized_sha256_equal"] = record.fetch("driver_normalized_sha256") == record.fetch("self_rebuild_normalized_sha256")
+  end
+  fixed_point_verified = driver_proof_kind == :self_rebuild &&
+                         comparisons.values.all? { |record| record.fetch("normalized_sha256_equal") } &&
+                         graph_comparison.values.all? { |record| record.fetch("normalized_sha256_equal") } &&
+                         first_build_receipt.dig("build", "revision") == revision &&
+                         first_build_receipt.dig("build", "version") == built_version
+
+  receipt = {
+    "schema" => "bun-self-rebuild-proof/v2",
+    "package" => "bun",
+    "release" => version,
+    "profile" => "release-local",
+    "proof_date" => Time.now.utc.strftime("%Y-%m-%d"),
+    "proof_root" => workdir,
+    "source_closure" => {
+      "path" => File.basename(closure_path),
+      "sha256" => closure_sha256,
+      "source_archive_sha256" => closure.dig("source_tree", "source_sha256"),
+      "source_commit" => source_commit
+    },
+    "first_build" => driver_receipt.fetch("source_built_driver"),
+    "bootstrap_seed" => {
+      "binary_sha256" => seed_metadata.fetch("binary_sha256"),
+      "size_bytes" => seed_metadata.fetch("binary_size_bytes"),
+      "path" => seed_identity_path,
+      "consumed_by_self_rebuild" => false,
+      "payload_allowed" => false,
+      "runtime_dependency_allowed" => false
+    },
+    "inputs" => configure_receipt.slice("zig", "webkit", "source_patches", "offline_inputs"),
+    "configure" => graph_receipt.merge("network_namespace" => true, "jobs" => jobs),
+    "build" => build_receipt,
+    "reproducibility" => {
+      "driver_proof_kind" => driver_proof_kind.to_s,
+      "driver_receipt_sha256" => first_build_receipt_sha256,
+      "artifacts" => comparisons,
+      "graph" => graph_comparison,
+      "revision_equal" => first_build_receipt.dig("build", "revision") == revision,
+      "version_equal" => first_build_receipt.dig("build", "version") == built_version,
+      "compared" => true,
+      "fixed_point_verified" => fixed_point_verified
+    },
+    "retained_relink_evidence" => relink_receipt,
+    "seed_contamination" => contamination.merge(
+      "payload_absent_verified" => true,
+      "runtime_dependency_absent_verified" => true,
+      "ldd_sha256" => Digest::SHA256.hexdigest(ldd_output)
+    ),
+    "resources" => {
+      "before" => before_resources,
+      "after" => after_resources,
+      "oom_counters_unchanged" => true
+    },
+    "validation" => {
+      "source_built_driver_verified" => true,
+      "self_rebuild_performed" => true,
+      "offline_verified" => true,
+      "seed_payload_absent_verified" => true,
+      "seed_runtime_dependency_absent_verified" => true,
+      "reproducibility_compared" => true,
+      "source_rebuild_fixed_point_verified" => fixed_point_verified,
+      "complete_lgpl_relink_materials_verified" => false,
+      "final_license_audit_verified" => false,
+      "final_rpm_verified" => false
+    },
+    "scope" => "immediate network-isolated source-built Bun self-rebuild and explicit first-build comparison only; immutable hosting, complete LGPL relink materials, final license review, and RPM remain blocked"
+  }
+else
+  receipt = {
   "schema" => "bun-first-source-build-proof/v1",
   "package" => "bun",
   "release" => version,
@@ -1041,38 +1348,8 @@ receipt = {
     }
   ),
   "configure" => graph_receipt.merge("network_namespace" => true, "jobs" => jobs),
-  "build" => {
-    "network_namespace" => true,
-    "nice_level" => 10,
-    "jobs" => jobs,
-    "nested_cmake_jobs" => jobs,
-    "cargo_jobs" => jobs,
-    "bun_profile" => file_receipt(bun_profile, workdir),
-    "bun" => file_receipt(bun, workdir),
-    "linker_map" => file_receipt(linker_map, workdir),
-    "revision" => revision,
-    "version" => built_version,
-    "smoke_verified" => true,
-    "stripped_output_verified" => true,
-    "strip_verification" => {
-      "bun_profile_file" => profile_file,
-      "bun_file" => bun_file,
-      "bun_profile_debug_sections" => profile_debug_sections,
-      "bun_debug_sections" => bun_debug_sections,
-      "size_reduced" => true
-    },
-    "fedora_shared_cxx_runtime_verified" => true,
-    "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6]
-  },
-  "retained_relink_evidence" => {
-    "object_files" => objects.length,
-    "static_archives" => archives.length,
-    "response_files" => response_files.length,
-    "compile_commands_retained" => File.file?(File.join(build_dir, "compile_commands.json")),
-    "build_ninja_retained" => true,
-    "linker_map_retained" => true,
-    "complete_lgpl_relink_materials_verified" => false
-  },
+  "build" => build_receipt,
+  "retained_relink_evidence" => relink_receipt,
   "seed_contamination" => contamination.merge(
     "payload_absent_verified" => true,
     "runtime_dependency_absent_verified" => true,
@@ -1094,7 +1371,8 @@ receipt = {
     "final_rpm_verified" => false
   },
   "scope" => "first network-isolated seed-driven Bun source build only; immediate source-built self-rebuild, reproducibility, complete LGPL relink materials, immutable hosting, final license review, and RPM remain blocked"
-}
+  }
+end
 Agentlab.atomic_write(output, JSON.pretty_generate(receipt) + "\n")
-puts "Verified Bun #{version}'s first network-isolated seed-driven source build."
+puts "Verified Bun #{version}'s #{self_rebuild ? 'network-isolated source-built self-rebuild' : 'first network-isolated seed-driven source build'}."
 puts "Proof receipt: #{output}"

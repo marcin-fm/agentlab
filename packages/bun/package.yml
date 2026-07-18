@@ -5,7 +5,7 @@ blockers:
   - The checked native, Node.js header, npm, and Cargo crate archives still need immutable RPM-consumable hosting.
   - The checked lol-html Cargo vendor and npm source closures are not integrated as immutable RPM sources.
   - Complete LGPL relink objects for the final statically linked Bun executable are not packaged.
-  - The source-built Bun has not yet driven the immediate offline self-rebuild, reproducibility comparison, and final seed-contamination checks.
+  - The immediate source-built offline self-rebuild is seed-free, but clean-cache Zig 0.15.2 output is not reproducible: the same 32-object target changes aggregate after only its local and global caches are cleared.
 upstream:
   provider: github
   repository: oven-sh/bun
@@ -184,10 +184,23 @@ build_plan:
       proof_receipt_sha256: fda7910119f4c11a2b7b11f19dc1f04a2315d580c192e4a007d6e654f27804eb
     self_rebuild:
       state: blocked
-      offline_verified: false
-      seed_payload_absent_verified: false
-      seed_runtime_dependency_absent_verified: false
-      reproducibility_compared: false
+      source_built_driver_verified: true
+      offline_verified: true
+      seed_payload_absent_verified: true
+      seed_runtime_dependency_absent_verified: true
+      reproducibility_compared: true
+      source_rebuild_fixed_point_verified: false
+      zig_object_aggregate_reproducible_with_retained_cache: true
+      zig_object_aggregate_reproducible_from_clean_cache: false
+      zig_object_count: 32
+      zig_retained_cache_aggregate_sha256: 204feaefdfc2792e322b27a8137eeb4a3fef5812250c40ac62570835ab97b988
+      zig_clean_cache_aggregate_sha256: 173d1e110081ce0802b51f656e5da2a13997b1f5bb08b28a8ae27894b6fd1d0b
+      proof_platform: fedora-44-x86_64
+      proof_date: "2026-07-18"
+      proof_receipt: self-rebuild-proof.json
+      proof_receipt_sha256: 9c5d742309e95516de508769b153d07c8ba5e7ba239861bd46fd85d1aeaa0da0
+      zig_reproducibility_proof_receipt: zig-reproducibility-proof.json
+      zig_reproducibility_proof_receipt_sha256: aab9128d9a27657e9d7269713bbe65880199b5eac6ef04af26f61ccce10c0367
     final:
       state: blocked
       license_audit_verified: false
