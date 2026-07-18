@@ -453,6 +453,235 @@ class AgentlabTest < Minitest::Test
     assert(errors.any? { |error| error.include?("deliberate build stop") })
   end
 
+  def test_validates_verified_bun_seed_build_stage
+    Dir.mktmpdir do |directory|
+      version = "1.3.14"
+      source_commit = "a" * 40
+      source_sha256 = "b" * 64
+      seed_sha256 = "c" * 64
+      seed_binary_sha256 = "d" * 64
+      zig_commit = "e" * 40
+      zig_sha256 = "f" * 64
+      webkit_commit = "1" * 40
+      webkit_sha256 = "2" * 64
+      patch_files = {
+        "zig.patch" => "zig patch\n",
+        "webkit.patch" => "webkit patch\n",
+        "lolhtml.patch" => "lolhtml patch\n",
+        "npm-lock.patch" => "npm lock patch\n",
+        "zig-cwd.patch" => "zig cwd patch\n",
+        "shared-runtime.patch" => "shared runtime patch\n"
+      }
+      patch_files.each { |name, content| File.write(File.join(directory, name), content) }
+      patch_sha256 = patch_files.to_h { |name, _content| [name, Digest::SHA256.file(File.join(directory, name)).hexdigest] }
+      closure_path = File.join(directory, "source-closure.json")
+      npm_proof_path = File.join(directory, "npm-proof.json")
+      cargo_proof_path = File.join(directory, "cargo-proof.json")
+      File.write(closure_path, "{}\n")
+      File.write(npm_proof_path, "{}\n")
+      File.write(cargo_proof_path, "{}\n")
+      closure_sha256 = Digest::SHA256.file(closure_path).hexdigest
+      npm_proof_sha256 = Digest::SHA256.file(npm_proof_path).hexdigest
+      cargo_proof_sha256 = Digest::SHA256.file(cargo_proof_path).hexdigest
+      seed_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+      receipt_path = File.join(directory, "first-source-build-proof.json")
+      File.write(receipt_path, JSON.dump(
+        "schema" => "bun-first-source-build-proof/v1",
+        "package" => "bun",
+        "release" => version,
+        "profile" => "release-local",
+        "proof_date" => "2026-07-18",
+        "source_closure" => {
+          "path" => File.basename(closure_path),
+          "sha256" => closure_sha256,
+          "source_commit" => source_commit,
+          "source_archive_sha256" => source_sha256
+        },
+        "bootstrap_seed" => {
+          "archive_sha256" => seed_sha256,
+          "binary_sha256" => seed_binary_sha256,
+          "size_bytes" => 123,
+          "version" => version,
+          "bootstrap_only" => true,
+          "final_payload_allowed" => false,
+          "final_runtime_dependency_allowed" => false
+        },
+        "inputs" => {
+          "zig" => {
+            "source_commit" => zig_commit,
+            "source_sha256" => zig_sha256,
+            "patch_sha256" => patch_sha256.fetch("zig.patch")
+          },
+          "webkit" => {
+            "commit" => webkit_commit,
+            "archive_sha256" => webkit_sha256,
+            "patch_sha256" => patch_sha256.fetch("webkit.patch")
+          },
+          "source_patches" => {
+            "lolhtml_sha256" => patch_sha256.fetch("lolhtml.patch"),
+            "npm_lock_sha256" => patch_sha256.fetch("npm-lock.patch"),
+            "zig_build_cwd_sha256" => patch_sha256.fetch("zig-cwd.patch"),
+            "fedora_shared_cxx_runtime_sha256" => patch_sha256.fetch("shared-runtime.patch")
+          },
+          "offline_inputs" => {
+            "native_archives" => 19,
+            "node_header_archives" => 1,
+            "npm_install_roots" => 3,
+            "supplemental_npm_trees" => [
+              {
+                "path" => "packages/@types/bun/node_modules",
+                "tree" => { "sha256" => "3" * 64 }
+              }
+            ]
+          },
+          "npm_proof" => {
+            "path" => File.basename(npm_proof_path),
+            "sha256" => npm_proof_sha256
+          },
+          "cargo_proof" => {
+            "path" => File.basename(cargo_proof_path),
+            "sha256" => cargo_proof_sha256
+          }
+        },
+        "configure" => {
+          "network_namespace" => true,
+          "install_edges" => 3,
+          "native_fetch_edges" => 19,
+          "node_header_fetch_edges" => 1,
+          "prepared_inputs_revalidated" => true,
+          "bootstrap_seed_rule_scope_verified" => true,
+          "bootstrap_seed_rules" => seed_rules,
+          "local_webkit_verified" => true,
+          "zig_fetch_absent" => true,
+          "zig_source_cwd_verified" => true,
+          "stable_lolhtml_cargo_verified" => true,
+          "unexpected_urls_absent" => true
+        },
+        "build" => {
+          "network_namespace" => true,
+          "bun_profile" => { "path" => "build/bun-profile", "size_bytes" => 200, "sha256" => "4" * 64 },
+          "bun" => { "path" => "build/bun", "size_bytes" => 100, "sha256" => "5" * 64 },
+          "linker_map" => { "path" => "build/bun.map", "size_bytes" => 50, "sha256" => "6" * 64 },
+          "revision" => "#{version}-canary.1+#{source_commit[0, 9]}",
+          "version" => version,
+          "smoke_verified" => true,
+          "stripped_output_verified" => true,
+          "fedora_shared_cxx_runtime_verified" => true,
+          "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6]
+        },
+        "retained_relink_evidence" => {
+          "complete_lgpl_relink_materials_verified" => false
+        },
+        "seed_contamination" => {
+          "seed_hash_matches" => 0,
+          "payload_absent_verified" => true,
+          "runtime_dependency_absent_verified" => true
+        },
+        "validation" => {
+          "bootstrap_seed_verified" => true,
+          "seed_isolated_verified" => true,
+          "source_build_verified" => true,
+          "self_rebuild_performed" => false,
+          "reproducibility_compared" => false,
+          "complete_lgpl_relink_materials_verified" => false,
+          "final_license_audit_verified" => false,
+          "final_rpm_verified" => false
+        }
+      ))
+      stages = Agentlab::BUN_BUILD_STAGES.to_h { |stage| [stage, { "state" => "blocked" }] }
+      stages.fetch("dependency_closure").merge!(
+        "proof_receipt" => File.basename(closure_path),
+        "proof_receipt_sha256" => closure_sha256,
+        "npm_install_proof_receipt" => File.basename(npm_proof_path),
+        "npm_install_proof_receipt_sha256" => npm_proof_sha256,
+        "cargo_build_proof_receipt" => File.basename(cargo_proof_path),
+        "cargo_build_proof_receipt_sha256" => cargo_proof_sha256,
+        "selected_github_archives" => 19,
+        "selected_node_header_archives" => 1
+      )
+      stages.fetch("seed_build").merge!(
+        "state" => "verified",
+        "bootstrap_seed_verified" => true,
+        "seed_isolated_verified" => true,
+        "source_build_verified" => true,
+        "proof_date" => "2026-07-18",
+        "proof_receipt" => File.basename(receipt_path),
+        "proof_receipt_sha256" => Digest::SHA256.file(receipt_path).hexdigest
+      )
+      data = {
+        "name" => "bun",
+        "status" => "blocked",
+        "upstream" => {
+          "current_version" => version,
+          "source_commit" => source_commit,
+          "source_sha256" => source_sha256
+        },
+        "copr" => { "enabled" => false },
+        "build_plan" => {
+          "target_release" => "1.3.14",
+          "source_inputs_reconciled" => true,
+          "architectures" => ["x86_64"],
+          "source_inputs" => {
+            "zig" => {
+              "release_pin" => "bun-v#{version}",
+              "commit" => zig_commit,
+              "url" => "https://example.com/zig.tar.gz",
+              "sha256" => zig_sha256,
+              "patch" => "zig.patch"
+            },
+            "webkit" => {
+              "release_pin" => "bun-v#{version}",
+              "commit" => webkit_commit,
+              "repository_url" => "https://example.com/WebKit.git",
+              "acquisition" => "deterministic_git_archive",
+              "submodules" => false,
+              "source_tree_complete" => true,
+              "sha256" => webkit_sha256,
+              "patch" => "webkit.patch",
+              "patch_sha256" => patch_sha256.fetch("webkit.patch")
+            },
+            "lolhtml" => {
+              "patch" => "lolhtml.patch",
+              "patch_sha256" => patch_sha256.fetch("lolhtml.patch")
+            },
+            "npm_lock" => {
+              "patch" => "npm-lock.patch",
+              "patch_sha256" => patch_sha256.fetch("npm-lock.patch")
+            },
+            "build_graph" => {
+              "patch" => "zig-cwd.patch",
+              "patch_sha256" => patch_sha256.fetch("zig-cwd.patch"),
+              "cxx_runtime_patch" => "shared-runtime.patch",
+              "cxx_runtime_patch_sha256" => patch_sha256.fetch("shared-runtime.patch")
+            },
+            "bootstrap_seed" => {
+              "release_pin" => "bun-v#{version}",
+              "architecture" => "x86_64",
+              "url" => "https://example.com/bun.zip",
+              "sha256" => seed_sha256,
+              "binary_sha256" => seed_binary_sha256,
+              "binary_size_bytes" => 123,
+              "bootstrap_only" => true,
+              "final_payload_allowed" => false,
+              "final_runtime_dependency_allowed" => false
+            }
+          },
+          "stages" => stages
+        }
+      }
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      assert_empty(Agentlab.validate_bun_build_plan(package, "exit 1\n"))
+
+      invalid_receipt = JSON.parse(File.read(receipt_path))
+      invalid_receipt.fetch("configure")["prepared_inputs_revalidated"] = false
+      File.write(receipt_path, JSON.dump(invalid_receipt))
+      stages.fetch("seed_build")["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      errors = Agentlab.validate_bun_build_plan(package, "exit 1\n")
+      assert_includes(errors, "bun: seed-build proof did not revalidate prepared inputs")
+    end
+  end
+
   def test_bun_release_change_invalidates_build_plan
     manifest = {
       "build_plan" => {

@@ -1,17 +1,17 @@
 name: bun
 status: blocked
 blockers:
-  - The checked temporary Bun seed has not yet driven the first isolated source build.
   - The checked WebKit archive still needs immutable public hosting.
   - The checked native, Node.js header, npm, and Cargo crate archives still need immutable RPM-consumable hosting.
-  - The checked lol-html Cargo vendor and npm source closures are not integrated as immutable RPM sources, and complete offline Bun/native materialization remains incomplete.
+  - The checked lol-html Cargo vendor and npm source closures are not integrated as immutable RPM sources.
   - Complete LGPL relink objects for the final statically linked Bun executable are not packaged.
-  - The immediate offline self-rebuild and seed-contamination checks have not passed.
+  - The source-built Bun has not yet driven the immediate offline self-rebuild, reproducibility comparison, and final seed-contamination checks.
 upstream:
   provider: github
   repository: oven-sh/bun
   tag_prefix: bun-v
   current_version: 1.3.14
+  source_commit: 0d9b296af33f2b851fcbf4df3e9ec89751734ba4
   source_url_template: https://github.com/oven-sh/bun/archive/refs/tags/bun-v{version}.tar.gz
   source_sha256: 112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e
 build_plan:
@@ -69,6 +69,15 @@ build_plan:
       patched_lock_sha256: fc6170ac30572ab73baa58ef32777cfe4c7f685cfa096fccae8c3463387006b4
       lightningcss_gnu_enabled: true
       lightningcss_musl_enabled: false
+    build_graph:
+      relationship: fedora_out_of_tree_build_correction
+      release_pin: bun-v1.3.14
+      patch: bun-zig-build-cwd.patch
+      patch_sha256: 6b8c241a4f1c5253e8dfcdabb943a956dd7867a044c5fef01591522090ad7fb2
+      zig_build_cwd_verified: true
+      cxx_runtime_patch: bun-fedora-shared-cxx-runtime.patch
+      cxx_runtime_patch_sha256: b9712db0e79d0277dfece2d74c4e943ed5714dff20676ab87b7a4dc6e869850e
+      fedora_shared_cxx_runtime: true
     bootstrap_seed:
       relationship: temporary_bootstrap_only
       state: acquired_local
@@ -82,7 +91,7 @@ build_plan:
       bootstrap_only: true
       final_payload_allowed: false
       final_runtime_dependency_allowed: false
-      npm_install_proof_only: true
+      first_source_build_proof_only: true
   stages:
     zig_source_bootstrap:
       state: verified
@@ -124,7 +133,8 @@ build_plan:
       github_sources_verified: true
       github_sources_scope: selected_native_dependency_archives
       node_headers_verified: true
-      offline_materialization_verified: false
+      offline_materialization_verified: true
+      complete_bun_offline_materialization_verified: true
       npm_cache_materialization_verified: true
       npm_offline_install_verified: true
       npm_frozen_lockfile_verified: true
@@ -159,10 +169,19 @@ build_plan:
       npm_install_proof_receipt: npm-offline-install-proof.json
       npm_install_proof_receipt_sha256: 61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f
     seed_build:
-      state: blocked
-      bootstrap_seed_verified: false
-      seed_isolated_verified: false
-      source_build_verified: false
+      state: verified
+      bootstrap_seed_verified: true
+      seed_isolated_verified: true
+      source_build_verified: true
+      network_namespace_verified: true
+      stripped_output_verified: true
+      fedora_shared_cxx_runtime_verified: true
+      seed_payload_absent_verified: true
+      seed_runtime_dependency_absent_verified: true
+      proof_platform: fedora-44-x86_64
+      proof_date: "2026-07-18"
+      proof_receipt: first-source-build-proof.json
+      proof_receipt_sha256: fda7910119f4c11a2b7b11f19dc1f04a2315d580c192e4a007d6e654f27804eb
     self_rebuild:
       state: blocked
       offline_verified: false

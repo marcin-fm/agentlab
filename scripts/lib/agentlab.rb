@@ -503,6 +503,9 @@ module Agentlab
     source_inputs = plan["source_inputs"]
     zig = source_inputs.is_a?(Hash) && source_inputs["zig"]
     webkit = source_inputs.is_a?(Hash) && source_inputs["webkit"]
+    lolhtml = source_inputs.is_a?(Hash) && source_inputs["lolhtml"]
+    npm_lock = source_inputs.is_a?(Hash) && source_inputs["npm_lock"]
+    build_graph = source_inputs.is_a?(Hash) && source_inputs["build_graph"]
     seed = source_inputs.is_a?(Hash) && source_inputs["bootstrap_seed"]
 
     if webkit.is_a?(Hash)
@@ -537,6 +540,138 @@ module Agentlab
       end
     elsif stages.dig("seed_build", "state") == "verified"
       errors << "bun: verified seed build requires bootstrap seed metadata"
+    end
+
+    if stages.dig("seed_build", "state") == "verified"
+      seed_stage = stages.fetch("seed_build")
+      receipt_name = seed_stage["proof_receipt"]
+      receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+      unless receipt_path && File.file?(receipt_path)
+        errors << "bun: verified seed build is missing proof receipt #{receipt_name.inspect}"
+      else
+        begin
+          receipt = JSON.parse(File.read(receipt_path))
+          expected_receipt_sha256 = seed_stage["proof_receipt_sha256"]
+          errors << "bun: seed-build proof receipt SHA-256 mismatch" unless expected_receipt_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_receipt_sha256
+          errors << "bun: unsupported seed-build proof receipt schema" unless receipt["schema"] == "bun-first-source-build-proof/v1"
+          errors << "bun: seed-build proof package mismatch" unless receipt["package"] == "bun"
+          errors << "bun: seed-build proof release mismatch" unless receipt["release"] == version
+          errors << "bun: seed-build proof profile mismatch" unless receipt["profile"] == "release-local"
+          errors << "bun: seed-build proof date mismatch" unless receipt["proof_date"] == seed_stage["proof_date"]
+          dependency_stage = stages.fetch("dependency_closure")
+          closure_name = dependency_stage["proof_receipt"]
+          closure_sha256 = dependency_stage["proof_receipt_sha256"]
+          closure_path = closure_name.is_a?(String) && File.join(package.directory, closure_name)
+          errors << "bun: seed-build proof source-closure path mismatch" unless receipt.dig("source_closure", "path") == closure_name
+          errors << "bun: seed-build proof source-closure SHA-256 mismatch" unless receipt.dig("source_closure", "sha256") == closure_sha256
+          unless closure_path && File.file?(closure_path) && closure_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(closure_path).hexdigest == closure_sha256
+            errors << "bun: dependency-closure proof receipt is missing or has the wrong SHA-256"
+          end
+          errors << "bun: seed-build proof source commit mismatch" unless receipt.dig("source_closure", "source_commit") == package.upstream["source_commit"]
+          errors << "bun: seed-build proof source SHA-256 mismatch" unless receipt.dig("source_closure", "source_archive_sha256") == package.upstream["source_sha256"]
+          errors << "bun: seed-build proof seed archive mismatch" unless receipt.dig("bootstrap_seed", "archive_sha256") == seed["sha256"]
+          errors << "bun: seed-build proof seed binary mismatch" unless receipt.dig("bootstrap_seed", "binary_sha256") == seed["binary_sha256"]
+          errors << "bun: seed-build proof seed size mismatch" unless receipt.dig("bootstrap_seed", "size_bytes") == seed["binary_size_bytes"]
+          errors << "bun: seed-build proof seed version mismatch" unless receipt.dig("bootstrap_seed", "version") == version
+          errors << "bun: seed-build proof seed is not bootstrap-only" unless receipt.dig("bootstrap_seed", "bootstrap_only") == true
+          errors << "bun: seed-build proof permits the seed in the payload" unless receipt.dig("bootstrap_seed", "final_payload_allowed") == false
+          errors << "bun: seed-build proof permits a seed runtime dependency" unless receipt.dig("bootstrap_seed", "final_runtime_dependency_allowed") == false
+
+          patch_digest = lambda do |metadata, path_key, sha_key, label|
+            unless metadata.is_a?(Hash)
+              errors << "bun: seed-build proof lacks #{label} metadata"
+              next nil
+            end
+            patch_name = metadata[path_key]
+            patch_path = patch_name.is_a?(String) && File.join(package.directory, patch_name)
+            unless patch_path && File.file?(patch_path)
+              errors << "bun: seed-build proof input patch is missing: #{patch_name.inspect}"
+              next nil
+            end
+            actual = Digest::SHA256.file(patch_path).hexdigest
+            expected = sha_key && metadata[sha_key]
+            errors << "bun: #{label} metadata SHA-256 mismatch" if expected && actual != expected
+            actual
+          end
+          zig_patch_sha256 = patch_digest.call(zig, "patch", nil, "Zig patch")
+          webkit_patch_sha256 = patch_digest.call(webkit, "patch", "patch_sha256", "WebKit patch")
+          lolhtml_patch_sha256 = patch_digest.call(lolhtml, "patch", "patch_sha256", "lol-html patch")
+          npm_lock_patch_sha256 = patch_digest.call(npm_lock, "patch", "patch_sha256", "npm lock patch")
+          zig_cwd_patch_sha256 = patch_digest.call(build_graph, "patch", "patch_sha256", "Zig cwd patch")
+          cxx_runtime_patch_sha256 = patch_digest.call(build_graph, "cxx_runtime_patch", "cxx_runtime_patch_sha256", "shared C++ runtime patch")
+          errors << "bun: seed-build proof Zig commit mismatch" unless receipt.dig("inputs", "zig", "source_commit") == zig["commit"]
+          errors << "bun: seed-build proof Zig source SHA-256 mismatch" unless receipt.dig("inputs", "zig", "source_sha256") == zig["sha256"]
+          errors << "bun: seed-build proof Zig patch SHA-256 mismatch" unless receipt.dig("inputs", "zig", "patch_sha256") == zig_patch_sha256
+          errors << "bun: seed-build proof WebKit commit mismatch" unless receipt.dig("inputs", "webkit", "commit") == webkit["commit"]
+          errors << "bun: seed-build proof WebKit source SHA-256 mismatch" unless receipt.dig("inputs", "webkit", "archive_sha256") == webkit["sha256"]
+          errors << "bun: seed-build proof WebKit patch SHA-256 mismatch" unless receipt.dig("inputs", "webkit", "patch_sha256") == webkit_patch_sha256
+          errors << "bun: seed-build proof lol-html patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "lolhtml_sha256") == lolhtml_patch_sha256
+          errors << "bun: seed-build proof npm-lock patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "npm_lock_sha256") == npm_lock_patch_sha256
+          errors << "bun: seed-build proof Zig-cwd patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "zig_build_cwd_sha256") == zig_cwd_patch_sha256
+          errors << "bun: seed-build proof shared-runtime patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "fedora_shared_cxx_runtime_sha256") == cxx_runtime_patch_sha256
+          errors << "bun: seed-build proof npm input receipt mismatch" unless receipt.dig("inputs", "npm_proof", "path") == dependency_stage["npm_install_proof_receipt"] && receipt.dig("inputs", "npm_proof", "sha256") == dependency_stage["npm_install_proof_receipt_sha256"]
+          errors << "bun: seed-build proof Cargo input receipt mismatch" unless receipt.dig("inputs", "cargo_proof", "path") == dependency_stage["cargo_build_proof_receipt"] && receipt.dig("inputs", "cargo_proof", "sha256") == dependency_stage["cargo_build_proof_receipt_sha256"]
+          [
+            [dependency_stage["npm_install_proof_receipt"], dependency_stage["npm_install_proof_receipt_sha256"], "npm"],
+            [dependency_stage["cargo_build_proof_receipt"], dependency_stage["cargo_build_proof_receipt_sha256"], "Cargo"]
+          ].each do |proof_name, proof_sha256, label|
+            proof_path = proof_name.is_a?(String) && File.join(package.directory, proof_name)
+            unless proof_path && File.file?(proof_path) && proof_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(proof_path).hexdigest == proof_sha256
+              errors << "bun: #{label} input proof receipt is missing or has the wrong SHA-256"
+            end
+          end
+          errors << "bun: seed-build proof native input count mismatch" unless receipt.dig("inputs", "offline_inputs", "native_archives") == dependency_stage["selected_github_archives"]
+          errors << "bun: seed-build proof Node-header input count mismatch" unless receipt.dig("inputs", "offline_inputs", "node_header_archives") == dependency_stage["selected_node_header_archives"]
+          errors << "bun: seed-build proof npm-root input count mismatch" unless receipt.dig("inputs", "offline_inputs", "npm_install_roots") == 3
+          supplemental_npm = receipt.dig("inputs", "offline_inputs", "supplemental_npm_trees")
+          valid_supplemental_npm = supplemental_npm.is_a?(Array) && supplemental_npm.all? do |entry|
+            entry.is_a?(Hash) && entry["path"].is_a?(String) && !entry["path"].empty? &&
+              entry.dig("tree", "sha256").to_s.match?(/\A[0-9a-f]{64}\z/)
+          end
+          errors << "bun: seed-build proof supplemental npm inputs are invalid" unless valid_supplemental_npm
+          errors << "bun: seed-build proof was not network isolated" unless receipt.dig("configure", "network_namespace") == true && receipt.dig("build", "network_namespace") == true
+          errors << "bun: seed-build proof did not revalidate prepared inputs" unless receipt.dig("configure", "prepared_inputs_revalidated") == true
+          errors << "bun: seed-build proof did not verify bootstrap-seed rule scope" unless receipt.dig("configure", "bootstrap_seed_rule_scope_verified") == true
+          expected_seed_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+          errors << "bun: seed-build proof bootstrap-seed rule set mismatch" unless receipt.dig("configure", "bootstrap_seed_rules") == expected_seed_rules
+          errors << "bun: seed-build proof install-edge count mismatch" unless receipt.dig("configure", "install_edges") == 3
+          errors << "bun: seed-build proof native-fetch count mismatch" unless receipt.dig("configure", "native_fetch_edges") == 19
+          errors << "bun: seed-build proof Node-header fetch count mismatch" unless receipt.dig("configure", "node_header_fetch_edges") == 1
+          errors << "bun: seed-build proof did not use local WebKit" unless receipt.dig("configure", "local_webkit_verified") == true
+          errors << "bun: seed-build proof retained a Zig fetch edge" unless receipt.dig("configure", "zig_fetch_absent") == true
+          errors << "bun: seed-build proof did not verify the Zig source cwd" unless receipt.dig("configure", "zig_source_cwd_verified") == true
+          errors << "bun: seed-build proof did not verify stable lol-html Cargo" unless receipt.dig("configure", "stable_lolhtml_cargo_verified") == true
+          errors << "bun: seed-build proof contains unexpected URLs" unless receipt.dig("configure", "unexpected_urls_absent") == true
+          errors << "bun: seed-build proof output version mismatch" unless receipt.dig("build", "version") == version
+          errors << "bun: seed-build proof revision mismatch" unless receipt.dig("build", "revision") == "#{version}-canary.1+#{package.upstream['source_commit'].to_s[0, 9]}"
+          output_receipts = %w[bun_profile bun linker_map].map { |key| [key, receipt.dig("build", key)] }
+          output_receipts.each do |key, output|
+            valid_output = output.is_a?(Hash) && output["path"].is_a?(String) && !output["path"].empty? &&
+              !Pathname(output["path"]).absolute? && !Pathname(output["path"]).each_filename.include?("..") &&
+              output["size_bytes"].is_a?(Integer) && output["size_bytes"].positive? &&
+              output["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+            errors << "bun: seed-build proof has an invalid #{key} receipt" unless valid_output
+          end
+          profile_size = receipt.dig("build", "bun_profile", "size_bytes")
+          bun_size = receipt.dig("build", "bun", "size_bytes")
+          errors << "bun: seed-build proof stripped output is not smaller than bun-profile" unless profile_size.is_a?(Integer) && bun_size.is_a?(Integer) && bun_size < profile_size
+          errors << "bun: seed-build proof smoke failed" unless receipt.dig("build", "smoke_verified") == true
+          errors << "bun: seed-build proof did not verify stripped output" unless receipt.dig("build", "stripped_output_verified") == true
+          errors << "bun: seed-build proof did not verify Fedora's shared C++ runtime" unless receipt.dig("build", "fedora_shared_cxx_runtime_verified") == true
+          errors << "bun: seed-build proof shared-runtime library set mismatch" unless receipt.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6]
+          errors << "bun: seed-build proof found a seed payload" unless receipt.dig("seed_contamination", "payload_absent_verified") == true && receipt.dig("seed_contamination", "seed_hash_matches") == 0
+          errors << "bun: seed-build proof found a seed runtime dependency" unless receipt.dig("seed_contamination", "runtime_dependency_absent_verified") == true
+          errors << "bun: seed-build proof validation is incomplete" unless %w[bootstrap_seed_verified seed_isolated_verified source_build_verified].all? { |key| receipt.dig("validation", key) == true }
+          errors << "bun: seed-build proof incorrectly claims a self-rebuild" unless receipt.dig("validation", "self_rebuild_performed") == false
+          errors << "bun: seed-build proof incorrectly claims reproducibility" unless receipt.dig("validation", "reproducibility_compared") == false
+          errors << "bun: seed-build proof retained relink evidence incorrectly claims completeness" unless receipt.dig("retained_relink_evidence", "complete_lgpl_relink_materials_verified") == false
+          errors << "bun: seed-build proof incorrectly claims complete LGPL relink materials" unless receipt.dig("validation", "complete_lgpl_relink_materials_verified") == false
+          errors << "bun: seed-build proof incorrectly claims a final license audit" unless receipt.dig("validation", "final_license_audit_verified") == false
+          errors << "bun: seed-build proof incorrectly claims a final RPM" unless receipt.dig("validation", "final_rpm_verified") == false
+        rescue JSON::ParserError => e
+          errors << "bun: invalid seed-build proof receipt: #{e.message}"
+        end
+      end
     end
 
     if stages.dig("zig_source_bootstrap", "state") == "verified"

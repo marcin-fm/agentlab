@@ -1,0 +1,1100 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require_relative "lib/agentlab"
+
+File.umask(0o022)
+
+package = Agentlab.package_named("bun")
+version = package.upstream.fetch("current_version").to_s
+source_commit = package.upstream.fetch("source_commit").to_s
+raise Agentlab::Error, "invalid Bun source commit" unless source_commit.match?(/\A[0-9a-f]{40}\z/)
+package_dir = package.directory
+closure_path = File.join(package_dir, "bun-#{version}-release-local-source-closure.json")
+npm_receipt_path = File.join(package_dir, "npm-offline-install-proof.json")
+cargo_receipt_path = File.join(package_dir, "lolhtml-offline-build-proof.json")
+zig_canonical_receipt_path = File.join(package_dir, "zig-bootstrap-proof.json")
+source_archive = "/srv/tmp/agentlab-bun/bun-v#{version}.tar.gz"
+seed_archive = "/srv/tmp/agentlab-bun/bun-seed-#{version}-linux-x64.zip"
+source_cache = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
+npm_proof = "/srv/tmp/agentlab-bun-npm-offline-proof"
+cargo_vendor = "/srv/tmp/agentlab-bun-lolhtml-offline-proof/cargo-vendor"
+zig_root = "/srv/tmp/agentlab-bun-zig-proof/bun-zig"
+zig_receipt_path = "/srv/tmp/agentlab-bun-zig-proof/proof-receipt.json"
+webkit_archive = "/srv/tmp/WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b.tar.gz"
+workdir = "/srv/tmp/agentlab-bun-first-source-build-proof"
+output = File.join(package_dir, "first-source-build-proof.json")
+jobs = 4
+configure_only = false
+resume = false
+force = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/prove-bun-first-source-build [options]"
+  parser.on("--source-archive PATH", "Checked Bun release source archive") { |path| source_archive = path }
+  parser.on("--seed-archive PATH", "Checked bootstrap-only Bun seed archive") { |path| seed_archive = path }
+  parser.on("--source-cache PATH", "Checked native, Node, npm, and Cargo source cache") { |path| source_cache = path }
+  parser.on("--npm-proof PATH", "Marked npm offline proof directory") { |path| npm_proof = path }
+  parser.on("--cargo-vendor PATH", "Verified lol-html Cargo vendor tree") { |path| cargo_vendor = path }
+  parser.on("--zig-root PATH", "Verified source-built Bun Zig root") { |path| zig_root = path }
+  parser.on("--zig-receipt PATH", "Receipt for the supplied Zig root") { |path| zig_receipt_path = path }
+  parser.on("--webkit-archive PATH", "Checked WebKit source archive") { |path| webkit_archive = path }
+  parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--output PATH", "Canonical package proof receipt") { |path| output = path }
+  parser.on("--jobs COUNT", Integer, "Parallel jobs, maximum 4") { |count| jobs = count }
+  parser.on("--configure-only", "Prepare and inspect the isolated Ninja graph without compiling") { configure_only = true }
+  parser.on("--resume", "Reuse an existing marked, configured proof tree") { resume = true }
+  parser.on("--force", "Replace an existing marked proof directory") { force = true }
+end.parse!
+
+raise Agentlab::Error, "--resume and --force are mutually exclusive" if resume && force
+raise Agentlab::Error, "jobs must be between 1 and 4" unless jobs.between?(1, 4)
+
+source_archive = File.expand_path(source_archive)
+seed_archive = File.expand_path(seed_archive)
+source_cache = File.expand_path(source_cache)
+npm_proof = File.expand_path(npm_proof)
+cargo_vendor = File.expand_path(cargo_vendor)
+zig_root = File.expand_path(zig_root)
+zig_receipt_path = File.expand_path(zig_receipt_path)
+webkit_archive = File.expand_path(webkit_archive)
+workdir = File.expand_path(workdir)
+output = File.expand_path(output)
+
+raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+[source_archive, seed_archive, source_cache, npm_proof, cargo_vendor, zig_root, zig_receipt_path, webkit_archive].each do |path|
+  if force && (path == workdir || path.start_with?("#{workdir}/"))
+    raise Agentlab::Error, "proof input must be outside the replaced workdir: #{path}"
+  end
+end
+
+marker = File.join(workdir, ".agentlab-bun-first-source-build-proof")
+marker_content = "agentlab bun first source build proof\n"
+if Dir.exist?(workdir)
+  stat = File.lstat(workdir)
+  raise Agentlab::Error, "refusing symlinked proof directory #{workdir}" if stat.symlink?
+  raise Agentlab::Error, "refusing proof directory owned by another user" unless stat.uid == Process.uid
+  raise Agentlab::Error, "proof directory path changed during validation" unless File.realpath(workdir) == workdir
+  raise Agentlab::Error, "refusing unmarked proof directory #{workdir}" unless File.file?(marker) && File.read(marker) == marker_content
+  unless resume || force
+    raise Agentlab::Error, "proof directory exists; pass --resume or --force"
+  end
+elsif resume
+  raise Agentlab::Error, "cannot resume missing proof directory #{workdir}"
+end
+
+def run!(environment, argv, chdir:, log: nil)
+  puts "$ #{Agentlab.command_string(argv)}"
+  if log
+    File.open(log, "ab") do |file|
+      Open3.popen2e(environment, *argv, chdir: chdir) do |stdin, stream, wait|
+        stdin.close
+        stream.each do |line|
+          $stdout.write(line)
+          file.write(line)
+        end
+        raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}" unless wait.value.success?
+      end
+    end
+  elsif !system(environment, *argv, chdir: chdir)
+    raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}"
+  end
+end
+
+def capture!(environment, argv, chdir:, success: [0])
+  stdout, stderr, status = Open3.capture3(environment, *argv, chdir: chdir)
+  unless success.include?(status.exitstatus)
+    raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}: #{stderr.strip}"
+  end
+
+  stdout
+end
+
+def sha256(path)
+  Digest::SHA256.file(path).hexdigest
+end
+
+def verify_file!(path, expected_sha256, label)
+  raise Agentlab::Error, "missing #{label}: #{path}" unless File.file?(path)
+  actual = sha256(path)
+  raise Agentlab::Error, "#{label} SHA-256 #{actual} does not match #{expected_sha256}" unless actual == expected_sha256
+end
+
+def safe_relative_path(path)
+  pathname = Pathname(path)
+  clean = pathname.cleanpath.to_s
+  return nil if pathname.absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def extract_single_root_tar!(archive, destination, expected_root, workdir)
+  entries = capture!({}, ["tar", "--list", "--gzip", "--file", archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
+  roots = entries.map do |entry|
+    path = safe_relative_path(entry.delete_suffix("/"))
+    raise Agentlab::Error, "unsafe archive path in #{archive}: #{entry}" unless path
+
+    path.split("/", 2).first
+  end.uniq
+  raise Agentlab::Error, "archive root mismatch for #{archive}: #{roots.inspect}" unless roots == [expected_root]
+
+  FileUtils.mkdir_p(destination)
+  run!({}, ["tar", "--extract", "--gzip", "--file", archive, "--directory", destination, "--no-same-owner", "--no-same-permissions"], chdir: workdir)
+end
+
+def extract_bun_source!(archive, destination, workdir)
+  entries = capture!({}, ["tar", "--list", "--gzip", "--file", archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
+  roots = entries.map do |entry|
+    path = safe_relative_path(entry.delete_suffix("/"))
+    raise Agentlab::Error, "unsafe Bun source archive path: #{entry}" unless path
+
+    path.split("/", 2).first
+  end.uniq
+  raise Agentlab::Error, "Bun source archive must contain one root" unless roots.length == 1
+
+  FileUtils.mkdir_p(destination)
+  run!({}, ["tar", "--extract", "--gzip", "--file", archive, "--directory", destination, "--strip-components=1", "--no-same-owner", "--no-same-permissions"], chdir: workdir)
+end
+
+def extract_zip_member!(archive, member, output, workdir)
+  File.open(output, "wb") do |file|
+    Open3.popen3("unzip", "-p", archive, member, chdir: workdir) do |stdin, stdout, stderr, wait|
+      stdin.close
+      IO.copy_stream(stdout, file)
+      error = stderr.read
+      raise Agentlab::Error, "cannot extract #{member}: #{error.strip}" unless wait.value.success?
+    end
+  end
+end
+
+def tree_receipt(root)
+  entries = []
+  Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+    relative = path.delete_prefix("#{root}/")
+    next if relative.empty? || [".", ".."].include?(File.basename(path))
+
+    stat = File.lstat(path)
+    if stat.symlink?
+      target = File.readlink(path)
+      raise Agentlab::Error, "absolute symlink in proof tree: #{relative}" if Pathname(target).absolute?
+      entries << ["link", relative, target]
+    elsif stat.file?
+      entries << ["file", relative, format("%04o", stat.mode & 0o7777), stat.size, sha256(path)]
+    elsif stat.directory?
+      entries << ["directory", relative, format("%04o", stat.mode & 0o7777)]
+    else
+      raise Agentlab::Error, "unsupported proof-tree entry: #{relative}"
+    end
+  end
+  serialized = entries.map { |entry| JSON.generate(entry) }.join("\n") + "\n"
+  {
+    "entries" => entries.length,
+    "files" => entries.count { |entry| entry.fetch(0) == "file" },
+    "directories" => entries.count { |entry| entry.fetch(0) == "directory" },
+    "symlinks" => entries.count { |entry| entry.fetch(0) == "link" },
+    "file_bytes" => entries.sum { |entry| entry.fetch(0) == "file" ? entry.fetch(3) : 0 },
+    "sha256" => Digest::SHA256.hexdigest(serialized)
+  }
+end
+
+def vendor_tree_digest(root)
+  digest = Digest::SHA256.new
+  Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+    next unless File.file?(path) && !File.symlink?(path)
+    next if [".", ".."].include?(File.basename(path))
+
+    digest.update(path.delete_prefix("#{root}/"))
+    digest.update("\0")
+    digest.update(sha256(path))
+    digest.update("\0")
+  end
+  digest.hexdigest
+end
+
+def assert_seed_absent!(root, seed_sha256, seed_size)
+  Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+    next if [".", ".."].include?(File.basename(path))
+
+    if File.symlink?(path)
+      target = File.readlink(path)
+      raise Agentlab::Error, "seed path leaked into symlink #{path}" if target.include?("bun-seed")
+    elsif File.file?(path) && File.size(path) == seed_size && sha256(path) == seed_sha256
+      raise Agentlab::Error, "seed binary copied into proof tree: #{path}"
+    end
+  end
+end
+
+def copy_tree!(source, destination)
+  raise Agentlab::Error, "missing source tree #{source}" unless Dir.exist?(source)
+  raise Agentlab::Error, "destination already exists #{destination}" if File.exist?(destination) || File.symlink?(destination)
+
+  FileUtils.mkdir_p(File.dirname(destination))
+  FileUtils.cp_r(source, destination, preserve: true, dereference_root: false)
+end
+
+def path_within?(path, root)
+  expanded_path = File.expand_path(path)
+  expanded_root = File.expand_path(root)
+  expanded_path == expanded_root || expanded_path.start_with?("#{expanded_root}/")
+end
+
+def supplemental_npm_trees(npm_source_dir, install_roots)
+  trees = {}
+  install_roots.each do |root|
+    install_root = File.expand_path(root.fetch("path"), npm_source_dir)
+    node_modules = File.join(install_root, "node_modules")
+    root.fetch("required_artifacts_verified").each do |artifact|
+      artifact_path = File.join(node_modules, artifact)
+      raise Agentlab::Error, "reusable npm artifact missing: #{root.fetch('path')}:#{artifact}" unless File.exist?(artifact_path) || File.symlink?(artifact_path)
+
+      resolved = File.realpath(artifact_path)
+      next if path_within?(resolved, node_modules)
+      raise Agentlab::Error, "npm artifact resolves outside the checked proof source: #{artifact_path}" unless path_within?(resolved, npm_source_dir)
+
+      external_node_modules = nil
+      Pathname(File.dirname(artifact_path)).ascend do |path|
+        break unless path_within?(path.to_s, npm_source_dir)
+        next unless path.basename.to_s == "node_modules"
+
+        resolved_node_modules = Pathname(File.realpath(path.to_s))
+        next if path_within?(resolved_node_modules.to_s, node_modules)
+
+        external_node_modules = resolved_node_modules
+        break
+      end
+      next unless external_node_modules
+      raise Agentlab::Error, "supplemental npm tree resolves outside the checked proof source: #{artifact_path}" unless path_within?(external_node_modules.to_s, npm_source_dir)
+
+      relative = external_node_modules.relative_path_from(Pathname(npm_source_dir)).to_s
+      trees[relative] ||= tree_receipt(external_node_modules.to_s)
+    end
+  end
+  trees.sort.to_h
+end
+
+def file_receipt(path, base)
+  {
+    "path" => path.delete_prefix("#{base}/"),
+    "size_bytes" => File.size(path),
+    "sha256" => sha256(path)
+  }
+end
+
+def resource_snapshot
+  meminfo = File.readlines("/proc/meminfo", chomp: true).to_h do |line|
+    key, value = line.split(":", 2)
+    [key, value.to_s.strip]
+  end
+  cgroup_relative = File.readlines("/proc/self/cgroup", chomp: true).find { |line| line.start_with?("0::") }&.split("::", 2)&.last || "/"
+  cgroup = File.join("/sys/fs/cgroup", cgroup_relative.delete_prefix("/"))
+  events_path = File.join(cgroup, "memory.events")
+  events = if File.file?(events_path)
+             File.readlines(events_path, chomp: true).to_h { |line| key, value = line.split; [key, value.to_i] }
+           else
+             {}
+           end
+  {
+    "mem_available" => meminfo["MemAvailable"],
+    "swap_free" => meminfo["SwapFree"],
+    "memory_pressure" => File.file?("/proc/pressure/memory") ? File.read("/proc/pressure/memory").strip : nil,
+    "cgroup" => cgroup,
+    "memory_current" => File.file?(File.join(cgroup, "memory.current")) ? File.read(File.join(cgroup, "memory.current")).strip : nil,
+    "memory_max" => File.file?(File.join(cgroup, "memory.max")) ? File.read(File.join(cgroup, "memory.max")).strip : nil,
+    "memory_events" => events,
+    "disk" => capture!({}, ["df", "-Pk", "/srv"], chdir: "/srv").lines.last.to_s.strip
+  }
+end
+
+def available_kib(snapshot)
+  snapshot.fetch("mem_available").to_s.split.first.to_i
+end
+
+def available_disk_kib(snapshot)
+  snapshot.fetch("disk").split.fetch(3).to_i
+end
+
+def stamp_path(build_dir, package_dir)
+  normalized = File.expand_path(package_dir)
+  File.join(build_dir, "stamps", "install_#{normalized.gsub(/[^A-Za-z0-9]+/, '_')}.stamp")
+end
+
+def replace_bun_install_rule!(ninja_path, seed_binary, receipt_path)
+  original_command = "  command = cd \$dir && #{seed_binary} install --frozen-lockfile && touch \$stamp"
+  replacement_command = "  command = /usr/bin/test -f \$stamp"
+  original_description = "  description = install \$dir"
+  replacement_description = "  description = verify prevalidated install \$dir"
+  ninja = File.read(ninja_path)
+
+  if ninja.include?(original_command)
+    raise Agentlab::Error, "unexpected number of generated bun_install commands" unless ninja.scan(Regexp.new(Regexp.escape(original_command))).length == 1
+    raise Agentlab::Error, "unexpected number of generated bun_install descriptions" unless ninja.scan(Regexp.new(Regexp.escape(original_description))).length == 1
+
+    original_sha256 = Digest::SHA256.hexdigest(ninja)
+    ninja = ninja.sub(original_command, replacement_command).sub(original_description, replacement_description)
+    Agentlab.atomic_write(ninja_path, ninja)
+    receipt = {
+      "schema" => "bun-prevalidated-install-rule-bypass/v1",
+      "original_build_ninja_sha256" => original_sha256,
+      "patched_build_ninja_sha256" => sha256(ninja_path),
+      "original_command" => original_command.strip,
+      "replacement_command" => replacement_command.strip,
+      "scope" => "generated Ninja bun_install rule only; three prevalidated materialized node_modules trees"
+    }
+    Agentlab.atomic_write(receipt_path, JSON.pretty_generate(receipt) + "\n")
+    return receipt
+  end
+
+  unless ninja.include?(replacement_command) && File.file?(receipt_path)
+    raise Agentlab::Error, "generated Ninja graph has neither the expected install rule nor its checked bypass"
+  end
+
+  receipt = JSON.parse(File.read(receipt_path))
+  unless receipt.fetch("replacement_command") == replacement_command.strip &&
+         receipt.fetch("patched_build_ninja_sha256") == sha256(ninja_path)
+    raise Agentlab::Error, "checked npm install-rule bypass receipt does not match build.ninja"
+  end
+  receipt
+end
+
+def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir, webkit_dir, zig_dir, seed_binary, install_roots, native_sources, node_headers)
+  raise Agentlab::Error, "missing generated Ninja graph #{ninja_path}" unless File.file?(ninja_path)
+  raise Agentlab::Error, "missing configure record #{configure_path}" unless File.file?(configure_path)
+  ninja = File.read(ninja_path)
+  logical_ninja = ninja.gsub(/\$\n[ \t]*/, " ")
+  logical_lines = logical_ninja.lines
+  configure = JSON.parse(File.read(configure_path))
+  unless configure == {
+    "buildType" => "Release",
+    "webkit" => "local",
+    "lto" => false,
+    "buildDir" => build_dir,
+    "cacheDir" => cache_dir
+  }
+    raise Agentlab::Error, "configure.json does not record the exact release-local proof configuration"
+  end
+
+  install_edges = logical_lines.grep(/: bun_install(?:\s|$)/)
+  raise Agentlab::Error, "expected three bun_install edges, found #{install_edges.length}" unless install_edges.length == 3
+  raise Agentlab::Error, "generated graph still contains a live Bun package-manager install" if ninja.include?(" install --frozen-lockfile")
+  raise Agentlab::Error, "generated graph lacks the checked prevalidated-install rule" unless ninja.include?("command = /usr/bin/test -f $stamp")
+
+  seed_rules = []
+  current_rule = nil
+  ninja.lines.each do |line|
+    current_rule = line.split.fetch(1) if line.start_with?("rule ")
+    next unless line.start_with?("  command = ") && line.include?(seed_binary)
+
+    raise Agentlab::Error, "bootstrap seed command is not attached to a named Ninja rule" unless current_rule
+    seed_rules << current_rule
+  end
+  expected_seed_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+  raise Agentlab::Error, "bootstrap seed Ninja rule scope changed: #{seed_rules.sort.join(', ')}" unless seed_rules.sort == expected_seed_rules.sort
+  raise Agentlab::Error, "bootstrap seed appears in a Ninja build edge" if logical_lines.any? { |line| line.start_with?("build ") && line.include?(seed_binary) }
+  raise Agentlab::Error, "generated graph activates the cross-target rustup Cargo rule" if logical_lines.any? { |line| line.match?(/: dep_cargo_cross(?:\s|$)/) }
+  expected_stamps = install_roots.map { |root| stamp_path(build_dir, File.join(source_dir, root.fetch("path"))) }.sort
+  unless expected_stamps.all? { |stamp| File.file?(stamp) }
+    raise Agentlab::Error, "one or more prevalidated npm install stamps are missing"
+  end
+  expected_stamps.each do |stamp|
+    raise Agentlab::Error, "Ninja graph does not contain install stamp #{stamp}" unless ninja.include?(stamp)
+  end
+
+  native_edges = logical_lines.grep(/\.ref(?:\s+\|[^:]*)?\s*:\s*dep_fetch(?:\s|$)/)
+  raise Agentlab::Error, "expected 19 native dep_fetch edges, found #{native_edges.length}" unless native_edges.length == native_sources.length && native_sources.length == 19
+  native_sources.each do |record|
+    raise Agentlab::Error, "Ninja graph omits native source #{record.fetch('name')}" unless ninja.include?("name = #{record.fetch('name')}")
+    raise Agentlab::Error, "Ninja graph omits native commit #{record.fetch('commit')}" unless ninja.include?("commit = #{record.fetch('commit')}")
+  end
+  raise Agentlab::Error, "Ninja graph does not use the controlled native cache" unless ninja.include?(File.join(cache_dir, "tarballs"))
+
+  node_identity = File.join(cache_dir, "nodejs-headers-#{node_headers.fetch('version')}", ".identity")
+  node_identity_graph_path = Pathname(node_identity).relative_path_from(Pathname(build_dir)).to_s
+  node_edges = logical_lines.grep(/: dep_fetch_prebuilt(?:\s|$)/).select { |line| line.include?(node_identity_graph_path) }
+  raise Agentlab::Error, "expected one controlled Node-header fetch edge" unless node_edges.length == 1
+  raise Agentlab::Error, "Ninja graph has an unexpected prebuilt URL" unless logical_lines.grep(/^\s*url = /).map { |line| line.split("=", 2).last.strip }.uniq == [node_headers.fetch("url")]
+
+  raise Agentlab::Error, "Ninja graph contains a Zig fetch edge" if logical_lines.any? { |line| line.match?(/^build .*: zig_fetch(?:\s|$)/) }
+  raise Agentlab::Error, "Ninja graph does not bind to the verified Zig root" unless ninja.include?(File.join(zig_dir, "zig"))
+  zig_cwd = "--cwd=#{source_dir}"
+  raise Agentlab::Error, "Ninja graph does not bind both Zig rules to the Bun source root" unless ninja.scan(zig_cwd).length == 2
+  raise Agentlab::Error, "Ninja graph still requests static GNU C++ runtimes" if ninja.include?("-static-libstdc++") || ninja.include?("-static-libgcc")
+  raise Agentlab::Error, "Ninja graph does not link Fedora's shared C++ runtime" unless ninja.include?("-lstdc++ -lgcc_s")
+
+  unless ninja.include?(webkit_dir) && ninja.include?(File.join(build_dir, "deps", "WebKit")) && logical_lines.any? { |line| line.match?(/: dep_configure(?:\s|$)/) && line.include?("WebKit") }
+    raise Agentlab::Error, "Ninja graph does not configure the supplied local WebKit source"
+  end
+  if ninja.include?("github.com/oven-sh/WebKit/releases/download")
+    raise Agentlab::Error, "Ninja graph contains a prebuilt WebKit download"
+  end
+
+  lolhtml_edges = logical_lines.grep(/: dep_cargo(?:\s|$)/).select { |line| line.include?("lolhtml") }
+  raise Agentlab::Error, "expected one lol-html Cargo edge" unless lolhtml_edges.length == 1
+  lolhtml_index = logical_lines.index(lolhtml_edges.first)
+  lolhtml_context = logical_lines[lolhtml_index, 6].join
+  %w[--locked --release -Cpanic=abort -Cdebuginfo=0 -Cforce-unwind-tables=no -Copt-level=s].each do |token|
+    raise Agentlab::Error, "lol-html Ninja edge omits #{token}" unless lolhtml_context.include?(token)
+  end
+  raise Agentlab::Error, "lol-html Ninja edge still uses -Zbuild-std" if lolhtml_context.include?("-Zbuild-std")
+
+  {
+    "profile" => "release-local",
+    "configure_json_sha256" => sha256(configure_path),
+    "build_ninja_sha256" => sha256(ninja_path),
+    "install_edges" => install_edges.length,
+    "prevalidated_install_stamps" => expected_stamps.map { |path| path.delete_prefix("#{build_dir}/") },
+    "native_fetch_edges" => native_edges.length,
+    "node_header_fetch_edges" => node_edges.length,
+    "prepared_inputs_revalidated" => true,
+    "bootstrap_seed_rule_scope_verified" => true,
+    "bootstrap_seed_rules" => seed_rules.sort,
+    "local_webkit_verified" => true,
+    "zig_fetch_absent" => true,
+    "zig_source_cwd_verified" => true,
+    "fedora_shared_cxx_runtime_verified" => true,
+    "stable_lolhtml_cargo_verified" => true,
+    "unexpected_urls_absent" => true
+  }
+end
+
+def scan_seed_contamination!(roots, seed_path, seed_sha256, seed_size, workdir)
+  allowed = Dir.glob(File.join(workdir, "build", "**", "{build.ninja,configure.json}")) + [
+    File.join(workdir, "configure.log"),
+    File.join(workdir, "build.log"),
+    File.join(workdir, "configure-proof.json")
+  ].select { |path| File.exist?(path) }.map { |path| File.realpath(path) }
+
+  hash_matches = []
+  roots.each do |root|
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      next unless File.file?(path) && !File.symlink?(path)
+      next if allowed.include?(File.realpath(path))
+      next unless File.size(path) == seed_size
+
+      hash_matches << path if sha256(path) == seed_sha256
+    end
+  end
+  raise Agentlab::Error, "bootstrap seed binary copied into build tree: #{hash_matches.join(', ')}" unless hash_matches.empty?
+
+  patterns = [seed_path, "bun-seed", seed_sha256]
+  path_matches = []
+  patterns.each do |pattern|
+    argv = ["rg", "-a", "-l", "--fixed-strings", "--glob", "!build.ninja", "--glob", "!configure.json", "--glob", "!*.log", "--glob", "!configure-proof.json", pattern, *roots]
+    path_matches.concat(capture!({}, argv, chdir: workdir, success: [0, 1]).lines.map(&:strip).reject(&:empty?))
+  end
+  path_matches.uniq!
+  raise Agentlab::Error, "bootstrap seed identity leaked into source/cache/build artifacts: #{path_matches.join(', ')}" unless path_matches.empty?
+
+  {
+    "roots" => roots.map { |root| root.delete_prefix("#{workdir}/") },
+    "allowed_control_metadata" => allowed.map { |path| path.delete_prefix("#{workdir}/") },
+    "same_size_files_hashed" => roots.sum do |root|
+      Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).count { |path| File.file?(path) && !File.symlink?(path) && File.size(path) == seed_size }
+    end,
+    "seed_hash_matches" => 0,
+    "seed_identity_text_matches" => 0
+  }
+end
+
+metadata = package.data.fetch("build_plan")
+source_inputs = metadata.fetch("source_inputs")
+seed_metadata = source_inputs.fetch("bootstrap_seed")
+zig_metadata = source_inputs.fetch("zig")
+webkit_metadata = source_inputs.fetch("webkit")
+build_graph_metadata = source_inputs.fetch("build_graph")
+raise Agentlab::Error, "Bun seed is not bootstrap-only" unless seed_metadata.fetch("bootstrap_only") == true
+raise Agentlab::Error, "Bun seed is allowed in the final payload" unless seed_metadata.fetch("final_payload_allowed") == false
+raise Agentlab::Error, "Bun seed is allowed as a final runtime dependency" unless seed_metadata.fetch("final_runtime_dependency_allowed") == false
+
+closure_bytes = File.binread(closure_path)
+closure_sha256 = Digest::SHA256.hexdigest(closure_bytes)
+expected_closure_sha256 = metadata.fetch("stages").fetch("dependency_closure").fetch("proof_receipt_sha256")
+raise Agentlab::Error, "source-closure receipt checksum mismatch" unless closure_sha256 == expected_closure_sha256
+closure = JSON.parse(closure_bytes)
+raise Agentlab::Error, "unsupported source-closure schema" unless closure["schema"] == "bun-release-local-source-closure/v2"
+raise Agentlab::Error, "source closure is not Bun #{version}" unless closure["package"] == "bun" && closure["release"] == version
+
+npm_receipt_bytes = File.binread(npm_receipt_path)
+npm_receipt_sha256 = Digest::SHA256.hexdigest(npm_receipt_bytes)
+expected_npm_receipt_sha256 = metadata.fetch("stages").fetch("dependency_closure").fetch("npm_install_proof_receipt_sha256")
+raise Agentlab::Error, "npm proof receipt checksum mismatch" unless npm_receipt_sha256 == expected_npm_receipt_sha256
+npm_receipt = JSON.parse(npm_receipt_bytes)
+
+cargo_receipt = JSON.parse(File.read(cargo_receipt_path))
+expected_cargo_receipt_sha256 = metadata.fetch("stages").fetch("dependency_closure").fetch("cargo_build_proof_receipt_sha256")
+raise Agentlab::Error, "Cargo proof receipt checksum mismatch" unless sha256(cargo_receipt_path) == expected_cargo_receipt_sha256
+
+zig_canonical_receipt = JSON.parse(File.read(zig_canonical_receipt_path))
+zig_receipt = JSON.parse(File.read(zig_receipt_path))
+unless zig_receipt.fetch("package_release") == "bun-v#{version}" &&
+       zig_receipt.dig("source", "commit") == zig_metadata.fetch("commit") &&
+       zig_receipt.dig("source", "sha256") == zig_metadata.fetch("sha256") &&
+       zig_receipt.dig("patch", "path") == zig_metadata.fetch("patch") &&
+       zig_receipt.dig("patch", "sha256") == zig_canonical_receipt.dig("patch", "sha256") &&
+       zig_receipt.dig("output", "version") == zig_metadata.fetch("version_metadata") &&
+       zig_receipt.dig("output", "bun_layout_verified") == true &&
+       zig_receipt.dig("output", "source_execution_verified") == true &&
+       zig_receipt.dig("output", "external_zig_binary_used") == false
+  raise Agentlab::Error, "supplied Zig proof does not match the pinned Bun source-bootstrap identity"
+end
+verify_file!(File.join(zig_root, "zig"), zig_receipt.dig("output", "executable_sha256"), "source-built Zig executable")
+raise Agentlab::Error, "source-built Zig standard library is missing" unless File.file?(File.join(zig_root, "lib", "std", "std.zig"))
+
+verify_file!(source_archive, closure.dig("source_tree", "source_sha256"), "Bun source archive")
+verify_file!(seed_archive, seed_metadata.fetch("sha256"), "bootstrap seed archive")
+verify_file!(webkit_archive, webkit_metadata.fetch("sha256"), "WebKit source archive")
+zig_cwd_patch = File.join(package_dir, build_graph_metadata.fetch("patch"))
+verify_file!(zig_cwd_patch, build_graph_metadata.fetch("patch_sha256"), "Bun Zig build cwd patch")
+cxx_runtime_patch = File.join(package_dir, build_graph_metadata.fetch("cxx_runtime_patch"))
+verify_file!(cxx_runtime_patch, build_graph_metadata.fetch("cxx_runtime_patch_sha256"), "Bun Fedora shared C++ runtime patch")
+raise Agentlab::Error, "missing checked source cache #{source_cache}" unless Dir.exist?(source_cache)
+raise Agentlab::Error, "missing marked npm proof #{npm_proof}" unless File.read(File.join(npm_proof, ".agentlab-bun-npm-offline-proof")) == "agentlab bun npm offline proof\n"
+raise Agentlab::Error, "missing Cargo vendor tree #{cargo_vendor}" unless Dir.exist?(cargo_vendor)
+raise Agentlab::Error, "Cargo vendor tree digest mismatch" unless vendor_tree_digest(cargo_vendor) == cargo_receipt.dig("vendor", "tree_sha256")
+
+%w[cmake ninja patch rg tar unshare unzip].each do |command|
+  raise Agentlab::Error, "missing tool: #{command}" unless Agentlab.command_available?(command)
+end
+run!({}, ["unshare", "--net", "true"], chdir: "/srv")
+
+FileUtils.rm_rf(workdir) if force && Dir.exist?(workdir)
+unless resume
+  FileUtils.mkdir_p(workdir)
+  File.write(marker, marker_content)
+  File.chmod(0o600, marker)
+end
+
+source_dir = File.join(workdir, "source")
+npm_source_dir = File.join(npm_proof, "source")
+build_dir = File.join(workdir, "build", "release-local")
+cache_dir = File.join(workdir, "cache")
+prefetch_dir = File.join(workdir, "prefetch")
+home_dir = File.join(workdir, "home")
+tmp_dir = File.join(workdir, "tmp")
+proof_zig_root = File.join(workdir, "zig")
+webkit_parent = File.join(workdir, "webkit")
+webkit_root = File.join(webkit_parent, "WebKit-#{webkit_metadata.fetch('commit')}")
+proof_vendor = File.join(workdir, "cargo-vendor")
+cargo_home = File.join(workdir, "cargo-home")
+rustup_home = File.join(workdir, "rustup-home")
+seed_dir = File.join(workdir, "seed")
+seed_binary = File.join(seed_dir, "bun")
+
+unless resume
+  [build_dir, cache_dir, prefetch_dir, home_dir, tmp_dir, cargo_home, rustup_home, seed_dir].each { |path| FileUtils.mkdir_p(path) }
+
+  zip_entries = capture!({}, ["unzip", "-Z1", seed_archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
+  zip_entries.each { |entry| raise Agentlab::Error, "unsafe seed ZIP entry #{entry}" unless safe_relative_path(entry) }
+  seed_member = "bun-linux-x64/bun"
+  raise Agentlab::Error, "seed archive lacks #{seed_member}" unless zip_entries.include?(seed_member)
+  extract_zip_member!(seed_archive, seed_member, seed_binary, workdir)
+  File.chmod(0o755, seed_binary)
+  verify_file!(seed_binary, seed_metadata.fetch("binary_sha256"), "bootstrap seed binary")
+  raise Agentlab::Error, "bootstrap seed size mismatch" unless File.size(seed_binary) == seed_metadata.fetch("binary_size_bytes")
+  seed_version = capture!({ "HOME" => home_dir }, [seed_binary, "--version"], chdir: workdir).strip
+  raise Agentlab::Error, "unexpected Bun seed version #{seed_version.inspect}" unless seed_version == version
+
+  extract_bun_source!(source_archive, source_dir, workdir)
+  source_files = {
+    "package.json" => closure.dig("source_tree", "package_json_sha256"),
+    "bun.lock" => closure.dig("source_tree", "bun_lock_sha256"),
+    "scripts/build/deps/index.ts" => closure.dig("source_tree", "dependency_index_sha256"),
+    "scripts/build/codegen.ts" => closure.dig("source_tree", "codegen_definition_sha256")
+  }
+  source_files.each { |relative, expected| verify_file!(File.join(source_dir, relative), expected, "Bun release file #{relative}") }
+
+  lolhtml_patch = File.join(package_dir, source_inputs.fetch("lolhtml").fetch("patch"))
+  lock_patch = File.join(package_dir, source_inputs.fetch("npm_lock").fetch("patch"))
+  [lolhtml_patch, lock_patch, zig_cwd_patch, cxx_runtime_patch].each do |patch|
+    run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", patch], chdir: source_dir)
+    run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", patch], chdir: source_dir)
+  end
+  verify_file!(File.join(source_dir, "bun.lock"), source_inputs.fetch("npm_lock").fetch("patched_lock_sha256"), "patched Bun root lock")
+  patched_lolhtml = File.read(File.join(source_dir, "scripts", "build", "deps", "lolhtml.ts"))
+  unless patched_lolhtml.include?("const canBuildStdImmediateAbort = cfg.darwin || cfg.freebsd;")
+    raise Agentlab::Error, "Fedora stable-Rust lol-html patch is not active"
+  end
+
+  webkit_expected_root = "WebKit-#{webkit_metadata.fetch('commit')}"
+  extract_single_root_tar!(webkit_archive, webkit_parent, webkit_expected_root, workdir)
+  webkit_patch = File.join(package_dir, webkit_metadata.fetch("patch"))
+  verify_file!(webkit_patch, webkit_metadata.fetch("patch_sha256"), "WebKit patch")
+  run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
+  run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
+
+  copy_tree!(zig_root, proof_zig_root)
+  verify_file!(File.join(proof_zig_root, "zig"), zig_receipt.dig("output", "executable_sha256"), "proof-owned Zig executable")
+  raise Agentlab::Error, "proof-owned Zig standard library is missing" unless File.file?(File.join(proof_zig_root, "lib", "std", "std.zig"))
+
+  npm_install_roots = npm_receipt.dig("install", "install_roots")
+  raise Agentlab::Error, "expected three npm install roots" unless npm_install_roots.length == 3
+  npm_install_roots.each do |root|
+    relative = root.fetch("path")
+    proof_source_root = File.join(npm_source_dir, relative)
+    destination_root = File.join(source_dir, relative)
+    verify_file!(File.join(destination_root, "package.json"), root.fetch("package_json_sha256"), "#{relative} package.json")
+    verify_file!(File.join(destination_root, "bun.lock"), root.fetch("lockfile_sha256"), "#{relative} bun.lock")
+    reusable_node_modules = File.join(proof_source_root, "node_modules")
+    reusable_receipt = tree_receipt(reusable_node_modules)
+    raise Agentlab::Error, "reusable npm tree receipt mismatch for #{relative}" unless reusable_receipt == root.fetch("node_modules")
+    root.fetch("required_artifacts_verified").each do |artifact|
+      path = File.join(reusable_node_modules, artifact)
+      raise Agentlab::Error, "reusable npm artifact missing: #{relative}:#{artifact}" unless File.exist?(path) || File.symlink?(path)
+    end
+    assert_seed_absent!(reusable_node_modules, seed_metadata.fetch("binary_sha256"), seed_metadata.fetch("binary_size_bytes"))
+    destination = File.join(destination_root, "node_modules")
+    copy_tree!(reusable_node_modules, destination)
+    raise Agentlab::Error, "copied npm tree receipt mismatch for #{relative}" unless tree_receipt(destination) == root.fetch("node_modules")
+  end
+
+  copy_tree!(cargo_vendor, proof_vendor)
+  raise Agentlab::Error, "copied Cargo vendor tree digest mismatch" unless vendor_tree_digest(proof_vendor) == cargo_receipt.dig("vendor", "tree_sha256")
+  File.write(File.join(cargo_home, "config.toml"), <<~TOML)
+    [net]
+    offline = true
+
+    [source.crates-io]
+    replace-with = "vendored-sources"
+
+    [source.vendored-sources]
+    directory = #{proof_vendor.dump}
+  TOML
+
+  native_sources = closure.fetch("native_github_sources")
+  raise Agentlab::Error, "expected 19 native source archives" unless native_sources.length == 19
+  tarball_cache = File.join(cache_dir, "tarballs")
+  by_url = File.join(prefetch_dir, "by-url")
+  FileUtils.mkdir_p([tarball_cache, by_url])
+  native_sources.each do |record|
+    archive = File.join(source_cache, "archives", record.fetch("archive"))
+    verify_file!(archive, record.fetch("sha256"), "native archive #{record.fetch('name')}")
+    cached = File.join(tarball_cache, record.fetch("archive"))
+    FileUtils.cp(archive, cached, preserve: true)
+    verify_file!(cached, record.fetch("sha256"), "cached native archive #{record.fetch('name')}")
+    prefetched = File.join(by_url, Digest::SHA256.hexdigest(record.fetch("url"))[0, 32])
+    FileUtils.cp(archive, prefetched, preserve: true)
+    verify_file!(prefetched, record.fetch("sha256"), "prefetched native archive #{record.fetch('name')}")
+  end
+  node_headers = closure.fetch("node_headers")
+  node_archive = File.join(source_cache, "archives", node_headers.fetch("archive"))
+  verify_file!(node_archive, node_headers.fetch("sha256"), "Node headers archive")
+  node_prefetch = File.join(by_url, Digest::SHA256.hexdigest(node_headers.fetch("url"))[0, 32])
+  FileUtils.cp(node_archive, node_prefetch, preserve: true)
+  verify_file!(node_prefetch, node_headers.fetch("sha256"), "prefetched Node headers archive")
+end
+
+npm_install_roots = npm_receipt.dig("install", "install_roots")
+raise Agentlab::Error, "expected three npm install roots" unless npm_install_roots.length == 3
+supplemental_npm = supplemental_npm_trees(npm_source_dir, npm_install_roots)
+supplemental_npm_receipt_path = File.join(workdir, "supplemental-npm-inputs.json")
+supplemental_npm_receipt = {
+  "schema" => "bun-supplemental-npm-inputs/v1",
+  "trees" => supplemental_npm.map { |path, receipt| { "path" => path, "tree" => receipt } }
+}
+legacy_configure = false
+if resume
+  configure_proof_path = File.join(workdir, "configure-proof.json")
+  legacy_configure = File.file?(configure_proof_path) && !JSON.parse(File.read(configure_proof_path)).dig("graph", "prepared_inputs_revalidated")
+end
+actual_supplemental_npm_receipt = File.file?(supplemental_npm_receipt_path) ? JSON.parse(File.read(supplemental_npm_receipt_path)) : nil
+unless actual_supplemental_npm_receipt == supplemental_npm_receipt
+  if resume
+    raise Agentlab::Error, "resume tree has an unexpected supplemental npm input receipt" unless legacy_configure
+    allowed_legacy_receipt = actual_supplemental_npm_receipt.nil? || actual_supplemental_npm_receipt == { "schema" => "bun-supplemental-npm-inputs/v1", "trees" => [] }
+    raise Agentlab::Error, "legacy supplemental npm input receipt is not safely migratable" unless allowed_legacy_receipt
+  end
+  supplemental_npm.each_key do |relative|
+    source = File.join(npm_source_dir, relative)
+    destination = File.join(source_dir, relative)
+    copy_tree!(source, destination) unless File.exist?(destination) || File.symlink?(destination)
+  end
+  Agentlab.atomic_write(supplemental_npm_receipt_path, JSON.pretty_generate(supplemental_npm_receipt) + "\n")
+end
+actual_supplemental_npm_receipt = JSON.parse(File.read(supplemental_npm_receipt_path))
+raise Agentlab::Error, "supplemental npm input receipt mismatch" unless actual_supplemental_npm_receipt == supplemental_npm_receipt
+supplemental_npm.each do |relative, expected|
+  destination = File.join(source_dir, relative)
+  raise Agentlab::Error, "prepared supplemental npm tree mismatch: #{relative}" unless Dir.exist?(destination) && tree_receipt(destination) == expected
+end
+
+raise Agentlab::Error, "resume tree lacks bootstrap seed" unless File.file?(seed_binary)
+verify_file!(seed_binary, seed_metadata.fetch("binary_sha256"), "bootstrap seed binary")
+raise Agentlab::Error, "bootstrap seed size mismatch" unless File.size(seed_binary) == seed_metadata.fetch("binary_size_bytes")
+seed_version = capture!({ "HOME" => home_dir }, [seed_binary, "--version"], chdir: workdir).strip
+raise Agentlab::Error, "unexpected Bun seed version #{seed_version.inspect}" unless seed_version == version
+raise Agentlab::Error, "resume tree lacks prepared Bun source" unless File.file?(File.join(source_dir, "scripts", "build.ts"))
+{
+  "package.json" => closure.dig("source_tree", "package_json_sha256"),
+  "scripts/build/deps/index.ts" => closure.dig("source_tree", "dependency_index_sha256"),
+  "scripts/build/codegen.ts" => closure.dig("source_tree", "codegen_definition_sha256")
+}.each { |relative, expected| verify_file!(File.join(source_dir, relative), expected, "prepared Bun source file #{relative}") }
+verify_file!(File.join(source_dir, "bun.lock"), source_inputs.fetch("npm_lock").fetch("patched_lock_sha256"), "prepared patched Bun root lock")
+zig_build_source = File.join(source_dir, "scripts", "build", "zig.ts")
+unless File.read(zig_build_source).include?('const cwd = `--cwd=${q(cfg.cwd)}`;')
+  raise Agentlab::Error, "fresh proof tree lacks the Bun Zig source-cwd patch" unless resume
+
+  run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", zig_cwd_patch], chdir: source_dir)
+  run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", zig_cwd_patch], chdir: source_dir)
+end
+raise Agentlab::Error, "Bun Zig source-cwd patch is not active" unless File.read(zig_build_source).scan('${stream} ${cwd}').length == 2
+flags_source = File.join(source_dir, "scripts", "build", "flags.ts")
+unless File.read(flags_source).include?('flag: ["-lstdc++", "-lgcc_s"]')
+  raise Agentlab::Error, "fresh proof tree lacks the Fedora shared C++ runtime patch" unless resume
+
+  run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", cxx_runtime_patch], chdir: source_dir)
+  run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", cxx_runtime_patch], chdir: source_dir)
+end
+raise Agentlab::Error, "Fedora shared C++ runtime patch is not active" if File.read(flags_source).include?('flag: ["-static-libstdc++", "-static-libgcc"]')
+raise Agentlab::Error, "resume tree lacks prepared WebKit source" unless File.file?(File.join(webkit_root, "CMakeLists.txt"))
+webkit_patch_target = File.join(webkit_root, "Source", "JavaScriptCore", "runtime", "TypedArrayAdaptors.h")
+webkit_patch_source = File.read(webkit_patch_target)
+raise Agentlab::Error, "prepared WebKit patch is not active" unless webkit_patch_source.include?("return static_cast<Type>(toInt32(value));")
+raise Agentlab::Error, "prepared WebKit retains the replaced conversion" if webkit_patch_source.include?("int32_t result = truncateDoubleToInt32(value);")
+verify_file!(File.join(proof_zig_root, "zig"), zig_receipt.dig("output", "executable_sha256"), "proof-owned Zig executable")
+raise Agentlab::Error, "proof-owned Zig standard library is missing" unless File.file?(File.join(proof_zig_root, "lib", "std", "std.zig"))
+
+npm_install_roots.each do |root|
+  relative = root.fetch("path")
+  destination_root = File.expand_path(relative, source_dir)
+  verify_file!(File.join(destination_root, "package.json"), root.fetch("package_json_sha256"), "prepared #{relative} package.json")
+  verify_file!(File.join(destination_root, "bun.lock"), root.fetch("lockfile_sha256"), "prepared #{relative} bun.lock")
+  node_modules = File.join(destination_root, "node_modules")
+  raise Agentlab::Error, "prepared npm tree receipt mismatch for #{relative}" unless tree_receipt(node_modules) == root.fetch("node_modules")
+  root.fetch("required_artifacts_verified").each do |artifact|
+    path = File.join(node_modules, artifact)
+    raise Agentlab::Error, "prepared npm artifact missing: #{relative}:#{artifact}" unless File.exist?(path) || File.symlink?(path)
+  end
+  assert_seed_absent!(node_modules, seed_metadata.fetch("binary_sha256"), seed_metadata.fetch("binary_size_bytes"))
+end
+
+raise Agentlab::Error, "prepared Cargo vendor tree digest mismatch" unless vendor_tree_digest(proof_vendor) == cargo_receipt.dig("vendor", "tree_sha256")
+expected_cargo_config = <<~TOML
+  [net]
+  offline = true
+
+  [source.crates-io]
+  replace-with = "vendored-sources"
+
+  [source.vendored-sources]
+  directory = #{proof_vendor.dump}
+TOML
+raise Agentlab::Error, "prepared Cargo vendor config mismatch" unless File.file?(File.join(cargo_home, "config.toml")) && File.read(File.join(cargo_home, "config.toml")) == expected_cargo_config
+
+native_sources = closure.fetch("native_github_sources")
+raise Agentlab::Error, "expected 19 native source archives" unless native_sources.length == 19
+tarball_cache = File.join(cache_dir, "tarballs")
+by_url = File.join(prefetch_dir, "by-url")
+native_sources.each do |record|
+  verify_file!(File.join(tarball_cache, record.fetch("archive")), record.fetch("sha256"), "prepared native cache #{record.fetch('name')}")
+  prefetch = File.join(by_url, Digest::SHA256.hexdigest(record.fetch("url"))[0, 32])
+  verify_file!(prefetch, record.fetch("sha256"), "prepared native prefetch #{record.fetch('name')}")
+end
+node_headers = closure.fetch("node_headers")
+node_prefetch = File.join(by_url, Digest::SHA256.hexdigest(node_headers.fetch("url"))[0, 32])
+verify_file!(node_prefetch, node_headers.fetch("sha256"), "prepared Node headers prefetch")
+
+environment = {
+  "ALL_PROXY" => "",
+  "BUN_BUILD_PREFETCH_DIR" => prefetch_dir,
+  "BUN_INSTALL_CACHE_DIR" => File.join(workdir, "bun-install-cache"),
+  "BUN_WEBKIT_PATH" => webkit_root,
+  "BUN_ZIG_PATH" => proof_zig_root,
+  "CARGO_BUILD_JOBS" => jobs.to_s,
+  "CARGO_HOME" => cargo_home,
+  "CARGO_INCREMENTAL" => "0",
+  "CARGO_NET_OFFLINE" => "true",
+  "CARGO_TERM_COLOR" => "never",
+  "CMAKE_BUILD_PARALLEL_LEVEL" => jobs.to_s,
+  "GIT_SHA" => source_commit,
+  "HOME" => home_dir,
+  "HTTP_PROXY" => "",
+  "HTTPS_PROXY" => "",
+  "NO_PROXY" => "*",
+  "PATH" => "/usr/lib64/llvm21/bin:/usr/bin:/bin",
+  "RUSTC" => "/usr/bin/rustc",
+  "RUSTUP_HOME" => rustup_home,
+  "SOURCE_DATE_EPOCH" => "0",
+  "TMPDIR" => tmp_dir,
+  "XDG_CACHE_HOME" => File.join(home_dir, ".cache"),
+  "XDG_CONFIG_HOME" => File.join(home_dir, ".config"),
+  "XDG_DATA_HOME" => File.join(home_dir, ".local", "share")
+}
+
+ninja_path = File.join(build_dir, "build.ninja")
+configure_path = File.join(build_dir, "configure.json")
+npm_install_roots = npm_receipt.dig("install", "install_roots")
+dep_versions_path = File.join(build_dir, "bun_dependency_versions.h")
+revision_constants_ready = File.file?(dep_versions_path) &&
+                           File.read(dep_versions_path).include?("BUN_VERSION_UWS = \"#{source_commit}\"") &&
+                           File.read(dep_versions_path).include?("BUN_VERSION_USOCKETS = \"#{source_commit}\"")
+resume_graph_ready = resume && File.file?(ninja_path) && File.file?(configure_path) &&
+                     File.read(ninja_path).scan("--cwd=#{source_dir}").length == 2 &&
+                     File.read(ninja_path).include?("-lstdc++ -lgcc_s") &&
+                     !File.read(ninja_path).include?("-static-libstdc++") && revision_constants_ready
+unless resume_graph_ready
+  configure_command = [
+    "unshare", "--net", "--", seed_binary, File.join(source_dir, "scripts", "build.ts"),
+    "--profile=release-local", "--build-dir=#{build_dir}", "--cache-dir=#{cache_dir}", "--configure-only", "-j#{jobs}"
+  ]
+  run!(environment, configure_command, chdir: source_dir, log: File.join(workdir, "configure.log"))
+end
+install_bypass = replace_bun_install_rule!(ninja_path, seed_binary, File.join(workdir, "install-rule-bypass.json"))
+
+FileUtils.mkdir_p(File.join(build_dir, "stamps"))
+expected_install_stamps = npm_install_roots.map do |root|
+  stamp_path(build_dir, File.expand_path(root.fetch("path"), source_dir))
+end
+Dir.glob(File.join(build_dir, "stamps", "install_*.stamp")).each do |path|
+  FileUtils.rm_f(path) unless expected_install_stamps.include?(path)
+end
+FileUtils.touch(File.join(build_dir, "stamps", ".dir"))
+logical_ninja_lines = File.read(ninja_path).gsub(/\$\n[ \t]*/, " ").lines
+npm_install_roots.each do |root|
+  directory = File.expand_path(root.fetch("path"), source_dir)
+  stamp = stamp_path(build_dir, directory)
+  graph_stamp = Pathname(stamp).relative_path_from(Pathname(build_dir)).to_s
+  edge = logical_ninja_lines.find do |line|
+    line.start_with?("build ") && line.include?(": bun_install ") && line.delete_prefix("build ").split(/\s+\|\s+/, 2).first == graph_stamp
+  end
+  raise Agentlab::Error, "missing npm install edge for #{directory}" unless edge
+
+  outputs = edge.split(": bun_install ", 2).first.delete_prefix("build ").tr("|", " ").split
+  latest_input = [File.mtime(File.join(directory, "package.json")), File.mtime(File.join(directory, "bun.lock"))].max
+  output_mtime = [Time.now, latest_input + 1].max
+  outputs.each do |graph_path|
+    path = File.expand_path(graph_path, build_dir)
+    unless path == stamp
+      raise Agentlab::Error, "prevalidated npm install output is missing: #{path}" unless File.file?(path) || File.symlink?(path)
+    end
+    FileUtils.touch(path, mtime: output_mtime)
+  end
+end
+
+graph_receipt = inspect_graph!(
+  ninja_path,
+  configure_path,
+  source_dir,
+  build_dir,
+  cache_dir,
+  webkit_root,
+  proof_zig_root,
+  seed_binary,
+  npm_install_roots,
+  closure.fetch("native_github_sources"),
+  closure.fetch("node_headers")
+)
+graph_receipt["install_rule_bypass"] = install_bypass
+install_targets = npm_install_roots.map do |root|
+  stamp = stamp_path(build_dir, File.expand_path(root.fetch("path"), source_dir))
+  Pathname(stamp).relative_path_from(Pathname(build_dir)).to_s
+end
+run!(environment, ["unshare", "--net", "--", "ninja", "-C", build_dir, *install_targets], chdir: source_dir, log: File.join(workdir, "install-bypass.log"))
+npm_install_roots.each do |root|
+  stamp = stamp_path(build_dir, File.expand_path(root.fetch("path"), source_dir))
+  target = Pathname(stamp).relative_path_from(Pathname(build_dir)).to_s
+  dry_run = capture!(environment, ["ninja", "-C", build_dir, "-n", target], chdir: source_dir)
+  raise Agentlab::Error, "prevalidated npm install stamp is still dirty: #{stamp}" unless dry_run.include?("no work to do")
+end
+
+configure_receipt = {
+  "schema" => "bun-first-source-build-configure-proof/v1",
+  "package" => "bun",
+  "release" => version,
+  "profile" => "release-local",
+  "source_closure_sha256" => closure_sha256,
+  "source_commit" => source_commit,
+  "npm_proof_sha256" => npm_receipt_sha256,
+  "cargo_proof_sha256" => sha256(cargo_receipt_path),
+  "seed" => {
+    "archive_sha256" => seed_metadata.fetch("sha256"),
+    "binary_sha256" => seed_metadata.fetch("binary_sha256"),
+    "size_bytes" => seed_metadata.fetch("binary_size_bytes"),
+    "bootstrap_only" => true
+  },
+  "zig" => {
+    "source_commit" => zig_metadata.fetch("commit"),
+    "source_sha256" => zig_metadata.fetch("sha256"),
+    "patch_sha256" => zig_receipt.dig("patch", "sha256"),
+    "executable_sha256" => zig_receipt.dig("output", "executable_sha256"),
+    "receipt" => zig_receipt_path
+  },
+  "webkit" => {
+    "commit" => webkit_metadata.fetch("commit"),
+    "archive_sha256" => webkit_metadata.fetch("sha256"),
+    "patch_sha256" => webkit_metadata.fetch("patch_sha256")
+  },
+  "source_patches" => {
+    "lolhtml_sha256" => source_inputs.fetch("lolhtml").fetch("patch_sha256"),
+    "npm_lock_sha256" => source_inputs.fetch("npm_lock").fetch("patch_sha256"),
+    "zig_build_cwd_sha256" => build_graph_metadata.fetch("patch_sha256"),
+    "fedora_shared_cxx_runtime_sha256" => build_graph_metadata.fetch("cxx_runtime_patch_sha256")
+  },
+  "offline_inputs" => {
+    "native_archives" => closure.fetch("native_github_sources").length,
+    "node_header_archives" => 1,
+    "npm_install_roots" => npm_install_roots.length,
+    "supplemental_npm_trees" => supplemental_npm_receipt.fetch("trees"),
+    "cargo_vendor_tree_sha256" => cargo_receipt.dig("vendor", "tree_sha256")
+  },
+  "environment" => environment.slice("BUN_BUILD_PREFETCH_DIR", "BUN_WEBKIT_PATH", "BUN_ZIG_PATH", "CARGO_HOME", "CARGO_NET_OFFLINE", "CMAKE_BUILD_PARALLEL_LEVEL", "GIT_SHA", "HOME", "RUSTC", "RUSTUP_HOME"),
+  "graph" => graph_receipt,
+  "network_namespace" => true,
+  "jobs" => jobs,
+  "source_build_performed" => false
+}
+Agentlab.atomic_write(File.join(workdir, "configure-proof.json"), JSON.pretty_generate(configure_receipt) + "\n")
+
+if configure_only
+  puts "Verified the network-isolated Bun first-build graph without compiling."
+  puts "Configure proof: #{File.join(workdir, 'configure-proof.json')}"
+  exit
+end
+
+before_resources = resource_snapshot
+if available_kib(before_resources) < 20 * 1024 * 1024
+  raise Agentlab::Error, "less than 20 GiB memory is available before the Bun build"
+end
+if available_disk_kib(before_resources) < 100 * 1024 * 1024
+  raise Agentlab::Error, "less than 100 GiB is available on /srv before the Bun build"
+end
+
+build_command = ["nice", "-n", "10", "unshare", "--net", "--", "ninja", "-C", build_dir, "-j", jobs.to_s]
+run!(environment, build_command, chdir: source_dir, log: File.join(workdir, "build.log"))
+after_resources = resource_snapshot
+%w[oom oom_kill oom_group_kill].each do |event|
+  before = before_resources.fetch("memory_events", {}).fetch(event, 0)
+  after = after_resources.fetch("memory_events", {}).fetch(event, 0)
+  raise Agentlab::Error, "cgroup #{event} counter increased during Bun build" if after > before
+end
+
+bun_profile = File.join(build_dir, "bun-profile")
+bun = File.join(build_dir, "bun")
+linker_map = File.join(build_dir, "bun-profile.linker-map")
+[bun_profile, bun, linker_map].each { |path| raise Agentlab::Error, "missing first-build artifact #{path}" unless File.file?(path) && File.size(path).positive? }
+raise Agentlab::Error, "stripped Bun is not smaller than bun-profile" unless File.size(bun) < File.size(bun_profile)
+profile_file = capture!({}, ["file", bun_profile], chdir: build_dir).strip
+bun_file = capture!({}, ["file", bun], chdir: build_dir).strip
+profile_sections = capture!({}, ["readelf", "--sections", "--wide", bun_profile], chdir: build_dir)
+bun_sections = capture!({}, ["readelf", "--sections", "--wide", bun], chdir: build_dir)
+profile_debug_sections = profile_sections.scan(/\]\s+(\.debug_[^\s]+)/).flatten.uniq.sort
+bun_debug_sections = bun_sections.scan(/\]\s+(\.debug_[^\s]+)/).flatten.uniq.sort
+raise Agentlab::Error, "bun-profile does not retain debug sections" if profile_debug_sections.empty?
+raise Agentlab::Error, "Bun output retains debug sections: #{bun_debug_sections.join(', ')}" unless bun_debug_sections.empty?
+
+revision = capture!(environment, ["unshare", "--net", "--", bun_profile, "--revision"], chdir: build_dir).strip
+built_version = capture!(environment, ["unshare", "--net", "--", bun, "--version"], chdir: build_dir).strip
+smoke = capture!(environment, ["unshare", "--net", "--", bun, "-e", "console.log('agentlab-bun-first-build')"], chdir: build_dir).strip
+raise Agentlab::Error, "unexpected source-built Bun version #{built_version.inspect}" unless built_version == version
+raise Agentlab::Error, "source-built Bun smoke failed" unless smoke == "agentlab-bun-first-build"
+
+node_identity = File.join(cache_dir, "nodejs-headers-#{closure.dig('node_headers', 'version')}", ".identity")
+raise Agentlab::Error, "Node header identity was not materialized" unless File.file?(node_identity) && File.read(node_identity).strip == closure.dig("node_headers", "version")
+%w[openssl uv uv.h].each do |entry|
+  path = File.join(File.dirname(node_identity), "include", "node", entry)
+  raise Agentlab::Error, "conflicting Node header path was not removed: #{path}" if File.exist?(path) || File.symlink?(path)
+end
+
+contamination = scan_seed_contamination!([source_dir, cache_dir, build_dir], seed_binary, seed_metadata.fetch("binary_sha256"), seed_metadata.fetch("binary_size_bytes"), workdir)
+ldd_output = capture!({}, ["ldd", bun], chdir: build_dir)
+raise Agentlab::Error, "source-built Bun has a runtime dependency on the seed" if ldd_output.include?(seed_binary) || ldd_output.include?("bun-seed")
+raise Agentlab::Error, "source-built Bun does not use Fedora's shared libstdc++" unless ldd_output.include?("libstdc++.so.6")
+raise Agentlab::Error, "source-built Bun does not use Fedora's shared libgcc" unless ldd_output.include?("libgcc_s.so.1")
+
+objects = Dir.glob(File.join(build_dir, "**", "*.o"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
+archives = Dir.glob(File.join(build_dir, "**", "*.a"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
+response_files = Dir.glob(File.join(build_dir, "**", "*.rsp"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
+
+receipt = {
+  "schema" => "bun-first-source-build-proof/v1",
+  "package" => "bun",
+  "release" => version,
+  "profile" => "release-local",
+  "proof_date" => Time.now.utc.strftime("%Y-%m-%d"),
+  "source_closure" => {
+    "path" => File.basename(closure_path),
+    "sha256" => closure_sha256,
+    "source_archive_sha256" => closure.dig("source_tree", "source_sha256"),
+    "source_commit" => source_commit
+  },
+  "bootstrap_seed" => {
+    "archive_sha256" => seed_metadata.fetch("sha256"),
+    "binary_sha256" => seed_metadata.fetch("binary_sha256"),
+    "size_bytes" => seed_metadata.fetch("binary_size_bytes"),
+    "version" => version,
+    "bootstrap_only" => true,
+    "final_payload_allowed" => false,
+    "final_runtime_dependency_allowed" => false
+  },
+  "inputs" => configure_receipt.slice("zig", "webkit", "source_patches", "offline_inputs").merge(
+    "npm_proof" => {
+      "path" => File.basename(npm_receipt_path),
+      "sha256" => npm_receipt_sha256
+    },
+    "cargo_proof" => {
+      "path" => File.basename(cargo_receipt_path),
+      "sha256" => sha256(cargo_receipt_path)
+    }
+  ),
+  "configure" => graph_receipt.merge("network_namespace" => true, "jobs" => jobs),
+  "build" => {
+    "network_namespace" => true,
+    "nice_level" => 10,
+    "jobs" => jobs,
+    "nested_cmake_jobs" => jobs,
+    "cargo_jobs" => jobs,
+    "bun_profile" => file_receipt(bun_profile, workdir),
+    "bun" => file_receipt(bun, workdir),
+    "linker_map" => file_receipt(linker_map, workdir),
+    "revision" => revision,
+    "version" => built_version,
+    "smoke_verified" => true,
+    "stripped_output_verified" => true,
+    "strip_verification" => {
+      "bun_profile_file" => profile_file,
+      "bun_file" => bun_file,
+      "bun_profile_debug_sections" => profile_debug_sections,
+      "bun_debug_sections" => bun_debug_sections,
+      "size_reduced" => true
+    },
+    "fedora_shared_cxx_runtime_verified" => true,
+    "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6]
+  },
+  "retained_relink_evidence" => {
+    "object_files" => objects.length,
+    "static_archives" => archives.length,
+    "response_files" => response_files.length,
+    "compile_commands_retained" => File.file?(File.join(build_dir, "compile_commands.json")),
+    "build_ninja_retained" => true,
+    "linker_map_retained" => true,
+    "complete_lgpl_relink_materials_verified" => false
+  },
+  "seed_contamination" => contamination.merge(
+    "payload_absent_verified" => true,
+    "runtime_dependency_absent_verified" => true,
+    "ldd_sha256" => Digest::SHA256.hexdigest(ldd_output)
+  ),
+  "resources" => {
+    "before" => before_resources,
+    "after" => after_resources,
+    "oom_counters_unchanged" => true
+  },
+  "validation" => {
+    "bootstrap_seed_verified" => true,
+    "seed_isolated_verified" => true,
+    "source_build_verified" => true,
+    "self_rebuild_performed" => false,
+    "reproducibility_compared" => false,
+    "complete_lgpl_relink_materials_verified" => false,
+    "final_license_audit_verified" => false,
+    "final_rpm_verified" => false
+  },
+  "scope" => "first network-isolated seed-driven Bun source build only; immediate source-built self-rebuild, reproducibility, complete LGPL relink materials, immutable hosting, final license review, and RPM remain blocked"
+}
+Agentlab.atomic_write(output, JSON.pretty_generate(receipt) + "\n")
+puts "Verified Bun #{version}'s first network-isolated seed-driven source build."
+puts "Proof receipt: #{output}"

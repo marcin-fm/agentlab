@@ -35,6 +35,8 @@ scripts/create-copr-packages      create or reconcile COPR definitions
 scripts/generate-node-bundled-provides
                                     generate manual metadata for embedded npm code
 scripts/prove-bun-zig-bootstrap    reproduce the private pinned-Zig source proof
+scripts/prove-bun-first-source-build
+                                     prove the first isolated seed-driven Bun build
 scripts/retire-package             remove a package from COPR and archive it
 scripts/update-and-build          update releases and request pushed SCM builds
 ```
@@ -44,7 +46,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | Package | Version | State | Reason |
 |---|---:|---|---|
 | OpenCode | 1.18.3 | blocked | Requires a source-built Bun and an audited npm source closure |
-| Bun | 1.3.14 | blocked | Pinned Zig source bootstrap works; WebKit, source closures, seed build, and offline self-rebuild remain |
+| Bun | 1.3.14 | blocked | First isolated source build works; immutable RPM inputs, self-rebuild, relink, and final audits remain |
 | RTK | 0.43.0 | enabled | Current F43/F44 builds passed 2,287 tests, full linked-license/provider receipts, system-SQLite smokes, and rpmlint |
 | codex-cli | 0.144.5 | blocked | Immutable source is verified; selected Linux Cargo closure, Git sources, Bubblewrap treatment, and offline builds remain |
 | rust-dirs5 | 5.0.1 | enabled | Fedora 44-only compatibility crate for RTK; clean mock build passed |
@@ -165,6 +167,15 @@ scripts/prove-bun-zig-bootstrap
 ```
 
 The command downloads or accepts the exact checked source archive, verifies its SHA-256, applies the repository-authored Fedora library-path patch, builds stage3 with Fedora LLVM 20, and validates the `zig` plus `lib` root that Bun expects. All outputs and the machine-readable proof receipt remain below `/srv/tmp`. This is a local source-bootstrap-stage proof, not a complete offline Bun RPM build or Fedora approval.
+
+Reproduce Bun's first isolated seed-driven source build after the subordinate source proofs and dependency cache are available:
+
+```bash
+scripts/prove-bun-first-source-build --configure-only --jobs 4 --force
+scripts/prove-bun-first-source-build --resume --jobs 4
+```
+
+The helper verifies and inspects the complete `release-local` graph before building it with networking unavailable. It writes `packages/bun/first-source-build-proof.json` only after output, smoke, linkage, and seed-absence checks pass. The immediate source-built self-rebuild and final packaging gates remain separate.
 
 The scripts never commit, tag, or push changes.
 

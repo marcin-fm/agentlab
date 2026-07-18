@@ -1,0 +1,15 @@
+diff --git a/scripts/build/flags.ts b/scripts/build/flags.ts
+--- a/scripts/build/flags.ts
++++ b/scripts/build/flags.ts
+@@ -833,9 +833,9 @@ export const linkFlags: Flag[] = [
+     desc: "Wrap glibc 2.18+ symbols (portable down to glibc 2.17)",
+   },
+   {
+-    flag: ["-static-libstdc++", "-static-libgcc"],
++    flag: ["-lstdc++", "-lgcc_s"],
+     when: c => c.linux && c.abi === "gnu",
+-    desc: "Static C++ runtime (don't depend on host libstdc++)",
++    desc: "Fedora system C++ runtime",
+   },
+   {
+     flag: ["-lstdc++", "-lgcc"],

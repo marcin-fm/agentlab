@@ -1,0 +1,27 @@
+diff --git a/scripts/build/zig.ts b/scripts/build/zig.ts
+--- a/scripts/build/zig.ts
++++ b/scripts/build/zig.ts
+@@ -328,20 +328,21 @@ export function registerZigRules(n: Ninja, cfg: Config): void {
+   const interleave = false;
+   const consoleMode = !interleave || hostWin;
+   const parallelSema = " --env=ZIG_PARALLEL_SEMA=1";
++  const cwd = `--cwd=${q(cfg.cwd)}`;
+   n.rule("zig_build", {
+-    command: `${stream} ${consoleMode ? "--console" : "--zig-progress"} --env=ZIG_LOCAL_CACHE_DIR=$zig_local_cache --env=ZIG_GLOBAL_CACHE_DIR=$zig_global_cache${parallelSema} $zig build $step $args`,
++    command: `${stream} ${cwd} ${consoleMode ? "--console" : "--zig-progress"} --env=ZIG_LOCAL_CACHE_DIR=$zig_local_cache --env=ZIG_GLOBAL_CACHE_DIR=$zig_global_cache${parallelSema} $zig build $step $args`,
+     // $out can be 16 shard paths; the build edge sets a compact $label.
+     description: "zig $step → $label",
+     ...(consoleMode && { pool: "console" }),
+     restat: true,
+   });
+ 
+   // Zig semantic check — `zig build check[-*]`. Type-checks without
+   // emitting object code; output is a stamp file created by --stamp so
+   // ninja can track completion. Same cache dirs as the main zig build —
+   // zig keys by hash, the two coexist cleanly.
+   n.rule("zig_check", {
+-    command: `${stream} --console --stamp=$out --env=ZIG_LOCAL_CACHE_DIR=$zig_local_cache --env=ZIG_GLOBAL_CACHE_DIR=$zig_global_cache${parallelSema} $zig build $step $args`,
++    command: `${stream} ${cwd} --console --stamp=$out --env=ZIG_LOCAL_CACHE_DIR=$zig_local_cache --env=ZIG_GLOBAL_CACHE_DIR=$zig_global_cache${parallelSema} $zig build $step $args`,
+     description: "zig $step",
+     pool: "console",
+     restat: true,

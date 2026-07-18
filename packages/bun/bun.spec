@@ -2,6 +2,7 @@
 # source bootstrap and builds the pinned WebKit/JSC source before stopping at
 # the still-incomplete Bun build stages.
 %global source_sha256 112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e
+%global bun_commit 0d9b296af33f2b851fcbf4df3e9ec89751734ba4
 %global zig_commit 04e7f6ac1e009525bc00934f20199c68f04e0a24
 %global zig_sha256 b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d
 %global webkit_commit 5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b
@@ -9,7 +10,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.9%{?dist}
+Release:        0.0.10%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -33,6 +34,12 @@ Patch2:         bun-lolhtml-fedora-stable-rust.patch
 # Bun 1.3.14 does not parse libc selectors from its text lockfile. Disable the
 # incompatible musl Lightning CSS prebuilt package with a supported OS value.
 Patch3:         bun-lightningcss-fedora-glibc-lock.patch
+# Ninja runs from the out-of-tree build directory, so bind Bun's Zig build and
+# semantic-check subprocesses to the release source root through stream.ts.
+Patch4:         bun-zig-build-cwd.patch
+# Use Fedora's shared C++ runtime instead of requiring unavailable static
+# libstdc++ and libgcc archives in the final Bun link.
+Patch5:         bun-fedora-shared-cxx-runtime.patch
 
 ExclusiveArch:  x86_64
 
@@ -86,6 +93,8 @@ echo "%{webkit_sha256}  %{SOURCE2}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
+patch -p1 < %{PATCH4}
+patch -p1 < %{PATCH5}
 
 mkdir -p .build-tools
 tar -xf %{SOURCE1} -C .build-tools
@@ -100,6 +109,7 @@ patch -d vendor/WebKit -p1 < %{PATCH1}
 %build
 export HOME="$PWD/.build-home"
 export XDG_CACHE_HOME="$PWD/.build-cache"
+export GIT_SHA=%{bun_commit}
 mkdir -p "$HOME" "$XDG_CACHE_HOME"
 
 cmake -S .build-tools/zig -B .build-tools/zig-build -G Ninja \
@@ -178,6 +188,11 @@ grep -Fq 'const canBuildStdImmediateAbort = cfg.darwin || cfg.freebsd;' \
 grep -Fq '"-Cpanic=abort"' scripts/build/deps/lolhtml.ts
 ! grep -Fq 'cfg.linux && cfg.release' scripts/build/deps/lolhtml.ts
 
+grep -Fq 'const cwd = `--cwd=${q(cfg.cwd)}`;' scripts/build/zig.ts
+test "$(grep -Fc '${stream} ${cwd}' scripts/build/zig.ts)" = 2
+grep -Fq 'flag: ["-lstdc++", "-lgcc_s"]' scripts/build/flags.ts
+! grep -Fq 'flag: ["-static-libstdc++", "-static-libgcc"]' scripts/build/flags.ts
+
 grep -Fq '"lightningcss-linux-x64-gnu": ["lightningcss-linux-x64-gnu@1.30.2", "", { "os": "linux", "cpu": "x64" }' \
   bun.lock
 grep -Fq '"lightningcss-linux-x64-musl": ["lightningcss-linux-x64-musl@1.30.2", "", { "os": "none", "cpu": "x64" }' \
@@ -213,6 +228,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.10
+- Prove the first isolated source build with source-root Zig and Fedora's shared C++ runtime.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.9
 - Cap the private Zig bootstrap at the four-job local build limit.
 

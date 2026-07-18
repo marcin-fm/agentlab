@@ -153,7 +153,7 @@ The Bun `1.3.14` build plan is staged:
 5. Immediately rebuild the identical Bun release offline with the first source-built Bun.
 6. Verify the final RPM has no seed payload or runtime dependency, complete the license/duplicate review, then enable COPR.
 
-The first stage is verified locally on Fedora 44 x86_64. The in-tree Zig stage-one WASM is part of the pinned source bootstrap; no external Zig executable is used. `scripts/prove-bun-zig-bootstrap` reproduces that proof below `/srv/tmp` and writes a source, patch, toolchain, and output receipt. The pinned WebKit commit has no gitlinks or submodules, and the exact Bun release seed is checksummed and marked bootstrap-only; neither has yet passed its build stage. This is not an offline Bun build or Fedora approval. Fedora-main use of a temporary prebuilt Bun seed still requires the applicable FPC bootstrap approval; a COPR proof does not grant that approval.
+The private Zig bootstrap, local and isolated WebKit builds, checked dependency materialization, and first seed-driven `release-local` source build are verified locally on Fedora 44 x86_64. `scripts/prove-bun-first-source-build` verifies the generated graph before running it under a network namespace, records the source-built `bun-profile` and stripped output, and proves that the seed hash/path is absent from that build's source, cache, outputs, and runtime dependencies. The immediate source-built self-rebuild, reproducibility comparison, immutable RPM source integration, complete LGPL relink set, final license review, and final RPM remain blocked. Fedora-main use of a temporary prebuilt Bun seed still requires the applicable FPC bootstrap approval; a COPR proof does not grant that approval.
 
 ## COPR Workflow
 
