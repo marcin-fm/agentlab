@@ -1,0 +1,147 @@
+{
+  "schema": "rust-v8-archive-graph-witness/v1",
+  "package": "rust-v8",
+  "release": "149.2.0",
+  "source_closure_reference": {
+    "path": "rust-v8-149.2.0-source-closure.json",
+    "sha256": "bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de",
+    "provenance_verified": false
+  },
+  "witness": {
+    "scope": "fedora-44-x86_64-prototype",
+    "production": false,
+    "network_isolated": false,
+    "isolated_buildroot": false,
+    "patched_source_provenance_verified": false
+  },
+  "gn": {
+    "target": "//:rusty_v8",
+    "ninja_target": "obj/librusty_v8.a",
+    "args": {
+      "is_debug": false,
+      "is_clang": false,
+      "use_lld": true,
+      "use_custom_libcxx": false,
+      "symbol_level": 0,
+      "line_tables_only": false,
+      "no_inline_line_tables": false,
+      "clang_base_path": "/usr",
+      "clang_version": "22",
+      "v8_enable_sandbox": false,
+      "v8_enable_pointer_compression": false,
+      "v8_enable_v8_checks": false,
+      "rusty_v8_enable_simdutf": false,
+      "treat_warnings_as_errors": false,
+      "rust_sysroot_absolute": "/usr",
+      "rustc_version": "1.96.1-Fedora-1.96.1-1.fc44",
+      "rust_bindgen_root": "/usr",
+      "toolchain_supports_rust_thin_lto": false
+    },
+    "args_file": {
+      "path": "args.gn",
+      "bytes": 495,
+      "sha256": "146a99adb7670d59fb90ff41ee856ca6c157ab2df63e00a5f415fedcb3eb6827"
+    },
+    "build_ninja": {
+      "path": "build.ninja",
+      "bytes": 110413,
+      "sha256": "af47aff087dfaa63b3f5968e347e75dcf0b8f6c67ef820f262ad086336cd10e7"
+    },
+    "target_ninja": {
+      "path": "obj/rusty_v8.ninja",
+      "bytes": 105650,
+      "sha256": "4f69925e507b0269e40d763092d739a8d8c6da24c903d11e246d99ca40cdbdbd"
+    },
+    "toolchain_ninja": {
+      "path": "toolchain.ninja",
+      "bytes": 272804,
+      "sha256": "99210fedbca6c1d7994cb9db8d27fae7d3385680406c3c72ff75f898995a178c"
+    }
+  },
+  "archive": {
+    "path": "obj/librusty_v8.a",
+    "bytes": 160316016,
+    "sha256": "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719",
+    "object_input_count": 1796,
+    "object_input_paths_sha256": "040b6f5002bb0fd318f727166a586bf90ce1d08cd42dbdc9389da1be5eabcaef",
+    "object_input_prefix_counts": {
+      "rusty_v8": 2,
+      "src/deno_inspector": 8,
+      "third_party/abseil-cpp": 137,
+      "third_party/highway": 7,
+      "third_party/icu": 456,
+      "third_party/simdutf": 1,
+      "v8/cppgc_base": 48,
+      "v8/src": 37,
+      "v8/third_party": 9,
+      "v8/torque_generated_definitions": 246,
+      "v8/v8_base_without_compiler": 586,
+      "v8/v8_bigint": 9,
+      "v8/v8_compiler": 186,
+      "v8/v8_heap_base": 7,
+      "v8/v8_libbase": 41,
+      "v8/v8_libplatform": 13,
+      "v8/v8_snapshot": 3
+    },
+    "member_count": 1796,
+    "unique_member_names": 1777,
+    "member_names_sha256": "2ae10bb5907a2f9e6f5bad215f34ce7fe4134f1e6ffe2c592a3ede0108fe320c",
+    "member_name_multiset_matches_object_basenames": true,
+    "member_contents_match_object_contents_verified": false,
+    "implicit_rust_rlib_count": 31,
+    "implicit_rust_rlib_paths_sha256": "1ffa1fc702d3720704cd4a772952b7283938f1cd83e5edd0e0a662e07978d4a0",
+    "implicit_rust_rlibs_embedded_in_archive": false,
+    "selected_googletest_inputs": []
+  },
+  "consumer_witness": {
+    "binary": {
+      "path": "target/debug/rust-v8-exact-consumer",
+      "bytes": 83227944,
+      "sha256": "1e92184fa9cc5c29b305cc61bfe1d9c14b96e39bd0dcc8da06ea5f190dd3a9f6"
+    },
+    "copied_archive": {
+      "path": "target/debug/gn_out/obj/librusty_v8.a",
+      "bytes": 160316016,
+      "sha256": "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719"
+    },
+    "archive_copy_sha256_matches": true,
+    "cargo_build_output": {
+      "path": "target/debug/build/v8-08635ab291c7edc0/output",
+      "normalized_bytes": 1417,
+      "normalized_sha256": "30e2b9ff2ebfc530834054520e1cc5ca3a386fbdae2983864e8caf2591289478",
+      "transient_roots_normalized": true
+    },
+    "cargo_fingerprint": {
+      "path": "target/debug/.fingerprint/v8-00037795b4eafb5d/lib-v8.json",
+      "bytes": 742,
+      "sha256": "cf39fc5a541729b3cb06cbdea16d6e4add2b0759ef0309548022fc15f403ad8a"
+    },
+    "cargo_features": [
+      "use_custom_libcxx"
+    ],
+    "cargo_dependencies_include_temporal_capi": true,
+    "elf_needed": [
+      "ld-linux-x86-64.so.2",
+      "libc.so.6",
+      "libgcc_s.so.1",
+      "libm.so.6",
+      "libstdc++.so.6"
+    ],
+    "link_map_available": false,
+    "link_response_file_available": false,
+    "final_link_command_available": false,
+    "archive_member_extraction_verified": false
+  },
+  "validation": {
+    "prototype_selected_archive_graph_captured": true,
+    "archive_member_basenames_match_selected_object_basenames": true,
+    "archive_member_contents_match_selected_object_contents_verified": false,
+    "implicit_rust_rlib_dependencies_classified": true,
+    "selected_graph_excludes_googletest": true,
+    "production_selected_archive_graph_verified": false,
+    "selected_build_dependency_closure_verified": false,
+    "network_isolated_build_verified": false,
+    "final_consumer_link_closure_verified": false
+  },
+  "scope": "retained Fedora 44 x86_64 prototype witness for the selected //:rusty_v8 graph, the archive member-name/object-basename multiset, and one exact Cargo consumer; production source provenance, object-to-member content equality, network isolation, selected-build dependency closure, archive-member extraction at final link, and final consumer link closure remain unverified"
+}

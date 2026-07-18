@@ -4,13 +4,14 @@
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
 %global closure_sha256 bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de
-%global license_audit_sha256 3e832a5a1d7d0078c155c9fa454b37db52b44d60e494d8aa66f531e6d1a35389
+%global license_audit_sha256 f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c
+%global archive_graph_sha256 fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561
 %global system_rust_patch_sha256 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # MIT covers Rusty V8 and BSD-3-Clause covers the original downstream allocator
@@ -41,6 +42,7 @@ Source19:       https://chromium.googlesource.com/chromium/src/tools/win/+archiv
 Source20:       https://codeload.github.com/denoland/v8/tar.gz/73d19698991616a34a00ca691a6e697dbb69e2ef#/%{name}-%{version}-v8-73d19698991616a34a00ca691a6e697dbb69e2ef.tar.gz
 Source21:       %{name}-%{version}-source-closure.json
 Source22:       %{name}-%{version}-license-audit.json
+Source23:       %{name}-%{version}-archive-graph.json
 # Guard Chromium nightly-only Rust behavior and use Fedora's stable toolchain.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
@@ -68,8 +70,10 @@ This draft is intentionally blocked. The root and all 20 `.gitmodules`
 components are immutable checked RPM inputs, reconstruct the exact recursive
 Git tree, and accept the Fedora stable-toolchain patches. A full gclient/DEPS
 checkout is not claimed; unmaterialized test and tooling dependencies remain
-separately classified. Complete semantic license review, network-isolated
-Fedora builds, and architecture proof are not complete.
+separately classified. A retained Fedora 44 prototype witness matches 1,796
+selected object inputs to 1,796 archive members but does not establish production
+or final consumer link closure. Complete semantic license review,
+network-isolated Fedora builds, and architecture proof are not complete.
 
 %package static
 Summary:        Exact-version Rusty V8 static archive
@@ -82,9 +86,10 @@ consumers select it with `RUSTY_V8_ARCHIVE` during their own source builds.
 %prep
 echo "%{closure_sha256}  %{SOURCE21}" | sha256sum -c -
 echo "%{license_audit_sha256}  %{SOURCE22}" | sha256sum -c -
+echo "%{archive_graph_sha256}  %{SOURCE23}" | sha256sum -c -
 echo "%{system_rust_patch_sha256}  %{PATCH0}" | sha256sum -c -
 echo "%{gcc_patch_sha256}  %{PATCH1}" | sha256sum -c -
-python3 - "%{SOURCE21}" "%{SOURCE22}" \
+python3 - "%{SOURCE21}" "%{SOURCE22}" "%{SOURCE23}" \
   "%{SOURCE0}" "%{SOURCE1}" "%{SOURCE2}" "%{SOURCE3}" "%{SOURCE4}" \
   "%{SOURCE5}" "%{SOURCE6}" "%{SOURCE7}" "%{SOURCE8}" "%{SOURCE9}" \
   "%{SOURCE10}" "%{SOURCE11}" "%{SOURCE12}" "%{SOURCE13}" "%{SOURCE14}" \
@@ -97,7 +102,8 @@ import sys
 
 receipt = json.load(open(sys.argv[1], encoding="utf-8"))
 license_audit = json.load(open(sys.argv[2], encoding="utf-8"))
-sources = sys.argv[3:]
+archive_graph = json.load(open(sys.argv[3], encoding="utf-8"))
+sources = sys.argv[4:]
 components = receipt["components"]
 assert receipt["schema"] == "rust-v8-source-closure/v1"
 assert receipt["release"]["version"] == "%{version}"
@@ -119,6 +125,18 @@ assert license_audit["validation"]["vendored_rust_source_package_candidate_texts
 assert license_audit["validation"]["declared_license_text_semantic_review_complete"] is False
 assert license_audit["validation"]["required_license_texts_verified"] is False
 assert license_audit["validation"]["fedora_allowed_spdx_verified"] is False
+assert archive_graph["schema"] == "rust-v8-archive-graph-witness/v1"
+assert archive_graph["source_closure_reference"]["sha256"] == "%{closure_sha256}"
+assert archive_graph["source_closure_reference"]["provenance_verified"] is False
+assert archive_graph["gn"]["target"] == "//:rusty_v8"
+assert archive_graph["archive"]["member_name_multiset_matches_object_basenames"] is True
+assert archive_graph["archive"]["member_contents_match_object_contents_verified"] is False
+assert archive_graph["archive"]["implicit_rust_rlibs_embedded_in_archive"] is False
+assert archive_graph["archive"]["selected_googletest_inputs"] == []
+assert archive_graph["validation"]["prototype_selected_archive_graph_captured"] is True
+assert archive_graph["validation"]["selected_build_dependency_closure_verified"] is False
+assert archive_graph["validation"]["network_isolated_build_verified"] is False
+assert archive_graph["validation"]["final_consumer_link_closure_verified"] is False
 for index, (component, source) in enumerate(zip(components, sources)):
     archive = component["archive"]
     assert component["rpm_source"] == index
@@ -179,6 +197,10 @@ install -Dpm0644 out/fedora/obj/librusty_v8.a \
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.4
+- Capture the retained prototype archive graph without claiming production closure.
+- Record mechanical license normalization and scoped Chromium parent evidence.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.3
 - Scope the immutable inputs explicitly to the exact Git submodule closure.
 - Classify unmaterialized DEPS declarations and ambiguous license syntax.

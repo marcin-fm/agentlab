@@ -1,0 +1,247 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require_relative "lib/agentlab"
+
+def capture!(*command)
+  stdout, stderr, status = Open3.capture3(*command)
+  return stdout if status.success?
+
+  raise Agentlab::Error, "#{command.join(' ')} failed: #{stderr.strip}"
+end
+
+def file_receipt(path, root)
+  {
+    "path" => path.delete_prefix("#{root}/"),
+    "bytes" => File.size(path),
+    "sha256" => Digest::SHA256.file(path).hexdigest
+  }
+end
+
+def normalized_text_receipt(path, root, replacements, regex_replacements = {})
+  content = File.binread(path)
+  replacements.each { |value, replacement| content = content.gsub(value, replacement) }
+  regex_replacements.each { |pattern, replacement| content = content.gsub(pattern, replacement) }
+  raise Agentlab::Error, "transient path remains in normalized #{path}" if content.include?("/srv/tmp/")
+  {
+    "path" => path.delete_prefix("#{root}/"),
+    "normalized_bytes" => content.bytesize,
+    "normalized_sha256" => Digest::SHA256.hexdigest(content),
+    "transient_roots_normalized" => true
+  }
+end
+
+def lines_sha256(lines)
+  Digest::SHA256.hexdigest(lines.sort.join("\n") + "\n")
+end
+
+def parse_gn_args(path)
+  File.readlines(path, chomp: true).to_h do |line|
+    key, raw = line.split(" = ", 2)
+    raise Agentlab::Error, "invalid GN argument line in #{path}: #{line}" unless key && raw
+
+    value = case raw
+            when "true" then true
+            when "false" then false
+            when /\A-?\d+\z/ then Integer(raw, 10)
+            when /\A".*"\z/ then JSON.parse(raw)
+            else
+              raise Agentlab::Error, "unsupported GN argument value in #{path}: #{raw}"
+            end
+    [key, value]
+  end
+end
+
+def parse_ninja_inputs(output)
+  input_lines = output.lines.drop_while { |line| line != "  input: alink\n" }.drop(1)
+  raise Agentlab::Error, "Ninja query did not identify the alink input section" if input_lines.empty?
+
+  input_lines.take_while { |line| line != "  outputs:\n" }.filter_map do |line|
+    next unless line.start_with?("    ")
+
+    input = line.strip
+    next if input.start_with?("||")
+
+    input.delete_prefix("| ")
+  end
+end
+
+def input_prefix(path)
+  parts = path.delete_prefix("obj/").split("/")
+  return parts.first if parts.length == 1 || !%w[src third_party v8].include?(parts.first)
+
+  parts.first(2).join("/")
+end
+
+begin
+  package = Agentlab.package_named("rust-v8")
+  version = package.upstream.fetch("current_version").to_s
+  source_receipt_path = File.join(package.directory, "rust-v8-#{version}-source-closure.json")
+  gn_out = nil
+  consumer_root = nil
+  output = File.join(package.directory, "rust-v8-#{version}-archive-graph.json")
+  check = false
+
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/audit-rust-v8-build-closure --gn-out PATH --consumer-root PATH [options]"
+    parser.on("--gn-out PATH", "Retained GN output directory") { |path| gn_out = path }
+    parser.on("--consumer-root PATH", "Retained exact Cargo consumer root") { |path| consumer_root = path }
+    parser.on("--output PATH", "Canonical archive-graph witness") { |path| output = path }
+    parser.on("--check", "Verify that the checked witness is current") { check = true }
+  end.parse!
+
+  raise Agentlab::Error, "--gn-out is required" unless gn_out
+  raise Agentlab::Error, "--consumer-root is required" unless consumer_root
+
+  gn_out = File.realpath(gn_out)
+  consumer_root = File.realpath(consumer_root)
+  args_path = File.join(gn_out, "args.gn")
+  build_ninja_path = File.join(gn_out, "build.ninja")
+  target_ninja_path = File.join(gn_out, "obj", "rusty_v8.ninja")
+  toolchain_ninja_path = File.join(gn_out, "toolchain.ninja")
+  archive_path = File.join(gn_out, "obj", "librusty_v8.a")
+  [args_path, build_ninja_path, target_ninja_path, toolchain_ninja_path, archive_path].each do |path|
+    raise Agentlab::Error, "missing retained GN artifact #{path}" unless File.file?(path)
+  end
+
+  query = capture!("ninja", "-C", gn_out, "-t", "query", "obj/librusty_v8.a")
+  inputs = parse_ninja_inputs(query)
+  object_inputs = inputs.select { |path| path.end_with?(".o") }
+  rlib_inputs = inputs.select { |path| path.end_with?(".rlib") }
+  unexpected_inputs = inputs.reject do |path|
+    path.end_with?(".o", ".rlib") || path == "phony/rusty_v8.inputdeps"
+  end
+  raise Agentlab::Error, "unexpected selected archive inputs: #{unexpected_inputs.join(', ')}" unless unexpected_inputs.empty?
+
+  member_names = capture!("ar", "t", archive_path).lines.map(&:strip).reject(&:empty?)
+  object_basenames = object_inputs.map { |path| File.basename(path) }
+  members_match = member_names.sort == object_basenames.sort
+  raise Agentlab::Error, "archive members do not match selected object basenames" unless members_match
+
+  prefix_counts = object_inputs.group_by { |path| input_prefix(path) }
+                              .transform_values(&:length)
+                              .sort.to_h
+  selected_googletest_inputs = inputs.grep(%r{(?:^|/)(?:googletest|gtest|gmock)(?:/|$)})
+
+  consumer_binary = File.join(consumer_root, "target", "debug", "rust-v8-exact-consumer")
+  copied_archive = File.join(consumer_root, "target", "debug", "gn_out", "obj", "librusty_v8.a")
+  [consumer_binary, copied_archive].each do |path|
+    raise Agentlab::Error, "missing retained consumer artifact #{path}" unless File.file?(path)
+  end
+
+  build_outputs = Dir.glob(File.join(consumer_root, "target", "debug", "build", "v8-*", "output")).select do |path|
+    content = File.read(path)
+    content.include?("cargo:rustc-link-lib=static=rusty_v8") &&
+      content.include?("cargo:rustc-link-lib=dylib=stdc++") &&
+      content.include?(archive_path)
+  end
+  raise Agentlab::Error, "expected exactly one retained v8 Cargo build output" unless build_outputs.length == 1
+  build_output_path = build_outputs.fetch(0)
+
+  fingerprints = Dir.glob(File.join(consumer_root, "target", "debug", ".fingerprint", "v8-*", "lib-v8.json")).select do |path|
+    record = JSON.parse(File.read(path))
+    JSON.parse(record.fetch("features")).include?("use_custom_libcxx")
+  end
+  raise Agentlab::Error, "expected exactly one retained v8 Cargo fingerprint" unless fingerprints.length == 1
+  fingerprint_path = fingerprints.fetch(0)
+  fingerprint = JSON.parse(File.read(fingerprint_path))
+  cargo_features = JSON.parse(fingerprint.fetch("features")).sort
+  cargo_dependencies = fingerprint.fetch("deps").map { |dependency| dependency.fetch(1) }.sort
+
+  dynamic = capture!("readelf", "-d", consumer_binary)
+  elf_needed = dynamic.scan(/\(NEEDED\).*Shared library: \[(.*?)\]/).flatten.sort
+  link_maps = Dir.glob(File.join(consumer_root, "**", "*.map")).sort
+  link_response_files = Dir.glob(File.join(consumer_root, "**", "*.rsp")).sort
+
+  archive_receipt = file_receipt(archive_path, gn_out)
+  copied_archive_receipt = file_receipt(copied_archive, consumer_root)
+  source_sha256 = Digest::SHA256.file(source_receipt_path).hexdigest
+  receipt = {
+    "schema" => "rust-v8-archive-graph-witness/v1",
+    "package" => package.name,
+    "release" => version,
+    "source_closure_reference" => {
+      "path" => File.basename(source_receipt_path),
+      "sha256" => source_sha256,
+      "provenance_verified" => false
+    },
+    "witness" => {
+      "scope" => "fedora-44-x86_64-prototype",
+      "production" => false,
+      "network_isolated" => false,
+      "isolated_buildroot" => false,
+      "patched_source_provenance_verified" => false
+    },
+    "gn" => {
+      "target" => "//:rusty_v8",
+      "ninja_target" => "obj/librusty_v8.a",
+      "args" => parse_gn_args(args_path),
+      "args_file" => file_receipt(args_path, gn_out),
+      "build_ninja" => file_receipt(build_ninja_path, gn_out),
+      "target_ninja" => file_receipt(target_ninja_path, gn_out),
+      "toolchain_ninja" => file_receipt(toolchain_ninja_path, gn_out)
+    },
+    "archive" => archive_receipt.merge(
+      "object_input_count" => object_inputs.length,
+      "object_input_paths_sha256" => lines_sha256(object_inputs),
+      "object_input_prefix_counts" => prefix_counts,
+      "member_count" => member_names.length,
+      "unique_member_names" => member_names.uniq.length,
+      "member_names_sha256" => lines_sha256(member_names),
+      "member_name_multiset_matches_object_basenames" => members_match,
+      "member_contents_match_object_contents_verified" => false,
+      "implicit_rust_rlib_count" => rlib_inputs.length,
+      "implicit_rust_rlib_paths_sha256" => lines_sha256(rlib_inputs),
+      "implicit_rust_rlibs_embedded_in_archive" => false,
+      "selected_googletest_inputs" => selected_googletest_inputs
+    ),
+    "consumer_witness" => {
+      "binary" => file_receipt(consumer_binary, consumer_root),
+      "copied_archive" => copied_archive_receipt,
+      "archive_copy_sha256_matches" => copied_archive_receipt.fetch("sha256") == archive_receipt.fetch("sha256"),
+      "cargo_build_output" => normalized_text_receipt(
+        build_output_path,
+        consumer_root,
+        { gn_out => "<GN_OUT>", consumer_root => "<CONSUMER_ROOT>" },
+        { %r{/[^\s"]+/registry/src/[^/\s"]+} => "<CARGO_REGISTRY>" }
+      ),
+      "cargo_fingerprint" => file_receipt(fingerprint_path, consumer_root),
+      "cargo_features" => cargo_features,
+      "cargo_dependencies_include_temporal_capi" => cargo_dependencies.include?("temporal_capi"),
+      "elf_needed" => elf_needed,
+      "link_map_available" => !link_maps.empty?,
+      "link_response_file_available" => !link_response_files.empty?,
+      "final_link_command_available" => false,
+      "archive_member_extraction_verified" => false
+    },
+    "validation" => {
+      "prototype_selected_archive_graph_captured" => true,
+      "archive_member_basenames_match_selected_object_basenames" => members_match,
+      "archive_member_contents_match_selected_object_contents_verified" => false,
+      "implicit_rust_rlib_dependencies_classified" => true,
+      "selected_graph_excludes_googletest" => selected_googletest_inputs.empty?,
+      "production_selected_archive_graph_verified" => false,
+      "selected_build_dependency_closure_verified" => false,
+      "network_isolated_build_verified" => false,
+      "final_consumer_link_closure_verified" => false
+    },
+    "scope" => "retained Fedora 44 x86_64 prototype witness for the selected //:rusty_v8 graph, the archive member-name/object-basename multiset, and one exact Cargo consumer; production source provenance, object-to-member content equality, network isolation, selected-build dependency closure, archive-member extraction at final link, and final consumer link closure remain unverified"
+  }
+  content = JSON.pretty_generate(receipt) + "\n"
+
+  if check
+    raise Agentlab::Error, "missing checked archive-graph witness #{output}" unless File.file?(output)
+    raise Agentlab::Error, "Rusty V8 archive-graph witness is stale: #{output}" unless File.binread(output) == content
+    puts "Verified #{object_inputs.length} selected objects, #{rlib_inputs.length} implicit Rust rlibs, and #{member_names.length} archive members."
+  else
+    Agentlab.atomic_write(output, content)
+    puts "Wrote #{object_inputs.length} selected objects, #{rlib_inputs.length} implicit Rust rlibs, and #{member_names.length} archive members to #{output}."
+  end
+rescue Agentlab::Error, JSON::ParserError, KeyError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

@@ -22,6 +22,19 @@ source_closure:
   unpacked_size_bytes: 733567144
   reconstructed_file_records: 60914
   reconstructed_tree_sha256: 4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07
+archive_graph:
+  schema: rust-v8-archive-graph-witness/v1
+  receipt: rust-v8-149.2.0-archive-graph.json
+  receipt_sha256: fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561
+  scope: fedora-44-x86_64-prototype
+  target: //:rusty_v8
+  object_input_count: 1796
+  member_count: 1796
+  implicit_rust_rlib_count: 31
+  implicit_rust_rlibs_embedded_in_archive: false
+  prototype_selected_archive_graph_captured: true
+  selected_build_dependency_closure_verified: false
+  final_consumer_link_closure_verified: false
 notable_components:
   chromium_build:
     commit: fffa45f2e9df48c0230a4c799b7d12e7f83d8219
@@ -105,7 +118,7 @@ consumer_integration:
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 3e832a5a1d7d0078c155c9fa454b37db52b44d60e494d8aa66f531e6d1a35389
+  receipt_sha256: f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
@@ -125,9 +138,12 @@ license_audit:
   readme_chromium_verified_declared_license_paths: 228
   readme_chromium_ambiguous_comma_licenses: 3
   readme_chromium_legacy_bsd_licenses: 1
+  readme_chromium_proposed_normalizations: 4
   readme_chromium_unmaterialized_declared_license_paths: 1
   readme_chromium_semantically_verified_declared_license_paths: 0
   vendored_rust_legacy_slash_license_expressions: 8
+  vendored_rust_mechanically_normalized_license_expressions: 8
+  scoped_parent_license_evidence_recorded: true
   unmaterialized_declared_license_paths:
   - v8/third_party/googletest/src/LICENSE
   license_texts_verified: false
@@ -140,7 +156,8 @@ closure_audit:
   recursive_commits_recorded: true
   recursive_component_archives_verified: true
   patches_verified: true
-  prototype_selected_build_sources_verified: true
+  prototype_selected_archive_graph_captured: true
+  prototype_selected_build_sources_verified: false
   production_build_sources_verified: false
   network_isolated_build_verified: false
   fedora_43_verified: false

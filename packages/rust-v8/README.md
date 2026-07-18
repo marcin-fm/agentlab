@@ -102,14 +102,17 @@ real vendored source package has a manifest license declaration and at least one
 candidate text. The audit resolves 228 of 229 paths explicitly declared by
 `README.chromium`. The sole unresolved path,
 `v8/third_party/googletest/src/LICENSE`, belongs to a `Shipped: no` test-only
-DEPS source that is intentionally not materialized. Three comma-separated
-declarations and one bare `BSD` label are ambiguous, and eight vendored Cargo
-slash alternatives remain proposed-only. `tools/clang` and `tools/win` also
-need scoped Chromium-parent text review. Semantic text review, SPDX
-normalization, Fedora allowability, system-library, and final linked-archive
-decisions remain open. The receipt
+DEPS source that is intentionally not materialized. Exact proposed expressions
+are recorded for the three comma-separated declarations and the bare `BSD`
+label. All eight vendored Cargo slash alternatives are mechanically normalized
+to `MIT OR Apache-2.0`, while semantic text and Fedora allowability review remain
+separate gates. The audit also records the exact Chromium parent text and
+file-level header evidence for `tools/clang` and `tools/win`, without applying
+that text to whole components or their embedded third-party assets. Semantic
+text review, aggregate SPDX normalization, Fedora allowability, system-library,
+and final linked-archive decisions remain open. The receipt
 SHA-256 is
-`3e832a5a1d7d0078c155c9fa454b37db52b44d60e494d8aa66f531e6d1a35389`.
+`f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c`.
 
 ## Prototype Result
 
@@ -120,10 +123,23 @@ binary toolchain. It built the Temporal Rust target and a 160,316,016-byte
 `07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719`.
 An offline Cargo consumer linked the archive and printed `Fedora Rusty V8`.
 
+`rust-v8-149.2.0-archive-graph.json` now preserves a canonical retained witness for
+that retained prototype. The `//:rusty_v8` Ninja query contains 1,796 selected
+object inputs, and the archive contains the same 1,796 member-basename multiset.
+The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
+classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
+records its separate `temporal_capi` dependency. No googletest input appears in
+the selected graph. The witness SHA-256 is
+`fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561`.
+Transient artifact roots are normalized, but this is not a reproducible-build
+claim. It does not claim production provenance, object-to-member content
+equality, network isolation, final archive-member extraction, or final consumer
+link closure.
+
 ## Remaining Gates
 
-1. Resolve scoped Chromium-parent text treatment for `tools/clang` and `tools/win`.
-2. Normalize ambiguous declarations and review every text, SPDX expression, and system-library decision for Fedora.
+1. Complete semantic review of the proposed expressions, scoped parent-text cases, and embedded third-party assets.
+2. Review every required text, SPDX expression, and system-library decision for Fedora.
 3. Establish the final source-package and linked-static-archive license expressions.
 4. Run clean Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes.
 5. Prove aarch64 or retain an explicitly reviewed architecture restriction.

@@ -457,17 +457,23 @@ module Agentlab
     version = package.upstream.fetch("current_version").to_s
     source_name = dependencies.dig("source_closure", "receipt")
     license_name = dependencies.dig("license_audit", "receipt")
+    archive_graph_name = dependencies.dig("archive_graph", "receipt")
     source_path = source_name.is_a?(String) && File.join(package.directory, source_name)
     license_path = license_name.is_a?(String) && File.join(package.directory, license_name)
+    archive_graph_path = archive_graph_name.is_a?(String) && File.join(package.directory, archive_graph_name)
     unless source_path && File.file?(source_path)
       return ["rust-v8: recursive-source receipt is missing"]
     end
     unless license_path && File.file?(license_path)
       return ["rust-v8: license-audit receipt is missing"]
     end
+    unless archive_graph_path && File.file?(archive_graph_path)
+      return ["rust-v8: archive-graph witness is missing"]
+    end
 
     source_sha256 = Digest::SHA256.file(source_path).hexdigest
     license_sha256 = Digest::SHA256.file(license_path).hexdigest
+    archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
     expected_source_hashes = [
       dependencies.dig("source_closure", "receipt_sha256"),
       package.data.dig("source_policy", "source_closure_receipt_sha256")
@@ -478,8 +484,16 @@ module Agentlab
       package.data.dig("license_audit", "receipt_sha256")
     ]
     errors << "rust-v8: license-audit receipt SHA-256 does not match metadata" unless expected_license_hashes.all? { |value| value == license_sha256 }
+    expected_archive_graph_hashes = [
+      dependencies.dig("archive_graph", "receipt_sha256"),
+      package.data.dig("archive_graph", "receipt_sha256")
+    ]
+    unless expected_archive_graph_hashes.all? { |value| value == archive_graph_sha256 }
+      errors << "rust-v8: archive-graph witness SHA-256 does not match metadata"
+    end
     errors << "rust-v8: spec recursive-source SHA-256 does not match" unless spec[/^%global closure_sha256\s+(\h{64})$/, 1] == source_sha256
     errors << "rust-v8: spec license-audit SHA-256 does not match" unless spec[/^%global license_audit_sha256\s+(\h{64})$/, 1] == license_sha256
+    errors << "rust-v8: spec archive-graph SHA-256 does not match" unless spec[/^%global archive_graph_sha256\s+(\h{64})$/, 1] == archive_graph_sha256
 
     source = JSON.parse(File.read(source_path))
     errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v1"
@@ -560,6 +574,7 @@ module Agentlab
     end
     errors << "rust-v8: spec Source21 does not select the recursive-source receipt" unless spec_sources[21] == source_name
     errors << "rust-v8: spec Source22 does not select the license-audit receipt" unless spec_sources[22] == license_name
+    errors << "rust-v8: spec Source23 does not select the archive-graph witness" unless spec_sources[23] == archive_graph_name
     flat_helper = spec[/extract_flat\(\) \{\n(.*?)\n\}/m, 1].to_s
     wrapped_helper = spec[/extract_wrapped\(\) \{\n(.*?)\n\}/m, 1].to_s
     errors << "rust-v8: flat archive extraction helper is invalid" unless flat_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner') && !flat_helper.include?("--strip-components")
@@ -579,6 +594,158 @@ module Agentlab
     SPEC
     errors << "rust-v8: deliberate remaining-gates stop is missing" unless spec.include?(expected_stop_block)
 
+    archive_graph = JSON.parse(File.read(archive_graph_path))
+    errors << "rust-v8: archive-graph schema is invalid" unless archive_graph["schema"] == "rust-v8-archive-graph-witness/v1"
+    errors << "rust-v8: archive-graph release does not match" unless archive_graph["release"].to_s == version
+    source_reference = archive_graph.fetch("source_closure_reference", {})
+    unless source_reference["path"] == source_name && source_reference["sha256"] == source_sha256
+      errors << "rust-v8: archive-graph source-closure reference does not match"
+    end
+    unless source_reference["provenance_verified"] == false
+      errors << "rust-v8: archive-graph source reference overclaims provenance"
+    end
+    expected_witness = {
+      "scope" => "fedora-44-x86_64-prototype",
+      "production" => false,
+      "network_isolated" => false,
+      "isolated_buildroot" => false,
+      "patched_source_provenance_verified" => false
+    }
+    errors << "rust-v8: archive-graph witness scope is invalid" unless archive_graph["witness"] == expected_witness
+    expected_gn_args = {
+      "is_debug" => false,
+      "is_clang" => false,
+      "use_lld" => true,
+      "use_custom_libcxx" => false,
+      "symbol_level" => 0,
+      "line_tables_only" => false,
+      "no_inline_line_tables" => false,
+      "clang_base_path" => "/usr",
+      "clang_version" => "22",
+      "v8_enable_sandbox" => false,
+      "v8_enable_pointer_compression" => false,
+      "v8_enable_v8_checks" => false,
+      "rusty_v8_enable_simdutf" => false,
+      "treat_warnings_as_errors" => false,
+      "rust_sysroot_absolute" => "/usr",
+      "rustc_version" => "1.96.1-Fedora-1.96.1-1.fc44",
+      "rust_bindgen_root" => "/usr",
+      "toolchain_supports_rust_thin_lto" => false
+    }
+    graph_gn = archive_graph.fetch("gn", {})
+    errors << "rust-v8: archive-graph target is invalid" unless graph_gn["target"] == "//:rusty_v8" && graph_gn["ninja_target"] == "obj/librusty_v8.a"
+    errors << "rust-v8: archive-graph GN arguments do not match the prototype" unless graph_gn["args"] == expected_gn_args
+    expected_graph_files = {
+      "args_file" => ["args.gn", 495, "146a99adb7670d59fb90ff41ee856ca6c157ab2df63e00a5f415fedcb3eb6827"],
+      "build_ninja" => ["build.ninja", 110_413, "af47aff087dfaa63b3f5968e347e75dcf0b8f6c67ef820f262ad086336cd10e7"],
+      "target_ninja" => ["obj/rusty_v8.ninja", 105_650, "4f69925e507b0269e40d763092d739a8d8c6da24c903d11e246d99ca40cdbdbd"],
+      "toolchain_ninja" => ["toolchain.ninja", 272_804, "99210fedbca6c1d7994cb9db8d27fae7d3385680406c3c72ff75f898995a178c"]
+    }
+    expected_graph_files.each do |key, (path, bytes, sha256)|
+      record = graph_gn.fetch(key, {})
+      errors << "rust-v8: archive-graph #{key} identity does not match" unless record == { "path" => path, "bytes" => bytes, "sha256" => sha256 }
+    end
+    expected_prefix_counts = {
+      "rusty_v8" => 2,
+      "src/deno_inspector" => 8,
+      "third_party/abseil-cpp" => 137,
+      "third_party/highway" => 7,
+      "third_party/icu" => 456,
+      "third_party/simdutf" => 1,
+      "v8/cppgc_base" => 48,
+      "v8/src" => 37,
+      "v8/third_party" => 9,
+      "v8/torque_generated_definitions" => 246,
+      "v8/v8_base_without_compiler" => 586,
+      "v8/v8_bigint" => 9,
+      "v8/v8_compiler" => 186,
+      "v8/v8_heap_base" => 7,
+      "v8/v8_libbase" => 41,
+      "v8/v8_libplatform" => 13,
+      "v8/v8_snapshot" => 3
+    }
+    graph_archive = archive_graph.fetch("archive", {})
+    expected_archive_identity = {
+      "path" => "obj/librusty_v8.a",
+      "bytes" => 160_316_016,
+      "sha256" => "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719"
+    }
+    expected_archive_identity.each do |key, value|
+      errors << "rust-v8: archive-graph archive #{key} does not match" unless graph_archive[key] == value
+    end
+    errors << "rust-v8: archive-graph object count does not match" unless graph_archive["object_input_count"] == 1_796
+    unless graph_archive["object_input_paths_sha256"] == "040b6f5002bb0fd318f727166a586bf90ce1d08cd42dbdc9389da1be5eabcaef"
+      errors << "rust-v8: archive-graph object path digest does not match"
+    end
+    errors << "rust-v8: archive-graph prefix counts do not match" unless graph_archive["object_input_prefix_counts"] == expected_prefix_counts
+    errors << "rust-v8: archive-graph prefix count total does not match" unless expected_prefix_counts.values.sum == graph_archive["object_input_count"]
+    errors << "rust-v8: archive member count does not match" unless graph_archive["member_count"] == 1_796
+    errors << "rust-v8: archive unique-member count does not match" unless graph_archive["unique_member_names"] == 1_777
+    unless graph_archive["member_names_sha256"] == "2ae10bb5907a2f9e6f5bad215f34ce7fe4134f1e6ffe2c592a3ede0108fe320c"
+      errors << "rust-v8: archive member digest does not match"
+    end
+    unless graph_archive["member_name_multiset_matches_object_basenames"] == true
+      errors << "rust-v8: archive member names do not match selected object basenames"
+    end
+    unless graph_archive["member_contents_match_object_contents_verified"] == false
+      errors << "rust-v8: archive-graph witness overclaims member-content equality"
+    end
+    errors << "rust-v8: implicit Rust rlib count does not match" unless graph_archive["implicit_rust_rlib_count"] == 31
+    unless graph_archive["implicit_rust_rlib_paths_sha256"] == "1ffa1fc702d3720704cd4a772952b7283938f1cd83e5edd0e0a662e07978d4a0"
+      errors << "rust-v8: implicit Rust rlib path digest does not match"
+    end
+    unless graph_archive["implicit_rust_rlibs_embedded_in_archive"] == false
+      errors << "rust-v8: archive-graph witness incorrectly claims embedded Rust rlibs"
+    end
+    errors << "rust-v8: selected archive graph unexpectedly includes googletest" unless graph_archive["selected_googletest_inputs"] == []
+
+    graph_consumer = archive_graph.fetch("consumer_witness", {})
+    expected_consumer_files = {
+      "binary" => ["target/debug/rust-v8-exact-consumer", 83_227_944, "1e92184fa9cc5c29b305cc61bfe1d9c14b96e39bd0dcc8da06ea5f190dd3a9f6"],
+      "copied_archive" => ["target/debug/gn_out/obj/librusty_v8.a", 160_316_016, "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719"],
+      "cargo_fingerprint" => ["target/debug/.fingerprint/v8-00037795b4eafb5d/lib-v8.json", 742, "cf39fc5a541729b3cb06cbdea16d6e4add2b0759ef0309548022fc15f403ad8a"]
+    }
+    expected_consumer_files.each do |key, (path, bytes, sha256)|
+      record = graph_consumer.fetch(key, {})
+      errors << "rust-v8: archive-graph consumer #{key} identity does not match" unless record == { "path" => path, "bytes" => bytes, "sha256" => sha256 }
+    end
+    expected_build_output = {
+      "path" => "target/debug/build/v8-08635ab291c7edc0/output",
+      "normalized_bytes" => 1_417,
+      "normalized_sha256" => "30e2b9ff2ebfc530834054520e1cc5ca3a386fbdae2983864e8caf2591289478",
+      "transient_roots_normalized" => true
+    }
+    unless graph_consumer["cargo_build_output"] == expected_build_output
+      errors << "rust-v8: archive-graph consumer cargo_build_output identity does not match"
+    end
+    errors << "rust-v8: archive copy witness does not match" unless graph_consumer["archive_copy_sha256_matches"] == true
+    errors << "rust-v8: Cargo feature witness does not match" unless graph_consumer["cargo_features"] == ["use_custom_libcxx"]
+    unless graph_consumer["cargo_dependencies_include_temporal_capi"] == true
+      errors << "rust-v8: Cargo temporal_capi dependency witness is missing"
+    end
+    expected_elf_needed = %w[ld-linux-x86-64.so.2 libc.so.6 libgcc_s.so.1 libm.so.6 libstdc++.so.6]
+    errors << "rust-v8: consumer ELF dependency witness does not match" unless graph_consumer["elf_needed"] == expected_elf_needed
+    %w[link_map_available link_response_file_available final_link_command_available archive_member_extraction_verified].each do |flag|
+      errors << "rust-v8: archive-graph consumer witness overclaims #{flag}" unless graph_consumer[flag] == false
+    end
+    %w[
+      prototype_selected_archive_graph_captured
+      archive_member_basenames_match_selected_object_basenames
+      implicit_rust_rlib_dependencies_classified
+      selected_graph_excludes_googletest
+    ].each do |flag|
+      errors << "rust-v8: archive-graph validation #{flag} is not true" unless archive_graph.dig("validation", flag) == true
+    end
+    %w[
+      production_selected_archive_graph_verified
+      archive_member_contents_match_selected_object_contents_verified
+      selected_build_dependency_closure_verified
+      network_isolated_build_verified
+      final_consumer_link_closure_verified
+    ].each do |flag|
+      errors << "rust-v8: archive-graph validation overclaims #{flag}" unless archive_graph.dig("validation", flag) == false
+    end
+
     license = JSON.parse(File.read(license_path))
     errors << "rust-v8: license-audit schema is invalid" unless license["schema"] == "rust-v8-license-audit/v1"
     errors << "rust-v8: license-audit release does not match" unless license["release"].to_s == version
@@ -596,34 +763,76 @@ module Agentlab
       spdx-identifier-syntax
       unclassified
     ]
+    expected_readme_normalizations = {
+      "buildtools/clang_format/README.chromium" => [
+        nil,
+        "Apache-2.0 AND NCSA",
+        "proposed",
+        "LLVM 547e3456660000a16fc5c2a2f819f1a2b5d35b5d llvm/LICENSE.TXT (SHA-256 8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee)"
+      ],
+      "third_party/rust/encoding_rs/v0_8/README.chromium" => [
+        "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+        "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+        "proposed-from-upstream-metadata",
+        "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field"
+      ],
+      "third_party/rust/unicode_ident/v1/README.chromium" => [
+        "(MIT OR Apache-2.0) AND Unicode-3.0",
+        "(MIT OR Apache-2.0) AND Unicode-3.0",
+        "proposed-from-upstream-metadata",
+        "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field"
+      ],
+      "v8/third_party/googletest/README.chromium" => [
+        "BSD-3-Clause",
+        "BSD-3-Clause",
+        "external-proposed",
+        "googletest 4fe3307fb2d9f86d19777c7eb0e4809e9694dde7 LICENSE (SHA-256 9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138)"
+      ]
+    }
     expected_syntax = lambda do |raw, allow_slash|
       if raw.nil?
-        ["missing", nil, nil, "missing"]
+        ["missing", nil, nil, "missing", nil, "pending"]
       elsif raw == "BSD"
-        ["legacy-bsd-label", nil, nil, "unresolved"]
+        ["legacy-bsd-label", nil, nil, "unresolved", nil, "pending"]
       elsif raw.include?(",")
-        ["ambiguous-comma-list", nil, nil, "ambiguous"]
+        ["ambiguous-comma-list", nil, nil, "ambiguous", nil, "pending"]
       elsif allow_slash && raw.include?("/")
         operands = raw.split("/").map(&:strip)
         proposed = if operands.length > 1 && operands.all? { |operand| operand.match?(/\A[A-Za-z0-9][A-Za-z0-9.+-]*\z/) }
                      operands.join(" OR ")
                    end
-        ["legacy-slash-alternative", nil, proposed, proposed ? "proposed" : "unresolved"]
+        if raw == "MIT/Apache-2.0"
+          [
+            "legacy-slash-alternative",
+            proposed,
+            nil,
+            "mechanically-normalized",
+            "Fedora cargo2rpm license.py legacy slash-alternative conversion",
+            "pending"
+          ]
+        else
+          ["legacy-slash-alternative", nil, proposed, proposed ? "proposed" : "unresolved", nil, "pending"]
+        end
       elsif raw.match?(/\b(?:AND|OR|WITH)\b|[()]/)
-        ["spdx-expression-syntax", raw, nil, "syntax-only"]
+        ["spdx-expression-syntax", raw, nil, "syntax-only", nil, "pending"]
       elsif raw.match?(/\A[A-Za-z0-9][A-Za-z0-9.+-]*\z/)
-        ["spdx-identifier-syntax", raw, nil, "syntax-only"]
+        ["spdx-identifier-syntax", raw, nil, "syntax-only", nil, "pending"]
       else
-        ["unclassified", nil, nil, "unresolved"]
+        ["unclassified", nil, nil, "unresolved", nil, "pending"]
       end
     end
     validate_syntax = lambda do |record, raw, allow_slash, label|
       expected = expected_syntax.call(raw, allow_slash)
+      if (normalization = expected_readme_normalizations[label])
+        expected[1, 4] = normalization
+      end
       actual = [
         record["syntax_class"],
         record["normalized_expression"],
         record["proposed_expression"],
-        record["normalization_status"]
+        record["normalization_status"],
+        record["normalization_basis"],
+        record["semantic_review_status"]
       ]
       errors << "rust-v8: license syntax metadata is inconsistent for #{label}" unless actual == expected
       errors << "rust-v8: license syntax rationale is missing for #{label}" if record["normalization_reason"].to_s.empty?
@@ -654,6 +863,12 @@ module Agentlab
       validate_syntax.call(record, record["manifest_license"], true, record["path"])
       license_paths = Array(record["license_files"]).map { |license_file| license_file["path"] }
       errors << "rust-v8: vendored Rust license files are not sorted for #{record['path']}" unless license_paths == license_paths.sort
+      if record["manifest_license"] == "MIT/Apache-2.0"
+        license_basenames = license_paths.map { |path| File.basename(path).upcase }
+        unless license_basenames.include?("LICENSE-MIT") && license_basenames.include?("LICENSE-APACHE")
+          errors << "rust-v8: mechanical slash normalization lacks both texts for #{record['path']}"
+        end
+      end
     end
     unmaterialized_deps = Array(license["unmaterialized_deps_declarations"])
     expected_unmaterialized_deps = [
@@ -669,6 +884,72 @@ module Agentlab
       }
     ]
     errors << "rust-v8: unmaterialized DEPS declaration inventory does not match" unless unmaterialized_deps == expected_unmaterialized_deps
+    chromium_parent_license = {
+      "repository" => "https://chromium.googlesource.com/chromium/src",
+      "commit" => "605c904774a4e2204ef7ca2dbc93ac16f526c085",
+      "path" => "LICENSE",
+      "url" => "https://chromium.googlesource.com/chromium/src/+/605c904774a4e2204ef7ca2dbc93ac16f526c085/LICENSE",
+      "sha256" => "368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b",
+      "expression" => "BSD-3-Clause"
+    }
+    expected_parent_evidence = [
+      {
+        "path" => "tools/clang",
+        "source_commit" => "61150a5f1ddf6460bad3d896c1502c6a56e15311",
+        "source_archive_url" => "https://chromium.googlesource.com/chromium/src/tools/clang/+archive/61150a5f1ddf6460bad3d896c1502c6a56e15311.tar.gz",
+        "component_local_texts_present" => false,
+        "parent_license" => chromium_parent_license,
+        "chromium_header_evidence" => {
+          "path" => "tools/clang/v8_handle_migrate/tests/with-prototypes-original.cc",
+          "sha256" => "c50c13e9b9cfd28d7b6e45002b000f85a74c92bce34c4f4311f762d75cf74858"
+        },
+        "applies_to_chromium_authored_files_only" => true,
+        "whole_component_license_verified" => false,
+        "embedded_third_party_reviewed" => false
+      },
+      {
+        "path" => "tools/win",
+        "source_commit" => "d16e6b55b2bd699735919d8a13a55ff284086603",
+        "source_archive_url" => "https://chromium.googlesource.com/chromium/src/tools/win/+archive/d16e6b55b2bd699735919d8a13a55ff284086603.tar.gz",
+        "component_local_texts_present" => false,
+        "parent_license" => chromium_parent_license,
+        "chromium_header_evidence" => {
+          "path" => "tools/win/sizeviewer/sizeviewer.py",
+          "sha256" => "2d75f52c309ab9d546f7a5453396772c75972d6b406c28d5bbbbf02d86388b9e"
+        },
+        "applies_to_chromium_authored_files_only" => true,
+        "whole_component_license_verified" => false,
+        "embedded_third_party_reviewed" => false,
+        "directory_declares_not_shipped" => true,
+        "embedded_third_party_assets" => {
+          "declaration_path" => "tools/win/sizeviewer/README.chromium",
+          "declaration_sha256" => "ff117457ee3fb3c3015a1e8aa73849eb52314ba525196651029d5a75242b1c64",
+          "assets" => [
+            {
+              "path" => "tools/win/sizeviewer/codemirror.js",
+              "sha256" => "6ec18dff438553ebebd9f33b86c387d16783ca6b64576810daafc123e60bd1fd",
+              "proposed_expression" => "MIT",
+              "semantic_review_status" => "pending"
+            },
+            {
+              "path" => "tools/win/sizeviewer/clike.js",
+              "sha256" => "76cd8a83c47592f454350df6bea616330d925acff9544fade8d97792384086ab",
+              "proposed_expression" => "MIT",
+              "semantic_review_status" => "pending"
+            },
+            {
+              "path" => "tools/win/sizeviewer/favicon.png",
+              "sha256" => "c4be8cf22cedfe22ca5a0691640c47ae5308aba65eb9949c246b53bcc86070bc",
+              "proposed_expression" => nil,
+              "semantic_review_status" => "pending"
+            }
+          ]
+        }
+      }
+    ]
+    unless license["scoped_parent_license_evidence"] == expected_parent_evidence
+      errors << "rust-v8: scoped parent-license evidence does not match"
+    end
     license_summary = license.fetch("summary", {})
     expected_license_summary = {
       "components" => components.length,
@@ -680,6 +961,7 @@ module Agentlab
       "readme_chromium_without_license" => readme_records.count { |record| record["raw_license"].nil? },
       "readme_chromium_ambiguous_comma_licenses" => readme_records.count { |record| record["syntax_class"] == "ambiguous-comma-list" },
       "readme_chromium_legacy_bsd_licenses" => readme_records.count { |record| record["syntax_class"] == "legacy-bsd-label" },
+      "readme_chromium_proposed_normalizations" => readme_records.count { |record| record["normalization_status"].to_s.start_with?("proposed", "external-proposed") },
       "readme_chromium_with_declared_license_file" => readme_records.count { |record| record["license_file"] },
       "readme_chromium_with_verified_declared_license_file" => readme_records.count { |record| record["license_file_verified"] == true },
       "readme_chromium_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).length },
@@ -693,7 +975,8 @@ module Agentlab
       "vendored_rust_source_packages_with_manifest_license_file" => source_packages.count { |record| record["manifest_license_file"] },
       "vendored_rust_source_packages_with_verified_manifest_license_file" => source_packages.count { |record| record["manifest_license_file_verified"] == true },
       "vendored_rust_source_packages_with_candidate_texts" => source_packages.count { |record| record["license_file_count"].to_i.positive? },
-      "vendored_rust_legacy_slash_license_expressions" => source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" }
+      "vendored_rust_legacy_slash_license_expressions" => source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" },
+      "vendored_rust_mechanically_normalized_license_expressions" => source_packages.count { |record| record["normalization_status"] == "mechanically-normalized" }
     }
     errors << "rust-v8: license-audit summary is inconsistent" unless license_summary == expected_license_summary
     unmaterialized_declared_license_paths = readme_records.flat_map do |record|
@@ -716,9 +999,11 @@ module Agentlab
       "readme_chromium_verified_declared_license_paths" => "readme_chromium_verified_declared_license_paths",
       "readme_chromium_ambiguous_comma_licenses" => "readme_chromium_ambiguous_comma_licenses",
       "readme_chromium_legacy_bsd_licenses" => "readme_chromium_legacy_bsd_licenses",
+      "readme_chromium_proposed_normalizations" => "readme_chromium_proposed_normalizations",
       "readme_chromium_unmaterialized_declared_license_paths" => "readme_chromium_unmaterialized_declared_license_paths",
       "readme_chromium_semantically_verified_declared_license_paths" => "readme_chromium_semantically_verified_declared_license_paths",
-      "vendored_rust_legacy_slash_license_expressions" => "vendored_rust_legacy_slash_license_expressions"
+      "vendored_rust_legacy_slash_license_expressions" => "vendored_rust_legacy_slash_license_expressions",
+      "vendored_rust_mechanically_normalized_license_expressions" => "vendored_rust_mechanically_normalized_license_expressions"
     }.each do |metadata_key, summary_key|
       errors << "rust-v8: package license metadata #{metadata_key} does not match" unless package_license[metadata_key] == license_summary[summary_key]
       errors << "rust-v8: dependency license metadata #{metadata_key} does not match" unless dependency_license[metadata_key] == license_summary[summary_key]
@@ -728,6 +1013,10 @@ module Agentlab
     component_text_gaps = Array(license_components).select { |record| record["license_file_count"].to_i.zero? }.map { |record| record["path"] }
     errors << "rust-v8: package component-local text gaps do not match" unless package_license["component_local_text_gaps"] == component_text_gaps
     errors << "rust-v8: dependency component-local text gaps do not match" unless dependency_license["components_without_local_license_files"] == component_text_gaps
+    unless package_license["scoped_parent_license_evidence_recorded"] == true &&
+           dependency_license["scoped_parent_license_evidence_recorded"] == true
+      errors << "rust-v8: scoped parent-license metadata is incomplete"
+    end
     %w[
       source_closure_verified
       source_tree_verified
@@ -736,6 +1025,8 @@ module Agentlab
       readme_chromium_metadata_inventoried
       declared_license_file_paths_inventoried
       declared_license_syntax_classified
+      known_license_normalization_evidence_recorded
+      scoped_parent_license_evidence_recorded
       unmaterialized_deps_declarations_classified
       vendored_rust_manifests_inventoried
       vendored_rust_placeholders_classified
@@ -771,12 +1062,59 @@ module Agentlab
     errors << "rust-v8: dependency metadata overclaims a full DEPS checkout" unless dependencies.dig("source_closure", "full_deps_checkout_verified") == false
     errors << "rust-v8: package metadata overclaims selected-build dependency closure" unless package.data.dig("source_policy", "selected_build_dependency_closure_verified") == false
     errors << "rust-v8: dependency metadata overclaims selected-build dependency closure" unless dependencies.dig("source_closure", "selected_build_dependency_closure_verified") == false
+    package_archive_graph = package.data.fetch("archive_graph", {})
+    dependency_archive_graph = dependencies.fetch("archive_graph", {})
+    [package_archive_graph, dependency_archive_graph].each do |metadata|
+      errors << "rust-v8: archive-graph metadata schema does not match" unless metadata["schema"] == archive_graph["schema"]
+      errors << "rust-v8: archive-graph metadata receipt does not match" unless metadata["receipt"] == archive_graph_name
+      errors << "rust-v8: archive-graph metadata SHA-256 does not match" unless metadata["receipt_sha256"] == archive_graph_sha256
+      errors << "rust-v8: archive-graph metadata scope does not match" unless metadata["scope"] == archive_graph.dig("witness", "scope")
+      errors << "rust-v8: archive-graph metadata target does not match" unless metadata["target"] == archive_graph.dig("gn", "target")
+      errors << "rust-v8: archive-graph metadata object count does not match" unless metadata["object_input_count"] == graph_archive["object_input_count"]
+      errors << "rust-v8: archive-graph metadata member count does not match" unless metadata["member_count"] == graph_archive["member_count"]
+      errors << "rust-v8: archive-graph metadata Rust rlib count does not match" unless metadata["implicit_rust_rlib_count"] == graph_archive["implicit_rust_rlib_count"]
+      unless metadata["implicit_rust_rlibs_embedded_in_archive"] == false
+        errors << "rust-v8: archive-graph metadata overclaims embedded Rust rlibs"
+      end
+      unless metadata["prototype_selected_archive_graph_captured"] == true
+        errors << "rust-v8: archive-graph metadata does not record the prototype witness"
+      end
+      unless metadata["selected_build_dependency_closure_verified"] == false
+        errors << "rust-v8: archive-graph metadata overclaims selected-build dependency closure"
+      end
+      unless metadata["final_consumer_link_closure_verified"] == false
+        errors << "rust-v8: archive-graph metadata overclaims final consumer link closure"
+      end
+    end
+    unless dependencies.dig("closure_audit", "prototype_selected_archive_graph_captured") == true
+      errors << "rust-v8: dependency closure metadata omits the prototype archive graph"
+    end
+    unless dependencies.dig("closure_audit", "prototype_selected_build_sources_verified") == false
+      errors << "rust-v8: dependency closure metadata overclaims prototype selected-build sources"
+    end
 
     reproducibility_path = File.join(package.directory, "reproducibility.yml")
     if File.file?(reproducibility_path)
       reproducibility = load_yaml(reproducibility_path)
       errors << "rust-v8: reproducibility source receipt SHA-256 does not match" unless reproducibility.dig("recursive_source", "receipt_sha256") == source_sha256
       errors << "rust-v8: reproducibility license receipt SHA-256 does not match" unless reproducibility.dig("licenses", "receipt_sha256") == license_sha256
+      errors << "rust-v8: reproducibility archive-graph receipt SHA-256 does not match" unless reproducibility.dig("archive_graph", "receipt_sha256") == archive_graph_sha256
+      errors << "rust-v8: reproducibility archive-graph schema does not match" unless reproducibility.dig("archive_graph", "schema") == archive_graph["schema"]
+      errors << "rust-v8: reproducibility archive-graph scope does not match" unless reproducibility.dig("archive_graph", "scope") == archive_graph.dig("witness", "scope")
+      errors << "rust-v8: reproducibility archive-graph target does not match" unless reproducibility.dig("archive_graph", "target") == archive_graph.dig("gn", "target")
+      errors << "rust-v8: reproducibility archive-graph object count does not match" unless reproducibility.dig("archive_graph", "object_input_count") == graph_archive["object_input_count"]
+      unless reproducibility.dig("archive_graph", "implicit_rust_rlibs_embedded_in_archive") == false
+        errors << "rust-v8: reproducibility metadata overclaims embedded Rust rlibs"
+      end
+      unless reproducibility.dig("archive_graph", "prototype_selected_archive_graph_captured") == true
+        errors << "rust-v8: reproducibility metadata omits the prototype archive graph"
+      end
+      unless reproducibility.dig("archive_graph", "selected_build_dependency_closure_verified") == false
+        errors << "rust-v8: reproducibility metadata overclaims selected-build dependency closure"
+      end
+      unless reproducibility.dig("archive_graph", "final_consumer_link_closure_verified") == false
+        errors << "rust-v8: reproducibility metadata overclaims final consumer link closure"
+      end
       errors << "rust-v8: reproducibility archive total does not match" unless reproducibility.dig("recursive_source", "archive_bytes") == summary["archive_bytes"]
       errors << "rust-v8: reproducibility tree SHA-256 does not match" unless reproducibility.dig("recursive_source", "reconstructed_tree_sha256") == source.dig("reconstruction", "tree_sha256")
       errors << "rust-v8: reproducibility source closure kind does not match" unless reproducibility.dig("recursive_source", "closure_kind") == closure_scope["kind"]
@@ -794,6 +1132,8 @@ module Agentlab
       errors << "rust-v8: reproducibility legacy-BSD count does not match" unless reproducibility.dig("licenses", "readme_chromium_legacy_bsd_licenses") == license_summary["readme_chromium_legacy_bsd_licenses"]
       errors << "rust-v8: reproducibility unmaterialized license-path count does not match" unless reproducibility.dig("licenses", "readme_chromium_unmaterialized_declared_license_paths") == license_summary["readme_chromium_unmaterialized_declared_license_paths"]
       errors << "rust-v8: reproducibility legacy-slash count does not match" unless reproducibility.dig("licenses", "vendored_rust_legacy_slash_license_expressions") == license_summary["vendored_rust_legacy_slash_license_expressions"]
+      errors << "rust-v8: reproducibility proposed-normalization count does not match" unless reproducibility.dig("licenses", "readme_chromium_proposed_normalizations") == license_summary["readme_chromium_proposed_normalizations"]
+      errors << "rust-v8: reproducibility mechanical-normalization count does not match" unless reproducibility.dig("licenses", "vendored_rust_mechanically_normalized_license_expressions") == license_summary["vendored_rust_mechanically_normalized_license_expressions"]
       errors << "rust-v8: reproducibility Git-component license inventory is incomplete" unless reproducibility.dig("licenses", "git_component_inventory_complete") == true
     else
       errors << "rust-v8: reproducibility metadata is missing"

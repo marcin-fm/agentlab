@@ -1232,6 +1232,7 @@ class AgentlabTest < Minitest::Test
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
     spec = File.read(package.spec_path)
     license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("license_audit", "receipt"))))
+    archive_graph = JSON.parse(File.read(File.join(package.directory, dependencies.dig("archive_graph", "receipt"))))
 
     assert_empty(Agentlab.validate_rust_v8_evidence(package, dependencies, spec))
     assert_equal(1, license.fetch("unmaterialized_deps_declarations").length)
@@ -1243,6 +1244,16 @@ class AgentlabTest < Minitest::Test
     refute(googletest.fetch("declared_text_resolvable"))
     assert_equal(3, license.dig("summary", "readme_chromium_ambiguous_comma_licenses"))
     assert_equal(8, license.dig("summary", "vendored_rust_legacy_slash_license_expressions"))
+    assert_equal(4, license.dig("summary", "readme_chromium_proposed_normalizations"))
+    assert_equal(8, license.dig("summary", "vendored_rust_mechanically_normalized_license_expressions"))
+    assert_equal(2, license.fetch("scoped_parent_license_evidence").length)
+    assert_equal(1_796, archive_graph.dig("archive", "object_input_count"))
+    assert_equal(1_796, archive_graph.dig("archive", "member_count"))
+    assert_equal(31, archive_graph.dig("archive", "implicit_rust_rlib_count"))
+    refute(archive_graph.dig("archive", "implicit_rust_rlibs_embedded_in_archive"))
+    refute(archive_graph.dig("archive", "member_contents_match_object_contents_verified"))
+    assert_empty(archive_graph.dig("archive", "selected_googletest_inputs"))
+    refute(archive_graph.dig("validation", "selected_build_dependency_closure_verified"))
     license.dig("vendored_rust", "packages").each do |record|
       paths = record.fetch("license_files").map { |license_file| license_file.fetch("path") }
       assert_equal(paths.sort, paths)
@@ -1258,8 +1269,10 @@ class AgentlabTest < Minitest::Test
     Dir.mktmpdir do |directory|
       source_name = dependencies.dig("source_closure", "receipt")
       license_name = dependencies.dig("license_audit", "receipt")
+      archive_graph_name = dependencies.dig("archive_graph", "receipt")
       FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
       FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
+      FileUtils.cp(File.join(source_package.directory, archive_graph_name), File.join(directory, archive_graph_name))
       license_path = File.join(directory, license_name)
       license = JSON.parse(File.read(license_path))
       license.fetch("validation")["fedora_allowed_spdx_verified"] = true
@@ -1312,8 +1325,10 @@ class AgentlabTest < Minitest::Test
     Dir.mktmpdir do |directory|
       source_name = dependencies.dig("source_closure", "receipt")
       license_name = dependencies.dig("license_audit", "receipt")
+      archive_graph_name = dependencies.dig("archive_graph", "receipt")
       FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
       FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
+      FileUtils.cp(File.join(source_package.directory, archive_graph_name), File.join(directory, archive_graph_name))
       license_path = File.join(directory, license_name)
       license = JSON.parse(File.read(license_path))
       googletest = license.fetch("components").flat_map { |component| component.fetch("readme_chromium") }.find do |record|
@@ -1357,7 +1372,97 @@ class AgentlabTest < Minitest::Test
         errors,
         "rust-v8: license syntax metadata is inconsistent for third_party/rust/chromium_crates_io/vendor/android_system_properties-v0_1"
       )
+
+      vendor.fetch("license_files").reject! { |record| File.basename(record.fetch("path")) == "LICENSE-MIT" }
+      File.write(license_path, JSON.pretty_generate(license) + "\n")
+      license_sha256 = Digest::SHA256.file(license_path).hexdigest
+      data.fetch("license_audit")["receipt_sha256"] = license_sha256
+      dependencies.fetch("license_audit")["receipt_sha256"] = license_sha256
+      spec = spec.sub(/^%global license_audit_sha256\s+\h{64}$/, "%global license_audit_sha256 #{license_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(
+        errors,
+        "rust-v8: mechanical slash normalization lacks both texts for third_party/rust/chromium_crates_io/vendor/android_system_properties-v0_1"
+      )
+
+      license.fetch("scoped_parent_license_evidence").fetch(0)["whole_component_license_verified"] = true
+      File.write(license_path, JSON.pretty_generate(license) + "\n")
+      license_sha256 = Digest::SHA256.file(license_path).hexdigest
+      data.fetch("license_audit")["receipt_sha256"] = license_sha256
+      dependencies.fetch("license_audit")["receipt_sha256"] = license_sha256
+      spec = spec.sub(/^%global license_audit_sha256\s+\h{64}$/, "%global license_audit_sha256 #{license_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: scoped parent-license evidence does not match")
     end
+  end
+
+  def test_rejects_rust_v8_archive_graph_overclaim
+    source_package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    data = Marshal.load(Marshal.dump(source_package.data))
+    spec = File.read(source_package.spec_path)
+
+    Dir.mktmpdir do |directory|
+      source_name = dependencies.dig("source_closure", "receipt")
+      license_name = dependencies.dig("license_audit", "receipt")
+      archive_graph_name = dependencies.dig("archive_graph", "receipt")
+      [source_name, license_name, archive_graph_name].each do |name|
+        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
+      end
+      archive_graph_path = File.join(directory, archive_graph_name)
+      archive_graph = JSON.parse(File.read(archive_graph_path))
+      archive_graph.fetch("validation")["selected_build_dependency_closure_verified"] = true
+      archive_graph.fetch("archive")["member_contents_match_object_contents_verified"] = true
+      archive_graph.fetch("validation")["archive_member_contents_match_selected_object_contents_verified"] = true
+      File.write(archive_graph_path, JSON.pretty_generate(archive_graph) + "\n")
+      archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
+      data.fetch("archive_graph")["receipt_sha256"] = archive_graph_sha256
+      dependencies = Marshal.load(Marshal.dump(dependencies))
+      dependencies.fetch("archive_graph")["receipt_sha256"] = archive_graph_sha256
+      spec = spec.sub(/^%global archive_graph_sha256\s+\h{64}$/, "%global archive_graph_sha256 #{archive_graph_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: archive-graph validation overclaims selected_build_dependency_closure_verified")
+      assert_includes(errors, "rust-v8: archive-graph witness overclaims member-content equality")
+      assert_includes(errors, "rust-v8: archive-graph validation overclaims archive_member_contents_match_selected_object_contents_verified")
+
+      archive_graph.fetch("validation")["selected_build_dependency_closure_verified"] = false
+      archive_graph.fetch("archive")["member_contents_match_object_contents_verified"] = false
+      archive_graph.fetch("validation")["archive_member_contents_match_selected_object_contents_verified"] = false
+      archive_graph.fetch("archive")["selected_googletest_inputs"] = ["obj/third_party/googletest/gtest-all.o"]
+      File.write(archive_graph_path, JSON.pretty_generate(archive_graph) + "\n")
+      archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
+      data.fetch("archive_graph")["receipt_sha256"] = archive_graph_sha256
+      dependencies.fetch("archive_graph")["receipt_sha256"] = archive_graph_sha256
+      spec = spec.sub(/^%global archive_graph_sha256\s+\h{64}$/, "%global archive_graph_sha256 #{archive_graph_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: selected archive graph unexpectedly includes googletest")
+    end
+  end
+
+  def test_rejects_rust_v8_archive_graph_metadata_overclaim
+    source_package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("archive_graph")["scope"] = "production"
+    data.fetch("archive_graph")["implicit_rust_rlibs_embedded_in_archive"] = true
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+
+    errors = Agentlab.validate_rust_v8_evidence(package, dependencies, File.read(source_package.spec_path))
+
+    assert_includes(errors, "rust-v8: archive-graph metadata scope does not match")
+    assert_includes(errors, "rust-v8: archive-graph metadata overclaims embedded Rust rlibs")
   end
 
   def test_rejects_rust_v8_nonterminal_fail_closed_stop

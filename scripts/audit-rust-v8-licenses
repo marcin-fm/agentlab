@@ -20,6 +20,39 @@ UNMATERIALIZED_DEPS_DECLARATIONS = [
     "expected_shipped" => "no"
   }
 ].freeze
+README_LICENSE_NORMALIZATIONS = {
+  "buildtools/clang_format/README.chromium" => {
+    "proposed_expression" => "Apache-2.0 AND NCSA",
+    "normalization_status" => "proposed",
+    "normalization_basis" => "LLVM 547e3456660000a16fc5c2a2f819f1a2b5d35b5d llvm/LICENSE.TXT (SHA-256 8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee)"
+  },
+  "third_party/rust/encoding_rs/v0_8/README.chromium" => {
+    "normalized_expression" => "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+    "proposed_expression" => "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+    "normalization_status" => "proposed-from-upstream-metadata",
+    "normalization_basis" => "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field"
+  },
+  "third_party/rust/unicode_ident/v1/README.chromium" => {
+    "normalized_expression" => "(MIT OR Apache-2.0) AND Unicode-3.0",
+    "proposed_expression" => "(MIT OR Apache-2.0) AND Unicode-3.0",
+    "normalization_status" => "proposed-from-upstream-metadata",
+    "normalization_basis" => "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field"
+  },
+  "v8/third_party/googletest/README.chromium" => {
+    "normalized_expression" => "BSD-3-Clause",
+    "proposed_expression" => "BSD-3-Clause",
+    "normalization_status" => "external-proposed",
+    "normalization_basis" => "googletest 4fe3307fb2d9f86d19777c7eb0e4809e9694dde7 LICENSE (SHA-256 9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138)"
+  }
+}.freeze
+CHROMIUM_PARENT_LICENSE = {
+  "repository" => "https://chromium.googlesource.com/chromium/src",
+  "commit" => "605c904774a4e2204ef7ca2dbc93ac16f526c085",
+  "path" => "LICENSE",
+  "url" => "https://chromium.googlesource.com/chromium/src/+/605c904774a4e2204ef7ca2dbc93ac16f526c085/LICENSE",
+  "sha256" => "368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b",
+  "expression" => "BSD-3-Clause"
+}.freeze
 
 def tree_manifest(root)
   records = []
@@ -63,7 +96,9 @@ def license_syntax_record(raw, allow_slash: false)
     "normalized_expression" => nil,
     "proposed_expression" => nil,
     "normalization_status" => "missing",
-    "normalization_reason" => "no license declaration is present"
+    "normalization_reason" => "no license declaration is present",
+    "normalization_basis" => nil,
+    "semantic_review_status" => "pending"
   }
   return record unless raw
 
@@ -84,12 +119,22 @@ def license_syntax_record(raw, allow_slash: false)
     proposed = if operands.length > 1 && operands.all? { |operand| operand.match?(/\A[A-Za-z0-9][A-Za-z0-9.+-]*\z/) }
                  operands.join(" OR ")
                end
-    record.merge(
-      "syntax_class" => "legacy-slash-alternative",
-      "proposed_expression" => proposed,
-      "normalization_status" => proposed ? "proposed" : "unresolved",
-      "normalization_reason" => "slash alternatives require explicit semantic review before conversion to OR"
-    )
+    if raw == "MIT/Apache-2.0"
+      record.merge(
+        "syntax_class" => "legacy-slash-alternative",
+        "normalized_expression" => proposed,
+        "normalization_status" => "mechanically-normalized",
+        "normalization_reason" => "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
+        "normalization_basis" => "Fedora cargo2rpm license.py legacy slash-alternative conversion"
+      )
+    else
+      record.merge(
+        "syntax_class" => "legacy-slash-alternative",
+        "proposed_expression" => proposed,
+        "normalization_status" => proposed ? "proposed" : "unresolved",
+        "normalization_reason" => "slash alternatives require explicit semantic review before conversion to OR"
+      )
+    end
   elsif raw.match?(/\b(?:AND|OR|WITH)\b|[()]/)
     record.merge(
       "syntax_class" => "spdx-expression-syntax",
@@ -159,8 +204,78 @@ def readme_chromium_metadata(path, source_dir)
     fields["license_file_records"] = declared_records
     fields["license_file_verified"] = declared_records.all? { |record| record.fetch("verified") }
   end
+  relative = path.delete_prefix("#{source_dir}/")
   fields.merge!(license_syntax_record(fields["license"]))
+  if (normalization = README_LICENSE_NORMALIZATIONS[relative])
+    fields.merge!(normalization)
+    fields["normalization_reason"] = "exact declaration-specific evidence supplies a proposed SPDX expression; semantic text and Fedora allowability review remain pending"
+  end
   fields
+end
+
+def scoped_parent_license_evidence(source_dir, component_records)
+  components = {
+    "tools/clang" => "tools/clang/v8_handle_migrate/tests/with-prototypes-original.cc",
+    "tools/win" => "tools/win/sizeviewer/sizeviewer.py"
+  }.map do |component_path, header_path|
+    component = component_records.fetch(component_path)
+    local_texts_present = component.fetch("license_files").any?
+    raise Agentlab::Error, "unexpected component-local text for #{component_path}" if local_texts_present
+    absolute_header_path = File.join(source_dir, header_path)
+    header = File.readlines(absolute_header_path).first(4).join
+    unless header.include?("The Chromium Authors") &&
+           header.include?("Use of this source code is governed by a BSD-style license") &&
+           header.include?("found in the LICENSE file")
+      raise Agentlab::Error, "Chromium parent-license header evidence changed for #{header_path}"
+    end
+
+    {
+      "path" => component_path,
+      "source_commit" => component.fetch("commit"),
+      "source_archive_url" => component.fetch("archive_url"),
+      "component_local_texts_present" => local_texts_present,
+      "parent_license" => CHROMIUM_PARENT_LICENSE,
+      "chromium_header_evidence" => {
+        "path" => header_path,
+        "sha256" => Digest::SHA256.file(absolute_header_path).hexdigest
+      },
+      "applies_to_chromium_authored_files_only" => true,
+      "whole_component_license_verified" => false,
+      "embedded_third_party_reviewed" => false
+    }
+  end
+
+  win = components.find { |component| component.fetch("path") == "tools/win" }
+  readme_path = File.join(source_dir, "tools/win/README.md")
+  unless File.read(readme_path).include?("Code in this directory and subdirectories is not shipped with Chrome.")
+    raise Agentlab::Error, "tools/win shipping-scope declaration changed"
+  end
+  embedded = {
+    "declaration_path" => "tools/win/sizeviewer/README.chromium",
+    "declaration_sha256" => "ff117457ee3fb3c3015a1e8aa73849eb52314ba525196651029d5a75242b1c64",
+    "assets" => [
+      ["tools/win/sizeviewer/codemirror.js", "MIT", "6ec18dff438553ebebd9f33b86c387d16783ca6b64576810daafc123e60bd1fd"],
+      ["tools/win/sizeviewer/clike.js", "MIT", "76cd8a83c47592f454350df6bea616330d925acff9544fade8d97792384086ab"],
+      ["tools/win/sizeviewer/favicon.png", nil, "c4be8cf22cedfe22ca5a0691640c47ae5308aba65eb9949c246b53bcc86070bc"]
+    ].map do |path, expression, sha256|
+      absolute = File.join(source_dir, path)
+      raise Agentlab::Error, "embedded asset hash changed for #{path}" unless Digest::SHA256.file(absolute).hexdigest == sha256
+
+      {
+        "path" => path,
+        "sha256" => sha256,
+        "proposed_expression" => expression,
+        "semantic_review_status" => "pending"
+      }
+    end
+  }
+  declaration_path = File.join(source_dir, embedded.fetch("declaration_path"))
+  unless Digest::SHA256.file(declaration_path).hexdigest == embedded.fetch("declaration_sha256")
+    raise Agentlab::Error, "tools/win embedded-asset declaration hash changed"
+  end
+  win["directory_declares_not_shipped"] = true
+  win["embedded_third_party_assets"] = embedded
+  components
 end
 
 def cargo_package_metadata(path)
@@ -223,9 +338,10 @@ component_paths = source_receipt.fetch("components").map { |component| component
 owner_order = component_paths.sort_by { |path| path == "." ? 0 : -path.length }
 component_records = source_receipt.fetch("components").to_h do |component|
   [component.fetch("path"), {
-    "path" => component.fetch("path"),
-    "url" => component.fetch("url"),
-    "commit" => component.fetch("commit"),
+      "path" => component.fetch("path"),
+      "url" => component.fetch("url"),
+      "archive_url" => component.dig("archive", "url"),
+      "commit" => component.fetch("commit"),
     "license_files" => [],
     "readme_chromium" => []
   }]
@@ -268,7 +384,7 @@ component_records.each_value do |component|
 end
 
 vendor_root = File.join(source_dir, "third_party", "rust", "chromium_crates_io", "vendor")
-vendor_packages = Dir.glob(File.join(vendor_root, "*", "Cargo.toml")).sort.map do |manifest_path|
+  vendor_packages = Dir.glob(File.join(vendor_root, "*", "Cargo.toml")).sort.map do |manifest_path|
   crate_root = File.dirname(manifest_path)
   relative_root = crate_root.delete_prefix("#{source_dir}/")
   metadata = cargo_package_metadata(manifest_path)
@@ -279,8 +395,14 @@ vendor_packages = Dir.glob(File.join(vendor_root, "*", "Cargo.toml")).sort.map d
                             File.expand_path(metadata.fetch("license_file"), crate_root)
                           end
   manifest_license_file_verified = manifest_license_path &&
-                                   manifest_license_path.start_with?("#{crate_root}/") &&
-                                   File.file?(manifest_license_path)
+                                    manifest_license_path.start_with?("#{crate_root}/") &&
+                                    File.file?(manifest_license_path)
+  if metadata["license"] == "MIT/Apache-2.0"
+    license_basenames = license_files.map { |record| File.basename(record.fetch("path")).upcase }
+    unless license_basenames.include?("LICENSE-MIT") && license_basenames.include?("LICENSE-APACHE")
+      raise Agentlab::Error, "legacy Cargo slash normalization lacks MIT and Apache texts for #{relative_root}"
+    end
+  end
   {
     "path" => relative_root,
     "name" => metadata["name"],
@@ -314,6 +436,7 @@ receipt = {
     "tree_sha256" => expected_tree_sha256
   },
   "components" => component_paths.map { |path| component_records.fetch(path) },
+  "scoped_parent_license_evidence" => scoped_parent_license_evidence(source_dir, component_records),
   "unmaterialized_deps_declarations" => unmaterialized_deps_declarations,
   "vendored_rust" => {
     "root" => "third_party/rust/chromium_crates_io/vendor",
@@ -330,6 +453,7 @@ receipt = {
     "readme_chromium_without_license" => readme_records.count { |record| record["raw_license"].nil? },
     "readme_chromium_ambiguous_comma_licenses" => readme_records.count { |record| record["syntax_class"] == "ambiguous-comma-list" },
     "readme_chromium_legacy_bsd_licenses" => readme_records.count { |record| record["syntax_class"] == "legacy-bsd-label" },
+    "readme_chromium_proposed_normalizations" => readme_records.count { |record| record["normalization_status"].to_s.start_with?("proposed", "external-proposed") },
     "readme_chromium_with_declared_license_file" => readme_license_file_records.length,
     "readme_chromium_with_verified_declared_license_file" => readme_license_file_records.count { |record| record["license_file_verified"] == true },
     "readme_chromium_declared_license_paths" => readme_declared_license_paths.length,
@@ -343,7 +467,8 @@ receipt = {
     "vendored_rust_source_packages_with_manifest_license_file" => vendored_source_packages.count { |record| record["manifest_license_file"] },
     "vendored_rust_source_packages_with_verified_manifest_license_file" => vendor_license_file_records.count { |record| record["manifest_license_file_verified"] == true },
     "vendored_rust_source_packages_with_candidate_texts" => vendored_source_packages.count { |record| record.fetch("license_file_count").positive? },
-    "vendored_rust_legacy_slash_license_expressions" => vendored_source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" }
+    "vendored_rust_legacy_slash_license_expressions" => vendored_source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" },
+    "vendored_rust_mechanically_normalized_license_expressions" => vendored_source_packages.count { |record| record["normalization_status"] == "mechanically-normalized" }
   },
   "validation" => {
     "source_closure_verified" => true,
@@ -353,6 +478,8 @@ receipt = {
     "readme_chromium_metadata_inventoried" => true,
     "declared_license_file_paths_inventoried" => true,
     "declared_license_syntax_classified" => true,
+    "known_license_normalization_evidence_recorded" => true,
+    "scoped_parent_license_evidence_recorded" => true,
     "unmaterialized_deps_declarations_classified" => true,
     "vendored_rust_manifests_inventoried" => true,
     "vendored_rust_placeholders_classified" => true,
@@ -365,7 +492,7 @@ receipt = {
     "source_package_license_complete" => false,
     "final_static_archive_license_complete" => false
   },
-  "scope" => "candidate legal-text and declaration inventory for every exact Git component, including embedded metadata that names intentionally unmaterialized DEPS test/tool sources; SPDX normalization, semantic text review, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
+  "scope" => "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, declaration-specific proposed expressions, scoped Chromium parent-text evidence, and embedded metadata that names intentionally unmaterialized DEPS test/tool sources; aggregate SPDX normalization, semantic text review, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
 }
 content = JSON.pretty_generate(receipt) + "\n"
 
