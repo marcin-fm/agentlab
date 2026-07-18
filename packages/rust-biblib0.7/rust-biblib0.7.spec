@@ -7,13 +7,19 @@
 
 Name:           rust-biblib0.7
 Version:        0.7.2
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Parse, manage, and deduplicate academic citations
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/biblib
-Source:         %{crates_source}
-Patch:          biblib-rstest-0.26.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: align test-only rstest with Fedora's packaged 0.26 branch.
+# Not submitted upstream because this is distribution test metadata.
+Patch0:         biblib-rstest-0.26.diff
+# Fedora-specific: omit unselected diagnostics support because Fedora does not
+# provide its ariadne 0.6 dependency. Not submitted upstream because this only
+# narrows the packaged optional feature surface.
+Patch1:         biblib-omit-diagnostics.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -86,18 +92,6 @@ use the "dedupe" feature of the "%{crate}" crate.
 %files       -n %{name}+dedupe-devel
 %ghost %{crate_instdir}/Cargo.toml
 
-%package     -n %{name}+diagnostics-devel
-Summary:        %{summary}
-BuildArch:      noarch
-
-%description -n %{name}+diagnostics-devel %{_description}
-
-This package contains library source intended for building other packages which
-use the "diagnostics" feature of the "%{crate}" crate.
-
-%files       -n %{name}+diagnostics-devel
-%ghost %{crate_instdir}/Cargo.toml
-
 %package     -n %{name}+enw-devel
 Summary:        %{summary}
 BuildArch:      noarch
@@ -166,5 +160,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.7.2-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+- Omit unavailable optional diagnostics support and align test-only rstest.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.7.2-0.1
 - Add the initial repository packaging changelog.

@@ -1,7 +1,14 @@
 # rust-wide1
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+Zlib license file.
 
-Blocked import of the staged Fedora 44 release-2 `wide` 1.5.0 compatibility package. Its feature-pruning patch is retained.
+No exact `wide 1.5.0` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. Fedora provides `bytemuck 1`, and Agentlab
+provides `safe_arch 1.0` across all six selected chroots. The Fedora-only patch
+omits unselected serde and benchmark surfaces while retaining the default `std`
+and SIMD implementation required by `simba`.

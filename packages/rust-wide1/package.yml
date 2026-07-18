@@ -1,5 +1,21 @@
 name: rust-wide1
-status: blocked
-blockers: ["Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.", "Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain."]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.3 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared Zlib license file.
+  dependency_evidence: Fedora provides bytemuck 1 in every selected release; Agentlab provides safe_arch 1.0 in all six chroots. The selected std surface has an explicit Rust 1.89 MSRV below every target toolchain.
+  patch_scope: The Fedora-only metadata patch omits unselected serde and benchmark surfaces while preserving the default std and architecture-specific SIMD implementation required by simba.
+  duplicate_audit: No crate(wide) = 1.5.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: wide, version_requirement: '= 1.5.0', current_version: 1.5.0, source_sha256: dfdfe6a32973f2d1b268b8895845a8a96cac2f0191e72c27cc929036060dbf89, source_url_template: 'https://static.crates.io/crates/wide/wide-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-wide1, spec: rust-wide1.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-wide1
+  spec: rust-wide1.spec

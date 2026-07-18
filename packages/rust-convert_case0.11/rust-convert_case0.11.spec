@@ -7,13 +7,18 @@
 
 Name:           rust-convert_case0.11
 Version:        0.11.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Convert strings into any case
 
 License:        MIT
 URL:            https://crates.io/crates/convert_case
-Source:         %{crates_source}
-Patch:          convert_case-fix-metadata.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: remove benchmark-only Criterion metadata. Not submitted
+# upstream because crates.io library builds do not need the benchmark surface.
+Patch0:         convert_case-remove-benchmark.diff
+# Fedora-specific: align test-only rstest with Fedora's packaged 0.26 branch.
+# Not submitted upstream because this is distribution test metadata.
+Patch1:         convert_case-rstest-0.26.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -68,5 +73,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.11.0-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+- Split benchmark removal from the Fedora test-dependency alignment.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.11.0-0.1
 - Add the initial repository packaging changelog.

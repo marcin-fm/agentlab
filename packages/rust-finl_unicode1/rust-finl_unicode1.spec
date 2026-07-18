@@ -7,13 +7,16 @@
 
 Name:           rust-finl_unicode1
 Version:        1.4.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Library for handling Unicode functionality for finl
 
 License:        (MIT OR Apache-2.0) AND Unicode-DFS-2016
 URL:            https://crates.io/crates/finl_unicode
-Source:         %{crates_source}
-Patch:          finl_unicode-fix-metadata.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: remove benchmark targets, their absent resource path, and
+# benchmark-only dependencies. Not submitted upstream because crates.io omits
+# benchmark resources intentionally and the library source is unchanged.
+Patch0:         finl_unicode-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -95,5 +98,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.4.0-0.2
+- Enable configured SCM publication from the immutable crates.io source.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.4.0-0.1
 - Add the initial changelog and clarify Unicode segmentation wording.

@@ -1,7 +1,14 @@
 # rust-convert_case0.11
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT license file.
 
-Blocked import of the staged `convert_case` 0.11.0 package. The staged metadata patch is retained for later Fedora validation.
+No exact `convert_case 0.11.0` provider exists in Fedora 43, Fedora 44,
+Rawhide, or matching RPM Fusion repositories. Fedora provides
+`unicode-segmentation 1` and test-only `rstest 0.26`. Separate Fedora-only
+patches remove benchmark-only Criterion metadata and align `rstest` without
+changing library sources.

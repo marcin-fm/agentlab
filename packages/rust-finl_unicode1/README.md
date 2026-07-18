@@ -1,7 +1,14 @@
 # rust-finl_unicode1
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT, Apache-2.0, and Unicode-DFS-2016 license files.
 
-Blocked import of the staged `finl_unicode` 1.4.0 package. The staged metadata patch is retained for later Fedora validation.
+No exact `finl_unicode 1.4.0` provider exists in Fedora 43, Fedora 44, Rawhide,
+or matching RPM Fusion repositories. The selected library has no external
+dependencies. The Fedora-only patch removes benchmark metadata, absent
+benchmark resources, and benchmark-only development dependencies without
+changing library sources.

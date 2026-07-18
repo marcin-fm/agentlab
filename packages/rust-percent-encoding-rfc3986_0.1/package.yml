@@ -1,5 +1,20 @@
 name: rust-percent-encoding-rfc3986_0.1
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT and Apache-2.0 license files.
+  dependency_evidence: The selected library has no runtime dependencies; Fedora provides the test-only quickcheck 1 branch in every selected release.
+  duplicate_audit: No crate(percent-encoding-rfc3986) = 0.1.3 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: percent-encoding-rfc3986, version_requirement: '= 0.1.3', current_version: 0.1.3, source_sha256: 3637c05577168127568a64e9dc5a6887da720efef07b3d9472d45f63ab191166, source_url_template: 'https://static.crates.io/crates/percent-encoding-rfc3986/percent-encoding-rfc3986-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-percent-encoding-rfc3986_0.1, spec: rust-percent-encoding-rfc3986_0.1.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-percent-encoding-rfc3986_0.1
+  spec: rust-percent-encoding-rfc3986_0.1.spec

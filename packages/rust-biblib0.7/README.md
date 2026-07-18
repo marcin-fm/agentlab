@@ -1,8 +1,14 @@
 # rust-biblib0.7
 
-Final staged Fedora Rust package for biblib 0.7.2. Source SHA-256 is recorded in `package.yml`; the package remains blocked pending publication approval and duplicate/license review.
-# rust-biblib0.7
+## Publication status
 
-## Finalization status
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT and Apache-2.0 license files.
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+No exact `biblib 0.7.2` provider exists in Fedora 43, Fedora 44, Rawhide, or
+matching RPM Fusion repositories. Fedora provides every selected default and
+test dependency. Separate Fedora-only metadata patches omit the unselected
+`diagnostics` feature, whose `ariadne 0.6` dependency is unavailable, and align
+the test-only `rstest` dependency with Fedora's 0.26 branch.

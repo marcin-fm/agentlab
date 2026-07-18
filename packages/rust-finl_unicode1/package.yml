@@ -1,5 +1,20 @@
 name: rust-finl_unicode1
-status: blocked
-blockers: [Final staged metadata patch imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT, Apache-2.0, and Unicode-DFS-2016 license files.
+  dependency_evidence: The selected library has no external dependencies; the Fedora-only metadata patch removes benchmark targets, their absent resource path, and benchmark-only development dependencies without changing library sources.
+  duplicate_audit: No crate(finl_unicode) = 1.4.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: finl_unicode, version_requirement: '= 1.4.0', current_version: 1.4.0, source_sha256: 9844ddc3a6e533d62bba727eb6c28b5d360921d5175e9ff0f1e621a5c590a4d5, source_url_template: 'https://static.crates.io/crates/finl_unicode/finl_unicode-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-finl_unicode1, spec: rust-finl_unicode1.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-finl_unicode1
+  spec: rust-finl_unicode1.spec

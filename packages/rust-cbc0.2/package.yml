@@ -1,5 +1,20 @@
 name: rust-cbc0.2
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT and Apache-2.0 license files.
+  dependency_evidence: Fedora provides cipher 0.5 and the test-only aes 0.9 and hex-literal 1 branches in every selected release; the crate's explicit Rust 1.85 MSRV is below each target toolchain.
+  duplicate_audit: No crate(cbc) = 0.2.1 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream: {provider: crates_io, crate: cbc, version_requirement: '= 0.2.1', current_version: 0.2.1, source_sha256: ce2dc9ee5f88d11e0beb842c88b33c8a5cf0d1329c4b19494af42b07dbfe8896, source_url_template: 'https://static.crates.io/crates/cbc/cbc-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-cbc0.2, spec: rust-cbc0.2.spec}
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-cbc0.2
+  spec: rust-cbc0.2.spec

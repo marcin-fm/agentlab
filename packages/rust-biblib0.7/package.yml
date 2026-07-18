@@ -1,9 +1,11 @@
-status: blocked
 name: rust-biblib0.7
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT and Apache-2.0 license files.
+  dependency_evidence: Fedora provides every selected default and test dependency, including compact_str 0.9, csv 1.4, quick-xml 0.41, rayon 1, rstest 0.26, and thiserror 2; the Fedora-only patches omit unselected diagnostics support requiring unavailable ariadne 0.6 and align test-only rstest.
+  duplicate_audit: No crate(biblib) = 0.7.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: biblib
@@ -12,6 +14,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/biblib/biblib-{version}.crate
   source_sha256: 17cf00fd6ddffdc0606a4eca2f55e09385ae61437a5e53dccdab6060db544968
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-biblib0.7
   spec: rust-biblib0.7.spec
