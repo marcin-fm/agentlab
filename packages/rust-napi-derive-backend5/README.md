@@ -8,4 +8,6 @@ The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch
 
 The package exposes all upstream public feature interfaces except the private implicit `semver` alias removed by the metadata repair. Both patches applied with fuzz 0 in a fresh Fedora 44 x86_64 release `0.5` Mock build, all 11 tests passed, and all seven source/binary RPMs passed digest verification and `rpmlint` with zero errors or warnings.
 
+Configured SCM build `10740892` produced `5.1.1-0.5` successfully in all six Fedora 43, Fedora 44, and Rawhide x86_64/aarch64 cells. All 21 downloaded x86_64 source/binary RPMs passed digest verification and artifact `rpmlint` with zero errors or warnings; the `noop` and `tracing` feature packages are present, and RPM metadata marks `LICENSE-MIT` as `%license`.
+
 Its private semver metadata repair and retained ctor 0.6 compatibility patch are both registered in the spec with adjacent downstream rationale.

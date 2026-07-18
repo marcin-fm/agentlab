@@ -9,6 +9,7 @@ validation:
   duplicate_audit: No crate(napi-derive-backend) = 5.1.1 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion free/nonfree repositories as checked on 2026-07-18.
   source_delivery: The direct static registry URL serves the same pinned crate bytes without the crates.io API endpoint's COPR source-builder HTTP 403.
   local_validation: Both patches applied with fuzz 0; a fresh Fedora 44 x86_64 release 0.5 Mock build passed 11 tests, and all seven source/binary RPMs passed digest verification and rpmlint with zero errors or warnings.
+  copr_validation: Configured SCM build 10740892 produced 5.1.1-0.5 and succeeded in all six Fedora 43, Fedora 44, and Rawhide x86_64/aarch64 cells; all 21 downloaded x86_64 source/binary RPMs passed digest verification and artifact rpmlint, the noop/tracing interfaces are published, and LICENSE-MIT is marked as an RPM license file.
 upstream: {provider: crates_io, crate: napi-derive-backend, version_requirement: '= 5.1.1', current_version: 5.1.1, source_sha256: ddd961eb2aa8965e3f29722d754f3a86907eb1984e2fbcbe3fe87b9a02d6bfba, source_url_template: 'https://static.crates.io/crates/napi-derive-backend/napi-derive-backend-{version}.crate'}
 supplemental: {license_url: 'https://raw.githubusercontent.com/napi-rs/napi-rs/2785de583a97e49adea8194090fca2ee12f067c8/LICENSE', license_commit: 2785de583a97e49adea8194090fca2ee12f067c8, license_sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, install_name: LICENSE-MIT}
 copr:

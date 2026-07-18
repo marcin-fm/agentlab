@@ -8,4 +8,6 @@ The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch
 
 A fresh Fedora 44 x86_64 Mock build of release `0.4` passed dynamic dependency generation, build, install, and tests. All 15 source/binary RPMs passed digest verification and `rpmlint` with zero errors or warnings.
 
+Configured SCM build `10740891` produced `3.2.2-0.4` successfully in all six Fedora 43, Fedora 44, and Rawhide x86_64/aarch64 cells. All 45 downloaded x86_64 source/binary RPMs passed digest verification and artifact `rpmlint` with zero errors or warnings, and RPM metadata marks `LICENSE-MIT` as `%license`.
+
 The published archive lacks a license file because its Cargo manifest explicitly includes only `src/**/*` and `Cargo.toml`; the spec verifies and installs the immutable upstream copy.

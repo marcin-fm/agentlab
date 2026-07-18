@@ -75,7 +75,7 @@ supplemental_license_sources:
       rust-napi3: f67d4cbc132969d48ab17bf072b9883741567cf9ab1b008a9217ab4dc7541672
       rust-napi-sys3: 129774a4c41b3814c1f6c5e12e64bc22dc854953acba755de08a1a208593bf48
       rust-napi-derive-backend5: 992c728cea16c32537b75518c942316e9cd202542ebde542a6d20344a07859b4
-    validation: immutable URLs fetched and checksums verified; rust-napi-sys3 and rust-napi-derive-backend5 passed fresh Fedora 44 local clean builds and artifact rpmlint, while rust-napi3 remains blocked
+    validation: immutable URLs fetched and checksums verified; rust-napi-sys3 build 10740891 and rust-napi-derive-backend5 build 10740892 passed all six COPR chroots, downloaded x86_64 artifacts passed digest verification and rpmlint, and rust-napi3 remains blocked
 dependency_patch_audit:
   package_records: 63
   declared_patch_members: 40
