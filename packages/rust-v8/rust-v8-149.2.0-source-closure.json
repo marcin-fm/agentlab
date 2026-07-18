@@ -1,0 +1,179 @@
+{
+  "schema": "rust-v8-source-closure/v1",
+  "release": {
+    "crate": "v8",
+    "version": "149.2.0",
+    "tag": "v149.2.0",
+    "commit": "5d0e31ea6bf67f4559faa759b91e22bc3f1cd696",
+    "v8_version": "14.9.207.2"
+  },
+  "root_source": {
+    "url": "https://codeload.github.com/denoland/rusty_v8/tar.gz/5d0e31ea6bf67f4559faa759b91e22bc3f1cd696",
+    "bytes": 340819,
+    "sha256": "8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a"
+  },
+  "components": [
+    {
+      "path": ".",
+      "url": "https://github.com/denoland/rusty_v8.git",
+      "commit": "5d0e31ea6bf67f4559faa759b91e22bc3f1cd696"
+    },
+    {
+      "path": "build",
+      "url": "https://github.com/denoland/chromium_build.git",
+      "commit": "fffa45f2e9df48c0230a4c799b7d12e7f83d8219"
+    },
+    {
+      "path": "buildtools",
+      "url": "https://chromium.googlesource.com/chromium/src/buildtools.git",
+      "commit": "c9110ba7150d93134b1c85ea392033b4a82d28f7"
+    },
+    {
+      "path": "third_party/abseil-cpp",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp.git",
+      "commit": "5e42a36a85a252d8cdee6c39661d2bfd9883fd5c"
+    },
+    {
+      "path": "third_party/dragonbox/src",
+      "url": "https://chromium.googlesource.com/external/github.com/jk-jeon/dragonbox.git",
+      "commit": "beeeef91cf6fef89a4d4ba5e95d47ca64ccb3a44"
+    },
+    {
+      "path": "third_party/fast_float/src",
+      "url": "https://chromium.googlesource.com/external/github.com/fastfloat/fast_float.git",
+      "commit": "05087a303dad9c98768b33c829d398223a649bc6"
+    },
+    {
+      "path": "third_party/fp16/src",
+      "url": "https://github.com/Maratyszcza/FP16.git",
+      "commit": "3d2de1816307bac63c16a297e8c4dc501b4076df"
+    },
+    {
+      "path": "third_party/highway/src",
+      "url": "https://chromium.googlesource.com/external/github.com/google/highway.git",
+      "commit": "2607d3b5b0113992fe84d3848859eae13b3b52c1"
+    },
+    {
+      "path": "third_party/icu",
+      "url": "https://chromium.googlesource.com/chromium/deps/icu.git",
+      "commit": "ee5f27adc28bd3f15b2c293f726d14d2e336cbd5"
+    },
+    {
+      "path": "third_party/jinja2",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/jinja2.git",
+      "commit": "c3027d884967773057bf74b957e3fea87e5df4d7"
+    },
+    {
+      "path": "third_party/libc++/src",
+      "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxx.git",
+      "commit": "99457fa555797f8c5ac3c076ca288d8481d3b23a"
+    },
+    {
+      "path": "third_party/libc++abi/src",
+      "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxxabi.git",
+      "commit": "8f11bb1d4438d0239d0dfc1bd9456a9f31629dda"
+    },
+    {
+      "path": "third_party/libunwind/src",
+      "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libunwind.git",
+      "commit": "a2530baf3d11013afd0f1c1941ab6bef5ba71d0a"
+    },
+    {
+      "path": "third_party/llvm-libc/src",
+      "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libc.git",
+      "commit": "cb952785ccee13811f293f3c419958d1e3ddafbf"
+    },
+    {
+      "path": "third_party/markupsafe",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/markupsafe.git",
+      "commit": "4256084ae14175d38a3ff7d739dca83ae49ccec6"
+    },
+    {
+      "path": "third_party/partition_alloc",
+      "url": "https://chromium.googlesource.com/chromium/src/base/allocator/partition_allocator.git",
+      "commit": "fafdd4c9f559c6d0cfdf2ed3170ce370b59bfdbf"
+    },
+    {
+      "path": "third_party/rust",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/rust",
+      "commit": "2b055f4ecac78bbf34a0d34217c699b7b09b44dd"
+    },
+    {
+      "path": "third_party/simdutf",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/simdutf",
+      "commit": "f7356eed293f8208c40b3c1b344a50bd70971983"
+    },
+    {
+      "path": "tools/clang",
+      "url": "https://chromium.googlesource.com/chromium/src/tools/clang.git",
+      "commit": "61150a5f1ddf6460bad3d896c1502c6a56e15311"
+    },
+    {
+      "path": "tools/win",
+      "url": "https://chromium.googlesource.com/chromium/src/tools/win",
+      "commit": "d16e6b55b2bd699735919d8a13a55ff284086603"
+    },
+    {
+      "path": "v8",
+      "url": "https://github.com/denoland/v8.git",
+      "commit": "73d19698991616a34a00ca691a6e697dbb69e2ef"
+    }
+  ],
+  "patches": [
+    {
+      "name": "rust-v8-system-rust-toolchain.patch",
+      "sha256": "3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976",
+      "zero_fuzz_dry_run": true,
+      "upstream_status": "not-submitted"
+    },
+    {
+      "name": "rust-v8-gcc-portability.patch",
+      "sha256": "6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2",
+      "zero_fuzz_dry_run": true,
+      "upstream_status": "not-submitted"
+    }
+  ],
+  "prototype": {
+    "environment": "fedora-44-x86_64",
+    "rust": "1.96.1-1.fc44",
+    "compiler": "GCC 16.1.1",
+    "linker": "LLD 22.1.8",
+    "gn": "2437 (5223a47630df)",
+    "ninja": "1.13.2",
+    "jobs": 4,
+    "chromium_rust_binary_toolchain_used": false,
+    "system_libstdcxx": true,
+    "archive_bytes": 160316016,
+    "archive_sha256": "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719",
+    "offline_consumer_output": "Fedora Rusty V8"
+  },
+  "consumer_contract": {
+    "binary_package": "rust-v8-static",
+    "provider_capability": "rusty-v8-static(abi) = 149.2.0",
+    "archive_path": "/usr/lib64/rust-v8/149.2.0/librusty_v8.a",
+    "cargo_environment": "RUSTY_V8_ARCHIVE",
+    "binding_source": "published v8 149.2.0 crate source",
+    "selected_crate_features": [
+      "default",
+      "use_custom_libcxx"
+    ],
+    "archive_use_custom_libcxx": false,
+    "link_environment": "GN_ARGS=use_custom_libcxx=false",
+    "exact_feature_contract_smoke": true
+  },
+  "validation": {
+    "tag_commit_verified": true,
+    "root_archive_verified": true,
+    "recursive_component_count": 21,
+    "recursive_commits_materialized": true,
+    "recursive_component_archives_verified": false,
+    "immutable_recursive_rpm_source_verified": false,
+    "network_isolated_build_verified": false,
+    "fedora_43_build_verified": false,
+    "fedora_44_build_verified": false,
+    "aarch64_build_verified": false,
+    "license_inventory_complete": false,
+    "fedora_allowed_spdx_verified": false,
+    "production_package_ready": false
+  }
+}

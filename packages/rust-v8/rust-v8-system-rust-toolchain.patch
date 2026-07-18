@@ -1,0 +1,275 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Support Chromium Rust targets with Fedora stable Rust
+
+Chromium's default Rust integration assumes its pinned nightly-capable binary
+toolchain. Rusty V8 needs the Temporal Rust graph, but Fedora builds must use the
+distribution stable toolchain. Guard nightly-only flags and bundled-toolchain
+inputs, use Fedora's libclang layout, and provide the allocator shims needed
+when the final static archive is linked by the C++ toolchain. The new allocator
+shim is original downstream code by Marcin FM under BSD-3-Clause to match the
+Chromium build source that it extends.
+---
+diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -990,21 +990,23 @@ config("compiler") {
+     "-Cdefault-linker-libraries",
+   ]
+ 
+-  rustflags += [
+-    # To make Rust .d files compatible with ninja
+-    "-Zdep-info-omit-d-target",
++  if (rustc_nightly_capability) {
++    rustflags += [
++      # To make Rust .d files compatible with ninja
++      "-Zdep-info-omit-d-target",
+ 
+-    # If a macro panics during compilation, show which macro and where it is
+-    # defined.
+-    "-Zmacro-backtrace",
++      # If a macro panics during compilation, show which macro and where it is
++      # defined.
++      "-Zmacro-backtrace",
+ 
+-    # For deterministic builds, keep the local machine's current working
+-    # directory from appearing in build outputs.
+-    "-Zremap-cwd-prefix=.",
++      # For deterministic builds, keep the local machine's current working
++      # directory from appearing in build outputs.
++      "-Zremap-cwd-prefix=.",
+ 
+-    # We use clang-rt sanitizer runtimes.
+-    "-Zexternal-clangrt",
+-  ]
++      # We use clang-rt sanitizer runtimes.
++      "-Zexternal-clangrt",
++    ]
++  }
+ 
+   if (!is_win || force_rustc_color_output) {
+     # Colorize error output. The analogous flag is passed for clang. This must
+@@ -1269,7 +1271,9 @@ config("linker") {
+ # Don't allow unstable features to be enabled by `#![feature()]` without
+ # additional command line flags.
+ config("disallow_unstable_features") {
+-  rustflags = [ "-Zallow-features=" ]
++  if (rustc_nightly_capability) {
++    rustflags = [ "-Zallow-features=" ]
++  }
+ }
+ 
+ # The BUILDCONFIG file sets this config on targets by default, which means when
+diff --git a/build/config/gcc/BUILD.gn b/build/config/gcc/BUILD.gn
+--- a/build/config/gcc/BUILD.gn
++++ b/build/config/gcc/BUILD.gn
+@@ -4,6 +4,7 @@
+ 
+ import("//build/config/c++/c++.gni")
+ import("//build/config/compiler/compiler.gni")
++import("//build/config/rust.gni")
+ import("//build/config/sanitizers/sanitizers.gni")
+ import("//build/config/sysroot.gni")
+ import("//build/toolchain/toolchain.gni")
+@@ -32,7 +33,9 @@ declare_args() {
+ # See http://gcc.gnu.org/wiki/Visibility
+ config("symbol_visibility_hidden") {
+   cflags = [ "-fvisibility=hidden" ]
+-  rustflags = [ "-Zdefault-visibility=hidden" ]
++  if (rustc_nightly_capability) {
++    rustflags = [ "-Zdefault-visibility=hidden" ]
++  }
+ 
+   # Visibility attribute is not supported on AIX.
+   if (current_os != "aix") {
+diff --git a/build/config/rust.gni b/build/config/rust.gni
+--- a/build/config/rust.gni
++++ b/build/config/rust.gni
+@@ -432,8 +432,10 @@ rustc_wrapper_inputs = [
+   "//build/rust/gni_impl/rustc_wrapper.py",
+ ]
+ 
+-if (host_os == "win") {
+-  rustc_wrapper_inputs += [ "//third_party/rust-toolchain/bin/rustc.exe" ]
+-} else {
+-  rustc_wrapper_inputs += [ "//third_party/rust-toolchain/bin/rustc" ]
++if (use_chromium_rust_toolchain) {
++  if (host_os == "win") {
++    rustc_wrapper_inputs += [ "//third_party/rust-toolchain/bin/rustc.exe" ]
++  } else {
++    rustc_wrapper_inputs += [ "//third_party/rust-toolchain/bin/rustc" ]
++  }
+ }
+diff --git a/build/rust/allocator/BUILD.gn b/build/rust/allocator/BUILD.gn
+--- a/build/rust/allocator/BUILD.gn
++++ b/build/rust/allocator/BUILD.gn
+@@ -50,25 +50,42 @@ if (toolchain_has_rust) {
+   # depend on this. Usually, this dependency will come from a `rust_target` or
+   # `cargo_crate` GN template, but note that this may be overridden by setting
+   # `no_allocator_crate` of `rust_static_library` or `no_std` of `cargo_crate`.
+-  rust_static_library("allocator") {
+-    sources = [ "lib.rs" ]
+-    crate_root = "lib.rs"
+-
+-    configs += [ ":buildflags_rust_cfg" ]
+-    deps = [ ":alloc_error_handler_impl_ffi" ]
+-    if (rust_allocator_uses_allocator_impls_h) {
+-      deps += [ ":allocator_impls_ffi" ]
+-    }
++  if (rustc_nightly_capability) {
++    rust_static_library("allocator") {
++      sources = [ "lib.rs" ]
++      crate_root = "lib.rs"
++
++      configs += [ ":buildflags_rust_cfg" ]
++      deps = [ ":alloc_error_handler_impl_ffi" ]
++      if (rust_allocator_uses_allocator_impls_h) {
++        deps += [ ":allocator_impls_ffi" ]
++      }
+ 
+-    # Avoid cyclic dependencies:
+-    no_chromium_prelude = true
+-    no_allocator_crate = true
++      # Avoid cyclic dependencies:
++      no_chromium_prelude = true
++      no_allocator_crate = true
+ 
+-    # Allow `unsafe` for FFI calls:
+-    allow_unsafe = true
++      # Allow `unsafe` for FFI calls:
++      allow_unsafe = true
+ 
+-    # TODO(https://crbug.com/410596442): Stop using unstable features here.
+-    configs -= [ "//build/config/compiler:disallow_unstable_features" ]
++      # TODO(https://crbug.com/410596442): Stop using unstable features here.
++      configs -= [ "//build/config/compiler:disallow_unstable_features" ]
++    }
++  } else {
++    rust_target("stable_system_allocator") {
++      target_type = "static_library"
++      crate_type = "staticlib"
++      crate_name = "stable_system_allocator"
++      sources = [ "stable_system_allocator.rs" ]
++      crate_root = "stable_system_allocator.rs"
++      library_configs = default_compiler_configs
++
++      # Use the system compiler's own sysroot and avoid the normal dependency
++      # on //build/rust/std, which links this archive into C++ final targets.
++      no_std = true
++      no_chromium_prelude = true
++      no_allocator_crate = true
++    }
+   }
+ 
+   if (rust_allocator_uses_allocator_impls_h) {
+diff --git a/build/rust/allocator/stable_system_allocator.rs b/build/rust/allocator/stable_system_allocator.rs
+new file mode 100644
+--- /dev/null
++++ b/build/rust/allocator/stable_system_allocator.rs
+@@ -0,0 +1,7 @@
++// Copyright 2026 Marcin FM
++// SPDX-License-Identifier: BSD-3-Clause
++
++// Let stable rustc emit the allocator and standard-library shims needed when
++// the final executable is linked by the C++ toolchain rather than rustc.
++#[global_allocator]
++static GLOBAL: std::alloc::System = std::alloc::System;
+diff --git a/build/rust/cargo_crate.gni b/build/rust/cargo_crate.gni
+--- a/build/rust/cargo_crate.gni
++++ b/build/rust/cargo_crate.gni
+@@ -463,10 +463,12 @@ template("cargo_crate") {
+         rustc_print_cfg_path,
+       ]
+ 
+-      if (host_os == "win") {
+-        inputs += [ "//third_party/rust-toolchain/bin/rustc.exe" ]
+-      } else {
+-        inputs += [ "//third_party/rust-toolchain/bin/rustc" ]
++      if (use_chromium_rust_toolchain) {
++        if (host_os == "win") {
++          inputs += [ "//third_party/rust-toolchain/bin/rustc.exe" ]
++        } else {
++          inputs += [ "//third_party/rust-toolchain/bin/rustc" ]
++        }
+       }
+ 
+       build_script_target = ":${_build_script_name}($rust_macro_toolchain)"
+diff --git a/build/rust/gni_impl/rust_target.gni b/build/rust/gni_impl/rust_target.gni
+--- a/build/rust/gni_impl/rust_target.gni
++++ b/build/rust/gni_impl/rust_target.gni
+@@ -479,9 +479,14 @@ template("rust_target") {
+     # consistency. However, this is currently incompatible with how Chromium
+     # builds rust dependencies (https://crbug.com/469501106 documents the errors
+     # encountered when trying this).
+-    if ((!defined(invoker.no_allocator_crate) || !invoker.no_allocator_crate) &&
+-        !is_cronet_for_aosp_build) {
+-      _rust_deps += [ "//build/rust/allocator" ]
++    if (rustc_nightly_capability) {
++      if ((!defined(invoker.no_allocator_crate) ||
++           !invoker.no_allocator_crate) &&
++          !is_cronet_for_aosp_build) {
++        _rust_deps += [ "//build/rust/allocator" ]
++      }
++    } else {
++      not_needed(invoker, [ "no_allocator_crate" ])
+     }
+ 
+     if (_build_unit_tests) {
+diff --git a/build/rust/rust_bindgen.gni b/build/rust/rust_bindgen.gni
+--- a/build/rust/rust_bindgen.gni
++++ b/build/rust/rust_bindgen.gni
+@@ -20,8 +20,7 @@ if (host_os == "win") {
+ # On Windows, the libclang.dll is beside the bindgen.exe, otherwise it is in
+ # ../lib.
+ _libclang_path = rust_bindgen_root
+-if (!use_chromium_rust_toolchain &&
+-    (current_cpu == "ppc64" || current_cpu == "s390x")) {
++if (!use_chromium_rust_toolchain && host_os != "win") {
+   _libclang_path = rust_sysroot_absolute + "/lib64"
+ } else if (host_os == "win") {
+   _libclang_path += "/bin"
+diff --git a/build/rust/rust_bindgen_generator.gni b/build/rust/rust_bindgen_generator.gni
+--- a/build/rust/rust_bindgen_generator.gni
++++ b/build/rust/rust_bindgen_generator.gni
+@@ -27,8 +27,7 @@ if (!use_chromium_rust_toolchain &&
+ # On Windows, the libclang.dll is beside the bindgen.exe, otherwise it is in
+ # ../lib.
+ _libclang_path = rust_bindgen_root
+-if (!use_chromium_rust_toolchain &&
+-    (host_cpu == "ppc64" || host_cpu == "s390x")) {
++if (!use_chromium_rust_toolchain && host_os != "win") {
+   _libclang_path = rust_sysroot_absolute + "/lib64"
+ } else if (host_os == "win") {
+   _libclang_path += "/bin"
+diff --git a/build/rust/std/BUILD.gn b/build/rust/std/BUILD.gn
+--- a/build/rust/std/BUILD.gn
++++ b/build/rust/std/BUILD.gn
+@@ -268,10 +268,12 @@ if (toolchain_has_rust) {
+       out_libdir = rebase_path(target_out_dir, root_build_dir)
+       out_depfile = rebase_path(depfile, root_build_dir)
+ 
+-      if (host_os == "win") {
+-        inputs = [ "//third_party/rust-toolchain/bin/rustc.exe" ]
+-      } else {
+-        inputs = [ "//third_party/rust-toolchain/bin/rustc" ]
++      if (use_chromium_rust_toolchain) {
++        if (host_os == "win") {
++          inputs = [ "//third_party/rust-toolchain/bin/rustc.exe" ]
++        } else {
++          inputs = [ "//third_party/rust-toolchain/bin/rustc" ]
++        }
+       }
+ 
+       # For the rustc sysroot we must include even the rlibs we don't pass to
+diff --git a/v8/BUILD.gn b/v8/BUILD.gn
+--- a/v8/BUILD.gn
++++ b/v8/BUILD.gn
+@@ -2525,6 +2525,9 @@ group("v8_maybe_icu") {
+ group("v8_maybe_temporal") {
+   if (v8_enable_temporal_support) {
+     public_deps = [ "//third_party/rust/temporal_capi" ]
++    if (!rustc_nightly_capability) {
++      public_deps += [ "//build/rust/allocator:stable_system_allocator" ]
++    }
+   }
+ }
+ 

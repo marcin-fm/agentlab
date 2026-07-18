@@ -1,0 +1,80 @@
+---
+source:
+  tag: v149.2.0
+  commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
+  url: https://codeload.github.com/denoland/rusty_v8/tar.gz/5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
+  bytes: 340819
+  sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
+recursive_source:
+  receipt: rust-v8-149.2.0-source-closure.json
+  receipt_sha256: fd5c2a46665b5686799a7505158e4f0bb047e087750acb455c50dfb90e3484b1
+  components: 21
+  submodules: 20
+  exact_commits_materialized: true
+  immutable_component_archives_verified: false
+  recursive_rpm_source_generated: false
+patch_validation:
+  exact_tag_recursive_worktree: true
+  fuzz: 0
+  system_rust_toolchain_patch: passed
+  gcc_portability_patch: passed
+prototype_build:
+  environment: fedora-44-x86_64
+  source_mode: direct GN and Ninja
+  rust: 1.96.1-1.fc44
+  compiler: GCC 16.1.1
+  linker: LLD 22.1.8
+  gn: 2437
+  ninja: 1.13.2
+  jobs: 4
+  prebuilt_chromium_rust_toolchain_used: false
+  system_libstdcxx: true
+  temporal_rust_target: passed
+  mksnapshot_link: passed
+  archive_build: passed
+  archive_bytes: 160316016
+  archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
+  build_network_isolation: not-enforced
+  isolated_buildroot: false
+prototype_consumer_smoke:
+  cargo_offline: true
+  crate: v8 149.2.0
+  crate_default_features: false
+  archive_environment: RUSTY_V8_ARCHIVE
+  binding_environment: RUSTY_V8_SRC_BINDING_PATH
+  output: Fedora Rusty V8
+exact_codex_feature_smoke:
+  cargo_offline: true
+  crate: v8 149.2.0
+  registry_crate_source: true
+  selected_features:
+  - default
+  - use_custom_libcxx
+  archive_environment: RUSTY_V8_ARCHIVE
+  link_environment: GN_ARGS=use_custom_libcxx=false
+  binding_environment_override: false
+  output: Fedora Rusty V8
+builds:
+  fedora_43_x86_64:
+    status: not-run-blocked
+  fedora_44_x86_64:
+    status: not-run-blocked
+  fedora_43_aarch64:
+    status: not-run-blocked
+  fedora_44_aarch64:
+    status: not-run-blocked
+  rawhide_x86_64:
+    status: not-run-blocked
+  rawhide_aarch64:
+    status: not-run-blocked
+licenses:
+  known_draft_expression: MIT AND BSD-3-Clause
+  downstream_allocator_shim: BSD-3-Clause
+  recursive_inventory_complete: false
+  required_texts_verified: false
+  fedora_allowed_spdx_verified: false
+  final_static_archive_license_complete: false
+installation:
+  generated_rpms_installed: false
+copr:
+  mutated: false

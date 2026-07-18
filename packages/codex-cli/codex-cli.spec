@@ -15,7 +15,7 @@
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.6%{?dist}
+Release:        0.7%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -47,6 +47,7 @@ ExclusiveArch:  x86_64
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  rust >= 1.95
+BuildRequires:  rusty-v8-static(abi) = 149.2.0
 
 %description
 Codex CLI is an open-source coding agent that runs in a terminal and integrates
@@ -58,8 +59,8 @@ offline as evidence, but the combined archive is not an immutable RPM source or
 approved license closure. The selected-aware Cargo audit now distinguishes 873
 Linux-linked packages from compile-time and resolver-only identities, but the
 package must not produce an RPM until source publication and integration,
-upstreamable V8 integration, complete license evidence, and offline builds are
-proven.
+the separate Rusty V8 provider, complete license evidence, and offline builds
+are proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -80,6 +81,8 @@ exit 1
 
 %build
 export CODEX_DISTRIBUTION_CHANNEL=%{codex_distribution_channel}
+export RUSTY_V8_ARCHIVE=%{_libdir}/rust-v8/149.2.0/librusty_v8.a
+export GN_ARGS='use_custom_libcxx=false'
 
 %install
 install -Dpm0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/codex/config.toml
@@ -88,6 +91,11 @@ install -Dpm0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/codex/config.toml
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.7
+- Select the separate blocked Rusty V8 149.2.0 ABI provider contract.
+- Match Codex's default crate feature to the system-libstdc++ archive link mode.
+- Keep recursive V8 sources, native licenses, and offline provider builds gated.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.6
 - Record the selected Linux and Fedora all-target Cargo license graphs.
 - Keep native Rusty V8 license texts and the final aggregate License tag blocked.

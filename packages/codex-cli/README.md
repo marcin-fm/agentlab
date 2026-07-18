@@ -184,23 +184,28 @@ Rust target compiled, `mksnapshot` linked, and the final 160,316,016-byte
 An offline path consumer linked that archive with the published 149.2.0 binding
 file and executed JavaScript, printing `Fedora Rusty V8`.
 
-That prototype is evidence, not a package-ready provider. It uses unsubmitted
-local changes to skip bundled Rust inputs and nightly-only flags for an explicit
-stable custom toolchain, support Fedora's libclang layout, provide allocator
-shims through a stable-rustc static library, and fix two small V8 GCC/include
-portability defects. The Ninja build was not network-isolated or run in Mock,
-the generated binding comes from the published crate, and the recursive
-Chromium/V8 source and aggregate static-link license closure are not yet an
-immutable RPM input set.
+That prototype is evidence, not a package-ready provider. Its exact source,
+consumer contract, and two zero-fuzz patch groups now live in the separate
+blocked `packages/rust-v8` draft. The `rust-v8-static` package provides
+`rusty-v8-static(abi) = 149.2.0` and installs
+`/usr/lib64/rust-v8/149.2.0/librusty_v8.a`; Codex keeps the published crate
+binding and selects the archive through `RUSTY_V8_ARCHIVE`.
 
-The preferred upstream direction is an opt-in system-toolchain mode that keeps
-current defaults, followed by upstreaming the proven stable-toolchain and V8
-portability fixes. A separate `rust-v8` source package may be appropriate only
-after those changes are upstreamed or reduced to reviewed patches and the full
-source/license closure reproduces without networking in Fedora 43 and Fedora 44
-buildroots. It is premature to add such a package now. openSUSE's nearby
-`rusty_v8 149.4.0` package demonstrates the scale of the source build but still
-supplies a prohibited 274,625,900-byte prebuilt Chromium Rust toolchain.
+Codex's selected Cargo graph enables `v8` features `default,use_custom_libcxx`,
+while the Fedora archive uses system libstdc++. `%build` therefore also exports
+`GN_ARGS=use_custom_libcxx=false`, which makes the crate build script emit the
+matching dynamic libstdc++ link flag. An offline smoke with that exact feature
+and environment tuple prints `Fedora Rusty V8`.
+
+The separate package boundary is now selected because the crate already accepts
+an external exact-version archive and the Chromium/V8 build concern is reusable.
+It does not remove Codex's final static-link license obligations. The provider
+remains blocked until all 20 submodules are immutable RPM inputs, the patches
+are accepted or fully reviewed downstream, the recursive license closure is
+complete, and network-isolated Fedora 43, Fedora 44, and Rawhide builds pass.
+openSUSE's nearby `rusty_v8 149.4.0` package demonstrates the scale of the
+source build but still supplies a prohibited 274,625,900-byte prebuilt Chromium
+Rust toolchain.
 
 ## Fedora Update Policy
 
@@ -225,9 +230,9 @@ upstream issue or pull request has been submitted.
    resolver-only sources, then integrate Fedora vendoring metadata.
 3. Upstream or review the V8 system-toolchain changes, materialize every
    recursive source and license input immutably, and reproduce the build without
-   networking in Fedora 43 and Fedora 44 buildroots.
+   networking in Fedora 43, Fedora 44, and Rawhide buildroots.
 4. Complete license-text and native static-link review, then run clean offline
-   Fedora 43 and Fedora 44 builds, tests, lint, and extracted-payload validation.
+   Fedora 43, Fedora 44, and Rawhide builds, tests, lint, and extracted-payload validation.
 
 ## Intentional Failure
 

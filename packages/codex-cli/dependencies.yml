@@ -186,7 +186,16 @@ vendored_native_sources:
 selected_special_sources:
 - component: rusty_v8
   crate: v8 149.2.0
-  status: local-source-build-prototype-passed-package-integration-pending
+  status: separate-package-draft-blocked
+  selected_provider: rusty-v8-static(abi) = 149.2.0
+  provider_package_path: packages/rust-v8
+  provider_archive: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
+  provider_environment: RUSTY_V8_ARCHIVE
+  provider_link_environment: GN_ARGS=use_custom_libcxx=false
+  selected_crate_features:
+  - default
+  - use_custom_libcxx
+  exact_feature_contract_smoke: passed-offline
   upstream_v8: 14.9.207.2
   upstream_tag_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
   compile_time_opt_out: absent
@@ -225,7 +234,8 @@ selected_special_sources:
     - Support Fedora's libclang layout and a stable-rustc allocator static library for C++ final links.
     - Use system libstdc++, GCC, and LLD; fix two default-preserving V8 GCC/include portability defects.
   upstreamable_path: Add an opt-in no-download system-toolchain mode that preserves current defaults, then upstream the stable custom-toolchain and V8 portability fixes proven by the local prototype.
-  separate_package_candidate: A new rust-v8 package is appropriate only after the prototype changes are upstreamed or reduced to reviewed patches and a complete immutable, license-audited, network-isolated Fedora 43/44 source build is proven.
+  separate_package_decision: Selected. The blocked rust-v8 source package owns the recursive Chromium/V8 source, stable-toolchain patches, static archive, architecture proof, and provider license closure; Codex remains responsible for final static-link license propagation.
+  separate_package_readiness: The provider draft records exact commits and zero-fuzz patches but remains blocked pending immutable recursive archives, upstream resolution, aggregate licenses, and network-isolated Fedora 43/44/Rawhide builds.
   distro_precedent: openSUSE rusty_v8 149.4.0 uses source mode with a 274625900-byte prebuilt Chromium Rust toolchain, which is forbidden by this package policy.
 closure_audit:
   production_source_selection_verified: true

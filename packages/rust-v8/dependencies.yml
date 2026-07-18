@@ -1,0 +1,119 @@
+---
+target_release: 149.2.0
+target_triple: x86_64-unknown-linux-gnu
+upstream_v8: 14.9.207.2
+source_closure:
+  schema: rust-v8-source-closure/v1
+  receipt: rust-v8-149.2.0-source-closure.json
+  receipt_sha256: fd5c2a46665b5686799a7505158e4f0bb047e087750acb455c50dfb90e3484b1
+  root_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
+  root_archive_sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
+  root_archive_bytes: 340819
+  recursive_components: 21
+  recursive_submodules: 20
+  component_commits_materialized: true
+  component_archive_hashes_complete: false
+  immutable_recursive_archive: false
+notable_components:
+  chromium_build:
+    commit: fffa45f2e9df48c0230a4c799b7d12e7f83d8219
+  chromium_rust_sources:
+    commit: 2b055f4ecac78bbf34a0d34217c699b7b09b44dd
+    temporal_capi_selected: true
+  denoland_v8:
+    commit: 73d19698991616a34a00ca691a6e697dbb69e2ef
+  icu:
+    commit: ee5f27adc28bd3f15b2c293f726d14d2e336cbd5
+toolchain:
+  source_build_driver: GN and Ninja directly, not Cargo's downloader path
+  gn: gn
+  ninja: ninja-build
+  rust: rust >= 1.91
+  rustfmt: required
+  bindgen: bindgen-cli >= 0.72
+  cxx: gcc-c++
+  linker: lld
+  libclang: clang-libs >= 19
+  python: python3
+  custom_libcxx: false
+  system_libstdcxx: true
+  chromium_binary_rust_toolchain: forbidden
+build_configuration:
+  is_debug: false
+  is_clang: false
+  use_lld: true
+  use_custom_libcxx: false
+  symbol_level: 0
+  line_tables_only: false
+  no_inline_line_tables: false
+  clang_base_path: /usr
+  clang_version: "22"
+  v8_enable_sandbox: false
+  v8_enable_pointer_compression: false
+  v8_enable_v8_checks: false
+  rusty_v8_enable_simdutf: false
+  treat_warnings_as_errors: false
+  rust_sysroot_absolute: /usr
+  rust_bindgen_root: /usr
+  toolchain_supports_rust_thin_lto: false
+patches:
+- file: rust-v8-system-rust-toolchain.patch
+  sha256: 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
+  purpose: Guard Chromium nightly-only Rust behavior, use the explicit Fedora stable toolchain and libclang layout, and link stable allocator shims for Temporal Rust.
+  upstream_status: not-submitted
+  zero_fuzz_dry_run: passed
+- file: rust-v8-gcc-portability.patch
+  sha256: 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
+  purpose: Preserve Clang warning handling while making V8 preprocessing valid under GCC and add one required direct include.
+  upstream_status: not-submitted
+  zero_fuzz_dry_run: passed
+output:
+  source_package: rust-v8
+  binary_package: rust-v8-static
+  provider_capability: rusty-v8-static(abi) = 149.2.0
+  archive_name: librusty_v8.a
+  archive_path: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
+  archive_sha256_from_prototype: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
+  archive_bytes_from_prototype: 160316016
+consumer_integration:
+  cargo_crate: v8 149.2.0
+  selected_features:
+  - default
+  - use_custom_libcxx
+  archive_build_features:
+    use_custom_libcxx: false
+    v8_enable_sandbox: false
+    v8_enable_pointer_compression: false
+    v8_enable_v8_checks: false
+    simdutf: false
+  archive_environment: RUSTY_V8_ARCHIVE=/usr/lib64/rust-v8/149.2.0/librusty_v8.a
+  link_environment: GN_ARGS=use_custom_libcxx=false
+  feature_contract_smoke: passed-offline
+  registry_crate_source: true
+  binding_environment_override: false
+  binding_source: gen/src_binding_release_x86_64-unknown-linux-gnu.rs from the exact crate source
+  codex_buildrequires: rusty-v8-static(abi) = 149.2.0
+  runtime_dependency: none; the archive is statically linked
+  consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
+license_audit:
+  rusty_v8_root_license: MIT
+  downstream_allocator_shim_license: BSD-3-Clause
+  known_draft_expression: MIT AND BSD-3-Clause
+  recursive_component_inventory_complete: false
+  vendored_rust_crate_inventory_complete: false
+  license_texts_verified: false
+  fedora_allowed_spdx_verified: false
+  system_library_decisions_verified: false
+  final_static_archive_license_complete: false
+closure_audit:
+  root_source_verified: true
+  recursive_commits_recorded: true
+  recursive_component_archives_verified: false
+  patches_verified: true
+  production_build_sources_verified: false
+  network_isolated_build_verified: false
+  fedora_43_verified: false
+  fedora_44_verified: false
+  rawhide_verified: false
+  aarch64_verified: false
+  package_ready: false

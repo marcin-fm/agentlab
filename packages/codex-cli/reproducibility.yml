@@ -117,13 +117,22 @@ special_source_audit:
       build_network_isolation: not-enforced
       isolated_buildroot: false
       upstream_changes_submitted: false
-    separate_rust_v8_package: deferred-until-upstream-source-closure-license-and-isolated-build-proof
+    separate_rust_v8_package: selected-provider-draft-blocked
+    provider: rusty-v8-static(abi) = 149.2.0
+    provider_archive: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
+    provider_link_environment: GN_ARGS=use_custom_libcxx=false
+    selected_crate_features:
+    - default
+    - use_custom_libcxx
+    exact_feature_contract_smoke: passed-offline
     source_build_offline: local-consumer-only
     chromium_rust_toolchain_source_build: replaced-by-system-fedora-rust-in-local-prototype
 builds:
   fedora_43_x86_64:
     status: not-run-blocked
   fedora_44_x86_64:
+    status: not-run-blocked
+  rawhide_x86_64:
     status: not-run-blocked
 installation:
   generated_rpms_installed: false

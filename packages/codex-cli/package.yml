@@ -3,14 +3,17 @@ name: codex-cli
 status: blocked
 blockers:
 - The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement materialize and resolve reproducibly. A selected-aware audit now identifies 873 Linux-linked Cargo packages, but the 1,124-source archive is evidence only and still needs maintainer review, immutable RPM hosting, complete license texts, and Fedora macro integration.
-- Selected crate v8 149.2.0 has no compatible Fedora provider. A local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but it relies on unsubmitted upstream changes and lacks an immutable, license-complete, network-isolated Fedora 43/44 package proof.
-- Offline Fedora 43 and Fedora 44 builds, tests, final linked-license approval, and payload validation have not been completed.
+- Selected crate v8 149.2.0 now has a separate blocked rust-v8-static provider draft. The local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but the provider still lacks immutable recursive sources, complete licenses, accepted patches, and network-isolated Fedora 43/44/Rawhide proof.
+- Offline Fedora 43, Fedora 44, and Rawhide builds, tests, final linked-license approval, and payload validation have not been completed.
 source_policy:
   npm_wrapper: forbidden platform-binary selector
   rpm_build_network: forbidden
   upstream_prebuilt_binaries: forbidden
   selected_workspace_member: codex-cli
   target: x86_64-unknown-linux-gnu
+  rusty_v8_provider: rusty-v8-static(abi) = 149.2.0
+  rusty_v8_archive: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
+  rusty_v8_link_override: GN_ARGS=use_custom_libcxx=false
   selected_closure_receipt: codex-cli-0.144.5-selected-cargo-closure.json
   selected_closure_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
   selected_vendor_receipt: codex-cli-0.144.5-selected-cargo-vendor-receipt.json
@@ -53,6 +56,8 @@ source_policy:
   rusty_v8_archive_bytes: 160316016
   rusty_v8_archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
   rusty_v8_upstream_submission: not-submitted
+  rusty_v8_package_status: separate-provider-draft-blocked
+  rusty_v8_exact_feature_contract: verified-offline
 cargo_license_audit:
   status: cargo-metadata-complete-native-static-incomplete
   authoritative_selected_packages: 1004
