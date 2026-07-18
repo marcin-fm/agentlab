@@ -16,107 +16,443 @@
     {
       "path": ".",
       "url": "https://github.com/denoland/rusty_v8.git",
-      "commit": "5d0e31ea6bf67f4559faa759b91e22bc3f1cd696"
+      "commit": "5d0e31ea6bf67f4559faa759b91e22bc3f1cd696",
+      "rpm_source": 0,
+      "archive": {
+        "url": "https://codeload.github.com/denoland/rusty_v8/tar.gz/5d0e31ea6bf67f4559faa759b91e22bc3f1cd696",
+        "filename": "rust-v8-149.2.0.tar.gz",
+        "layout": "github-wrapper",
+        "bytes": 340819,
+        "sha256": "8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a",
+        "tree_file_records": 151,
+        "tree_sha256": "adbbdb73b1eb08feabb26369c802a17da2ba2c75d368d391144c1a4bf97f4f97",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": "rusty_v8-5d0e31ea6bf67f4559faa759b91e22bc3f1cd696",
+        "file_count": 151,
+        "unpacked_size_bytes": 1770532,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "build",
       "url": "https://github.com/denoland/chromium_build.git",
-      "commit": "fffa45f2e9df48c0230a4c799b7d12e7f83d8219"
+      "commit": "fffa45f2e9df48c0230a4c799b7d12e7f83d8219",
+      "rpm_source": 1,
+      "archive": {
+        "url": "https://codeload.github.com/denoland/chromium_build/tar.gz/fffa45f2e9df48c0230a4c799b7d12e7f83d8219",
+        "filename": "rust-v8-149.2.0-build-fffa45f2e9df48c0230a4c799b7d12e7f83d8219.tar.gz",
+        "layout": "github-wrapper",
+        "bytes": 1776285,
+        "sha256": "50ab8b983a870cdf27f715e0ee1ee06f8aaceb2c4ab2dcb19d32e66e55bc4e0e",
+        "tree_file_records": 1474,
+        "tree_sha256": "3890762b5aad05a3907604f37a7cfa988be8459535979635a20e3bf31e99bfb6",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": "chromium_build-fffa45f2e9df48c0230a4c799b7d12e7f83d8219",
+        "file_count": 1474,
+        "unpacked_size_bytes": 7595749,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "buildtools",
       "url": "https://chromium.googlesource.com/chromium/src/buildtools.git",
-      "commit": "c9110ba7150d93134b1c85ea392033b4a82d28f7"
+      "commit": "c9110ba7150d93134b1c85ea392033b4a82d28f7",
+      "rpm_source": 2,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/buildtools/+archive/c9110ba7150d93134b1c85ea392033b4a82d28f7.tar.gz",
+        "filename": "rust-v8-149.2.0-buildtools-c9110ba7150d93134b1c85ea392033b4a82d28f7.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 60361,
+        "sha256": "b09a0c7020bc8883600bdcbf34137a6ace18f4ab1fd334231e5e52680f2e3f1a",
+        "tree_file_records": 83,
+        "tree_sha256": "6c73cb5c5ff30c83e19c79a2c1c73bc47a8ca315e27c3ea1ee5daaab44a03046",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 83,
+        "unpacked_size_bytes": 241837,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/abseil-cpp",
       "url": "https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp.git",
-      "commit": "5e42a36a85a252d8cdee6c39661d2bfd9883fd5c"
+      "commit": "5e42a36a85a252d8cdee6c39661d2bfd9883fd5c",
+      "rpm_source": 3,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp/+archive/5e42a36a85a252d8cdee6c39661d2bfd9883fd5c.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-abseil-cpp-5e42a36a85a252d8cdee6c39661d2bfd9883fd5c.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 3125867,
+        "sha256": "0c31655455f1631411e8aa2534b6c40ec0bbde91d91df51d0909c918308be4b7",
+        "tree_file_records": 1639,
+        "tree_sha256": "b4aa82a1aba96d342d2f051997598cb91d494e0b5c0ab9203a719951e23e3e53",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 1639,
+        "unpacked_size_bytes": 19899634,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/dragonbox/src",
       "url": "https://chromium.googlesource.com/external/github.com/jk-jeon/dragonbox.git",
-      "commit": "beeeef91cf6fef89a4d4ba5e95d47ca64ccb3a44"
+      "commit": "beeeef91cf6fef89a4d4ba5e95d47ca64ccb3a44",
+      "rpm_source": 4,
+      "archive": {
+        "url": "https://chromium.googlesource.com/external/github.com/jk-jeon/dragonbox/+archive/beeeef91cf6fef89a4d4ba5e95d47ca64ccb3a44.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-dragonbox-src-beeeef91cf6fef89a4d4ba5e95d47ca64ccb3a44.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 4235131,
+        "sha256": "f293a7b481d66ac0992a7ef8f2cfdd7904834ddda2be98322a80852fc3ab3c3f",
+        "tree_file_records": 92,
+        "tree_sha256": "2ac724b53361b2ca171a267703205a06afa33d989b070f6baf61d62f7a695b6b",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 92,
+        "unpacked_size_bytes": 5096952,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/fast_float/src",
       "url": "https://chromium.googlesource.com/external/github.com/fastfloat/fast_float.git",
-      "commit": "05087a303dad9c98768b33c829d398223a649bc6"
+      "commit": "05087a303dad9c98768b33c829d398223a649bc6",
+      "rpm_source": 5,
+      "archive": {
+        "url": "https://chromium.googlesource.com/external/github.com/fastfloat/fast_float/+archive/05087a303dad9c98768b33c829d398223a649bc6.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-fast_float-src-05087a303dad9c98768b33c829d398223a649bc6.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 126169,
+        "sha256": "66ace9c19eafff203aa06d1254b72d6ad102af56ff9e18ffd5dcd5f8c6037aa9",
+        "tree_file_records": 110,
+        "tree_sha256": "65024ca4fcce16317c43617eaa899e699387e81ef1399d7d6f6e6561117df228",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 110,
+        "unpacked_size_bytes": 536375,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/fp16/src",
       "url": "https://github.com/Maratyszcza/FP16.git",
-      "commit": "3d2de1816307bac63c16a297e8c4dc501b4076df"
+      "commit": "3d2de1816307bac63c16a297e8c4dc501b4076df",
+      "rpm_source": 6,
+      "archive": {
+        "url": "https://codeload.github.com/Maratyszcza/FP16/tar.gz/3d2de1816307bac63c16a297e8c4dc501b4076df",
+        "filename": "rust-v8-149.2.0-third_party-fp16-src-3d2de1816307bac63c16a297e8c4dc501b4076df.tar.gz",
+        "layout": "github-wrapper",
+        "bytes": 64715,
+        "sha256": "65ace2f05fd9434b0acb7a7d3cc6cd96842ea6236b680594af932b359bedbfc1",
+        "tree_file_records": 31,
+        "tree_sha256": "78e39a5ff4fed2b2faf246172fd73823d2e697dc430e5552f863397b32ada99d",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": "FP16-3d2de1816307bac63c16a297e8c4dc501b4076df",
+        "file_count": 31,
+        "unpacked_size_bytes": 398207,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/highway/src",
       "url": "https://chromium.googlesource.com/external/github.com/google/highway.git",
-      "commit": "2607d3b5b0113992fe84d3848859eae13b3b52c1"
+      "commit": "2607d3b5b0113992fe84d3848859eae13b3b52c1",
+      "rpm_source": 7,
+      "archive": {
+        "url": "https://chromium.googlesource.com/external/github.com/google/highway/+archive/2607d3b5b0113992fe84d3848859eae13b3b52c1.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-highway-src-2607d3b5b0113992fe84d3848859eae13b3b52c1.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 3704427,
+        "sha256": "b5b576939a6c65cc20ce9e07f3cd9afda995803ca84e21169f12b72726231aa2",
+        "tree_file_records": 278,
+        "tree_sha256": "43f09c39f3253b0d4e981580bc5ec44ae3aa86a6d2db32fd63fdc3f153bfb251",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 278,
+        "unpacked_size_bytes": 9489471,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/icu",
       "url": "https://chromium.googlesource.com/chromium/deps/icu.git",
-      "commit": "ee5f27adc28bd3f15b2c293f726d14d2e336cbd5"
+      "commit": "ee5f27adc28bd3f15b2c293f726d14d2e336cbd5",
+      "rpm_source": 8,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/deps/icu/+archive/ee5f27adc28bd3f15b2c293f726d14d2e336cbd5.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-icu-ee5f27adc28bd3f15b2c293f726d14d2e336cbd5.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 55185840,
+        "sha256": "9efb2f88be40588575cfe4c10c46f59374e7764909083b4f7856ae63c154fed4",
+        "tree_file_records": 6995,
+        "tree_sha256": "9d985cd75e726493ea41582017a6cb6214630398b67511effba2eb99b6dee28f",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 6995,
+        "unpacked_size_bytes": 223955116,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/jinja2",
       "url": "https://chromium.googlesource.com/chromium/src/third_party/jinja2.git",
-      "commit": "c3027d884967773057bf74b957e3fea87e5df4d7"
+      "commit": "c3027d884967773057bf74b957e3fea87e5df4d7",
+      "rpm_source": 9,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/third_party/jinja2/+archive/c3027d884967773057bf74b957e3fea87e5df4d7.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-jinja2-c3027d884967773057bf74b957e3fea87e5df4d7.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 124235,
+        "sha256": "c0d209d11a933c9f4d52cc4fe00fd7edbdb1caa2b41ea34daba732f3a2e60cef",
+        "tree_file_records": 34,
+        "tree_sha256": "7834f2a05e4c233e4cf293d1e61373d6072de50729f88d2350dead86ba45b486",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 34,
+        "unpacked_size_bytes": 490074,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/libc++/src",
       "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxx.git",
-      "commit": "99457fa555797f8c5ac3c076ca288d8481d3b23a"
+      "commit": "99457fa555797f8c5ac3c076ca288d8481d3b23a",
+      "rpm_source": 10,
+      "archive": {
+        "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxx/+archive/99457fa555797f8c5ac3c076ca288d8481d3b23a.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-libc-src-99457fa555797f8c5ac3c076ca288d8481d3b23a.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 8893041,
+        "sha256": "4f68bd46b19af558c53bf3c84d09a0c4c11db5f905ba8a49b5d15600f757d075",
+        "tree_file_records": 12293,
+        "tree_sha256": "b88c884573a87c2fc48500fdca1a970c1ce16bae024a0966cb500ff85f2b2113",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 12293,
+        "unpacked_size_bytes": 61202026,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/libc++abi/src",
       "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxxabi.git",
-      "commit": "8f11bb1d4438d0239d0dfc1bd9456a9f31629dda"
+      "commit": "8f11bb1d4438d0239d0dfc1bd9456a9f31629dda",
+      "rpm_source": 11,
+      "archive": {
+        "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libcxxabi/+archive/8f11bb1d4438d0239d0dfc1bd9456a9f31629dda.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-libc-abi-src-8f11bb1d4438d0239d0dfc1bd9456a9f31629dda.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 806352,
+        "sha256": "47f8652a20aad86e3f2b3b7a3b5c4c3432f7ffe8a18afb372d0f79e35350b30b",
+        "tree_file_records": 161,
+        "tree_sha256": "f367e021c4823a305bf811595b13eef189a51ab8682be5c07763e7499fe6ef37",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 161,
+        "unpacked_size_bytes": 6429132,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/libunwind/src",
       "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libunwind.git",
-      "commit": "a2530baf3d11013afd0f1c1941ab6bef5ba71d0a"
+      "commit": "a2530baf3d11013afd0f1c1941ab6bef5ba71d0a",
+      "rpm_source": 12,
+      "archive": {
+        "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libunwind/+archive/a2530baf3d11013afd0f1c1941ab6bef5ba71d0a.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-libunwind-src-a2530baf3d11013afd0f1c1941ab6bef5ba71d0a.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 181592,
+        "sha256": "8d5636689b9d79664cbc1bf913ec214484ada4dc9e22c53454baae6b9a26f25d",
+        "tree_file_records": 76,
+        "tree_sha256": "f13edb8b73af7218d4f3c2ae482b676a0d8856ae3adf276a4ec20510712db480",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 76,
+        "unpacked_size_bytes": 865307,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/llvm-libc/src",
       "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libc.git",
-      "commit": "cb952785ccee13811f293f3c419958d1e3ddafbf"
+      "commit": "cb952785ccee13811f293f3c419958d1e3ddafbf",
+      "rpm_source": 13,
+      "archive": {
+        "url": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/libc/+archive/cb952785ccee13811f293f3c419958d1e3ddafbf.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-llvm-libc-src-cb952785ccee13811f293f3c419958d1e3ddafbf.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 7656935,
+        "sha256": "0c0eee5fba7777f543c6b5f774f14639dd815cad7ff344f94190e90a17f2cd80",
+        "tree_file_records": 6925,
+        "tree_sha256": "406217222acbb3f43c4c026f75fcb4c109b719c297e755573a3f529c3e0218b1",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 6925,
+        "unpacked_size_bytes": 26414005,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/markupsafe",
       "url": "https://chromium.googlesource.com/chromium/src/third_party/markupsafe.git",
-      "commit": "4256084ae14175d38a3ff7d739dca83ae49ccec6"
+      "commit": "4256084ae14175d38a3ff7d739dca83ae49ccec6",
+      "rpm_source": 14,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/third_party/markupsafe/+archive/4256084ae14175d38a3ff7d739dca83ae49ccec6.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-markupsafe-4256084ae14175d38a3ff7d739dca83ae49ccec6.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 10302,
+        "sha256": "9229c1490205cc111b01dbc06a3dba3f3bc0dfb3e94d19c050423142616b9d09",
+        "tree_file_records": 15,
+        "tree_sha256": "ec20925a7d6e05391dea540fb612d263b9402694fb8c9907203c23da7691563f",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 15,
+        "unpacked_size_bytes": 27154,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/partition_alloc",
       "url": "https://chromium.googlesource.com/chromium/src/base/allocator/partition_allocator.git",
-      "commit": "fafdd4c9f559c6d0cfdf2ed3170ce370b59bfdbf"
+      "commit": "fafdd4c9f559c6d0cfdf2ed3170ce370b59bfdbf",
+      "rpm_source": 15,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/base/allocator/partition_allocator/+archive/fafdd4c9f559c6d0cfdf2ed3170ce370b59bfdbf.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-partition_alloc-fafdd4c9f559c6d0cfdf2ed3170ce370b59bfdbf.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 860034,
+        "sha256": "d5851c09a3b9da8be25f9047621f17057312024db5824926f42ae59dc747db0d",
+        "tree_file_records": 400,
+        "tree_sha256": "e61dd2ecc7b489a868ed69468309ad469736ea7edc2d460c9b713f7777b9fb59",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 400,
+        "unpacked_size_bytes": 3501928,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/rust",
       "url": "https://chromium.googlesource.com/chromium/src/third_party/rust",
-      "commit": "2b055f4ecac78bbf34a0d34217c699b7b09b44dd"
+      "commit": "2b055f4ecac78bbf34a0d34217c699b7b09b44dd",
+      "rpm_source": 16,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/third_party/rust/+archive/2b055f4ecac78bbf34a0d34217c699b7b09b44dd.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-rust-2b055f4ecac78bbf34a0d34217c699b7b09b44dd.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 32425111,
+        "sha256": "7d5454624142efb86cf3f38e7aacfa96aba2f8dfc1007c528d9c6936c60bf2fe",
+        "tree_file_records": 10120,
+        "tree_sha256": "d4ab22e366f03b1d7786612dfce4831c5f31ba8118865d10e3c24569fe461397",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 10120,
+        "unpacked_size_bytes": 196097090,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "third_party/simdutf",
       "url": "https://chromium.googlesource.com/chromium/src/third_party/simdutf",
-      "commit": "f7356eed293f8208c40b3c1b344a50bd70971983"
+      "commit": "f7356eed293f8208c40b3c1b344a50bd70971983",
+      "rpm_source": 17,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/third_party/simdutf/+archive/f7356eed293f8208c40b3c1b344a50bd70971983.tar.gz",
+        "filename": "rust-v8-149.2.0-third_party-simdutf-f7356eed293f8208c40b3c1b344a50bd70971983.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 425714,
+        "sha256": "c571ecd63e633ee43498ee1ec0c51b3c670d2879dfdc44a82aed8155f8532ac5",
+        "tree_file_records": 6,
+        "tree_sha256": "910b730a707e8626152ab7b1b3d1fc58498ef645c654c18e130f1c9de256ee03",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 6,
+        "unpacked_size_bytes": 3219229,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "tools/clang",
       "url": "https://chromium.googlesource.com/chromium/src/tools/clang.git",
-      "commit": "61150a5f1ddf6460bad3d896c1502c6a56e15311"
+      "commit": "61150a5f1ddf6460bad3d896c1502c6a56e15311",
+      "rpm_source": 18,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/tools/clang/+archive/61150a5f1ddf6460bad3d896c1502c6a56e15311.tar.gz",
+        "filename": "rust-v8-149.2.0-tools-clang-61150a5f1ddf6460bad3d896c1502c6a56e15311.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 639339,
+        "sha256": "73bbcb5cb3f8032d910d9a091b37cd444b17ca015c3e91a90595a86c6f160995",
+        "tree_file_records": 1004,
+        "tree_sha256": "808680ac5bccfaeedf9ae6e0e37840ff01de59093b152cbfba7d3eda925306bc",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 1004,
+        "unpacked_size_bytes": 3049324,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "tools/win",
       "url": "https://chromium.googlesource.com/chromium/src/tools/win",
-      "commit": "d16e6b55b2bd699735919d8a13a55ff284086603"
+      "commit": "d16e6b55b2bd699735919d8a13a55ff284086603",
+      "rpm_source": 19,
+      "archive": {
+        "url": "https://chromium.googlesource.com/chromium/src/tools/win/+archive/d16e6b55b2bd699735919d8a13a55ff284086603.tar.gz",
+        "filename": "rust-v8-149.2.0-tools-win-d16e6b55b2bd699735919d8a13a55ff284086603.tar.gz",
+        "layout": "gitiles-flat",
+        "bytes": 177268,
+        "sha256": "ee1dbd86c6de3e0da220268836c6972eaa3bb818a9e9693be9e1adad8bf6bd02",
+        "tree_file_records": 91,
+        "tree_sha256": "807c23e5664c8d97ad7c363a46139b634552f399c59880666c13a1cc67420e6d",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": null,
+        "file_count": 91,
+        "unpacked_size_bytes": 646860,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     },
     {
       "path": "v8",
       "url": "https://github.com/denoland/v8.git",
-      "commit": "73d19698991616a34a00ca691a6e697dbb69e2ef"
+      "commit": "73d19698991616a34a00ca691a6e697dbb69e2ef",
+      "rpm_source": 20,
+      "archive": {
+        "url": "https://codeload.github.com/denoland/v8/tar.gz/73d19698991616a34a00ca691a6e697dbb69e2ef",
+        "filename": "rust-v8-149.2.0-v8-73d19698991616a34a00ca691a6e697dbb69e2ef.tar.gz",
+        "layout": "github-wrapper",
+        "bytes": 32678156,
+        "sha256": "63a19755f87d8366c5112c341e0d4fcdb10bf9706d6acb55cf581b9afee9361a",
+        "tree_file_records": 18936,
+        "tree_sha256": "babf9f9482b4f4c5781d686f8c7723a0f9404fdc6e2c1b3c30c320ac3dee1e36",
+        "content_modes_and_symlinks_match_git": true,
+        "archive_root": "v8-73d19698991616a34a00ca691a6e697dbb69e2ef",
+        "file_count": 18936,
+        "unpacked_size_bytes": 162641142,
+        "symlink_count": 0,
+        "hardlink_count": 0
+      }
     }
   ],
   "patches": [
@@ -166,14 +502,33 @@
     "root_archive_verified": true,
     "recursive_component_count": 21,
     "recursive_commits_materialized": true,
-    "recursive_component_archives_verified": false,
-    "immutable_recursive_rpm_source_verified": false,
+    "recursive_component_archives_verified": true,
+    "immutable_recursive_rpm_source_verified": true,
     "network_isolated_build_verified": false,
     "fedora_43_build_verified": false,
     "fedora_44_build_verified": false,
     "aarch64_build_verified": false,
     "license_inventory_complete": false,
     "fedora_allowed_spdx_verified": false,
-    "production_package_ready": false
+    "production_package_ready": false,
+    "root_archive_identity_verified": true,
+    "gitmodules_paths_and_urls_verified": true,
+    "recursive_component_archive_trees_match_git": true,
+    "recursive_source_tree_reconstructed": true,
+    "recursive_source_tree_matches_git": true
+  },
+  "source_summary": {
+    "component_archives": 21,
+    "submodule_archives": 20,
+    "archive_bytes": 153497693,
+    "archive_files": 60914,
+    "unpacked_size_bytes": 733567144,
+    "component_tree_file_records": 60914
+  },
+  "reconstruction": {
+    "reference_commit": "5d0e31ea6bf67f4559faa759b91e22bc3f1cd696",
+    "file_records": 60914,
+    "tree_sha256": "4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07",
+    "content_modes_and_symlinks_match_recursive_git": true
   }
 }

@@ -5,15 +5,20 @@ upstream_v8: 14.9.207.2
 source_closure:
   schema: rust-v8-source-closure/v1
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: fd5c2a46665b5686799a7505158e4f0bb047e087750acb455c50dfb90e3484b1
+  receipt_sha256: 8bc2852dbfc829ab83ee33c526c3356e0ec124485a1944a80f0b35ff3ec42752
   root_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
   root_archive_sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
   root_archive_bytes: 340819
   recursive_components: 21
   recursive_submodules: 20
   component_commits_materialized: true
-  component_archive_hashes_complete: false
-  immutable_recursive_archive: false
+  component_archive_hashes_complete: true
+  immutable_recursive_archive: true
+  direct_public_rpm_sources: 21
+  archive_bytes: 153497693
+  unpacked_size_bytes: 733567144
+  reconstructed_file_records: 60914
+  reconstructed_tree_sha256: 4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07
 notable_components:
   chromium_build:
     commit: fffa45f2e9df48c0230a4c799b7d12e7f83d8219
@@ -96,11 +101,27 @@ consumer_integration:
   runtime_dependency: none; the archive is statically linked
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
+  receipt: rust-v8-149.2.0-license-audit.json
+  receipt_sha256: 8ef742e096806101fcb464f7bb34ab5b7c2231d4857a0bfd9a02799001631eb6
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
-  recursive_component_inventory_complete: false
-  vendored_rust_crate_inventory_complete: false
+  recursive_component_inventory_complete: true
+  candidate_license_files: 415
+  components_without_local_license_files:
+  - tools/clang
+  - tools/win
+  readme_chromium_records: 231
+  vendored_rust_entries: 268
+  vendored_rust_source_packages: 216
+  vendored_rust_placeholders: 52
+  vendored_rust_crate_inventory_complete: true
+  vendored_rust_source_declarations_complete: true
+  vendored_rust_source_candidate_texts_present: true
+  readme_chromium_declared_license_paths: 229
+  readme_chromium_verified_declared_license_paths: 228
+  missing_declared_license_paths:
+  - v8/third_party/googletest/src/LICENSE
   license_texts_verified: false
   fedora_allowed_spdx_verified: false
   system_library_decisions_verified: false
@@ -108,9 +129,9 @@ license_audit:
 closure_audit:
   root_source_verified: true
   recursive_commits_recorded: true
-  recursive_component_archives_verified: false
+  recursive_component_archives_verified: true
   patches_verified: true
-  production_build_sources_verified: false
+  production_build_sources_verified: true
   network_isolated_build_verified: false
   fedora_43_verified: false
   fedora_44_verified: false

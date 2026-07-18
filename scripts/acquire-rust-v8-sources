@@ -1,0 +1,494 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "find"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "set"
+require "tempfile"
+require "zlib"
+require_relative "lib/agentlab"
+
+MARKER = ".agentlab-rust-v8-source-acquisition"
+
+def safe_archive_path(path)
+  clean = Pathname(path).cleanpath.to_s
+  return nil if Pathname(path).absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def safe_link?(path, target)
+  return false if target.to_s.empty? || Pathname(target).absolute?
+
+  resolved = Pathname(File.join(File.dirname(path), target)).cleanpath.to_s
+  resolved != ".." && !resolved.start_with?("../")
+end
+
+def parse_pax_headers(data)
+  offset = 0
+  headers = {}
+  while offset < data.bytesize
+    space = data.index(" ", offset)
+    raise Agentlab::Error, "invalid PAX header length" unless space
+
+    length = data.byteslice(offset, space - offset).to_i
+    unless length.positive? && offset + length <= data.bytesize
+      raise Agentlab::Error, "invalid PAX header record"
+    end
+
+    record = data.byteslice(space + 1, length - (space - offset) - 1).delete_suffix("\n")
+    key, value = record.split("=", 2)
+    raise Agentlab::Error, "invalid PAX header value" unless key && value
+
+    headers[key] = value
+    offset += length
+  end
+  headers
+end
+
+def tar_header_path(header)
+  name = header.name.to_s.split("\0", 2).first
+  prefix = header.prefix.to_s.split("\0", 2).first
+  prefix.to_s.empty? ? name : "#{prefix}/#{name}"
+end
+
+def inspect_archive(path, layout)
+  paths = Set.new
+  roots = Set.new
+  file_count = 0
+  unpacked_size = 0
+  symlink_count = 0
+  hardlink_count = 0
+  long_name = nil
+  long_link = nil
+  local_pax = {}
+  global_pax = {}
+
+  Zlib::GzipReader.open(path) do |gzip|
+    Gem::Package::TarReader.new(gzip) do |tar|
+      tar.each do |entry|
+        case entry.header.typeflag
+        when "L"
+          long_name = entry.read.delete_suffix("\0")
+          next
+        when "K"
+          long_link = entry.read.delete_suffix("\0")
+          next
+        when "x"
+          local_pax = parse_pax_headers(entry.read)
+          next
+        when "g"
+          global_pax.merge!(parse_pax_headers(entry.read))
+          next
+        end
+
+        entry_name = local_pax["path"] || global_pax["path"] || long_name || tar_header_path(entry.header)
+        link_name = local_pax["linkpath"] || global_pax["linkpath"] || long_link ||
+                    entry.header.linkname.to_s.split("\0", 2).first
+        clean = safe_archive_path(entry_name)
+        raise Agentlab::Error, "archive path escapes root: #{entry_name}" unless clean
+        raise Agentlab::Error, "archive contains duplicate path: #{clean}" unless paths.add?(clean)
+
+        root = clean.split("/", 2).first
+        roots << root unless root.nil? || root.empty? || root == "."
+
+        if entry.file?
+          file_count += 1
+          unpacked_size += entry.header.size
+        elsif entry.directory?
+          # Directories carry no source content.
+        elsif entry.header.typeflag == "2"
+          raise Agentlab::Error, "archive symlink escapes root: #{clean} -> #{link_name}" unless safe_link?(clean, link_name)
+
+          symlink_count += 1
+        elsif entry.header.typeflag == "1"
+          raise Agentlab::Error, "archive hardlink escapes root: #{clean} -> #{link_name}" unless safe_link?(clean, link_name)
+
+          hardlink_count += 1
+        else
+          raise Agentlab::Error, "archive contains unsupported entry type #{entry.header.typeflag.inspect}: #{clean}"
+        end
+
+        long_name = nil
+        long_link = nil
+        local_pax = {}
+      end
+    end
+  end
+
+  if layout == "github-wrapper" && roots.length != 1
+    raise Agentlab::Error, "GitHub archive must contain one top-level root: #{roots.to_a.sort.inspect}"
+  end
+
+  {
+    "archive_root" => layout == "github-wrapper" ? roots.first : nil,
+    "file_count" => file_count,
+    "unpacked_size_bytes" => unpacked_size,
+    "symlink_count" => symlink_count,
+    "hardlink_count" => hardlink_count
+  }
+rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+  raise Agentlab::Error, "cannot inspect #{path}: #{e.message}"
+end
+
+def require_workdir(path, check:)
+  expanded = File.expand_path(path)
+  raise Agentlab::Error, "workdir must be below /srv/tmp" unless expanded.start_with?("/srv/tmp/")
+
+  marker = File.join(expanded, MARKER)
+  if Dir.exist?(expanded)
+    raise Agentlab::Error, "refusing unmarked workdir #{expanded}" unless File.file?(marker)
+  elsif check
+    raise Agentlab::Error, "missing source acquisition workdir #{expanded}"
+  else
+    FileUtils.mkdir_p(expanded)
+    File.write(marker, "agentlab rust-v8 source acquisition\n")
+  end
+
+  %w[archives component-validation reconstructed].each do |directory|
+    FileUtils.mkdir_p(File.join(expanded, directory))
+  end unless check
+  expanded
+end
+
+def archive_url(component, root_source)
+  return root_source.fetch("url") if component.fetch("path") == "."
+
+  repository_url = component.fetch("url").delete_suffix(".git").delete_suffix("/")
+  commit = component.fetch("commit")
+  uri = URI(repository_url)
+  raise Agentlab::Error, "component URL must use HTTPS: #{repository_url}" unless uri.is_a?(URI::HTTPS)
+
+  case uri.host
+  when "github.com"
+    "https://codeload.github.com#{uri.path}/tar.gz/#{commit}"
+  when "chromium.googlesource.com"
+    "#{repository_url}/+archive/#{commit}.tar.gz"
+  else
+    raise Agentlab::Error, "unsupported Rusty V8 source host #{uri.host.inspect}"
+  end
+end
+
+def archive_layout(url)
+  URI(url).host == "codeload.github.com" ? "github-wrapper" : "gitiles-flat"
+end
+
+def archive_filename(version, component)
+  return "rust-v8-#{version}.tar.gz" if component.fetch("path") == "."
+
+  path = component.fetch("path").gsub(/[^A-Za-z0-9_.-]+/, "-")
+  "rust-v8-#{version}-#{path}-#{component.fetch('commit')}.tar.gz"
+end
+
+def download_archive(url, destination)
+  return if File.file?(destination)
+
+  Tempfile.create([".rust-v8-source-", ".tmp"], File.dirname(destination)) do |file|
+    file.close
+    success = system(
+      "curl", "--fail", "--location", "--retry", "3", "--silent", "--show-error",
+      "--output", file.path, url
+    )
+    raise Agentlab::Error, "download failed: #{url}" unless success
+
+    File.chmod(0o644, file.path)
+    File.rename(file.path, destination)
+  end
+end
+
+def run!(*command)
+  output, error, status = Open3.capture3(*command)
+  return output if status.success?
+
+  detail = error.strip.empty? ? output.strip : error.strip
+  raise Agentlab::Error, "command failed: #{command.join(' ')}#{detail.empty? ? '' : ": #{detail}"}"
+end
+
+def extract_component(archive, destination, layout)
+  FileUtils.rm_rf(destination)
+  FileUtils.mkdir_p(destination)
+  command = ["tar", "-xzf", archive, "-C", destination, "--no-same-owner"]
+  command.concat(["--strip-components", "1"]) if layout == "github-wrapper"
+  run!(*command)
+end
+
+def tree_manifest(root, excluded_paths: [])
+  exclusions = excluded_paths.to_set
+  records = []
+  Find.find(root) do |entry|
+    relative = entry.delete_prefix("#{root}/")
+    next if entry == root
+
+    if exclusions.include?(relative)
+      Find.prune if File.directory?(entry)
+      next
+    end
+
+    if File.basename(entry) == ".git"
+      Find.prune if File.directory?(entry)
+      next
+    end
+
+    stat = File.lstat(entry)
+    if stat.file?
+      mode = stat.executable? ? "100755" : "100644"
+      records << [relative, mode, Digest::SHA256.file(entry).hexdigest]
+    elsif stat.symlink?
+      records << [relative, "120000", Digest::SHA256.hexdigest(File.readlink(entry))]
+    elsif !stat.directory?
+      raise Agentlab::Error, "unsupported source-tree entry #{relative}"
+    end
+  end
+  records.sort
+end
+
+def compare_manifests!(actual, expected, label)
+  return expected if actual == expected
+
+  expected_by_path = expected.to_h { |path, mode, digest| [path, [mode, digest]] }
+  actual_by_path = actual.to_h { |path, mode, digest| [path, [mode, digest]] }
+  missing = (expected_by_path.keys - actual_by_path.keys).sort.first(10)
+  extra = (actual_by_path.keys - expected_by_path.keys).sort.first(10)
+  changed = (expected_by_path.keys & actual_by_path.keys).select do |path|
+    expected_by_path.fetch(path) != actual_by_path.fetch(path)
+  end.sort.first(10)
+  raise Agentlab::Error,
+        "#{label} differs from Git tree; missing=#{missing.inspect} extra=#{extra.inspect} changed=#{changed.inspect}"
+end
+
+def compare_trees!(reconstructed, reference, expected_excluded_paths: [], label: "reconstructed source")
+  expected = tree_manifest(reference, excluded_paths: expected_excluded_paths)
+  actual = tree_manifest(reconstructed)
+  compare_manifests!(actual, expected, label)
+end
+
+def gitmodules_entries(path)
+  entries = {}
+  current = nil
+  File.foreach(path) do |line|
+    case line
+    when /^\[submodule "(.+)"\]$/
+      current = Regexp.last_match(1)
+      entries[current] = {}
+    when /^\s*path\s*=\s*(.+)$/
+      raise Agentlab::Error, "submodule path appears outside a section" unless current
+
+      entries.fetch(current)["path"] = Regexp.last_match(1).strip
+    when /^\s*url\s*=\s*(.+)$/
+      raise Agentlab::Error, "submodule URL appears outside a section" unless current
+
+      entries.fetch(current)["url"] = Regexp.last_match(1).strip
+    end
+  end
+
+  entries.to_h do |name, entry|
+    path_value = entry["path"]
+    url_value = entry["url"]
+    raise Agentlab::Error, "incomplete .gitmodules entry #{name}" unless path_value && url_value
+
+    [path_value, url_value]
+  end
+end
+
+def verify_spec_sources!(spec_path, records)
+  expanded = run!("rpmspec", "-P", spec_path)
+  sources = expanded.scan(/^Source(\d*):\s+(\S+)/).to_h do |number, value|
+    [number.empty? ? 0 : number.to_i, value]
+  end
+
+  records.each do |component|
+    number = component.fetch("rpm_source")
+    archive = component.fetch("archive")
+    expected = "#{archive.fetch('url')}\#/#{archive.fetch('filename')}"
+    actual = sources[number]
+    raise Agentlab::Error, "spec Source#{number} does not match #{component.fetch('path')}" unless actual == expected
+  end
+end
+
+begin
+package = Agentlab.package_named("rust-v8")
+version = package.upstream.fetch("current_version").to_s
+receipt_path = File.join(package.directory, "rust-v8-#{version}-source-closure.json")
+workdir = "/srv/tmp/agentlab-rust-v8-#{version}/source-acquisition"
+output = File.join(workdir, "rust-v8-#{version}-source-closure.candidate.json")
+root_archive = nil
+reference_tree = nil
+check = false
+verify_spec_sources = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/acquire-rust-v8-sources --root-archive PATH --reference-tree PATH [options]"
+  parser.on("--root-archive PATH", "Previously verified Rusty V8 root archive") { |path| root_archive = path }
+  parser.on("--reference-tree PATH", "Clean exact-tag recursive Git checkout") { |path| reference_tree = path }
+  parser.on("--workdir PATH", "Marked resumable work directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--output PATH", "Generated source-closure receipt") { |path| output = path }
+  parser.on("--check", "Verify cached archives and the checked receipt without downloading") { check = true }
+  parser.on("--verify-spec-sources", "Require Source0-Source20 to match the verified archives") do
+    verify_spec_sources = true
+  end
+end.parse!
+
+raise Agentlab::Error, "--root-archive is required" unless root_archive
+raise Agentlab::Error, "--reference-tree is required" unless reference_tree
+root_archive = File.realpath(root_archive)
+reference_tree = File.realpath(reference_tree)
+raise Agentlab::Error, "missing source-closure receipt #{receipt_path}" unless File.file?(receipt_path)
+
+receipt = JSON.parse(File.read(receipt_path))
+release = receipt.fetch("release")
+raise Agentlab::Error, "source receipt release mismatch" unless release.fetch("version") == version
+raise Agentlab::Error, "reference tree is dirty" unless run!("git", "-C", reference_tree, "status", "--short", "--ignore-submodules=none").strip.empty?
+reference_commit = run!("git", "-C", reference_tree, "rev-parse", "HEAD").strip
+unless reference_commit == release.fetch("commit")
+  raise Agentlab::Error, "reference tree commit mismatch: #{reference_commit}"
+end
+
+workdir = require_workdir(workdir, check: check)
+archives_dir = File.join(workdir, "archives")
+component_validation_parent = File.join(workdir, "component-validation")
+reconstructed_parent = File.join(workdir, "reconstructed")
+reconstructed = File.join(reconstructed_parent, "rusty_v8-#{release.fetch('commit')}")
+FileUtils.rm_rf(component_validation_parent) if Dir.exist?(component_validation_parent)
+FileUtils.mkdir_p(component_validation_parent)
+FileUtils.rm_rf(reconstructed) if Dir.exist?(reconstructed)
+
+root_source = receipt.fetch("root_source")
+components = receipt.fetch("components")
+raise Agentlab::Error, "expected 21 Rusty V8 components" unless components.length == 21
+raise Agentlab::Error, "first Rusty V8 component must be the root" unless components.first.fetch("path") == "."
+
+component_paths = components.map { |component| component.fetch("path") }
+raise Agentlab::Error, "duplicate Rusty V8 component path" unless component_paths.uniq.length == component_paths.length
+component_paths.drop(1).each do |path|
+  unless safe_archive_path(path) == path && path != "."
+    raise Agentlab::Error, "unsafe Rusty V8 component path #{path.inspect}"
+  end
+end
+
+receipt_modules = components.drop(1).to_h do |component|
+  [component.fetch("path"), component.fetch("url")]
+end
+reference_modules = gitmodules_entries(File.join(reference_tree, ".gitmodules"))
+unless receipt_modules == reference_modules
+  raise Agentlab::Error, "source receipt does not match the exact-tag .gitmodules paths and URLs"
+end
+
+root_bytes = File.size(root_archive)
+root_sha256 = Digest::SHA256.file(root_archive).hexdigest
+unless root_bytes == root_source.fetch("bytes") && root_sha256 == root_source.fetch("sha256")
+  raise Agentlab::Error, "root archive does not match the checked root_source identity"
+end
+
+records = components.each_with_index.map do |component, index|
+  url = archive_url(component, root_source)
+  layout = archive_layout(url)
+  filename = archive_filename(version, component)
+  archive = if component.fetch("path") == "."
+              root_archive
+            else
+              cached = File.join(archives_dir, filename)
+              raise Agentlab::Error, "missing cached archive #{cached}" if check && !File.file?(cached)
+              download_archive(url, cached) unless check
+              cached
+            end
+  inspection = inspect_archive(archive, layout)
+
+  component_reference = component.fetch("path") == "." ? reference_tree : File.join(reference_tree, component.fetch("path"))
+  actual_commit = run!("git", "-C", component_reference, "rev-parse", "HEAD").strip
+  unless actual_commit == component.fetch("commit")
+    raise Agentlab::Error, "reference commit mismatch for #{component.fetch('path')}: #{actual_commit}"
+  end
+
+  unless component.fetch("path") == "."
+    gitlink = run!("git", "-C", reference_tree, "ls-tree", "HEAD", "--", component.fetch("path")).strip
+    expected_gitlink = "160000 commit #{component.fetch('commit')}\t#{component.fetch('path')}"
+    raise Agentlab::Error, "root Git tree gitlink mismatch for #{component.fetch('path')}" unless gitlink == expected_gitlink
+  end
+
+  descendants = if component.fetch("path") == "."
+                  component_paths.drop(1)
+                else
+                  prefix = "#{component.fetch('path')}/"
+                  component_paths.filter_map { |path| path.delete_prefix(prefix) if path.start_with?(prefix) }
+                end
+  component_validation = File.join(component_validation_parent, format("%02d", index))
+  extract_component(archive, component_validation, layout)
+  component_manifest = compare_trees!(
+    component_validation,
+    component_reference,
+    expected_excluded_paths: descendants,
+    label: "archive for #{component.fetch('path')}"
+  )
+
+  component.merge(
+    "rpm_source" => index,
+    "archive" => {
+      "url" => url,
+      "filename" => filename,
+      "layout" => layout,
+      "bytes" => File.size(archive),
+      "sha256" => Digest::SHA256.file(archive).hexdigest,
+      "tree_file_records" => component_manifest.length,
+      "tree_sha256" => Digest::SHA256.hexdigest(JSON.generate(component_manifest)),
+      "content_modes_and_symlinks_match_git" => true
+    }.merge(inspection)
+  )
+end
+
+root_record = records.first
+extract_component(root_archive, reconstructed, root_record.dig("archive", "layout"))
+records.drop(1).each do |component|
+  extract_component(
+    File.join(archives_dir, component.dig("archive", "filename")),
+    File.join(reconstructed, component.fetch("path")),
+    component.dig("archive", "layout")
+  )
+end
+
+manifest = compare_trees!(reconstructed, reference_tree)
+tree_sha256 = Digest::SHA256.hexdigest(JSON.generate(manifest))
+receipt["components"] = records
+receipt["source_summary"] = {
+  "component_archives" => records.length,
+  "submodule_archives" => records.length - 1,
+  "archive_bytes" => records.sum { |component| component.dig("archive", "bytes") },
+  "archive_files" => records.sum { |component| component.dig("archive", "file_count") },
+  "unpacked_size_bytes" => records.sum { |component| component.dig("archive", "unpacked_size_bytes") },
+  "component_tree_file_records" => records.sum { |component| component.dig("archive", "tree_file_records") }
+}
+receipt["reconstruction"] = {
+  "reference_commit" => reference_commit,
+  "file_records" => manifest.length,
+  "tree_sha256" => tree_sha256,
+  "content_modes_and_symlinks_match_recursive_git" => true
+}
+verify_spec_sources!(package.spec_path, records) if verify_spec_sources
+receipt.fetch("validation").merge!(
+  "root_archive_identity_verified" => true,
+  "gitmodules_paths_and_urls_verified" => true,
+  "recursive_component_archives_verified" => true,
+  "recursive_component_archive_trees_match_git" => true,
+  "recursive_source_tree_reconstructed" => true,
+  "recursive_source_tree_matches_git" => true,
+  "immutable_recursive_rpm_source_verified" => verify_spec_sources
+)
+content = JSON.pretty_generate(receipt) + "\n"
+
+if check
+  raise Agentlab::Error, "missing checked source-closure receipt #{output}" unless File.file?(output)
+  raise Agentlab::Error, "Rusty V8 source-closure receipt is stale: #{output}" unless File.binread(output) == content
+  puts "Verified #{records.length} Rusty V8 source archives and #{manifest.length} reconstructed file records."
+else
+  Agentlab.atomic_write(output, content)
+  puts "Wrote #{records.length} Rusty V8 source archives and #{manifest.length} reconstructed file records to #{output}."
+end
+rescue Agentlab::Error, JSON::ParserError, KeyError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

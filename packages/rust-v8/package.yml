@@ -2,9 +2,8 @@
 name: rust-v8
 status: blocked
 blockers:
-- The verified root archive excludes 20 recursive Chromium and V8 submodules. Their exact URLs and commits are recorded, but immutable component archives and a complete recursive RPM source are not yet verified or hosted.
 - The stable Fedora Rust and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream.
-- The complete native, third-party, and vendored Rust license-text inventory, Fedora SPDX review, system-library decisions, and final aggregate License expression are unresolved.
+- Candidate legal texts and all 216 real vendored Rust source packages are inventoried, but `v8/third_party/googletest/src/LICENSE` is absent, two Chromium tooling components lack component-local texts, and required-text decisions, Fedora SPDX review, system-library decisions, and the final aggregate License expression remain unresolved.
 - Network-isolated Fedora 43, Fedora 44, and Rawhide builds have not been run. The successful prototype is Fedora 44 x86_64 evidence only, and aarch64 is unverified.
 source_policy:
   rpm_build_network: forbidden
@@ -12,11 +11,15 @@ source_policy:
   chromium_binary_rust_toolchain: forbidden
   root_archive_verified: true
   recursive_component_commits_recorded: true
-  recursive_component_archives_verified: false
-  immutable_recursive_rpm_source_verified: false
+  recursive_component_archives_verified: true
+  immutable_recursive_rpm_source_verified: true
   source_closure_receipt: rust-v8-149.2.0-source-closure.json
-  source_closure_receipt_sha256: fd5c2a46665b5686799a7505158e4f0bb047e087750acb455c50dfb90e3484b1
+  source_closure_receipt_sha256: 8bc2852dbfc829ab83ee33c526c3356e0ec124485a1944a80f0b35ff3ec42752
   recursive_components: 21
+  direct_public_rpm_sources: 21
+  source_archive_bytes: 153497693
+  reconstructed_file_records: 60914
+  reconstructed_tree_sha256: 4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07
   target_archive: librusty_v8.a
   target_triple: x86_64-unknown-linux-gnu
 consumer_contract:
@@ -61,6 +64,26 @@ patches:
     sha256: 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
     zero_fuzz_dry_run: passed
     upstream_status: not-submitted
+license_audit:
+  receipt: rust-v8-149.2.0-license-audit.json
+  receipt_sha256: 8ef742e096806101fcb464f7bb34ab5b7c2231d4857a0bfd9a02799001631eb6
+  candidate_license_files: 415
+  readme_chromium_records: 231
+  vendored_rust_entries: 268
+  vendored_rust_source_packages: 216
+  vendored_rust_placeholders: 52
+  vendored_rust_source_declarations_complete: true
+  vendored_rust_source_candidate_texts_present: true
+  readme_chromium_declared_license_paths: 229
+  readme_chromium_verified_declared_license_paths: 228
+  missing_declared_license_paths:
+  - v8/third_party/googletest/src/LICENSE
+  component_local_text_gaps:
+  - tools/clang
+  - tools/win
+  required_texts_verified: false
+  fedora_allowed_spdx_verified: false
+  final_static_archive_license_complete: false
 upstream:
   provider: github
   repository: denoland/rusty_v8

@@ -450,6 +450,238 @@ module Agentlab
       ["# END GENERATED BUNDLED NODE PROVIDES"]).join("\n")
   end
 
+  def validate_rust_v8_evidence(package, dependencies, spec)
+    return [] unless package.name == "rust-v8"
+
+    errors = []
+    version = package.upstream.fetch("current_version").to_s
+    source_name = dependencies.dig("source_closure", "receipt")
+    license_name = dependencies.dig("license_audit", "receipt")
+    source_path = source_name.is_a?(String) && File.join(package.directory, source_name)
+    license_path = license_name.is_a?(String) && File.join(package.directory, license_name)
+    unless source_path && File.file?(source_path)
+      return ["rust-v8: recursive-source receipt is missing"]
+    end
+    unless license_path && File.file?(license_path)
+      return ["rust-v8: license-audit receipt is missing"]
+    end
+
+    source_sha256 = Digest::SHA256.file(source_path).hexdigest
+    license_sha256 = Digest::SHA256.file(license_path).hexdigest
+    expected_source_hashes = [
+      dependencies.dig("source_closure", "receipt_sha256"),
+      package.data.dig("source_policy", "source_closure_receipt_sha256")
+    ]
+    errors << "rust-v8: recursive-source receipt SHA-256 does not match metadata" unless expected_source_hashes.all? { |value| value == source_sha256 }
+    expected_license_hashes = [
+      dependencies.dig("license_audit", "receipt_sha256"),
+      package.data.dig("license_audit", "receipt_sha256")
+    ]
+    errors << "rust-v8: license-audit receipt SHA-256 does not match metadata" unless expected_license_hashes.all? { |value| value == license_sha256 }
+    errors << "rust-v8: spec recursive-source SHA-256 does not match" unless spec[/^%global closure_sha256\s+(\h{64})$/, 1] == source_sha256
+    errors << "rust-v8: spec license-audit SHA-256 does not match" unless spec[/^%global license_audit_sha256\s+(\h{64})$/, 1] == license_sha256
+
+    source = JSON.parse(File.read(source_path))
+    errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v1"
+    errors << "rust-v8: recursive-source release does not match" unless source.dig("release", "version").to_s == version
+    components = source["components"]
+    unless components.is_a?(Array) && components.length == 21
+      return errors << "rust-v8: recursive-source receipt must contain 21 components"
+    end
+
+    paths = components.map { |component| component["path"] }
+    errors << "rust-v8: recursive-source component paths are not unique" unless paths.uniq.length == paths.length
+    errors << "rust-v8: recursive-source root component is invalid" unless paths.first == "."
+    archives = components.filter_map { |component| component["archive"] }
+    errors << "rust-v8: recursive-source archive metadata is incomplete" unless archives.length == components.length
+    components.each_with_index do |component, index|
+      archive = component["archive"] || {}
+      errors << "rust-v8: component #{component['path']} has invalid RPM source number" unless component["rpm_source"] == index
+      errors << "rust-v8: component #{component['path']} has an invalid commit" unless component["commit"].to_s.match?(/\A[0-9a-f]{40}\z/)
+      errors << "rust-v8: component #{component['path']} has an invalid archive SHA-256" unless archive["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+      errors << "rust-v8: component #{component['path']} has an invalid tree SHA-256" unless archive["tree_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+      errors << "rust-v8: component #{component['path']} archive tree is unverified" unless archive["content_modes_and_symlinks_match_git"] == true
+      errors << "rust-v8: component #{component['path']} archive size is invalid" unless archive["bytes"].to_i.positive?
+      begin
+        errors << "rust-v8: component #{component['path']} archive URL must use HTTPS" unless URI(archive["url"]).is_a?(URI::HTTPS)
+      rescue URI::InvalidURIError, TypeError
+        errors << "rust-v8: component #{component['path']} archive URL is invalid"
+      end
+    end
+
+    summary = source.fetch("source_summary", {})
+    errors << "rust-v8: recursive-source archive byte total does not match" unless summary["archive_bytes"] == archives.sum { |archive| archive["bytes"] }
+    errors << "rust-v8: recursive-source file total does not match" unless summary["archive_files"] == archives.sum { |archive| archive["file_count"] }
+    errors << "rust-v8: recursive-source component tree total does not match" unless summary["component_tree_file_records"] == archives.sum { |archive| archive["tree_file_records"] }
+    errors << "rust-v8: recursive-source combined tree count does not match" unless source.dig("reconstruction", "file_records") == summary["archive_files"]
+    errors << "rust-v8: recursive-source combined tree SHA-256 is invalid" unless source.dig("reconstruction", "tree_sha256").to_s.match?(/\A[0-9a-f]{64}\z/)
+    %w[
+      root_archive_identity_verified
+      gitmodules_paths_and_urls_verified
+      recursive_component_archives_verified
+      recursive_component_archive_trees_match_git
+      recursive_source_tree_reconstructed
+      recursive_source_tree_matches_git
+      immutable_recursive_rpm_source_verified
+    ].each do |flag|
+      errors << "rust-v8: recursive-source validation #{flag} is not true" unless source.dig("validation", flag) == true
+    end
+
+    macros = {
+      "%{name}" => package.name,
+      "%{version}" => version,
+      "%{source_commit}" => source.dig("release", "commit")
+    }
+    spec_sources = spec.scan(/^Source(\d*):\s+(\S+)/).to_h do |number, value|
+      expanded = macros.reduce(value) { |result, (macro, replacement)| result.gsub(macro, replacement.to_s) }
+      [number.empty? ? 0 : number.to_i, expanded]
+    end
+    components.each do |component|
+      archive = component.fetch("archive")
+      expected = "#{archive.fetch('url')}#/#{archive.fetch('filename')}"
+      errors << "rust-v8: spec Source#{component.fetch('rpm_source')} does not match the receipt" unless spec_sources[component.fetch("rpm_source")] == expected
+      extraction = archive.fetch("layout") == "github-wrapper" ? "extract_wrapped" : "extract_flat"
+      unless component.fetch("path") == "."
+        expected_line = "#{extraction} #{component.fetch('path')} %{SOURCE#{component.fetch('rpm_source')}}"
+        errors << "rust-v8: spec extraction does not match #{component.fetch('path')}" unless spec.lines.map(&:strip).include?(expected_line)
+      end
+    end
+    errors << "rust-v8: spec Source21 does not select the recursive-source receipt" unless spec_sources[21] == source_name
+    errors << "rust-v8: spec Source22 does not select the license-audit receipt" unless spec_sources[22] == license_name
+    flat_helper = spec[/extract_flat\(\) \{\n(.*?)\n\}/m, 1].to_s
+    wrapped_helper = spec[/extract_wrapped\(\) \{\n(.*?)\n\}/m, 1].to_s
+    errors << "rust-v8: flat archive extraction helper is invalid" unless flat_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner') && !flat_helper.include?("--strip-components")
+    errors << "rust-v8: wrapped archive extraction helper is invalid" unless wrapped_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner --strip-components=1')
+    patch_lines = [
+      "patch --batch --fuzz=0 -p1 < %{PATCH0}",
+      "patch --batch --fuzz=0 -p1 < %{PATCH1}"
+    ]
+    patch_lines.each do |line|
+      errors << "rust-v8: spec does not apply #{line.split.last}" unless spec.lines.map(&:strip).include?(line)
+    end
+    final_stop = spec.index("echo 'rust-v8 sources are complete")
+    errors << "rust-v8: deliberate remaining-gates stop is missing" unless final_stop && spec.index("exit 1", final_stop)
+
+    license = JSON.parse(File.read(license_path))
+    errors << "rust-v8: license-audit schema is invalid" unless license["schema"] == "rust-v8-license-audit/v1"
+    errors << "rust-v8: license-audit release does not match" unless license["release"].to_s == version
+    errors << "rust-v8: license audit is not bound to the source receipt" unless license.dig("source_closure", "sha256") == source_sha256
+    license_components = license["components"]
+    errors << "rust-v8: license component paths do not match the source receipt" unless Array(license_components).map { |component| component["path"] } == paths
+    license_files = Array(license_components).flat_map { |component| Array(component["license_files"]) }
+    readme_records = Array(license_components).flat_map { |component| Array(component["readme_chromium"]) }
+    license_files.each do |record|
+      errors << "rust-v8: license candidate #{record['path']} has an invalid SHA-256" unless record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+
+    vendored = license.dig("vendored_rust", "packages")
+    unless vendored.is_a?(Array)
+      return errors << "rust-v8: vendored Rust package inventory is missing"
+    end
+    placeholders = vendored.select { |record| record["placeholder"] == true }
+    source_packages = vendored.reject { |record| record["placeholder"] == true }
+    errors << "rust-v8: vendored Rust source declaration inventory is incomplete" unless source_packages.all? { |record| record["manifest_license"] || record["manifest_license_file"] }
+    errors << "rust-v8: vendored Rust candidate-text inventory is incomplete" unless source_packages.all? { |record| record["license_file_count"].to_i.positive? }
+    license_summary = license.fetch("summary", {})
+    expected_license_summary = {
+      "components" => components.length,
+      "components_with_license_files" => Array(license_components).count { |record| record["license_file_count"].to_i.positive? },
+      "components_without_license_files" => Array(license_components).count { |record| record["license_file_count"].to_i.zero? },
+      "license_candidate_files" => license_files.length,
+      "readme_chromium_records" => readme_records.length,
+      "readme_chromium_with_license" => readme_records.count { |record| record.key?("license") },
+      "readme_chromium_with_declared_license_file" => readme_records.count { |record| record["license_file"] },
+      "readme_chromium_with_verified_declared_license_file" => readme_records.count { |record| record["license_file_verified"] == true },
+      "readme_chromium_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).length },
+      "readme_chromium_verified_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).count { |path| path["verified"] == true } },
+      "vendored_rust_packages" => vendored.length,
+      "vendored_rust_source_packages" => source_packages.length,
+      "vendored_rust_placeholders" => placeholders.length,
+      "vendored_rust_source_packages_with_manifest_license" => source_packages.count { |record| record["manifest_license"] },
+      "vendored_rust_source_packages_with_manifest_license_file" => source_packages.count { |record| record["manifest_license_file"] },
+      "vendored_rust_source_packages_with_verified_manifest_license_file" => source_packages.count { |record| record["manifest_license_file_verified"] == true },
+      "vendored_rust_source_packages_with_candidate_texts" => source_packages.count { |record| record["license_file_count"].to_i.positive? }
+    }
+    errors << "rust-v8: license-audit summary is inconsistent" unless license_summary == expected_license_summary
+    missing_declared_license_paths = readme_records.flat_map do |record|
+      Array(record["license_file_records"]).reject { |path| path["verified"] == true }.map { |path| path["path"] }
+    end.sort
+    package_license = package.data.fetch("license_audit", {})
+    dependency_license = dependencies.fetch("license_audit", {})
+    {
+      "candidate_license_files" => "license_candidate_files",
+      "vendored_rust_entries" => "vendored_rust_packages",
+      "vendored_rust_source_packages" => "vendored_rust_source_packages",
+      "vendored_rust_placeholders" => "vendored_rust_placeholders",
+      "readme_chromium_declared_license_paths" => "readme_chromium_declared_license_paths",
+      "readme_chromium_verified_declared_license_paths" => "readme_chromium_verified_declared_license_paths"
+    }.each do |metadata_key, summary_key|
+      errors << "rust-v8: package license metadata #{metadata_key} does not match" unless package_license[metadata_key] == license_summary[summary_key]
+      errors << "rust-v8: dependency license metadata #{metadata_key} does not match" unless dependency_license[metadata_key] == license_summary[summary_key]
+    end
+    errors << "rust-v8: package missing declared-license paths do not match" unless package_license["missing_declared_license_paths"] == missing_declared_license_paths
+    errors << "rust-v8: dependency missing declared-license paths do not match" unless dependency_license["missing_declared_license_paths"] == missing_declared_license_paths
+    component_text_gaps = Array(license_components).select { |record| record["license_file_count"].to_i.zero? }.map { |record| record["path"] }
+    errors << "rust-v8: package component-local text gaps do not match" unless package_license["component_local_text_gaps"] == component_text_gaps
+    errors << "rust-v8: dependency component-local text gaps do not match" unless dependency_license["components_without_local_license_files"] == component_text_gaps
+    %w[
+      source_closure_verified
+      source_tree_verified
+      all_source_components_inventoried
+      candidate_license_files_hashed
+      readme_chromium_metadata_inventoried
+      declared_license_file_paths_inventoried
+      vendored_rust_manifests_inventoried
+      vendored_rust_placeholders_classified
+      vendored_rust_source_package_declarations_complete
+      vendored_rust_source_package_candidate_texts_present
+    ].each do |flag|
+      errors << "rust-v8: license-audit validation #{flag} is not true" unless license.dig("validation", flag) == true
+    end
+    %w[
+      license_expressions_normalized
+      required_license_texts_verified
+      fedora_allowed_spdx_verified
+      source_package_license_complete
+      final_static_archive_license_complete
+    ].each do |flag|
+      errors << "rust-v8: license audit overclaims #{flag}" unless license.dig("validation", flag) == false
+    end
+
+    patch_metadata = Array(dependencies["patches"])
+    patch_metadata.each do |patch|
+      patch_path = File.join(package.directory, patch.fetch("file"))
+      actual = File.file?(patch_path) && Digest::SHA256.file(patch_path).hexdigest
+      errors << "rust-v8: patch SHA-256 does not match #{patch.fetch('file')}" unless actual == patch["sha256"]
+    end
+    errors << "rust-v8: package source archive total does not match" unless package.data.dig("source_policy", "source_archive_bytes") == summary["archive_bytes"]
+    errors << "rust-v8: dependency source archive total does not match" unless dependencies.dig("source_closure", "archive_bytes") == summary["archive_bytes"]
+    errors << "rust-v8: package reconstructed file count does not match" unless package.data.dig("source_policy", "reconstructed_file_records") == source.dig("reconstruction", "file_records")
+    errors << "rust-v8: dependency reconstructed tree SHA-256 does not match" unless dependencies.dig("source_closure", "reconstructed_tree_sha256") == source.dig("reconstruction", "tree_sha256")
+
+    reproducibility_path = File.join(package.directory, "reproducibility.yml")
+    if File.file?(reproducibility_path)
+      reproducibility = load_yaml(reproducibility_path)
+      errors << "rust-v8: reproducibility source receipt SHA-256 does not match" unless reproducibility.dig("recursive_source", "receipt_sha256") == source_sha256
+      errors << "rust-v8: reproducibility license receipt SHA-256 does not match" unless reproducibility.dig("licenses", "receipt_sha256") == license_sha256
+      errors << "rust-v8: reproducibility archive total does not match" unless reproducibility.dig("recursive_source", "archive_bytes") == summary["archive_bytes"]
+      errors << "rust-v8: reproducibility tree SHA-256 does not match" unless reproducibility.dig("recursive_source", "reconstructed_tree_sha256") == source.dig("reconstruction", "tree_sha256")
+      errors << "rust-v8: reproducibility metadata incorrectly claims a generated recursive archive" unless reproducibility.dig("recursive_source", "recursive_rpm_source_generated") == false
+      errors << "rust-v8: reproducibility license candidate count does not match" unless reproducibility.dig("licenses", "candidate_license_files") == license_summary["license_candidate_files"]
+      errors << "rust-v8: reproducibility vendored Rust source count does not match" unless reproducibility.dig("licenses", "vendored_rust_source_packages") == license_summary["vendored_rust_source_packages"]
+      errors << "rust-v8: reproducibility vendored Rust placeholder count does not match" unless reproducibility.dig("licenses", "vendored_rust_placeholders") == license_summary["vendored_rust_placeholders"]
+      errors << "rust-v8: reproducibility declared license-path count does not match" unless reproducibility.dig("licenses", "readme_chromium_declared_license_paths") == license_summary["readme_chromium_declared_license_paths"]
+      errors << "rust-v8: reproducibility verified license-path count does not match" unless reproducibility.dig("licenses", "readme_chromium_verified_declared_license_paths") == license_summary["readme_chromium_verified_declared_license_paths"]
+      errors << "rust-v8: reproducibility recursive license inventory is incomplete" unless reproducibility.dig("licenses", "recursive_inventory_complete") == true
+    else
+      errors << "rust-v8: reproducibility metadata is missing"
+    end
+
+    errors
+  rescue JSON::ParserError, KeyError => e
+    errors << "rust-v8: invalid evidence receipt: #{e.message}"
+  end
+
   def validate_bun_build_plan(package, spec)
     return [] unless package.name == "bun"
 

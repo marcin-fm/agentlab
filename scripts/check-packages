@@ -285,6 +285,8 @@ packages.each do |package|
 
   errors.concat(Agentlab.validate_opencode_review_evidence(package, dependencies, manifest_version)) if dependencies
 
+  errors.concat(Agentlab.validate_rust_v8_evidence(package, dependencies, spec)) if dependencies
+
   errors.concat(Agentlab.validate_bun_build_plan(package, spec))
 
   next unless Agentlab.command_available?("rpmspec")

@@ -1,0 +1,270 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "find"
+require "json"
+require "optparse"
+require "set"
+require_relative "lib/agentlab"
+
+LICENSE_BASENAME = /\A(?:licen[cs]e|copying|notice|copyright|credits|authors|patents|unlicense)(?:[._-].*)?\z/i
+
+def tree_manifest(root)
+  records = []
+  Find.find(root) do |entry|
+    next if entry == root
+
+    if File.basename(entry) == ".git"
+      Find.prune if File.directory?(entry)
+      next
+    end
+
+    relative = entry.delete_prefix("#{root}/")
+    stat = File.lstat(entry)
+    if stat.file?
+      mode = stat.executable? ? "100755" : "100644"
+      records << [relative, mode, Digest::SHA256.file(entry).hexdigest]
+    elsif stat.symlink?
+      records << [relative, "120000", Digest::SHA256.hexdigest(File.readlink(entry))]
+    elsif !stat.directory?
+      raise Agentlab::Error, "unsupported source-tree entry #{relative}"
+    end
+  end
+  records.sort
+end
+
+def license_candidate?(path)
+  basename = File.basename(path)
+  basename.match?(LICENSE_BASENAME) || path.split("/").include?("LICENSES")
+end
+
+def owner_path(path, component_paths)
+  component_paths.find do |component|
+    component == "." || path == component || path.start_with?("#{component}/")
+  end
+end
+
+def readme_chromium_metadata(path, source_dir)
+  content = File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+  fields = {}
+  content.each_line do |line|
+    key, value = line.split(":", 2)
+    next unless value
+
+    normalized = key.strip.downcase.gsub(/[^a-z0-9]+/, "_").delete_suffix("_")
+    next unless %w[name url version revision license license_file shipped security_critical].include?(normalized)
+
+    fields[normalized] = value.strip
+  end
+  if fields["license_file"]
+    declared_records = fields.fetch("license_file").split(/\s*,\s*/).map do |license_file|
+      declared = if license_file.start_with?("//")
+                   File.expand_path(license_file.delete_prefix("//"), source_dir)
+                 else
+                   File.expand_path(license_file, File.dirname(path))
+                 end
+      within_source = declared.start_with?("#{source_dir}/")
+      verified = within_source && File.file?(declared)
+      {
+        "path" => within_source ? declared.delete_prefix("#{source_dir}/") : license_file,
+        "verified" => verified,
+        "sha256" => verified ? Digest::SHA256.file(declared).hexdigest : nil
+      }
+    end
+    fields["license_file_records"] = declared_records
+    fields["license_file_verified"] = declared_records.all? { |record| record.fetch("verified") }
+  end
+  fields
+end
+
+def cargo_package_metadata(path)
+  content = File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+  package = content[/^\[package\]\s*$\n(.*?)(?=^\[|\z)/m, 1]
+  raise Agentlab::Error, "missing [package] section in #{path}" unless package
+
+  values = {}
+  %w[name version license license-file].each do |key|
+    value = package[/^#{Regexp.escape(key)}\s*=\s*["']([^"']+)["']\s*$/, 1]
+    values[key.tr("-", "_")] = value if value
+  end
+  values["placeholder"] = content.match?(/^is_placeholder\s*=\s*true\s*$/)
+  values
+end
+
+begin
+package = Agentlab.package_named("rust-v8")
+version = package.upstream.fetch("current_version").to_s
+source_receipt_path = File.join(package.directory, "rust-v8-#{version}-source-closure.json")
+source_dir = nil
+output = File.join(package.directory, "rust-v8-#{version}-license-audit.json")
+check = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/audit-rust-v8-licenses --source-dir PATH [options]"
+  parser.on("--source-dir PATH", "Reconstructed exact Rusty V8 source tree") { |path| source_dir = path }
+  parser.on("--output PATH", "Canonical license-audit receipt") { |path| output = path }
+  parser.on("--check", "Verify that the checked receipt is current") { check = true }
+end.parse!
+
+raise Agentlab::Error, "--source-dir is required" unless source_dir
+source_dir = File.realpath(source_dir)
+source_receipt = JSON.parse(File.read(source_receipt_path))
+expected_tree_sha256 = source_receipt.dig("reconstruction", "tree_sha256")
+actual_tree_sha256 = Digest::SHA256.hexdigest(JSON.generate(tree_manifest(source_dir)))
+unless actual_tree_sha256 == expected_tree_sha256
+  raise Agentlab::Error, "source tree does not match the checked recursive-source receipt"
+end
+
+component_paths = source_receipt.fetch("components").map { |component| component.fetch("path") }
+owner_order = component_paths.sort_by { |path| path == "." ? 0 : -path.length }
+component_records = source_receipt.fetch("components").to_h do |component|
+  [component.fetch("path"), {
+    "path" => component.fetch("path"),
+    "url" => component.fetch("url"),
+    "commit" => component.fetch("commit"),
+    "license_files" => [],
+    "readme_chromium" => []
+  }]
+end
+
+all_license_files = []
+readme_records = []
+Find.find(source_dir) do |entry|
+  next unless File.file?(entry)
+
+  relative = entry.delete_prefix("#{source_dir}/")
+  owner = owner_path(relative, owner_order)
+  raise Agentlab::Error, "cannot assign source owner for #{relative}" unless owner
+
+  if license_candidate?(relative)
+    record = {
+      "path" => relative,
+      "bytes" => File.size(entry),
+      "sha256" => Digest::SHA256.file(entry).hexdigest
+    }
+    component_records.fetch(owner).fetch("license_files") << record
+    all_license_files << record
+  end
+
+  next unless File.basename(relative) == "README.chromium"
+
+  record = { "path" => relative }.merge(readme_chromium_metadata(entry, source_dir))
+  component_records.fetch(owner).fetch("readme_chromium") << record
+  readme_records << record
+end
+
+component_records.each_value do |component|
+  component.fetch("license_files").sort_by! { |record| record.fetch("path") }
+  component.fetch("readme_chromium").sort_by! { |record| record.fetch("path") }
+  component["license_file_count"] = component.fetch("license_files").length
+  component["readme_chromium_count"] = component.fetch("readme_chromium").length
+  component["declared_license_candidates"] = component.fetch("readme_chromium")
+                                                       .filter_map { |record| record["license"] }
+                                                       .uniq.sort
+end
+
+vendor_root = File.join(source_dir, "third_party", "rust", "chromium_crates_io", "vendor")
+vendor_packages = Dir.glob(File.join(vendor_root, "*", "Cargo.toml")).sort.map do |manifest_path|
+  crate_root = File.dirname(manifest_path)
+  relative_root = crate_root.delete_prefix("#{source_dir}/")
+  metadata = cargo_package_metadata(manifest_path)
+  license_files = all_license_files.select do |record|
+    record.fetch("path").start_with?("#{relative_root}/")
+  end
+  manifest_license_path = if metadata["license_file"]
+                            File.expand_path(metadata.fetch("license_file"), crate_root)
+                          end
+  manifest_license_file_verified = manifest_license_path &&
+                                   manifest_license_path.start_with?("#{crate_root}/") &&
+                                   File.file?(manifest_license_path)
+  {
+    "path" => relative_root,
+    "name" => metadata["name"],
+    "version" => metadata["version"],
+    "manifest_license" => metadata["license"],
+    "manifest_license_file" => metadata["license_file"],
+    "manifest_license_file_path" => manifest_license_path&.delete_prefix("#{source_dir}/"),
+    "manifest_license_file_verified" => manifest_license_file_verified == true,
+    "placeholder" => metadata.fetch("placeholder"),
+    "license_files" => license_files,
+    "license_file_count" => license_files.length
+  }
+end
+
+declared_candidates = component_records.values.flat_map do |component|
+  component.fetch("declared_license_candidates")
+end
+declared_candidates.concat(vendor_packages.filter_map { |record| record["manifest_license"] })
+vendored_source_packages = vendor_packages.reject { |record| record.fetch("placeholder") }
+readme_license_file_records = readme_records.select { |record| record["license_file"] }
+readme_declared_license_paths = readme_license_file_records.flat_map { |record| record.fetch("license_file_records") }
+vendor_license_file_records = vendored_source_packages.select { |record| record["manifest_license_file"] }
+
+receipt = {
+  "schema" => "rust-v8-license-audit/v1",
+  "package" => package.name,
+  "release" => version,
+  "source_closure" => {
+    "path" => File.basename(source_receipt_path),
+    "sha256" => Digest::SHA256.file(source_receipt_path).hexdigest,
+    "tree_sha256" => expected_tree_sha256
+  },
+  "components" => component_paths.map { |path| component_records.fetch(path) },
+  "vendored_rust" => {
+    "root" => "third_party/rust/chromium_crates_io/vendor",
+    "packages" => vendor_packages
+  },
+  "declared_license_candidates" => declared_candidates.uniq.sort,
+  "summary" => {
+    "components" => component_records.length,
+    "components_with_license_files" => component_records.values.count { |record| record.fetch("license_file_count").positive? },
+    "components_without_license_files" => component_records.values.count { |record| record.fetch("license_file_count").zero? },
+    "license_candidate_files" => all_license_files.length,
+    "readme_chromium_records" => readme_records.length,
+    "readme_chromium_with_license" => readme_records.count { |record| record.key?("license") },
+    "readme_chromium_with_declared_license_file" => readme_license_file_records.length,
+    "readme_chromium_with_verified_declared_license_file" => readme_license_file_records.count { |record| record["license_file_verified"] == true },
+    "readme_chromium_declared_license_paths" => readme_declared_license_paths.length,
+    "readme_chromium_verified_declared_license_paths" => readme_declared_license_paths.count { |record| record.fetch("verified") },
+    "vendored_rust_packages" => vendor_packages.length,
+    "vendored_rust_source_packages" => vendored_source_packages.length,
+    "vendored_rust_placeholders" => vendor_packages.count { |record| record.fetch("placeholder") },
+    "vendored_rust_source_packages_with_manifest_license" => vendored_source_packages.count { |record| record["manifest_license"] },
+    "vendored_rust_source_packages_with_manifest_license_file" => vendored_source_packages.count { |record| record["manifest_license_file"] },
+    "vendored_rust_source_packages_with_verified_manifest_license_file" => vendor_license_file_records.count { |record| record["manifest_license_file_verified"] == true },
+    "vendored_rust_source_packages_with_candidate_texts" => vendored_source_packages.count { |record| record.fetch("license_file_count").positive? }
+  },
+  "validation" => {
+    "source_closure_verified" => true,
+    "source_tree_verified" => true,
+    "all_source_components_inventoried" => true,
+    "candidate_license_files_hashed" => true,
+    "readme_chromium_metadata_inventoried" => true,
+    "declared_license_file_paths_inventoried" => true,
+    "vendored_rust_manifests_inventoried" => true,
+    "vendored_rust_placeholders_classified" => true,
+    "vendored_rust_source_package_declarations_complete" => vendored_source_packages.all? { |record| record["manifest_license"] || record["manifest_license_file"] },
+    "vendored_rust_source_package_candidate_texts_present" => vendored_source_packages.all? { |record| record.fetch("license_file_count").positive? },
+    "license_expressions_normalized" => false,
+    "required_license_texts_verified" => false,
+    "fedora_allowed_spdx_verified" => false,
+    "source_package_license_complete" => false,
+    "final_static_archive_license_complete" => false
+  },
+  "scope" => "candidate legal-text and declaration inventory for every recursive source component; SPDX normalization, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
+}
+content = JSON.pretty_generate(receipt) + "\n"
+
+if check
+  raise Agentlab::Error, "missing checked license-audit receipt #{output}" unless File.file?(output)
+  raise Agentlab::Error, "Rusty V8 license-audit receipt is stale: #{output}" unless File.binread(output) == content
+  puts "Verified #{all_license_files.length} candidate license files and #{vendor_packages.length} vendored Rust packages."
+else
+  Agentlab.atomic_write(output, content)
+  puts "Wrote #{all_license_files.length} candidate license files and #{vendor_packages.length} vendored Rust packages to #{output}."
+end
+rescue Agentlab::Error, JSON::ParserError, KeyError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

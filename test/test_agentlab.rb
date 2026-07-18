@@ -1135,4 +1135,53 @@ class AgentlabTest < Minitest::Test
       assert(errors.any? { |error| error.include?("Tree-sitter source-build evidence does not match") })
     end
   end
+
+  def test_validates_rust_v8_evidence
+    package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    spec = File.read(package.spec_path)
+
+    assert_empty(Agentlab.validate_rust_v8_evidence(package, dependencies, spec))
+  end
+
+  def test_rejects_rust_v8_license_overclaim
+    source_package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    data = Marshal.load(Marshal.dump(source_package.data))
+    spec = File.read(source_package.spec_path)
+
+    Dir.mktmpdir do |directory|
+      source_name = dependencies.dig("source_closure", "receipt")
+      license_name = dependencies.dig("license_audit", "receipt")
+      FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
+      FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
+      license_path = File.join(directory, license_name)
+      license = JSON.parse(File.read(license_path))
+      license.fetch("validation")["fedora_allowed_spdx_verified"] = true
+      File.write(license_path, JSON.pretty_generate(license) + "\n")
+      license_sha256 = Digest::SHA256.file(license_path).hexdigest
+      data.fetch("license_audit")["receipt_sha256"] = license_sha256
+      dependencies = Marshal.load(Marshal.dump(dependencies))
+      dependencies.fetch("license_audit")["receipt_sha256"] = license_sha256
+      spec = spec.sub(/^%global license_audit_sha256\s+\h{64}$/, "%global license_audit_sha256 #{license_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: license audit overclaims fedora_allowed_spdx_verified")
+    end
+  end
+
+  def test_rejects_rust_v8_flat_archive_stripping
+    package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    spec = File.read(package.spec_path).sub(
+      'tar -xzf "$2" -C "$1" --no-same-owner',
+      'tar -xzf "$2" -C "$1" --no-same-owner --strip-components=1'
+    )
+
+    errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+    assert_includes(errors, "rust-v8: flat archive extraction helper is invalid")
+  end
 end

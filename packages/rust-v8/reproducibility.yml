@@ -7,17 +7,22 @@ source:
   sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
 recursive_source:
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: fd5c2a46665b5686799a7505158e4f0bb047e087750acb455c50dfb90e3484b1
+  receipt_sha256: 8bc2852dbfc829ab83ee33c526c3356e0ec124485a1944a80f0b35ff3ec42752
   components: 21
   submodules: 20
   exact_commits_materialized: true
-  immutable_component_archives_verified: false
+  immutable_component_archives_verified: true
+  direct_public_rpm_sources_verified: true
   recursive_rpm_source_generated: false
+  archive_bytes: 153497693
+  reconstructed_file_records: 60914
+  reconstructed_tree_sha256: 4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07
 patch_validation:
   exact_tag_recursive_worktree: true
   fuzz: 0
   system_rust_toolchain_patch: passed
   gcc_portability_patch: passed
+  applied_after_recursive_reconstruction: true
 prototype_build:
   environment: fedora-44-x86_64
   source_mode: direct GN and Ninja
@@ -68,9 +73,16 @@ builds:
   rawhide_aarch64:
     status: not-run-blocked
 licenses:
+  receipt: rust-v8-149.2.0-license-audit.json
+  receipt_sha256: 8ef742e096806101fcb464f7bb34ab5b7c2231d4857a0bfd9a02799001631eb6
   known_draft_expression: MIT AND BSD-3-Clause
   downstream_allocator_shim: BSD-3-Clause
-  recursive_inventory_complete: false
+  candidate_license_files: 415
+  vendored_rust_source_packages: 216
+  vendored_rust_placeholders: 52
+  readme_chromium_declared_license_paths: 229
+  readme_chromium_verified_declared_license_paths: 228
+  recursive_inventory_complete: true
   required_texts_verified: false
   fedora_allowed_spdx_verified: false
   final_static_archive_license_complete: false

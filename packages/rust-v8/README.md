@@ -57,12 +57,17 @@ The root tag `v149.2.0` resolves to commit
 has SHA-256
 `8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a`.
 
-The root archive does not contain the required submodule contents.
-`rust-v8-149.2.0-source-closure.json` records the root plus all 20 recursive
-submodules with exact URLs and commits. That receipt has SHA-256
-`fd5c2a46665b5686799a7505158e4f0bb047e087750acb455c50dfb90e3484b1`.
-It is identity evidence, not a production RPM source: immutable component
-archives, their hashes, and a complete recursive source artifact remain open.
+The root archive does not contain the required submodule contents. The spec now
+adds all 20 exact commit-addressed GitHub codeload or Chromium Gitiles archives
+as direct RPM inputs. The 153,497,693 bytes of checked archives reconstruct
+60,914 file, mode, and symlink records and match the clean recursive Git tree at
+SHA-256
+`4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07`.
+
+`rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
+archive hash, component-tree hash, and RPM source number. Its SHA-256 is
+`8bc2852dbfc829ab83ee33c526c3356e0ec124485a1944a80f0b35ff3ec42752`.
+No generated aggregate archive or separate hosting service is required.
 
 ## Fedora Toolchain Patches
 
@@ -74,15 +79,28 @@ stable allocator shims needed by the Temporal Rust graph.
 preprocessor conditions valid under GCC and adding one direct include required
 by the Wasm build.
 
-Both patches pass zero-fuzz dry-runs against a fresh exact-tag recursive tree
-and are retained as hashed source inputs in the draft SRPM. They are not yet
-declared as RPM patches because the root archive lacks the files they modify.
-Neither patch has been submitted upstream. The new allocator shim is original
-downstream BSD-3-Clause code by Marcin FM.
+Both patches pass zero-fuzz dry-runs against a fresh exact-tag recursive tree.
+The spec now reconstructs that tree from the checked RPM sources and applies the
+patches before reaching its deliberate remaining-gates stop. Neither patch has
+been submitted upstream. The new allocator shim is original downstream
+BSD-3-Clause code by Marcin FM.
 
 The known draft source-package license expression is therefore
-`MIT AND BSD-3-Clause`. It remains incomplete until the recursive Chromium,
-V8, third-party, and vendored Rust inventory is finished.
+`MIT AND BSD-3-Clause`. It remains provisional until the recursive Chromium,
+V8, third-party, and vendored Rust declarations and texts are normalized,
+reviewed for Fedora, and converted into the final aggregate expression.
+
+`rust-v8-149.2.0-license-audit.json` currently hashes 415 candidate legal texts
+and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
+entries: 216 real source packages and 52 generated empty placeholders. Every
+real vendored source package has a manifest license declaration and at least one
+candidate text. The audit resolves 228 of 229 paths explicitly declared by
+`README.chromium`; the remaining missing path is
+`v8/third_party/googletest/src/LICENSE`. `tools/clang` and `tools/win` also lack
+component-local texts. Required-text, SPDX normalization, Fedora allowability,
+system-library, and final linked-archive decisions remain open. The receipt
+SHA-256 is
+`8ef742e096806101fcb464f7bb34ab5b7c2231d4857a0bfd9a02799001631eb6`.
 
 ## Prototype Result
 
@@ -95,13 +113,13 @@ An offline Cargo consumer linked the archive and printed `Fedora Rusty V8`.
 
 ## Remaining Gates
 
-1. Materialize every recursive component as an immutable checksummed RPM input.
-2. Reproduce the patched source tree without network access.
-3. Complete the native, third-party, and vendored Rust license-text inventory.
-4. Review every SPDX expression and system-library decision for Fedora.
-5. Run clean Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes.
-6. Prove aarch64 or retain an explicitly reviewed architecture restriction.
-7. Submit or otherwise resolve the downstream system-toolchain and portability patches.
+1. Resolve inherited or missing required texts, including `tools/clang` and `tools/win`.
+2. Normalize and review every SPDX expression and system-library decision for Fedora.
+3. Establish the final source-package and linked-static-archive license expressions.
+4. Run clean Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes.
+5. Prove aarch64 or retain an explicitly reviewed architecture restriction.
+6. Submit or otherwise resolve the downstream system-toolchain and portability patches.
 
-The spec verifies only checked root and receipt hashes, then aborts before
-unpacking. The package is disabled in COPR.
+The spec verifies every source through the checked receipt, reconstructs the
+recursive tree, applies both patches, then aborts before compilation while the
+remaining legal and build gates are open. The package is disabled in COPR.
