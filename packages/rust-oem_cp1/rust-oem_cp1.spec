@@ -7,13 +7,16 @@
 
 Name:           rust-oem_cp1
 Version:        1.3.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Rust library that handles OEM code pages
 
 License:        MIT
 URL:            https://crates.io/crates/oem_cp
 Source:         %{crates_source}
-# Automatically generated patch to strip dependencies and normalize metadata
+# Fedora packaging: remove Windows-only development dependencies from Fedora's
+# non-Windows crate graph.
+# Upstream status: not submitted because upstream supports Windows tests, while
+# this package targets Fedora.
 Patch:          oem_cp-fix-metadata-auto.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -70,5 +73,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.0-0.2
+- Document the foreign-target patch purpose and upstream status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.3.0-0.1
 - Add the initial repository packaging changelog.

@@ -10,12 +10,16 @@
 
 Name:           rust-phf_generator0.14
 Version:        0.14.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        PHF generation logic
 
 License:        MIT
 URL:            https://crates.io/crates/phf_generator
 Source:         %{crates_source}
+# Fedora packaging: omit the benchmark target and its Criterion-only
+# development dependency from the packaged crate graph.
+# Upstream status: not submitted because upstream intentionally retains the
+# benchmark, while Fedora does not package benchmark-only inputs.
 Patch:          phf_generator-0.14.0-no-benchmarks.patch
 
 BuildRequires:  cargo-rpm-macros >= 26
@@ -84,5 +88,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.2
+- Document the benchmark-pruning patch purpose and upstream status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.1
 - Add the initial repository packaging changelog.
