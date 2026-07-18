@@ -2,8 +2,9 @@ name: rust-napi-build2
 status: enabled
 blockers: []
 validation:
-  enablement_release: Release 0.2 uses immutable crate and supplemental-license sources and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  enablement_release: Release 0.3 uses immutable crate and supplemental-license sources accepted by COPR source builders and enables configured SCM publication across Kreuzberg's six-cell target matrix.
   source_identity: The static crates.io archive matches the pinned source SHA-256; the archive omits license text, so the spec pins and verifies the workspace LICENSE from the exact napi-build-v2.3.2 release commit.
+  source_delivery: The canonical crates.io API download route returned HTTP 403 in COPR source builds 10740815 and 10740816, so the specs use the byte-identical direct static registry endpoint.
   dependency_evidence: The crate has no external Cargo dependencies and declares Rust 1.88, below every selected Fedora toolchain.
   duplicate_audit: No crate(napi-build) = 2.3.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:

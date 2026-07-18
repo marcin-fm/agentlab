@@ -7,12 +7,13 @@
 
 Name:           rust-hashify0.2
 Version:        0.2.9
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Fast perfect hashing without dependencies
 
 License:        Apache-2.0 OR MIT
 URL:            https://crates.io/crates/hashify
-Source0:        %{crates_source}
+# crates.io's API download route returns HTTP 403 in COPR source builders.
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # Fedora does not need the benchmark-only Criterion dependency.
 # Downstream-only registry integration metadata; not submitted upstream.
 Patch0:         hashify-fix-metadata.diff
@@ -83,6 +84,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.9-0.3
+- Use the direct static registry archive accepted by COPR source builders.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.9-0.2
 - Enable configured SCM publication from the immutable crates.io source.
 - Mark both included project license texts as license files.

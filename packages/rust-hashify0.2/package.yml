@@ -2,8 +2,9 @@ name: rust-hashify0.2
 status: enabled
 blockers: []
 validation:
-  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix.
+  enablement_release: Release 0.3 uses the immutable static registry archive accepted by COPR source builders and enables configured SCM publication across Kreuzberg's six-cell target matrix.
   source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared Apache-2.0 and MIT license texts.
+  source_delivery: The canonical crates.io API download route returned HTTP 403 in COPR source builds 10740815 and 10740816, so the specs use the byte-identical direct static registry endpoint.
   dependency_evidence: Fedora supplies indexmap 2.13 or newer, proc-macro2 1, quote 1, syn 2 with full, and phf 0.11.3 with macros in every selected release; every selected toolchain supports Rust 2024.
   patch_scope: The Fedora-only metadata patch removes only the benchmark target and its Criterion dependency while retaining the phf-backed integration tests and all library sources.
   duplicate_audit: No crate(hashify) = 0.2.9 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.

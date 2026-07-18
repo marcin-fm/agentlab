@@ -9,12 +9,13 @@
 
 Name:           rust-napi-build2
 Version:        2.3.2
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        N-API build support
 
 License:        MIT
 URL:            https://crates.io/crates/napi-build
-Source0:        %{crates_source}
+# crates.io's API download route returns HTTP 403 in COPR source builders.
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # The registry archive omits the workspace license; pin the release commit.
 Source1:        https://raw.githubusercontent.com/napi-rs/napi-rs/%{license_commit}/LICENSE#/%{crate}-%{version}-LICENSE
 
@@ -73,6 +74,9 @@ install -pm 0644 %{SOURCE1} LICENSE
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.3.2-0.3
+- Use the direct static registry archive accepted by COPR source builders.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.3.2-0.2
 - Enable configured SCM publication with the immutable upstream license text.
 
