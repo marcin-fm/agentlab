@@ -9,6 +9,11 @@ on:
         type: choice
         options:
           - bun
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/source-release/bun.yml"
 
 permissions:
   contents: write
@@ -17,12 +22,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: source-release-${{ inputs.package }}
+  group: source-release-${{ inputs.package || 'bun' }}
   cancel-in-progress: false
 
 jobs:
   bun-webkit:
-    if: inputs.package == 'bun'
+    if: github.event_name == 'push' || inputs.package == 'bun'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
@@ -45,9 +50,20 @@ jobs:
             webkit = data.fetch("build_plan").fetch("source_inputs").fetch("webkit")
             source = webkit.fetch("jsc_only")
             commit = webkit.fetch("commit")
+            tag = "bun-sources-#{version}-webkit-#{commit[0, 12]}"
+            request = YAML.safe_load_file(".github/source-release/bun.yml")
+            expected_request = {
+              "schema" => "agentlab-source-release-request/v1",
+              "package" => "bun",
+              "version" => version,
+              "webkit_commit" => commit,
+              "archive_sha256" => source.fetch("sha256"),
+              "tag" => tag
+            }
+            abort "Bun source-release request does not match package metadata" unless request == expected_request
             values = {
               "version" => version,
-              "tag" => "bun-sources-#{version}-webkit-#{commit[0, 12]}",
+              "tag" => tag,
               "repository_url" => webkit.fetch("repository_url"),
               "commit" => commit,
               "canonical_filename" => webkit.fetch("archive_filename"),
