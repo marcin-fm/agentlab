@@ -1,10 +1,10 @@
 name: bun
 status: blocked
 blockers:
-  - The checked WebKit archive still needs immutable public hosting.
+  - The checked minimized WebKit/JSC archive still needs immutable public hosting.
   - The checked native, Node.js header, npm, and Cargo crate archives still need immutable RPM-consumable hosting.
   - The checked lol-html Cargo vendor and npm source closures are not integrated as immutable RPM sources.
-  - Complete LGPL relink objects for the final statically linked Bun executable are not packaged.
+  - The complete LGPL relink kit is not hosted or integrated as an RPM-consumable source.
   - The immediate source-built offline self-rebuild is seed-free, but clean-cache Zig 0.15.2 output is not reproducible: the same 32-object target changes aggregate after only its local and global caches are cleared.
 upstream:
   provider: github
@@ -49,6 +49,28 @@ build_plan:
       patch_sha256: 023a4686ba96eb6ace658bef0226ba8b2968b57075ad11813918da93ed3c14e3
       patch_provenance: https://gitlab.archlinux.org/archlinux/packaging/packages/bun/-/commit/e6f882caed2016f0aadfe1d2af821c42b74d5840
       patch_issue: https://github.com/oven-sh/bun/issues/28607
+      jsc_only:
+        state: verified
+        architectures:
+          - x86_64
+        acquisition: deterministic_minimized_archive
+        source_tree_complete: false
+        jsc_only_source_subset: true
+        archive_filename: WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc-only.tar.gz
+        archive_size_bytes: 93056181
+        archive_url: null
+        archive_hosted: false
+        sha256: 909d4b08612356159103fec95190b629754e460196404fa3fb3bd14e706eaa3b
+        tree_sha256: dd102e7dc710fc0ba143b962172f43e117e9eca46070088dfed19bf67521d4d6
+        member_count: 12867
+        regular_file_count: 11633
+        symlink_count: 19
+        regular_file_bytes: 267960543
+        proof_receipt: webkit-minimized-source-proof.json
+        proof_receipt_sha256: 01c59af278003013b6679599f3e371a6b91a56ca30a42569ef70147dc9b61c48
+        source_build_proof_receipt: webkit-minimized-source-build-proof.json
+        source_build_proof_receipt_sha256: b6c2c9cc5a01b63a1e7fc0b2c6aac9ec055ba8d26dacc1c73059311186dc6b4d
+        source_build_verified: true
     lolhtml:
       relationship: pinned_by_bun_release
       release_pin: bun-v1.3.14
@@ -115,6 +137,7 @@ build_plan:
       proof_date: "2026-07-18"
       proof_receipt: webkit-source-build-proof.json
       isolated_buildroot_proof_receipt: webkit-mock-build-proof.json
+      minimized_jsc_only_source_verified: true
     dependency_closure:
       state: blocked
       npm_sources_verified: true
@@ -197,6 +220,19 @@ build_plan:
         response_files_retained: false
         bootstrap_seed_wrapper_invoked: true
         complete_lgpl_relink_materials_verified: false
+      relink_kit:
+        state: verified
+        proof_receipt: relink-kit-proof.json
+        proof_receipt_sha256: ffb31b4310a12212c2c8c3a0197fbd197819f083483caba536bd66de753987f0
+        archive: bun-1.3.14-relink-kit.tar.zst
+        archive_bytes: 329696015
+        archive_sha256: 730986ddddf5849aaefd8afe5a9c898668e5e12de9e4bd794d0715d12f64a3c5
+        archive_hosted: false
+        payload_manifest_sha256: 17a8129066962dc89bb648cf8fd4610dea138f72c0d560c181220f330dc6491a
+        response_file_sha256: f4066db70302c018aff564c7be8de8071897c45b4c99eca0bf4b70a4e98572dc
+        relinked_output_sha256: fa12b3c4ba0e8eb4fca7c7cf1e3e1d0354844dc1f532d12bee37306b813a4382
+        linker_map_sha256: fd0c8b561c464914938a15ba0220580554d887e17738e81d6f100a8c8e030004
+        complete_lgpl_relink_materials_verified: true
     self_rebuild:
       state: blocked
       source_built_driver_verified: true
@@ -216,6 +252,16 @@ build_plan:
       proof_receipt_sha256: 9c5d742309e95516de508769b153d07c8ba5e7ba239861bd46fd85d1aeaa0da0
       zig_reproducibility_proof_receipt: zig-reproducibility-proof.json
       zig_reproducibility_proof_receipt_sha256: aab9128d9a27657e9d7269713bbe65880199b5eac6ef04af26f61ccce10c0367
+      zig_single_thread_control:
+        proof_receipt: zig-single-thread-control-proof.json
+        proof_receipt_sha256: c8cbe386eb83152372729da609205dff49dd59c255171472fc6c5fe25e0fe4c3
+        compiler_sha256: 07d6fbcb907f4a84671311fafd5ad9e5106c51596968ccc16bbc340d9687be6b
+        object_aggregate_sha256: c5be03baa457e911e42f200406b920ba21763b0526f62a037723bde1b5be4f16
+        trace_sha256: 0a9d55fad7929fd415a3cbdfa1fa4e0941136c6f60b5ec39ed859c83f1e09078
+        object_count: 32
+        trace_count: 44674
+        combined_single_thread_control_reproducible: true
+        production_fix_verified: false
     final:
       state: blocked
       license_audit_verified: false

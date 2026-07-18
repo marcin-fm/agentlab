@@ -1,0 +1,110 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "optparse"
+require_relative "lib/agentlab"
+require_relative "lib/bun_webkit_source"
+
+package = Agentlab.package_named("bun")
+version = package.upstream.fetch("current_version").to_s
+webkit = package.data.fetch("build_plan").fetch("source_inputs").fetch("webkit")
+release_pin = "bun-v#{version}"
+source = File.join("/srv/tmp", webkit.fetch("archive_filename"))
+output = File.join("/srv/tmp", "WebKit-#{webkit.fetch('commit')}-jsc-only.tar.gz")
+receipt = "#{output}.json"
+workdir = "/srv/tmp/agentlab-bun-webkit-source-package"
+force = false
+
+def resolved_identity(path)
+  absolute = File.expand_path(path)
+  return File.realpath(absolute) if File.exist?(absolute) || File.symlink?(absolute)
+
+  missing = []
+  cursor = absolute
+  until File.exist?(cursor) || File.symlink?(cursor)
+    parent = File.dirname(cursor)
+    break if parent == cursor
+
+    missing.unshift(File.basename(cursor))
+    cursor = parent
+  end
+  File.expand_path(File.join(File.realpath(cursor), *missing))
+rescue Errno::ENOENT, Errno::ELOOP
+  absolute
+end
+
+def below_srv_tmp?(path)
+  path == "/srv/tmp" || path.start_with?("/srv/tmp/")
+end
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/package-bun-webkit-source [options]"
+  parser.on("--source PATH", "Checked complete WebKit source archive") { |path| source = path }
+  parser.on("--output PATH", "Minimized deterministic WebKit archive") { |path| output = path }
+  parser.on("--receipt PATH", "Minimized source identity receipt") { |path| receipt = path }
+  parser.on("--workdir PATH", "Marked packaging directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--force", "Replace existing marked packaging output") { force = true }
+end.parse!
+
+source = File.expand_path(source)
+output = File.expand_path(output)
+receipt = File.expand_path(receipt)
+workdir = File.expand_path(workdir)
+raise Agentlab::Error, "packaging workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+raise Agentlab::Error, "minimized WebKit output must be below /srv/tmp" unless output.start_with?("/srv/tmp/")
+raise Agentlab::Error, "minimized WebKit receipt must be below /srv/tmp" unless receipt.start_with?("/srv/tmp/")
+raise Agentlab::Error, "Bun WebKit source is not reconciled for #{release_pin}" unless webkit.fetch("release_pin") == release_pin
+path_roles = { "source" => source, "output" => output, "receipt" => receipt }
+{ "output" => output, "receipt" => receipt, "workdir" => workdir }.each do |role, path|
+  raise Agentlab::Error, "refusing symlinked #{role} path #{path}" if File.symlink?(path)
+end
+resolved_roles = path_roles.transform_values { |path| resolved_identity(path) }
+%w[output receipt].each do |role|
+  resolved = resolved_roles.fetch(role)
+  raise Agentlab::Error, "#{role} path must resolve below /srv/tmp: #{resolved}" unless below_srv_tmp?(resolved)
+end
+collisions = resolved_roles.group_by { |_role, path| path }.select { |_path, entries| entries.length > 1 }
+unless collisions.empty?
+  descriptions = collisions.map { |path, entries| "#{entries.map(&:first).join('/')}=#{path}" }
+  raise Agentlab::Error, "source, output, and receipt paths must be distinct: #{descriptions.join(', ')}"
+end
+resolved_workdir = resolved_identity(workdir)
+raise Agentlab::Error, "packaging workdir must resolve below /srv/tmp: #{resolved_workdir}" unless below_srv_tmp?(resolved_workdir)
+inside_workdir = resolved_roles.select do |_role, path|
+  path == resolved_workdir || path.start_with?("#{resolved_workdir}/")
+end
+unless inside_workdir.empty?
+  raise Agentlab::Error, "source, output, and receipt paths must be outside the packaging workdir: #{inside_workdir.keys.join(', ')}"
+end
+
+marker = File.join(workdir, ".agentlab-bun-webkit-source-package")
+if Dir.exist?(workdir)
+  raise Agentlab::Error, "refusing to use unmarked packaging directory #{workdir}" unless File.file?(marker)
+  raise Agentlab::Error, "packaging directory exists; pass --force to replace it" unless force
+end
+[output, receipt].each do |path|
+  raise Agentlab::Error, "output exists; pass --force to replace #{path}" if File.exist?(path) && !force
+end
+
+if force
+  FileUtils.rm_rf(workdir)
+  FileUtils.rm_f([output, receipt])
+end
+FileUtils.mkdir_p(workdir)
+File.write(marker, "agentlab bun webkit source package\n")
+File.chmod(0o600, marker)
+
+result = Agentlab::BunWebKitSource.package!(
+  source_archive: source,
+  output: output,
+  receipt_path: receipt,
+  workdir: workdir,
+  commit: webkit.fetch("commit"),
+  release_pin: release_pin,
+  canonical_sha256: webkit.fetch("sha256")
+)
+
+puts "Created deterministic minimized WebKit source: #{output}"
+puts "Reduced #{result.dig('source', 'complete_archive_size_bytes')} bytes to #{result.dig('archive', 'size_bytes')} bytes (#{result.dig('archive', 'saved_percent')}% saved)."
+puts "Source receipt: #{receipt}"

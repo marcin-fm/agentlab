@@ -6,11 +6,11 @@
 %global zig_commit 04e7f6ac1e009525bc00934f20199c68f04e0a24
 %global zig_sha256 b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d
 %global webkit_commit 5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b
-%global webkit_sha256 c48d419170205210dc40eb70c2c4bf91e5d50db91a2739d13030965c08d31d3c
+%global webkit_sha256 909d4b08612356159103fec95190b629754e460196404fa3fb3bd14e706eaa3b
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.12%{?dist}
+Release:        0.0.13%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -18,10 +18,11 @@ License:        MIT AND LGPL-2.0-only AND LGPL-2.1-only AND Apache-2.0 AND BSD-2
 URL:            https://bun.com
 Source0:        https://github.com/oven-sh/bun/archive/refs/tags/bun-v%{version}.tar.gz
 Source1:        https://codeload.github.com/oven-sh/zig/tar.gz/%{zig_commit}#/%{name}-%{version}-zig-%{zig_commit}.tar.gz
-# GitHub codeload returns HTTP 422 for this repository. Generate Source2 with:
-# git archive --format=tar --prefix=WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b/ 5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b | gzip -n
+# GitHub codeload returns HTTP 422 for this repository. Generate the checked
+# x86_64 JSC-only subset from the complete pinned archive with
+# scripts/package-bun-webkit-source. The package receipt binds both identities.
 # Replace this local draft source with an immutable HTTPS URL before enablement.
-Source2:        WebKit-%{webkit_commit}.tar.gz
+Source2:        WebKit-%{webkit_commit}-jsc-only.tar.gz
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -80,12 +81,12 @@ Bun is an all-in-one JavaScript runtime and development toolkit.
 
 This draft is intentionally excluded from COPR. It source-bootstraps the
 Bun-pinned Zig fork without an external Zig executable, verifies and patches
-the complete pinned WebKit tree, builds its static JSC libraries with LLVM 21,
+the checked minimized WebKit/JSC source, builds its static libraries with LLVM 21,
 and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
 three frozen npm installs are proven separately with networking unavailable.
 The RPM draft stops before dependency-source integration and the Bun build.
 Separate local proofs cover the first and seed-free offline self-builds, but
-clean-cache Zig reproducibility and final LGPL relink materials remain blocked.
+clean-cache Zig reproducibility and relink-kit source integration remain blocked.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -229,6 +230,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.13
+- Bind the deterministic minimized WebKit/JSC source and its checked build proof.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.12
 - Audit the retained final-link inputs and record the incomplete LGPL relink kit.
 

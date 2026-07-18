@@ -120,6 +120,7 @@ end
 source_inputs = package.data.dig("build_plan", "source_inputs")
 raise Agentlab::Error, "Bun source input metadata is missing" unless source_inputs.is_a?(Hash)
 webkit = source_inputs.fetch("webkit")
+webkit_source = webkit.fetch("jsc_only")
 closure_webkit = Array(receipt["existing_local_sources"]).find { |source| source.is_a?(Hash) && source["symbol"] == "webkit" }
 raise Agentlab::Error, "Bun dependency-closure WebKit source is missing" unless closure_webkit.is_a?(Hash)
 unless closure_webkit["commit"] == webkit["commit"] && closure_webkit["archive"] == webkit["archive_filename"] && closure_webkit["sha256"] == webkit["sha256"]
@@ -147,28 +148,31 @@ direct_sources.each do |source|
 end
 
 generated_sources = []
-webkit_url = webkit["archive_url"]
+webkit_url = webkit_source["archive_url"]
 if webkit_url
-  unless receipt.dig("validation", "immutable_public_hosting_verified") == true && closure_webkit["immutable_public_url"] == webkit_url
-    raise Agentlab::Error, "hosted WebKit metadata is not verified by the dependency closure"
-  end
+  raise Agentlab::Error, "hosted minimized WebKit metadata is not yet verified by the dependency closure" unless webkit_source["archive_hosted"] == true
   direct_sources << {
     "role" => "webkit-source",
-    "filename" => webkit.fetch("archive_filename"),
+    "filename" => webkit_source.fetch("archive_filename"),
     "url" => https_url!(webkit_url, "WebKit archive URL"),
-    "sha256" => webkit.fetch("sha256"),
-    "size_bytes" => webkit.fetch("archive_size_bytes")
+    "sha256" => webkit_source.fetch("sha256"),
+    "size_bytes" => webkit_source.fetch("archive_size_bytes")
   }
 else
   generated_sources << {
     "role" => "webkit-source",
-    "filename" => webkit.fetch("archive_filename"),
-    "recipe" => webkit.fetch("archive_recipe"),
+    "filename" => webkit_source.fetch("archive_filename"),
+    "recipe" => "bun-webkit-minimized-source/v1",
+    "packager" => "scripts/package-bun-webkit-source",
+    "source_receipt" => webkit_source.fetch("proof_receipt"),
+    "source_receipt_sha256" => webkit_source.fetch("proof_receipt_sha256"),
     "repository_url" => https_url!(webkit.fetch("repository_url"), "WebKit repository URL"),
     "commit" => webkit.fetch("commit"),
     "archive_prefix" => webkit.fetch("archive_prefix"),
-    "expected_sha256" => webkit.fetch("sha256"),
-    "expected_size_bytes" => webkit.fetch("archive_size_bytes")
+    "canonical_source_sha256" => webkit.fetch("sha256"),
+    "expected_sha256" => webkit_source.fetch("sha256"),
+    "expected_size_bytes" => webkit_source.fetch("archive_size_bytes"),
+    "tree_sha256" => webkit_source.fetch("tree_sha256")
   }
 end
 
@@ -233,7 +237,13 @@ plan = {
     "target_build_network_allowed" => false,
     "external_generated_artifact_host_required_by_design" => false,
     "fedora_submission_storage" => "lookaside-cache",
-    "architecture_independent_outputs_required" => true,
+    "architecture_independent_outputs_required" => false,
+    "architecture_scoped_outputs" => [
+      {
+        "role" => "webkit-source",
+        "architectures" => webkit_source.fetch("architectures")
+      }
+    ],
     "make_srpm_materializer_integrated" => false,
     "make_srpm_checksum_verification_integrated" => false
   },
@@ -249,6 +259,7 @@ plan = {
     "source_tree_binding_verified" => true,
     "source_counts_verified" => true,
     "member_identities_verified" => true,
+    "webkit_spec_integrated" => true,
     "delivery_implementation_verified" => false,
     "generated_sources_materialized" => false,
     "bun_spec_integrated" => false,

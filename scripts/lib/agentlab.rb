@@ -1192,6 +1192,136 @@ module Agentlab
     errors << "bun: invalid dependency-closure proof receipt: #{e.message}"
   end
 
+  def validate_bun_minimized_webkit_source(package, webkit, version, spec)
+    return [] unless package.name == "bun" && webkit.is_a?(Hash) && webkit.key?("jsc_only")
+
+    errors = []
+    source = webkit["jsc_only"]
+    unless source.is_a?(Hash)
+      return ["bun: minimized WebKit source metadata must be an object"]
+    end
+
+    expected_filename = "WebKit-#{webkit['commit']}-jsc-only.tar.gz"
+    errors << "bun: minimized WebKit source is not verified" unless source["state"] == "verified"
+    errors << "bun: minimized WebKit architecture scope mismatch" unless source["architectures"] == ["x86_64"]
+    errors << "bun: minimized WebKit architecture does not match the build plan" unless source["architectures"] == package.data.dig("build_plan", "architectures")
+    errors << "bun: minimized WebKit acquisition method mismatch" unless source["acquisition"] == "deterministic_minimized_archive"
+    errors << "bun: minimized WebKit source incorrectly claims a complete tree" unless source["source_tree_complete"] == false
+    errors << "bun: minimized WebKit source is not marked JSC-only" unless source["jsc_only_source_subset"] == true
+    errors << "bun: minimized WebKit archive filename mismatch" unless source["archive_filename"] == expected_filename
+    errors << "bun: minimized WebKit archive SHA-256 is invalid" unless source["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors << "bun: minimized WebKit tree SHA-256 is invalid" unless source["tree_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    %w[archive_size_bytes member_count regular_file_count symlink_count regular_file_bytes].each do |key|
+      errors << "bun: minimized WebKit #{key} is invalid" unless source[key].is_a?(Integer) && source[key].positive?
+    end
+    if source["archive_hosted"] == false
+      errors << "bun: minimized WebKit unhosted archive has a URL" unless source["archive_url"].nil?
+    else
+      valid_url = begin
+        URI(source["archive_url"]).is_a?(URI::HTTPS)
+      rescue URI::InvalidURIError, TypeError
+        false
+      end
+      errors << "bun: minimized WebKit hosted archive URL is invalid" unless source["archive_hosted"] == true && valid_url
+    end
+
+    receipt_name = source["proof_receipt"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_receipt_sha256 = source["proof_receipt_sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_receipt_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_receipt_sha256
+      errors << "bun: minimized WebKit source receipt is missing or has wrong SHA-256"
+    else
+      receipt = JSON.parse(File.read(receipt_path))
+      errors << "bun: unsupported minimized WebKit source receipt schema" unless receipt["schema"] == "bun-webkit-minimized-source/v1"
+      errors << "bun: minimized WebKit source receipt package mismatch" unless receipt["package"] == "bun"
+      errors << "bun: minimized WebKit source receipt release mismatch" unless receipt["release_pin"] == "bun-v#{version}"
+      errors << "bun: minimized WebKit source receipt commit mismatch" unless receipt.dig("source", "commit") == webkit["commit"]
+      errors << "bun: minimized WebKit source receipt root mismatch" unless receipt.dig("source", "archive_root") == "WebKit-#{webkit['commit']}"
+      errors << "bun: minimized WebKit source receipt canonical filename mismatch" unless receipt.dig("source", "complete_archive_filename") == webkit["archive_filename"]
+      errors << "bun: minimized WebKit source receipt canonical SHA-256 mismatch" unless receipt.dig("source", "complete_archive_sha256") == webkit["sha256"]
+      errors << "bun: minimized WebKit source receipt canonical size mismatch" unless receipt.dig("source", "complete_archive_size_bytes") == webkit["archive_size_bytes"]
+      {
+        "filename" => "archive_filename",
+        "sha256" => "sha256",
+        "size_bytes" => "archive_size_bytes",
+        "tree_sha256" => "tree_sha256",
+        "member_count" => "member_count",
+        "regular_file_count" => "regular_file_count",
+        "symlink_count" => "symlink_count",
+        "regular_file_bytes" => "regular_file_bytes"
+      }.each do |receipt_key, metadata_key|
+        errors << "bun: minimized WebKit source receipt #{receipt_key} mismatch" unless receipt.dig("archive", receipt_key) == source[metadata_key]
+      end
+      required_paths = receipt.dig("retained_scope", "required_paths")
+      excluded_paths = receipt.dig("retained_scope", "excluded_paths")
+      errors << "bun: minimized WebKit required-path scope is invalid" unless required_paths.is_a?(Array) && %w[CMakeLists.txt Source/JavaScriptCore/CMakeLists.txt Source/ThirdParty/gtest/CMakeLists.txt].all? { |path| required_paths.include?(path) }
+      errors << "bun: minimized WebKit excluded-path scope is invalid" unless excluded_paths.is_a?(Array) && %w[Source/WebCore Source/ThirdParty/capstone LayoutTests].all? { |path| excluded_paths.include?(path) }
+      verified = %w[canonical_source_verified safe_single_root_verified required_paths_verified excluded_paths_absent git_mode_semantics_normalized modes_and_symlinks_manifested deterministic_regeneration_verified archive_size_reduced jsc_only_source_subset]
+      errors << "bun: minimized WebKit source receipt validation is incomplete" unless verified.all? { |key| receipt.dig("validation", key) == true }
+      errors << "bun: minimized WebKit source receipt incorrectly claims completeness" unless receipt.dig("validation", "source_tree_complete") == false
+      errors << "bun: minimized WebKit identity receipt incorrectly claims a Bun build" unless receipt.dig("validation", "bun_source_build_verified") == false
+    end
+
+    build_name = source["source_build_proof_receipt"]
+    build_path = build_name.is_a?(String) && File.join(package.directory, build_name)
+    expected_build_sha256 = source["source_build_proof_receipt_sha256"]
+    unless build_path && File.file?(build_path) && expected_build_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(build_path).hexdigest == expected_build_sha256
+      errors << "bun: minimized WebKit source-build receipt is missing or has wrong SHA-256"
+    else
+      build = JSON.parse(File.read(build_path))
+      errors << "bun: unsupported minimized WebKit source-build receipt schema" unless build["schema"] == 1
+      errors << "bun: minimized WebKit source-build release mismatch" unless build["package_release"] == "bun-v#{version}"
+      errors << "bun: minimized WebKit source-build platform mismatch" unless build["proof_platform"] == "fedora-44-x86_64"
+      errors << "bun: minimized WebKit source-build unexpectedly claims an isolated buildroot" unless build["isolated_buildroot"] == false
+      expected_source = {
+        "commit" => webkit["commit"],
+        "archive_filename" => source["archive_filename"],
+        "sha256" => source["sha256"],
+        "source_tree_complete" => false,
+        "minimized_jsc_only_source" => true,
+        "source_receipt_sha256" => source["proof_receipt_sha256"],
+        "tree_sha256" => source["tree_sha256"],
+        "gitlink_count" => webkit["gitlink_count"],
+        "embedded_gitmodules_count" => webkit["embedded_gitmodules_count"]
+      }
+      errors << "bun: minimized WebKit source-build input mismatch" unless build["source"] == expected_source
+      errors << "bun: minimized WebKit source-build patch mismatch" unless build.dig("patch", "path") == webkit["patch"] && build.dig("patch", "sha256") == webkit["patch_sha256"]
+
+      static_archives = build.dig("output", "static_archives")
+      valid_file = lambda do |entry|
+        entry.is_a?(Hash) && entry["path"].is_a?(String) && !entry["path"].empty? &&
+          !Pathname(entry["path"]).absolute? && !Pathname(entry["path"]).each_filename.include?("..") &&
+          entry["size_bytes"].is_a?(Integer) && entry["size_bytes"].positive? &&
+          entry["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+      end
+      expected_archives = %w[libJavaScriptCore.a libWTF.a libbmalloc.a]
+      errors << "bun: minimized WebKit static-archive proof is invalid" unless static_archives.is_a?(Hash) && static_archives.keys.sort == expected_archives && static_archives.values.all? { |entry| valid_file.call(entry) }
+      jsc = build.dig("output", "jsc")
+      errors << "bun: minimized WebKit jsc proof is invalid" unless valid_file.call(jsc) && jsc["runtime_probe_verified"] == true
+      build_metadata = build.dig("output", "metadata")
+      expected_metadata = %w[CMakeCache.txt compile_commands.json]
+      errors << "bun: minimized WebKit retained build metadata is invalid" unless build_metadata.is_a?(Hash) && build_metadata.keys.sort == expected_metadata && build_metadata.values.all? { |entry| valid_file.call(entry) }
+      expected_headers = {
+        "JavaScriptCore/Headers" => 9,
+        "JavaScriptCore/PrivateHeaders" => 1415,
+        "WTF/Headers" => 510,
+        "bmalloc/Headers" => 360
+      }
+      errors << "bun: minimized WebKit generated-header proof mismatch" unless build.dig("output", "generated_header_counts") == expected_headers
+      errors << "bun: minimized WebKit source-build relink evidence is incomplete" unless %w[webkit_static_archives_verified generated_headers_retained compile_commands_retained].all? { |key| build.dig("relink_materials", key) == true }
+      errors << "bun: minimized WebKit source-build incorrectly claims complete Bun relink materials" unless build.dig("relink_materials", "complete_bun_relink_materials_verified") == false
+      errors << "bun: minimized WebKit source-build metadata is not verified" unless source["source_build_verified"] == true
+    end
+
+    errors << "bun: spec does not bind the minimized WebKit SHA-256" unless spec.to_s.match?(/^%global\s+webkit_sha256\s+#{Regexp.escape(source['sha256'].to_s)}$/)
+    errors << "bun: spec does not use the minimized WebKit Source2" unless spec.to_s.match?(/^Source2:\s+WebKit-%\{webkit_commit\}-jsc-only\.tar\.gz$/)
+    errors << "bun: spec architecture does not match the minimized WebKit source" unless spec.to_s.match?(/^ExclusiveArch:\s+x86_64$/)
+
+    errors
+  rescue JSON::ParserError, KeyError => e
+    errors << "bun: invalid minimized WebKit receipt: #{e.message}"
+  end
+
   def validate_bun_build_plan(package, spec)
     return [] unless package.name == "bun"
 
@@ -1267,6 +1397,7 @@ module Agentlab
     elsif stages.dig("webkit_source_build", "state") == "verified"
       errors << "bun: verified WebKit stage requires source input metadata"
     end
+    errors.concat(validate_bun_minimized_webkit_source(package, webkit, version, spec))
 
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
 
@@ -1492,6 +1623,98 @@ module Agentlab
       end
     end
 
+    if seed_stage.is_a?(Hash) && seed_stage.key?("relink_kit")
+      metadata = seed_stage["relink_kit"]
+      unless metadata.is_a?(Hash)
+        errors << "bun: relink-kit metadata must be an object"
+      else
+        receipt_name = metadata["proof_receipt"]
+        receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+        unless receipt_path && File.file?(receipt_path)
+          errors << "bun: relink-kit proof receipt is missing: #{receipt_name.inspect}"
+        else
+          begin
+            receipt = JSON.parse(File.read(receipt_path))
+            expected_sha256 = metadata["proof_receipt_sha256"]
+            errors << "bun: relink-kit proof receipt SHA-256 mismatch" unless expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+            errors << "bun: unsupported relink-kit proof receipt schema" unless receipt["schema"] == "bun-relink-kit/v1"
+            errors << "bun: relink-kit proof package mismatch" unless receipt["package"] == "bun"
+            errors << "bun: relink-kit proof release mismatch" unless receipt["version"] == version
+            errors << "bun: relink-kit proof date mismatch" unless receipt["date"] == seed_stage["proof_date"]
+
+            audit = seed_stage["relink_materials_audit"]
+            errors << "bun: relink-kit source audit mismatch" unless audit.is_a?(Hash) &&
+              receipt.dig("source_audit", "schema") == "bun-relink-materials-audit/v2" &&
+              receipt.dig("source_audit", "sha256") == audit["proof_receipt_sha256"] &&
+              receipt.dig("source_audit", "link_manifest_sha256") == audit["link_manifest_sha256"] &&
+              receipt.dig("source_audit", "direct_object_inventory_sha256") == audit["direct_object_inventory_sha256"]
+
+            kit = receipt["kit"]
+            errors << "bun: relink-kit archive metadata mismatch" unless kit.is_a?(Hash) &&
+              kit["root_name"] == "bun-#{version}-relink-kit" &&
+              kit["archive"] == metadata["archive"] &&
+              kit["archive_size_bytes"] == metadata["archive_bytes"] &&
+              kit["archive_sha256"] == metadata["archive_sha256"] &&
+              metadata["archive_hosted"] == false
+
+            summary = kit.is_a?(Hash) && kit["payload_summary"]
+            expected_summary = {
+              "object_count" => 1162,
+              "archive_count" => 4,
+              "linker_script_count" => 2,
+              "generated_header_entry_count" => 2294,
+              "generated_header_target_count" => 1415,
+              "response_file_input_count" => 1166
+            }
+            errors << "bun: relink-kit payload summary mismatch" unless summary.is_a?(Hash) && expected_summary.all? { |key, value| summary[key] == value }
+
+            errors << "bun: relink-kit payload manifest mismatch" unless kit.is_a?(Hash) && kit.dig("payload_manifest", "sha256") == metadata["payload_manifest_sha256"]
+            errors << "bun: relink-kit response file mismatch" unless kit.is_a?(Hash) && kit.dig("response_file", "sha256") == metadata["response_file_sha256"]
+            valid_records = %w[payload_manifest link_command relink_script readme response_file].all? do |key|
+              record = kit.is_a?(Hash) && kit[key]
+              path = record.is_a?(Hash) && record["path"]
+              path.is_a?(String) && !path.empty? && !Pathname(path).absolute? && !Pathname(path).each_filename.include?("..") &&
+                record["size_bytes"].is_a?(Integer) && record["size_bytes"].positive? &&
+                record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+            end
+            errors << "bun: relink-kit payload records are invalid" unless valid_records
+
+            validation_keys = %w[
+              archive_generated payload_manifest_generated response_file_reconstructed
+              wrapper_free_link_command_generated proof_root_paths_removed_from_link_command
+              archive_extraction_verified network_isolated_link_verified relinked_output_verified
+              retained_profile_sha256_equal retained_linker_map_sha256_equal smoke_verified
+              fedora_shared_cxx_runtime_verified seed_payload_absent_verified
+              seed_runtime_dependency_absent_verified
+            ]
+            errors << "bun: relink-kit proof validation is incomplete" unless validation_keys.all? { |key| receipt.dig("validation", key) == true }
+
+            link = receipt["link_validation"]
+            errors << "bun: relink-kit output proof mismatch" unless link.is_a?(Hash) &&
+              link["network_namespace"] == true && link["version"] == version &&
+              link.dig("output", "path") == "build/release-local/bun-profile" &&
+              link.dig("output", "sha256") == metadata["relinked_output_sha256"] &&
+              link.dig("output", "retained_profile_sha256") == metadata["relinked_output_sha256"] &&
+              link.dig("output", "retained_profile_sha256_equal") == true &&
+              link.dig("linker_map", "path") == "build/release-local/bun-profile.linker-map" &&
+              link.dig("linker_map", "sha256") == metadata["linker_map_sha256"] &&
+              link.dig("linker_map", "retained_linker_map_sha256") == metadata["linker_map_sha256"] &&
+              link.dig("linker_map", "retained_linker_map_sha256_equal") == true
+            errors << "bun: relink-kit runtime proof is incomplete" unless link.is_a?(Hash) &&
+              link["smoke_verified"] == true && link["fedora_shared_cxx_runtime_verified"] == true &&
+              link["shared_runtime_libraries"] == %w[libgcc_s.so.1 libstdc++.so.6] &&
+              link["seed_payload_absent_verified"] == true && link["seed_runtime_dependency_absent_verified"] == true
+
+            errors << "bun: relink-kit completeness mismatch" unless receipt["complete_lgpl_relink_materials_verified"] == metadata["complete_lgpl_relink_materials_verified"] && receipt["complete_lgpl_relink_materials_verified"] == true
+            errors << "bun: relink-kit proof incorrectly claims a final license audit" unless receipt["final_license_audit_verified"] == false
+            errors << "bun: relink-kit proof incorrectly claims a final RPM" unless receipt["final_rpm_verified"] == false
+          rescue JSON::ParserError => e
+            errors << "bun: invalid relink-kit proof receipt: #{e.message}"
+          end
+        end
+      end
+    end
+
     self_stage = stages["self_rebuild"]
     if self_stage.is_a?(Hash) && self_stage["proof_receipt"]
       self_receipt = nil
@@ -1616,6 +1839,60 @@ module Agentlab
           errors << "bun: Zig reproducibility proof fixed-point result mismatch" unless zig_receipt.dig("validation", "source_rebuild_fixed_point_verified") == self_stage["source_rebuild_fixed_point_verified"]
         rescue JSON::ParserError => e
           errors << "bun: invalid Zig reproducibility proof receipt: #{e.message}"
+        end
+      end
+
+      control = self_stage["zig_single_thread_control"]
+      if control
+        unless control.is_a?(Hash)
+          errors << "bun: Zig single-thread control metadata must be an object"
+        else
+          control_name = control["proof_receipt"]
+          control_path = control_name.is_a?(String) && File.join(package.directory, control_name)
+          unless control_path && File.file?(control_path)
+            errors << "bun: Zig single-thread control receipt is missing: #{control_name.inspect}"
+          else
+            begin
+              control_receipt = JSON.parse(File.read(control_path))
+              control_sha256 = control["proof_receipt_sha256"]
+              errors << "bun: Zig single-thread control receipt SHA-256 mismatch" unless control_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(control_path).hexdigest == control_sha256
+              errors << "bun: unsupported Zig single-thread control receipt schema" unless control_receipt["schema"] == "bun-zig-single-thread-control/v1"
+              errors << "bun: Zig single-thread control package mismatch" unless control_receipt["package"] == "bun"
+              errors << "bun: Zig single-thread control release mismatch" unless control_receipt["release"] == version
+              errors << "bun: Zig single-thread control date mismatch" unless control_receipt["proof_date"] == self_stage["proof_date"]
+              errors << "bun: Zig single-thread control platform mismatch" unless control_receipt["proof_platform"] == self_stage["proof_platform"]
+              errors << "bun: Zig single-thread control source mismatch" unless zig.is_a?(Hash) && control_receipt.dig("source", "zig_commit") == zig["commit"]
+              errors << "bun: Zig single-thread control compiler mismatch" unless control_receipt.dig("compiler", "single_threaded_sha256") == control["compiler_sha256"]
+
+              experiment = control_receipt["experiment"]
+              errors << "bun: Zig single-thread control execution mismatch" unless experiment.is_a?(Hash) &&
+                experiment["network_namespace"] == true && experiment["top_level_jobs"] == 1 &&
+                experiment["parallel_sema_environment_present"] == false && experiment["llvm_codegen_threads"] == 32
+              runs = experiment.is_a?(Hash) && experiment["runs"]
+              valid_runs = runs.is_a?(Array) && runs.length == 2 && runs.all? do |run|
+                run.is_a?(Hash) && run["object_count"] == control["object_count"] &&
+                  run["object_aggregate_sha256"] == control["object_aggregate_sha256"] &&
+                  run["trace_count"] == control["trace_count"] && run["trace_sha256"] == control["trace_sha256"] &&
+                  run["sorted_trace_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && run["log_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+              end
+              errors << "bun: Zig single-thread control run inventory mismatch" unless valid_runs
+
+              comparison = control_receipt["comparison"]
+              errors << "bun: Zig single-thread control comparison mismatch" unless comparison.is_a?(Hash) &&
+                comparison["object_aggregates_equal"] == control["combined_single_thread_control_reproducible"] &&
+                comparison["object_aggregates_equal"] == true && comparison["changed_object_count"] == 0 &&
+                comparison["raw_traces_equal"] == true && comparison["sorted_traces_equal"] == true
+              validation = control_receipt["validation"]
+              errors << "bun: Zig single-thread control overclaims a production fix" unless validation.is_a?(Hash) &&
+                validation["combined_single_thread_control_reproducible"] == true &&
+                validation["intern_pool_only_isolation_verified"] == false &&
+                validation["production_fix_verified"] == control["production_fix_verified"] &&
+                validation["production_fix_verified"] == false &&
+                validation["canonical_package_sources_modified"] == false
+            rescue JSON::ParserError => e
+              errors << "bun: invalid Zig single-thread control receipt: #{e.message}"
+            end
+          end
         end
       end
     end

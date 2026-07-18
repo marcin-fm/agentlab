@@ -5,8 +5,10 @@ require "date"
 require "digest"
 require "fileutils"
 require "json"
+require "open3"
 require "optparse"
 require "pathname"
+require "shellwords"
 
 File.umask(0o022)
 
@@ -15,14 +17,20 @@ output = nil
 check = false
 receipt = nil
 audit_date = nil
+kit_output_dir = nil
+force = false
+validate_link = false
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: scripts/audit-bun-relink-materials --root PATH --date YYYY-MM-DD [--output PATH | --check --receipt PATH]"
+  parser.banner = "Usage: scripts/audit-bun-relink-materials --root PATH --date YYYY-MM-DD [--output PATH | --check --receipt PATH] [--kit-output-dir PATH [--validate-link] [--force]]"
   parser.on("--root PATH", "Successful Bun proof root") { |path| root = path }
   parser.on("--output PATH", "Deterministic JSON audit receipt") { |path| output = path }
   parser.on("--date YYYY-MM-DD", "Evidence date") { |date| audit_date = date }
   parser.on("--check", "Compare the generated receipt with --receipt") { check = true }
   parser.on("--receipt PATH", "Existing receipt for --check") { |path| receipt = path }
+  parser.on("--kit-output-dir PATH", "Materialize the deterministic relink kit below PATH") { |path| kit_output_dir = path }
+  parser.on("--validate-link", "Run the kit's direct final link in a network namespace") { validate_link = true }
+  parser.on("--force", "Replace only previously marked kit outputs") { force = true }
 end.parse!
 
 raise "--root is required" unless root
@@ -30,6 +38,9 @@ raise "--date is required" unless audit_date
 raise "--output is required unless --check" unless output || check
 raise "--receipt is required with --check" if check && !receipt
 raise "--receipt is only valid with --check" if receipt && !check
+raise "--kit-output-dir is not valid with --check" if check && kit_output_dir
+raise "--validate-link requires --kit-output-dir" if validate_link && !kit_output_dir
+raise "--force requires --kit-output-dir" if force && !kit_output_dir
 begin
   parsed_date = Date.strptime(audit_date, "%Y-%m-%d")
   raise unless parsed_date.strftime("%Y-%m-%d") == audit_date
@@ -75,6 +86,297 @@ def inventory_digest(records)
     JSON.generate(record.sort.to_h)
   end.join("\n") + "\n"
   Digest::SHA256.hexdigest(serialized)
+end
+
+def write_json(path, data)
+  FileUtils.mkdir_p(File.dirname(path))
+  File.binwrite(path, JSON.pretty_generate(data) + "\n")
+end
+
+def run!(*command, chdir: nil)
+  options = {}
+  options[:chdir] = chdir if chdir
+  success = system(*command, **options)
+  raise "command failed: #{command.shelljoin}" unless success
+end
+
+def capture!(*command, chdir: nil)
+  options = {}
+  options[:chdir] = chdir if chdir
+  stdout, stderr, status = Open3.capture3(*command, **options)
+  raise "command failed: #{command.shelljoin}: #{stderr.strip}" unless status.success?
+
+  stdout
+end
+
+def copy_payload_file(source, destination, kit_root, kind: "file", mode: 0o644)
+  FileUtils.mkdir_p(File.dirname(destination))
+  FileUtils.copy_file(source, destination)
+  File.chmod(mode, destination)
+  {
+    "path" => destination.delete_prefix("#{kit_root}/"),
+    "kind" => kind,
+    "mode" => format("%04o", mode),
+    "size_bytes" => File.size(destination),
+    "sha256" => sha256(destination)
+  }
+end
+
+def write_payload_file(destination, content, kit_root, kind: "metadata", mode: 0o644)
+  FileUtils.mkdir_p(File.dirname(destination))
+  File.binwrite(destination, content)
+  File.chmod(mode, destination)
+  {
+    "path" => destination.delete_prefix("#{kit_root}/"),
+    "kind" => kind,
+    "mode" => format("%04o", mode),
+    "size_bytes" => File.size(destination),
+    "sha256" => sha256(destination)
+  }
+end
+
+def materialize_header_target(relative, root, kit_root, payload_records, materialized, targets, active = {})
+  targets[relative] = true
+  return if materialized.key?(relative)
+  raise "generated-header symlink cycle at #{relative}" if active.key?(relative)
+
+  active[relative] = true
+  source = File.join(root, relative)
+  raise "generated-header target escapes proof root #{relative}" unless inside_root?(Pathname(source).cleanpath.to_s, root)
+  stat = File.lstat(source)
+  destination = File.join(kit_root, relative)
+  if stat.symlink?
+    raw_target = File.readlink(source)
+    target_path = if raw_target.start_with?("/")
+                    Pathname(raw_target).cleanpath.to_s
+                  else
+                    Pathname(File.join(File.dirname(source), raw_target)).cleanpath.to_s
+                  end
+    raise "generated-header symlink target escapes proof root #{relative}" unless inside_root?(target_path, root)
+    target_real = File.realpath(target_path)
+    raise "generated-header symlink target escapes proof root #{relative}" unless inside_root?(target_real, root)
+
+    normalized_target = Pathname(target_path).relative_path_from(Pathname(File.dirname(source))).to_s
+    FileUtils.mkdir_p(File.dirname(destination))
+    File.symlink(normalized_target, destination)
+    payload_records << {
+      "path" => relative,
+      "kind" => "generated-header-target-symlink",
+      "mode" => "0777",
+      "target" => normalized_target,
+      "target_size_bytes" => File.size(target_real),
+      "target_sha256" => sha256(target_real)
+    }
+    materialized[relative] = true
+    target_relative = target_path.delete_prefix("#{root}/")
+    materialize_header_target(target_relative, root, kit_root, payload_records, materialized, targets, active)
+  elsif stat.file?
+    payload_records << copy_payload_file(source, destination, kit_root, kind: "generated-header-target")
+    materialized[relative] = true
+  else
+    raise "unsupported generated-header target #{relative}"
+  end
+ensure
+  active.delete(relative)
+end
+
+def safe_output_path(path)
+  expanded = File.expand_path(path)
+  expanded = File.realpath(expanded) if File.exist?(expanded)
+  raise "unsafe kit output directory #{expanded}" if expanded == "/"
+
+  expanded
+end
+
+def resolved_output_candidate(path, seen = {})
+  expanded = File.expand_path(path)
+  raise "symlink cycle while resolving output path #{expanded}" if seen.key?(expanded)
+
+  seen[expanded] = true
+  suffix = []
+  ancestor = expanded
+  until File.exist?(ancestor) || File.symlink?(ancestor)
+    parent = File.dirname(ancestor)
+    raise "cannot resolve output path #{expanded}" if parent == ancestor
+
+    suffix.unshift(File.basename(ancestor))
+    ancestor = parent
+  end
+  if File.symlink?(ancestor)
+    target = File.readlink(ancestor)
+    target = File.join(File.dirname(ancestor), target) unless target.start_with?("/")
+    target = File.join(target, *suffix) unless suffix.empty?
+    return resolved_output_candidate(target, seen)
+  end
+
+  File.join(File.realpath(ancestor), *suffix)
+end
+
+def prepare_kit_outputs(output_dir, kit_name, force)
+  output_dir = safe_output_path(output_dir)
+  FileUtils.mkdir_p(output_dir)
+  kit_root = File.join(output_dir, kit_name)
+  archive_path = File.join(output_dir, "#{kit_name}.tar.zst")
+  receipt_path = File.join(output_dir, "#{kit_name}-receipt.json")
+  marker_path = File.join(kit_root, ".agentlab-bun-relink-kit")
+
+  existing = [kit_root, archive_path, receipt_path].select { |path| File.exist?(path) || File.symlink?(path) }
+  unless existing.empty?
+    raise "kit outputs already exist: #{existing.join(', ')}" unless force
+    raise "refusing to replace unmarked kit outputs below #{output_dir}" unless File.file?(marker_path)
+
+    FileUtils.rm_rf(kit_root) if File.exist?(kit_root) || File.symlink?(kit_root)
+    FileUtils.rm_f([archive_path, receipt_path])
+  end
+
+  FileUtils.mkdir_p(kit_root)
+  File.binwrite(marker_path, "agentlab bun relink kit\n")
+  File.chmod(0o644, marker_path)
+  [output_dir, kit_root, archive_path, receipt_path]
+end
+
+def rewritten_ldflags(ldflags, root)
+  replacements = {
+    "-Wl,-Map=#{root}/build/release-local/bun-profile.linker-map" => "-Wl,-Map=bun-profile.linker-map",
+    "-Wl,--dynamic-list=#{root}/source/src/symbols.dyn" => "-Wl,--dynamic-list=../../source/src/symbols.dyn",
+    "-Wl,--version-script=#{root}/source/src/linker.lds" => "-Wl,--version-script=../../source/src/linker.lds"
+  }
+  rewritten = ldflags.map { |flag| replacements.fetch(flag, flag) }
+  leaked = rewritten.grep(/#{Regexp.escape(root)}/)
+  raise "proof-root paths remain in wrapper-free ldflags: #{leaked.join(', ')}" unless leaked.empty?
+  raise "expected linker-map path was not rewritten" unless rewritten.include?("-Wl,-Map=bun-profile.linker-map")
+  raise "expected dynamic-list path was not rewritten" unless rewritten.include?("-Wl,--dynamic-list=../../source/src/symbols.dyn")
+  raise "expected version-script path was not rewritten" unless rewritten.include?("-Wl,--version-script=../../source/src/linker.lds")
+
+  rewritten
+end
+
+def direct_link_argv(command_line, ldflags, root)
+  command = command_line.sub(/\A\s*command\s*=\s*/, "").strip
+  tokens = Shellwords.split(command)
+  console = tokens.index("--console")
+  raise "link rule is not the expected Bun stream wrapper" unless console && console >= 3
+  raise "link rule does not invoke the proof seed" unless tokens.fetch(0) == File.join(root, "seed", "bun")
+  raise "link rule does not invoke stream.ts" unless tokens.fetch(console - 2) == File.join(root, "source", "scripts", "build", "stream.ts")
+  raise "link rule is not the expected stream link mode" unless tokens.fetch(console - 1) == "link"
+
+  wrapped = tokens[(console + 1)..]
+  raise "link rule does not contain the expected response-file placeholder" unless wrapped.include?("@$out.rsp")
+  raise "link rule does not contain the expected ldflags placeholder" unless wrapped.include?("$ldflags")
+  raise "link rule does not contain the expected output placeholder" unless wrapped.include?("$out")
+
+  rewritten_flags = rewritten_ldflags(ldflags, root)
+  wrapped.flat_map do |token|
+    case token
+    when "@$out.rsp"
+      "@../../relink/bun-profile.rsp"
+    when "$ldflags"
+      rewritten_flags
+    when "$out"
+      "bun-profile"
+    else
+      token
+    end
+  end
+end
+
+def create_kit_archive(kit_root, archive_path)
+  tar = [
+    "tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner",
+    "--format=gnu", "-cf", "-",
+    "-C", File.dirname(kit_root), File.basename(kit_root)
+  ]
+  statuses = Open3.pipeline(tar, ["zstd", "-10", "-T1", "-q", "-f"], out: archive_path)
+  raise "failed to create deterministic relink-kit archive" unless statuses.all?(&:success?)
+end
+
+def validate_relink_kit!(kit_root, root, version, retained_profile)
+  output = File.join(kit_root, "build", "release-local", "bun-profile")
+  map = File.join(kit_root, "build", "release-local", "bun-profile.linker-map")
+  begin
+    run!("unshare", "--net", "--", File.join(kit_root, "relink", "relink.sh"), chdir: kit_root)
+    raise "wrapper-free relink did not produce #{output}" unless File.file?(output)
+    raise "wrapper-free relink did not produce #{map}" unless File.file?(map)
+
+    revision = capture!("unshare", "--net", "--", output, "--revision", chdir: kit_root).strip
+    built_version = capture!("unshare", "--net", "--", output, "--version", chdir: kit_root).strip
+    smoke = capture!("unshare", "--net", "--", output, "-e", "console.log('agentlab-bun-relink-kit')", chdir: kit_root).strip
+    raise "unexpected relinked Bun version #{built_version.inspect}" unless built_version == version
+    raise "relinked Bun smoke failed" unless smoke == "agentlab-bun-relink-kit"
+
+    ldd = capture!("ldd", output, chdir: kit_root)
+    shared_libraries = %w[libgcc_s.so.1 libstdc++.so.6]
+    missing_libraries = shared_libraries.reject { |library| ldd.include?(library) }
+    raise "relinked Bun is missing Fedora shared runtimes: #{missing_libraries.join(', ')}" unless missing_libraries.empty?
+
+    seed_path = File.join(root, "seed", "bun")
+    seed_sha256 = sha256(seed_path)
+    seed_size = File.size(seed_path)
+    same_seed_payload = File.size(output) == seed_size && sha256(output) == seed_sha256
+    raise "wrapper-free relink reproduced the bootstrap seed payload" if same_seed_payload
+    [seed_path, "bun-seed", seed_sha256].each do |pattern|
+      _stdout, _stderr, status = Open3.capture3("rg", "-a", "-l", "--fixed-strings", pattern, output)
+      raise "cannot scan relinked Bun for seed identity" unless [0, 1].include?(status.exitstatus)
+      raise "bootstrap seed identity leaked into relinked Bun" if status.success?
+    end
+    raise "relinked Bun has a runtime dependency on the seed" if ldd.include?(seed_path) || ldd.include?("bun-seed")
+
+    retained_map = File.join(File.dirname(retained_profile), "bun-profile.linker-map")
+    output_sha256 = sha256(output)
+    map_sha256 = sha256(map)
+    retained_profile_sha256 = sha256(retained_profile)
+    retained_map_sha256 = sha256(retained_map)
+    raise "wrapper-free relink output differs from the retained bun-profile" unless output_sha256 == retained_profile_sha256
+    raise "wrapper-free relink map differs from the retained linker map" unless map_sha256 == retained_map_sha256
+
+    {
+      "network_namespace" => true,
+      "output" => {
+        "path" => "build/release-local/bun-profile",
+        "size_bytes" => File.size(output),
+        "sha256" => output_sha256,
+        "retained_profile_sha256" => retained_profile_sha256,
+        "retained_profile_sha256_equal" => true
+      },
+      "linker_map" => {
+        "path" => "build/release-local/bun-profile.linker-map",
+        "size_bytes" => File.size(map),
+        "sha256" => map_sha256,
+        "retained_linker_map_sha256" => retained_map_sha256,
+        "retained_linker_map_sha256_equal" => true
+      },
+      "revision" => revision,
+      "version" => built_version,
+      "smoke_verified" => true,
+      "fedora_shared_cxx_runtime_verified" => true,
+      "shared_runtime_libraries" => shared_libraries,
+      "seed_payload_absent_verified" => true,
+      "seed_runtime_dependency_absent_verified" => true
+    }
+  ensure
+    FileUtils.rm_f([output, map])
+  end
+end
+
+def validate_relink_archive!(archive_path, output_dir, kit_name, root, version, retained_profile)
+  validation_root = File.join(output_dir, ".#{kit_name}-validation-#{Process.pid}")
+  raise "validation directory already exists: #{validation_root}" if File.exist?(validation_root) || File.symlink?(validation_root)
+
+  FileUtils.mkdir_p(validation_root)
+  begin
+    listing = capture!("tar", "-tf", archive_path)
+    unsafe = listing.lines.map(&:strip).reject(&:empty?).reject do |entry|
+      clean = Pathname(entry).cleanpath.to_s
+      !Pathname(entry).absolute? && clean != ".." && !clean.start_with?("../") &&
+        (clean == kit_name || clean.start_with?("#{kit_name}/"))
+    end
+    raise "relink-kit archive has unsafe members: #{unsafe.join(', ')}" unless unsafe.empty?
+
+    run!("tar", "-xf", archive_path, "-C", validation_root)
+    validate_relink_kit!(File.join(validation_root, kit_name), root, version, retained_profile)
+  ensure
+    FileUtils.rm_rf(validation_root)
+  end
 end
 
 def header_tree_records(directory, root)
@@ -143,7 +445,9 @@ ldflags_index = ldflags_indexes.fetch(0)
 edge_lines = block_lines[0...ldflags_index]
 ldflags_line = block_lines.fetch(ldflags_index)
 edge_text = edge_lines.join
-edge_tokens = edge_lines.join(" ").gsub("$", " ").split
+logical_edge = edge_text.gsub(/\$\r?\n[ \t]*/, " ")
+raise "unsupported Ninja escaping in final bun-profile link edge" if logical_edge.include?("$")
+edge_tokens = logical_edge.split
 link_token = edge_tokens.index("link")
 raise "final bun-profile link edge is malformed" unless link_token
 
@@ -178,7 +482,10 @@ rule_lines = lines[rule_start...rule_end]
 rule_text = rule_lines.join
 command_line = rule_lines.find { |line| line.start_with?("  command =") }
 raise "link rule has no command" unless command_line
-raise "link rule does not retain a response-file declaration" unless rule_lines.any? { |line| line.start_with?("  rspfile =") }
+rspfile_lines = rule_lines.select { |line| line.start_with?("  rspfile =") }
+rspfile_content_lines = rule_lines.select { |line| line.start_with?("  rspfile_content =") }
+raise "link rule does not retain the expected response-file declaration" unless rspfile_lines == ["  rspfile = $out.rsp\n"]
+raise "link rule does not retain $in_newline response-file semantics" unless rspfile_content_lines == ["  rspfile_content = $in_newline\n"]
 
 direct_records = inputs.map do |input|
   path, real = safe_path!(input, build_root, root)
@@ -206,18 +513,23 @@ header_directories = %w[
   deps/WebKit/bmalloc/Headers
 ].map { |relative| File.join(build_root, relative) }
 expected_header_counts = [9, 1415, 510, 360]
-header_trees = header_directories.zip(expected_header_counts).map do |directory, expected_count|
+header_payloads = header_directories.zip(expected_header_counts).map do |directory, expected_count|
   raise "missing generated WebKit header directory #{directory}" unless Dir.exist?(directory)
 
   records = header_tree_records(directory, root)
   raise "generated WebKit header count mismatch for #{directory}: #{records.length} != #{expected_count}" unless records.length == expected_count
 
   {
-    "path" => directory.delete_prefix("#{root}/"),
-    "count" => records.length,
-    "tree_sha256" => inventory_digest(records)
+    "directory" => directory,
+    "records" => records,
+    "summary" => {
+      "path" => directory.delete_prefix("#{root}/"),
+      "count" => records.length,
+      "tree_sha256" => inventory_digest(records)
+    }
   }
 end
+header_trees = header_payloads.map { |payload| payload.fetch("summary") }
 raise "generated WebKit header tree is empty" if header_trees.empty?
 
 marker_specs = {
@@ -318,6 +630,211 @@ receipt_data = {
 }
 
 content = JSON.pretty_generate(receipt_data) + "\n"
+if kit_output_dir
+  kit_name = "bun-#{version}-relink-kit"
+  expected_output_dir = safe_output_path(kit_output_dir)
+  expected_kit_root = File.join(expected_output_dir, kit_name)
+  expected_archive = File.join(expected_output_dir, "#{kit_name}.tar.zst")
+  expected_kit_receipt = File.join(expected_output_dir, "#{kit_name}-receipt.json")
+  if output
+    expanded_audit_output = resolved_output_candidate(output)
+    collision = inside_root?(expanded_audit_output, expected_kit_root) || [expected_archive, expected_kit_receipt].include?(expanded_audit_output)
+    raise "--output collides with generated relink-kit outputs" if collision
+  end
+  output_dir, kit_root, archive_path, kit_receipt_path = prepare_kit_outputs(expected_output_dir, kit_name, force)
+  payload_records = []
+
+  direct_records.each do |record|
+    relative = record.fetch("path")
+    source = File.join(root, relative)
+    payload_records << copy_payload_file(source, File.join(kit_root, relative), kit_root, kind: record.fetch("kind"))
+  end
+  script_records.each do |record|
+    relative = record.fetch("path")
+    payload_records << copy_payload_file(File.join(root, relative), File.join(kit_root, relative), kit_root, kind: "linker-script")
+  end
+
+  materialized_header_paths = {}
+  header_target_paths = {}
+  header_payloads.each do |payload|
+    payload.fetch("records").each do |record|
+      relative = record.fetch("path")
+      next if materialized_header_paths.key?(relative)
+
+      source = File.join(root, relative)
+      destination = File.join(kit_root, relative)
+      if record.fetch("kind") == "symlink"
+        FileUtils.mkdir_p(File.dirname(destination))
+        File.symlink(record.fetch("target"), destination)
+        payload_records << {
+          "path" => relative,
+          "kind" => "symlink",
+          "mode" => "0777",
+          "target" => record.fetch("target"),
+          "target_size_bytes" => record.fetch("target_size_bytes"),
+          "target_sha256" => record.fetch("target_sha256")
+        }
+        materialized_header_paths[relative] = true
+        target_relative = Pathname(File.join(File.dirname(relative), record.fetch("target"))).cleanpath.to_s
+        materialize_header_target(target_relative, root, kit_root, payload_records, materialized_header_paths, header_target_paths)
+      else
+        payload_records << copy_payload_file(source, destination, kit_root, kind: "generated-header")
+        materialized_header_paths[relative] = true
+      end
+    end
+  end
+
+  marker_records.each_value do |record|
+    relative = record.fetch("path")
+    payload_records << copy_payload_file(File.join(root, relative), File.join(kit_root, relative), kit_root, kind: "license-marker")
+  end
+  package_relative = package_path.delete_prefix("#{root}/")
+  payload_records << copy_payload_file(package_path, File.join(kit_root, package_relative), kit_root, kind: "package-manifest")
+
+  relink_inputs = inputs
+  rsp_content = relink_inputs.join("\n") + "\n"
+  rsp_path = File.join(kit_root, "relink", "bun-profile.rsp")
+  rsp_record = write_payload_file(rsp_path, rsp_content, kit_root, kind: "response-file")
+  parsed_ldflags = Shellwords.split(ldflags_line.sub(/\A\s*ldflags\s*=\s*/, "").strip)
+  link_argv = direct_link_argv(command_line, parsed_ldflags, root)
+  link_command = {
+    "schema" => "bun-relink-command/v1",
+    "package" => "bun",
+    "version" => version,
+    "working_directory" => "build/release-local",
+    "argv" => link_argv,
+    "output" => "build/release-local/bun-profile",
+    "linker_map" => "build/release-local/bun-profile.linker-map",
+    "response_file" => {
+      "path" => rsp_record.fetch("path"),
+      "input_count" => relink_inputs.length,
+      "sha256" => rsp_record.fetch("sha256")
+    },
+    "source_rule_command_sha256" => receipt_data.dig("final_link", "command_sha256"),
+    "source_link_manifest_sha256" => link_manifest_sha256,
+    "bootstrap_wrapper_removed" => true,
+    "proof_root_paths_removed_from_argv" => link_argv.none? { |argument| argument.include?(root) },
+    "system_library_requirements" => %w[libatomic.a libdl.so libgcc_s.so.1 libicudata.so libicui18n.so libicuuc.so libc.so libpthread.so libstdc++.so.6]
+  }
+  raise "wrapper-free link argv retains the proof root" unless link_command.fetch("proof_root_paths_removed_from_argv")
+  command_path = File.join(kit_root, "relink", "link-command.json")
+  write_json(command_path, link_command)
+  command_record = file_record(command_path, kit_root).merge("kind" => "link-command", "mode" => "0644")
+
+  relink_script = <<~SH
+    #!/bin/sh
+    set -eu
+    kit_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+    cd "$kit_root/build/release-local"
+    exec #{link_argv.shelljoin}
+  SH
+  script_path = File.join(kit_root, "relink", "relink.sh")
+  relink_script_record = write_payload_file(script_path, relink_script, kit_root, kind: "relink-script", mode: 0o755)
+
+  payload_manifest = {
+    "schema" => "bun-relink-payload-manifest/v1",
+    "package" => "bun",
+    "version" => version,
+    "source_audit" => {
+      "schema" => receipt_data.fetch("schema"),
+      "sha256" => Digest::SHA256.hexdigest(content),
+      "link_manifest_sha256" => link_manifest_sha256
+    },
+    "summary" => {
+      "file_count" => payload_records.count { |record| !record.fetch("kind").end_with?("symlink") },
+      "symlink_count" => payload_records.count { |record| record.fetch("kind").end_with?("symlink") },
+      "object_count" => objects.length,
+      "archive_count" => archives.length,
+      "linker_script_count" => script_records.length,
+      "generated_header_entry_count" => header_trees.sum { |tree| tree.fetch("count") },
+      "generated_header_target_count" => header_target_paths.length,
+      "response_file_input_count" => relink_inputs.length
+    },
+    "entries" => payload_records.sort_by { |record| record.fetch("path") }
+  }
+  payload_paths = payload_records.map { |record| record.fetch("path") }
+  raise "relink-kit payload contains duplicate paths" unless payload_paths.uniq.length == payload_paths.length
+  manifest_path = File.join(kit_root, "relink", "payload-manifest.json")
+  write_json(manifest_path, payload_manifest)
+  manifest_record = file_record(manifest_path, kit_root).merge("kind" => "payload-manifest", "mode" => "0644")
+
+  readme = <<~TEXT
+    Bun #{version} LGPL relink kit
+
+    This archive contains the exact final-link object files, static archives, linker scripts,
+    generated WebKit headers and their symlink targets, and the LGPL marker files retained by
+    the Fedora 44 x86_64 source-build proof. It does not contain the bootstrap Bun executable.
+
+    Run ./relink/relink.sh from an extracted kit on the matching Fedora toolchain. The command
+    uses /usr/lib64/llvm21/bin/clang++ and Fedora's system libc, libpthread, libdl, libatomic,
+    ICU, libstdc++, and libgcc_s libraries. The generated response file preserves the original
+    Ninja input order and the link command contains no proof-root or bootstrap-wrapper path.
+  TEXT
+  readme_path = File.join(kit_root, "README.relink.txt")
+  readme_record = write_payload_file(readme_path, readme, kit_root, kind: "readme")
+
+  create_kit_archive(kit_root, archive_path)
+  archive_sha256 = sha256(archive_path)
+  validation = if validate_link
+                 validate_relink_archive!(archive_path, output_dir, kit_name, root, version, File.join(build_root, "bun-profile"))
+               end
+  completeness = validation &&
+                 validation.fetch("smoke_verified") &&
+                 validation.fetch("fedora_shared_cxx_runtime_verified") &&
+                 validation.fetch("seed_payload_absent_verified") &&
+                 validation.fetch("seed_runtime_dependency_absent_verified") &&
+                 validation.dig("output", "retained_profile_sha256_equal") &&
+                 validation.dig("linker_map", "retained_linker_map_sha256_equal")
+
+  kit_receipt = {
+    "schema" => "bun-relink-kit/v1",
+    "package" => "bun",
+    "version" => version,
+    "date" => audit_date,
+    "source_audit" => {
+      "schema" => receipt_data.fetch("schema"),
+      "sha256" => Digest::SHA256.hexdigest(content),
+      "link_manifest_sha256" => link_manifest_sha256,
+      "direct_object_inventory_sha256" => inventory_digest(objects)
+    },
+    "kit" => {
+      "root_name" => kit_name,
+      "archive" => File.basename(archive_path),
+      "archive_size_bytes" => File.size(archive_path),
+      "archive_sha256" => archive_sha256,
+      "payload_manifest" => manifest_record,
+      "link_command" => command_record,
+      "relink_script" => relink_script_record,
+      "readme" => readme_record,
+      "response_file" => rsp_record,
+      "payload_summary" => payload_manifest.fetch("summary")
+    },
+    "validation" => {
+      "archive_generated" => true,
+      "payload_manifest_generated" => true,
+      "response_file_reconstructed" => true,
+      "wrapper_free_link_command_generated" => true,
+      "proof_root_paths_removed_from_link_command" => true,
+      "archive_extraction_verified" => !validation.nil?,
+      "network_isolated_link_verified" => !validation.nil?,
+      "relinked_output_verified" => !validation.nil?,
+      "retained_profile_sha256_equal" => validation&.dig("output", "retained_profile_sha256_equal") || false,
+      "retained_linker_map_sha256_equal" => validation&.dig("linker_map", "retained_linker_map_sha256_equal") || false,
+      "smoke_verified" => validation&.fetch("smoke_verified", false) || false,
+      "fedora_shared_cxx_runtime_verified" => validation&.fetch("fedora_shared_cxx_runtime_verified", false) || false,
+      "seed_payload_absent_verified" => validation&.fetch("seed_payload_absent_verified", false) || false,
+      "seed_runtime_dependency_absent_verified" => validation&.fetch("seed_runtime_dependency_absent_verified", false) || false
+    },
+    "link_validation" => validation,
+    "complete_lgpl_relink_materials_verified" => !!completeness,
+    "final_license_audit_verified" => false,
+    "final_rpm_verified" => false
+  }
+  write_json(kit_receipt_path, kit_receipt)
+  puts "Wrote #{archive_path}"
+  puts "Wrote #{kit_receipt_path}"
+end
+
 if check
   expected = File.binread(File.expand_path(receipt))
   raise "receipt differs from generated audit" unless expected == content

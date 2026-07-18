@@ -8,12 +8,14 @@ require "json"
 require "open3"
 require "optparse"
 require_relative "lib/agentlab"
+require_relative "lib/bun_webkit_source"
 
 package = Agentlab.package_named("bun")
 build_plan = package.data.fetch("build_plan")
 webkit = build_plan.dig("source_inputs", "webkit") || {}
 workdir = "/srv/tmp/agentlab-bun-webkit-proof"
 source_path = File.join("/srv/tmp", webkit.fetch("archive_filename"))
+source_receipt_path = nil
 jobs = [Etc.nprocessors, 4].min
 force = false
 resume = false
@@ -21,6 +23,7 @@ resume = false
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prove-bun-webkit-source-build [options]"
   parser.on("--source PATH", "Use an existing pinned WebKit source archive") { |path| source_path = path }
+  parser.on("--source-receipt PATH", "Identity receipt for a minimized WebKit archive") { |path| source_receipt_path = path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--jobs COUNT", Integer, "Parallel build jobs, maximum 4") { |count| jobs = count }
   parser.on("--resume", "Resume an existing marked proof directory") { resume = true }
@@ -29,6 +32,7 @@ end.parse!
 
 workdir = File.expand_path(workdir)
 source_path = File.expand_path(source_path)
+source_receipt_path = File.expand_path(source_receipt_path) if source_receipt_path
 raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
 raise Agentlab::Error, "jobs must be between 1 and 4" unless jobs.between?(1, 4)
 raise Agentlab::Error, "missing WebKit source archive #{source_path}" unless File.file?(source_path)
@@ -52,9 +56,18 @@ if force && source_path.start_with?("#{workdir}/")
   raise Agentlab::Error, "source archive must be outside the replaced proof directory"
 end
 
+source_receipt = if source_receipt_path
+                   Agentlab::BunWebKitSource.verify_receipt!(
+                     receipt_path: source_receipt_path,
+                     archive_path: source_path,
+                     webkit_metadata: webkit,
+                     release_pin: expected_release_pin
+                   )
+                 end
+expected_source_sha256 = source_receipt&.dig("archive", "sha256") || webkit.fetch("sha256")
 actual_source_sha256 = Digest::SHA256.file(source_path).hexdigest
-unless actual_source_sha256 == webkit.fetch("sha256")
-  raise Agentlab::Error, "WebKit source SHA-256 #{actual_source_sha256} does not match #{webkit.fetch('sha256')}"
+unless actual_source_sha256 == expected_source_sha256
+  raise Agentlab::Error, "WebKit source SHA-256 #{actual_source_sha256} does not match #{expected_source_sha256}"
 end
 
 patch_path = File.join(package.directory, webkit.fetch("patch"))
@@ -109,8 +122,16 @@ File.write(marker, "agentlab bun webkit proof\n") unless File.file?(marker)
 source_parent = File.join(workdir, "source")
 FileUtils.mkdir_p(source_parent)
 source_root = File.join(source_parent, "WebKit-#{webkit.fetch('commit')}")
-unless resume
-  run!({}, ["tar", "-xf", source_path, "-C", source_parent], chdir: Agentlab::ROOT)
+if source_receipt || !resume
+  if source_receipt
+    Agentlab::BunWebKitSource.extract_verified_tree!(
+      archive_path: source_path,
+      staging: source_parent,
+      receipt: source_receipt
+    )
+  else
+    run!({}, ["tar", "-xf", source_path, "-C", source_parent], chdir: Agentlab::ROOT)
+  end
   raise Agentlab::Error, "missing expected WebKit source root #{source_root}" unless Dir.exist?(source_root)
   run!({}, ["patch", "-d", source_root, "-p1", "-i", patch_path], chdir: Agentlab::ROOT)
 end
@@ -203,7 +224,10 @@ receipt = {
     "commit" => webkit.fetch("commit"),
     "archive_filename" => File.basename(source_path),
     "sha256" => actual_source_sha256,
-    "source_tree_complete" => webkit.fetch("source_tree_complete"),
+    "source_tree_complete" => source_receipt ? false : webkit.fetch("source_tree_complete"),
+    "minimized_jsc_only_source" => !source_receipt.nil?,
+    "source_receipt_sha256" => source_receipt_path && Digest::SHA256.file(source_receipt_path).hexdigest,
+    "tree_sha256" => source_receipt&.dig("archive", "tree_sha256"),
     "gitlink_count" => webkit.fetch("gitlink_count"),
     "embedded_gitmodules_count" => webkit.fetch("embedded_gitmodules_count")
   },

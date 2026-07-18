@@ -8,6 +8,7 @@ require "open3"
 require "optparse"
 require "pathname"
 require_relative "lib/agentlab"
+require_relative "lib/bun_webkit_source"
 
 File.umask(0o022)
 
@@ -29,6 +30,7 @@ cargo_vendor = "/srv/tmp/agentlab-bun-lolhtml-offline-proof/cargo-vendor"
 zig_root = "/srv/tmp/agentlab-bun-zig-proof/bun-zig"
 zig_receipt_path = "/srv/tmp/agentlab-bun-zig-proof/proof-receipt.json"
 webkit_archive = "/srv/tmp/WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b.tar.gz"
+webkit_source_receipt_path = nil
 workdir = nil
 output = nil
 self_rebuild_from = nil
@@ -48,6 +50,7 @@ OptionParser.new do |parser|
   parser.on("--zig-root PATH", "Verified source-built Bun Zig root") { |path| zig_root = path }
   parser.on("--zig-receipt PATH", "Receipt for the supplied Zig root") { |path| zig_receipt_path = path }
   parser.on("--webkit-archive PATH", "Checked WebKit source archive") { |path| webkit_archive = path }
+  parser.on("--webkit-source-receipt PATH", "Identity receipt for a minimized WebKit archive") { |path| webkit_source_receipt_path = path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Canonical package proof receipt") { |path| output = path }
   parser.on("--self-rebuild-from PATH", "Verified first source-build proof directory supplying the build driver") { |path| self_rebuild_from = path }
@@ -74,13 +77,14 @@ cargo_vendor = File.expand_path(cargo_vendor)
 zig_root = File.expand_path(zig_root)
 zig_receipt_path = File.expand_path(zig_receipt_path)
 webkit_archive = File.expand_path(webkit_archive)
+webkit_source_receipt_path = File.expand_path(webkit_source_receipt_path) if webkit_source_receipt_path
 self_rebuild_from = File.expand_path(self_rebuild_from) if self_rebuild
 driver_receipt_path = File.expand_path(driver_receipt_path) if self_rebuild
 workdir = File.expand_path(workdir)
 output = File.expand_path(output)
 
 raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
-[source_archive, seed_archive, source_cache, npm_proof, cargo_vendor, zig_root, zig_receipt_path, webkit_archive, self_rebuild_from, driver_receipt_path].compact.each do |path|
+[source_archive, seed_archive, source_cache, npm_proof, cargo_vendor, zig_root, zig_receipt_path, webkit_archive, webkit_source_receipt_path, self_rebuild_from, driver_receipt_path].compact.each do |path|
   if force && (path == workdir || path.start_with?("#{workdir}/"))
     raise Agentlab::Error, "proof input must be outside the replaced workdir: #{path}"
   end
@@ -565,6 +569,15 @@ seed_metadata = source_inputs.fetch("bootstrap_seed")
 zig_metadata = source_inputs.fetch("zig")
 webkit_metadata = source_inputs.fetch("webkit")
 build_graph_metadata = source_inputs.fetch("build_graph")
+webkit_source_receipt = if webkit_source_receipt_path
+                          Agentlab::BunWebKitSource.verify_receipt!(
+                            receipt_path: webkit_source_receipt_path,
+                            archive_path: webkit_archive,
+                            webkit_metadata: webkit_metadata,
+                            release_pin: "bun-v#{version}"
+                          )
+                        end
+webkit_archive_sha256 = webkit_source_receipt&.dig("archive", "sha256") || webkit_metadata.fetch("sha256")
 raise Agentlab::Error, "Bun seed is not bootstrap-only" unless seed_metadata.fetch("bootstrap_only") == true
 raise Agentlab::Error, "Bun seed is allowed in the final payload" unless seed_metadata.fetch("final_payload_allowed") == false
 raise Agentlab::Error, "Bun seed is allowed as a final runtime dependency" unless seed_metadata.fetch("final_runtime_dependency_allowed") == false
@@ -605,7 +618,7 @@ raise Agentlab::Error, "source-built Zig standard library is missing" unless Fil
 
 verify_file!(source_archive, closure.dig("source_tree", "source_sha256"), "Bun source archive")
 verify_file!(seed_archive, seed_metadata.fetch("sha256"), "bootstrap seed archive") unless self_rebuild
-verify_file!(webkit_archive, webkit_metadata.fetch("sha256"), "WebKit source archive")
+verify_file!(webkit_archive, webkit_archive_sha256, "WebKit source archive")
 zig_cwd_patch = File.join(package_dir, build_graph_metadata.fetch("patch"))
 verify_file!(zig_cwd_patch, build_graph_metadata.fetch("patch_sha256"), "Bun Zig build cwd patch")
 cxx_runtime_patch = File.join(package_dir, build_graph_metadata.fetch("cxx_runtime_patch"))
@@ -688,9 +701,25 @@ seed_binary = File.join(seed_dir, "bun")
 build_driver = self_rebuild ? File.join(self_rebuild_from, first_build_driver_relative) : seed_binary
 seed_identity_path = if self_rebuild
                        driver_proof_kind == :first_build ? File.join(self_rebuild_from, "seed", "bun") : first_build_receipt.dig("bootstrap_seed", "path")
-                     else
-                       seed_binary
-                     end
+                      else
+                        seed_binary
+                      end
+webkit_patch = File.join(package_dir, webkit_metadata.fetch("patch"))
+verify_file!(webkit_patch, webkit_metadata.fetch("patch_sha256"), "WebKit patch")
+prepare_webkit = lambda do
+  webkit_expected_root = "WebKit-#{webkit_metadata.fetch('commit')}"
+  if webkit_source_receipt
+    Agentlab::BunWebKitSource.extract_verified_tree!(
+      archive_path: webkit_archive,
+      staging: webkit_parent,
+      receipt: webkit_source_receipt
+    )
+  else
+    extract_single_root_tar!(webkit_archive, webkit_parent, webkit_expected_root, workdir)
+  end
+  run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
+  run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
+end
 
 unless resume
   proof_directories = [build_dir, cache_dir, prefetch_dir, home_dir, tmp_dir, cargo_home, rustup_home]
@@ -727,12 +756,7 @@ unless resume
     raise Agentlab::Error, "Fedora stable-Rust lol-html patch is not active"
   end
 
-  webkit_expected_root = "WebKit-#{webkit_metadata.fetch('commit')}"
-  extract_single_root_tar!(webkit_archive, webkit_parent, webkit_expected_root, workdir)
-  webkit_patch = File.join(package_dir, webkit_metadata.fetch("patch"))
-  verify_file!(webkit_patch, webkit_metadata.fetch("patch_sha256"), "WebKit patch")
-  run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
-  run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
+  prepare_webkit.call
 
   copy_tree!(zig_root, proof_zig_root)
   verify_file!(File.join(proof_zig_root, "zig"), zig_receipt.dig("output", "executable_sha256"), "proof-owned Zig executable")
@@ -794,6 +818,7 @@ unless resume
   FileUtils.cp(node_archive, node_prefetch, preserve: true)
   verify_file!(node_prefetch, node_headers.fetch("sha256"), "prefetched Node headers archive")
 end
+prepare_webkit.call if resume && webkit_source_receipt
 
 npm_install_roots = npm_receipt.dig("install", "install_roots")
 raise Agentlab::Error, "expected three npm install roots" unless npm_install_roots.length == 3
@@ -1066,7 +1091,10 @@ configure_receipt = {
   },
   "webkit" => {
     "commit" => webkit_metadata.fetch("commit"),
-    "archive_sha256" => webkit_metadata.fetch("sha256"),
+    "archive_sha256" => webkit_archive_sha256,
+    "minimized_jsc_only_source" => !webkit_source_receipt.nil?,
+    "source_receipt_sha256" => webkit_source_receipt_path && sha256(webkit_source_receipt_path),
+    "tree_sha256" => webkit_source_receipt&.dig("archive", "tree_sha256"),
     "patch_sha256" => webkit_metadata.fetch("patch_sha256")
   },
   "source_patches" => {

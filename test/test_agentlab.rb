@@ -909,19 +909,73 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_validates_bun_minimized_webkit_source
+    source_package = Agentlab.package_named("bun")
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(source_package.data))
+      webkit = data.dig("build_plan", "source_inputs", "webkit")
+      minimized = webkit.fetch("jsc_only")
+      %w[webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json].each do |name|
+        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
+      end
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+      spec = File.read(File.join(source_package.directory, "bun.spec"))
+
+      assert_empty(Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec))
+
+      original_tree_sha256 = minimized.fetch("tree_sha256")
+      minimized["tree_sha256"] = "0" * 64
+      errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec)
+      assert_includes(errors, "bun: minimized WebKit source receipt tree_sha256 mismatch")
+      minimized["tree_sha256"] = original_tree_sha256
+
+      build_path = File.join(directory, minimized.fetch("source_build_proof_receipt"))
+      build = JSON.parse(File.read(build_path))
+      build.fetch("output").fetch("metadata").delete("compile_commands.json")
+      File.write(build_path, JSON.dump(build))
+      minimized["source_build_proof_receipt_sha256"] = Digest::SHA256.file(build_path).hexdigest
+      errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec)
+      assert_includes(errors, "bun: minimized WebKit retained build metadata is invalid")
+
+      FileUtils.cp(File.join(source_package.directory, minimized.fetch("source_build_proof_receipt")), build_path)
+      minimized["source_build_proof_receipt_sha256"] = Digest::SHA256.file(build_path).hexdigest
+      build = JSON.parse(File.read(build_path))
+      build.fetch("output").fetch("jsc")["runtime_probe_verified"] = false
+      File.write(build_path, JSON.dump(build))
+      minimized["source_build_proof_receipt_sha256"] = Digest::SHA256.file(build_path).hexdigest
+      errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec)
+      assert_includes(errors, "bun: minimized WebKit jsc proof is invalid")
+
+      errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec.sub("ExclusiveArch:  x86_64", "ExclusiveArch:  aarch64"))
+      assert_includes(errors, "bun: spec architecture does not match the minimized WebKit source")
+    end
+  end
+
   def test_validates_bun_self_rebuild_receipts
     source_package = Agentlab.package_named("bun")
     Dir.mktmpdir do |directory|
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-release-local-source-closure.json first-source-build-proof.json relink-materials-proof.json self-rebuild-proof.json zig-reproducibility-proof.json].each do |name|
+      %w[bun-1.3.14-release-local-source-closure.json first-source-build-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
       spec = File.read(File.join(source_package.directory, "bun.spec"))
 
       assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
+      control_metadata = data.dig("build_plan", "stages", "self_rebuild", "zig_single_thread_control")
+      control_path = File.join(directory, control_metadata.fetch("proof_receipt"))
+      control_receipt = JSON.parse(File.read(control_path))
+      control_receipt.fetch("validation")["production_fix_verified"] = true
+      File.write(control_path, JSON.dump(control_receipt))
+      control_metadata["proof_receipt_sha256"] = Digest::SHA256.file(control_path).hexdigest
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: Zig single-thread control overclaims a production fix")
+      control_receipt.fetch("validation")["production_fix_verified"] = false
+      File.write(control_path, JSON.dump(control_receipt))
+      control_metadata["proof_receipt_sha256"] = Digest::SHA256.file(control_path).hexdigest
 
       self_receipt_path = File.join(directory, "self-rebuild-proof.json")
       self_receipt = JSON.parse(File.read(self_receipt_path))
@@ -970,10 +1024,18 @@ class AgentlabTest < Minitest::Test
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
       self_stage.delete("proof_receipt")
       self_stage.delete("zig_reproducibility_proof_receipt")
+      self_stage.delete("zig_single_thread_control")
       receipt_name = data.dig("build_plan", "stages", "seed_build", "relink_materials_audit", "proof_receipt")
       FileUtils.cp(File.join(source_package.directory, receipt_name), File.join(directory, receipt_name))
+      kit_receipt_name = data.dig("build_plan", "stages", "seed_build", "relink_kit", "proof_receipt")
+      FileUtils.cp(File.join(source_package.directory, kit_receipt_name), File.join(directory, kit_receipt_name))
       closure_name = data.dig("build_plan", "stages", "dependency_closure", "proof_receipt")
       FileUtils.cp(File.join(source_package.directory, closure_name), File.join(directory, closure_name))
+      webkit = data.dig("build_plan", "source_inputs", "webkit", "jsc_only")
+      %w[proof_receipt source_build_proof_receipt].each do |key|
+        name = webkit.fetch(key)
+        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
+      end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
 
       assert(File.executable?(File.expand_path("../scripts/audit-bun-relink-materials", __dir__)))
@@ -988,6 +1050,19 @@ class AgentlabTest < Minitest::Test
 
       errors = Agentlab.validate_bun_build_plan(package, File.read(File.join(source_package.directory, "bun.spec")))
       assert_includes(errors, "bun: relink-materials proof response-file retention mismatch")
+
+      receipt.fetch("final_link")["response_file_count"] = 0
+      File.write(receipt_path, JSON.dump(receipt))
+      audit["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      kit_receipt_path = File.join(directory, kit_receipt_name)
+      kit_receipt = JSON.parse(File.read(kit_receipt_path))
+      kit_receipt.fetch("validation")["retained_linker_map_sha256_equal"] = false
+      File.write(kit_receipt_path, JSON.dump(kit_receipt))
+      kit_metadata = data.dig("build_plan", "stages", "seed_build", "relink_kit")
+      kit_metadata["proof_receipt_sha256"] = Digest::SHA256.file(kit_receipt_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, File.read(File.join(source_package.directory, "bun.spec")))
+      assert_includes(errors, "bun: relink-kit proof validation is incomplete")
     end
   end
 
