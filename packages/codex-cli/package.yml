@@ -2,9 +2,9 @@
 name: codex-cli
 status: blocked
 blockers:
-- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement materialize and resolve reproducibly, but the 1,124-source combined archive is evidence only. It still needs maintainer review, immutable RPM hosting, selected-aware license integration, and Fedora macro integration.
+- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement materialize and resolve reproducibly. A selected-aware audit now identifies 873 Linux-linked Cargo packages, but the 1,124-source archive is evidence only and still needs maintainer review, immutable RPM hosting, complete license texts, and Fedora macro integration.
 - Selected crate v8 149.2.0 has no compatible Fedora provider. A local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but it relies on unsubmitted upstream changes and lacks an immutable, license-complete, network-isolated Fedora 43/44 package proof.
-- Offline Fedora 43 and Fedora 44 builds, tests, linked-license evidence, and payload validation have not been completed.
+- Offline Fedora 43 and Fedora 44 builds, tests, final linked-license approval, and payload validation have not been completed.
 source_policy:
   npm_wrapper: forbidden platform-binary selector
   rpm_build_network: forbidden
@@ -37,6 +37,14 @@ source_policy:
   resolver_vendor_reproducible: true
   resolver_vendor_standalone_resolvable: true
   resolver_vendor_production_build_input: false
+  selected_cargo_license_audit: codex-cli-0.144.5-selected-cargo-license-audit.json
+  selected_cargo_license_audit_sha256: 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
+  selected_cargo_linked_linux_packages: 873
+  selected_cargo_compile_only_packages: 131
+  fedora_all_target_linked_packages: 1019
+  selected_cargo_license_metadata_complete: true
+  selected_source_license_metadata_verified: true
+  final_binary_license_complete: false
   lock_normalization: verified-prep-transform
   lock_normalization_records: 132
   source_lock_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
@@ -45,6 +53,21 @@ source_policy:
   rusty_v8_archive_bytes: 160316016
   rusty_v8_archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
   rusty_v8_upstream_submission: not-submitted
+cargo_license_audit:
+  status: cargo-metadata-complete-native-static-incomplete
+  authoritative_selected_packages: 1004
+  linked_linux_packages: 873
+  selected_compile_only_packages: 131
+  resolver_only_packages: 239
+  fedora_all_target_linked_packages: 1019
+  legacy_slash_expressions_normalized: 80
+  linux_linked_unique_expressions: 35
+  cargo_manifest_metadata_complete: true
+  selected_source_license_metadata_verified: true
+  license_texts_verified: false
+  fedora_allowed_spdx_verified: false
+  rusty_v8_native_static_license_complete: false
+  final_rpm_license_approved: false
 update_policy:
   status: implemented-downstream-pending-build-integration
   build_marker: CODEX_DISTRIBUTION_CHANNEL=fedora

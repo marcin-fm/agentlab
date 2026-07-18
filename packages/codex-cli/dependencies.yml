@@ -104,6 +104,31 @@ resolver_vendor_evidence:
   standalone_offline_directory_source_verified: true
   production_build_input: false
   immutable_hosting: false
+selected_cargo_license_evidence:
+  status: deterministic-cargo-manifest-license-accounting
+  receipt: codex-cli-0.144.5-selected-cargo-license-audit.json
+  receipt_sha256: 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
+  authoritative_selected_packages: 1004
+  linked_linux_packages: 873
+  selected_compile_only_packages: 131
+  selected_build_role_packages: 20
+  selected_normal_path_compile_only_packages: 111
+  resolver_only_packages: 239
+  fedora_all_target_linked_packages: 1019
+  fedora_all_target_linked_selected_packages: 874
+  fedora_all_target_linked_resolver_only_packages: 145
+  selected_legacy_slash_expressions_normalized: 62
+  resolver_legacy_slash_expressions_normalized: 18
+  linux_linked_unique_license_expressions: 35
+  fedora_all_target_unique_license_expressions: 39
+  authoritative_linux_closure_changed: false
+  cargo_manifest_metadata_complete: true
+  selected_source_license_metadata_verified: true
+  license_texts_verified: false
+  fedora_allowed_spdx_verified: false
+  native_static_licenses_verified: false
+  final_binary_license_complete: false
+  limitation: The generated expressions cover Cargo manifest metadata only. Rusty V8 and Chromium native static sources, required texts, system-library decisions, and final Fedora License approval remain separate gates.
 lock_normalization:
   status: verified-prep-transform
   source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
@@ -205,6 +230,7 @@ selected_special_sources:
 closure_audit:
   production_source_selection_verified: true
   git_source_selection_verified: true
+  selected_cargo_license_graph_verified: true
   immutable_build_inputs_verified: false
   licenses_verified: false
   special_sources_verified: false

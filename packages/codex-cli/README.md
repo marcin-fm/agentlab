@@ -118,9 +118,43 @@ resolver-only sources. Both the 1,004-package selected target and the
 This proves the source model, not its final packaging integration. The archive
 is not immutably hosted, the resolver-only license metadata has not been
 approved as part of the RPM source inventory, and `%cargo_vendor_manifest`,
-complete `bundled(crate(...))` metadata, aggregate linked-license accounting,
-and the no-crate-devel application layout remain later gates. The spec remains
-fail-closed.
+complete `bundled(crate(...))` metadata, final aggregate linked-license
+approval, license texts, and the no-crate-devel application layout remain later
+gates. The spec remains fail-closed.
+
+## Selected Cargo License Accounting
+
+The separate deterministic license audit links back to the unchanged selected
+closure and resolver supplement. It applies the same package and feature
+selection while distinguishing the product's Linux graph from Fedora's
+`cargo-rpm-macros` license witness. The earlier 984 normal-path count is not the
+linked-license count because proc-macro dependencies and their subgraphs remain
+compile-time inputs even when reached through normal edges.
+
+For `x86_64-unknown-linux-gnu`, excluding build, development, and proc-macro
+edges leaves 873 Cargo packages in the linked graph. The remaining 131 selected
+packages are compile-time only: 20 have the existing build role and 111 are in
+the normal-path proc-macro subgraph. Fedora's `--target=all` license witness
+contains 1,019 packages: 874 selected identities and 145 resolver-only
+identities. Resolver-only records remain separate from the authoritative Linux
+source and linked-license closure.
+
+The audit records Cargo manifest license metadata for all 1,004 selected and
+239 resolver-only packages. It normalizes 62 selected and 18 resolver-only
+legacy slash-separated alternatives to SPDX `OR`, matching cargo2rpm, and
+records 35 unique Linux-linked and 39 unique all-target expression candidates.
+Every selected license is compared with source metadata before it is accepted:
+879 registry manifests come from checksum-verified archives, six Git manifests
+come directly from exact commit objects after URL and tracked-checkout
+verification, and 119 workspace licenses come from the exact release metadata.
+The receipt SHA-256 is
+`530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8`.
+
+This is not the final RPM license closure. Fedora-allowed SPDX review, package
+license texts, and the recursive Rusty V8/Chromium native static inventory are
+still incomplete. The audit therefore leaves final binary license completeness
+and production `License:` approval false; the spec retains only the upstream
+project `Apache-2.0` tag while `%prep` aborts.
 
 ## V8 Source Gate
 
@@ -185,24 +219,24 @@ upstream issue or pull request has been submitted.
 
 ## Remaining Gates
 
-1. Review the separate resolver-only source and license model without obscuring
-   the exact selected Linux build closure.
+1. Review the separate resolver-only source model and selected-aware Cargo
+   license evidence without obscuring the exact Linux build closure.
 2. Publish immutable, checksummed RPM inputs for the accepted registry, Git, and
    resolver-only sources, then integrate Fedora vendoring metadata.
 3. Upstream or review the V8 system-toolchain changes, materialize every
    recursive source and license input immutably, and reproduce the build without
    networking in Fedora 43 and Fedora 44 buildroots.
-4. Complete the linked-license review and clean offline Fedora 43 and Fedora 44
-   builds, tests, lint, and extracted-payload validation.
+4. Complete license-text and native static-link review, then run clean offline
+   Fedora 43 and Fedora 44 builds, tests, lint, and extracted-payload validation.
 
 ## Intentional Failure
 
-`codex-cli.spec` verifies the immutable release archive, closure receipt, and
-selected-source materialization receipt, extracts the source, verifies the
-original lock and exact mutation count, performs the anchored normalization,
-verifies the normalized lock, and then exits during `%prep`. It must remain
-fail-closed until the gates above are satisfied. No generated RPM was installed
-and COPR was not mutated during this probe.
+`codex-cli.spec` verifies the immutable release archive, closure, selected and
+resolver source evidence, and selected-aware Cargo license audit, extracts the
+source, verifies the original lock and exact mutation count, performs the
+anchored normalization, verifies the normalized lock, and then exits during
+`%prep`. It must remain fail-closed until the gates above are satisfied. No
+generated RPM was installed and COPR was not mutated during this probe.
 
 ## References
 

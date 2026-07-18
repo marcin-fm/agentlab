@@ -8,13 +8,14 @@
 %global vendor_receipt_sha256 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
 %global resolver_supplement_sha256 a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff
 %global resolver_vendor_receipt_sha256 fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b
+%global license_audit_sha256 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
 %global source_lock_sha256 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
 %global normalized_lock_sha256 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -27,6 +28,7 @@ Source2:        %{name}-%{version}-selected-cargo-vendor-receipt.json
 Source3:        %{name}-%{version}-cargo-resolver-supplement.json
 Source4:        %{name}-%{version}-resolver-cargo-vendor-receipt.json
 Source5:        %{name}-fedora-config.toml
+Source6:        %{name}-%{version}-selected-cargo-license-audit.json
 
 # Fedora packaging: make doctor suppress its network version probe when the
 # centrally managed update setting is disabled.
@@ -53,9 +55,11 @@ with local developer tools.
 This source-build draft is intentionally blocked. The selected Cargo closure
 and separate resolver-only supplement materialize reproducibly and resolve
 offline as evidence, but the combined archive is not an immutable RPM source or
-approved license closure. The package must not produce an RPM until Cargo source
-publication and integration, upstreamable V8 integration, license evidence,
-and offline builds are proven.
+approved license closure. The selected-aware Cargo audit now distinguishes 873
+Linux-linked packages from compile-time and resolver-only identities, but the
+package must not produce an RPM until source publication and integration,
+upstreamable V8 integration, complete license evidence, and offline builds are
+proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -63,6 +67,7 @@ echo "%{closure_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{vendor_receipt_sha256}  %{SOURCE2}" | sha256sum -c -
 echo "%{resolver_supplement_sha256}  %{SOURCE3}" | sha256sum -c -
 echo "%{resolver_vendor_receipt_sha256}  %{SOURCE4}" | sha256sum -c -
+echo "%{license_audit_sha256}  %{SOURCE6}" | sha256sum -c -
 %autosetup -n codex-%{commit} -N
 %autopatch -p1
 test "$(grep -Fxc 'check_for_update_on_startup = false' %{SOURCE5})" -eq 1
@@ -83,6 +88,10 @@ install -Dpm0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/codex/config.toml
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.6
+- Record the selected Linux and Fedora all-target Cargo license graphs.
+- Keep native Rusty V8 license texts and the final aggregate License tag blocked.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.5
 - Make doctor honor disabled update checks and install the Fedora default.
 - Disable upstream self-update recommendations and standalone daemon downloads in the Fedora build.

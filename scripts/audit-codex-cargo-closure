@@ -151,6 +151,61 @@ def parse_tree(output, lock_by_name_version, source_dir)
   selected
 end
 
+def parse_license_tree(output, lock_by_name_version, source_dir)
+  stack = []
+  selected = {}
+
+  output.each_line do |raw_line|
+    line = raw_line.strip.delete_suffix(" (*)")
+    next if line.empty?
+
+    match = line.match(/\A(\d+)(.+)\z/)
+    raise Agentlab::Error, "cannot parse Cargo license tree depth: #{line}" unless match
+
+    depth = Integer(match[1], 10)
+    display, license = match[2].split("|", 2)
+    raise Agentlab::Error, "Cargo license tree format is missing license metadata: #{line}" unless license
+
+    license = license.strip
+    raise Agentlab::Error, "Cargo package lacks license metadata: #{display}" if license.empty?
+
+    lock_record, location = resolve_tree_package(display, lock_by_name_version, source_dir)
+    package_id = [
+      lock_record.fetch("name"),
+      lock_record.fetch("version"),
+      lock_record["source"]
+    ]
+    stack[depth] = package_id
+    stack.slice!(depth + 1, stack.length) if stack.length > depth + 1
+    dependency_path = stack.first(depth + 1).map(&:dup)
+    previous = selected[package_id]
+
+    if previous && previous.fetch("license") != license
+      raise Agentlab::Error, "Cargo reported conflicting licenses for #{display}"
+    end
+    if previous.nil? || dependency_path.length < previous.fetch("dependency_path").length
+      selected[package_id] = {
+        "lock_record" => lock_record,
+        "location" => location,
+        "license" => license,
+        "dependency_path" => dependency_path
+      }
+    end
+  end
+
+  selected
+end
+
+def normalize_cargo_license_expression(expression)
+  expression.strip.gsub(/\s*\/\s*/, " OR ")
+end
+
+def aggregate_license_expression(expressions)
+  expressions.uniq.sort.map do |expression|
+    expression.match?(/\b(?:AND|OR)\b/) ? "(#{expression})" : expression
+  end.join(" AND ")
+end
+
 def resolve_lock_dependency(reference, lock_by_name)
   match = reference.match(/\A([^ ]+)(?: ([^ ]+)(?: \((.+)\))?)?\z/)
   raise Agentlab::Error, "cannot parse Cargo.lock dependency reference: #{reference}" unless match
@@ -288,6 +343,20 @@ def cargo_package_metadata(manifest, name, version)
   license = package.match(/^license\s*=\s*"([^"]+)"$/)&.captures&.first
   license_file = package.match(/^license-file\s*=\s*"([^"]+)"$/)&.captures&.first
   raise Agentlab::Error, "Cargo.toml records both license and license-file: #{name} #{version}" if license && license_file
+
+  if license
+    { "expression" => license }
+  elsif license_file
+    { "file" => license_file }
+  else
+    {}
+  end
+end
+
+def cargo_metadata_license(package)
+  license = package["license"]
+  license_file = package["license_file"]
+  raise Agentlab::Error, "Cargo metadata records both license and license_file: #{package.fetch('name')} #{package.fetch('version')}" if license && license_file
 
   if license
     { "expression" => license }
@@ -500,12 +569,35 @@ ensure
   FileUtils.rm_f(tar_path) if tar_path
 end
 
-def manifest_identity(path)
-  content = File.read(path)
+def manifest_identity_content(content)
   package = content[/^\[package\]\s*$\n(.*?)(?=^\[|\z)/m, 1]
   name = package&.match(/^name\s*=\s*"([^"]+)"/)&.captures&.first
   version = package&.match(/^version\s*=\s*"([^"]+)"/)&.captures&.first
   name && version ? [name, version] : nil
+end
+
+def manifest_identity(path)
+  manifest_identity_content(File.read(path))
+end
+
+def git_package_manifest_at_commit(checkout, commit, package)
+  identity = package.values_at("name", "version")
+  manifest_paths = capture_command(
+    {},
+    ["git", "-C", checkout, "ls-tree", "-r", "--name-only", commit],
+    "Git commit manifest listing"
+  ).lines(chomp: true).select { |path| File.basename(path) == "Cargo.toml" }
+  matches = manifest_paths.filter_map do |path|
+    content = capture_command(
+      {},
+      ["git", "-C", checkout, "show", "#{commit}:#{path}"],
+      "Git commit manifest read"
+    )
+    [path, content] if manifest_identity_content(content) == identity
+  end
+  raise Agentlab::Error, "expected one Git commit manifest for #{identity.join(' ')}, found #{matches.length}" unless matches.one?
+
+  matches.first
 end
 
 def package_manifest_path(checkout, package)
@@ -623,6 +715,12 @@ def verify_git_source!(cargo_home, repository, commit, packages)
       git_resolves_commit?(path, commit) && capture_command({}, ["git", "-C", path, "rev-parse", "HEAD"], "Git checkout commit query").strip == commit
   end
   raise Agentlab::Error, "expected one Git checkout for #{repository} at #{commit}, found #{checkout_matches.length}" unless checkout_matches.one?
+  tracked_changes = capture_command(
+    {},
+    ["git", "-C", checkout_matches.first, "status", "--short", "--untracked-files=no"],
+    "Git checkout tracked-state query"
+  )
+  raise Agentlab::Error, "Git checkout has tracked changes for #{repository} at #{commit}" unless tracked_changes.empty?
 
   identities = Dir.glob(File.join(checkout_matches.first, "**", "Cargo.toml")).filter_map { |path| manifest_identity(path) }
   packages.each do |package|
@@ -1251,6 +1349,7 @@ cargo_home = nil
 work_dir_root = ENV.fetch("TMPDIR", Dir.tmpdir)
 output = File.join(package.directory, "codex-cli-#{version}-selected-cargo-closure.json")
 resolver_output = File.join(package.directory, "codex-cli-#{version}-cargo-resolver-supplement.json")
+license_output = File.join(package.directory, "codex-cli-#{version}-selected-cargo-license-audit.json")
 check = false
 bootstrap_online = false
 verify_sources = false
@@ -1267,6 +1366,7 @@ OptionParser.new do |parser|
   parser.on("--work-dir-root PATH", "Parent directory for the isolated source copy") { |path| work_dir_root = path }
   parser.on("--output PATH", "Receipt path") { |path| output = path }
   parser.on("--resolver-output PATH", "Resolver-only supplement receipt path") { |path| resolver_output = path }
+  parser.on("--license-output PATH", "Selected-aware Cargo license audit path") { |path| license_output = path }
   parser.on("--online", "Allow the first selected-tree pass to populate the Cargo cache") { bootstrap_online = true }
   parser.on("--check", "Verify that the existing receipt is current") { check = true }
   parser.on("--verify-sources", "Read-only verify selected and resolver-only cached sources") { verify_sources = true }
@@ -1357,6 +1457,7 @@ end
 
 receipt = nil
 resolver_supplement = nil
+license_audit = nil
 Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
   metadata_source_dir = File.join(temporary_directory, "source")
   FileUtils.cp_r(source_dir, metadata_source_dir, preserve: true)
@@ -1386,9 +1487,18 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
   selected_tree_command += ["--offline"]
   resolver_tree_command += ["--offline"]
   runtime_tree_command = tree_base + ["--edges", "normal", "--offline"]
+  selected_license_tree_command = tree_base.dup
+  selected_license_tree_command[selected_license_tree_command.index("{p}|{f}")] = "{p}|{l}"
+  selected_license_tree_command += ["--edges", "normal,build", "--offline"]
+  linked_linux_tree_command = tree_base + ["-Z", "avoid-dev-deps", "--edges", "no-build,no-dev,no-proc-macro", "--offline"]
+  fedora_license_tree_command = linked_linux_tree_command.dup
+  fedora_license_tree_command[fedora_license_tree_command.index(target)] = "all"
   selected_tree_output = capture_command(environment, selected_tree_command, "Cargo selected tree")
   resolver_tree_output = capture_command(resolver_environment, resolver_tree_command, "Cargo resolver tree")
   runtime_tree_output = capture_command(environment, runtime_tree_command, "Cargo runtime tree")
+  selected_license_tree_output = capture_command(environment, selected_license_tree_command, "Cargo selected license metadata tree")
+  linked_linux_tree_output = capture_command(resolver_environment, linked_linux_tree_command, "Cargo linked Linux license tree")
+  fedora_license_tree_output = capture_command(resolver_environment, fedora_license_tree_command, "Cargo Fedora all-target license tree")
 
   normalized_lock_records = parse_lock_packages(normalized_lock)
   lock_by_name_version = normalized_lock_records.group_by do |record|
@@ -1412,6 +1522,12 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
   selected_tree = parse_tree(selected_tree_output, lock_by_name_version, metadata_source_dir)
   resolver_tree = parse_tree(resolver_tree_output, lock_by_name_version, metadata_source_dir)
   runtime_tree = parse_tree(runtime_tree_output, lock_by_name_version, metadata_source_dir)
+  selected_license_tree = parse_license_tree(selected_license_tree_output, lock_by_name_version, metadata_source_dir)
+  linked_linux_tree = parse_tree(linked_linux_tree_output, lock_by_name_version, metadata_source_dir)
+  fedora_license_tree = parse_tree(fedora_license_tree_output, lock_by_name_version, metadata_source_dir)
+  unless selected_license_tree.keys.sort_by { |package_id| JSON.generate(package_id) } == selected_tree.keys.sort_by { |package_id| JSON.generate(package_id) }
+    raise Agentlab::Error, "selected Cargo license metadata tree differs from the authoritative closure"
+  end
   missing_runtime_packages = runtime_tree.keys - selected_tree.keys
   unless missing_runtime_packages.empty?
     raise Agentlab::Error, "runtime tree is not a subset of the selected tree"
@@ -1419,6 +1535,14 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
   missing_selected_packages = selected_tree.keys - resolver_tree.keys
   unless missing_selected_packages.empty?
     raise Agentlab::Error, "selected tree is not a subset of the all-target resolver tree"
+  end
+  missing_linked_linux_packages = linked_linux_tree.keys - selected_tree.keys
+  unless missing_linked_linux_packages.empty?
+    raise Agentlab::Error, "linked Linux license tree is not a subset of the authoritative closure"
+  end
+  missing_linked_all_target_packages = linked_linux_tree.keys - fedora_license_tree.keys
+  unless missing_linked_all_target_packages.empty?
+    raise Agentlab::Error, "linked Linux license tree is not a subset of Fedora's all-target license tree"
   end
 
   root_records = selected_tree.values.select do |record|
@@ -1616,10 +1740,261 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
     "packages" => resolver_records,
     "scope" => "resolver-only source and license metadata required by Cargo directory-source resolution; not part of the authoritative Linux build graph or linked-license closure"
   }
+
+  selected_source_plan = verify_selected_sources!(receipt, normalized_lock, effective_cargo_home)
+  selected_source_licenses = {}
+  selected_license_provenance = {}
+  selected_source_plan.fetch("registry").each do |source_record|
+    package_record = source_record.fetch("package")
+    package_id = package_record.values_at("name", "version", "source")
+    selected_source_licenses[package_id] = source_record.fetch("license")
+    selected_license_provenance[package_id] = "checksum-verified registry archive Cargo.toml"
+  end
+  selected_source_plan.fetch("git").each do |git_source|
+    git_source.fetch("packages").each do |package_record|
+      _manifest_path, manifest = git_package_manifest_at_commit(
+        git_source.fetch("checkout"),
+        git_source.fetch("commit"),
+        package_record
+      )
+      package_id = package_record.values_at("name", "version", "source")
+      selected_source_licenses[package_id] = cargo_package_metadata(
+        manifest,
+        package_record.fetch("name"),
+        package_record.fetch("version")
+      )
+      selected_license_provenance[package_id] = "exact-commit Git object Cargo.toml after normalized repository URL and tracked-checkout verification"
+    end
+  end
+  selected_records.select { |record| record.fetch("origin") == "path" }.each do |package_record|
+    package_id = package_record.values_at("name", "version", "source")
+    selected_source_licenses[package_id] = cargo_metadata_license(workspace_packages.fetch(package_id))
+    selected_license_provenance[package_id] = "exact release workspace metadata with inherited workspace package license"
+  end
+  unless selected_source_licenses.keys.sort_by { |package_id| JSON.generate(package_id) } == selected_tree.keys.sort_by { |package_id| JSON.generate(package_id) }
+    raise Agentlab::Error, "verified selected source license identities differ from the authoritative closure"
+  end
+
+  selected_by_id = selected_records.to_h do |record|
+    [record.values_at("name", "version", "source"), record]
+  end
+  resolver_by_id = resolver_records.to_h do |record|
+    [record.values_at("name", "version", "source"), record]
+  end
+  known_license_ids = selected_by_id.keys + resolver_by_id.keys
+  unknown_fedora_license_packages = fedora_license_tree.keys - known_license_ids
+  unless unknown_fedora_license_packages.empty?
+    raise Agentlab::Error, "Fedora all-target license tree contains identities outside the selected and resolver receipts"
+  end
+
+  selected_license_records = selected_records.map do |record|
+    package_id = record.values_at("name", "version", "source")
+    cargo_license = selected_license_tree.fetch(package_id).fetch("license")
+    source_license = selected_source_licenses.fetch(package_id)
+    unless source_license == { "expression" => cargo_license }
+      raise Agentlab::Error, "Cargo tree/source license mismatch for #{record.fetch('name')} #{record.fetch('version')}"
+    end
+    normalized_license = normalize_cargo_license_expression(cargo_license)
+    record.slice(
+      "name",
+      "version",
+      "origin",
+      "source",
+      "checksum",
+      "role",
+      "manifest_path",
+      "workspace_path_package"
+    ).merge(
+      "cargo_manifest_license" => source_license,
+      "cargo_tree_license" => cargo_license,
+      "license_provenance" => selected_license_provenance.fetch(package_id),
+      "normalized_spdx_candidate" => normalized_license,
+      "legacy_slash_normalized" => cargo_license != normalized_license,
+      "linked_linux" => linked_linux_tree.key?(package_id),
+      "fedora_all_target_linked" => fedora_license_tree.key?(package_id)
+    )
+  end
+
+  resolver_license_records = resolver_records.map do |record|
+    package_id = record.values_at("name", "version", "source")
+    license_metadata = record.fetch("license")
+    expression = license_metadata["expression"]
+    normalized_license = normalize_cargo_license_expression(expression) if expression
+    record.slice("name", "version", "origin", "source", "checksum", "active_in_all_target_graph").merge(
+      "cargo_manifest_license" => license_metadata,
+      "normalized_spdx_candidate" => normalized_license,
+      "legacy_slash_normalized" => expression && expression != normalized_license,
+      "linked_linux" => false,
+      "fedora_all_target_linked" => fedora_license_tree.key?(package_id)
+    ).compact
+  end
+
+  license_record_by_id = (selected_license_records + resolver_license_records).to_h do |record|
+    [record.values_at("name", "version", "source"), record]
+  end
+  linux_linked_records = linked_linux_tree.keys.map { |package_id| license_record_by_id.fetch(package_id) }
+  fedora_linked_records = fedora_license_tree.keys.map { |package_id| license_record_by_id.fetch(package_id) }
+  linux_linked_expressions = linux_linked_records.map { |record| record.fetch("normalized_spdx_candidate") }
+  fedora_linked_expressions = fedora_linked_records.map { |record| record["normalized_spdx_candidate"] }
+  unless fedora_linked_expressions.all?
+    raise Agentlab::Error, "Fedora all-target linked graph contains a package without an SPDX expression"
+  end
+
+  v8_record = selected_license_records.select do |record|
+    record.fetch("name") == "v8" && record.fetch("version") == "149.2.0"
+  end
+  raise Agentlab::Error, "expected one selected v8 149.2.0 package" unless v8_record.one?
+  rusty_v8 = dependencies.fetch("selected_special_sources").find do |source|
+    source.fetch("component") == "rusty_v8"
+  end
+  raise Agentlab::Error, "missing Rusty V8 source evidence" unless rusty_v8
+  bubblewrap = dependencies.fetch("vendored_native_sources").find do |source|
+    source.fetch("component") == "bubblewrap"
+  end
+  raise Agentlab::Error, "missing excluded Bubblewrap evidence" unless bubblewrap
+
+  resolver_rendered_for_license = JSON.pretty_generate(resolver_supplement) + "\n"
+  license_audit = {
+    "schema" => "agentlab-codex-selected-cargo-license-audit/v1",
+    "release" => receipt.fetch("release").slice(
+      "version",
+      "source_tag",
+      "source_commit",
+      "source_sha256",
+      "source_cargo_lock_sha256",
+      "normalized_cargo_lock_sha256"
+    ),
+    "authoritative_closure" => {
+      "name" => File.basename(output),
+      "sha256" => Digest::SHA256.hexdigest(selected_rendered),
+      "packages" => selected_records.length,
+      "target_triple" => target
+    },
+    "resolver_supplement" => {
+      "name" => File.basename(resolver_output),
+      "sha256" => Digest::SHA256.hexdigest(resolver_rendered_for_license),
+      "packages" => resolver_records.length
+    },
+    "selection" => {
+      "root_package" => "codex-cli",
+      "root_manifest" => "codex-rs/cli/Cargo.toml",
+      "feature_policy" => "Cargo-selected features from codex-cli; --all-features is not used",
+      "selected_source_graph" => {
+        "target" => target,
+        "included_edges" => %w[normal build],
+        "excluded_edges" => ["dev"]
+      },
+      "linked_linux_graph" => {
+        "target" => target,
+        "excluded_edges" => %w[build dev proc-macro],
+        "dev_dependency_avoidance" => "RUSTC_BOOTSTRAP=1 cargo -Z avoid-dev-deps"
+      },
+      "fedora_macro_graph" => {
+        "target" => "all",
+        "excluded_edges" => %w[build dev proc-macro],
+        "reason" => "Matches cargo2rpm license-breakdown and license-summary graph selection."
+      }
+    },
+    "generator" => {
+      "cargo_version" => cargo_version,
+      "offline_verification" => true,
+      "selected_source_license_verification" => "Registry Cargo.toml metadata comes from checksum-verified archives; Git metadata comes from exact commit objects after normalized repository URL and tracked-checkout verification; workspace metadata comes from the exact release source copy.",
+      "selected_license_tree_command" => stable_command(selected_license_tree_command, workspace_manifest),
+      "linked_linux_tree_command" => stable_command(linked_linux_tree_command, workspace_manifest),
+      "fedora_license_tree_command" => stable_command(fedora_license_tree_command, workspace_manifest),
+      "legacy_license_normalization" => "Replace each slash-separated Cargo alternative with SPDX OR, matching Fedora cargo2rpm license output normalization."
+    },
+    "counts" => {
+      "selected_packages" => selected_license_records.length,
+      "selected_linked_linux_packages" => linux_linked_records.length,
+      "selected_compile_only_packages" => selected_license_records.count { |record| !record.fetch("linked_linux") },
+      "selected_build_role_packages" => selected_license_records.count { |record| record.fetch("role") == "build" },
+      "selected_normal_path_compile_only_packages" => selected_license_records.count do |record|
+        record.fetch("role") == "runtime" && !record.fetch("linked_linux")
+      end,
+      "resolver_only_packages" => resolver_license_records.length,
+      "fedora_all_target_linked_packages" => fedora_linked_records.length,
+      "fedora_all_target_linked_selected_packages" => fedora_linked_records.count do |record|
+        selected_by_id.key?(record.values_at("name", "version", "source"))
+      end,
+      "fedora_all_target_linked_resolver_only_packages" => fedora_linked_records.count do |record|
+        resolver_by_id.key?(record.values_at("name", "version", "source"))
+      end,
+      "selected_legacy_slash_expressions" => selected_license_records.count { |record| record.fetch("legacy_slash_normalized") },
+      "resolver_legacy_slash_expressions" => resolver_license_records.count { |record| record.fetch("legacy_slash_normalized", false) },
+      "linux_linked_unique_license_expressions" => linux_linked_expressions.uniq.length,
+      "fedora_all_target_unique_license_expressions" => fedora_linked_expressions.uniq.length
+    },
+    "aggregate_candidates" => {
+      "linux_cargo_linked" => {
+        "expression" => aggregate_license_expression(linux_linked_expressions),
+        "unique_expressions" => linux_linked_expressions.uniq.sort,
+        "complete_for_cargo_manifest_metadata" => true
+      },
+      "fedora_all_target_cargo_macro" => {
+        "expression" => aggregate_license_expression(fedora_linked_expressions),
+        "unique_expressions" => fedora_linked_expressions.uniq.sort,
+        "complete_for_cargo_manifest_metadata" => true,
+        "use" => "Comparison witness for Fedora cargo-rpm-macros; not the authoritative Linux product closure."
+      },
+      "final_binary" => {
+        "complete" => false,
+        "reason" => "Cargo manifest metadata does not cover the Rusty V8/Chromium native static source closure, system-library decisions, or required license texts."
+      }
+    },
+    "selected_packages" => selected_license_records,
+    "resolver_only_packages" => resolver_license_records,
+    "native_static_components" => [
+      {
+        "component" => "rusty_v8",
+        "cargo_package" => v8_record.first.slice(
+          "name",
+          "version",
+          "source",
+          "checksum",
+          "cargo_manifest_license",
+          "cargo_tree_license",
+          "normalized_spdx_candidate",
+          "linked_linux"
+        ),
+        "upstream_v8" => rusty_v8.fetch("upstream_v8").to_s,
+        "prototype_archive_sha256" => rusty_v8.fetch("local_prototype").fetch("archive_sha256"),
+        "recursive_source_license_inventory_complete" => false,
+        "required_license_texts_complete" => false,
+        "system_library_decisions_complete" => false,
+        "scope" => "The v8 crate's Cargo license is recorded above; its statically linked Chromium/V8 implementation requires separate source and license accounting."
+      }
+    ],
+    "excluded_native_sources" => [
+      {
+        "component" => "bubblewrap",
+        "path" => bubblewrap.fetch("path"),
+        "license" => bubblewrap.fetch("license"),
+        "reason" => bubblewrap.fetch("status")
+      }
+    ],
+    "validation" => {
+      "authoritative_closure_unchanged" => true,
+      "resolver_supplement_kept_separate" => true,
+      "selected_cargo_license_metadata_complete" => true,
+      "selected_source_license_metadata_verified" => true,
+      "resolver_cargo_license_metadata_complete" => true,
+      "legacy_cargo_license_syntax_normalized" => true,
+      "linked_linux_graph_verified" => true,
+      "fedora_macro_graph_verified" => true,
+      "license_texts_verified" => false,
+      "fedora_allowed_spdx_verified" => false,
+      "native_static_licenses_verified" => false,
+      "final_binary_license_complete" => false,
+      "production_license_tag_approved" => false
+    },
+    "scope" => "Deterministic Cargo manifest license metadata and linked-graph accounting; not a complete native/static license closure, legal review, final RPM License expression, or source-publication approval."
+  }
 end
 
 rendered = "#{JSON.pretty_generate(receipt)}\n"
 resolver_rendered = "#{JSON.pretty_generate(resolver_supplement)}\n"
+license_rendered = "#{JSON.pretty_generate(license_audit)}\n"
 if check
   raise Agentlab::Error, "missing receipt: #{output}" unless File.file?(output)
   raise Agentlab::Error, "Codex Cargo closure receipt is stale" unless File.read(output) == rendered
@@ -1627,11 +2002,17 @@ if check
   unless File.read(resolver_output) == resolver_rendered
     raise Agentlab::Error, "Codex Cargo resolver supplement is stale"
   end
+  raise Agentlab::Error, "missing license audit: #{license_output}" unless File.file?(license_output)
+  unless File.read(license_output) == license_rendered
+    raise Agentlab::Error, "Codex Cargo license audit is stale"
+  end
 
-  puts "Codex Cargo closure receipt is current: #{receipt.fetch('counts').fetch('selected_packages')} packages; resolver supplement #{resolver_supplement.fetch('counts').fetch('resolver_only_packages')} packages"
+  puts "Codex Cargo closure receipt is current: #{receipt.fetch('counts').fetch('selected_packages')} packages; resolver supplement #{resolver_supplement.fetch('counts').fetch('resolver_only_packages')} packages; linked license graph #{license_audit.fetch('counts').fetch('selected_linked_linux_packages')} packages"
 else
   File.write(output, rendered)
   File.write(resolver_output, resolver_rendered)
+  File.write(license_output, license_rendered)
   puts "Wrote #{output}: #{receipt.fetch('counts').fetch('selected_packages')} packages"
   puts "Wrote #{resolver_output}: #{resolver_supplement.fetch('counts').fetch('resolver_only_packages')} resolver-only packages"
+  puts "Wrote #{license_output}: #{license_audit.fetch('counts').fetch('selected_linked_linux_packages')} linked Linux Cargo packages"
 end
