@@ -162,7 +162,7 @@ else
   generated_sources << {
     "role" => "webkit-source",
     "filename" => webkit_source.fetch("archive_filename"),
-    "recipe" => "bun-webkit-minimized-source/v1",
+    "recipe" => "bun-webkit-minimized-source/v2",
     "packager" => "scripts/package-bun-webkit-source",
     "source_receipt" => webkit_source.fetch("proof_receipt"),
     "source_receipt_sha256" => webkit_source.fetch("proof_receipt_sha256"),
@@ -237,13 +237,8 @@ plan = {
     "target_build_network_allowed" => false,
     "external_generated_artifact_host_required_by_design" => false,
     "fedora_submission_storage" => "lookaside-cache",
-    "architecture_independent_outputs_required" => false,
-    "architecture_scoped_outputs" => [
-      {
-        "role" => "webkit-source",
-        "architectures" => webkit_source.fetch("architectures")
-      }
-    ],
+    "architecture_independent_outputs_required" => true,
+    "architecture_scoped_outputs" => [],
     "make_srpm_materializer_integrated" => false,
     "make_srpm_checksum_verification_integrated" => false
   },

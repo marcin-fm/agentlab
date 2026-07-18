@@ -947,7 +947,7 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: minimized WebKit jsc proof is invalid")
 
       errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec.sub("ExclusiveArch:  x86_64", "ExclusiveArch:  aarch64"))
-      assert_includes(errors, "bun: spec architecture does not match the minimized WebKit source")
+      assert_includes(errors, "bun: spec architecture does not match the build plan")
     end
   end
 

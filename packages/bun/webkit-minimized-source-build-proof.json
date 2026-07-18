@@ -6,12 +6,12 @@
   "isolated_buildroot": false,
   "source": {
     "commit": "5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b",
-    "archive_filename": "WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc-only.tar.gz",
-    "sha256": "909d4b08612356159103fec95190b629754e460196404fa3fb3bd14e706eaa3b",
+    "archive_filename": "WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc.tar.gz",
+    "sha256": "38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d",
     "source_tree_complete": false,
     "minimized_jsc_only_source": true,
-    "source_receipt_sha256": "01c59af278003013b6679599f3e371a6b91a56ca30a42569ef70147dc9b61c48",
-    "tree_sha256": "dd102e7dc710fc0ba143b962172f43e117e9eca46070088dfed19bf67521d4d6",
+    "source_receipt_sha256": "01b4549178b6469c4969b46dc1a5e31c17efdfb84d684d5ca192935227c89680",
+    "tree_sha256": "dcf7d67f6bced499d961d20c29a1dc12cead88650c7d9f79a830082969e744d8",
     "gitlink_count": 0,
     "embedded_gitmodules_count": 4
   },
@@ -58,36 +58,36 @@
     "static_archives": {
       "libWTF.a": {
         "path": "build/lib/libWTF.a",
-        "size_bytes": 50492328,
-        "sha256": "b596c85b5bd0c0dd09e504155e79b1fbe2927ef7b6bc390cdd7685004ee071ce"
+        "size_bytes": 50488896,
+        "sha256": "93b792da54b34b1321663e53a3b2a4127d1bd44bd5843329980a8c3e31955918"
       },
       "libJavaScriptCore.a": {
         "path": "build/lib/libJavaScriptCore.a",
-        "size_bytes": 590765292,
-        "sha256": "efbb691de6c80a17ad05d4fb32cde9cc9e80c2b2d8f09b33ca8860d5cee05e7f"
+        "size_bytes": 590747204,
+        "sha256": "8772b93eebce36671c3d2ed01b388c2414d4aa383ce9a6e1bdc7e8d0e8a294a0"
       },
       "libbmalloc.a": {
         "path": "build/lib/libbmalloc.a",
-        "size_bytes": 9512796,
-        "sha256": "752e2b8581871360e07211c9f9f48812cf876c02e8ef11d8500b2323b9e346a7"
+        "size_bytes": 9511940,
+        "sha256": "63ef9f23d5d86c2c6d34520ec6f6c2a8183915211cdbb4b6e75a1c53bf4d7b3b"
       }
     },
     "jsc": {
       "path": "build/bin/jsc",
-      "size_bytes": 291729992,
-      "sha256": "0cde4c32d92a7cbba023fd178afd51268cedf63e5bbc318989f4cc9f1d902ac6",
+      "size_bytes": 291712816,
+      "sha256": "bc1cdc5c54ee6ff081cb58ac3dbfa4e8ca7321afa825788878335d3377fc22cf",
       "runtime_probe_verified": true
     },
     "metadata": {
       "CMakeCache.txt": {
         "path": "build/CMakeCache.txt",
-        "size_bytes": 66378,
-        "sha256": "9cb709c40ec4b1bb63148319833262708895604fdb8d2078dd67fe203d5f491f"
+        "size_bytes": 65762,
+        "sha256": "80b6454b5af0994b458ca9b6af4ebab536ae9f2cad6c298e86bb32b3b09a4c8b"
       },
       "compile_commands.json": {
         "path": "build/compile_commands.json",
-        "size_bytes": 2682803,
-        "sha256": "04ea6486e269dc937575f4c121a57a123f8a87c668e06ae88ba0f3f2c49c793a"
+        "size_bytes": 2666764,
+        "sha256": "d75060f07e6a8227f7437b0d6af4b72709c4825ba0cbd7662145d07ddea6ba44"
       }
     },
     "generated_header_counts": {

@@ -35,15 +35,12 @@ class PlanBunSrpmSourcesTest < Minitest::Test
       plan.fetch("generated_sources").map { |source| source.fetch("role") }
     )
     webkit = plan.fetch("generated_sources").find { |source| source.fetch("role") == "webkit-source" }
-    assert_equal("WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc-only.tar.gz", webkit.fetch("filename"))
-    assert_equal("bun-webkit-minimized-source/v1", webkit.fetch("recipe"))
-    assert_equal("909d4b08612356159103fec95190b629754e460196404fa3fb3bd14e706eaa3b", webkit.fetch("expected_sha256"))
-    assert_equal(93_056_181, webkit.fetch("expected_size_bytes"))
-    refute(plan.dig("delivery", "architecture_independent_outputs_required"))
-    assert_equal(
-      [{ "role" => "webkit-source", "architectures" => ["x86_64"] }],
-      plan.dig("delivery", "architecture_scoped_outputs")
-    )
+    assert_equal("WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc.tar.gz", webkit.fetch("filename"))
+    assert_equal("bun-webkit-minimized-source/v2", webkit.fetch("recipe"))
+    assert_equal("38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d", webkit.fetch("expected_sha256"))
+    assert_equal(95_923_474, webkit.fetch("expected_size_bytes"))
+    assert(plan.dig("delivery", "architecture_independent_outputs_required"))
+    assert_equal([], plan.dig("delivery", "architecture_scoped_outputs"))
     assert(plan.dig("validation", "webkit_spec_integrated"))
     refute(plan.dig("validation", "generated_sources_materialized"))
     refute(plan.dig("validation", "delivery_implementation_verified"))

@@ -1,5 +1,5 @@
 {
-  "schema": "bun-webkit-minimized-source/v1",
+  "schema": "bun-webkit-minimized-source/v2",
   "package": "bun",
   "release_pin": "bun-v1.3.14",
   "source": {
@@ -10,18 +10,23 @@
     "complete_archive_size_bytes": 1976477934
   },
   "archive": {
-    "filename": "WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc-only.tar.gz",
-    "sha256": "909d4b08612356159103fec95190b629754e460196404fa3fb3bd14e706eaa3b",
-    "size_bytes": 93056181,
-    "saved_bytes": 1883421753,
-    "saved_percent": 95.2918,
-    "tree_sha256": "dd102e7dc710fc0ba143b962172f43e117e9eca46070088dfed19bf67521d4d6",
-    "member_count": 12867,
-    "regular_file_count": 11633,
+    "filename": "WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc.tar.gz",
+    "sha256": "38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d",
+    "size_bytes": 95923474,
+    "saved_bytes": 1880554460,
+    "saved_percent": 95.1467,
+    "tree_sha256": "dcf7d67f6bced499d961d20c29a1dc12cead88650c7d9f79a830082969e744d8",
+    "member_count": 13241,
+    "regular_file_count": 11983,
     "symlink_count": 19,
-    "regular_file_bytes": 267960543
+    "regular_file_bytes": 298343903
   },
   "retained_scope": {
+    "architectures": [
+      "x86_64",
+      "aarch64"
+    ],
+    "capstone_retained": true,
     "required_paths": [
       "CMakeLists.txt",
       "Source/CMakeLists.txt",
@@ -30,6 +35,7 @@
       "Source/WTF/CMakeLists.txt",
       "Source/bmalloc/CMakeLists.txt",
       "Source/cmake/OptionsJSCOnly.cmake",
+      "Source/ThirdParty/capstone/CMakeLists.txt",
       "Source/ThirdParty/gtest/CMakeLists.txt",
       "Source/ThirdParty/unifdef/CMakeLists.txt",
       "Tools/CMakeLists.txt",
@@ -54,7 +60,6 @@
       "Source/WebKit",
       "Source/WebKitLegacy",
       "Source/ThirdParty/ANGLE",
-      "Source/ThirdParty/capstone",
       "Source/ThirdParty/d3flamegraphjs",
       "Source/ThirdParty/d3js",
       "Source/ThirdParty/dav1d",
@@ -78,6 +83,7 @@
     "archive_size_reduced": true,
     "source_tree_complete": false,
     "jsc_only_source_subset": true,
+    "aarch64_capstone_scope_verified": true,
     "bun_source_build_verified": false
   }
 }

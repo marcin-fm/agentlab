@@ -1,0 +1,217 @@
+name: Release source assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package source release to build
+        required: true
+        type: choice
+        options:
+          - bun
+
+permissions:
+  contents: write
+  attestations: write
+  artifact-metadata: write
+  id-token: write
+
+concurrency:
+  group: source-release-${{ inputs.package }}
+  cancel-in-progress: false
+
+jobs:
+  bun-webkit:
+    if: inputs.package == 'bun'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Read checked source metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d -o "$USER" -g "$USER" /srv/tmp
+          ruby -ryaml -e '
+            data = YAML.safe_load_file("packages/bun/package.yml")
+            version = data.fetch("upstream").fetch("current_version").to_s
+            webkit = data.fetch("build_plan").fetch("source_inputs").fetch("webkit")
+            source = webkit.fetch("jsc_only")
+            commit = webkit.fetch("commit")
+            values = {
+              "version" => version,
+              "tag" => "bun-sources-#{version}-webkit-#{commit[0, 12]}",
+              "repository_url" => webkit.fetch("repository_url"),
+              "commit" => commit,
+              "canonical_filename" => webkit.fetch("archive_filename"),
+              "canonical_sha256" => webkit.fetch("sha256"),
+              "canonical_size" => webkit.fetch("archive_size_bytes"),
+              "archive_filename" => source.fetch("archive_filename"),
+              "archive_sha256" => source.fetch("sha256"),
+              "archive_size" => source.fetch("archive_size_bytes"),
+              "receipt_filename" => source.fetch("proof_receipt"),
+              "receipt_sha256" => source.fetch("proof_receipt_sha256"),
+              "build_receipt_filename" => source.fetch("source_build_proof_receipt"),
+              "build_receipt_sha256" => source.fetch("source_build_proof_receipt_sha256")
+            }
+            values.each { |key, value| puts "#{key}=#{value}" }
+          ' >> "$GITHUB_OUTPUT"
+
+      - name: Refuse an existing release or tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "tag already exists: $TAG" >&2
+            exit 1
+          fi
+          release_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .id")"
+          if [[ -n "$release_id" ]]; then
+            echo "release already exists for $TAG" >&2
+            exit 1
+          fi
+
+      - name: Recreate the canonical WebKit archive
+        shell: bash
+        env:
+          REPOSITORY_URL: ${{ steps.metadata.outputs.repository_url }}
+          COMMIT: ${{ steps.metadata.outputs.commit }}
+          CANONICAL_FILENAME: ${{ steps.metadata.outputs.canonical_filename }}
+          CANONICAL_SHA256: ${{ steps.metadata.outputs.canonical_sha256 }}
+          CANONICAL_SIZE: ${{ steps.metadata.outputs.canonical_size }}
+        run: |
+          set -euo pipefail
+          repository=/srv/tmp/bun-webkit-release-repository
+          canonical="/srv/tmp/$CANONICAL_FILENAME"
+          rm -rf "$repository"
+          git init "$repository"
+          git -C "$repository" remote add origin "$REPOSITORY_URL"
+          git -C "$repository" -c protocol.version=2 fetch --depth=1 --no-tags origin "$COMMIT"
+          test "$(git -C "$repository" rev-parse FETCH_HEAD)" = "$COMMIT"
+          git -C "$repository" archive \
+            --format=tar \
+            --prefix="WebKit-$COMMIT/" \
+            FETCH_HEAD | gzip -n > "$canonical"
+          test "$(stat -c %s "$canonical")" = "$CANONICAL_SIZE"
+          printf '%s  %s\n' "$CANONICAL_SHA256" "$canonical" | sha256sum -c -
+
+      - name: Generate and verify release assets
+        shell: bash
+        env:
+          CANONICAL_FILENAME: ${{ steps.metadata.outputs.canonical_filename }}
+          ARCHIVE_FILENAME: ${{ steps.metadata.outputs.archive_filename }}
+          ARCHIVE_SHA256: ${{ steps.metadata.outputs.archive_sha256 }}
+          ARCHIVE_SIZE: ${{ steps.metadata.outputs.archive_size }}
+          RECEIPT_FILENAME: ${{ steps.metadata.outputs.receipt_filename }}
+          RECEIPT_SHA256: ${{ steps.metadata.outputs.receipt_sha256 }}
+          BUILD_RECEIPT_FILENAME: ${{ steps.metadata.outputs.build_receipt_filename }}
+          BUILD_RECEIPT_SHA256: ${{ steps.metadata.outputs.build_receipt_sha256 }}
+        run: |
+          set -euo pipefail
+          release=/srv/tmp/bun-source-release
+          archive="$release/$ARCHIVE_FILENAME"
+          receipt="$release/$RECEIPT_FILENAME"
+          rm -rf "$release"
+          mkdir -p "$release"
+          scripts/package-bun-webkit-source \
+            --source "/srv/tmp/$CANONICAL_FILENAME" \
+            --output "$archive" \
+            --receipt "$receipt" \
+            --workdir /srv/tmp/bun-webkit-release-package \
+            --force
+          scripts/package-bun-webkit-source --output "$archive" --receipt "$receipt" --check
+          test "$(stat -c %s "$archive")" = "$ARCHIVE_SIZE"
+          printf '%s  %s\n' "$ARCHIVE_SHA256" "$archive" | sha256sum -c -
+          printf '%s  %s\n' "$RECEIPT_SHA256" "$receipt" | sha256sum -c -
+          cmp --silent "$receipt" "packages/bun/$RECEIPT_FILENAME"
+          cp "packages/bun/$BUILD_RECEIPT_FILENAME" "$release/"
+          printf '%s  %s\n' "$BUILD_RECEIPT_SHA256" "$release/$BUILD_RECEIPT_FILENAME" | sha256sum -c -
+          {
+            git --version
+            gzip --version
+            ruby --version
+          } > "$release/SOURCE_TOOLCHAIN.txt"
+          ruby -rdigest -e '
+            directory = ARGV.fetch(0)
+            entries = Dir.children(directory).sort.map do |name|
+              path = File.join(directory, name)
+              "#{Digest::SHA256.file(path).hexdigest}  #{name}"
+            end
+            File.write(File.join(directory, "SHA256SUMS"), entries.join("\n") + "\n")
+          ' "$release"
+          scripts/check-packages --package bun
+
+      - name: Attest generated source assets
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
+        with:
+          subject-path: /srv/tmp/bun-source-release/*
+
+      - name: Create and verify draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          WEBKIT_COMMIT: ${{ steps.metadata.outputs.commit }}
+        run: |
+          set -euo pipefail
+          release=/srv/tmp/bun-source-release
+          notes=/srv/tmp/bun-source-release-notes.md
+          ruby -e '
+            File.write(ARGV.fetch(0), <<~NOTES)
+              Deterministic source assets for Bun #{ENV.fetch("VERSION")}.
+
+              WebKit commit: `#{ENV.fetch("WEBKIT_COMMIT")}`
+              Generator commit: `#{ENV.fetch("GITHUB_SHA")}`
+              Source profile: JSC-only tree retaining Capstone for the declared aarch64 source scope
+
+              Every uploaded file is covered by `SHA256SUMS` and a GitHub artifact attestation.
+              This release remains a draft until repository release immutability is enabled in GitHub settings.
+            NOTES
+          ' "$notes"
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Bun $VERSION WebKit source assets" \
+            --notes-file "$notes" \
+            --draft
+          gh release upload "$TAG" "$release"/* --repo "$GITHUB_REPOSITORY"
+          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .id")"
+          test -n "$release_id"
+          assets=/srv/tmp/bun-source-release-assets.json
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" > "$assets"
+          ruby -rjson -rdigest -e '
+            directory, response = ARGV
+            expected = Dir.children(directory).sort
+            assets = JSON.parse(File.read(response))
+            actual = assets.map { |asset| asset.fetch("name") }.sort
+            abort "release asset names do not match" unless actual == expected
+            assets.each do |asset|
+              path = File.join(directory, asset.fetch("name"))
+              abort "release asset size mismatch: #{path}" unless asset.fetch("size") == File.size(path)
+              digest = asset["digest"]
+              next unless digest
+              abort "release asset digest mismatch: #{path}" unless digest == "sha256:#{Digest::SHA256.file(path).hexdigest}"
+            end
+          ' "$release" "$assets"
+          download=/srv/tmp/bun-source-release-download
+          rm -rf "$download"
+          mkdir -p "$download"
+          for path in "$release"/*; do
+            name="$(basename "$path")"
+            asset_id="$(ruby -rjson -e 'assets = JSON.parse(File.read(ARGV[0])); puts assets.find { |asset| asset["name"] == ARGV[1] }.fetch("id")' "$assets" "$name")"
+            gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" > "$download/$name"
+            cmp --silent "$path" "$download/$name"
+          done
+          draft_url="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url)"
+          printf 'Verified draft release: %s\n' "$draft_url" >> "$GITHUB_STEP_SUMMARY"

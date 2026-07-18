@@ -1,11 +1,10 @@
 name: bun
 status: blocked
 blockers:
-  - The checked minimized WebKit/JSC archive still needs immutable public hosting.
+  - The checked dual-architecture minimized WebKit/JSC source archive still needs immutable public hosting.
   - The checked native, Node.js header, npm, and Cargo crate archives still need immutable RPM-consumable hosting.
   - The checked lol-html Cargo vendor and npm source closures are not integrated as immutable RPM sources.
   - The complete LGPL relink kit is not hosted or integrated as an RPM-consumable source.
-  - The immediate source-built offline self-rebuild is seed-free, but clean-cache Zig 0.15.2 output is not reproducible: the same 32-object target changes aggregate after only its local and global caches are cleared.
 upstream:
   provider: github
   repository: oven-sh/bun
@@ -53,23 +52,26 @@ build_plan:
         state: verified
         architectures:
           - x86_64
+          - aarch64
         acquisition: deterministic_minimized_archive
         source_tree_complete: false
         jsc_only_source_subset: true
-        archive_filename: WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc-only.tar.gz
-        archive_size_bytes: 93056181
+        aarch64_capstone_scope_verified: true
+        capstone_retained: true
+        archive_filename: WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc.tar.gz
+        archive_size_bytes: 95923474
         archive_url: null
         archive_hosted: false
-        sha256: 909d4b08612356159103fec95190b629754e460196404fa3fb3bd14e706eaa3b
-        tree_sha256: dd102e7dc710fc0ba143b962172f43e117e9eca46070088dfed19bf67521d4d6
-        member_count: 12867
-        regular_file_count: 11633
+        sha256: 38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d
+        tree_sha256: dcf7d67f6bced499d961d20c29a1dc12cead88650c7d9f79a830082969e744d8
+        member_count: 13241
+        regular_file_count: 11983
         symlink_count: 19
-        regular_file_bytes: 267960543
+        regular_file_bytes: 298343903
         proof_receipt: webkit-minimized-source-proof.json
-        proof_receipt_sha256: 01c59af278003013b6679599f3e371a6b91a56ca30a42569ef70147dc9b61c48
+        proof_receipt_sha256: 01b4549178b6469c4969b46dc1a5e31c17efdfb84d684d5ca192935227c89680
         source_build_proof_receipt: webkit-minimized-source-build-proof.json
-        source_build_proof_receipt_sha256: b6c2c9cc5a01b63a1e7fc0b2c6aac9ec055ba8d26dacc1c73059311186dc6b4d
+        source_build_proof_receipt_sha256: b127f3cb711b079cfe002aeb40b36dd9e40d2e585c916b3a65365a6f79fafa14
         source_build_verified: true
     lolhtml:
       relationship: pinned_by_bun_release

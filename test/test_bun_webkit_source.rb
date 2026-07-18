@@ -46,6 +46,7 @@ class BunWebKitSourceTest < Minitest::Test
 
       entries = capture!("tar", "--list", "--gzip", "--file", results[0][1]).lines.map(&:strip)
       assert_includes(entries, "WebKit-#{COMMIT}/Source/JavaScriptCore/CMakeLists.txt")
+      assert_includes(entries, "WebKit-#{COMMIT}/Source/ThirdParty/capstone/CMakeLists.txt")
       refute(entries.any? { |entry| entry.start_with?("WebKit-#{COMMIT}/LayoutTests/") })
       refute(entries.any? { |entry| entry.start_with?("WebKit-#{COMMIT}/Source/WebCore/") })
 
@@ -66,6 +67,9 @@ class BunWebKitSourceTest < Minitest::Test
         release_pin: RELEASE_PIN
       )
       assert_equal(true, verified.dig("validation", "deterministic_regeneration_verified"))
+      assert_equal(true, verified.dig("validation", "aarch64_capstone_scope_verified"))
+      assert_equal(%w[x86_64 aarch64], verified.dig("retained_scope", "architectures"))
+      assert_equal(true, verified.dig("retained_scope", "capstone_retained"))
       assert_equal(false, verified.dig("validation", "source_tree_complete"))
       assert_operator(verified.dig("archive", "saved_bytes"), :>, 0)
       assert_equal(
@@ -88,6 +92,44 @@ class BunWebKitSourceTest < Minitest::Test
       )
       assert_equal(verified.dig("archive", "tree_sha256"), restored.fetch("tree_sha256"))
       assert_equal("fixture CMakeLists.txt\n", File.read(File.join(extracted_root, "CMakeLists.txt")))
+
+      tampered_scope = JSON.parse(File.read(results[0][2]))
+      tampered_scope.fetch("retained_scope")["architectures"] = ["x86_64"]
+      tampered_receipt = File.join(temporary, "tampered-scope.json")
+      File.write(tampered_receipt, JSON.pretty_generate(tampered_scope) + "\n")
+      error = assert_raises(Agentlab::Error) do
+        Agentlab::BunWebKitSource.verify_receipt!(
+          receipt_path: tampered_receipt,
+          archive_path: results[0][1],
+          webkit_metadata: metadata,
+          release_pin: RELEASE_PIN
+        )
+      end
+      assert_includes(error.message, "source scope does not match")
+    end
+  end
+
+  def test_requires_capstone_for_the_dual_architecture_source_profile
+    Dir.mktmpdir("agentlab-webkit-capstone-test-", "/srv/tmp") do |temporary|
+      complete = File.join(temporary, "complete")
+      root = File.join(complete, "WebKit-#{COMMIT}")
+      create_fixture_tree(root)
+      FileUtils.rm_f(File.join(root, "Source", "ThirdParty", "capstone", "CMakeLists.txt"))
+      source = File.join(temporary, "complete.tar.gz")
+      create_archive(complete, "WebKit-#{COMMIT}", source)
+
+      error = assert_raises(Agentlab::Error) do
+        Agentlab::BunWebKitSource.package!(
+          source_archive: source,
+          output: File.join(temporary, "minimized.tar.gz"),
+          receipt_path: File.join(temporary, "receipt.json"),
+          workdir: File.join(temporary, "work"),
+          commit: COMMIT,
+          release_pin: RELEASE_PIN,
+          canonical_sha256: Digest::SHA256.file(source).hexdigest
+        )
+      end
+      assert_includes(error.message, "missing Source/ThirdParty/capstone/CMakeLists.txt")
     end
   end
 

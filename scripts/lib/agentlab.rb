@@ -1201,13 +1201,18 @@ module Agentlab
       return ["bun: minimized WebKit source metadata must be an object"]
     end
 
-    expected_filename = "WebKit-#{webkit['commit']}-jsc-only.tar.gz"
+    expected_filename = "WebKit-#{webkit['commit']}-jsc.tar.gz"
     errors << "bun: minimized WebKit source is not verified" unless source["state"] == "verified"
-    errors << "bun: minimized WebKit architecture scope mismatch" unless source["architectures"] == ["x86_64"]
-    errors << "bun: minimized WebKit architecture does not match the build plan" unless source["architectures"] == package.data.dig("build_plan", "architectures")
+    errors << "bun: minimized WebKit architecture scope mismatch" unless source["architectures"] == %w[x86_64 aarch64]
+    build_architectures = package.data.dig("build_plan", "architectures")
+    unless build_architectures.is_a?(Array) && (build_architectures - Array(source["architectures"])).empty?
+      errors << "bun: minimized WebKit architecture does not cover the build plan"
+    end
     errors << "bun: minimized WebKit acquisition method mismatch" unless source["acquisition"] == "deterministic_minimized_archive"
     errors << "bun: minimized WebKit source incorrectly claims a complete tree" unless source["source_tree_complete"] == false
     errors << "bun: minimized WebKit source is not marked JSC-only" unless source["jsc_only_source_subset"] == true
+    errors << "bun: minimized WebKit aarch64 Capstone scope is not verified" unless source["aarch64_capstone_scope_verified"] == true
+    errors << "bun: minimized WebKit source does not retain Capstone" unless source["capstone_retained"] == true
     errors << "bun: minimized WebKit archive filename mismatch" unless source["archive_filename"] == expected_filename
     errors << "bun: minimized WebKit archive SHA-256 is invalid" unless source["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: minimized WebKit tree SHA-256 is invalid" unless source["tree_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
@@ -1232,7 +1237,7 @@ module Agentlab
       errors << "bun: minimized WebKit source receipt is missing or has wrong SHA-256"
     else
       receipt = JSON.parse(File.read(receipt_path))
-      errors << "bun: unsupported minimized WebKit source receipt schema" unless receipt["schema"] == "bun-webkit-minimized-source/v1"
+      errors << "bun: unsupported minimized WebKit source receipt schema" unless receipt["schema"] == "bun-webkit-minimized-source/v2"
       errors << "bun: minimized WebKit source receipt package mismatch" unless receipt["package"] == "bun"
       errors << "bun: minimized WebKit source receipt release mismatch" unless receipt["release_pin"] == "bun-v#{version}"
       errors << "bun: minimized WebKit source receipt commit mismatch" unless receipt.dig("source", "commit") == webkit["commit"]
@@ -1254,9 +1259,11 @@ module Agentlab
       end
       required_paths = receipt.dig("retained_scope", "required_paths")
       excluded_paths = receipt.dig("retained_scope", "excluded_paths")
-      errors << "bun: minimized WebKit required-path scope is invalid" unless required_paths.is_a?(Array) && %w[CMakeLists.txt Source/JavaScriptCore/CMakeLists.txt Source/ThirdParty/gtest/CMakeLists.txt].all? { |path| required_paths.include?(path) }
-      errors << "bun: minimized WebKit excluded-path scope is invalid" unless excluded_paths.is_a?(Array) && %w[Source/WebCore Source/ThirdParty/capstone LayoutTests].all? { |path| excluded_paths.include?(path) }
-      verified = %w[canonical_source_verified safe_single_root_verified required_paths_verified excluded_paths_absent git_mode_semantics_normalized modes_and_symlinks_manifested deterministic_regeneration_verified archive_size_reduced jsc_only_source_subset]
+      errors << "bun: minimized WebKit retained architecture scope is invalid" unless receipt.dig("retained_scope", "architectures") == source["architectures"]
+      errors << "bun: minimized WebKit receipt does not retain Capstone" unless receipt.dig("retained_scope", "capstone_retained") == true
+      errors << "bun: minimized WebKit required-path scope is invalid" unless required_paths.is_a?(Array) && %w[CMakeLists.txt Source/JavaScriptCore/CMakeLists.txt Source/ThirdParty/capstone/CMakeLists.txt Source/ThirdParty/gtest/CMakeLists.txt].all? { |path| required_paths.include?(path) }
+      errors << "bun: minimized WebKit excluded-path scope is invalid" unless excluded_paths.is_a?(Array) && %w[Source/WebCore LayoutTests].all? { |path| excluded_paths.include?(path) } && !excluded_paths.include?("Source/ThirdParty/capstone")
+      verified = %w[canonical_source_verified safe_single_root_verified required_paths_verified excluded_paths_absent git_mode_semantics_normalized modes_and_symlinks_manifested deterministic_regeneration_verified archive_size_reduced jsc_only_source_subset aarch64_capstone_scope_verified]
       errors << "bun: minimized WebKit source receipt validation is incomplete" unless verified.all? { |key| receipt.dig("validation", key) == true }
       errors << "bun: minimized WebKit source receipt incorrectly claims completeness" unless receipt.dig("validation", "source_tree_complete") == false
       errors << "bun: minimized WebKit identity receipt incorrectly claims a Bun build" unless receipt.dig("validation", "bun_source_build_verified") == false
@@ -1314,8 +1321,10 @@ module Agentlab
     end
 
     errors << "bun: spec does not bind the minimized WebKit SHA-256" unless spec.to_s.match?(/^%global\s+webkit_sha256\s+#{Regexp.escape(source['sha256'].to_s)}$/)
-    errors << "bun: spec does not use the minimized WebKit Source2" unless spec.to_s.match?(/^Source2:\s+WebKit-%\{webkit_commit\}-jsc-only\.tar\.gz$/)
-    errors << "bun: spec architecture does not match the minimized WebKit source" unless spec.to_s.match?(/^ExclusiveArch:\s+x86_64$/)
+    expected_source2 = source["archive_url"] || source["archive_filename"]
+    expected_source2 = expected_source2.gsub(webkit.fetch("commit"), "%{webkit_commit}")
+    errors << "bun: spec does not use the minimized WebKit Source2" unless spec.to_s.match?(/^Source2:\s+#{Regexp.escape(expected_source2)}$/)
+    errors << "bun: spec architecture does not match the build plan" unless spec.to_s.match?(/^ExclusiveArch:\s+#{Regexp.escape(Array(build_architectures).join(" "))}$/)
 
     errors
   rescue JSON::ParserError, KeyError => e

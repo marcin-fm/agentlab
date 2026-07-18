@@ -10,7 +10,8 @@ require_relative "agentlab"
 
 module Agentlab
   module BunWebKitSource
-    SCHEMA = "bun-webkit-minimized-source/v1"
+    SCHEMA = "bun-webkit-minimized-source/v2"
+    SOURCE_ARCHITECTURES = %w[x86_64 aarch64].freeze
     EXCLUDED_PATHS = %w[
       .claude
       .codex
@@ -30,7 +31,6 @@ module Agentlab
       Source/WebKit
       Source/WebKitLegacy
       Source/ThirdParty/ANGLE
-      Source/ThirdParty/capstone
       Source/ThirdParty/d3flamegraphjs
       Source/ThirdParty/d3js
       Source/ThirdParty/dav1d
@@ -50,6 +50,7 @@ module Agentlab
       Source/WTF/CMakeLists.txt
       Source/bmalloc/CMakeLists.txt
       Source/cmake/OptionsJSCOnly.cmake
+      Source/ThirdParty/capstone/CMakeLists.txt
       Source/ThirdParty/gtest/CMakeLists.txt
       Source/ThirdParty/unifdef/CMakeLists.txt
       Tools/CMakeLists.txt
@@ -128,6 +129,8 @@ module Agentlab
           "regular_file_bytes" => manifest.fetch("regular_file_bytes")
         },
         "retained_scope" => {
+          "architectures" => SOURCE_ARCHITECTURES,
+          "capstone_retained" => true,
           "required_paths" => REQUIRED_PATHS,
           "excluded_paths" => EXCLUDED_PATHS
         },
@@ -142,6 +145,7 @@ module Agentlab
           "archive_size_reduced" => true,
           "source_tree_complete" => false,
           "jsc_only_source_subset" => true,
+          "aarch64_capstone_scope_verified" => true,
           "bun_source_build_verified" => false
         }
       }
@@ -162,7 +166,9 @@ module Agentlab
              receipt.dig("source", "complete_archive_sha256") == webkit_metadata.fetch("sha256")
         raise Agentlab::Error, "minimized WebKit receipt does not match the pinned complete source identity"
       end
-      unless receipt.dig("retained_scope", "required_paths") == REQUIRED_PATHS &&
+      unless receipt.dig("retained_scope", "architectures") == SOURCE_ARCHITECTURES &&
+             receipt.dig("retained_scope", "capstone_retained") == true &&
+             receipt.dig("retained_scope", "required_paths") == REQUIRED_PATHS &&
              receipt.dig("retained_scope", "excluded_paths") == EXCLUDED_PATHS
         raise Agentlab::Error, "minimized WebKit receipt source scope does not match the packager"
       end
@@ -178,6 +184,7 @@ module Agentlab
         deterministic_regeneration_verified
         archive_size_reduced
         jsc_only_source_subset
+        aarch64_capstone_scope_verified
       ].each do |key|
         raise Agentlab::Error, "minimized WebKit receipt has not verified #{key}" unless validation[key] == true
       end

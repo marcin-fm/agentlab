@@ -11,10 +11,11 @@ version = package.upstream.fetch("current_version").to_s
 webkit = package.data.fetch("build_plan").fetch("source_inputs").fetch("webkit")
 release_pin = "bun-v#{version}"
 source = File.join("/srv/tmp", webkit.fetch("archive_filename"))
-output = File.join("/srv/tmp", "WebKit-#{webkit.fetch('commit')}-jsc-only.tar.gz")
+output = File.join("/srv/tmp", "WebKit-#{webkit.fetch('commit')}-jsc.tar.gz")
 receipt = "#{output}.json"
 workdir = "/srv/tmp/agentlab-bun-webkit-source-package"
 force = false
+check = false
 
 def resolved_identity(path)
   absolute = File.expand_path(path)
@@ -45,6 +46,7 @@ OptionParser.new do |parser|
   parser.on("--receipt PATH", "Minimized source identity receipt") { |path| receipt = path }
   parser.on("--workdir PATH", "Marked packaging directory below /srv/tmp") { |path| workdir = path }
   parser.on("--force", "Replace existing marked packaging output") { force = true }
+  parser.on("--check", "Verify an existing minimized archive and receipt") { check = true }
 end.parse!
 
 source = File.expand_path(source)
@@ -76,6 +78,17 @@ inside_workdir = resolved_roles.select do |_role, path|
 end
 unless inside_workdir.empty?
   raise Agentlab::Error, "source, output, and receipt paths must be outside the packaging workdir: #{inside_workdir.keys.join(', ')}"
+end
+
+if check
+  Agentlab::BunWebKitSource.verify_receipt!(
+    receipt_path: receipt,
+    archive_path: output,
+    webkit_metadata: webkit,
+    release_pin: release_pin
+  )
+  puts "Verified deterministic minimized WebKit source: #{output}"
+  exit
 end
 
 marker = File.join(workdir, ".agentlab-bun-webkit-source-package")
