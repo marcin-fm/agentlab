@@ -7,12 +7,12 @@
 
 Name:           rust-fmt2io1
 Version:        1.0.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Bridge between std::io::Write and std::fmt::Write
 
 License:        MITNFA
 URL:            https://crates.io/crates/fmt2io
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -68,5 +68,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.0.0-0.2
+- Enable the independently eligible leaf for six-cell SCM COPR publication.
+- Use the immutable static crates.io archive for source generation.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.0.0-0.1
 - Add the initial repository packaging changelog.

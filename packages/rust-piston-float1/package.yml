@@ -1,5 +1,26 @@
 name: rust-piston-float1
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
-upstream: {provider: crates_io, crate: piston-float, version_requirement: '= 1.0.1', current_version: 1.0.1, source_sha256: ad78bf43dcf80e8f950c92b84f938a0fc7590b7f6866fbcbeca781609c115590, source_url_template: 'https://static.crates.io/crates/piston-float/piston-float-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-piston-float1, spec: rust-piston-float1.spec}
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live build results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: The normalized crate manifest has no external dependencies; this package is serialized before rust-vecmath1.
+  duplicate_audit: No crate(piston-float) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
+upstream:
+  provider: crates_io
+  crate: piston-float
+  version_requirement: = 1.0.1
+  current_version: 1.0.1
+  source_sha256: ad78bf43dcf80e8f950c92b84f938a0fc7590b7f6866fbcbeca781609c115590
+  source_url_template: https://static.crates.io/crates/piston-float/piston-float-{version}.crate
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-piston-float1
+  spec: rust-piston-float1.spec

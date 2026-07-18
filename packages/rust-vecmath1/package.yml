@@ -1,7 +1,11 @@
 name: rust-vecmath1
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live build results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: vecmath 1.0.0 requires piston-float 1.0; rust-piston-float1 provides compatible version 1.0.1 and is serialized immediately before this package.
+  duplicate_audit: No crate(vecmath) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
 upstream:
   provider: crates_io
   crate: vecmath
@@ -10,6 +14,13 @@ upstream:
   source_sha256: 956ae1e0d85bca567dee1dcf87fb1ca2e792792f66f87dced8381f99cd91156a
   source_url_template: https://static.crates.io/crates/vecmath/vecmath-{version}.crate
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-vecmath1
   spec: rust-vecmath1.spec

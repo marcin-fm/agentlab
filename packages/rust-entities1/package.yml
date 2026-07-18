@@ -1,5 +1,26 @@
 name: rust-entities1
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
-upstream: {provider: crates_io, crate: entities, version_requirement: '= 1.0.1', current_version: 1.0.1, source_sha256: b5320ae4c3782150d900b79807611a59a99fc9a1d61d686faafc24b93fc8d7ca, source_url_template: 'https://static.crates.io/crates/entities/entities-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-entities1, spec: rust-entities1.spec}
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live build results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MIT license file.
+  dependency_evidence: The normalized crate manifest has no external dependencies.
+  duplicate_audit: No crate(entities) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
+upstream:
+  provider: crates_io
+  crate: entities
+  version_requirement: = 1.0.1
+  current_version: 1.0.1
+  source_sha256: b5320ae4c3782150d900b79807611a59a99fc9a1d61d686faafc24b93fc8d7ca
+  source_url_template: https://static.crates.io/crates/entities/entities-{version}.crate
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-entities1
+  spec: rust-entities1.spec

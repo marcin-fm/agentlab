@@ -1,8 +1,14 @@
 # rust-vecmath1
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently eligible and enabled for configured SCM COPR
+publication. The canonical crates.io archive is pinned by SHA-256, fetched
+directly from the immutable static registry endpoint, and includes the declared
+MIT license file.
 
-Final direct-v3 Rust package import for `vecmath 1.0.0`. Blocked pending
-repository/source approval.
+No `crate(vecmath)` provider exists in Fedora 43, Fedora 44, Rawhide, or matching
+RPM Fusion repositories. Its only external dependency is `piston-float` 1.0;
+the compatible `rust-piston-float1` package is published immediately before
+this package. Exact-current six-cell build and artifact-lint results are
+retained in the project playbook.

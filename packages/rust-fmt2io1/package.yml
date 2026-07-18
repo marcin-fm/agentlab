@@ -1,5 +1,26 @@
 name: rust-fmt2io1
-status: blocked
-blockers: [Final staged spec imported without a new clean Fedora 43/44 validation run., Immutable source hosting and current Fedora/RPM Fusion duplicate audit remain.]
-upstream: {provider: crates_io, crate: fmt2io, version_requirement: '= 1.0.0', current_version: 1.0.0, source_sha256: 6b6129284da9f7e5296cc22183a63f24300e945e297705dcc0672f7df01d62c8, source_url_template: 'https://static.crates.io/crates/fmt2io/fmt2io-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-fmt2io1, spec: rust-fmt2io1.spec}
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live build results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared MITNFA license file.
+  dependency_evidence: The normalized crate manifest has no external dependencies.
+  duplicate_audit: No crate(fmt2io) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-18.
+upstream:
+  provider: crates_io
+  crate: fmt2io
+  version_requirement: = 1.0.0
+  current_version: 1.0.0
+  source_sha256: 6b6129284da9f7e5296cc22183a63f24300e945e297705dcc0672f7df01d62c8
+  source_url_template: https://static.crates.io/crates/fmt2io/fmt2io-{version}.crate
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/rust-fmt2io1
+  spec: rust-fmt2io1.spec
