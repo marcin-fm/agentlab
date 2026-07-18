@@ -15,8 +15,7 @@ source_inputs:
 patches:
   rtk-use-system-sqlite.patch: e9f2b1d08874a2bd46ca87ea671cec389bb0bc71dc82d29262c50eb3ccc4df0d
   dirs-sys-fix-metadata-auto.diff: c668f7b6bb5c658eed85acec48214a35d3d69ad4432fb34522063d64be019bf6
-collector_sha256: d17d4ef4e530cb61ac5d9b36decf4e6fe17cd4223b22972d61eed2c7059b0bb9
-spec_sha256: c8a22f20620dfc46c4de1018fe18df2365b6c6b67c5b40984b3bcead3932100c
+historical_spec_sha256: c8a22f20620dfc46c4de1018fe18df2365b6c6b67c5b40984b3bcead3932100c
 closure:
   dependency_inventory_records: 114
   resolved_crate_versions: 114
@@ -28,17 +27,12 @@ closure:
   dependency_inventory_sha256: efe3c0966d0d745513ed61c0699a0240ac14b19287e6d99b9e18f6b337c8646b
   fedora_43_provider_manifest_sha256: f119ad6c076946bb224edf08d53095e318d08298f5a01233fe4b2c815b76b6be
   fedora_44_provider_manifest_sha256: 3394d9f72b0d552a051dcf068cdbdf73073f55ce9083fe2c6fae875107e10c53
-license_evidence:
-  evidence_entries: 218
-  manifest_sha256: 60dd1535a4d25b4bc2352d5b43f13e00f7ff419b924648662a012dc111fe41b1
-  checksum_verification:
-    fedora-43-x86_64: passed
-    fedora-44-x86_64: passed
-  hardlink_deduplication:
-    unique_inodes: 94
-    hardlink_groups: 21
-    hardlinked_paths: 146
-    duplicate_bytes_eliminated: 754181
+license_policy:
+  runtime_payload:
+    - LICENSE
+    - LICENSE.dependencies
+  copied_system_provider_license_corpus: false
+  provider_receipts: repository-only historical evidence
 validation:
   fedora-43-x86_64:
     result: passed

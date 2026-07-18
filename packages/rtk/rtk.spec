@@ -1,23 +1,23 @@
+%bcond check 1
+
 %global crate rtk
 %global source_sha256 196bec9e9b438f0b8cd0198f68e05f072ccdfdec2c2655a3562d6ea357fa485b
 
 Name:           rtk
 Version:        0.43.0
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        CLI proxy that reduces command output sent to language models
 
 License:        Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
 URL:            https://github.com/rtk-ai/rtk
 Source0:        https://github.com/rtk-ai/rtk/archive/refs/tags/v%{version}.tar.gz
-Source1:        collect-cargo-licenses.py
 # Link RTK against Fedora system SQLite instead of compiling rusqlite's bundled copy.
 # Upstream support is proposed in https://github.com/rtk-ai/rtk/pull/2404; Fedora selects it unconditionally.
 Patch0:         rtk-use-system-sqlite.patch
 
-BuildRequires:  cargo-rpm-macros
+BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  binutils
 BuildRequires:  git-core
-BuildRequires:  python3
 BuildRequires:  sqlite-devel
 
 %description
@@ -35,32 +35,31 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %build
 %cargo_build_crate
 
+%if %{with check}
 %check
 %cargo_test
 readelf -d target/rpm/%{name} | grep -q 'libsqlite3.so.0'
 RTK_TELEMETRY_DISABLED=1 RTK_DB_PATH="$PWD/rtk-smoke.db" \
   target/rpm/%{name} proxy true >/dev/null
 test -s rtk-smoke.db
+%endif
 
 %install
 %cargo_install
 install -Dpm0644 LICENSE.dependencies \
   %{buildroot}%{_licensedir}/%{name}/LICENSE.dependencies
-python3 %{SOURCE1} \
-  --inventory %{buildroot}%{_licensedir}/%{name}/LICENSE.dependencies \
-  --registry /usr/share/cargo/registry \
-  --output %{buildroot}%{_licensedir}/%{name}/THIRD-PARTY-LICENSES \
-  --closure-output %{buildroot}%{_licensedir}/%{name}/CARGO-PROVIDERS.tsv
 
 %files
 %license LICENSE
 %license %{_licensedir}/%{name}/LICENSE.dependencies
-%license %{_licensedir}/%{name}/CARGO-PROVIDERS.tsv
-%license %{_licensedir}/%{name}/THIRD-PARTY-LICENSES
 %doc README.md
 %{_bindir}/rtk
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.5
+- Generate test dependencies through the Fedora check bcond.
+- Remove the copied system-provider license corpus from the runtime payload.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.4
 - Document the expanded COPR architecture and Rawhide target matrix.
 
