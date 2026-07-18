@@ -1,0 +1,273 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "optparse"
+require "uri"
+require_relative "lib/agentlab"
+
+SHA256 = /\A[0-9a-f]{64}\z/
+
+def https_url!(value, label)
+  uri = URI(value)
+  raise Agentlab::Error, "#{label} must use HTTPS" unless uri.is_a?(URI::HTTPS)
+
+  value
+rescue URI::InvalidURIError, TypeError
+  raise Agentlab::Error, "#{label} is invalid"
+end
+
+def source_member(record, label:, url_key:)
+  archive = record["archive"]
+  sha256 = record["sha256"]
+  size_bytes = record["size_bytes"]
+  raise Agentlab::Error, "#{label} archive filename is invalid" unless archive.is_a?(String) && !archive.empty? && File.basename(archive) == archive
+  raise Agentlab::Error, "#{label} SHA-256 is invalid" unless sha256.to_s.match?(SHA256)
+  raise Agentlab::Error, "#{label} size is invalid" unless size_bytes.is_a?(Integer) && size_bytes.positive?
+
+  {
+    "archive" => archive,
+    "url" => https_url!(record[url_key], "#{label} URL"),
+    "sha256" => sha256,
+    "size_bytes" => size_bytes
+  }
+end
+
+def manifest_summary(records)
+  content = JSON.generate(records) + "\n"
+  {
+    "member_count" => records.length,
+    "input_bytes" => records.sum { |record| record.fetch("size_bytes") },
+    "member_manifest_sha256" => Digest::SHA256.hexdigest(content)
+  }
+end
+
+package = Agentlab.package_named("bun")
+version = package.upstream.fetch("current_version").to_s
+dependency_stage = package.data.dig("build_plan", "stages", "dependency_closure")
+raise Agentlab::Error, "bun dependency-closure stage is missing" unless dependency_stage.is_a?(Hash)
+
+receipt_name = dependency_stage.fetch("proof_receipt")
+receipt_path = File.join(package.directory, receipt_name)
+expected_receipt_sha256 = dependency_stage.fetch("proof_receipt_sha256")
+unless File.file?(receipt_path) && expected_receipt_sha256.to_s.match?(SHA256) && Digest::SHA256.file(receipt_path).hexdigest == expected_receipt_sha256
+  raise Agentlab::Error, "bun dependency-closure receipt is missing or has the wrong SHA-256"
+end
+
+receipt = JSON.parse(File.read(receipt_path))
+raise Agentlab::Error, "unsupported Bun dependency-closure schema" unless receipt["schema"] == "bun-release-local-source-closure/v2"
+raise Agentlab::Error, "Bun dependency-closure package mismatch" unless receipt["package"] == "bun"
+raise Agentlab::Error, "Bun dependency-closure release mismatch" unless receipt["release"].to_s == version
+unless receipt.dig("source_tree", "source_sha256") == package.upstream.fetch("source_sha256")
+  raise Agentlab::Error, "Bun dependency-closure source tree does not match Source0"
+end
+
+native_sources = Array(receipt["native_github_sources"])
+node_source = receipt["node_headers"]
+npm_sources = Array(receipt.dig("npm", "source_archives"))
+cargo_sources = Array(receipt.dig("cargo", "crate_sources"))
+expected_counts = {
+  "native" => dependency_stage.fetch("selected_github_archives"),
+  "node" => dependency_stage.fetch("selected_node_header_archives"),
+  "npm" => dependency_stage.fetch("unique_npm_source_archives"),
+  "cargo" => dependency_stage.fetch("selected_lolhtml_cargo_crates")
+}
+actual_counts = {
+  "native" => native_sources.length,
+  "node" => node_source.is_a?(Hash) ? 1 : 0,
+  "npm" => npm_sources.length,
+  "cargo" => cargo_sources.length
+}
+raise Agentlab::Error, "Bun dependency-closure source counts do not match package metadata" unless actual_counts == expected_counts
+
+native_members = native_sources.map do |source|
+  source_member(source, label: "native source #{source['name']}", url_key: "url").merge(
+    "name" => source.fetch("name"),
+    "symbol" => source.fetch("symbol")
+  )
+end.sort_by { |record| [record.fetch("name"), record.fetch("archive")] }
+node_members = [
+  source_member(node_source, label: "Node.js headers", url_key: "url").merge(
+    "name" => node_source.fetch("name"),
+    "version" => node_source.fetch("version"),
+    "abi" => node_source.fetch("abi")
+  )
+]
+npm_members = npm_sources.map do |source|
+  source_member(source, label: "npm source #{source['npm_name']}", url_key: "source_url").merge(
+    "origin" => source.fetch("origin"),
+    "npm_name" => source.fetch("npm_name"),
+    "source_name" => source["source_name"],
+    "source_version" => source["source_version"],
+    "source_commit" => source["source_commit"],
+    "integrity" => source["integrity"]
+  )
+end.sort_by { |record| [record.fetch("npm_name"), record["source_version"].to_s, record.fetch("archive")] }
+cargo_members = cargo_sources.map do |source|
+  source_member(source, label: "Cargo source #{source['name']} #{source['version']}", url_key: "source_url").merge(
+    "name" => source.fetch("name"),
+    "version" => source.fetch("version"),
+    "checksum" => source.fetch("checksum")
+  )
+end.sort_by { |record| [record.fetch("name"), record.fetch("version")] }
+
+[native_members, node_members, npm_members, cargo_members].each do |members|
+  archives = members.map { |record| record.fetch("archive") }
+  raise Agentlab::Error, "Bun source plan contains duplicate archive filenames" unless archives.uniq.length == archives.length
+end
+
+source_inputs = package.data.dig("build_plan", "source_inputs")
+raise Agentlab::Error, "Bun source input metadata is missing" unless source_inputs.is_a?(Hash)
+webkit = source_inputs.fetch("webkit")
+closure_webkit = Array(receipt["existing_local_sources"]).find { |source| source.is_a?(Hash) && source["symbol"] == "webkit" }
+raise Agentlab::Error, "Bun dependency-closure WebKit source is missing" unless closure_webkit.is_a?(Hash)
+unless closure_webkit["commit"] == webkit["commit"] && closure_webkit["archive"] == webkit["archive_filename"] && closure_webkit["sha256"] == webkit["sha256"]
+  raise Agentlab::Error, "Bun WebKit source identity does not match the dependency closure"
+end
+
+bun_url = package.upstream.fetch("source_url_template").gsub("{version}", version)
+zig = source_inputs.fetch("zig")
+direct_sources = [
+  {
+    "role" => "bun-release",
+    "filename" => File.basename(URI(https_url!(bun_url, "Bun source URL")).path),
+    "url" => bun_url,
+    "sha256" => package.upstream.fetch("source_sha256")
+  },
+  {
+    "role" => "zig-source",
+    "filename" => "bun-#{version}-zig-#{zig.fetch('commit')}.tar.gz",
+    "url" => https_url!(zig.fetch("url"), "Zig source URL"),
+    "sha256" => zig.fetch("sha256")
+  }
+]
+direct_sources.each do |source|
+  raise Agentlab::Error, "#{source.fetch('role')} SHA-256 is invalid" unless source.fetch("sha256").to_s.match?(SHA256)
+end
+
+generated_sources = []
+webkit_url = webkit["archive_url"]
+if webkit_url
+  unless receipt.dig("validation", "immutable_public_hosting_verified") == true && closure_webkit["immutable_public_url"] == webkit_url
+    raise Agentlab::Error, "hosted WebKit metadata is not verified by the dependency closure"
+  end
+  direct_sources << {
+    "role" => "webkit-source",
+    "filename" => webkit.fetch("archive_filename"),
+    "url" => https_url!(webkit_url, "WebKit archive URL"),
+    "sha256" => webkit.fetch("sha256"),
+    "size_bytes" => webkit.fetch("archive_size_bytes")
+  }
+else
+  generated_sources << {
+    "role" => "webkit-source",
+    "filename" => webkit.fetch("archive_filename"),
+    "recipe" => webkit.fetch("archive_recipe"),
+    "repository_url" => https_url!(webkit.fetch("repository_url"), "WebKit repository URL"),
+    "commit" => webkit.fetch("commit"),
+    "archive_prefix" => webkit.fetch("archive_prefix"),
+    "expected_sha256" => webkit.fetch("sha256"),
+    "expected_size_bytes" => webkit.fetch("archive_size_bytes")
+  }
+end
+
+generated_sources << {
+  "role" => "native-node-source-bundle",
+  "filename" => "bun-#{version}-native-node-sources.tar.gz",
+  "recipe" => "deterministic-archive-bundle/v1",
+  "compression" => "gzip-n",
+  "closure_receipt_sha256" => expected_receipt_sha256
+}.merge(manifest_summary(native_members + node_members))
+generated_sources << {
+  "role" => "npm-source-bundle",
+  "filename" => "bun-#{version}-npm-sources.tar.gz",
+  "recipe" => "deterministic-archive-bundle/v1",
+  "compression" => "gzip-n",
+  "closure_receipt_sha256" => expected_receipt_sha256
+}.merge(manifest_summary(npm_members))
+
+if dependency_stage["cargo_vendor_archive_hosted"] == true
+  cargo_vendor_url = dependency_stage.fetch("cargo_vendor_archive_url")
+  closure_cargo_vendor = receipt.dig("cargo", "vendor_archive")
+  verified_cargo_vendor = receipt.dig("validation", "immutable_public_hosting_verified") == true &&
+                          closure_cargo_vendor.is_a?(Hash) &&
+                          closure_cargo_vendor["immutable_public_url"] == cargo_vendor_url &&
+                          closure_cargo_vendor["sha256"] == dependency_stage["cargo_vendor_archive_sha256"] &&
+                          closure_cargo_vendor["size_bytes"] == dependency_stage["cargo_vendor_archive_bytes"]
+  unless verified_cargo_vendor
+    raise Agentlab::Error, "hosted Cargo vendor metadata is not verified by the dependency closure"
+  end
+  direct_sources << {
+    "role" => "lolhtml-cargo-vendor",
+    "filename" => dependency_stage.fetch("cargo_vendor_archive_filename"),
+    "url" => https_url!(cargo_vendor_url, "Cargo vendor archive URL"),
+    "sha256" => dependency_stage.fetch("cargo_vendor_archive_sha256"),
+    "size_bytes" => dependency_stage.fetch("cargo_vendor_archive_bytes")
+  }
+else
+  generated_sources << {
+    "role" => "lolhtml-cargo-vendor",
+    "filename" => dependency_stage.fetch("cargo_vendor_archive_filename"),
+    "recipe" => "lolhtml-cargo-vendor/v1",
+    "vendor_manifest" => dependency_stage.fetch("cargo_vendor_manifest"),
+    "vendor_manifest_sha256" => dependency_stage.fetch("cargo_vendor_manifest_sha256"),
+    "expected_sha256" => dependency_stage.fetch("cargo_vendor_archive_sha256"),
+    "expected_size_bytes" => dependency_stage.fetch("cargo_vendor_archive_bytes"),
+    "closure_receipt_sha256" => expected_receipt_sha256
+  }.merge(manifest_summary(cargo_members))
+end
+
+plan = {
+  "schema" => "bun-srpm-source-plan/v1",
+  "package" => "bun",
+  "release" => version,
+  "closure_receipt" => {
+    "path" => receipt_name,
+    "sha256" => expected_receipt_sha256
+  },
+  "delivery" => {
+    "planned_method" => "copr-git-scm-make_srpm",
+    "implementation_state" => "planned",
+    "planned_network_scope" => "srpm-generation-only",
+    "target_build_network_allowed" => false,
+    "external_generated_artifact_host_required_by_design" => false,
+    "fedora_submission_storage" => "lookaside-cache",
+    "architecture_independent_outputs_required" => true,
+    "make_srpm_materializer_integrated" => false,
+    "make_srpm_checksum_verification_integrated" => false
+  },
+  "input_summary" => actual_counts.merge(
+    "native_node_manifest" => manifest_summary(native_members + node_members),
+    "npm_manifest" => manifest_summary(npm_members),
+    "cargo_manifest" => manifest_summary(cargo_members)
+  ),
+  "direct_sources" => direct_sources.sort_by { |source| source.fetch("role") },
+  "generated_sources" => generated_sources.sort_by { |source| source.fetch("role") },
+  "validation" => {
+    "closure_receipt_verified" => true,
+    "source_tree_binding_verified" => true,
+    "source_counts_verified" => true,
+    "member_identities_verified" => true,
+    "delivery_implementation_verified" => false,
+    "generated_sources_materialized" => false,
+    "bun_spec_integrated" => false,
+    "srpm_built" => false
+  }
+}
+
+check = false
+output = nil
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/plan-bun-srpm-sources [options]"
+  parser.on("--check", "Validate the plan and print a concise result") { check = true }
+  parser.on("--output PATH", "Write the JSON plan to PATH") { |path| output = path }
+end.parse!
+
+content = JSON.pretty_generate(plan) + "\n"
+Agentlab.atomic_write(File.expand_path(output), content) if output
+if check
+  puts "Verified Bun #{version} SRPM source plan: #{direct_sources.length} direct sources, #{generated_sources.length} generated sources, #{actual_counts.values.sum} checked closure inputs."
+else
+  puts content
+end
