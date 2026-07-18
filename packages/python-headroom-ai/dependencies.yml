@@ -1,27 +1,36 @@
-target_release: 0.31.0
+target_release: 0.32.0
 production_runtime:
   python:
     - tiktoken >= 0.5.0
     - pydantic >= 2.0.0
-    - click >= 8.1.0
+    - litellm >= 1.86.2, < 2.0 on Python below 3.14
+    - click >= 8.3.3
+    - rich >= 13.0.0
     - opentelemetry-api >= 1.24.0
-    - mcp >= 1.0.0
+    - ast-grep-cli >= 0.30.0
+    - pyyaml >= 6.0
+    - tomlkit >= 0.13.0, < 1.0
+    - mcp >= 1.0.0 with httpx, starlette, and uvicorn
   rust_selected:
-    - pyo3 >= 0.27.2, < 0.28 with abi3-py310 and extension-module
+    - pyo3 >= 0.29, < 0.30 with abi3-py310 and extension-module
     - pyo3-log >= 0.13, < 0.14
     - tokenizers >= 0.22, < 0.23
+    - hf-hub >= 0.4, < 0.5 with ureq and rustls-tls
     - tiktoken-rs >= 0.11, < 0.12 using rust-tiktoken-rs0.11
-    - rusqlite >= 0.31, < 0.32 using system SQLite
+    - fancy-regex >= 0.17, < 0.18 using rust-fancy-regex0.17
+    - rusqlite >= 0.31, < 0.32 using system SQLite through a compatibility patch
     - unidiff >= 0.4, < 0.5 using rust-unidiff0.4
     - Fedora-provided serde, serde_json, bytes, thiserror, tracing, digest, compression, regex, rayon, toml, and blake3 branches
 excluded_runtime:
   rust:
-    - fastembed, magika, ort, ort-sys, hf-hub, and redis
+    - fastembed, magika, ort, and ort-sys through disabled headroom-core ml defaults
+    - redis through the unselected optional feature
   python:
-    - litellm, rich, ast-grep-cli, httpx direct dependency, proxy/model extras, and sqlite-vec
+    - optional proxy, ML, memory, relevance, image, voice, and other non-mcp extras
 build_runtime:
   backend: maturin >= 1.5, < 2.0
-  native_extension: crates/headroom-py via PyO3 feature extension-module,mcp-minimal
+  native_extension: crates/headroom-py with no default features and PyO3 feature extension-module
+  license_workspace: root Cargo workspace narrowed to headroom-core and headroom-py for Fedora cargo2rpm accounting
   system_libraries:
     - pkgconfig(sqlite3)
   local_packages:
@@ -30,8 +39,13 @@ build_runtime:
     - rust-tiktoken-rs0.11 = 0.11.0
 validation:
   current_draft:
-    release: 0.31.0-0.3
-    status: not built; substantive-rework hold
+    release: 0.32.0-0.5
+    status: not built; blocked license-scope rework
+    static_validation: exact-archive zero-fuzz patch application, scoped Cargo metadata and license probing, RPM spec parsing, YAML parsing, and repository tests passed
+    source_license_probe: 240 target-all package/version records for headroom-core and headroom-py; fastembed and aws-config are absent
+    license_breakdown_records: 207
+    candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
+    unresolved_resolution: Fedora 43/44 buildroots must regenerate the provider-selected dependency inventory and confirm the aggregate expression
   prior_release_0_1:
     fedora_43:
       mock: passed

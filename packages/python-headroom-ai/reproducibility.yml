@@ -1,42 +1,57 @@
 schema: headroom-ai-reproducibility/v1
 release:
-  version: 0.31.0
-  source_kind: PyPI sdist
-  source_url: https://files.pythonhosted.org/packages/ad/fd/fe59aa45a74ead7ce0faad8175b29f02e5ef81034a434ff2a0da7f59a0a6/headroom_ai-0.31.0.tar.gz
-  source_sha256: a13f9764be168e4d075fd80ff6ee5d47a9febe0152b82ad28bab0e949fcd9bd3
-  upstream_tag: v0.31.0
-  upstream_commit: 55efb1c77d5b67f7ad0620372c6256c8b0547591
-local_nonrelease:
-  configured_version: 0.32.0
-  provenance: file:///tmp/headroom
-  packageable: false
+  version: 0.32.0
+  source_kind: GitHub archive for exact released tag commit; PyPI has wheels but no sdist
+  source_url: https://github.com/headroomlabs-ai/headroom/archive/4381388d56f49af3ae9b1dece7489a12fa64a1a1.tar.gz
+  source_sha256: 6bb138a038d9a74c3a9b51bcc593d996054cf9eca95fc39df9e0e80c3944ddce
+  upstream_tag: v0.32.0
+  upstream_commit: 4381388d56f49af3ae9b1dece7489a12fa64a1a1
 current_draft:
-  release: 0.31.0-0.3
-  validation: not built
-  hold: custom mcp-minimal feature graph requires substantive rework or explicit maintainer approval
-  license_gate: aggregate SPDX accounting for the statically linked Rust closure is pending
-fedora_surface:
-  cli: headroom mcp serve
-  transport: stdio only
-  tools:
-    - headroom_compress
-    - headroom_retrieve
-    - headroom_stats
-  disabled:
-    - proxy and provider commands
-    - update checks
-    - optional file-read tool
-    - native model, ORT, and Hugging Face download branches
-    - Redis and bundled SQLite
+  release: 0.32.0-0.5
+  validation: static source-backed checks only; not built
+  spec_sha256: 9b9b42aee4eea4081eebc056aef2bf6a800610682a9dad0bcd36c6b80a029aaf
+  hold: upstream exposes no bounded MCP-only surface; dependency and runtime policy review remains open
+  candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
+  license_gate: Fedora 43/44 buildroot regeneration must confirm the dependency inventory and aggregate expression
+selected_surface:
+  python: upstream base project plus mcp extra
+  native_features:
+    - extension-module
+  disabled_native_defaults:
+    - ml, including fastembed, Magika, and ORT
+    - Redis remains unselected
+  license_workspace:
+    - crates/headroom-core
+    - crates/headroom-py
+  unresolved_runtime:
+    - full upstream CLI and proxy commands remain installed
+    - streamable HTTP MCP remains available
+    - proxy fallback, update checks, file-read opt-in, and hf-hub capability remain present
 patches:
-  headroom-mcp-minimal.patch: 0ed335b70366fb39ee995f154e108168539d4b76967e4bbfc4746077612b23ca
-  headroom-mcp-minimal-tests.patch: 77d669095849ff2b0c0786a77e5c3477ea4f717ab12068fc3082f3de9bf2a08c
-  headroom-mcp-remove-unavailable-native-deps.patch: 0e4243e3b108161093ac86d95666ebb59e6fc1ba269a73bf0445a78637d425d3
+  headroom-disable-default-ml.patch: 0f17b01a7a1c7845d50e7fdb235a161bc65317b8a7f44bc9617c7f3dd99872ca
+  headroom-system-rusqlite.patch: 4d940b3261fee935d9fa5376f9553ba7ce10e485b194ff557528c3f2e7918739
+  headroom-python-workspace.patch: 3db624347342b5a4313c2f5e536598bcc3e5a92bb39e7c683ce4be500b961078
+current_static_validation:
+  exact_archive_patch_apply: passed with zero fuzz
+  cargo_metadata: headroom-py dependency uses_default_features is false
+  cargo_resolution: rusqlite 0.31.0 and libsqlite3-sys 0.28.0 selected
+  sqlite_source_review: v0.31.0 to v0.32.0 changes only the backend TTL documentation, not its rusqlite API use
+  license_workspace: headroom-core and headroom-py only
+  source_license_probe: 240 unique target-all package/version records; fastembed and aws-config are absent
+  license_breakdown_records: 207
+  buildroot_license_probe: pending
+  spec_parse: passed
+  rpmlint: zero errors, zero warnings, one filtered
+  yaml_parse: passed
+  scoped_package_validator: passed
+  full_package_validator: blocked by unrelated rust-memoffset0.7, rust-nix0.26, and rust-polling2 chroot records
+  repository_tests: 35 runs, 77 assertions, zero failures
+  diff_check: passed
 validation:
-  applies_to: 0.31.0-0.1 historical package only
+  applies_to: 0.31.0-0.1 historical package only; no current build evidence
   source_hash_verified: true
   spec_sha256: c6e84d9dc574e2a423cbabd969a6a0a80578054af52aae554c5252334bd91096
-  mcp_security_review: mcp-1.26-stdio-security-review.md
+  mcp_security_review: historical bounded-stdio review is superseded and not applicable to the current upstream surface
   fedora_43_x86_64:
     mock_build: passed
     native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed; 1 ignored

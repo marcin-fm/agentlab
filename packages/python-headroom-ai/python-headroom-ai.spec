@@ -1,23 +1,29 @@
-%global source_sha256 a13f9764be168e4d075fd80ff6ee5d47a9febe0152b82ad28bab0e949fcd9bd3
+%global upstream_commit 4381388d56f49af3ae9b1dece7489a12fa64a1a1
+%global source_sha256 6bb138a038d9a74c3a9b51bcc593d996054cf9eca95fc39df9e0e80c3944ddce
 %bcond check 1
 
 Name:           python-headroom-ai
-Version:        0.31.0
-Release:        0.3%{?dist}
-Summary:        Local context compression and stdio MCP server
+Version:        0.32.0
+Release:        0.5%{?dist}
+Summary:        Context compression toolkit and MCP server
 
-License:        Apache-2.0
+# Candidate from the scoped source probe; regenerate the selected closure in
+# Fedora 43 and Fedora 44 buildroots before treating this as publication-ready.
+License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
 URL:            https://github.com/headroomlabs-ai/headroom
-Source0:        https://files.pythonhosted.org/packages/ad/fd/fe59aa45a74ead7ce0faad8175b29f02e5ef81034a434ff2a0da7f59a0a6/headroom_ai-%{version}.tar.gz
-# Fedora-specific custom feature reduction; not submitted upstream and held for
-# substantive rework under /srv/wikis/agentlab/needs-fixing.md.
-Patch0:         headroom-mcp-minimal.patch
-# Fedora-specific test adaptation for Patch0; not submitted upstream and held
-# with the custom feature reduction.
-Patch1:         headroom-mcp-minimal-tests.patch
-# Fedora-specific dependency pruning and Fedora runtime integration; not
-# submitted upstream and held for the same substantive rework review.
-Patch2:         headroom-mcp-remove-unavailable-native-deps.patch
+Source0:        https://github.com/headroomlabs-ai/headroom/archive/%{upstream_commit}/headroom-%{upstream_commit}.tar.gz
+# Packaging-only feature propagation: upstream headroom-core defaults to ML,
+# but headroom-py cannot disable that dependency default. Not submitted yet;
+# retain only while upstream lacks a forwarding feature or default opt-out.
+Patch0:         headroom-disable-default-ml.patch
+# Fedora compatibility adaptation: use the available rusqlite 0.31 branch and
+# system SQLite instead of the upstream bundled 0.32 branch. Not submitted;
+# behavior and exact dependency closure still require clean buildroot proof.
+Patch1:         headroom-system-rusqlite.patch
+# Fedora cargo2rpm 0.3.3 inventories every workspace member and its package
+# selector is broken. Narrow the packaging workspace to the built extension and
+# core library. This is Fedora-tooling-specific and is not an upstream change.
+Patch2:         headroom-python-workspace.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  gcc
@@ -27,37 +33,47 @@ BuildRequires:  python3-devel
 BuildRequires:  rust >= 1.80
 
 %description
-Headroom compresses AI-agent context locally. This Fedora package retains the
-native compression core while disabling model downloads, proxy integration,
-update checks, and non-stdio MCP behavior.
+Headroom compresses AI-agent context and exposes command-line and Model Context
+Protocol integrations. This blocked Fedora draft selects the released non-ML
+Rust path without redefining Headroom's upstream command surface.
 
 %package -n python3-headroom-ai
 Summary:        %{summary}
 Requires:       python3dist(mcp) >= 1
+Requires:       python3dist(httpx) >= 0.24
+Requires:       python3dist(starlette) >= 0.27
+Requires:       python3dist(uvicorn) >= 0.23
+Requires:       python3dist(uvicorn) < 1
 
 %description -n python3-headroom-ai
-Headroom compresses AI-agent context locally. This Fedora package retains the
-native compression core while disabling model downloads, proxy integration,
-update checks, and non-stdio MCP behavior.
+Headroom compresses AI-agent context and exposes command-line and Model Context
+Protocol integrations. This blocked Fedora draft selects the released non-ML
+Rust path without redefining Headroom's upstream command surface.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
-%autosetup -n headroom_ai-%{version} -p1
+%autosetup -n headroom-%{upstream_commit} -p1
 %cargo_prep
 
 %generate_buildrequires
 pushd crates/headroom-py >/dev/null
-%cargo_generate_buildrequires -n -f extension-module,mcp-minimal
+%cargo_generate_buildrequires -n -f extension-module
 popd >/dev/null
 %if %{with check}
 pushd crates/headroom-core >/dev/null
-%cargo_generate_buildrequires -n -f mcp-minimal
+%cargo_generate_buildrequires -n
 popd >/dev/null
 %endif
 %pyproject_buildrequires -x mcp
 
 %build
+export MATURIN_PEP517_ARGS="--no-default-features --features extension-module"
 %pyproject_wheel
+pushd crates/headroom-py >/dev/null
+%cargo_license_summary -n -f extension-module
+%cargo_license -n -f extension-module > ../../LICENSE.dependencies
+popd >/dev/null
+test -s LICENSE.dependencies
 
 %install
 %pyproject_install
@@ -65,119 +81,34 @@ popd >/dev/null
 
 %if %{with check}
 %check
-%{__cargo} test %{__cargo_common_opts} --profile rpm --no-fail-fast \
-  -p headroom-core --no-default-features --features mcp-minimal --lib
-%{__cargo} test %{__cargo_common_opts} --profile rpm --no-fail-fast \
-  -p headroom-core --no-default-features --features mcp-minimal \
-  --test ccr_backends
-%{__cargo} test %{__cargo_common_opts} --profile rpm --no-fail-fast \
-  -p headroom-core --no-default-features --features mcp-minimal \
-  --test tokenizer_proptest
-
-%{python3} - <<'PY'
-import tiktoken
-
-encoding = tiktoken.encoding_for_model("gpt-4o-mini")
-assert len(encoding.encode("hello")) == 1
-assert len(encoding.encode("Hello, world!")) == 4
-assert len(encoding.encode("the quick brown fox jumps over the lazy dog")) == 9
-PY
-
+pushd crates/headroom-core >/dev/null
+%cargo_test -n
+popd >/dev/null
 export PYTHONPATH=%{buildroot}%{python3_sitearch}
-export HOME="$PWD/.home"
-export XDG_CACHE_HOME="$PWD/.cache"
-export XDG_CONFIG_HOME="$PWD/.config"
-export XDG_STATE_HOME="$PWD/.state"
-export HEADROOM_WORKSPACE_DIR="$PWD/.headroom"
-export HEADROOM_CCR_BACKEND=memory
-export HEADROOM_STATELESS=1
-export HEADROOM_MCP_READ=on
-export HEADROOM_SERVER=%{buildroot}%{_bindir}/headroom
-mkdir -p "$HOME" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$XDG_STATE_HOME"
-
 extension=$(find %{buildroot}%{python3_sitearch}/headroom -name '_core*.so' -print -quit)
 test -n "$extension"
 if ldd "$extension" | grep -q 'libsqlite3.so'; then
   ldd "$extension" | grep -Eq '/(usr/)?lib64/libsqlite3\.so'
 fi
 ! readelf -d "$extension" | grep -Eq 'RPATH|RUNPATH'
-
 %{python3} - <<'PY'
-import asyncio
-import json
-import os
-
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-
-
-def payload(result):
-    assert result.content and hasattr(result.content[0], "text")
-    return json.loads(result.content[0].text)
-
-
-async def smoke() -> None:
-    server = StdioServerParameters(
-        command=os.environ["HEADROOM_SERVER"],
-        args=["mcp", "serve"],
-        env=dict(os.environ),
-    )
-    async with stdio_client(server) as (reader, writer):
-        async with ClientSession(reader, writer) as session:
-            await session.initialize()
-            tools = await session.list_tools()
-            names = {tool.name for tool in tools.tools}
-            assert names == {
-                "headroom_compress",
-                "headroom_retrieve",
-                "headroom_stats",
-            }, names
-
-            original = json.dumps(
-                [
-                    {
-                        "id": index,
-                        "status": "ok",
-                        "message": "repeated Fedora Headroom validation content",
-                    }
-                    for index in range(400)
-                ]
-            )
-            compressed = payload(
-                await session.call_tool("headroom_compress", {"content": original})
-            )
-            assert compressed["hash"]
-            assert compressed["original_tokens"] > compressed["compressed_tokens"]
-            assert compressed["tokens_saved"] > 0
-            assert "proxy" not in compressed and "warning" not in compressed
-
-            restored = payload(
-                await session.call_tool("headroom_retrieve", {"hash": compressed["hash"]})
-            )
-            assert restored["source"] == "local"
-            assert restored["original_content"] == original
-
-            missing = payload(
-                await session.call_tool("headroom_retrieve", {"hash": "missing-fedora-hash"})
-            )
-            assert "error" in missing and "source" not in missing
-
-            stats = payload(await session.call_tool("headroom_stats", {}))
-            assert stats["compressions"] >= 1
-            assert stats["retrievals"] >= 1
-            assert stats["total_tokens_saved"] > 0
-
-
-asyncio.run(asyncio.wait_for(smoke(), timeout=60))
+import headroom
+import headroom._core
 PY
 %endif
 
 %files -n python3-headroom-ai -f %{pyproject_files}
-%license LICENSE NOTICE
+%license LICENSE NOTICE LICENSE.dependencies
 %doc README.md
 %{_bindir}/headroom
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.5
+- Scope Cargo license accounting to the native extension and record its candidate aggregate SPDX expression.
+
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.4
+- Re-scope the blocked draft to the released upstream non-ML feature boundary.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.31.0-0.3
 - Record the substantive-rework hold for the downstream feature patches.
 

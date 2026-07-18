@@ -1,0 +1,10 @@
+--- a/crates/headroom-py/Cargo.toml
++++ b/crates/headroom-py/Cargo.toml
+@@ -33,6 +33,6 @@ extension-module = ["pyo3/extension-module"]
+ 
+ [dependencies]
+-headroom-core = { path = "../headroom-core" }
++headroom-core = { path = "../headroom-core", default-features = false }
+ pyo3 = { workspace = true }
+ pyo3-log = { workspace = true }
+ serde_json = { workspace = true }

@@ -13,7 +13,7 @@
 
 Name:           rust-tiktoken-rs0.11
 Version:        0.11.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        OpenAI-compatible byte pair tokenizer for Rust
 
 License:        MIT
@@ -84,6 +84,9 @@ install -Dpm0644 %{SOURCE2} %{buildroot}%{crate_instdir}/OPENAI-LICENSE
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.11.0-0.2
+- Retain the exact tokenizer branch required by Headroom 0.32.0.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.11.0-0.1
 - Add the exact tokenizer crate required by Headroom 0.31.0.
 - Restore the project and vendored OpenAI MIT license texts.

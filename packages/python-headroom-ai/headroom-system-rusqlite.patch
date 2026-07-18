@@ -1,0 +1,7 @@
+--- a/crates/headroom-core/Cargo.toml
++++ b/crates/headroom-core/Cargo.toml
+@@ -127,3 +127,3 @@
+ # flags required.
+-rusqlite = { version = "0.32", features = ["bundled"] }
++rusqlite = "0.31"
+ # `redis` for the optional multi-worker CCR backend. Cfg-gated behind

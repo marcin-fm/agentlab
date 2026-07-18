@@ -1,7 +1,7 @@
 name: rust-tiktoken-rs0.11
 status: blocked
 blockers:
-  - Dependent-scope hold: confirm the crate remains required after python-headroom-ai is reduced to an upstream-supported surface; do not build or enable it before that decision.
+  - Released Headroom v0.32.0 still requires this exact tokenizer branch, but the parent remains blocked; do not build or enable this draft before the parent dependency and license gates are resolved.
 upstream:
   provider: crates_io
   crate: tiktoken-rs

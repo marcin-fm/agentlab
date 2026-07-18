@@ -1,29 +1,32 @@
 # Headroom AI Packaging Status
 
-`python-headroom-ai` packages the latest released source-verifiable Headroom
-version, `0.31.0`, from the Apache-2.0 PyPI sdist with SHA-256
-`a13f9764be168e4d075fd80ff6ee5d47a9febe0152b82ad28bab0e949fcd9bd3`.
-The configured local `0.32.0` installation came from `file:///tmp/headroom` and
-has no release artifact, so it is intentionally not used.
+`python-headroom-ai` tracks released Headroom `v0.32.0`, tag commit
+`4381388d56f49af3ae9b1dece7489a12fa64a1a1`. PyPI publishes four wheels and no
+sdist for this release, so the blocked draft uses the exact released commit
+archive with SHA-256
+`6bb138a038d9a74c3a9b51bcc593d996054cf9eca95fc39df9e0e80c3944ddce`.
 
-The prior validated `0.31.0-0.1` package built the Rust/PyO3 `headroom._core`
-extension through a downstream `mcp-minimal` feature graph and exposed the
-stdio tools `headroom_compress`, `headroom_retrieve`, and `headroom_stats`.
-Updated project policy classifies that custom feature graph and its companion
-patches as substantive downstream product work. Release `0.31.0-0.3` is
-therefore an unbuilt, blocked draft: it must not be rebuilt, enabled, or
-published until an upstream-supported feature selection replaces the custom
-surface or the maintainer explicitly approves it.
+Upstream `v0.32.0` places ONNX, FastEmbed, and Magika behind the default-on Rust
+`ml` feature. The draft disables that dependency default through one narrow
+`headroom-py` patch and selects Fedora's system-SQLite `rusqlite 0.31` branch
+through a separate compatibility patch. A third packaging-only patch limits the
+Cargo workspace to `headroom-core` and `headroom-py`, because Fedora cargo2rpm
+0.3.3 otherwise inventories unrelated proxy, simulator, parity, ML, AWS, and
+HTTP workspace members. The old custom feature graph, CLI pruning, proxy
+suppression, tokenizer download changes, and companion test patches are removed.
 
-Historical Fedora 43 and Fedora 44 `0.31.0-0.1` builds passed 836 library tests,
-seven CCR backend tests, two reduced tokenizer property tests, the packaged
-three-tool stdio smoke, and `rpmlint` with zero errors. Those receipts do not
-validate the `0.3` draft. Exact Rust tokenization and the compatibility drafts
-`rust-fancy-regex0.17` and `rust-tiktoken-rs0.11` remain dependent-scope audit
-evidence only. A future binary also needs aggregate SPDX accounting for its
-statically linked Rust closure.
+The package remains blocked and COPR-disabled. Upstream still has no bounded
+MCP-only feature: the installed Python project exposes its full CLI and network
+transports, retains broad base dependencies, and keeps `hf-hub` unconditional.
+The rusqlite adaptation needs clean buildroot proof. A scoped source probe found
+240 target-all package/version records and 207 license-breakdown entries, then
+produced the candidate aggregate expression `Apache-2.0 AND BSD-2-Clause AND
+BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND
+Unicode-3.0`. Fedora 43/44 buildroots must regenerate the dependency inventory
+and confirm that expression before publication.
 
-The Fedora MCP 1.26 dependency is accepted only through the reviewed stdio,
-no-task, no-WebSocket boundary recorded in `mcp-1.26-stdio-security-review.md`.
-The separately installed `headroom-opencode` plugin remains unreleased and is
-not part of this package. No produced RPM was installed and COPR was not mutated.
+Historical Fedora 43 and Fedora 44 `0.31.0-0.1` receipts remain evidence only;
+they do not validate `0.32.0-0.5`. Released non-ML Headroom still requires
+`tiktoken-rs 0.11`, its `fancy-regex 0.17` edge, and `unidiff 0.4`, so those
+three compatibility records remain selected for the blocked parent. No
+produced RPM was installed and COPR was not mutated.

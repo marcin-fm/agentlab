@@ -1,43 +1,60 @@
 name: python-headroom-ai
 status: blocked
 blockers:
-  - Updated project policy places the custom mcp-minimal feature graph under substantive-rework hold; do not rebuild, enable, or publish until an upstream-supported feature selection replaces it or the maintainer explicitly approves it.
-  - The binary RPM needs an aggregate SPDX review for its statically linked Rust closure before any future validation build.
-  - Exact Rust tokenization and its compatibility drafts remain dependent-scope evidence only until the Headroom surface is re-selected.
+  - Upstream v0.32.0 has no bounded MCP-only feature; the unmodified Python package exposes the full CLI and network-capable MCP transports, so the former stdio-only security boundary no longer applies.
+  - The Fedora rusqlite 0.31 compatibility adaptation requires clean Fedora 43/44 build and behavior proof.
+  - The candidate aggregate SPDX expression must be regenerated and confirmed from the selected Fedora 43/44 buildroot closures before publication.
+  - Base Python runtime dependencies and the remaining unconditional hf-hub path require provider and runtime-network review.
 dependency_status:
   python_runtime:
     - tiktoken >= 0.5
     - pydantic >= 2
-    - click >= 8.1
+    - litellm >= 1.86.2, < 2 on Python below 3.14
+    - click >= 8.3.3
+    - rich >= 13
     - opentelemetry-api >= 1.24
-    - mcp >= 1; accepted only through the reviewed stdio/no-task boundary
+    - ast-grep-cli >= 0.30
+    - pyyaml >= 6 and tomlkit >= 0.13, < 1
+    - mcp >= 1 with httpx, starlette, and uvicorn from the selected mcp extra
   native_runtime:
-    - PyO3 0.27.2 and pyo3-log 0.13
-    - tokenizers 0.22 with local tokenizer loading only
-    - rusqlite 0.31 built against system SQLite
+    - PyO3 0.29 and pyo3-log 0.13
+    - tokenizers 0.22 and hf-hub 0.4
+    - tiktoken-rs 0.11 through rust-tiktoken-rs0.11 and fancy-regex 0.17
+    - rusqlite 0.31 against system SQLite through a Fedora compatibility patch
     - unidiff 0.4 from the completed rust-unidiff0.4 package
   excluded_surfaces:
-    - fastembed, Magika, ORT, and Hugging Face downloads
-    - Redis, proxy/provider commands, update checks, and the optional file-read tool
-    - litellm, rich, ast-grep-cli, sqlite-vec, and proxy/model Python extras
+    - headroom-core ml feature, including fastembed, Magika, and ORT
+    - optional Rust Redis feature
 duplicate_check:
-  checked: "2026-07-17"
+  checked: "2026-07-18"
   fedora_43_44: absent
   rpm_fusion_43_44: absent
 network_policy:
-  transport: stdio only
-  proxy: disabled; no health, retrieve, or statistics fallback
-  update_check: removed from the packaged CLI path
-  model_assets: native model and runtime-download branches are not compiled
-  tokenizer_downloads: from_pretrained fails closed; audited local files remain supported
-  file_read_tool: disabled even when HEADROOM_MCP_READ is set
+  transport: unresolved; upstream mcp command supports stdio and streamable HTTP
+  proxy: unresolved; upstream proxy and fallback paths remain present
+  update_check: upstream CLI behavior remains present
+  model_assets: native ml feature is disabled, but unconditional hf-hub capability remains under review
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.31.0-0.3
-  status: unbuilt draft under substantive-rework hold
+  release: 0.32.0-0.5
+  status: unbuilt blocked license-scope rework
+  exact_archive_patch_apply: passed with zero fuzz
+  cargo_metadata: headroom-py disables headroom-core default features
+  cargo_resolution: rusqlite 0.31.0 with libsqlite3-sys 0.28.0
+  sqlite_source_review: v0.31.0 to v0.32.0 changes only the backend TTL documentation, not its rusqlite API use
+  license_workspace: headroom-core and headroom-py only; unrelated proxy, simulator, parity, ML, AWS, and HTTP members are excluded
+  source_license_probe: 240 unique target-all package/version records after fetching the exact release lockfile closure
+  license_breakdown_records: 207
+  candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
+  buildroot_license_gate: Fedora 43/44 registry resolution and generated inventory remain required
   prior_release: 0.31.0-0.1
   source_sha256_verified: true
   spec_parse: passed
+  current_rpmlint: zero errors, zero warnings, one filtered
+  scoped_validator: passed
+  repository_tests: 35 runs, 77 assertions, zero failures
+  diff_check: passed
+  full_validator: blocked by unrelated rust-memoffset0.7, rust-nix0.26, and rust-polling2 chroot records
   prior_mock_fedora_43: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
   prior_mock_fedora_44: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
   prior_native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed per chroot; 1 library test ignored
@@ -56,12 +73,14 @@ prior_artifacts:
     srpm_sha256: 24526af2ef804d82ab85bdcb8b85f5cc603dd463a1fb13ded0ec381110404a1f
     rpm_sha256: 1edb31fc85691bf492fea052c0a4cf8ed3618366066770bca748cccf05b761eb
 upstream:
-  provider: pypi
+  provider: github_release_commit_archive
   repository: headroomlabs-ai/headroom
   tag_prefix: v
-  current_version: 0.31.0
-  source_url: https://files.pythonhosted.org/packages/ad/fd/fe59aa45a74ead7ce0faad8175b29f02e5ef81034a434ff2a0da7f59a0a6/headroom_ai-0.31.0.tar.gz
-  source_sha256: a13f9764be168e4d075fd80ff6ee5d47a9febe0152b82ad28bab0e949fcd9bd3
+  current_version: 0.32.0
+  tag_commit: 4381388d56f49af3ae9b1dece7489a12fa64a1a1
+  source_url: https://github.com/headroomlabs-ai/headroom/archive/4381388d56f49af3ae9b1dece7489a12fa64a1a1.tar.gz
+  source_sha256: 6bb138a038d9a74c3a9b51bcc593d996054cf9eca95fc39df9e0e80c3944ddce
+  pypi_sdist: absent
   license: Apache-2.0
 copr:
   enabled: false
