@@ -1,7 +1,23 @@
 name: rust-maybe-owned0.3
 status: blocked
 blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+  - This leaf is selected only by the blocked Kreuzberg PDFium-render dependency group; keep it COPR-disabled until the parent selected closure and publication gates are resolved under rust-reducibility.md.
+validation:
+  proof_release: 0.1
+  current_release_delta: Release 0.2 changes only the release, changelog, and retained evidence records; prep, build, install, and check behavior is unchanged.
+  downloaded_srpm_spec_sha256: 673383f1f50f21161f395386a7542b00279087d2890310964cad513a34b87066
+  source_identity: Fedora 43 and Fedora 44 SRPMs contain the pinned crates.io archive with the recorded source SHA-256.
+  duplicate_audit: No crate(maybe-owned) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories on 2026-07-18.
+  fedora_43:
+    build_id: 10737880
+    chroots: [fedora-43-x86_64, fedora-43-aarch64]
+    result: succeeded
+    rpmlint: zero errors and zero warnings on the downloaded SRPM and noarch RPMs after filtering only the transient COPR signing key absent from the host keyring; RPM digests verified.
+  fedora_44:
+    build_id: 10737914
+    chroots: [fedora-44-x86_64, fedora-44-aarch64]
+    result: succeeded
+    rpmlint: zero errors and zero warnings on the downloaded SRPM and noarch RPMs after filtering only the transient COPR signing key absent from the host keyring; RPM digests verified.
 upstream:
   provider: crates_io
   crate: maybe-owned

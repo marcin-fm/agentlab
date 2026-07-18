@@ -7,7 +7,7 @@
 
 Name:           rust-utf16string0.2
 Version:        0.2.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        String types to work directly with UTF-16 encoded strings
 
 License:        MIT OR Apache-2.0
@@ -68,5 +68,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.2
+- Record current four-chroot build and artifact-lint proof for the leaf crate.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.1
 - Add the initial repository packaging changelog.

@@ -7,7 +7,7 @@
 
 Name:           rust-maybe-owned0.3
 Version:        0.3.4
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        MaybeOwned
 
 License:        MIT OR Apache-2.0
@@ -82,5 +82,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.3.4-0.2
+- Record current four-chroot build and artifact-lint proof for the leaf crate.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.3.4-0.1
 - Clarify the Rust standard-library reference in package metadata.
