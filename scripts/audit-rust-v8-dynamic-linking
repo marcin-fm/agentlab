@@ -1,0 +1,191 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "optparse"
+require_relative "lib/agentlab"
+
+EXPECTED_SOURCE_FILES = {
+  "BUILD.gn" => [1_622, "d791ceb9d77a0094fdf9209fa3bf3152051b9a6d113641703be287e9bc039334"],
+  ".gn" => [3_351, "bfc1665eed0764923e2a47f367bc8d9b2e7d48f13c3c9a963092e8e5bdafe8de"],
+  "build.rs" => [39_002, "2a87a11db76f10c358d751cd3abed0f8e6f9945804ac599c3dc1698e951be5b4"],
+  "Cargo.toml" => [3_750, "b2e08fc9d277cd79811e87105861ba61b07ab20d1fbaf9c0be91fddd1f68bb4b"],
+  "v8/BUILD.gn" => [298_906, "accee889632544c7d88be264715694727d22c644cac0a3874b3f4e26d2f29c28"],
+  "build/config/BUILDCONFIG.gn" => [33_848, "e6bf43e2f5f6ddefa1a10f796a8dbe3a4bf28d39a9e61781e75803760829f5de"],
+  "build/config/gcc/BUILD.gn" => [4_333, "b31b0ca78798f37c316e3ae6e16b0aa34ce297c997a5b9b56d324370c3aa2ddf"],
+  "v8/include/v8config.h" => [37_232, "4c550bbbf16f31881fccaa2d694b12d157d27bdcba4ad885a9ad557830eaf171"],
+  "src/binding.cc" => [173_851, "ad157eb49bee6a0e3c62b63a8f8a04c3c1d405f0ccca0ced752048457c7a169a"],
+  "src/cppgc.rs" => [22_952, "c0e210c8f1365d1fb85e5f994d592afbd051e8685e05c260a549c5d0bfddc15f"]
+}.freeze
+
+def source_file!(root, relative)
+  path = File.join(root, relative)
+  raise Agentlab::Error, "missing Rusty V8 source file #{path}" unless File.file?(path)
+
+  [path, File.binread(path)]
+end
+
+def require_source!(content, path, fragment)
+  return if content.include?(fragment)
+
+  raise Agentlab::Error, "expected source contract is missing from #{path}: #{fragment.inspect}"
+end
+
+def source_receipt(path, root)
+  {
+    "path" => path.delete_prefix("#{root}/"),
+    "bytes" => File.size(path),
+    "sha256" => Digest::SHA256.file(path).hexdigest
+  }
+end
+
+begin
+  package = Agentlab.package_named("rust-v8")
+  version = package.upstream.fetch("current_version").to_s
+  source_tree = nil
+  output = File.join(package.directory, "rust-v8-#{version}-dynamic-linking.json")
+  check = false
+
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/audit-rust-v8-dynamic-linking --source-tree PATH [options]"
+    parser.on("--source-tree PATH", "Exact reconstructed Rusty V8 source tree") { |path| source_tree = path }
+    parser.on("--output PATH", "Dynamic-linking feasibility receipt") { |path| output = path }
+    parser.on("--check", "Verify that the checked receipt is current") { check = true }
+  end.parse!
+
+  raise Agentlab::Error, "--source-tree is required" unless source_tree
+
+  source_tree = File.realpath(source_tree)
+  source_closure_path = File.join(package.directory, "rust-v8-#{version}-source-closure.json")
+  source_closure = JSON.parse(File.read(source_closure_path))
+  expected_commit = package.upstream.fetch("source_commit")
+  unless source_closure.dig("release", "version").to_s == version &&
+         source_closure.dig("release", "commit") == expected_commit
+    raise Agentlab::Error, "Rusty V8 source-closure release identity does not match package metadata"
+  end
+
+  relative_paths = EXPECTED_SOURCE_FILES.keys
+  files = relative_paths.to_h do |relative|
+    path, content = source_file!(source_tree, relative)
+    expected_bytes, expected_sha256 = EXPECTED_SOURCE_FILES.fetch(relative)
+    unless content.bytesize == expected_bytes && Digest::SHA256.hexdigest(content) == expected_sha256
+      raise Agentlab::Error, "Rusty V8 exact-source identity does not match for #{path}"
+    end
+    [relative, { path: path, content: content }]
+  end
+
+  root_gn = files.fetch("BUILD.gn")
+  dot_gn = files.fetch(".gn")
+  build_rs = files.fetch("build.rs")
+  cargo_toml = files.fetch("Cargo.toml")
+  v8_gn = files.fetch("v8/BUILD.gn")
+  build_config = files.fetch("build/config/BUILDCONFIG.gn")
+  gcc_config = files.fetch("build/config/gcc/BUILD.gn")
+  v8_config = files.fetch("v8/include/v8config.h")
+  binding = files.fetch("src/binding.cc")
+  cppgc = files.fetch("src/cppgc.rs")
+
+  require_source!(root_gn[:content], root_gn[:path], "static_library(\"rusty_v8\")")
+  require_source!(root_gn[:content], root_gn[:path], "complete_static_lib = true")
+  root_target_kinds = root_gn[:content].scan(/^\s*([A-Za-z_]\w*)\("rusty_v8"\)\s*\{/).flatten
+  unless root_target_kinds == ["static_library"]
+    raise Agentlab::Error, "Rusty V8 root target kinds changed: #{root_target_kinds.join(', ')}"
+  end
+  require_source!(dot_gn[:content], dot_gn[:path], "is_component_build = false")
+  require_source!(build_rs[:content], build_rs[:path], "env::var(\"RUSTY_V8_ARCHIVE\")")
+  require_source!(build_rs[:content], build_rs[:path], "format!(\"librusty_v8{suffix}.a\")")
+  require_source!(build_rs[:content], build_rs[:path], "println!(\"cargo:rustc-link-lib=static=rusty_v8\")")
+  rusty_v8_link_directives = build_rs[:content].lines.grep(/cargo:rustc-link-lib=.*rusty_v8/).map(&:strip)
+  unless rusty_v8_link_directives == ['println!("cargo:rustc-link-lib=static=rusty_v8");']
+    raise Agentlab::Error, "Rusty V8 Cargo native link directives changed: #{rusty_v8_link_directives.join(', ')}"
+  end
+  if cargo_toml[:content].match?(/^\[lib\]/) || cargo_toml[:content].include?("crate-type")
+    raise Agentlab::Error, "Rusty V8 now declares an explicit Rust library output type; review the dynamic boundary"
+  end
+  require_source!(v8_gn[:content], v8_gn[:path], "v8_monolithic_for_shared_library = false")
+  require_source!(v8_gn[:content], v8_gn[:path], "if (is_component_build) {")
+  require_source!(v8_gn[:content], v8_gn[:path], "v8_component(\"v8\")")
+  require_source!(build_config[:content], build_config[:path], "_component_mode = \"shared_library\"")
+  require_source!(build_config[:content], build_config[:path], "target(_component_mode, target_name)")
+  require_source!(gcc_config[:content], gcc_config[:path], "cflags = [ \"-fvisibility=hidden\" ]")
+  require_source!(v8_config[:content], v8_config[:path], "# define V8_EXPORT __attribute__((visibility(\"default\")))")
+  require_source!(binding[:content], binding[:path], "void rusty_v8_RustObj_trace(const RustObj*, cppgc::Visitor*);")
+  require_source!(binding[:content], binding[:path], "RustObj::~RustObj() { rusty_v8_RustObj_drop(this); }")
+  require_source!(cppgc[:content], cppgc[:path], "unsafe extern \"C\" fn rusty_v8_RustObj_trace(")
+  require_source!(cppgc[:content], cppgc[:path], "unsafe extern \"C\" fn rusty_v8_RustObj_drop(obj: *mut RustObj)")
+
+  receipt = {
+    "schema" => "rust-v8-dynamic-linking-feasibility/v1",
+    "package" => package.name,
+    "release" => version,
+    "source_closure_reference" => {
+      "path" => File.basename(source_closure_path),
+      "sha256" => Digest::SHA256.file(source_closure_path).hexdigest,
+      "commit" => expected_commit
+    },
+    "source_files" => relative_paths.map { |relative| source_receipt(files.fetch(relative)[:path], source_tree) },
+    "upstream_contract" => {
+      "rusty_v8_gn_target_type" => "static_library",
+      "rusty_v8_complete_static_lib" => true,
+      "rusty_v8_shared_target_declared" => false,
+      "cargo_archive_override" => "RUSTY_V8_ARCHIVE",
+      "cargo_archive_filename" => "librusty_v8.a",
+      "cargo_native_link_kind" => "static",
+      "rust_shared_crate_type_declared" => false,
+      "v8_component_build_available" => true,
+      "v8_component_mode_target_type" => "shared_library",
+      "v8_component_build_default" => false,
+      "posix_default_symbol_visibility" => "hidden",
+      "v8_shared_visibility_macro_available" => true,
+      "v8_monolithic_for_shared_library_argument_available" => true,
+      "rust_callbacks_demonstrating_cross_language_boundary" => [
+        "rusty_v8_RustObj_drop",
+        "rusty_v8_RustObj_get_name",
+        "rusty_v8_RustObj_trace"
+      ]
+    },
+    "shared_provider" => {
+      "upstream_supported" => false,
+      "existing_rust_consumers_supported" => false,
+      "rusty_v8_soname_defined" => false,
+      "rusty_v8_symbol_export_policy_defined" => false,
+      "rusty_v8_symbol_version_policy_defined" => false,
+      "rusty_v8_runtime_loader_contract_defined" => false,
+      "requires_downstream_consumer_interface_change" => true,
+      "requires_downstream_abi_design" => true
+    },
+    "decision" => {
+      "package_shared_library" => false,
+      "retain_exact_static_provider" => true,
+      "v8_component_dsos_are_not_rusty_v8_shared_abi" => true,
+      "relinking_static_objects_is_not_a_supported_shared_contract" => true,
+      "revisit_when_upstream_defines_shared_consumer_contract" => true
+    },
+    "validation" => {
+      "exact_relevant_source_files_verified" => true,
+      "exact_upstream_static_contract_verified" => true,
+      "single_static_root_target_verified" => true,
+      "single_static_cargo_link_directive_verified" => true,
+      "v8_component_mode_distinguished" => true,
+      "cross_language_callback_boundary_recorded" => true,
+      "existing_consumer_dynamic_linking_verified" => false,
+      "shared_provider_packaged" => false
+    },
+    "scope" => "exact-source feasibility review; no dynamic library was built because upstream defines no shared Rusty V8 consumer contract, SONAME, or exported/versioned bridge ABI"
+  }
+  content = JSON.pretty_generate(receipt) + "\n"
+
+  if check
+    raise Agentlab::Error, "missing checked dynamic-linking receipt #{output}" unless File.file?(output)
+    raise Agentlab::Error, "Rusty V8 dynamic-linking receipt is stale: #{output}" unless File.binread(output) == content
+
+    puts "Verified Rusty V8's static-only consumer contract and distinct V8 component mode."
+  else
+    Agentlab.atomic_write(output, content)
+    puts "Wrote Rusty V8 dynamic-linking feasibility evidence to #{output}."
+  end
+rescue Agentlab::Error, JSON::ParserError, KeyError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

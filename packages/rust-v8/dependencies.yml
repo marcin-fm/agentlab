@@ -35,6 +35,14 @@ archive_graph:
   prototype_selected_archive_graph_captured: true
   selected_build_dependency_closure_verified: false
   final_consumer_link_closure_verified: false
+dynamic_linking:
+  receipt: rust-v8-149.2.0-dynamic-linking.json
+  receipt_sha256: 266a51befb8037f3460ed0259ec1aa8c277b9d9a1bb07d47bbb4d7cd92ab5f50
+  v8_component_build_available: true
+  upstream_supported: false
+  existing_rust_consumers_supported: false
+  package_shared_library: false
+  retain_exact_static_provider: true
 notable_components:
   chromium_build:
     commit: fffa45f2e9df48c0230a4c799b7d12e7f83d8219

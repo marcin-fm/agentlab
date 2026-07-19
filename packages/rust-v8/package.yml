@@ -3,6 +3,7 @@ name: rust-v8
 status: blocked
 blockers:
 - The stable Fedora Rust and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream.
+- Exact-source review confirms that Rusty V8 exposes only a complete static GN target and its Cargo build script always links `static=rusty_v8`. V8 component DSOs are a distinct internal boundary; upstream defines no `librusty_v8.so`, SONAME, exported/versioned bridge ABI, or existing-consumer dynamic mode. Agentlab does not add a cross-package shared provider without that upstream contract; this is a package-design decision, not a Fedora prohibition on application-private DSOs.
 - Candidate legal texts and all 216 real vendored Rust source packages are inventoried. Fedora 44 package metadata supplies exact-version SPDX evidence for 136 crates, version-different evidence for 26, and no provider for 54; this reuses Fedora review without claiming archive linkage. One `Shipped: no` googletest declaration points into an intentionally unmaterialized test-only DEPS source. The bare BSD label and all three comma lists are semantically normalized from exact evidence, including LLVM's required exception, three declared texts are semantically verified, all eight Cargo slash alternatives are mechanically normalized, and scoped Chromium parent evidence is recorded for the two tooling components. Remaining unmatched/version-different semantic review, embedded third-party review, Fedora allowability, system-library decisions, and the final aggregate License expression remain unresolved.
 - Network-isolated Fedora 43, Fedora 44, and Rawhide builds have not been run. The successful prototype is Fedora 44 x86_64 evidence only, and aarch64 is unverified.
 source_policy:
@@ -39,6 +40,14 @@ consumer_contract:
   exact_feature_contract_verified: true
   binding_source: published v8 149.2.0 crate source
   static_link_license_propagation: required in every consumer
+dynamic_linking:
+  receipt: rust-v8-149.2.0-dynamic-linking.json
+  receipt_sha256: 266a51befb8037f3460ed0259ec1aa8c277b9d9a1bb07d47bbb4d7cd92ab5f50
+  v8_component_build_available: true
+  upstream_supported: false
+  existing_rust_consumers_supported: false
+  package_shared_library: false
+  retain_exact_static_provider: true
 prototype:
   environment: fedora-44-x86_64
   rust: 1.96.1-1.fc44

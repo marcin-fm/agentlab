@@ -1,0 +1,110 @@
+{
+  "schema": "rust-v8-dynamic-linking-feasibility/v1",
+  "package": "rust-v8",
+  "release": "149.2.0",
+  "source_closure_reference": {
+    "path": "rust-v8-149.2.0-source-closure.json",
+    "sha256": "bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de",
+    "commit": "5d0e31ea6bf67f4559faa759b91e22bc3f1cd696"
+  },
+  "source_files": [
+    {
+      "path": "BUILD.gn",
+      "bytes": 1622,
+      "sha256": "d791ceb9d77a0094fdf9209fa3bf3152051b9a6d113641703be287e9bc039334"
+    },
+    {
+      "path": ".gn",
+      "bytes": 3351,
+      "sha256": "bfc1665eed0764923e2a47f367bc8d9b2e7d48f13c3c9a963092e8e5bdafe8de"
+    },
+    {
+      "path": "build.rs",
+      "bytes": 39002,
+      "sha256": "2a87a11db76f10c358d751cd3abed0f8e6f9945804ac599c3dc1698e951be5b4"
+    },
+    {
+      "path": "Cargo.toml",
+      "bytes": 3750,
+      "sha256": "b2e08fc9d277cd79811e87105861ba61b07ab20d1fbaf9c0be91fddd1f68bb4b"
+    },
+    {
+      "path": "v8/BUILD.gn",
+      "bytes": 298906,
+      "sha256": "accee889632544c7d88be264715694727d22c644cac0a3874b3f4e26d2f29c28"
+    },
+    {
+      "path": "build/config/BUILDCONFIG.gn",
+      "bytes": 33848,
+      "sha256": "e6bf43e2f5f6ddefa1a10f796a8dbe3a4bf28d39a9e61781e75803760829f5de"
+    },
+    {
+      "path": "build/config/gcc/BUILD.gn",
+      "bytes": 4333,
+      "sha256": "b31b0ca78798f37c316e3ae6e16b0aa34ce297c997a5b9b56d324370c3aa2ddf"
+    },
+    {
+      "path": "v8/include/v8config.h",
+      "bytes": 37232,
+      "sha256": "4c550bbbf16f31881fccaa2d694b12d157d27bdcba4ad885a9ad557830eaf171"
+    },
+    {
+      "path": "src/binding.cc",
+      "bytes": 173851,
+      "sha256": "ad157eb49bee6a0e3c62b63a8f8a04c3c1d405f0ccca0ced752048457c7a169a"
+    },
+    {
+      "path": "src/cppgc.rs",
+      "bytes": 22952,
+      "sha256": "c0e210c8f1365d1fb85e5f994d592afbd051e8685e05c260a549c5d0bfddc15f"
+    }
+  ],
+  "upstream_contract": {
+    "rusty_v8_gn_target_type": "static_library",
+    "rusty_v8_complete_static_lib": true,
+    "rusty_v8_shared_target_declared": false,
+    "cargo_archive_override": "RUSTY_V8_ARCHIVE",
+    "cargo_archive_filename": "librusty_v8.a",
+    "cargo_native_link_kind": "static",
+    "rust_shared_crate_type_declared": false,
+    "v8_component_build_available": true,
+    "v8_component_mode_target_type": "shared_library",
+    "v8_component_build_default": false,
+    "posix_default_symbol_visibility": "hidden",
+    "v8_shared_visibility_macro_available": true,
+    "v8_monolithic_for_shared_library_argument_available": true,
+    "rust_callbacks_demonstrating_cross_language_boundary": [
+      "rusty_v8_RustObj_drop",
+      "rusty_v8_RustObj_get_name",
+      "rusty_v8_RustObj_trace"
+    ]
+  },
+  "shared_provider": {
+    "upstream_supported": false,
+    "existing_rust_consumers_supported": false,
+    "rusty_v8_soname_defined": false,
+    "rusty_v8_symbol_export_policy_defined": false,
+    "rusty_v8_symbol_version_policy_defined": false,
+    "rusty_v8_runtime_loader_contract_defined": false,
+    "requires_downstream_consumer_interface_change": true,
+    "requires_downstream_abi_design": true
+  },
+  "decision": {
+    "package_shared_library": false,
+    "retain_exact_static_provider": true,
+    "v8_component_dsos_are_not_rusty_v8_shared_abi": true,
+    "relinking_static_objects_is_not_a_supported_shared_contract": true,
+    "revisit_when_upstream_defines_shared_consumer_contract": true
+  },
+  "validation": {
+    "exact_relevant_source_files_verified": true,
+    "exact_upstream_static_contract_verified": true,
+    "single_static_root_target_verified": true,
+    "single_static_cargo_link_directive_verified": true,
+    "v8_component_mode_distinguished": true,
+    "cross_language_callback_boundary_recorded": true,
+    "existing_consumer_dynamic_linking_verified": false,
+    "shared_provider_packaged": false
+  },
+  "scope": "exact-source feasibility review; no dynamic library was built because upstream defines no shared Rusty V8 consumer contract, SONAME, or exported/versioned bridge ABI"
+}

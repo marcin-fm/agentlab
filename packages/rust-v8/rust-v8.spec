@@ -7,12 +7,13 @@
 %global license_audit_sha256 19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef
 %global archive_graph_sha256 fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
+%global dynamic_linking_sha256 266a51befb8037f3460ed0259ec1aa8c277b9d9a1bb07d47bbb4d7cd92ab5f50
 %global system_rust_patch_sha256 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.6%{?dist}
+Release:        0.7%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # MIT covers Rusty V8 and BSD-3-Clause covers the original downstream allocator
@@ -45,6 +46,7 @@ Source21:       %{name}-%{version}-source-closure.json
 Source22:       %{name}-%{version}-license-audit.json
 Source23:       %{name}-%{version}-archive-graph.json
 Source24:       %{name}-%{version}-fedora-license-evidence.json
+Source25:       %{name}-%{version}-dynamic-linking.json
 # Guard Chromium nightly-only Rust behavior and use Fedora's stable toolchain.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
@@ -92,9 +94,10 @@ echo "%{closure_sha256}  %{SOURCE21}" | sha256sum -c -
 echo "%{license_audit_sha256}  %{SOURCE22}" | sha256sum -c -
 echo "%{archive_graph_sha256}  %{SOURCE23}" | sha256sum -c -
 echo "%{fedora_license_evidence_sha256}  %{SOURCE24}" | sha256sum -c -
+echo "%{dynamic_linking_sha256}  %{SOURCE25}" | sha256sum -c -
 echo "%{system_rust_patch_sha256}  %{PATCH0}" | sha256sum -c -
 echo "%{gcc_patch_sha256}  %{PATCH1}" | sha256sum -c -
-python3 - "%{SOURCE21}" "%{SOURCE22}" "%{SOURCE23}" "%{SOURCE24}" \
+python3 - "%{SOURCE21}" "%{SOURCE22}" "%{SOURCE23}" "%{SOURCE24}" "%{SOURCE25}" \
   "%{SOURCE0}" "%{SOURCE1}" "%{SOURCE2}" "%{SOURCE3}" "%{SOURCE4}" \
   "%{SOURCE5}" "%{SOURCE6}" "%{SOURCE7}" "%{SOURCE8}" "%{SOURCE9}" \
   "%{SOURCE10}" "%{SOURCE11}" "%{SOURCE12}" "%{SOURCE13}" "%{SOURCE14}" \
@@ -109,7 +112,8 @@ receipt = json.load(open(sys.argv[1], encoding="utf-8"))
 license_audit = json.load(open(sys.argv[2], encoding="utf-8"))
 archive_graph = json.load(open(sys.argv[3], encoding="utf-8"))
 fedora_license_evidence = json.load(open(sys.argv[4], encoding="utf-8"))
-sources = sys.argv[5:]
+dynamic_linking = json.load(open(sys.argv[5], encoding="utf-8"))
+sources = sys.argv[6:]
 components = receipt["components"]
 assert receipt["schema"] == "rust-v8-source-closure/v1"
 assert receipt["release"]["version"] == "%{version}"
@@ -144,6 +148,16 @@ assert fedora_license_evidence["validation"]["exact_matches_include_fedora_licen
 assert fedora_license_evidence["validation"]["linked_archive_selection_verified"] is False
 assert fedora_license_evidence["validation"]["final_static_archive_license_complete"] is False
 assert license_audit["fedora_license_evidence"]["sha256"] == "%{fedora_license_evidence_sha256}"
+assert dynamic_linking["schema"] == "rust-v8-dynamic-linking-feasibility/v1"
+assert dynamic_linking["release"] == "%{version}"
+assert dynamic_linking["source_closure_reference"]["sha256"] == "%{closure_sha256}"
+assert dynamic_linking["upstream_contract"]["rusty_v8_gn_target_type"] == "static_library"
+assert dynamic_linking["upstream_contract"]["cargo_native_link_kind"] == "static"
+assert dynamic_linking["upstream_contract"]["v8_component_build_available"] is True
+assert dynamic_linking["shared_provider"]["upstream_supported"] is False
+assert dynamic_linking["shared_provider"]["existing_rust_consumers_supported"] is False
+assert dynamic_linking["decision"]["package_shared_library"] is False
+assert dynamic_linking["decision"]["retain_exact_static_provider"] is True
 assert archive_graph["schema"] == "rust-v8-archive-graph-witness/v1"
 assert archive_graph["source_closure_reference"]["sha256"] == "%{closure_sha256}"
 assert archive_graph["source_closure_reference"]["provenance_verified"] is False
@@ -216,6 +230,10 @@ install -Dpm0644 out/fedora/obj/librusty_v8.a \
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.7
+- Record the exact-source dynamic-linking feasibility decision.
+- Retain the supported static provider instead of inventing a shared ABI.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.6
 - Reuse Fedora 44 license metadata for 136 exact vendored Rust crate versions.
 - Keep selected-link and final aggregate-license decisions fail-closed.

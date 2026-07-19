@@ -50,6 +50,26 @@ libstdc++ link flag even when it consumes an external archive. An offline smoke
 with that exact feature and environment tuple printed `Fedora Rusty V8`. No
 runtime dependency on `rust-v8-static` is needed after the archive is linked.
 
+## Dynamic Library Decision
+
+`rust-v8-149.2.0-dynamic-linking.json` records the exact-source feasibility
+review. Rusty V8 declares only `static_library("rusty_v8")` with
+`complete_static_lib = true`. Its Cargo build script copies
+`RUSTY_V8_ARCHIVE` to `librusty_v8.a` and always emits
+`cargo:rustc-link-lib=static=rusty_v8`.
+
+V8 itself can produce component shared libraries, but those DSOs are not a
+shared Rusty V8 consumer interface. The Rusty V8 bridge has no shared target,
+SONAME, symbol-version policy, or exported bridge ABI, and its C++ side calls
+consumer-provided Rust callbacks. Repacking the PIC objects into a `.so` would
+therefore create a new downstream ABI without making existing `v8` crate
+consumers use it.
+
+The package retains only `rust-v8-static`. A dynamic package can be reconsidered
+if upstream defines a shared target and build-script mode with a maintained
+loader and ABI contract. The receipt SHA-256 is
+`266a51befb8037f3460ed0259ec1aa8c277b9d9a1bb07d47bbb4d7cd92ab5f50`.
+
 ## Source Evidence
 
 The root tag `v149.2.0` resolves to commit

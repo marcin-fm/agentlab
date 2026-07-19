@@ -463,10 +463,12 @@ module Agentlab
     license_name = dependencies.dig("license_audit", "receipt")
     archive_graph_name = dependencies.dig("archive_graph", "receipt")
     fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
+    dynamic_linking_name = dependencies.dig("dynamic_linking", "receipt")
     source_path = source_name.is_a?(String) && File.join(package.directory, source_name)
     license_path = license_name.is_a?(String) && File.join(package.directory, license_name)
     archive_graph_path = archive_graph_name.is_a?(String) && File.join(package.directory, archive_graph_name)
     fedora_license_path = fedora_license_name.is_a?(String) && File.join(package.directory, fedora_license_name)
+    dynamic_linking_path = dynamic_linking_name.is_a?(String) && File.join(package.directory, dynamic_linking_name)
     unless source_path && File.file?(source_path)
       return ["rust-v8: recursive-source receipt is missing"]
     end
@@ -479,11 +481,15 @@ module Agentlab
     unless fedora_license_path && File.file?(fedora_license_path)
       return ["rust-v8: Fedora license-evidence receipt is missing"]
     end
+    unless dynamic_linking_path && File.file?(dynamic_linking_path)
+      return ["rust-v8: dynamic-linking receipt is missing"]
+    end
 
     source_sha256 = Digest::SHA256.file(source_path).hexdigest
     license_sha256 = Digest::SHA256.file(license_path).hexdigest
     archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
     fedora_license_sha256 = Digest::SHA256.file(fedora_license_path).hexdigest
+    dynamic_linking_sha256 = Digest::SHA256.file(dynamic_linking_path).hexdigest
     expected_source_hashes = [
       dependencies.dig("source_closure", "receipt_sha256"),
       package.data.dig("source_policy", "source_closure_receipt_sha256")
@@ -508,10 +514,18 @@ module Agentlab
     unless expected_fedora_license_hashes.all? { |value| value == fedora_license_sha256 }
       errors << "rust-v8: Fedora license-evidence receipt SHA-256 does not match metadata"
     end
+    expected_dynamic_linking_hashes = [
+      dependencies.dig("dynamic_linking", "receipt_sha256"),
+      package.data.dig("dynamic_linking", "receipt_sha256")
+    ]
+    unless expected_dynamic_linking_hashes.all? { |value| value == dynamic_linking_sha256 }
+      errors << "rust-v8: dynamic-linking receipt SHA-256 does not match metadata"
+    end
     errors << "rust-v8: spec recursive-source SHA-256 does not match" unless spec[/^%global closure_sha256\s+(\h{64})$/, 1] == source_sha256
     errors << "rust-v8: spec license-audit SHA-256 does not match" unless spec[/^%global license_audit_sha256\s+(\h{64})$/, 1] == license_sha256
     errors << "rust-v8: spec archive-graph SHA-256 does not match" unless spec[/^%global archive_graph_sha256\s+(\h{64})$/, 1] == archive_graph_sha256
     errors << "rust-v8: spec Fedora license-evidence SHA-256 does not match" unless spec[/^%global fedora_license_evidence_sha256\s+(\h{64})$/, 1] == fedora_license_sha256
+    errors << "rust-v8: spec dynamic-linking SHA-256 does not match" unless spec[/^%global dynamic_linking_sha256\s+(\h{64})$/, 1] == dynamic_linking_sha256
 
     source = JSON.parse(File.read(source_path))
     errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v1"
@@ -594,6 +608,7 @@ module Agentlab
     errors << "rust-v8: spec Source22 does not select the license-audit receipt" unless spec_sources[22] == license_name
     errors << "rust-v8: spec Source23 does not select the archive-graph witness" unless spec_sources[23] == archive_graph_name
     errors << "rust-v8: spec Source24 does not select the Fedora license-evidence receipt" unless spec_sources[24] == fedora_license_name
+    errors << "rust-v8: spec Source25 does not select the dynamic-linking receipt" unless spec_sources[25] == dynamic_linking_name
     flat_helper = spec[/extract_flat\(\) \{\n(.*?)\n\}/m, 1].to_s
     wrapped_helper = spec[/extract_wrapped\(\) \{\n(.*?)\n\}/m, 1].to_s
     errors << "rust-v8: flat archive extraction helper is invalid" unless flat_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner') && !flat_helper.include?("--strip-components")
@@ -764,6 +779,102 @@ module Agentlab
     ].each do |flag|
       errors << "rust-v8: archive-graph validation overclaims #{flag}" unless archive_graph.dig("validation", flag) == false
     end
+
+    dynamic_linking = JSON.parse(File.read(dynamic_linking_path))
+    unless dynamic_linking["schema"] == "rust-v8-dynamic-linking-feasibility/v1"
+      errors << "rust-v8: dynamic-linking schema is invalid"
+    end
+    errors << "rust-v8: dynamic-linking package does not match" unless dynamic_linking["package"] == package.name
+    errors << "rust-v8: dynamic-linking release does not match" unless dynamic_linking["release"].to_s == version
+    expected_dynamic_source_reference = {
+      "path" => source_name,
+      "sha256" => source_sha256,
+      "commit" => package.upstream.fetch("source_commit")
+    }
+    unless dynamic_linking["source_closure_reference"] == expected_dynamic_source_reference
+      errors << "rust-v8: dynamic-linking source-closure reference does not match"
+    end
+    expected_dynamic_source_files = [
+      ["BUILD.gn", 1_622, "d791ceb9d77a0094fdf9209fa3bf3152051b9a6d113641703be287e9bc039334"],
+      [".gn", 3_351, "bfc1665eed0764923e2a47f367bc8d9b2e7d48f13c3c9a963092e8e5bdafe8de"],
+      ["build.rs", 39_002, "2a87a11db76f10c358d751cd3abed0f8e6f9945804ac599c3dc1698e951be5b4"],
+      ["Cargo.toml", 3_750, "b2e08fc9d277cd79811e87105861ba61b07ab20d1fbaf9c0be91fddd1f68bb4b"],
+      ["v8/BUILD.gn", 298_906, "accee889632544c7d88be264715694727d22c644cac0a3874b3f4e26d2f29c28"],
+      ["build/config/BUILDCONFIG.gn", 33_848, "e6bf43e2f5f6ddefa1a10f796a8dbe3a4bf28d39a9e61781e75803760829f5de"],
+      ["build/config/gcc/BUILD.gn", 4_333, "b31b0ca78798f37c316e3ae6e16b0aa34ce297c997a5b9b56d324370c3aa2ddf"],
+      ["v8/include/v8config.h", 37_232, "4c550bbbf16f31881fccaa2d694b12d157d27bdcba4ad885a9ad557830eaf171"],
+      ["src/binding.cc", 173_851, "ad157eb49bee6a0e3c62b63a8f8a04c3c1d405f0ccca0ced752048457c7a169a"],
+      ["src/cppgc.rs", 22_952, "c0e210c8f1365d1fb85e5f994d592afbd051e8685e05c260a549c5d0bfddc15f"]
+    ].map { |path, bytes, sha256| { "path" => path, "bytes" => bytes, "sha256" => sha256 } }
+    unless dynamic_linking["source_files"] == expected_dynamic_source_files
+      errors << "rust-v8: dynamic-linking exact-source file identities do not match"
+    end
+    expected_upstream_contract = {
+      "rusty_v8_gn_target_type" => "static_library",
+      "rusty_v8_complete_static_lib" => true,
+      "rusty_v8_shared_target_declared" => false,
+      "cargo_archive_override" => "RUSTY_V8_ARCHIVE",
+      "cargo_archive_filename" => "librusty_v8.a",
+      "cargo_native_link_kind" => "static",
+      "rust_shared_crate_type_declared" => false,
+      "v8_component_build_available" => true,
+      "v8_component_mode_target_type" => "shared_library",
+      "v8_component_build_default" => false,
+      "posix_default_symbol_visibility" => "hidden",
+      "v8_shared_visibility_macro_available" => true,
+      "v8_monolithic_for_shared_library_argument_available" => true,
+      "rust_callbacks_demonstrating_cross_language_boundary" => %w[
+        rusty_v8_RustObj_drop
+        rusty_v8_RustObj_get_name
+        rusty_v8_RustObj_trace
+      ]
+    }
+    unless dynamic_linking["upstream_contract"] == expected_upstream_contract
+      errors << "rust-v8: dynamic-linking upstream contract does not match"
+    end
+    expected_shared_provider = {
+      "upstream_supported" => false,
+      "existing_rust_consumers_supported" => false,
+      "rusty_v8_soname_defined" => false,
+      "rusty_v8_symbol_export_policy_defined" => false,
+      "rusty_v8_symbol_version_policy_defined" => false,
+      "rusty_v8_runtime_loader_contract_defined" => false,
+      "requires_downstream_consumer_interface_change" => true,
+      "requires_downstream_abi_design" => true
+    }
+    errors << "rust-v8: dynamic-linking shared-provider boundary does not match" unless dynamic_linking["shared_provider"] == expected_shared_provider
+    expected_dynamic_decision = {
+      "package_shared_library" => false,
+      "retain_exact_static_provider" => true,
+      "v8_component_dsos_are_not_rusty_v8_shared_abi" => true,
+      "relinking_static_objects_is_not_a_supported_shared_contract" => true,
+      "revisit_when_upstream_defines_shared_consumer_contract" => true
+    }
+    errors << "rust-v8: dynamic-linking package decision does not match" unless dynamic_linking["decision"] == expected_dynamic_decision
+    expected_dynamic_validation = {
+      "exact_relevant_source_files_verified" => true,
+      "exact_upstream_static_contract_verified" => true,
+      "single_static_root_target_verified" => true,
+      "single_static_cargo_link_directive_verified" => true,
+      "v8_component_mode_distinguished" => true,
+      "cross_language_callback_boundary_recorded" => true,
+      "existing_consumer_dynamic_linking_verified" => false,
+      "shared_provider_packaged" => false
+    }
+    unless dynamic_linking["validation"] == expected_dynamic_validation
+      errors << "rust-v8: dynamic-linking validation state does not match"
+    end
+    expected_dynamic_metadata = {
+      "receipt" => dynamic_linking_name,
+      "receipt_sha256" => dynamic_linking_sha256,
+      "v8_component_build_available" => true,
+      "upstream_supported" => false,
+      "existing_rust_consumers_supported" => false,
+      "package_shared_library" => false,
+      "retain_exact_static_provider" => true
+    }
+    errors << "rust-v8: package dynamic-linking metadata does not match" unless package.data["dynamic_linking"] == expected_dynamic_metadata
+    errors << "rust-v8: dependency dynamic-linking metadata does not match" unless dependencies["dynamic_linking"] == expected_dynamic_metadata
 
     fedora_license = JSON.parse(File.read(fedora_license_path))
     unless fedora_license["schema"] == "rust-v8-fedora-license-evidence/v1"
