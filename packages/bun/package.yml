@@ -1,9 +1,9 @@
 name: bun
 status: blocked
 blockers:
-  - The checked native, Node.js header, npm, and Cargo crate archives still need immutable RPM-consumable hosting.
-  - The checked lol-html Cargo vendor and npm source closures are not integrated as immutable RPM sources.
-  - The complete LGPL relink kit is not hosted or integrated as an RPM-consumable source.
+  - The 20 checked native and Node.js archives are not yet declared as direct immutable RPM sources.
+  - The checked npm source bundle and lol-html Cargo vendor archive are not integrated as generated RPM sources.
+  - The complete LGPL relink kit is not generated and shipped from the final RPM build.
 upstream:
   provider: github
   repository: oven-sh/bun

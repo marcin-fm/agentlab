@@ -11,7 +11,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.15%{?dist}
+Release:        0.0.16%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -230,6 +230,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.16
+- Select the Fedora-aligned direct, npm-bundle, Cargo-vendor, and relink source layout.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.15
 - Consume the immutable attested WebKit source release asset.
 

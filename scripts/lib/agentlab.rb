@@ -1164,29 +1164,14 @@ module Agentlab
     errors << "bun: dependency-closure proof package mismatch" unless receipt["package"] == "bun"
     errors << "bun: dependency-closure proof release mismatch" unless receipt["release"].to_s == version
 
-    immutable_hosting_blocked = Array(package.data["blockers"]).any? do |blocker|
-      normalized = blocker.to_s.downcase
-      normalized.include?("immutable") && normalized.include?("hosting")
-    end
     hosting_verified = receipt.dig("validation", "immutable_public_hosting_verified")
     local_webkit = Array(receipt["existing_local_sources"]).find { |source| source.is_a?(Hash) && source["symbol"] == "webkit" }
-    if immutable_hosting_blocked
-      errors << "bun: dependency-closure proof incorrectly claims immutable public hosting" unless hosting_verified == false
-      errors << "bun: dependency-closure proof has hosted WebKit archive" unless webkit.is_a?(Hash) && webkit["archive_url"].nil?
-      errors << "bun: dependency-closure proof hosted local-source record" unless local_webkit.is_a?(Hash) && local_webkit["immutable_public_url"].nil?
-      errors << "bun: dependency-closure Cargo vendor archive hosting state is invalid" unless dependency_stage["cargo_vendor_archive_hosted"] == false
-    else
-      errors << "bun: dependency-closure proof does not verify immutable public hosting" unless hosting_verified == true
-      hosted_webkit_url = webkit.is_a?(Hash) && webkit["archive_url"]
-      local_webkit_url = local_webkit.is_a?(Hash) && local_webkit["immutable_public_url"]
-      valid_hosted_webkit = begin
-        hosted_webkit_url == local_webkit_url && URI(hosted_webkit_url).is_a?(URI::HTTPS)
-      rescue URI::InvalidURIError, TypeError
-        false
-      end
-      errors << "bun: dependency-closure hosted WebKit source mapping is invalid" unless valid_hosted_webkit
-      errors << "bun: dependency-closure Cargo vendor archive hosting state is invalid" unless dependency_stage["cargo_vendor_archive_hosted"] == true
-    end
+    # This receipt covers the canonical full WebKit source and local dependency
+    # closure. The separately hosted minimized WebKit source has its own validator.
+    errors << "bun: dependency-closure proof incorrectly claims immutable public hosting" unless hosting_verified == false
+    errors << "bun: dependency-closure proof has hosted WebKit archive" unless webkit.is_a?(Hash) && webkit["archive_url"].nil?
+    errors << "bun: dependency-closure proof hosted local-source record" unless local_webkit.is_a?(Hash) && local_webkit["immutable_public_url"].nil?
+    errors << "bun: dependency-closure Cargo vendor archive hosting state is invalid" unless dependency_stage["cargo_vendor_archive_hosted"] == false
 
     errors
   rescue JSON::ParserError => e

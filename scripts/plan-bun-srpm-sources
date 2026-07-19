@@ -187,13 +187,30 @@ else
   }
 end
 
-generated_sources << {
-  "role" => "native-node-source-bundle",
-  "filename" => "bun-#{version}-native-node-sources.tar.gz",
-  "recipe" => "deterministic-archive-bundle/v1",
-  "compression" => "gzip-n",
-  "closure_receipt_sha256" => expected_receipt_sha256
-}.merge(manifest_summary(native_members + node_members))
+direct_sources.concat(native_members.map do |source|
+  {
+    "role" => "native-source",
+    "source_id" => source.fetch("symbol"),
+    "name" => source.fetch("name"),
+    "filename" => source.fetch("archive"),
+    "url" => source.fetch("url"),
+    "sha256" => source.fetch("sha256"),
+    "size_bytes" => source.fetch("size_bytes")
+  }
+end)
+direct_sources.concat(node_members.map do |source|
+  {
+    "role" => "node-headers",
+    "source_id" => "node-headers",
+    "name" => source.fetch("name"),
+    "version" => source.fetch("version"),
+    "abi" => source.fetch("abi"),
+    "filename" => source.fetch("archive"),
+    "url" => source.fetch("url"),
+    "sha256" => source.fetch("sha256"),
+    "size_bytes" => source.fetch("size_bytes")
+  }
+end)
 generated_sources << {
   "role" => "npm-source-bundle",
   "filename" => "bun-#{version}-npm-sources.tar.gz",
@@ -246,8 +263,14 @@ plan = {
     "implementation_state" => "planned",
     "planned_network_scope" => "srpm-generation-only",
     "target_build_network_allowed" => false,
-    "external_generated_artifact_host_required_by_design" => true,
+    "external_generated_artifact_host_required_by_design" => false,
     "fedora_submission_storage" => "lookaside-cache",
+    "source_layout" => {
+      "native_node" => "direct-upstream-source-tags",
+      "npm" => "generated-original-archive-bundle",
+      "cargo" => "generated-cargo-vendor-archive",
+      "relink" => "generated-build-output-payload"
+    },
     "architecture_independent_outputs_required" => true,
     "architecture_scoped_outputs" => [],
     "make_srpm_materializer_integrated" => false,
@@ -258,13 +281,14 @@ plan = {
     "npm_manifest" => manifest_summary(npm_members),
     "cargo_manifest" => manifest_summary(cargo_members)
   ),
-  "direct_sources" => direct_sources.sort_by { |source| source.fetch("role") },
+  "direct_sources" => direct_sources.sort_by { |source| [source.fetch("role"), source.fetch("source_id", "")] },
   "generated_sources" => generated_sources.sort_by { |source| source.fetch("role") },
   "validation" => {
     "closure_receipt_verified" => true,
     "source_tree_binding_verified" => true,
     "source_counts_verified" => true,
     "member_identities_verified" => true,
+    "fedora_source_layout_selected" => true,
     "webkit_spec_integrated" => true,
     "delivery_implementation_verified" => false,
     "generated_sources_materialized" => false,

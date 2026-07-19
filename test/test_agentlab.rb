@@ -831,7 +831,7 @@ class AgentlabTest < Minitest::Test
     end
   end
 
-  def test_validates_bun_dependency_closure_hosting_state
+  def test_validates_bun_dependency_closure_local_source_state
     Dir.mktmpdir do |directory|
       receipt_path = File.join(directory, "source-closure.json")
       receipt = {
@@ -858,7 +858,7 @@ class AgentlabTest < Minitest::Test
         data: {
           "name" => "bun",
           "status" => "blocked",
-          "blockers" => ["Immutable public hosting is not verified."],
+          "blockers" => ["The dependency sources are not integrated into the SRPM."],
           "upstream" => { "current_version" => "1.3.14" },
           "copr" => { "enabled" => false }
         }
@@ -899,13 +899,11 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
       assert_includes(errors, "bun: dependency-closure Cargo vendor archive hosting state is invalid")
 
-      hosted_url = "https://sources.example.invalid/WebKit.tar.gz"
-      package.data["blockers"] = []
-      receipt.fetch("validation")["immutable_public_hosting_verified"] = true
-      receipt.fetch("existing_local_sources").first["immutable_public_url"] = hosted_url
-      webkit["archive_url"] = hosted_url
+      receipt.fetch("validation")["immutable_public_hosting_verified"] = false
+      receipt.fetch("existing_local_sources").first["immutable_public_url"] = "https://sources.example.invalid/WebKit.tar.gz"
       write_receipt.call
-      assert_empty(Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14"))
+      errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
+      assert_includes(errors, "bun: dependency-closure proof hosted local-source record")
     end
   end
 
