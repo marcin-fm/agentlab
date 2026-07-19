@@ -2,13 +2,13 @@
   "schema": "bun-release-local-source-staging-proof/v1",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.19",
+  "rpm_release": "0.0.20",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-19",
   "proof_mode": "network-isolated rpmbuild prep from the complete checked SRPM",
   "production_spec": {
-    "sha256": "681c493d7ec80d222c4ee6c93339b47755bdfbae8bbbf2ad4707f1a9287f2457",
-    "size_bytes": 22074
+    "size_bytes": 23128,
+    "sha256": "cb0421ce5ab8b8dcc7726b4c51345a61ddcad7d5b36cae72c543e2c0c2f3cb5c"
   },
   "inputs": {
     "closure": {
@@ -28,17 +28,16 @@
     }
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.19.fc44.src.rpm",
-    "size_bytes": 322305310,
-    "sha256": "1dd7044ad1c935fcc38b732057759622dda09bd2d4d26b46db6a7bd977a60fda",
+    "filename": "bun-1.3.14-0.0.20.fc44.src.rpm",
+    "size_bytes": 322330473,
+    "sha256": "84717c855d261b87c6e64a4a8b02b97703fd7d3178933dea9b601b2e76ae9fb3",
     "digest_check": "ok",
-    "inventory_members": 34,
-    "all_members_match_source_job": true
+    "inventory_members": 36
   },
   "prep": {
     "network_namespace": true,
-    "log_size_bytes": 10436,
-    "log_sha256": "4d5b85519a4ddb8294f06033bdeae752d4a44016af412e08bab21509396018de",
+    "log_size_bytes": 11797,
+    "log_sha256": "35bb61c7ef94353bade784b21d5bfe4780d7efa89bbcbfd904b6352c5ab531fe",
     "staging_receipt": {
       "path": ".build-tools/release-local-source-staging.json",
       "size_bytes": 4008,
@@ -68,10 +67,11 @@
       "manifest_size_bytes": 558378,
       "manifest_lines": 4613,
       "manifest_sha256": "50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214"
-    }
+    },
+    "source_license_inventory_check": true
   },
   "reproduction": {
-    "second_network_isolated_prep_log_sha256": "ea4b5e2afb5b536fe9f05f98a77080c422161b36a4ede659f320290b0d82ecaf",
+    "second_network_isolated_prep_log_sha256": "793cd37e475d4fd405d27f7c3742f42c6d44ba2675b9c3781dddcb069dc7f9e9",
     "staging_receipt_byte_identical": true,
     "npm_cache_manifest_byte_identical": true
   },

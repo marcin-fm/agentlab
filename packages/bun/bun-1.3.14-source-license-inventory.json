@@ -1,0 +1,3805 @@
+{
+  "schema": "bun-source-license-inventory/v1",
+  "package": "bun",
+  "release": "1.3.14",
+  "rpm_release": "0.0.20",
+  "audit_date": "2026-07-19",
+  "source_closure": {
+    "path": "bun-1.3.14-release-local-source-closure.json",
+    "size_bytes": 448430,
+    "sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0"
+  },
+  "bun_license": {
+    "path": "LICENSE.md",
+    "size_bytes": 5376,
+    "sha256": "2c6160ec8fb853f7e8f97d9b249e756c9b0ac44860a68b6bf4f1b0bcbc5c3741"
+  },
+  "cargo": {
+    "cargo2rpm_package": "cargo2rpm-0.3.3-1.fc44",
+    "manifest": {
+      "path": "vendor/lolhtml/c-api/Cargo.toml",
+      "size_bytes": 800,
+      "sha256": "feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03"
+    },
+    "lockfile": {
+      "path": "vendor/lolhtml/c-api/Cargo.lock",
+      "size_bytes": 10039,
+      "sha256": "02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d"
+    },
+    "vendor_directory_count": 43,
+    "linked_vendor_package_count": 41,
+    "linked_vendor_manifest_sha256": "37dc9f2bef863d9b87e3e289ea9a783b6955bd961586be34ad0c37766522d187",
+    "license_summary": [
+      "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+      "Apache-2.0 OR MIT",
+      "BSD-3-Clause",
+      "MIT",
+      "MIT OR Apache-2.0",
+      "MPL-2.0",
+      "Unlicense OR MIT",
+      "Zlib"
+    ],
+    "license_summary_sha256": "a19dc12630536092faeba3eb9c2f54e8e4ff17944ffff9bce50d4086bad4607a",
+    "license_breakdown": [
+      "(Apache-2.0 OR MIT) AND BSD-3-Clause: encoding_rs v0.8.35",
+      ": lol_html_c_api v1.3.1",
+      "Apache-2.0 OR MIT: equivalent v1.0.2",
+      "Apache-2.0 OR MIT: rustc-hash v2.1.1",
+      "BSD-3-Clause: lol_html v2.7.2",
+      "MIT OR Apache-2.0: allocator-api2 v0.2.21",
+      "MIT OR Apache-2.0: bitflags v2.11.0",
+      "MIT OR Apache-2.0: cfg-if v1.0.4",
+      "MIT OR Apache-2.0: dtoa v1.0.11",
+      "MIT OR Apache-2.0: hashbrown v0.16.1",
+      "MIT OR Apache-2.0: itoa v1.0.17",
+      "MIT OR Apache-2.0: libc v0.2.182",
+      "MIT OR Apache-2.0: log v0.4.29",
+      "MIT OR Apache-2.0: mime v0.3.17",
+      "MIT OR Apache-2.0: servo_arc v0.4.3",
+      "MIT OR Apache-2.0: siphasher v1.0.2",
+      "MIT OR Apache-2.0: smallvec v1.15.1",
+      "MIT OR Apache-2.0: stable_deref_trait v1.2.1",
+      "MIT OR Apache-2.0: thiserror v2.0.18",
+      "MIT: derive_more v2.1.1",
+      "MIT: new_debug_unreachable v1.0.6",
+      "MIT: phf v0.13.1",
+      "MIT: phf_shared v0.13.1",
+      "MIT: precomputed-hash v0.1.1",
+      "MPL-2.0: cssparser v0.36.0",
+      "MPL-2.0: dtoa-short v0.3.5",
+      "MPL-2.0: selectors v0.33.0",
+      "Unlicense OR MIT: memchr v2.8.0",
+      "Zlib: foldhash v0.2.0"
+    ],
+    "license_breakdown_sha256": "8b893831ed6cf87e129dd4e320591511df53ea69c97b38f883b919e78c5d3da9",
+    "missing_local_declaration": [
+      ": lol_html_c_api v1.3.1"
+    ]
+  },
+  "npm": {
+    "cache_entries": 236,
+    "license_declarations": {
+      "(MIT AND BSD-3-Clause)": 1,
+      "(MIT AND Zlib)": 1,
+      "0BSD": 1,
+      "<missing>": 2,
+      "Apache-2.0": 5,
+      "Artistic-2.0": 1,
+      "BSD-2-Clause": 1,
+      "BSD-3-Clause": 5,
+      "ISC": 10,
+      "MIT": 207,
+      "MPL-2.0": 2
+    },
+    "entries_with_supplied_license_text": 221,
+    "entries_without_supplied_license_text": 15,
+    "missing_license_field": [
+      {
+        "cache_name": "@GH@oven-sh-bun.report-912ca63@@@1",
+        "name": "bun-tracestrings",
+        "version": null,
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@GH@oven-sh-bun.report-912ca63@@@1/LICENSE",
+            "size_bytes": 1060,
+            "sha256": "e8db60c1b7c0273efc1da8282ae7e61c1e1a759f18254f4ef4c7f042f5e38698"
+          }
+        ]
+      },
+      {
+        "cache_name": "console-browserify@1.2.0@@@1",
+        "name": "console-browserify",
+        "version": "1.2.0",
+        "legacy_licenses": [
+          {
+            "type": "MIT",
+            "url": "http://github.com/browserify/console-browserify/raw/master/LICENSE"
+          }
+        ],
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/console-browserify@1.2.0@@@1/LICENCE",
+            "size_bytes": 1050,
+            "sha256": "19338d17a974d1c747b3f6c618f08975b8908fdebccbc047c0e72b09daf6ddd3"
+          }
+        ]
+      }
+    ],
+    "records": [
+      {
+        "cache_name": "@esbuild/linux-x64@0.21.5@@@1",
+        "name": "@esbuild/linux-x64",
+        "version": "0.21.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "@esbuild/linux-x64@0.25.12@@@1",
+        "name": "@esbuild/linux-x64",
+        "version": "0.25.12",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "@lezer/common@1.3.0@@@1",
+        "name": "@lezer/common",
+        "version": "1.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@lezer/common@1.3.0@@@1/LICENSE",
+            "size_bytes": 1113,
+            "sha256": "568902fb66eaf1f11750e966b33fd7b5d7c618e65af09f35ef843635bcf5f1ba"
+          }
+        ]
+      },
+      {
+        "cache_name": "@lezer/cpp@1.1.3@@@1",
+        "name": "@lezer/cpp",
+        "version": "1.1.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@lezer/cpp@1.1.3@@@1/LICENSE",
+            "size_bytes": 1113,
+            "sha256": "54bd812a6d334e0c438b78a43cea74b67e882739fd3450115ddc7c52be5706c1"
+          }
+        ]
+      },
+      {
+        "cache_name": "@lezer/highlight@1.2.3@@@1",
+        "name": "@lezer/highlight",
+        "version": "1.2.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@lezer/highlight@1.2.3@@@1/LICENSE",
+            "size_bytes": 1113,
+            "sha256": "568902fb66eaf1f11750e966b33fd7b5d7c618e65af09f35ef843635bcf5f1ba"
+          }
+        ]
+      },
+      {
+        "cache_name": "@lezer/lr@1.4.3@@@1",
+        "name": "@lezer/lr",
+        "version": "1.4.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@lezer/lr@1.4.3@@@1/LICENSE",
+            "size_bytes": 1113,
+            "sha256": "568902fb66eaf1f11750e966b33fd7b5d7c618e65af09f35ef843635bcf5f1ba"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/app@14.1.0@@@1",
+        "name": "@octokit/app",
+        "version": "14.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/app@14.1.0@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "511ea01f49c4e15572d1a0dbef3c10f3e26425be79df7ef599c3b65f9bf55281"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/auth-app@6.1.4@@@1",
+        "name": "@octokit/auth-app",
+        "version": "6.1.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/auth-app@6.1.4@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "304e4a73f6212adaf242c78fcbe1dfcebd78d8bab53b007fe69b39fc968292b7"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/auth-oauth-app@7.1.0@@@1",
+        "name": "@octokit/auth-oauth-app",
+        "version": "7.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/auth-oauth-app@7.1.0@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "304e4a73f6212adaf242c78fcbe1dfcebd78d8bab53b007fe69b39fc968292b7"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/auth-oauth-device@6.1.0@@@1",
+        "name": "@octokit/auth-oauth-device",
+        "version": "6.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/auth-oauth-device@6.1.0@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "2de16f3f6fe7543f2ab7b6d4efadec99aa7db09b6f4f959c15569479dd9d0f8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/auth-oauth-user@4.1.0@@@1",
+        "name": "@octokit/auth-oauth-user",
+        "version": "4.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/auth-oauth-user@4.1.0@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "2de16f3f6fe7543f2ab7b6d4efadec99aa7db09b6f4f959c15569479dd9d0f8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/auth-token@4.0.0@@@1",
+        "name": "@octokit/auth-token",
+        "version": "4.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/auth-token@4.0.0@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "304e4a73f6212adaf242c78fcbe1dfcebd78d8bab53b007fe69b39fc968292b7"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/auth-unauthenticated@5.0.1@@@1",
+        "name": "@octokit/auth-unauthenticated",
+        "version": "5.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/auth-unauthenticated@5.0.1@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "f5963c8027ad57606817d7a2cdb01c46ccb0fa77bfe6e97a0c520157e1c5b83d"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/core@5.2.2@@@1",
+        "name": "@octokit/core",
+        "version": "5.2.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/core@5.2.2@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "304e4a73f6212adaf242c78fcbe1dfcebd78d8bab53b007fe69b39fc968292b7"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/endpoint@9.0.6@@@1",
+        "name": "@octokit/endpoint",
+        "version": "9.0.6",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/endpoint@9.0.6@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "511ea01f49c4e15572d1a0dbef3c10f3e26425be79df7ef599c3b65f9bf55281"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/graphql@7.1.1@@@1",
+        "name": "@octokit/graphql",
+        "version": "7.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/graphql@7.1.1@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "511ea01f49c4e15572d1a0dbef3c10f3e26425be79df7ef599c3b65f9bf55281"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/oauth-app@6.1.0@@@1",
+        "name": "@octokit/oauth-app",
+        "version": "6.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/oauth-app@6.1.0@@@1/LICENSE",
+            "size_bytes": 1107,
+            "sha256": "91fd2d025ca697f02becd68acaabc6373fa853a04c4f7543b306e830d3ed6b36"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/oauth-authorization-url@6.0.2@@@1",
+        "name": "@octokit/oauth-authorization-url",
+        "version": "6.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/oauth-authorization-url@6.0.2@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "304e4a73f6212adaf242c78fcbe1dfcebd78d8bab53b007fe69b39fc968292b7"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/oauth-methods@4.1.0@@@1",
+        "name": "@octokit/oauth-methods",
+        "version": "4.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/oauth-methods@4.1.0@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "2de16f3f6fe7543f2ab7b6d4efadec99aa7db09b6f4f959c15569479dd9d0f8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/openapi-types@20.0.0@@@1",
+        "name": "@octokit/openapi-types",
+        "version": "20.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/openapi-types@20.0.0@@@1/LICENSE",
+            "size_bytes": 1054,
+            "sha256": "42a39bbb762677f013c9b959785ff8853f67ce8ed06caa71b7044142518e1731"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/openapi-types@24.2.0@@@1",
+        "name": "@octokit/openapi-types",
+        "version": "24.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/openapi-types@24.2.0@@@1/LICENSE",
+            "size_bytes": 1054,
+            "sha256": "42a39bbb762677f013c9b959785ff8853f67ce8ed06caa71b7044142518e1731"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/plugin-paginate-graphql@4.0.1@@@1",
+        "name": "@octokit/plugin-paginate-graphql",
+        "version": "4.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/plugin-paginate-graphql@4.0.1@@@1/LICENSE",
+            "size_bytes": 1107,
+            "sha256": "8cd41c03a45ebf957a00d335d9dfab638b7ddba797a7d2f23bc1c4157a50db72"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/plugin-paginate-rest@11.4.4-0e40aeb971250b85@@@1",
+        "name": "@octokit/plugin-paginate-rest",
+        "version": "11.4.4-cjs.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/plugin-paginate-rest@11.4.4-0e40aeb971250b85@@@1/LICENSE",
+            "size_bytes": 1107,
+            "sha256": "8cd41c03a45ebf957a00d335d9dfab638b7ddba797a7d2f23bc1c4157a50db72"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/plugin-paginate-rest@9.2.2@@@1",
+        "name": "@octokit/plugin-paginate-rest",
+        "version": "9.2.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/plugin-paginate-rest@9.2.2@@@1/LICENSE",
+            "size_bytes": 1107,
+            "sha256": "8cd41c03a45ebf957a00d335d9dfab638b7ddba797a7d2f23bc1c4157a50db72"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/plugin-rest-endpoint-methods@13.3.2-ec7b5e1ef906f68d@@@1",
+        "name": "@octokit/plugin-rest-endpoint-methods",
+        "version": "13.3.2-cjs.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/plugin-rest-endpoint-methods@13.3.2-ec7b5e1ef906f68d@@@1/LICENSE",
+            "size_bytes": 1107,
+            "sha256": "8cd41c03a45ebf957a00d335d9dfab638b7ddba797a7d2f23bc1c4157a50db72"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/plugin-retry@6.1.0@@@1",
+        "name": "@octokit/plugin-retry",
+        "version": "6.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/plugin-retry@6.1.0@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "41bd6d9ba4bb32c97f332bdf389dc07d8b61b600a9de2974b9ed4e4ac6cc3c03"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/plugin-throttling@8.2.0@@@1",
+        "name": "@octokit/plugin-throttling",
+        "version": "8.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/plugin-throttling@8.2.0@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "511ea01f49c4e15572d1a0dbef3c10f3e26425be79df7ef599c3b65f9bf55281"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/request@8.4.1@@@1",
+        "name": "@octokit/request",
+        "version": "8.4.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/request@8.4.1@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "511ea01f49c4e15572d1a0dbef3c10f3e26425be79df7ef599c3b65f9bf55281"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/request-error@5.1.1@@@1",
+        "name": "@octokit/request-error",
+        "version": "5.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/request-error@5.1.1@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "304e4a73f6212adaf242c78fcbe1dfcebd78d8bab53b007fe69b39fc968292b7"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/types@12.6.0@@@1",
+        "name": "@octokit/types",
+        "version": "12.6.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/types@12.6.0@@@1/LICENSE",
+            "size_bytes": 1107,
+            "sha256": "8cd41c03a45ebf957a00d335d9dfab638b7ddba797a7d2f23bc1c4157a50db72"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/types@13.10.0@@@1",
+        "name": "@octokit/types",
+        "version": "13.10.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/types@13.10.0@@@1/LICENSE",
+            "size_bytes": 1107,
+            "sha256": "8cd41c03a45ebf957a00d335d9dfab638b7ddba797a7d2f23bc1c4157a50db72"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/webhooks@12.3.2@@@1",
+        "name": "@octokit/webhooks",
+        "version": "12.3.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/webhooks@12.3.2@@@1/LICENSE.md",
+            "size_bytes": 1059,
+            "sha256": "f5f7b68650527969a41df756f8b8960df77cc53b41ed1fc37a42586abc7dccf4"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/webhooks-methods@4.1.0@@@1",
+        "name": "@octokit/webhooks-methods",
+        "version": "4.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/webhooks-methods@4.1.0@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "2de16f3f6fe7543f2ab7b6d4efadec99aa7db09b6f4f959c15569479dd9d0f8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/webhooks-methods@5.1.1@@@1",
+        "name": "@octokit/webhooks-methods",
+        "version": "5.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@octokit/webhooks-methods@5.1.1@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "2de16f3f6fe7543f2ab7b6d4efadec99aa7db09b6f4f959c15569479dd9d0f8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "@octokit/webhooks-types@7.6.1@@@1",
+        "name": "@octokit/webhooks-types",
+        "version": "7.6.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "@sentry/types@7.120.4@@@1",
+        "name": "@sentry/types",
+        "version": "7.120.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@sentry/types@7.120.4@@@1/LICENSE",
+            "size_bytes": 1120,
+            "sha256": "5923d68bab743f88511b2f1efe7087ac8d748f36e6d5aea8ab5265e8e6a6c7c7"
+          }
+        ]
+      },
+      {
+        "cache_name": "@types/aws-lambda@8.10.159@@@1",
+        "name": "@types/aws-lambda",
+        "version": "8.10.159",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@types/aws-lambda@8.10.159@@@1/LICENSE",
+            "size_bytes": 1141,
+            "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+          }
+        ]
+      },
+      {
+        "cache_name": "@types/btoa-lite@1.0.2@@@1",
+        "name": "@types/btoa-lite",
+        "version": "1.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@types/btoa-lite@1.0.2@@@1/LICENSE",
+            "size_bytes": 1141,
+            "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+          }
+        ]
+      },
+      {
+        "cache_name": "@types/jsonwebtoken@9.0.10@@@1",
+        "name": "@types/jsonwebtoken",
+        "version": "9.0.10",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@types/jsonwebtoken@9.0.10@@@1/LICENSE",
+            "size_bytes": 1141,
+            "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+          }
+        ]
+      },
+      {
+        "cache_name": "@types/ms@2.1.0@@@1",
+        "name": "@types/ms",
+        "version": "2.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@types/ms@2.1.0@@@1/LICENSE",
+            "size_bytes": 1141,
+            "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+          }
+        ]
+      },
+      {
+        "cache_name": "@types/node@25.0.0@@@1",
+        "name": "@types/node",
+        "version": "25.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@types/node@25.0.0@@@1/LICENSE",
+            "size_bytes": 1141,
+            "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+          }
+        ]
+      },
+      {
+        "cache_name": "@wolfy1339/lru-cache@11.0.2-505c8ed44add284c@@@1",
+        "name": "@wolfy1339/lru-cache",
+        "version": "11.0.2-patch.1",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@wolfy1339/lru-cache@11.0.2-505c8ed44add284c@@@1/LICENSE",
+            "size_bytes": 775,
+            "sha256": "451ec07eeb9c4e1b86de9abdaa426462a8be48f887ec7421cf0bbb9c769555ab"
+          }
+        ]
+      },
+      {
+        "cache_name": "abort-controller@3.0.0@@@1",
+        "name": "abort-controller",
+        "version": "3.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/abort-controller@3.0.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "dbbf03317f0101fed5643cd87ca80fb769e358fa4f428445bf2315deeb23a154"
+          }
+        ]
+      },
+      {
+        "cache_name": "aggregate-error@3.1.0@@@1",
+        "name": "aggregate-error",
+        "version": "3.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/aggregate-error@3.1.0@@@1/license",
+            "size_bytes": 1109,
+            "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+          }
+        ]
+      },
+      {
+        "cache_name": "asn1.js@4.10.1@@@1",
+        "name": "asn1.js",
+        "version": "4.10.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "assert@2.1.0@@@1",
+        "name": "assert",
+        "version": "2.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/assert@2.1.0@@@1/LICENSE",
+            "size_bytes": 1096,
+            "sha256": "6239c6144c31e58cf925c34483606969c555574d64ffa96518ab5d7f45c75d43"
+          }
+        ]
+      },
+      {
+        "cache_name": "available-typed-arrays@1.0.7@@@1",
+        "name": "available-typed-arrays",
+        "version": "1.0.7",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/available-typed-arrays@1.0.7@@@1/LICENSE",
+            "size_bytes": 1067,
+            "sha256": "6d0917530cf3b3dca12c1ab7798e4d38ad0a6798ecc1bd27849a3048ba91d265"
+          }
+        ]
+      },
+      {
+        "cache_name": "base64-js@1.5.1@@@1",
+        "name": "base64-js",
+        "version": "1.5.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/base64-js@1.5.1@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "5b37224c080cdcc97c871ada971c224e9926370fe74f11b539aa1cf9f3b1aca1"
+          }
+        ]
+      },
+      {
+        "cache_name": "before-after-hook@2.2.3@@@1",
+        "name": "before-after-hook",
+        "version": "2.2.3",
+        "license": "Apache-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/before-after-hook@2.2.3@@@1/LICENSE",
+            "size_bytes": 11369,
+            "sha256": "ea5a8caa168f387ef2ccac8d7eea12d3be7e2e70a8b7125b68dbc8d1e7fa1998"
+          }
+        ]
+      },
+      {
+        "cache_name": "bn.js@4.12.2@@@1",
+        "name": "bn.js",
+        "version": "4.12.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/bn.js@4.12.2@@@1/LICENSE",
+            "size_bytes": 1055,
+            "sha256": "445739f5b5eb63e5aeff5aeb0f35a45080a421615dce0d97f9939aeea498acdd"
+          }
+        ]
+      },
+      {
+        "cache_name": "bn.js@5.2.2@@@1",
+        "name": "bn.js",
+        "version": "5.2.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/bn.js@5.2.2@@@1/LICENSE",
+            "size_bytes": 1055,
+            "sha256": "445739f5b5eb63e5aeff5aeb0f35a45080a421615dce0d97f9939aeea498acdd"
+          }
+        ]
+      },
+      {
+        "cache_name": "bottleneck@2.19.5@@@1",
+        "name": "bottleneck",
+        "version": "2.19.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/bottleneck@2.19.5@@@1/LICENSE",
+            "size_bytes": 1080,
+            "sha256": "84a08edb16cc9ae161c31e76c9e593702f3d9192061abc6721398e0227bdb5e7"
+          }
+        ]
+      },
+      {
+        "cache_name": "brorand@1.1.0@@@1",
+        "name": "brorand",
+        "version": "1.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "browserify-aes@1.2.0@@@1",
+        "name": "browserify-aes",
+        "version": "1.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/browserify-aes@1.2.0@@@1/LICENSE",
+            "size_bytes": 1099,
+            "sha256": "82ba430b068b75a41438568e1e4ed1f96e02699c9b51735154af03e9b59d6b0d"
+          }
+        ]
+      },
+      {
+        "cache_name": "browserify-cipher@1.0.1@@@1",
+        "name": "browserify-cipher",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/browserify-cipher@1.0.1@@@1/LICENSE",
+            "size_bytes": 1101,
+            "sha256": "dc09aa476634db0dbae1a296f099d5bd39e27c96b876d4d20b236fa565002bb6"
+          }
+        ]
+      },
+      {
+        "cache_name": "browserify-des@1.0.2@@@1",
+        "name": "browserify-des",
+        "version": "1.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/browserify-des@1.0.2@@@1/license",
+            "size_bytes": 1116,
+            "sha256": "e54f1a2edadb1d8d3a482bcd0712acad2947337ae35e40ca34b22eb77940863f"
+          }
+        ]
+      },
+      {
+        "cache_name": "browserify-rsa@4.1.1@@@1",
+        "name": "browserify-rsa",
+        "version": "4.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/browserify-rsa@4.1.1@@@1/LICENSE",
+            "size_bytes": 1101,
+            "sha256": "d7314f44f0873f703b3cbaad5d60b947eb252a70072df586488e20a236c1223f"
+          }
+        ]
+      },
+      {
+        "cache_name": "browserify-sign@4.2.5@@@1",
+        "name": "browserify-sign",
+        "version": "4.2.5",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/browserify-sign@4.2.5@@@1/LICENSE",
+            "size_bytes": 770,
+            "sha256": "a0e06d86a5a17341fa6134ee30ef18d73251cf32b8a577cdfd6aad6ad34af61d"
+          }
+        ]
+      },
+      {
+        "cache_name": "browserify-zlib@0.2.0@@@1",
+        "name": "browserify-zlib",
+        "version": "0.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/browserify-zlib@0.2.0@@@1/LICENSE",
+            "size_bytes": 3486,
+            "sha256": "ddd770379e07bf0574dfaa4485be80a23b3248b36d09f33ec79276c09b829daf"
+          }
+        ]
+      },
+      {
+        "cache_name": "btoa-lite@1.0.0@@@1",
+        "name": "btoa-lite",
+        "version": "1.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/btoa-lite@1.0.0@@@1/LICENSE.md",
+            "size_bytes": 1073,
+            "sha256": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b"
+          }
+        ]
+      },
+      {
+        "cache_name": "buffer@5.0.5@@@1",
+        "name": "buffer",
+        "version": "5.0.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/buffer@5.0.5@@@1/LICENSE",
+            "size_bytes": 1106,
+            "sha256": "06bafa45fdad2579ba0e43b0c9b2c6290287c99c4203c300254a462b38a307f6"
+          }
+        ]
+      },
+      {
+        "cache_name": "buffer@6.0.3@@@1",
+        "name": "buffer",
+        "version": "6.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/buffer@6.0.3@@@1/LICENSE",
+            "size_bytes": 1106,
+            "sha256": "06bafa45fdad2579ba0e43b0c9b2c6290287c99c4203c300254a462b38a307f6"
+          }
+        ]
+      },
+      {
+        "cache_name": "buffer-equal-constant-time@1.0.1@@@1",
+        "name": "buffer-equal-constant-time",
+        "version": "1.0.1",
+        "license": "BSD-3-Clause",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/buffer-equal-constant-time@1.0.1@@@1/LICENSE.txt",
+            "size_bytes": 1518,
+            "sha256": "751d0e80fb5c828f8c3de198cc760e1e05377e47c8263ab6ee2f10cdc19ba658"
+          }
+        ]
+      },
+      {
+        "cache_name": "buffer-xor@1.0.3@@@1",
+        "name": "buffer-xor",
+        "version": "1.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/buffer-xor@1.0.3@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "51ad9defd71911dbe413daf277bcb2e1077743f5ee5ae48d0a3b90a5b7486f55"
+          }
+        ]
+      },
+      {
+        "cache_name": "builtin-status-codes@3.0.0@@@1",
+        "name": "builtin-status-codes",
+        "version": "3.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/builtin-status-codes@3.0.0@@@1/license",
+            "size_bytes": 1111,
+            "sha256": "f057f36739d53d228a746de4440c1e0c644ecde06d6beab45337d39c9d12a393"
+          }
+        ]
+      },
+      {
+        "cache_name": "@GH@oven-sh-bun.report-912ca63@@@1",
+        "name": "bun-tracestrings",
+        "version": null,
+        "license": null,
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/@GH@oven-sh-bun.report-912ca63@@@1/LICENSE",
+            "size_bytes": 1060,
+            "sha256": "e8db60c1b7c0273efc1da8282ae7e61c1e1a759f18254f4ef4c7f042f5e38698"
+          }
+        ]
+      },
+      {
+        "cache_name": "call-bind@1.0.8@@@1",
+        "name": "call-bind",
+        "version": "1.0.8",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/call-bind@1.0.8@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "39c5ec504cf6bd5cd782a7c695828e09189df79f5d94840e4f08feb97b9fd416"
+          }
+        ]
+      },
+      {
+        "cache_name": "call-bind-apply-helpers@1.0.2@@@1",
+        "name": "call-bind-apply-helpers",
+        "version": "1.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/call-bind-apply-helpers@1.0.2@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "call-bound@1.0.4@@@1",
+        "name": "call-bound",
+        "version": "1.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/call-bound@1.0.4@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "camel-case@3.0.0@@@1",
+        "name": "camel-case",
+        "version": "3.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/camel-case@3.0.0@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "camel-case@4.1.2@@@1",
+        "name": "camel-case",
+        "version": "4.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/camel-case@4.1.2@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "capital-case@1.0.4@@@1",
+        "name": "capital-case",
+        "version": "1.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/capital-case@1.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "change-case@4.1.2@@@1",
+        "name": "change-case",
+        "version": "4.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/change-case@4.1.2@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "cipher-base@1.0.7@@@1",
+        "name": "cipher-base",
+        "version": "1.0.7",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/cipher-base@1.0.7@@@1/LICENSE",
+            "size_bytes": 1097,
+            "sha256": "cf93ad78cfd5f3523248675aeb2a46e003367596883d4fa26a0c38d553ab0f61"
+          }
+        ]
+      },
+      {
+        "cache_name": "clean-css@4.2.4@@@1",
+        "name": "clean-css",
+        "version": "4.2.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/clean-css@4.2.4@@@1/LICENSE",
+            "size_bytes": 1062,
+            "sha256": "7b43b9a9057033055cf8a6b4e032f932727e0576db2426303c800d73c2ac733f"
+          }
+        ]
+      },
+      {
+        "cache_name": "clean-stack@2.2.0@@@1",
+        "name": "clean-stack",
+        "version": "2.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/clean-stack@2.2.0@@@1/license",
+            "size_bytes": 1109,
+            "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+          }
+        ]
+      },
+      {
+        "cache_name": "commander@2.20.3@@@1",
+        "name": "commander",
+        "version": "2.20.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/commander@2.20.3@@@1/LICENSE",
+            "size_bytes": 1098,
+            "sha256": "04512a63dce4d2d506ad612dc0bd7681ccf6e3655f7b6eaef7dfac8323d1ec0b"
+          }
+        ]
+      },
+      {
+        "cache_name": "console-browserify@1.2.0@@@1",
+        "name": "console-browserify",
+        "version": "1.2.0",
+        "license": null,
+        "legacy_licenses": [
+          {
+            "type": "MIT",
+            "url": "http://github.com/browserify/console-browserify/raw/master/LICENSE"
+          }
+        ],
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/console-browserify@1.2.0@@@1/LICENCE",
+            "size_bytes": 1050,
+            "sha256": "19338d17a974d1c747b3f6c618f08975b8908fdebccbc047c0e72b09daf6ddd3"
+          }
+        ]
+      },
+      {
+        "cache_name": "constant-case@3.0.4@@@1",
+        "name": "constant-case",
+        "version": "3.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/constant-case@3.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "constants-browserify@1.0.0@@@1",
+        "name": "constants-browserify",
+        "version": "1.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "core-util-is@1.0.3@@@1",
+        "name": "core-util-is",
+        "version": "1.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/core-util-is@1.0.3@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "33b734d60042d0fe0c92dd1fc1e874193a1c899ec3e276a2eb935d2d0bf5b710"
+          }
+        ]
+      },
+      {
+        "cache_name": "create-ecdh@4.0.4@@@1",
+        "name": "create-ecdh",
+        "version": "4.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/create-ecdh@4.0.4@@@1/LICENSE",
+            "size_bytes": 1095,
+            "sha256": "d4ad87ad0bb7d57c17ae73b46e064243b972edc3036c38c222172c9600a20b56"
+          }
+        ]
+      },
+      {
+        "cache_name": "create-hash@1.2.0@@@1",
+        "name": "create-hash",
+        "version": "1.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/create-hash@1.2.0@@@1/LICENSE",
+            "size_bytes": 1097,
+            "sha256": "cf93ad78cfd5f3523248675aeb2a46e003367596883d4fa26a0c38d553ab0f61"
+          }
+        ]
+      },
+      {
+        "cache_name": "create-hmac@1.1.7@@@1",
+        "name": "create-hmac",
+        "version": "1.1.7",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/create-hmac@1.1.7@@@1/LICENSE",
+            "size_bytes": 1097,
+            "sha256": "cf93ad78cfd5f3523248675aeb2a46e003367596883d4fa26a0c38d553ab0f61"
+          }
+        ]
+      },
+      {
+        "cache_name": "crypto-browserify@3.12.1@@@1",
+        "name": "crypto-browserify",
+        "version": "3.12.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/crypto-browserify@3.12.1@@@1/LICENSE",
+            "size_bytes": 1087,
+            "sha256": "6134c69bc22c8289252e70de3af20bd67071233459055be74d83acfcc4865e7e"
+          }
+        ]
+      },
+      {
+        "cache_name": "define-data-property@1.1.4@@@1",
+        "name": "define-data-property",
+        "version": "1.1.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/define-data-property@1.1.4@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "b41d08bc3624d8c436fc80237d73ebb361985a67f4504bbcd703e5ca2b27254c"
+          }
+        ]
+      },
+      {
+        "cache_name": "define-properties@1.2.1@@@1",
+        "name": "define-properties",
+        "version": "1.2.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/define-properties@1.2.1@@@1/LICENSE",
+            "size_bytes": 1080,
+            "sha256": "00d402c2bbe7c67369bd01ce2c16b8ed46ccc949a1ee2d6bb8f9606afa8c7434"
+          }
+        ]
+      },
+      {
+        "cache_name": "deprecation@2.3.1@@@1",
+        "name": "deprecation",
+        "version": "2.3.1",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/deprecation@2.3.1@@@1/LICENSE",
+            "size_bytes": 762,
+            "sha256": "bfa751427053e9f0e4f2af1e62862681cdd45000db8d8db753baf7d462cb1a08"
+          }
+        ]
+      },
+      {
+        "cache_name": "des.js@1.1.0@@@1",
+        "name": "des.js",
+        "version": "1.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "detect-libc@2.1.2@@@1",
+        "name": "detect-libc",
+        "version": "2.1.2",
+        "license": "Apache-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/detect-libc@2.1.2@@@1/LICENSE",
+            "size_bytes": 11357,
+            "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+          }
+        ]
+      },
+      {
+        "cache_name": "diffie-hellman@5.0.3@@@1",
+        "name": "diffie-hellman",
+        "version": "5.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/diffie-hellman@5.0.3@@@1/LICENSE",
+            "size_bytes": 1058,
+            "sha256": "db6109f994692150ed82cd904bb053c73b97b23678bf52047f747bfec11e1934"
+          }
+        ]
+      },
+      {
+        "cache_name": "domain-browser@4.23.0@@@1",
+        "name": "domain-browser",
+        "version": "4.23.0",
+        "license": "Artistic-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/domain-browser@4.23.0@@@1/LICENSE.md",
+            "size_bytes": 9094,
+            "sha256": "4380ef327b7e7b1f291d74bdccc2995758d76d7f9d179ad1ac41c5fadea9feb5"
+          }
+        ]
+      },
+      {
+        "cache_name": "dot-case@3.0.4@@@1",
+        "name": "dot-case",
+        "version": "3.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/dot-case@3.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "dunder-proto@1.0.1@@@1",
+        "name": "dunder-proto",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/dunder-proto@1.0.1@@@1/LICENSE",
+            "size_bytes": 1073,
+            "sha256": "2b770a704c15de238c3f622b01b0044ddd60b49ee30608ea6991ebf19db7a7a1"
+          }
+        ]
+      },
+      {
+        "cache_name": "ecdsa-sig-formatter@1.0.11@@@1",
+        "name": "ecdsa-sig-formatter",
+        "version": "1.0.11",
+        "license": "Apache-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/ecdsa-sig-formatter@1.0.11@@@1/LICENSE",
+            "size_bytes": 11312,
+            "sha256": "50a6b24f8defc31a078aa9799a91d776f83948071574854f12473362aee74d0d"
+          }
+        ]
+      },
+      {
+        "cache_name": "elliptic@6.6.1@@@1",
+        "name": "elliptic",
+        "version": "6.6.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "es-define-property@1.0.1@@@1",
+        "name": "es-define-property",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/es-define-property@1.0.1@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "es-errors@1.3.0@@@1",
+        "name": "es-errors",
+        "version": "1.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/es-errors@1.3.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "es-object-atoms@1.1.1@@@1",
+        "name": "es-object-atoms",
+        "version": "1.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/es-object-atoms@1.1.1@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "esbuild@0.21.5@@@1",
+        "name": "esbuild",
+        "version": "0.21.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/esbuild@0.21.5@@@1/LICENSE.md",
+            "size_bytes": 1069,
+            "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
+          }
+        ]
+      },
+      {
+        "cache_name": "esbuild@0.25.12@@@1",
+        "name": "esbuild",
+        "version": "0.25.12",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/esbuild@0.25.12@@@1/LICENSE.md",
+            "size_bytes": 1069,
+            "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
+          }
+        ]
+      },
+      {
+        "cache_name": "event-target-shim@5.0.1@@@1",
+        "name": "event-target-shim",
+        "version": "5.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/event-target-shim@5.0.1@@@1/LICENSE",
+            "size_bytes": 1082,
+            "sha256": "97d87142793695cd73243de7258694abe85b3b6060fca7f247b0a2afa8219678"
+          }
+        ]
+      },
+      {
+        "cache_name": "events@3.3.0@@@1",
+        "name": "events",
+        "version": "3.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/events@3.3.0@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "631987b7616a325a5b97566c232418481ddf7dbb5ecadefb991e791876cc2599"
+          }
+        ]
+      },
+      {
+        "cache_name": "evp_bytestokey@1.0.3@@@1",
+        "name": "evp_bytestokey",
+        "version": "1.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/evp_bytestokey@1.0.3@@@1/LICENSE",
+            "size_bytes": 1097,
+            "sha256": "cf93ad78cfd5f3523248675aeb2a46e003367596883d4fa26a0c38d553ab0f61"
+          }
+        ]
+      },
+      {
+        "cache_name": "for-each@0.3.5@@@1",
+        "name": "for-each",
+        "version": "0.3.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/for-each@0.3.5@@@1/LICENSE",
+            "size_bytes": 1075,
+            "sha256": "d07913d776eef217a95d7ee3ee83577fc3c365b9c870f5a3411f785b81090614"
+          }
+        ]
+      },
+      {
+        "cache_name": "function-bind@1.1.2@@@1",
+        "name": "function-bind",
+        "version": "1.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/function-bind@1.1.2@@@1/LICENSE",
+            "size_bytes": 1052,
+            "sha256": "773e131a7684726005a7e4688a80b4620033bc08499bc1404dd1a1eb3bca725e"
+          }
+        ]
+      },
+      {
+        "cache_name": "generator-function@2.0.1@@@1",
+        "name": "generator-function",
+        "version": "2.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/generator-function@2.0.1@@@1/LICENSE.md",
+            "size_bytes": 1070,
+            "sha256": "1ac0263302bfb8eedc54a10a44175b0df51419306d5bc1539bfd7a7da121bd08"
+          }
+        ]
+      },
+      {
+        "cache_name": "get-intrinsic@1.3.0@@@1",
+        "name": "get-intrinsic",
+        "version": "1.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/get-intrinsic@1.3.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "39c5ec504cf6bd5cd782a7c695828e09189df79f5d94840e4f08feb97b9fd416"
+          }
+        ]
+      },
+      {
+        "cache_name": "get-proto@1.0.1@@@1",
+        "name": "get-proto",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/get-proto@1.0.1@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "be46ce1e3b0479af9ce82d22b465a6d7d2ff084fca0aaf3d54172da2b5eb5781"
+          }
+        ]
+      },
+      {
+        "cache_name": "gopd@1.2.0@@@1",
+        "name": "gopd",
+        "version": "1.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/gopd@1.2.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "d90bf0a089da4cf43d644ed240a0b3825dcdb705e64e38371d56995a4cc9e4c5"
+          }
+        ]
+      },
+      {
+        "cache_name": "has-property-descriptors@1.0.2@@@1",
+        "name": "has-property-descriptors",
+        "version": "1.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/has-property-descriptors@1.0.2@@@1/LICENSE",
+            "size_bytes": 1067,
+            "sha256": "0f0ca96f50793990031ebc488a38f7292ff70bce8ab6a8e5eeda674abc32ccdf"
+          }
+        ]
+      },
+      {
+        "cache_name": "has-symbols@1.1.0@@@1",
+        "name": "has-symbols",
+        "version": "1.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/has-symbols@1.1.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "206c1adcf206dc0031b11232f5b054ec5f1662407ab1ca415247921cab2068ab"
+          }
+        ]
+      },
+      {
+        "cache_name": "has-tostringtag@1.0.2@@@1",
+        "name": "has-tostringtag",
+        "version": "1.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/has-tostringtag@1.0.2@@@1/LICENSE",
+            "size_bytes": 1067,
+            "sha256": "e2560e002e13281578c75c850061d9255c33d16d732939e8c2db64c2506642fa"
+          }
+        ]
+      },
+      {
+        "cache_name": "hash-base@3.0.5@@@1",
+        "name": "hash-base",
+        "version": "3.0.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/hash-base@3.0.5@@@1/LICENSE",
+            "size_bytes": 1082,
+            "sha256": "898f204abbbbde58c6230a31842c59aeb8040fbcffa924db28e6d0b1d7631a3a"
+          }
+        ]
+      },
+      {
+        "cache_name": "hash-base@3.1.2@@@1",
+        "name": "hash-base",
+        "version": "3.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/hash-base@3.1.2@@@1/LICENSE",
+            "size_bytes": 1082,
+            "sha256": "898f204abbbbde58c6230a31842c59aeb8040fbcffa924db28e6d0b1d7631a3a"
+          }
+        ]
+      },
+      {
+        "cache_name": "hash.js@1.1.7@@@1",
+        "name": "hash.js",
+        "version": "1.1.7",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "hasown@2.0.2@@@1",
+        "name": "hasown",
+        "version": "2.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/hasown@2.0.2@@@1/LICENSE",
+            "size_bytes": 1083,
+            "sha256": "bf9b0d665be2a689851eea667ca9f42066ea1d903b38349c51e6a44b2577680a"
+          }
+        ]
+      },
+      {
+        "cache_name": "he@1.2.0@@@1",
+        "name": "he",
+        "version": "1.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/he@1.2.0@@@1/LICENSE-MIT.txt",
+            "size_bytes": 1077,
+            "sha256": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "header-case@2.0.4@@@1",
+        "name": "header-case",
+        "version": "2.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/header-case@2.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "hmac-drbg@1.0.1@@@1",
+        "name": "hmac-drbg",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "html-minifier@4.0.0@@@1",
+        "name": "html-minifier",
+        "version": "4.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/html-minifier@4.0.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "40df091261cba1fe12ca5f29d6b49e9412384e2e732f8c1fd7a45ffd7241c4fc"
+          }
+        ]
+      },
+      {
+        "cache_name": "https-browserify@1.0.0@@@1",
+        "name": "https-browserify",
+        "version": "1.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/https-browserify@1.0.0@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "ff151c00207c908581639851dd8504ce4255be0650b2b236edec2aa90342b0cd"
+          }
+        ]
+      },
+      {
+        "cache_name": "ieee754@1.2.1@@@1",
+        "name": "ieee754",
+        "version": "1.2.1",
+        "license": "BSD-3-Clause",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/ieee754@1.2.1@@@1/LICENSE",
+            "size_bytes": 1465,
+            "sha256": "18d45466ba3253deae04667e267a91ea8de8548f18c1125264d1c9db28194cc1"
+          }
+        ]
+      },
+      {
+        "cache_name": "indent-string@4.0.0@@@1",
+        "name": "indent-string",
+        "version": "4.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/indent-string@4.0.0@@@1/license",
+            "size_bytes": 1109,
+            "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+          }
+        ]
+      },
+      {
+        "cache_name": "inherits@2.0.4@@@1",
+        "name": "inherits",
+        "version": "2.0.4",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/inherits@2.0.4@@@1/LICENSE",
+            "size_bytes": 749,
+            "sha256": "5ffe28e7ade7d8f10d85d5337a73fd793dac5c462fb9a28fbf8c5046c7fbca3b"
+          }
+        ]
+      },
+      {
+        "cache_name": "is-arguments@1.2.0@@@1",
+        "name": "is-arguments",
+        "version": "1.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/is-arguments@1.2.0@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "dc0fe5a22d9336f345ee984f9bf56f11f22877a3aa5fd16a1db9a8ca0e23a5d1"
+          }
+        ]
+      },
+      {
+        "cache_name": "is-callable@1.2.7@@@1",
+        "name": "is-callable",
+        "version": "1.2.7",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/is-callable@1.2.7@@@1/LICENSE",
+            "size_bytes": 1082,
+            "sha256": "c61652db3d2808f667b48af0a358f0d85fd07ad4a0d0b1a50882dec3b764c522"
+          }
+        ]
+      },
+      {
+        "cache_name": "is-generator-function@1.1.2@@@1",
+        "name": "is-generator-function",
+        "version": "1.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/is-generator-function@1.1.2@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "dc0fe5a22d9336f345ee984f9bf56f11f22877a3aa5fd16a1db9a8ca0e23a5d1"
+          }
+        ]
+      },
+      {
+        "cache_name": "is-nan@1.3.2@@@1",
+        "name": "is-nan",
+        "version": "1.3.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/is-nan@1.3.2@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "dc0fe5a22d9336f345ee984f9bf56f11f22877a3aa5fd16a1db9a8ca0e23a5d1"
+          }
+        ]
+      },
+      {
+        "cache_name": "is-regex@1.2.1@@@1",
+        "name": "is-regex",
+        "version": "1.2.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/is-regex@1.2.1@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "dc0fe5a22d9336f345ee984f9bf56f11f22877a3aa5fd16a1db9a8ca0e23a5d1"
+          }
+        ]
+      },
+      {
+        "cache_name": "is-typed-array@1.1.15@@@1",
+        "name": "is-typed-array",
+        "version": "1.1.15",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/is-typed-array@1.1.15@@@1/LICENSE",
+            "size_bytes": 1082,
+            "sha256": "c61652db3d2808f667b48af0a358f0d85fd07ad4a0d0b1a50882dec3b764c522"
+          }
+        ]
+      },
+      {
+        "cache_name": "isarray@1.0.0@@@1",
+        "name": "isarray",
+        "version": "1.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "isarray@2.0.5@@@1",
+        "name": "isarray",
+        "version": "2.0.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/isarray@2.0.5@@@1/LICENSE",
+            "size_bytes": 1096,
+            "sha256": "68f12f6e2c33688699249c01d8f9623c534da20aa71989c57b061b7bc1676d14"
+          }
+        ]
+      },
+      {
+        "cache_name": "js-tokens@4.0.0@@@1",
+        "name": "js-tokens",
+        "version": "4.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/js-tokens@4.0.0@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "2213d91c606205c71eb051a199478cdc2adde945893404d7f1421436dd6d5cc1"
+          }
+        ]
+      },
+      {
+        "cache_name": "jsonwebtoken@9.0.2@@@1",
+        "name": "jsonwebtoken",
+        "version": "9.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/jsonwebtoken@9.0.2@@@1/LICENSE",
+            "size_bytes": 1121,
+            "sha256": "2144eb6894cb440fde6b2b3aaae3b617c8f1dc9bb19813079dcf62ec6c517042"
+          }
+        ]
+      },
+      {
+        "cache_name": "jwa@1.4.2@@@1",
+        "name": "jwa",
+        "version": "1.4.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/jwa@1.4.2@@@1/LICENSE",
+            "size_bytes": 1068,
+            "sha256": "3320319f8a5f42bc4254e65471eca7a5ea4dc8c883c4c24b4868e36b14890bcf"
+          }
+        ]
+      },
+      {
+        "cache_name": "jws@3.2.2@@@1",
+        "name": "jws",
+        "version": "3.2.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/jws@3.2.2@@@1/LICENSE",
+            "size_bytes": 1068,
+            "sha256": "3320319f8a5f42bc4254e65471eca7a5ea4dc8c883c4c24b4868e36b14890bcf"
+          }
+        ]
+      },
+      {
+        "cache_name": "lightningcss@1.30.2@@@1",
+        "name": "lightningcss",
+        "version": "1.30.2",
+        "license": "MPL-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lightningcss@1.30.2@@@1/LICENSE",
+            "size_bytes": 15648,
+            "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+          }
+        ]
+      },
+      {
+        "cache_name": "lightningcss-linux-x64-gnu@1.30.2@@@1",
+        "name": "lightningcss-linux-x64-gnu",
+        "version": "1.30.2",
+        "license": "MPL-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lightningcss-linux-x64-gnu@1.30.2@@@1/LICENSE",
+            "size_bytes": 15648,
+            "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+          }
+        ]
+      },
+      {
+        "cache_name": "lodash.includes@4.3.0@@@1",
+        "name": "lodash.includes",
+        "version": "4.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lodash.includes@4.3.0@@@1/LICENSE",
+            "size_bytes": 1951,
+            "sha256": "ffd8b33b354585f4ce119f19c53728281e48a97b074491eb6bf6d5c5ff305272"
+          }
+        ]
+      },
+      {
+        "cache_name": "lodash.isboolean@3.0.3@@@1",
+        "name": "lodash.isboolean",
+        "version": "3.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lodash.isboolean@3.0.3@@@1/LICENSE",
+            "size_bytes": 1233,
+            "sha256": "25a399d4a42f419445101092a1fc3f9b4bfe06d614f84128222d79e3a2105fe7"
+          }
+        ]
+      },
+      {
+        "cache_name": "lodash.isinteger@4.0.4@@@1",
+        "name": "lodash.isinteger",
+        "version": "4.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lodash.isinteger@4.0.4@@@1/LICENSE",
+            "size_bytes": 1951,
+            "sha256": "ffd8b33b354585f4ce119f19c53728281e48a97b074491eb6bf6d5c5ff305272"
+          }
+        ]
+      },
+      {
+        "cache_name": "lodash.isnumber@3.0.3@@@1",
+        "name": "lodash.isnumber",
+        "version": "3.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lodash.isnumber@3.0.3@@@1/LICENSE",
+            "size_bytes": 1233,
+            "sha256": "25a399d4a42f419445101092a1fc3f9b4bfe06d614f84128222d79e3a2105fe7"
+          }
+        ]
+      },
+      {
+        "cache_name": "lodash.isplainobject@4.0.6@@@1",
+        "name": "lodash.isplainobject",
+        "version": "4.0.6",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lodash.isplainobject@4.0.6@@@1/LICENSE",
+            "size_bytes": 1951,
+            "sha256": "ffd8b33b354585f4ce119f19c53728281e48a97b074491eb6bf6d5c5ff305272"
+          }
+        ]
+      },
+      {
+        "cache_name": "lodash.isstring@4.0.1@@@1",
+        "name": "lodash.isstring",
+        "version": "4.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lodash.isstring@4.0.1@@@1/LICENSE",
+            "size_bytes": 1233,
+            "sha256": "25a399d4a42f419445101092a1fc3f9b4bfe06d614f84128222d79e3a2105fe7"
+          }
+        ]
+      },
+      {
+        "cache_name": "lodash.once@4.1.1@@@1",
+        "name": "lodash.once",
+        "version": "4.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lodash.once@4.1.1@@@1/LICENSE",
+            "size_bytes": 1951,
+            "sha256": "ffd8b33b354585f4ce119f19c53728281e48a97b074491eb6bf6d5c5ff305272"
+          }
+        ]
+      },
+      {
+        "cache_name": "loose-envify@1.4.0@@@1",
+        "name": "loose-envify",
+        "version": "1.4.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/loose-envify@1.4.0@@@1/LICENSE",
+            "size_bytes": 1100,
+            "sha256": "4eb7543b08d955a6d23fcc224601d43ff566e775be918805e26210d7f6eb4893"
+          }
+        ]
+      },
+      {
+        "cache_name": "lower-case@1.1.4@@@1",
+        "name": "lower-case",
+        "version": "1.1.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lower-case@1.1.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "lower-case@2.0.2@@@1",
+        "name": "lower-case",
+        "version": "2.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/lower-case@2.0.2@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "marked@12.0.2@@@1",
+        "name": "marked",
+        "version": "12.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/marked@12.0.2@@@1/LICENSE.md",
+            "size_bytes": 2942,
+            "sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c"
+          }
+        ]
+      },
+      {
+        "cache_name": "math-intrinsics@1.1.0@@@1",
+        "name": "math-intrinsics",
+        "version": "1.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/math-intrinsics@1.1.0@@@1/LICENSE",
+            "size_bytes": 1073,
+            "sha256": "2b770a704c15de238c3f622b01b0044ddd60b49ee30608ea6991ebf19db7a7a1"
+          }
+        ]
+      },
+      {
+        "cache_name": "md5.js@1.3.5@@@1",
+        "name": "md5.js",
+        "version": "1.3.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/md5.js@1.3.5@@@1/LICENSE",
+            "size_bytes": 1082,
+            "sha256": "898f204abbbbde58c6230a31842c59aeb8040fbcffa924db28e6d0b1d7631a3a"
+          }
+        ]
+      },
+      {
+        "cache_name": "miller-rabin@4.0.1@@@1",
+        "name": "miller-rabin",
+        "version": "4.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "minimalistic-assert@1.0.1@@@1",
+        "name": "minimalistic-assert",
+        "version": "1.0.1",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/minimalistic-assert@1.0.1@@@1/LICENSE",
+            "size_bytes": 727,
+            "sha256": "136fee1129ea96ce18b41c26a72f5d4ba196ee41bfd73b55d0b8509cdda148e9"
+          }
+        ]
+      },
+      {
+        "cache_name": "minimalistic-crypto-utils@1.0.1@@@1",
+        "name": "minimalistic-crypto-utils",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "mitata@0.1.14@@@1",
+        "name": "mitata",
+        "version": "0.1.14",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/mitata@0.1.14@@@1/license",
+            "size_bytes": 1050,
+            "sha256": "85ef1781bf83d922097fc8d4c84035ca28f400cf5e60f9de641819e0ce8de003"
+          }
+        ]
+      },
+      {
+        "cache_name": "ms@2.1.3@@@1",
+        "name": "ms",
+        "version": "2.1.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/ms@2.1.3@@@1/license.md",
+            "size_bytes": 1079,
+            "sha256": "1662fae9b5314d11cf51284e2dcd1f006a354f7343f08712a730fcff9a359801"
+          }
+        ]
+      },
+      {
+        "cache_name": "no-case@2.3.2@@@1",
+        "name": "no-case",
+        "version": "2.3.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/no-case@2.3.2@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "no-case@3.0.4@@@1",
+        "name": "no-case",
+        "version": "3.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/no-case@3.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "object-inspect@1.13.4@@@1",
+        "name": "object-inspect",
+        "version": "1.13.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/object-inspect@1.13.4@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "bd40cc437e28a3ad7bef2ad34e6b72e757b182e67bda1acadbab4ef0476f8232"
+          }
+        ]
+      },
+      {
+        "cache_name": "object-is@1.1.6@@@1",
+        "name": "object-is",
+        "version": "1.1.6",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/object-is@1.1.6@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "dc0fe5a22d9336f345ee984f9bf56f11f22877a3aa5fd16a1db9a8ca0e23a5d1"
+          }
+        ]
+      },
+      {
+        "cache_name": "object-keys@1.1.1@@@1",
+        "name": "object-keys",
+        "version": "1.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/object-keys@1.1.1@@@1/LICENSE",
+            "size_bytes": 1080,
+            "sha256": "5640e5cbe2e9f57f6ccfdd8dbfbeadb875495bdbcb69d2666ce3177ccd0942e4"
+          }
+        ]
+      },
+      {
+        "cache_name": "object.assign@4.1.7@@@1",
+        "name": "object.assign",
+        "version": "4.1.7",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/object.assign@4.1.7@@@1/LICENSE",
+            "size_bytes": 1080,
+            "sha256": "a596744eec6b05682ed972bf93937668bbc8da2caed93fbf6510389de019b5c0"
+          }
+        ]
+      },
+      {
+        "cache_name": "octokit@3.2.2@@@1",
+        "name": "octokit",
+        "version": "3.2.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/octokit@3.2.2@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "209154c5fbc1efe9ec643cc37bb721b25ead0a8bb573fac90e1df2ae9e9e6ad9"
+          }
+        ]
+      },
+      {
+        "cache_name": "once@1.4.0@@@1",
+        "name": "once",
+        "version": "1.4.0",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/once@1.4.0@@@1/LICENSE",
+            "size_bytes": 765,
+            "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+          }
+        ]
+      },
+      {
+        "cache_name": "os-browserify@0.3.0@@@1",
+        "name": "os-browserify",
+        "version": "0.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/os-browserify@0.3.0@@@1/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "d25d1d6d28c35cb6f358e2833e405c4e53fec2fa24d156323ddea5cd438d3407"
+          }
+        ]
+      },
+      {
+        "cache_name": "pako@1.0.11@@@1",
+        "name": "pako",
+        "version": "1.0.11",
+        "license": "(MIT AND Zlib)",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/pako@1.0.11@@@1/LICENSE",
+            "size_bytes": 1104,
+            "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+          }
+        ]
+      },
+      {
+        "cache_name": "param-case@2.1.1@@@1",
+        "name": "param-case",
+        "version": "2.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/param-case@2.1.1@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "param-case@3.0.4@@@1",
+        "name": "param-case",
+        "version": "3.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/param-case@3.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "parse-asn1@5.1.9@@@1",
+        "name": "parse-asn1",
+        "version": "5.1.9",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/parse-asn1@5.1.9@@@1/LICENSE",
+            "size_bytes": 749,
+            "sha256": "bc5ed4eed738303bf403ec3b7e0a8e76760ef60664ad050a0ff61db23da77e66"
+          }
+        ]
+      },
+      {
+        "cache_name": "pascal-case@3.1.2@@@1",
+        "name": "pascal-case",
+        "version": "3.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/pascal-case@3.1.2@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "path-browserify@1.0.1@@@1",
+        "name": "path-browserify",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/path-browserify@1.0.1@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "a22b9d5763f574e5db347c30acc0b33eaf4846767c03d2e27d012e864e79a824"
+          }
+        ]
+      },
+      {
+        "cache_name": "path-case@3.0.4@@@1",
+        "name": "path-case",
+        "version": "3.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/path-case@3.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "pbkdf2@3.1.5@@@1",
+        "name": "pbkdf2",
+        "version": "3.1.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/pbkdf2@3.1.5@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "a9667a8bf55e7f20cf894cb47774f94ebd4eb366408aafb980f1f6547bcdc10a"
+          }
+        ]
+      },
+      {
+        "cache_name": "peechy@0.4.34@@@1",
+        "name": "peechy",
+        "version": "0.4.34",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "possible-typed-array-names@1.1.0@@@1",
+        "name": "possible-typed-array-names",
+        "version": "1.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/possible-typed-array-names@1.1.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "preact@10.27.2@@@1",
+        "name": "preact",
+        "version": "10.27.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/preact@10.27.2@@@1/LICENSE",
+            "size_bytes": 1087,
+            "sha256": "1fe6958409c8c257a70c587a18b6f7f412b179b456630790d30b2ec9a8e4b7d4"
+          }
+        ]
+      },
+      {
+        "cache_name": "prettier@3.6.2@@@1",
+        "name": "prettier",
+        "version": "3.6.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/prettier@3.6.2@@@1/LICENSE",
+            "size_bytes": 1065,
+            "sha256": "b0f2417199889f1c0d28ec4e0244eacf1a15de5819d61f641dd7d8f45153ac9c"
+          }
+        ]
+      },
+      {
+        "cache_name": "prettier-plugin-organize-imports@4.3.0@@@1",
+        "name": "prettier-plugin-organize-imports",
+        "version": "4.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/prettier-plugin-organize-imports@4.3.0@@@1/license",
+            "size_bytes": 1066,
+            "sha256": "f336161d4d9b3bfc743f6228bd73a71cb56f8030174c866e3c06fd57dd523fc0"
+          }
+        ]
+      },
+      {
+        "cache_name": "process@0.11.10@@@1",
+        "name": "process",
+        "version": "0.11.10",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/process@0.11.10@@@1/LICENSE",
+            "size_bytes": 1098,
+            "sha256": "59a400d04c5078579acc27ddd6452c1bdf763f9506e01364700935fbb1a7c91b"
+          }
+        ]
+      },
+      {
+        "cache_name": "process-nextick-args@2.0.1@@@1",
+        "name": "process-nextick-args",
+        "version": "2.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/process-nextick-args@2.0.1@@@1/license.md",
+            "size_bytes": 1064,
+            "sha256": "ecdccbcf39024f624ded480c01c0b25458e1eca8f26ecf040933865ce56d9a4f"
+          }
+        ]
+      },
+      {
+        "cache_name": "public-encrypt@4.0.3@@@1",
+        "name": "public-encrypt",
+        "version": "4.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/public-encrypt@4.0.3@@@1/LICENSE",
+            "size_bytes": 1058,
+            "sha256": "db6109f994692150ed82cd904bb053c73b97b23678bf52047f747bfec11e1934"
+          }
+        ]
+      },
+      {
+        "cache_name": "punycode@1.4.1@@@1",
+        "name": "punycode",
+        "version": "1.4.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/punycode@1.4.1@@@1/LICENSE-MIT.txt",
+            "size_bytes": 1077,
+            "sha256": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "punycode@2.3.1@@@1",
+        "name": "punycode",
+        "version": "2.3.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/punycode@2.3.1@@@1/LICENSE-MIT.txt",
+            "size_bytes": 1077,
+            "sha256": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a"
+          }
+        ]
+      },
+      {
+        "cache_name": "qs@6.14.0@@@1",
+        "name": "qs",
+        "version": "6.14.0",
+        "license": "BSD-3-Clause",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/qs@6.14.0@@@1/LICENSE.md",
+            "size_bytes": 1600,
+            "sha256": "e7dc37bf662d7f786efcb46c545615e70c1daf458a38385521c63cf6607cdfe1"
+          }
+        ]
+      },
+      {
+        "cache_name": "querystring-es3@1.0.0-b8f8325b21a8a1e5@@@1",
+        "name": "querystring-es3",
+        "version": "1.0.0-0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/querystring-es3@1.0.0-b8f8325b21a8a1e5@@@1/License.md",
+            "size_bytes": 2242,
+            "sha256": "a2d84514bf60e8dab31c3db9b25bf2fcb644171ec91f3a7463173f3e9ac6b8b4"
+          }
+        ]
+      },
+      {
+        "cache_name": "randombytes@2.1.0@@@1",
+        "name": "randombytes",
+        "version": "2.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/randombytes@2.1.0@@@1/LICENSE",
+            "size_bytes": 1074,
+            "sha256": "ddc0dd5947bd2966b9a4cfde098566b011de0acfbe7814536955636ce9e3eced"
+          }
+        ]
+      },
+      {
+        "cache_name": "randomfill@1.0.4@@@1",
+        "name": "randomfill",
+        "version": "1.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/randomfill@1.0.4@@@1/LICENSE",
+            "size_bytes": 1074,
+            "sha256": "ddc0dd5947bd2966b9a4cfde098566b011de0acfbe7814536955636ce9e3eced"
+          }
+        ]
+      },
+      {
+        "cache_name": "react@18.3.1@@@1",
+        "name": "react",
+        "version": "18.3.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/react@18.3.1@@@1/LICENSE",
+            "size_bytes": 1086,
+            "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85"
+          }
+        ]
+      },
+      {
+        "cache_name": "react-dom@18.3.1@@@1",
+        "name": "react-dom",
+        "version": "18.3.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/react-dom@18.3.1@@@1/LICENSE",
+            "size_bytes": 1086,
+            "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85"
+          }
+        ]
+      },
+      {
+        "cache_name": "react-refresh@0.17.0@@@1",
+        "name": "react-refresh",
+        "version": "0.17.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/react-refresh@0.17.0@@@1/LICENSE",
+            "size_bytes": 1088,
+            "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+          }
+        ]
+      },
+      {
+        "cache_name": "readable-stream@2.3.8@@@1",
+        "name": "readable-stream",
+        "version": "2.3.8",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/readable-stream@2.3.8@@@1/LICENSE",
+            "size_bytes": 2337,
+            "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+          }
+        ]
+      },
+      {
+        "cache_name": "readable-stream@3.6.2@@@1",
+        "name": "readable-stream",
+        "version": "3.6.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/readable-stream@3.6.2@@@1/LICENSE",
+            "size_bytes": 2337,
+            "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+          }
+        ]
+      },
+      {
+        "cache_name": "readable-stream@4.7.0@@@1",
+        "name": "readable-stream",
+        "version": "4.7.0",
+        "license": "MIT",
+        "legacy_licenses": [
+          {
+            "type": "MIT",
+            "url": "https://choosealicense.com/licenses/mit/"
+          }
+        ],
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/readable-stream@4.7.0@@@1/LICENSE",
+            "size_bytes": 2337,
+            "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+          }
+        ]
+      },
+      {
+        "cache_name": "relateurl@0.2.7@@@1",
+        "name": "relateurl",
+        "version": "0.2.7",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/relateurl@0.2.7@@@1/license",
+            "size_bytes": 1111,
+            "sha256": "4c97d11c3d10ddede28b756f4d834e660bc49d67d9a8aae16bda5e59efcd479f"
+          }
+        ]
+      },
+      {
+        "cache_name": "ripemd160@2.0.3@@@1",
+        "name": "ripemd160",
+        "version": "2.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/ripemd160@2.0.3@@@1/LICENSE",
+            "size_bytes": 1084,
+            "sha256": "4847d2fd9ed54cc006dd79f5a14fa5dd35eb8274dca511418166e195e277c05b"
+          }
+        ]
+      },
+      {
+        "cache_name": "safe-buffer@5.1.2@@@1",
+        "name": "safe-buffer",
+        "version": "5.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/safe-buffer@5.1.2@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "c7cc929b57080f4b9d0c6cf57669f0463fc5b39906344dfc8d3bc43426b30eac"
+          }
+        ]
+      },
+      {
+        "cache_name": "safe-buffer@5.2.1@@@1",
+        "name": "safe-buffer",
+        "version": "5.2.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/safe-buffer@5.2.1@@@1/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "c7cc929b57080f4b9d0c6cf57669f0463fc5b39906344dfc8d3bc43426b30eac"
+          }
+        ]
+      },
+      {
+        "cache_name": "safe-regex-test@1.1.0@@@1",
+        "name": "safe-regex-test",
+        "version": "1.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/safe-regex-test@1.1.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "d90bf0a089da4cf43d644ed240a0b3825dcdb705e64e38371d56995a4cc9e4c5"
+          }
+        ]
+      },
+      {
+        "cache_name": "scheduler@0.23.2@@@1",
+        "name": "scheduler",
+        "version": "0.23.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/scheduler@0.23.2@@@1/LICENSE",
+            "size_bytes": 1086,
+            "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85"
+          }
+        ]
+      },
+      {
+        "cache_name": "semver@7.7.3@@@1",
+        "name": "semver",
+        "version": "7.7.3",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/semver@7.7.3@@@1/LICENSE",
+            "size_bytes": 765,
+            "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+          }
+        ]
+      },
+      {
+        "cache_name": "sentence-case@3.0.4@@@1",
+        "name": "sentence-case",
+        "version": "3.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/sentence-case@3.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "set-function-length@1.2.2@@@1",
+        "name": "set-function-length",
+        "version": "1.2.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/set-function-length@1.2.2@@@1/LICENSE",
+            "size_bytes": 1083,
+            "sha256": "bf9b0d665be2a689851eea667ca9f42066ea1d903b38349c51e6a44b2577680a"
+          }
+        ]
+      },
+      {
+        "cache_name": "setimmediate@1.0.5@@@1",
+        "name": "setimmediate",
+        "version": "1.0.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/setimmediate@1.0.5@@@1/LICENSE.txt",
+            "size_bytes": 1103,
+            "sha256": "c4b4ad3a5746f1f5249a6dd90396ec519264e1bb02e01e48a6522c48a3a97cb4"
+          }
+        ]
+      },
+      {
+        "cache_name": "sha.js@2.4.12@@@1",
+        "name": "sha.js",
+        "version": "2.4.12",
+        "license": "(MIT AND BSD-3-Clause)",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/sha.js@2.4.12@@@1/LICENSE",
+            "size_bytes": 2557,
+            "sha256": "58dcf38be1438f739412b87eb70d64bf00e9976d529bb119f700d8b3167924f0"
+          }
+        ]
+      },
+      {
+        "cache_name": "side-channel@1.1.0@@@1",
+        "name": "side-channel",
+        "version": "1.1.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/side-channel@1.1.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "cfc3f455254c0af0655cc3ff46a41ed644b67599f6043346169d285bf2b3cf3b"
+          }
+        ]
+      },
+      {
+        "cache_name": "side-channel-list@1.0.0@@@1",
+        "name": "side-channel-list",
+        "version": "1.0.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/side-channel-list@1.0.0@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "side-channel-map@1.0.1@@@1",
+        "name": "side-channel-map",
+        "version": "1.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/side-channel-map@1.0.1@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+          }
+        ]
+      },
+      {
+        "cache_name": "side-channel-weakmap@1.0.2@@@1",
+        "name": "side-channel-weakmap",
+        "version": "1.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/side-channel-weakmap@1.0.2@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "cfc3f455254c0af0655cc3ff46a41ed644b67599f6043346169d285bf2b3cf3b"
+          }
+        ]
+      },
+      {
+        "cache_name": "snake-case@3.0.4@@@1",
+        "name": "snake-case",
+        "version": "3.0.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/snake-case@3.0.4@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "source-map@0.6.1@@@1",
+        "name": "source-map",
+        "version": "0.6.1",
+        "license": "BSD-3-Clause",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/source-map@0.6.1@@@1/LICENSE",
+            "size_bytes": 1526,
+            "sha256": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd"
+          }
+        ]
+      },
+      {
+        "cache_name": "source-map-js@1.2.1@@@1",
+        "name": "source-map-js",
+        "version": "1.2.1",
+        "license": "BSD-3-Clause",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/source-map-js@1.2.1@@@1/LICENSE",
+            "size_bytes": 1526,
+            "sha256": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd"
+          }
+        ]
+      },
+      {
+        "cache_name": "stream-http@3.2.0@@@1",
+        "name": "stream-http",
+        "version": "3.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/stream-http@3.2.0@@@1/LICENSE",
+            "size_bytes": 1086,
+            "sha256": "a0e6357a5e8ea65827addeb383e0948a1874d2f46bc7feaf6349b7a376ed6e98"
+          }
+        ]
+      },
+      {
+        "cache_name": "string_decoder@1.1.1@@@1",
+        "name": "string_decoder",
+        "version": "1.1.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/string_decoder@1.1.1@@@1/LICENSE",
+            "size_bytes": 2338,
+            "sha256": "11f2aafb37d06b3ee5bdaf06e9811141d0da05263c316f3d627f45c20d43261b"
+          }
+        ]
+      },
+      {
+        "cache_name": "string_decoder@1.3.0@@@1",
+        "name": "string_decoder",
+        "version": "1.3.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/string_decoder@1.3.0@@@1/LICENSE",
+            "size_bytes": 2338,
+            "sha256": "11f2aafb37d06b3ee5bdaf06e9811141d0da05263c316f3d627f45c20d43261b"
+          }
+        ]
+      },
+      {
+        "cache_name": "timers-browserify@2.0.12@@@1",
+        "name": "timers-browserify",
+        "version": "2.0.12",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/timers-browserify@2.0.12@@@1/LICENSE.md",
+            "size_bytes": 2505,
+            "sha256": "d5f14c3258420dfe5a3b641a143d6e6dd90eabb5962244d937e25699c3a45ec9"
+          }
+        ]
+      },
+      {
+        "cache_name": "to-buffer@1.2.2@@@1",
+        "name": "to-buffer",
+        "version": "1.2.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/to-buffer@1.2.2@@@1/LICENSE",
+            "size_bytes": 1079,
+            "sha256": "6a134e51aa31496c15a741592fc5d782b2dbf8d8b6b8524e15c8520ae0cd6374"
+          }
+        ]
+      },
+      {
+        "cache_name": "tslib@2.8.1@@@1",
+        "name": "tslib",
+        "version": "2.8.1",
+        "license": "0BSD",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/tslib@2.8.1@@@1/LICENSE.txt",
+            "size_bytes": 655,
+            "sha256": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751"
+          }
+        ]
+      },
+      {
+        "cache_name": "tty-browserify@0.0.1@@@1",
+        "name": "tty-browserify",
+        "version": "0.0.1",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/tty-browserify@0.0.1@@@1/LICENSE",
+            "size_bytes": 1073,
+            "sha256": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b"
+          }
+        ]
+      },
+      {
+        "cache_name": "typed-array-buffer@1.0.3@@@1",
+        "name": "typed-array-buffer",
+        "version": "1.0.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/typed-array-buffer@1.0.3@@@1/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "b41d08bc3624d8c436fc80237d73ebb361985a67f4504bbcd703e5ca2b27254c"
+          }
+        ]
+      },
+      {
+        "cache_name": "typescript@5.9.2@@@1",
+        "name": "typescript",
+        "version": "5.9.2",
+        "license": "Apache-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/typescript@5.9.2@@@1/LICENSE.txt",
+            "size_bytes": 9197,
+            "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+          }
+        ]
+      },
+      {
+        "cache_name": "typescript@6.0.2@@@1",
+        "name": "typescript",
+        "version": "6.0.2",
+        "license": "Apache-2.0",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/typescript@6.0.2@@@1/LICENSE.txt",
+            "size_bytes": 9197,
+            "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+          }
+        ]
+      },
+      {
+        "cache_name": "uglify-js@3.19.3@@@1",
+        "name": "uglify-js",
+        "version": "3.19.3",
+        "license": "BSD-2-Clause",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/uglify-js@3.19.3@@@1/LICENSE",
+            "size_bytes": 1348,
+            "sha256": "422ee8d0b531a3e3c3c730b4dbd6f590ff786853897b9992888e34fcdacbe526"
+          }
+        ]
+      },
+      {
+        "cache_name": "undici-types@7.16.0@@@1",
+        "name": "undici-types",
+        "version": "7.16.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/undici-types@7.16.0@@@1/LICENSE",
+            "size_bytes": 1090,
+            "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
+          }
+        ]
+      },
+      {
+        "cache_name": "universal-github-app-jwt@1.2.0@@@1",
+        "name": "universal-github-app-jwt",
+        "version": "1.2.0",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/universal-github-app-jwt@1.2.0@@@1/LICENSE",
+            "size_bytes": 1076,
+            "sha256": "c7295737b5306642cfa9cd4d1ddfed7642e3d04d79da131d0aabf77f6be97c98"
+          }
+        ]
+      },
+      {
+        "cache_name": "universal-user-agent@6.0.1@@@1",
+        "name": "universal-user-agent",
+        "version": "6.0.1",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/universal-user-agent@6.0.1@@@1/LICENSE.md",
+            "size_bytes": 808,
+            "sha256": "b7ad8777cf2eaca832498a2bd34fca0a5bde02d74158fa6c24ab4596d4f73a25"
+          }
+        ]
+      },
+      {
+        "cache_name": "upper-case@1.1.3@@@1",
+        "name": "upper-case",
+        "version": "1.1.3",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/upper-case@1.1.3@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "upper-case@2.0.2@@@1",
+        "name": "upper-case",
+        "version": "2.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": []
+      },
+      {
+        "cache_name": "upper-case-first@2.0.2@@@1",
+        "name": "upper-case-first",
+        "version": "2.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/upper-case-first@2.0.2@@@1/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+          }
+        ]
+      },
+      {
+        "cache_name": "url@0.11.4@@@1",
+        "name": "url",
+        "version": "0.11.4",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/url@0.11.4@@@1/LICENSE",
+            "size_bytes": 1104,
+            "sha256": "00bfc53d658b2173d23e8c2a0f52332a5cfc6044525dafc5ecbe9a733bc3a49d"
+          }
+        ]
+      },
+      {
+        "cache_name": "util@0.12.5@@@1",
+        "name": "util",
+        "version": "0.12.5",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/util@0.12.5@@@1/LICENSE",
+            "size_bytes": 1096,
+            "sha256": "6239c6144c31e58cf925c34483606969c555574d64ffa96518ab5d7f45c75d43"
+          }
+        ]
+      },
+      {
+        "cache_name": "util-deprecate@1.0.2@@@1",
+        "name": "util-deprecate",
+        "version": "1.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/util-deprecate@1.0.2@@@1/LICENSE",
+            "size_bytes": 1102,
+            "sha256": "0154425673db15cdfa80ecba2c9b1f1a867f7197a006764712849bfc3a93cbb7"
+          }
+        ]
+      },
+      {
+        "cache_name": "vm-browserify@1.1.2@@@1",
+        "name": "vm-browserify",
+        "version": "1.1.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/vm-browserify@1.1.2@@@1/LICENSE",
+            "size_bytes": 1036,
+            "sha256": "3a62887f73cd035ac1068bc0127ce94291f7a03843391f56df3520e2ca2037f8"
+          }
+        ]
+      },
+      {
+        "cache_name": "which-typed-array@1.1.19@@@1",
+        "name": "which-typed-array",
+        "version": "1.1.19",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/which-typed-array@1.1.19@@@1/LICENSE",
+            "size_bytes": 1082,
+            "sha256": "c61652db3d2808f667b48af0a358f0d85fd07ad4a0d0b1a50882dec3b764c522"
+          }
+        ]
+      },
+      {
+        "cache_name": "wrappy@1.0.2@@@1",
+        "name": "wrappy",
+        "version": "1.0.2",
+        "license": "ISC",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/wrappy@1.0.2@@@1/LICENSE",
+            "size_bytes": 765,
+            "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+          }
+        ]
+      },
+      {
+        "cache_name": "xtend@4.0.2@@@1",
+        "name": "xtend",
+        "version": "4.0.2",
+        "license": "MIT",
+        "legacy_licenses": null,
+        "license_files": [
+          {
+            "path": ".build-tools/bun-install-cache/xtend@4.0.2@@@1/LICENSE",
+            "size_bytes": 1078,
+            "sha256": "82e67379203d5794e7c44549847d8d64ae6904591381682360470898bd306821"
+          }
+        ]
+      }
+    ]
+  },
+  "native": [
+    {
+      "name": "boringssl",
+      "source_identity": "7a2153bae7c799de",
+      "license_files": [
+        {
+          "path": "vendor/boringssl/LICENSE",
+          "size_bytes": 13115,
+          "sha256": "827c8d8fc207c2392794eef9e00fe246f9f61fdcc132556c275be3dd8c3cd97f"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "brotli",
+      "source_identity": "0351e58a8e1677f1",
+      "license_files": [
+        {
+          "path": "vendor/brotli/LICENSE",
+          "size_bytes": 1084,
+          "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "cares",
+      "source_identity": "6a9f7592a665eca0",
+      "license_files": [
+        {
+          "path": "vendor/cares/LICENSE.md",
+          "size_bytes": 1211,
+          "sha256": "460f5e768fda3752ca2169a95df062578a10fb126bfd65f3b9b1a1bed2f84807"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "hdrhistogram",
+      "source_identity": "d51cf5561f0ad7a0",
+      "license_files": [
+        {
+          "path": "vendor/hdrhistogram/COPYING.txt",
+          "size_bytes": 7048,
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        },
+        {
+          "path": "vendor/hdrhistogram/LICENSE.txt",
+          "size_bytes": 2208,
+          "sha256": "93a583ec58cd981232ec6fab797ff6f17f350c97b83ae0700b2d9350c91028af"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "highway",
+      "source_identity": "7d20e5704b5730be",
+      "license_files": [
+        {
+          "path": "vendor/highway/LICENSE",
+          "size_bytes": 20785,
+          "sha256": "e340270d4f64384569a91d546acb5b094d69ce47f0c015db77abb74dc6f815af"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "libarchive",
+      "source_identity": "ce98adaf8aae5739",
+      "license_files": [
+        {
+          "path": "vendor/libarchive/COPYING",
+          "size_bytes": 3089,
+          "sha256": "30e556b3959e3985d66efefec5eaac51d4995053caa1d3cffe6eb916f146f229"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "libdeflate",
+      "source_identity": "400b3b8ab3ed87f3",
+      "license_files": [
+        {
+          "path": "vendor/libdeflate/COPYING",
+          "size_bytes": 1078,
+          "sha256": "4ad69099cb4374836fd27583d9991e2838cd86b6e4666ab26b2d32582c91e73a"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "libjpeg-turbo",
+      "source_identity": "9053d831ac76313a",
+      "license_files": [
+        {
+          "path": "vendor/libjpeg-turbo/LICENSE.md",
+          "size_bytes": 5622,
+          "sha256": "e10114e6e40f3d0311c401ca25245ac5ef459a43c20f976fd63f03e816f5741f"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "libspng",
+      "source_identity": "8f68c9b1c94ed67e",
+      "license_files": [
+        {
+          "path": "vendor/libspng/LICENSE",
+          "size_bytes": 1341,
+          "sha256": "0622b0794d0fecde47d743f1bb70a03e6fdf082be8e71f39de672ed995d96ff9"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "libwebp",
+      "source_identity": "9445242ced9a3647",
+      "license_files": [
+        {
+          "path": "vendor/libwebp/COPYING",
+          "size_bytes": 1496,
+          "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "lolhtml",
+      "source_identity": "712928b3736f4aad",
+      "license_files": [
+        {
+          "path": "vendor/lolhtml/LICENSE",
+          "size_bytes": 1487,
+          "sha256": "e4ddaa9d7391bb9536fcb8c59b570a8b85a0bf6da54df5b3b26f098f6f99c9cc"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "lshpack",
+      "source_identity": "06008f7ad49dbc2c",
+      "license_files": [
+        {
+          "path": "vendor/lshpack/LICENSE",
+          "size_bytes": 1090,
+          "sha256": "0490f9666828ad1b6b5503102e7ebbe491451b7174511f3b6255caa967caf955"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "lsqpack",
+      "source_identity": "5f17acf20a675e10",
+      "license_files": [
+        {
+          "path": "vendor/lsqpack/LICENSE",
+          "size_bytes": 1090,
+          "sha256": "6b1aded50331e34502c8d2b00238c6146b1a54314ce94a5c5feb5d340a6d00d6"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "lsquic",
+      "source_identity": "c81ba98aa007d021",
+      "license_files": [
+        {
+          "path": "vendor/lsquic/LICENSE",
+          "size_bytes": 1090,
+          "sha256": "9bc22643b3ea2b55c547c83e332253d04ba3df4f26696091e6fa9f7a1ccc65ef"
+        },
+        {
+          "path": "vendor/lsquic/LICENSE.chrome",
+          "size_bytes": 1618,
+          "sha256": "85d5dcb0d30ea89fa5922451957ff2a1a2c3c24f1ad2bb9ab23b5d6080763fc9"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "mimalloc",
+      "source_identity": "1777c5501c92ce2b",
+      "license_files": [
+        {
+          "path": "vendor/mimalloc/LICENSE",
+          "size_bytes": 1096,
+          "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "picohttpparser",
+      "source_identity": "28cb701fbd0273ea",
+      "license_files": [
+        {
+          "path": "vendor/picohttpparser/picohttpparser.c",
+          "size_bytes": 26538,
+          "sha256": "177196a72fb3b480de80485a17b5509578f3e2c1e4343dcb1f2b2cf94255065a"
+        }
+      ],
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "complete MIT terms embedded in picohttpparser.c; the Perl-license alternative is not selected"
+      }
+    },
+    {
+      "name": "tinycc",
+      "source_identity": "059347b7ef7daf21",
+      "license_files": [
+        {
+          "path": "vendor/tinycc/COPYING",
+          "size_bytes": 26428,
+          "sha256": "512d2d21b6b3384ba64781abb0208a1b87740bc31e2df48e2b206ddb7e4d5779"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "zlib",
+      "source_identity": "21426576697e7e84",
+      "license_files": [
+        {
+          "path": "vendor/zlib/LICENSE.md",
+          "size_bytes": 867,
+          "sha256": "6c9f0d975b41afaa34d22f55bb8986ce69e5cb7ad327cb2b28820cd425edf5ee"
+        }
+      ],
+      "license_selection": null
+    },
+    {
+      "name": "zstd",
+      "source_identity": "c612046874df2384",
+      "license_files": [
+        {
+          "path": "vendor/zstd/COPYING",
+          "size_bytes": 18091,
+          "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+        },
+        {
+          "path": "vendor/zstd/LICENSE",
+          "size_bytes": 1549,
+          "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+        }
+      ],
+      "license_selection": null
+    }
+  ],
+  "webkit": {
+    "candidate_license_files": [
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/COPYING.LIB",
+        "size_bytes": 25584,
+        "sha256": "5094ecb9c9dcd0eadc34f3c11511d9b5535063032bc150164ecd1a5d5a445547"
+      },
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/disassembler/ARM64/LICENSE-binja.txt",
+        "size_bytes": 556,
+        "sha256": "94c095293b051622c4279153e94f8f69e6e9fd41c2d6eef07ad9ea02c30fb4c0"
+      },
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/disassembler/zydis/LICENSE-zycore.txt",
+        "size_bytes": 1122,
+        "sha256": "bad974d260b4697edfdf3a126c33d451a512947b5265f6014fb66173f42ccab3"
+      },
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/disassembler/zydis/LICENSE-zydis.txt",
+        "size_bytes": 1122,
+        "sha256": "1218751ea297d1559d768da22dfb95248d6b7c6fdcf3aedecd53a818694b6bf9"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE.TXT",
+        "size_bytes": 1687,
+        "sha256": "65e9ed46a59976eda8f5bd1ea79a680dea38dd299c760bc9a8d87a764ef5029b"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE_LLVM.TXT",
+        "size_bytes": 3331,
+        "sha256": "dfdca2d7fdbabfd937f9dc41b7f61647b0e6cb1f9ee767ecb4520f979ebe91da"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/gtest/LICENSE",
+        "size_bytes": 1475,
+        "sha256": "9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/unifdef/COPYING",
+        "size_bytes": 4278,
+        "sha256": "37ed46a39446b15b08af418fda23b75c27a769d5aad236d817ee7522cc9caeee"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-LLVM.txt",
+        "size_bytes": 12263,
+        "sha256": "f72b120d1385408e9e380acc020756eb6ba1b461d66c328ea67327ba08d7dcfd"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-dragonbox.txt",
+        "size_bytes": 13858,
+        "sha256": "9bb1036ef8dcb42c59e2a23c9e465f43e75003e06898faf0edd18de662f3ecb8"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-libc++.txt",
+        "size_bytes": 3493,
+        "sha256": "c1938c0e9e90639d1e8f5a7f6bebaab83a3642e0ee44295a4c69934686d0bda8"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-simde.txt",
+        "size_bytes": 1077,
+        "sha256": "75ce0a8c5a7bff42fbd6f8f3b469b518132132c4f4948fb8d02b1ccb5d0df9d8"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/icu/LICENSE",
+        "size_bytes": 21088,
+        "sha256": "de596f6e3482bab99d2425af16add38f959ebc17a5883c6302970355853b6539"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/dtoa/COPYING",
+        "size_bytes": 1527,
+        "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/dtoa/LICENSE",
+        "size_bytes": 1527,
+        "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/fast_float/LICENSE",
+        "size_bytes": 10767,
+        "sha256": "097a889aa954d04e088b790b10a4014d6189561d0a6013935a73ce3d4ddaaf06"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/simdutf/LICENSE-simdutf.txt",
+        "size_bytes": 1059,
+        "sha256": "fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f"
+      },
+      {
+        "path": "vendor/WebKit/Source/bmalloc/mimalloc/mimalloc/LICENSE",
+        "size_bytes": 1096,
+        "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9"
+      },
+      {
+        "path": "vendor/WebKit/Tools/IonGraph/LICENSE",
+        "size_bytes": 16726,
+        "sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/reporelaypy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/resultsdbpy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitapipy/webkitapipy/_vendor/tomli/LICENSE",
+        "size_bytes": 1072,
+        "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitbugspy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitcorepy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitflaskpy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitscmpy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/webkitpy/thirdparty/wpt/LICENSE.md",
+        "size_bytes": 1502,
+        "sha256": "5a7b465d39b5e018bc40cc34162176269f7c476989cb4dbcf0ec0b81701545a7"
+      },
+      {
+        "path": "vendor/WebKit/Tools/TestWebKitAPI/Tests/WebKit/WKWebView/Copying.mm",
+        "size_bytes": 3228,
+        "sha256": "d23fbf951ae3ab93fa5c5bfd8c16128c263cdf89b37f04ef54c0b93bf71bbc13"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.dejavu",
+        "size_bytes": 2770,
+        "sha256": "53ccee972a18da8da08a92f9d0a86183b9929956106dfae25fd8d7996f192802"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.freefont",
+        "size_bytes": 1241,
+        "sha256": "1f953b86c8505ab5bf834f10d0c951d5c6842e8ddda27588b830854f34685ad0"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.kochi",
+        "size_bytes": 1873,
+        "sha256": "d909f9d43f3c9479613eca6736e3bfde17ed99b23ff27a0513befbc35cce2c14"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.latinmodern",
+        "size_bytes": 1456,
+        "sha256": "2bd69affc3da00715116f713f57eab9707e96daf3562ad0215987b15b9c16f73"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.liberation",
+        "size_bytes": 4938,
+        "sha256": "29068c8e53e4fa7c101ca3915d0a8bd5eed27ab253a4b257d9e2b1cb2506066d"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.noto-color-emoji",
+        "size_bytes": 5087,
+        "sha256": "3720722d2046accb40e1696f096b57c658b0b47d74031b3d114cf7545b840b3c"
+      },
+      {
+        "path": "vendor/WebKit/Tools/mangleme/LICENSE",
+        "size_bytes": 26436,
+        "sha256": "5df07007198989c622f5d41de8d703e7bef3d0e79d62e24332ee739a452af62a"
+      }
+    ],
+    "candidate_license_file_count": 35,
+    "required_files_present": [
+      "vendor/WebKit/Source/JavaScriptCore/COPYING.LIB",
+      "vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE.TXT"
+    ]
+  },
+  "validation": {
+    "source_closure_verified": true,
+    "cargo2rpm_inventory_verified": true,
+    "npm_source_declarations_inventoried": true,
+    "npm_supplied_license_texts_inventoried": true,
+    "native_license_files_inventoried": true,
+    "webkit_license_files_inventoried": true,
+    "network_used": false,
+    "final_npm_installed_closure_verified": false,
+    "final_linked_native_components_verified": false,
+    "webkit_linked_file_semantic_review_verified": false,
+    "fedora_allowed_spdx_verified": false,
+    "required_license_texts_verified": false,
+    "final_license_expression_verified": false,
+    "rpm_payload_license_verified": false
+  },
+  "scope": "provisional source-license inventory from Fedora cargo2rpm output, npm source declarations and supplied texts, and selected native/WebKit license files; not the final linked closure, aggregate License expression, license payload, bundled Provides, RPM, or Fedora bootstrap approval"
+}

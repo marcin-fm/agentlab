@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v1",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.19",
+  "rpm_release": "0.0.20",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-19",
   "source_generation": {
@@ -10,8 +10,8 @@
     "network_scope": "srpm-generation-only",
     "direct_sources": 23,
     "generated_sources": 2,
-    "packaging_sources": 2,
-    "declared_sources": 27,
+    "packaging_sources": 4,
+    "declared_sources": 29,
     "patches": 6,
     "canonical_closure_inputs": 299,
     "canonical_closure_sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0",
@@ -24,22 +24,32 @@
       "filename": "bun-1.3.14-lolhtml-cargo-vendor.tar.gz",
       "size_bytes": 4126499,
       "sha256": "299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57"
+    },
+    "source_license_inventory": {
+      "filename": "bun-1.3.14-source-license-inventory.json",
+      "size_bytes": 124370,
+      "sha256": "c647fadd798fa1f07d907a01d7e1547598538d56239b34bab9f3221933491eff"
+    },
+    "source_license_audit_script": {
+      "filename": "audit-bun-source-licenses",
+      "size_bytes": 16721,
+      "sha256": "2e1520b5f892f8e37da9a08f01284f3cad1e580f0c03efcbc4409381e0f70723"
     }
   },
   "spec": {
     "filename": "bun.spec",
-    "size_bytes": 22074,
-    "sha256": "681c493d7ec80d222c4ee6c93339b47755bdfbae8bbbf2ad4707f1a9287f2457"
+    "size_bytes": 23128,
+    "sha256": "cb0421ce5ab8b8dcc7726b4c51345a61ddcad7d5b36cae72c543e2c0c2f3cb5c"
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.19.fc44.src.rpm",
-    "size_bytes": 322305310,
-    "sha256": "1dd7044ad1c935fcc38b732057759622dda09bd2d4d26b46db6a7bd977a60fda",
+    "filename": "bun-1.3.14-0.0.20.fc44.src.rpm",
+    "size_bytes": 322330473,
+    "sha256": "84717c855d261b87c6e64a4a8b02b97703fd7d3178933dea9b601b2e76ae9fb3",
     "digest_check": "ok",
-    "inventory_members": 34,
-    "inventory_sha256": "ad470b7ba8c00ca976591708318a710e7a9b7bebf1a5c96b1c0712cfa06f857d",
-    "member_manifest_sha256": "59677c6651d9d2e5aa842a8803eb47c4462dda28e192a460afbaa027d7811cb2",
-    "uncompressed_member_bytes": 326650689
+    "inventory_members": 36,
+    "inventory_sha256": "9c49e7f30d787683c5140a83e75795c120d648b46202050a2cd8b19b56f2368e",
+    "member_manifest_sha256": "915a267877eb39d6fdfa6d5ada64d22ab944de92423a932ea0fc9c180d55c208",
+    "uncompressed_member_bytes": 326792834
   },
   "validation": {
     "direct_source_checksums_verified": true,

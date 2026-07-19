@@ -386,6 +386,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "curl --fail --location --retry 3")
     assert_includes(makefile, 'filename="$${fragment#/}"')
     assert_includes(makefile, "scripts/prepare-bun-srpm-sources")
+    assert_includes(makefile, "scripts/audit-bun-source-licenses")
     assert_includes(makefile, "dnf -y install ruby ruby-bundled-gems")
   end
 
@@ -1018,6 +1019,68 @@ class AgentlabTest < Minitest::Test
     )
   end
 
+  def test_validates_bun_source_license_inventory
+    package = Agentlab.package_named("bun")
+    plan = package.data.fetch("build_plan")
+    inventory = plan.fetch("source_inputs").fetch("source_license_inventory")
+    spec = File.read(File.join(package.directory, "bun.spec"))
+
+    assert_empty(
+      Agentlab.validate_bun_source_license_inventory(
+        package,
+        inventory,
+        plan.fetch("stages").fetch("dependency_closure"),
+        "1.3.14",
+        spec
+      )
+    )
+
+    invalid = inventory.merge("sha256" => "0" * 64)
+    assert_includes(
+      Agentlab.validate_bun_source_license_inventory(
+        package,
+        invalid,
+        plan.fetch("stages").fetch("dependency_closure"),
+        "1.3.14",
+        spec
+      ),
+      "bun: source-license inventory is missing or has wrong SHA-256"
+    )
+    assert_includes(
+      Agentlab.validate_bun_source_license_inventory(
+        package,
+        inventory,
+        plan.fetch("stages").fetch("dependency_closure"),
+        "1.3.14",
+        spec.sub("Source27:", "Removed27:")
+      ),
+      "bun: spec does not integrate the source-license inventory"
+    )
+
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(package.data))
+      copied_inventory = data.fetch("build_plan").fetch("source_inputs").fetch("source_license_inventory")
+      receipt_path = File.join(directory, copied_inventory.fetch("source"))
+      FileUtils.cp(File.join(package.directory, copied_inventory.fetch("source")), receipt_path)
+      mutated = JSON.parse(File.read(receipt_path))
+      mutated.fetch("validation")["final_license_expression_verified"] = true
+      mutated.fetch("webkit").fetch("candidate_license_files").first["path"] = "../escape"
+      File.write(receipt_path, JSON.pretty_generate(mutated) + "\n")
+      copied_inventory["sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      copied_package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_bun_source_license_inventory(
+        copied_package,
+        copied_inventory,
+        data.fetch("build_plan").fetch("stages").fetch("dependency_closure"),
+        "1.3.14",
+        spec
+      )
+      assert_includes(errors, "bun: source-license inventory overclaims completion")
+      assert_includes(errors, "bun: source-license WebKit file records mismatch")
+    end
+  end
+
   def test_validates_bun_minimized_webkit_source
     source_package = Agentlab.package_named("bun")
     Dir.mktmpdir do |directory|
@@ -1126,7 +1189,7 @@ class AgentlabTest < Minitest::Test
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-release-local-source-closure.json first-source-build-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
+      %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json first-source-build-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -1200,6 +1263,8 @@ class AgentlabTest < Minitest::Test
       FileUtils.cp(File.join(source_package.directory, kit_receipt_name), File.join(directory, kit_receipt_name))
       closure_name = data.dig("build_plan", "stages", "dependency_closure", "proof_receipt")
       FileUtils.cp(File.join(source_package.directory, closure_name), File.join(directory, closure_name))
+      inventory_name = data.dig("build_plan", "source_inputs", "source_license_inventory", "source")
+      FileUtils.cp(File.join(source_package.directory, inventory_name), File.join(directory, inventory_name))
       webkit = data.dig("build_plan", "source_inputs", "webkit", "jsc_only")
       %w[proof_receipt source_build_proof_receipt].each do |key|
         name = webkit.fetch(key)

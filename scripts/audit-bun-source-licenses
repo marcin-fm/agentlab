@@ -1,0 +1,372 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "shellwords"
+require "tempfile"
+
+module BunSourceLicenseAudit
+  class Error < StandardError; end
+
+  NATIVE_LICENSE_PATHS = {
+    "boringssl" => %w[LICENSE],
+    "brotli" => %w[LICENSE],
+    "cares" => %w[LICENSE.md],
+    "hdrhistogram" => %w[COPYING.txt LICENSE.txt],
+    "highway" => %w[LICENSE],
+    "libarchive" => %w[COPYING],
+    "libdeflate" => %w[COPYING],
+    "libjpeg-turbo" => %w[LICENSE.md],
+    "libspng" => %w[LICENSE],
+    "libwebp" => %w[COPYING],
+    "lolhtml" => %w[LICENSE],
+    "lshpack" => %w[LICENSE],
+    "lsqpack" => %w[LICENSE],
+    "lsquic" => %w[LICENSE LICENSE.chrome],
+    "mimalloc" => %w[LICENSE],
+    "picohttpparser" => %w[picohttpparser.c],
+    "tinycc" => %w[COPYING],
+    "zlib" => %w[LICENSE.md],
+    "zstd" => %w[COPYING LICENSE]
+  }.freeze
+  EXPECTED_NPM_DECLARATIONS = {
+    "(MIT AND BSD-3-Clause)" => 1,
+    "(MIT AND Zlib)" => 1,
+    "0BSD" => 1,
+    "<missing>" => 2,
+    "Apache-2.0" => 5,
+    "Artistic-2.0" => 1,
+    "BSD-2-Clause" => 1,
+    "BSD-3-Clause" => 5,
+    "ISC" => 10,
+    "MIT" => 207,
+    "MPL-2.0" => 2
+  }.freeze
+  LICENSE_BASENAME = /\A(?:licen[cs]e|copying|copyright|notice)(?:[._-].*)?\z/i
+
+  module_function
+
+  def wyhash11(input)
+    mask = (1 << 64) - 1
+    primes = [0xa0761d6478bd642f, 0xe7037ed1a0b428db, 0x8ebc6af09c88c6e3, 0x589965cc75374cc3, 0x1d8e4e27c47d124f]
+    bytes = input.b.bytes
+    raise Error, "unsupported long npm prerelease identifier: #{input}" if bytes.length > 8
+
+    read = lambda do |offset, length|
+      slice = bytes.slice(offset, length)
+      raise Error, "cannot read npm prerelease identifier bytes" unless slice&.length == length
+
+      slice.each_with_index.sum { |byte, index| byte << (index * 8) }
+    end
+    mum = lambda do |a, b|
+      product = (a & mask) * (b & mask)
+      ((product >> 64) ^ (product & mask)) & mask
+    end
+    mix0 = ->(a, b, seed) { mum.call(a ^ seed ^ primes[0], b ^ seed ^ primes[1]) }
+    value = case bytes.length
+            when 0 then 0
+            when 1 then mix0.call(read.call(0, 1), primes[4], 0)
+            when 2 then mix0.call(read.call(0, 2), primes[4], 0)
+            when 3 then mix0.call((read.call(0, 2) << 8) | read.call(2, 1), primes[4], 0)
+            when 4 then mix0.call(read.call(0, 4), primes[4], 0)
+            when 5 then mix0.call((read.call(0, 4) << 8) | read.call(4, 1), primes[4], 0)
+            when 6 then mix0.call((read.call(0, 4) << 16) | read.call(4, 2), primes[4], 0)
+            when 7 then mix0.call((read.call(0, 4) << 24) | (read.call(4, 2) << 8) | read.call(6, 1), primes[4], 0)
+            when 8 then mix0.call((read.call(0, 4) << 32) | read.call(4, 4), primes[4], 0)
+            end
+    mum.call(value ^ bytes.length, primes[4])
+  end
+
+  def source_cache_name(source, install_roots, semver_hashes)
+    if source.fetch("origin") == "registry"
+      version = source.fetch("source_version")
+      match = version.match(/\A(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+(.+))?\z/)
+      raise Error, "unsupported npm semver for Bun cache: #{version}" unless match
+
+      rendered = "#{match[1]}.#{match[2]}.#{match[3]}"
+      rendered += "-#{semver_hashes.fetch(match[4]).downcase}" if match[4]
+      rendered += "+#{semver_hashes.fetch(match[5]).upcase}" if match[5]
+      "#{source.fetch('source_name')}@#{rendered}@@@1"
+    else
+      reference = source.fetch("references").fetch(0)
+      root = install_roots.fetch(reference.fetch("install_root"))
+      resolution = root.fetch("sources").find do |record|
+        record.fetch("package_path") == reference.fetch("package_path") && record.fetch("origin") == "github"
+      end&.fetch("resolution")
+      match = resolution.to_s.match(/\Agithub:([^#]+)#([0-9a-f]+)\z/)
+      raise Error, "cannot derive Bun GitHub cache identity" unless match
+
+      "@GH@#{match[1].tr('/', '-')}-#{match[2]}@@@1"
+    end
+  end
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def file_record(path, root)
+    real = File.realpath(path)
+    root_real = File.realpath(root)
+    raise Error, "license path escapes source root: #{path}" unless real.start_with?("#{root_real}/")
+
+    {
+      "path" => real.delete_prefix("#{root_real}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def source_cache_names(closure)
+    sources = closure.dig("npm", "source_archives")
+    roots = closure.dig("npm", "install_roots").to_h { |record| [record.fetch("path"), record] }
+    parts = sources.filter_map do |source|
+      next unless source.fetch("origin") == "registry"
+
+      source.fetch("source_version").match(/\A\d+\.\d+\.\d+(?:-([^+]+))?(?:\+(.+))?\z/)&.captures
+    end.flatten.compact.uniq.sort
+    hashes = parts.to_h do |part|
+      [part, format("%016x", wyhash11(part))]
+    end
+    sources.to_h do |source|
+      [source.fetch("archive"), source_cache_name(source, roots, hashes)]
+    end
+  end
+
+  def license_file_records(package_root, source_root)
+    Dir.glob(File.join(package_root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+      file_record(path, source_root) if File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+    end.sort_by { |record| record.fetch("path") }
+  end
+
+  def npm_inventory(closure, cache_root, source_root)
+    cache_names = source_cache_names(closure)
+    records = closure.dig("npm", "source_archives").map do |source|
+      cache_name = cache_names.fetch(source.fetch("archive"))
+      package_root = File.join(cache_root, cache_name)
+      manifest_path = File.join(package_root, "package.json")
+      raise Error, "missing npm package manifest #{cache_name}" unless File.file?(manifest_path)
+
+      manifest = JSON.parse(File.read(manifest_path))
+      license_files = license_file_records(package_root, source_root)
+      {
+        "cache_name" => cache_name,
+        "name" => manifest.fetch("name"),
+        "version" => manifest["version"],
+        "license" => manifest["license"],
+        "legacy_licenses" => manifest["licenses"],
+        "license_files" => license_files
+      }
+    end.sort_by { |record| [record.fetch("name"), record["version"].to_s, record.fetch("cache_name")] }
+    raise Error, "expected 236 npm cache entries" unless records.length == 236
+
+    declarations = records.group_by do |record|
+      value = record["license"]
+      value.nil? ? "<missing>" : value.is_a?(String) ? value : JSON.generate(value)
+    end.transform_values(&:length).sort.to_h
+    raise Error, "npm license declaration inventory drifted" unless declarations == EXPECTED_NPM_DECLARATIONS
+
+    missing = records.select { |record| record["license"].nil? }.map do |record|
+      {
+        "cache_name" => record.fetch("cache_name"),
+        "name" => record.fetch("name"),
+        "version" => record["version"],
+        "legacy_licenses" => record["legacy_licenses"],
+        "license_files" => record.fetch("license_files")
+      }
+    end
+    {
+      "cache_entries" => records.length,
+      "license_declarations" => declarations,
+      "entries_with_supplied_license_text" => records.count { |record| record.fetch("license_files").any? },
+      "entries_without_supplied_license_text" => records.count { |record| record.fetch("license_files").empty? },
+      "missing_license_field" => missing,
+      "records" => records
+    }
+  end
+
+  def native_inventory(closure, source_root)
+    names = closure.fetch("native_github_sources").map { |record| record.fetch("name") }.sort
+    raise Error, "native license map does not match closure" unless names == NATIVE_LICENSE_PATHS.keys.sort
+
+    names.map do |name|
+      component_root = File.join(source_root, "vendor", name)
+      files = NATIVE_LICENSE_PATHS.fetch(name).map do |relative|
+        path = File.join(component_root, relative)
+        raise Error, "missing native license evidence #{name}/#{relative}" unless File.file?(path)
+
+        file_record(path, source_root)
+      end
+      {
+        "name" => name,
+        "source_identity" => File.read(File.join(component_root, ".ref")).strip,
+        "license_files" => files,
+        "license_selection" => name == "picohttpparser" ? {
+          "selected_expression" => "MIT",
+          "basis" => "complete MIT terms embedded in picohttpparser.c; the Perl-license alternative is not selected"
+        } : nil
+      }
+    end
+  end
+
+  def webkit_inventory(source_root)
+    webkit_root = File.join(source_root, "vendor", "WebKit")
+    files = Dir.glob(File.join(webkit_root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+      file_record(path, source_root) if File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+    end.sort_by { |record| record.fetch("path") }
+    required = %w[
+      vendor/WebKit/Source/JavaScriptCore/COPYING.LIB
+      vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE.TXT
+    ]
+    missing = required - files.map { |record| record.fetch("path") }
+    raise Error, "missing required WebKit license evidence: #{missing.join(', ')}" if missing.any?
+
+    {
+      "candidate_license_files" => files,
+      "candidate_license_file_count" => files.length,
+      "required_files_present" => required
+    }
+  end
+
+  def capture!(*command, chdir:, env: {})
+    stdout, stderr, status = Open3.capture3(env, *command, chdir: chdir)
+    raise Error, "command failed (#{command.shelljoin}): #{stderr.strip}" unless status.success?
+
+    stdout
+  end
+
+  def cargo_inventory(source_root, linked_vendor_count, linked_vendor_manifest_sha256)
+    cargo_root = File.join(source_root, "vendor", "lolhtml", "c-api")
+    summary = capture!("/usr/bin/cargo2rpm", "--path", "Cargo.toml", "license-summary", chdir: cargo_root, env: { "CARGO_NET_OFFLINE" => "true" })
+    breakdown = capture!("/usr/bin/cargo2rpm", "--path", "Cargo.toml", "license-breakdown", chdir: cargo_root, env: { "CARGO_NET_OFFLINE" => "true" })
+    normalized_breakdown = breakdown.lines.map(&:strip).reject(&:empty?).map do |line|
+      line.sub(/^(BSD-3-Clause: lol_html v2\.7\.2) \(.+\)$/, '\\1')
+    end.sort
+    summary_lines = summary.lines.map(&:strip).select { |line| line.start_with?("# ") }.map { |line| line.delete_prefix("# ") }
+    vendor_dirs = Dir.children(File.join(cargo_root, "cargo-vendor")).count do |entry|
+      File.directory?(File.join(cargo_root, "cargo-vendor", entry))
+    end
+    raise Error, "expected 43 Cargo vendor directories" unless vendor_dirs == 43
+    raise Error, "invalid lol-html linked vendor count" unless linked_vendor_count == 41
+    raise Error, "invalid lol-html linked vendor manifest" unless linked_vendor_manifest_sha256.to_s.match?(/\A[0-9a-f]{64}\z/)
+
+    {
+      "cargo2rpm_package" => capture!("rpm", "-qf", "--qf", "%{NAME}-%{VERSION}-%{RELEASE}\n", "/usr/bin/cargo2rpm", chdir: cargo_root).strip,
+      "manifest" => file_record(File.join(cargo_root, "Cargo.toml"), source_root),
+      "lockfile" => file_record(File.join(cargo_root, "Cargo.lock"), source_root),
+      "vendor_directory_count" => vendor_dirs,
+      "linked_vendor_package_count" => linked_vendor_count,
+      "linked_vendor_manifest_sha256" => linked_vendor_manifest_sha256,
+      "license_summary" => summary_lines,
+      "license_summary_sha256" => Digest::SHA256.hexdigest(summary_lines.join("\n") + "\n"),
+      "license_breakdown" => normalized_breakdown,
+      "license_breakdown_sha256" => Digest::SHA256.hexdigest(normalized_breakdown.join("\n") + "\n"),
+      "missing_local_declaration" => normalized_breakdown.grep(/\A: /)
+    }
+  end
+
+  def generate(source_root:, closure_path:, linked_vendor_count:, linked_vendor_manifest_sha256:, rpm_release:, audit_date:)
+    source_root = File.realpath(source_root)
+    closure_path = File.realpath(closure_path)
+    closure = JSON.parse(File.read(closure_path))
+    raise Error, "unexpected Bun release" unless closure.fetch("release") == "1.3.14"
+
+    npm_cache = File.join(source_root, ".build-tools", "bun-install-cache")
+    raise Error, "missing staged npm cache" unless Dir.exist?(npm_cache)
+
+    {
+      "schema" => "bun-source-license-inventory/v1",
+      "package" => "bun",
+      "release" => closure.fetch("release"),
+      "rpm_release" => rpm_release,
+      "audit_date" => audit_date,
+      "source_closure" => file_record(closure_path, File.dirname(closure_path)),
+      "bun_license" => file_record(File.join(source_root, "LICENSE.md"), source_root),
+      "cargo" => cargo_inventory(source_root, linked_vendor_count, linked_vendor_manifest_sha256),
+      "npm" => npm_inventory(closure, npm_cache, source_root),
+      "native" => native_inventory(closure, source_root),
+      "webkit" => webkit_inventory(source_root),
+      "validation" => {
+        "source_closure_verified" => true,
+        "cargo2rpm_inventory_verified" => true,
+        "npm_source_declarations_inventoried" => true,
+        "npm_supplied_license_texts_inventoried" => true,
+        "native_license_files_inventoried" => true,
+        "webkit_license_files_inventoried" => true,
+        "network_used" => false,
+        "final_npm_installed_closure_verified" => false,
+        "final_linked_native_components_verified" => false,
+        "webkit_linked_file_semantic_review_verified" => false,
+        "fedora_allowed_spdx_verified" => false,
+        "required_license_texts_verified" => false,
+        "final_license_expression_verified" => false,
+        "rpm_payload_license_verified" => false
+      },
+      "scope" => "provisional source-license inventory from Fedora cargo2rpm output, npm source declarations and supplied texts, and selected native/WebKit license files; not the final linked closure, aggregate License expression, license payload, bundled Provides, RPM, or Fedora bootstrap approval"
+    }
+  end
+
+  def write_json(path, data)
+    FileUtils.mkdir_p(File.dirname(path))
+    Tempfile.create([".bun-license-inventory-", ".json"], File.dirname(path)) do |file|
+      file.binmode
+      file.write(JSON.pretty_generate(data) + "\n")
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+
+  def main(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.banner = "Usage: scripts/audit-bun-source-licenses --source-root PATH --closure PATH --cargo-linked-count N --cargo-linked-manifest-sha256 SHA256 --rpm-release RELEASE --date YYYY-MM-DD [--output PATH | --check --receipt PATH]"
+      parser.on("--source-root PATH") { |value| options[:source_root] = value }
+      parser.on("--closure PATH") { |value| options[:closure] = value }
+      parser.on("--cargo-linked-count N", Integer) { |value| options[:linked_vendor_count] = value }
+      parser.on("--cargo-linked-manifest-sha256 SHA256") { |value| options[:linked_vendor_manifest_sha256] = value }
+      parser.on("--rpm-release RELEASE") { |value| options[:rpm_release] = value }
+      parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
+      parser.on("--output PATH") { |value| options[:output] = value }
+      parser.on("--check") { options[:check] = true }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+    end.parse!(argv)
+
+    %i[source_root closure linked_vendor_count linked_vendor_manifest_sha256 rpm_release audit_date].each do |key|
+      raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key]
+    end
+    Date.iso8601(options.fetch(:audit_date))
+    raise Error, "--output is required unless --check" unless options[:output] || options[:check]
+    raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
+    raise Error, "--receipt is only valid with --check" if options[:receipt] && !options[:check]
+
+    result = generate(
+      source_root: options.fetch(:source_root),
+      closure_path: options.fetch(:closure),
+      linked_vendor_count: options.fetch(:linked_vendor_count),
+      linked_vendor_manifest_sha256: options.fetch(:linked_vendor_manifest_sha256),
+      rpm_release: options.fetch(:rpm_release),
+      audit_date: options.fetch(:audit_date)
+    )
+    serialized = JSON.pretty_generate(result) + "\n"
+    if options[:check]
+      raise Error, "Bun source-license inventory differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized
+
+      puts "Verified Bun source-license inventory #{options.fetch(:receipt)}."
+    else
+      write_json(options.fetch(:output), result)
+      puts "Wrote Bun source-license inventory to #{options.fetch(:output)}."
+    end
+  rescue Date::Error, JSON::ParserError, KeyError, Errno::ENOENT, Error => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end
+
+BunSourceLicenseAudit.main(ARGV) if $PROGRAM_NAME == __FILE__

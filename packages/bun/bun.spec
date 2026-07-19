@@ -36,6 +36,8 @@
 %global lolhtml_source_identity 712928b3736f4aad
 %global release_local_closure_sha256 ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
 %global source_staging_helper_sha256 73f25a3a5e3640d749a69fa530d8fb0d2fcad93e1c8aa01460b829616a63aaaf
+%global source_license_inventory_sha256 c647fadd798fa1f07d907a01d7e1547598538d56239b34bab9f3221933491eff
+%global source_license_audit_script_sha256 2e1520b5f892f8e37da9a08f01284f3cad1e580f0c03efcbc4409381e0f70723
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -44,7 +46,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.19%{?dist}
+Release:        0.0.20%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -84,6 +86,10 @@ Source24:       bun-%{version}-lolhtml-cargo-vendor.tar.gz
 Source25:       bun-%{version}-release-local-source-closure.json
 # Fedora packaging helper that reconstructs Bun's offline source/cache layout.
 Source26:       bun-stage-release-local-sources
+# Provisional source-license inventory. Final linked-license claims remain blocked.
+Source27:       bun-%{version}-source-license-inventory.json
+# Reproduces and verifies Source27 against the actual prepared source tree.
+Source28:       audit-bun-source-licenses
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -148,7 +154,8 @@ Bun-pinned Zig fork without an external Zig executable, verifies and patches
 the checked minimized WebKit/JSC source, builds its static libraries with LLVM 21,
 and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
 three frozen npm installs are proven separately with networking unavailable.
-The RPM draft carries the complete checked dependency-source closure, stages
+The RPM draft carries the complete checked dependency-source closure and a
+provisional source-license inventory, stages
 the native dependency trees, Node.js headers, npm install cache, and vendored
 lol-html Cargo graph at Bun's production paths, and verifies the Cargo static
 library through Fedora macros. The source-built npm installs, final Bun build
@@ -182,6 +189,8 @@ echo "%{npm_sources_sha256}  %{SOURCE23}" | sha256sum -c -
 echo "%{cargo_vendor_sha256}  %{SOURCE24}" | sha256sum -c -
 echo "%{release_local_closure_sha256}  %{SOURCE25}" | sha256sum -c -
 echo "%{source_staging_helper_sha256}  %{SOURCE26}" | sha256sum -c -
+echo "%{source_license_inventory_sha256}  %{SOURCE27}" | sha256sum -c -
+echo "%{source_license_audit_script_sha256}  %{SOURCE28}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -226,6 +235,15 @@ ruby %{SOURCE26} \
   --expected-npm-file-bytes "%{npm_cache_file_bytes}"
 test -s .build-tools/release-local-source-staging.json
 test -s .build-tools/npm-cache-manifest.jsonl
+ruby %{SOURCE28} \
+  --source-root "$PWD" \
+  --closure "%{SOURCE25}" \
+  --cargo-linked-count 41 \
+  --cargo-linked-manifest-sha256 "%{cargo_vendor_manifest_sha256}" \
+  --rpm-release 0.0.20 \
+  --date 2026-07-19 \
+  --check \
+  --receipt "%{SOURCE27}"
 
 %build
 export HOME="$PWD/.build-home"
@@ -364,6 +382,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.20
+- Inventory the Cargo, npm, native, and WebKit source-license evidence.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.19
 - Stage the native, Node.js, and npm dependency sources for the offline build graph.
 

@@ -1209,8 +1209,8 @@ module Agentlab
     expected_counts = {
       "direct_sources" => 23,
       "generated_sources" => 2,
-      "packaging_sources" => 2,
-      "declared_sources" => 27,
+      "packaging_sources" => 4,
+      "declared_sources" => 29,
       "patches" => 6
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
@@ -1228,13 +1228,26 @@ module Agentlab
     }
     errors << "bun: source-delivery npm archive mismatch" unless generation["npm_archive"] == expected_npm
     errors << "bun: source-delivery Cargo archive mismatch" unless generation["cargo_archive"] == expected_cargo
+    license_inventory = package.data.dig("build_plan", "source_inputs", "source_license_inventory") || {}
+    expected_license_inventory = {
+      "filename" => license_inventory["source"],
+      "size_bytes" => File.file?(File.join(package.directory, license_inventory["source"].to_s)) ? File.size(File.join(package.directory, license_inventory["source"])) : nil,
+      "sha256" => license_inventory["sha256"]
+    }
+    errors << "bun: source-delivery license inventory mismatch" unless generation["source_license_inventory"] == expected_license_inventory
+    expected_license_audit_script = {
+      "filename" => license_inventory["audit_script_source"],
+      "size_bytes" => File.file?(script_path = File.join(ROOT, license_inventory["audit_script"].to_s)) ? File.size(script_path) : nil,
+      "sha256" => license_inventory["audit_script_sha256"]
+    }
+    errors << "bun: source-delivery license audit script mismatch" unless generation["source_license_audit_script"] == expected_license_audit_script
 
     srpm = receipt.fetch("srpm", {})
     errors << "bun: source-delivery SRPM filename mismatch" unless srpm["filename"] == "bun-#{version}-#{spec_release}.fc44.src.rpm"
     errors << "bun: source-delivery SRPM size is invalid" unless srpm["size_bytes"].is_a?(Integer) && srpm["size_bytes"].positive?
     errors << "bun: source-delivery SRPM SHA-256 is invalid" unless srpm["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: source-delivery SRPM digest check failed" unless srpm["digest_check"] == "ok"
-    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 34
+    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 36
     %w[inventory_sha256 member_manifest_sha256].each do |key|
       errors << "bun: source-delivery #{key} is invalid" unless srpm[key].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
@@ -1255,7 +1268,7 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source26 layout" unless source_indexes == (0..26).to_a
+    errors << "bun: spec does not declare the complete Source0-Source28 layout" unless source_indexes == (0..28).to_a
     npm_spec_filename = expected_npm["filename"].sub(version, "%{version}")
     cargo_spec_filename = expected_cargo["filename"].sub(version, "%{version}")
     errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source23:\s+#{Regexp.escape(npm_spec_filename)}$/)
@@ -1263,6 +1276,8 @@ module Agentlab
     staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
     errors << "bun: spec closure source filename mismatch" unless spec.match?(/^Source25:\s+#{Regexp.escape(staging["closure_source"].to_s.gsub(version, "%{version}"))}$/)
     errors << "bun: spec staging helper filename mismatch" unless spec.match?(/^Source26:\s+#{Regexp.escape(staging["helper_source"].to_s)}$/)
+    errors << "bun: spec source-license inventory filename mismatch" unless spec.match?(/^Source27:\s+#{Regexp.escape(license_inventory["source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec source-license audit script mismatch" unless spec.match?(/^Source28:\s+#{Regexp.escape(license_inventory["audit_script_source"].to_s)}$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -1406,6 +1421,7 @@ module Agentlab
       errors << "bun: dependency-staging #{key} is invalid" unless prep[key].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
     errors << "bun: dependency-staging prep log size is invalid" unless prep["log_size_bytes"].is_a?(Integer) && prep["log_size_bytes"].positive?
+    errors << "bun: dependency-staging source-license inventory was not checked" unless prep["source_license_inventory_check"] == true
     staged_receipt = prep["staging_receipt"] || {}
     errors << "bun: dependency-staging transient receipt SHA-256 is invalid" unless staged_receipt["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: dependency-staging transient receipt size is invalid" unless staged_receipt["size_bytes"].is_a?(Integer) && staged_receipt["size_bytes"].positive?
@@ -1464,6 +1480,134 @@ module Agentlab
     errors
   rescue JSON::ParserError, KeyError => e
     ["bun: invalid dependency-staging proof receipt: #{e.message}"]
+  end
+
+  def validate_bun_source_license_inventory(package, inventory, dependency_stage, version, spec)
+    return [] unless package.name == "bun" && inventory.is_a?(Hash)
+
+    receipt_name = inventory["source"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_sha256 = inventory["sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: source-license inventory is missing or has wrong SHA-256"]
+    end
+
+    errors = []
+    receipt = JSON.parse(File.read(receipt_path))
+    valid_file_record = lambda do |record|
+      next false unless record.is_a?(Hash) && record["path"].is_a?(String) && !record["path"].empty?
+
+      path = Pathname(record["path"])
+      path.relative? && path.each_filename.none? { |part| [".", ".."].include?(part) } &&
+        record["size_bytes"].is_a?(Integer) && record["size_bytes"].positive? &&
+        record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+    errors << "bun: unsupported source-license inventory schema" unless receipt["schema"] == "bun-source-license-inventory/v1"
+    errors << "bun: source-license inventory package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: source-license inventory release mismatch" unless receipt["release"].to_s == version
+    spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
+    errors << "bun: source-license inventory RPM release mismatch" unless receipt["rpm_release"] == spec_release
+    closure = receipt["source_closure"] || {}
+    errors << "bun: source-license inventory closure filename mismatch" unless closure["path"] == dependency_stage["proof_receipt"]
+    errors << "bun: source-license inventory closure SHA-256 mismatch" unless closure["sha256"] == dependency_stage["proof_receipt_sha256"]
+    errors << "bun: source-license Bun license record is invalid" unless valid_file_record.call(receipt["bun_license"])
+
+    script_path = File.join(ROOT, inventory["audit_script"].to_s)
+    unless File.file?(script_path) && inventory["audit_script_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(script_path).hexdigest == inventory["audit_script_sha256"]
+      errors << "bun: source-license audit script is missing or has wrong SHA-256"
+    end
+
+    cargo = receipt["cargo"] || {}
+    errors << "bun: source-license Cargo vendor count mismatch" unless cargo["vendor_directory_count"] == inventory["cargo_vendor_directories"]
+    errors << "bun: source-license Cargo summary mismatch" unless cargo["license_summary_sha256"] == inventory["cargo_license_summary_sha256"]
+    errors << "bun: source-license Cargo breakdown mismatch" unless cargo["license_breakdown_sha256"] == inventory["cargo_license_breakdown_sha256"]
+    errors << "bun: source-license Cargo linked count mismatch" unless cargo["linked_vendor_package_count"] == inventory["cargo_linked_packages"]
+    errors << "bun: source-license Cargo linked manifest mismatch" unless cargo["linked_vendor_manifest_sha256"] == inventory["cargo_linked_manifest_sha256"]
+    errors << "bun: source-license Cargo local declaration gap mismatch" unless cargo["missing_local_declaration"] == [": lol_html_c_api v1.3.1"]
+    errors << "bun: source-license Cargo manifest record is invalid" unless valid_file_record.call(cargo["manifest"])
+    errors << "bun: source-license Cargo lockfile record is invalid" unless valid_file_record.call(cargo["lockfile"])
+
+    npm = receipt["npm"] || {}
+    errors << "bun: source-license npm cache count mismatch" unless npm["cache_entries"] == inventory["npm_cache_entries"]
+    errors << "bun: source-license npm text count mismatch" unless npm["entries_with_supplied_license_text"] == inventory["npm_entries_with_license_text"]
+    errors << "bun: source-license npm missing-text count mismatch" unless npm["entries_without_supplied_license_text"] == inventory["npm_entries_without_license_text"]
+    expected_declarations = {
+      "(MIT AND BSD-3-Clause)" => 1,
+      "(MIT AND Zlib)" => 1,
+      "0BSD" => 1,
+      "<missing>" => 2,
+      "Apache-2.0" => 5,
+      "Artistic-2.0" => 1,
+      "BSD-2-Clause" => 1,
+      "BSD-3-Clause" => 5,
+      "ISC" => 10,
+      "MIT" => 207,
+      "MPL-2.0" => 2
+    }
+    errors << "bun: source-license npm declaration inventory mismatch" unless npm["license_declarations"] == expected_declarations
+    npm_records = Array(npm["records"])
+    errors << "bun: source-license npm record count mismatch" unless npm_records.length == inventory["npm_cache_entries"]
+    errors << "bun: source-license npm cache identities are not unique" unless npm_records.map { |record| record["cache_name"] }.uniq.length == npm_records.length
+    npm_file_records = npm_records.flat_map { |record| Array(record["license_files"]) }
+    errors << "bun: source-license npm file record is invalid" unless npm_file_records.all? { |record| valid_file_record.call(record) && record["path"].start_with?(".build-tools/bun-install-cache/") }
+    errors << "bun: source-license npm declaration-gap count mismatch" unless Array(npm["missing_license_field"]).length == inventory["npm_missing_license_fields"]
+    errors << "bun: source-license npm declaration gaps lack supplied texts" unless Array(npm["missing_license_field"]).all? { |record| Array(record["license_files"]).any? }
+    errors << "bun: source-license npm declaration gaps mismatch" unless Array(npm["missing_license_field"]).map { |record| record["name"] }.sort == %w[bun-tracestrings console-browserify]
+    native = Array(receipt["native"])
+    errors << "bun: source-license native component count mismatch" unless native.length == inventory["native_components"]
+    errors << "bun: source-license native component lacks evidence" unless native.all? { |record| Array(record["license_files"]).any? && Array(record["license_files"]).all? { |file| valid_file_record.call(file) } }
+    errors << "bun: source-license native component identities are not unique" unless native.map { |record| record["name"] }.uniq.length == native.length
+    pico = native.find { |record| record["name"] == "picohttpparser" }
+    errors << "bun: source-license picohttpparser selection mismatch" unless pico&.dig("license_selection", "selected_expression") == inventory["picohttpparser_selected_license"]
+    webkit = receipt["webkit"] || {}
+    errors << "bun: source-license WebKit candidate count mismatch" unless webkit["candidate_license_file_count"] == inventory["webkit_candidate_license_files"]
+    webkit_files = Array(webkit["candidate_license_files"])
+    errors << "bun: source-license WebKit file records mismatch" unless webkit_files.length == inventory["webkit_candidate_license_files"] && webkit_files.all? { |record| valid_file_record.call(record) && record["path"].start_with?("vendor/WebKit/") }
+    errors << "bun: source-license WebKit required files mismatch" unless webkit["required_files_present"] == %w[vendor/WebKit/Source/JavaScriptCore/COPYING.LIB vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE.TXT]
+
+    true_validation = %w[
+      source_closure_verified
+      cargo2rpm_inventory_verified
+      npm_source_declarations_inventoried
+      npm_supplied_license_texts_inventoried
+      native_license_files_inventoried
+      webkit_license_files_inventoried
+    ]
+    errors << "bun: source-license inventory validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
+    false_validation = %w[
+      network_used
+      final_npm_installed_closure_verified
+      final_linked_native_components_verified
+      webkit_linked_file_semantic_review_verified
+      fedora_allowed_spdx_verified
+      required_license_texts_verified
+      final_license_expression_verified
+      rpm_payload_license_verified
+    ]
+    errors << "bun: source-license inventory overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
+    errors << "bun: source-license inventory metadata overclaims final closure" unless inventory["final_linked_closure_verified"] == false
+    errors << "bun: source-license inventory metadata overclaims final expression" unless inventory["final_license_expression_verified"] == false
+    errors << "bun: source-license inventory metadata overclaims required texts" unless inventory["required_license_texts_verified"] == false
+
+    required_spec_fragments = [
+      "%global source_license_inventory_sha256 #{expected_sha256}",
+      "%global source_license_audit_script_sha256 #{inventory['audit_script_sha256']}",
+      "Source27:       #{receipt_name.sub(version, "%{version}")}",
+      "Source28:       #{inventory['audit_script_source']}",
+      "echo \"%{source_license_inventory_sha256}  %{SOURCE27}\" | sha256sum -c -",
+      "echo \"%{source_license_audit_script_sha256}  %{SOURCE28}\" | sha256sum -c -",
+      "ruby %{SOURCE28}",
+      "--cargo-linked-count 41",
+      "--cargo-linked-manifest-sha256 \"%{cargo_vendor_manifest_sha256}\"",
+      "--check",
+      "--receipt \"%{SOURCE27}\""
+    ]
+    errors << "bun: spec does not integrate the source-license inventory" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
+    errors
+  rescue JSON::ParserError, KeyError => e
+    ["bun: invalid source-license inventory: #{e.message}"]
   end
 
   def validate_bun_minimized_webkit_source(package, webkit, version, spec)
@@ -1716,6 +1860,7 @@ module Agentlab
     lolhtml = source_inputs.is_a?(Hash) && source_inputs["lolhtml"]
     npm_lock = source_inputs.is_a?(Hash) && source_inputs["npm_lock"]
     release_local_staging = source_inputs.is_a?(Hash) && source_inputs["release_local_staging"]
+    source_license_inventory = source_inputs.is_a?(Hash) && source_inputs["source_license_inventory"]
     build_graph = source_inputs.is_a?(Hash) && source_inputs["build_graph"]
     seed = source_inputs.is_a?(Hash) && source_inputs["bootstrap_seed"]
 
@@ -1742,6 +1887,7 @@ module Agentlab
     errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
     errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
     errors.concat(validate_bun_dependency_staging(package, stages["dependency_staging"], stages["source_delivery"], stages["dependency_closure"], release_local_staging, version, spec))
+    errors.concat(validate_bun_source_license_inventory(package, source_license_inventory, stages["dependency_closure"], version, spec))
 
     if seed.is_a?(Hash)
       errors << "bun: seed source must match the Bun release" unless seed["release_pin"] == "bun-v#{version}"

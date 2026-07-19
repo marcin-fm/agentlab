@@ -30,6 +30,7 @@ srpm:
 	case "$$(basename "$(spec)")" in \
 		bun.spec) \
 			command -v ruby >/dev/null 2>&1 || dnf -y install ruby ruby-bundled-gems; \
+			install -pm0755 "$(repo_root)/scripts/audit-bun-source-licenses" "$$(dirname "$(spec)")/audit-bun-source-licenses"; \
 			ruby "$(repo_root)/scripts/prepare-bun-srpm-sources" --spec "$(spec)"; \
 			;; \
 	esac
