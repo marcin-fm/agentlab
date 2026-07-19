@@ -1,0 +1,201 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "rbconfig"
+require "tempfile"
+require "tmpdir"
+require "uri"
+require_relative "lib/agentlab"
+
+def run!(*argv)
+  stdout, stderr, status = Open3.capture3(*argv)
+  $stdout.write(stdout)
+  $stderr.write(stderr)
+  return if status.success?
+
+  raise Agentlab::Error, "command failed: #{Agentlab.command_string(argv)}"
+end
+
+def source_filename(value)
+  url, fragment = value.split("#", 2)
+  return fragment.delete_prefix("/") if fragment&.start_with?("/")
+
+  File.basename(URI(url).path)
+rescue URI::InvalidURIError
+  raise Agentlab::Error, "invalid Bun source URL #{value.inspect}"
+end
+
+def expanded_sources(spec)
+  stdout, stderr, status = Open3.capture3("rpmspec", "-P", spec)
+  raise Agentlab::Error, "cannot expand #{spec}: #{stderr.strip}" unless status.success?
+
+  stdout.each_line.each_with_object({}) do |line, sources|
+    match = line.match(/\ASource(?<index>\d*):\s+(?<value>\S+)/)
+    next unless match
+
+    index = match[:index].empty? ? 0 : Integer(match[:index], 10)
+    raise Agentlab::Error, "duplicate Source#{index} in #{spec}" if sources.key?(index)
+
+    sources[index] = match[:value]
+  end
+end
+
+def verify_file!(path, sha256:, size_bytes: nil)
+  raise Agentlab::Error, "missing Bun SRPM source #{path}" unless File.file?(path)
+  raise Agentlab::Error, "refusing symlinked Bun SRPM source #{path}" if File.symlink?(path)
+  if size_bytes && File.size(path) != size_bytes
+    raise Agentlab::Error, "Bun SRPM source size mismatch: #{File.basename(path)}"
+  end
+  unless Digest::SHA256.file(path).hexdigest == sha256
+    raise Agentlab::Error, "Bun SRPM source checksum mismatch: #{File.basename(path)}"
+  end
+end
+
+def atomic_copy(source, destination)
+  Tempfile.create([".bun-srpm-source-", ".tmp"], File.dirname(destination)) do |file|
+    file.binmode
+    File.open(source, "rb") { |input| IO.copy_stream(input, file) }
+    file.flush
+    file.fsync
+    File.chmod(0o644, file.path)
+    File.rename(file.path, destination)
+  end
+end
+
+begin
+package = Agentlab.package_named("bun")
+version = package.upstream.fetch("current_version").to_s
+spec = nil
+jobs = 4
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/prepare-bun-srpm-sources --spec PATH [options]"
+  parser.on("--spec PATH", "Expanded Bun spec source directory") { |path| spec = path }
+  parser.on("--jobs N", Integer, "Concurrent npm/Cargo downloads (1-4)") { |value| jobs = value }
+end.parse!
+
+raise Agentlab::Error, "--spec is required" unless spec
+raise Agentlab::Error, "--jobs must be between 1 and 4" unless (1..4).cover?(jobs)
+
+spec = File.realpath(spec)
+raise Agentlab::Error, "Bun source preparer requires bun.spec" unless File.basename(spec) == "bun.spec"
+specdir = File.dirname(spec)
+dependency_stage = package.data.fetch("build_plan").fetch("stages").fetch("dependency_closure")
+source_inputs = package.data.fetch("build_plan").fetch("source_inputs")
+closure_path = File.join(package.directory, dependency_stage.fetch("proof_receipt"))
+closure_bytes = File.binread(closure_path)
+unless Digest::SHA256.hexdigest(closure_bytes) == dependency_stage.fetch("proof_receipt_sha256")
+  raise Agentlab::Error, "checked Bun source closure does not match package metadata"
+end
+closure = JSON.parse(closure_bytes)
+native_sources = Array(closure.fetch("native_github_sources")).sort_by { |record| [record.fetch("name"), record.fetch("archive")] }
+node_source = closure.fetch("node_headers")
+
+bun_url = package.upstream.fetch("source_url_template").gsub("{version}", version)
+zig = source_inputs.fetch("zig")
+zig_filename = "bun-#{version}-zig-#{zig.fetch('commit')}.tar.gz"
+webkit = source_inputs.fetch("webkit").fetch("jsc_only")
+npm_filename = dependency_stage.fetch("npm_source_archive_filename")
+cargo_filename = dependency_stage.fetch("cargo_vendor_archive_filename")
+expected_sources = {
+  0 => bun_url,
+  1 => "#{zig.fetch('url')}#/#{zig_filename}",
+  2 => webkit.fetch("archive_url")
+}
+native_sources.each_with_index do |source, offset|
+  expected_sources[offset + 3] = "#{source.fetch('url')}#/#{source.fetch('archive')}"
+end
+expected_sources[22] = "#{node_source.fetch('url')}#/#{node_source.fetch('archive')}"
+expected_sources[23] = npm_filename
+expected_sources[24] = cargo_filename
+actual_sources = expanded_sources(spec)
+unless actual_sources == expected_sources
+  raise Agentlab::Error, "bun.spec Source declarations do not match the checked SRPM source layout"
+end
+
+direct_identities = [
+  [0, package.upstream.fetch("source_sha256"), nil],
+  [1, zig.fetch("sha256"), nil],
+  [2, webkit.fetch("sha256"), webkit.fetch("archive_size_bytes")]
+]
+(native_sources + [node_source]).each_with_index do |source, offset|
+  direct_identities << [offset + 3, source.fetch("sha256"), source.fetch("size_bytes")]
+end
+direct_identities.each do |index, sha256, size_bytes|
+  verify_file!(
+    File.join(specdir, source_filename(actual_sources.fetch(index))),
+    sha256: sha256,
+    size_bytes: size_bytes
+  )
+end
+
+Dir.mktmpdir("agentlab-bun-srpm-preparation-", "/srv/tmp") do |temporary|
+  cache_dir = File.join(temporary, "cache")
+  FileUtils.mkdir_p(%w[archives npm cargo].map { |directory| File.join(cache_dir, directory) })
+  File.write(File.join(cache_dir, ".agentlab-bun-release-local-sources"), "agentlab bun release-local source acquisition\n")
+  (native_sources + [node_source]).each do |source|
+    atomic_copy(File.join(specdir, source.fetch("archive")), File.join(cache_dir, "archives", source.fetch("archive")))
+  end
+
+  source_parent = File.join(temporary, "source")
+  FileUtils.mkdir_p(source_parent)
+  run!(
+    "tar", "--extract", "--gzip", "--no-same-owner",
+    "--file", File.join(specdir, source_filename(actual_sources.fetch(0))),
+    "--directory", source_parent
+  )
+  source_dir = File.join(source_parent, "bun-bun-v#{version}")
+  raise Agentlab::Error, "Bun Source0 has an unexpected archive root" unless File.directory?(source_dir)
+
+  generated_closure = File.join(temporary, "release-local-source-closure.json")
+  run!(
+    RbConfig.ruby,
+    File.join(File.dirname(__FILE__), "acquire-bun-release-local-sources"),
+    "--source-dir", source_dir,
+    "--workdir", cache_dir,
+    "--output", generated_closure,
+    "--jobs", jobs.to_s
+  )
+  unless File.binread(generated_closure) == closure_bytes
+    raise Agentlab::Error, "regenerated Bun source closure differs from the checked receipt"
+  end
+
+  output_dir = File.join(temporary, "output")
+  receipt_path = File.join(temporary, "bun-srpm-source-bundles.json")
+  run!(
+    RbConfig.ruby,
+    File.join(File.dirname(__FILE__), "materialize-bun-srpm-sources"),
+    "--cache-dir", cache_dir,
+    "--output-dir", output_dir,
+    "--receipt", receipt_path,
+    "--workdir", File.join(temporary, "materializer"),
+    "--roles", "npm,cargo"
+  )
+
+  generated_identities = {
+    npm_filename => {
+      sha256: dependency_stage.fetch("npm_source_archive_sha256"),
+      size_bytes: dependency_stage.fetch("npm_source_archive_bytes")
+    },
+    cargo_filename => {
+      sha256: dependency_stage.fetch("cargo_vendor_archive_sha256"),
+      size_bytes: dependency_stage.fetch("cargo_vendor_archive_bytes")
+    }
+  }
+  generated_identities.each do |filename, identity|
+    source = File.join(output_dir, filename)
+    verify_file!(source, **identity)
+    atomic_copy(source, File.join(specdir, filename))
+  end
+end
+
+puts "Prepared and verified Bun #{version} npm and Cargo SRPM sources in #{specdir}."
+rescue Agentlab::Error, JSON::ParserError, KeyError, Errno::ENOENT => e
+  warn "error: #{e.message}"
+  exit 1
+end

@@ -385,6 +385,8 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, 'rpmspec -P "$(spec)"')
     assert_includes(makefile, "curl --fail --location --retry 3")
     assert_includes(makefile, 'filename="$${fragment#/}"')
+    assert_includes(makefile, "scripts/prepare-bun-srpm-sources")
+    assert_includes(makefile, "dnf -y install ruby ruby-bundled-gems")
   end
 
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions
@@ -905,6 +907,28 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
       assert_includes(errors, "bun: dependency-closure proof hosted local-source record")
     end
+  end
+
+  def test_validates_bun_source_delivery_receipt
+    package = Agentlab.package_named("bun")
+    stages = package.data.fetch("build_plan").fetch("stages")
+    spec = File.read(File.join(package.directory, "bun.spec"))
+
+    assert_empty(
+      Agentlab.validate_bun_source_delivery(
+        package,
+        stages.fetch("source_delivery"),
+        stages.fetch("dependency_closure"),
+        "1.3.14",
+        spec
+      )
+    )
+
+    invalid_stage = stages.fetch("source_delivery").merge("proof_receipt_sha256" => "0" * 64)
+    assert_includes(
+      Agentlab.validate_bun_source_delivery(package, invalid_stage, stages.fetch("dependency_closure"), "1.3.14", spec),
+      "bun: source-delivery proof receipt is missing or has wrong SHA-256"
+    )
   end
 
   def test_validates_bun_minimized_webkit_source

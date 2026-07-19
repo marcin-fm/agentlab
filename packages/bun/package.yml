@@ -1,9 +1,9 @@
 name: bun
 status: blocked
 blockers:
-  - The 20 checked native and Node.js archives are not yet declared as direct immutable RPM sources.
-  - The checked npm source bundle and lol-html Cargo vendor archive are not integrated as generated RPM sources.
+  - The complete checked dependency closure is carried by the SRPM but is not yet staged into Bun's final offline build graph.
   - The complete LGPL relink kit is not generated and shipped from the final RPM build.
+  - Final bundled-license accounting, aarch64 build proof, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
   provider: github
   repository: oven-sh/bun
@@ -184,6 +184,9 @@ build_plan:
       npm_node_fallbacks_installed_packages: 121
       selected_lolhtml_cargo_packages: 45
       selected_lolhtml_cargo_crates: 43
+      npm_source_archive_filename: bun-1.3.14-npm-sources.tar.gz
+      npm_source_archive_bytes: 30078643
+      npm_source_archive_sha256: 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
       cargo_vendor_manifest: lolhtml-cargo-vendor.txt
       cargo_vendor_manifest_sha256: 7728706170a520d53a1f33e4814f0abcf07edd5ea69db5af623a8a0579edcd5b
       cargo_vendor_archive_filename: bun-1.3.14-lolhtml-cargo-vendor.tar.gz
@@ -199,6 +202,18 @@ build_plan:
       cargo_build_proof_receipt_sha256: 05785f79c560ce5953500acc7c9dea283a53b18240e59b62c84f57ab02eb5cce
       npm_install_proof_receipt: npm-offline-install-proof.json
       npm_install_proof_receipt_sha256: 61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f
+    source_delivery:
+      state: verified
+      proof_receipt: srpm-source-delivery-proof.json
+      proof_receipt_sha256: c097517dadec87b2b3d5eafe606979bd99ef220393a7fc72982db5ed7a29d99e
+      direct_source_checksums_verified: true
+      canonical_closure_regenerated_verified: true
+      canonical_closure_byte_identity_verified: true
+      generated_source_checksums_verified: true
+      deterministic_materialization_verified: true
+      srpm_built_verified: true
+      srpm_inventory_verified: true
+      source_members_byte_identical_verified: true
     seed_build:
       state: verified
       bootstrap_seed_verified: true

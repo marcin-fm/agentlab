@@ -1,0 +1,55 @@
+{
+  "schema": "bun-srpm-source-delivery/v1",
+  "package": "bun",
+  "release": "1.3.14",
+  "rpm_release": "0.0.17",
+  "proof_platform": "fedora-44-x86_64",
+  "proof_date": "2026-07-19",
+  "source_generation": {
+    "method": "copr-git-scm-make_srpm",
+    "network_scope": "srpm-generation-only",
+    "direct_sources": 23,
+    "generated_sources": 2,
+    "declared_sources": 25,
+    "patches": 6,
+    "canonical_closure_inputs": 299,
+    "canonical_closure_sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0",
+    "npm_archive": {
+      "filename": "bun-1.3.14-npm-sources.tar.gz",
+      "size_bytes": 30078643,
+      "sha256": "38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f"
+    },
+    "cargo_archive": {
+      "filename": "bun-1.3.14-lolhtml-cargo-vendor.tar.gz",
+      "size_bytes": 4126499,
+      "sha256": "299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57"
+    }
+  },
+  "spec": {
+    "filename": "bun.spec",
+    "size_bytes": 18230,
+    "sha256": "989da13ec04131347104bfc7762dc15e1b15425fe743164392796f83c373f241"
+  },
+  "srpm": {
+    "filename": "bun-1.3.14-0.0.17.fc44.src.rpm",
+    "size_bytes": 322184174,
+    "sha256": "7984d0fced0c103d3642e03a93cfd57afc31a8259054ce23ea0f2b0c0e1c1f86",
+    "digest_check": "ok",
+    "inventory_members": 32,
+    "inventory_sha256": "0d47854281710d42af689e0f377908f239da584c42b0ac72f068a9425b0cc93d",
+    "member_manifest_sha256": "57ad684ad5080d2339dfb57d64a032844e37100a8f51dd98da8cf46eb16eaf56",
+    "uncompressed_member_bytes": 326174335
+  },
+  "validation": {
+    "direct_source_checksums_verified": true,
+    "canonical_closure_regenerated_verified": true,
+    "canonical_closure_byte_identity_verified": true,
+    "generated_source_checksums_verified": true,
+    "deterministic_materialization_verified": true,
+    "srpm_built": true,
+    "srpm_inventory_verified": true,
+    "source_members_byte_identical": true,
+    "rpm_build_executed": false,
+    "rpm_installed": false
+  }
+}

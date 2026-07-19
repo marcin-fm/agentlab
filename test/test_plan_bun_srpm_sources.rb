@@ -22,7 +22,7 @@ class PlanBunSrpmSourcesTest < Minitest::Test
     assert_equal("bun-srpm-source-plan/v1", plan["schema"])
     assert_equal("1.3.14", plan["release"])
     assert_equal("copr-git-scm-make_srpm", plan.dig("delivery", "planned_method"))
-    assert_equal("planned", plan.dig("delivery", "implementation_state"))
+    assert_equal("verified", plan.dig("delivery", "implementation_state"))
     assert_equal("srpm-generation-only", plan.dig("delivery", "planned_network_scope"))
     refute(plan.dig("delivery", "target_build_network_allowed"))
     refute(plan.dig("delivery", "external_generated_artifact_host_required_by_design"))
@@ -35,8 +35,8 @@ class PlanBunSrpmSourcesTest < Minitest::Test
       },
       plan.dig("delivery", "source_layout")
     )
-    refute(plan.dig("delivery", "make_srpm_materializer_integrated"))
-    refute(plan.dig("delivery", "make_srpm_checksum_verification_integrated"))
+    assert(plan.dig("delivery", "make_srpm_materializer_integrated"))
+    assert(plan.dig("delivery", "make_srpm_checksum_verification_integrated"))
     assert_equal({ "native" => 19, "node" => 1, "npm" => 236, "cargo" => 43 }, plan.fetch("input_summary").slice("native", "node", "npm", "cargo"))
     assert_equal(23, plan.fetch("direct_sources").length)
     assert_equal(19, plan.fetch("direct_sources").count { |source| source.fetch("role") == "native-source" })
@@ -71,10 +71,10 @@ class PlanBunSrpmSourcesTest < Minitest::Test
     assert_equal([], plan.dig("delivery", "architecture_scoped_outputs"))
     assert(plan.dig("validation", "webkit_spec_integrated"))
     assert(plan.dig("validation", "fedora_source_layout_selected"))
-    refute(plan.dig("validation", "generated_sources_materialized"))
-    refute(plan.dig("validation", "delivery_implementation_verified"))
-    refute(plan.dig("validation", "bun_spec_integrated"))
-    refute(plan.dig("validation", "srpm_built"))
+    assert(plan.dig("validation", "generated_sources_materialized"))
+    assert(plan.dig("validation", "delivery_implementation_verified"))
+    assert(plan.dig("validation", "bun_spec_integrated"))
+    assert(plan.dig("validation", "srpm_built"))
   end
 
   def test_check_mode_reports_the_bound_closure

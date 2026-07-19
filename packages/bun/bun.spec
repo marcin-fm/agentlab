@@ -8,10 +8,32 @@
 %global webkit_commit 5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b
 %global webkit_source_tag bun-sources-%{version}-webkit-5488984d20e0
 %global webkit_sha256 38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d
+%global boringssl_sha256 a414b1d105fef105697b7428c0be5f7fc67489849eaa276931ae8344d78a99b8
+%global brotli_sha256 e720a6ca29428b803f4ad165371771f5398faba397edf6778837a18599ea13ff
+%global cares_sha256 8c94116cb366ae4a44e487da4d9f7e736287d329efa6f88fdf077cd2d0a2e4b8
+%global hdrhistogram_sha256 811c5e5ae5303a75ade50688880af6aad5d2f951ec5785f68186bd18635cdfc9
+%global highway_sha256 741d705781e0b3e406beda8f1f994fbae01321237ce8023a1ad90fbaf7940c25
+%global libarchive_sha256 042f0efe7147063ff9ba10f1a38ed080e949bcbd04bdbf3592b8846dd11b1da2
+%global libdeflate_sha256 1e5cc06bdbf3e1245d8b89c9e3588f507e3c8bc53fe8b8229770a9e8661dea81
+%global libjpeg_turbo_sha256 440f3a94390c78eab88f74b92944d2f6b248e592e984412e389885dfb5796bf0
+%global libspng_sha256 d656813290d70a750b69e768323ff3b3875adf8c2e8c2fdb4e57ca1467abf86a
+%global libwebp_sha256 76fb89b4454ff2161bb0cca2cf832e19b8b4001b0ef42fbcc2b4a437c945b2b6
+%global lolhtml_sha256 2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379
+%global lshpack_sha256 07d8bf901bb1b15543f38eabd23938519e1210eebadb52f3d651d6ef130ef973
+%global lsqpack_sha256 e9d8abe5b7c1e35b9908a9521e2acd7c1d17547babc01d73c7297e02aebbcc2d
+%global lsquic_sha256 f8cb90fb327eb91597c23163bf596c0d1882560be35b661d9ba84891cc461735
+%global mimalloc_sha256 d98b7f315f16b82cd43b7e36a7e1f73ceae9422f8bba8ebb99899c78a54277fc
+%global picohttpparser_sha256 637ff2ab6f5c7f7e05a5b5dc393d5cf2fea8d4754fcaceaaf935ffff5c1323ee
+%global tinycc_sha256 6b50485fcbbfa90a99c56e8e2b6a92014dcd34377d5edb23e1938dc9ec96f0aa
+%global zlib_sha256 a0d2a5d122c84b56a793a1553a9c3327fb2eb7469bf7a86b79e3c7be5d92e8d6
+%global zstd_sha256 4b0bd1f0cfb25e61b9103c35f27395530ff5b4c0d2513a00fd745849e85ea52c
+%global node_headers_sha256 045e9bf477cd5db0ec67f8c1a63ba7f784dedfe2c581e3d0ed09b88e9115dd07
+%global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
+%global cargo_vendor_sha256 299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.16%{?dist}
+Release:        0.0.17%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -19,10 +41,34 @@ License:        MIT AND LGPL-2.0-only AND LGPL-2.1-only AND Apache-2.0 AND BSD-2
 URL:            https://bun.com
 Source0:        https://github.com/oven-sh/bun/archive/refs/tags/bun-v%{version}.tar.gz
 Source1:        https://codeload.github.com/oven-sh/zig/tar.gz/%{zig_commit}#/%{name}-%{version}-zig-%{zig_commit}.tar.gz
-# GitHub codeload returns HTTP 422 for this repository. Generate the checked
-# This immutable release asset is generated from the complete pinned archive by
+# GitHub codeload returns HTTP 422 for this repository. This immutable release
+# asset is generated from the complete pinned archive by
 # scripts/package-bun-webkit-source. The package receipt binds both identities.
 Source2:        https://github.com/marcin-fm/agentlab/releases/download/%{webkit_source_tag}/WebKit-%{webkit_commit}-jsc.tar.gz
+Source3:        https://github.com/oven-sh/boringssl/archive/0c5fce43b7ed5eb6001487ee48ac65766f5ddcd1.tar.gz#/boringssl-5e15ff9594809574.tar.gz
+Source4:        https://github.com/google/brotli/archive/v1.1.0.tar.gz#/brotli-723494d4c3a9902a.tar.gz
+Source5:        https://github.com/c-ares/c-ares/archive/3ac47ee46edd8ea40370222f91613fc16c434853.tar.gz#/cares-4e43539b43c0f4ae.tar.gz
+Source6:        https://github.com/HdrHistogram/HdrHistogram_c/archive/be60a9987ee48d0abf0d7b6a175bad8d6c1585d1.tar.gz#/hdrhistogram-97084f213075a65e.tar.gz
+Source7:        https://github.com/google/highway/archive/2607d3b5b0113992fe84d3848859eae13b3b52c1.tar.gz#/highway-b2dcc6002e95cc47.tar.gz
+Source8:        https://github.com/libarchive/libarchive/archive/ded82291ab41d5e355831b96b0e1ff49e24d8939.tar.gz#/libarchive-4296b191210d6b1b.tar.gz
+Source9:        https://github.com/ebiggers/libdeflate/archive/c8c56a20f8f621e6a966b716b31f1dedab6a41e3.tar.gz#/libdeflate-ce0e2d9805b30dcc.tar.gz
+Source10:       https://github.com/libjpeg-turbo/libjpeg-turbo/archive/e352b02f794f701407b39af08576035ba3360d60.tar.gz#/libjpeg-turbo-297099166a01f75e.tar.gz
+Source11:       https://github.com/randy408/libspng/archive/fb768002d4288590083a476af628e51c3f1d47cd.tar.gz#/libspng-e6aca86c593b51ad.tar.gz
+Source12:       https://github.com/webmproject/libwebp/archive/b7e29b9d75bd31422b00c2a446d49d7af06c328d.tar.gz#/libwebp-2ced709f169b40bd.tar.gz
+Source13:       https://github.com/cloudflare/lol-html/archive/77127cd2b8545998756e8d64e36ee2313c4bb312.tar.gz#/lolhtml-929339b1d898e66b.tar.gz
+Source14:       https://github.com/litespeedtech/ls-hpack/archive/8905c024b6d052f083a3d11d0a169b3c2735c8a1.tar.gz#/lshpack-73e0c55d12ea4fc2.tar.gz
+Source15:       https://github.com/litespeedtech/ls-qpack/archive/1e9c5b8e59f8161c54f168a570c8bfdc59ded0c3.tar.gz#/lsqpack-ceeb8e315778b938.tar.gz
+Source16:       https://github.com/litespeedtech/lsquic/archive/3181911301b1aa4f54c1ed690901abc674ee08fb.tar.gz#/lsquic-d3ef6cf1fbedd7f9.tar.gz
+Source17:       https://github.com/oven-sh/mimalloc/archive/f15aecb94fc8096008bf87b90c53ed682026914a.tar.gz#/mimalloc-4a1c4f1f45e31b88.tar.gz
+Source18:       https://github.com/h2o/picohttpparser/archive/066d2b1e9ab820703db0837a7255d92d30f0c9f5.tar.gz#/picohttpparser-fad59b16ad4752cc.tar.gz
+Source19:       https://github.com/oven-sh/tinycc/archive/12882eee073cfe5c7621bcfadf679e1372d4537b.tar.gz#/tinycc-2f1f629056328c7b.tar.gz
+Source20:       https://github.com/zlib-ng/zlib-ng/archive/12731092979c6d07f42da27da673a9f6c7b13586.tar.gz#/zlib-655c6ecdb6fc9cd5.tar.gz
+Source21:       https://github.com/facebook/zstd/archive/f8745da6ff1ad1e7bab384bd1f9d742439278e99.tar.gz#/zstd-e010993a24072468.tar.gz
+Source22:       https://nodejs.org/dist/v24.3.0/node-v24.3.0-headers.tar.gz#/nodejs-d79d5920ee9b0fc1.tar.gz
+# Generated during repository-backed SRPM construction from the checked Bun lock closure.
+Source23:       bun-%{version}-npm-sources.tar.gz
+# Generated during repository-backed SRPM construction from the checked lol-html Cargo lock closure.
+Source24:       bun-%{version}-lolhtml-cargo-vendor.tar.gz
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -84,14 +130,37 @@ Bun-pinned Zig fork without an external Zig executable, verifies and patches
 the checked minimized WebKit/JSC source, builds its static libraries with LLVM 21,
 and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
 three frozen npm installs are proven separately with networking unavailable.
-The RPM draft stops before dependency-source integration and the Bun build.
+The RPM draft carries the complete checked dependency-source closure but stops
+before staging those inputs into Bun's build graph and compiling Bun itself.
 Separate local proofs cover the first and seed-free offline self-builds, but
-the remaining dependency source bundles and relink-kit integration remain blocked.
+the final source-build graph and relink payload integration remain blocked.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{zig_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{webkit_sha256}  %{SOURCE2}" | sha256sum -c -
+echo "%{boringssl_sha256}  %{SOURCE3}" | sha256sum -c -
+echo "%{brotli_sha256}  %{SOURCE4}" | sha256sum -c -
+echo "%{cares_sha256}  %{SOURCE5}" | sha256sum -c -
+echo "%{hdrhistogram_sha256}  %{SOURCE6}" | sha256sum -c -
+echo "%{highway_sha256}  %{SOURCE7}" | sha256sum -c -
+echo "%{libarchive_sha256}  %{SOURCE8}" | sha256sum -c -
+echo "%{libdeflate_sha256}  %{SOURCE9}" | sha256sum -c -
+echo "%{libjpeg_turbo_sha256}  %{SOURCE10}" | sha256sum -c -
+echo "%{libspng_sha256}  %{SOURCE11}" | sha256sum -c -
+echo "%{libwebp_sha256}  %{SOURCE12}" | sha256sum -c -
+echo "%{lolhtml_sha256}  %{SOURCE13}" | sha256sum -c -
+echo "%{lshpack_sha256}  %{SOURCE14}" | sha256sum -c -
+echo "%{lsqpack_sha256}  %{SOURCE15}" | sha256sum -c -
+echo "%{lsquic_sha256}  %{SOURCE16}" | sha256sum -c -
+echo "%{mimalloc_sha256}  %{SOURCE17}" | sha256sum -c -
+echo "%{picohttpparser_sha256}  %{SOURCE18}" | sha256sum -c -
+echo "%{tinycc_sha256}  %{SOURCE19}" | sha256sum -c -
+echo "%{zlib_sha256}  %{SOURCE20}" | sha256sum -c -
+echo "%{zstd_sha256}  %{SOURCE21}" | sha256sum -c -
+echo "%{node_headers_sha256}  %{SOURCE22}" | sha256sum -c -
+echo "%{npm_sources_sha256}  %{SOURCE23}" | sha256sum -c -
+echo "%{cargo_vendor_sha256}  %{SOURCE24}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -230,6 +299,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.17
+- Integrate the direct native and Node sources plus generated npm and Cargo sources.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.16
 - Select the Fedora-aligned direct, npm-bundle, Cargo-vendor, and relink source layout.
 

@@ -47,6 +47,8 @@ package = Agentlab.package_named("bun")
 version = package.upstream.fetch("current_version").to_s
 dependency_stage = package.data.dig("build_plan", "stages", "dependency_closure")
 raise Agentlab::Error, "bun dependency-closure stage is missing" unless dependency_stage.is_a?(Hash)
+source_delivery = package.data.dig("build_plan", "stages", "source_delivery")
+delivery_verified = source_delivery.is_a?(Hash) && source_delivery["state"] == "verified"
 
 receipt_name = dependency_stage.fetch("proof_receipt")
 receipt_path = File.join(package.directory, receipt_name)
@@ -260,7 +262,7 @@ plan = {
   },
   "delivery" => {
     "planned_method" => "copr-git-scm-make_srpm",
-    "implementation_state" => "planned",
+    "implementation_state" => delivery_verified ? "verified" : "planned",
     "planned_network_scope" => "srpm-generation-only",
     "target_build_network_allowed" => false,
     "external_generated_artifact_host_required_by_design" => false,
@@ -273,8 +275,8 @@ plan = {
     },
     "architecture_independent_outputs_required" => true,
     "architecture_scoped_outputs" => [],
-    "make_srpm_materializer_integrated" => false,
-    "make_srpm_checksum_verification_integrated" => false
+    "make_srpm_materializer_integrated" => delivery_verified,
+    "make_srpm_checksum_verification_integrated" => delivery_verified
   },
   "input_summary" => actual_counts.merge(
     "native_node_manifest" => manifest_summary(native_members + node_members),
@@ -290,10 +292,10 @@ plan = {
     "member_identities_verified" => true,
     "fedora_source_layout_selected" => true,
     "webkit_spec_integrated" => true,
-    "delivery_implementation_verified" => false,
-    "generated_sources_materialized" => false,
-    "bun_spec_integrated" => false,
-    "srpm_built" => false
+    "delivery_implementation_verified" => delivery_verified,
+    "generated_sources_materialized" => delivery_verified,
+    "bun_spec_integrated" => delivery_verified,
+    "srpm_built" => delivery_verified
   }
 }
 

@@ -1,5 +1,7 @@
 .PHONY: srpm
 
+repo_root := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
+
 srpm:
 	test -n "$(spec)"
 	test -n "$(outdir)"
@@ -25,6 +27,12 @@ srpm:
 					;; \
 			esac; \
 		done
+	case "$$(basename "$(spec)")" in \
+		bun.spec) \
+			command -v ruby >/dev/null 2>&1 || dnf -y install ruby ruby-bundled-gems; \
+			ruby "$(repo_root)/scripts/prepare-bun-srpm-sources" --spec "$(spec)"; \
+			;; \
+	esac
 	rpmbuild -bs \
 		--define "_sourcedir $$(dirname "$(spec)")" \
 		--define "_srcrpmdir $(outdir)" \

@@ -113,6 +113,18 @@ class MaterializeBunSrpmSourcesTest < Minitest::Test
     end
   end
 
+  def test_materializes_only_selected_npm_and_cargo_archives
+    with_fixture do |_temporary, _closure, options|
+      receipt = Agentlab::BunSrpmSources.materialize!(**options.merge(roles: %w[npm cargo]))
+
+      assert_equal(%w[npm cargo], receipt.fetch("selected_archive_roles"))
+      assert_equal(%w[cargo npm], receipt.fetch("archives").keys.sort)
+      refute(File.exist?(File.join(options.fetch(:output_dir), "bun-1.3.14-native-node-sources.tar.gz")))
+      assert(File.file?(File.join(options.fetch(:output_dir), "bun-1.3.14-npm-sources.tar.gz")))
+      assert(File.file?(File.join(options.fetch(:output_dir), options.fetch(:cargo_archive_filename))))
+    end
+  end
+
   def test_check_mode_rejects_a_changed_archive
     with_fixture do |temporary, _closure, options|
       receipt = Agentlab::BunSrpmSources.materialize!(**options)

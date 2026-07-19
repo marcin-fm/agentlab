@@ -26,6 +26,7 @@ module Agentlab
     zig_source_bootstrap
     webkit_source_build
     dependency_closure
+    source_delivery
     seed_build
     self_rebuild
     final
@@ -1178,6 +1179,88 @@ module Agentlab
     errors << "bun: invalid dependency-closure proof receipt: #{e.message}"
   end
 
+  def validate_bun_source_delivery(package, stage, dependency_stage, version, spec)
+    return [] unless package.name == "bun" && stage.is_a?(Hash) && stage["state"] == "verified"
+
+    errors = []
+    receipt_name = stage["proof_receipt"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_sha256 = stage["proof_receipt_sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: source-delivery proof receipt is missing or has wrong SHA-256"]
+    end
+
+    receipt = JSON.parse(File.read(receipt_path))
+    errors << "bun: unsupported source-delivery proof schema" unless receipt["schema"] == "bun-srpm-source-delivery/v1"
+    errors << "bun: source-delivery proof package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: source-delivery proof release mismatch" unless receipt["release"].to_s == version
+    spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
+    errors << "bun: source-delivery proof RPM release mismatch" unless receipt["rpm_release"] == spec_release
+    errors << "bun: source-delivery proof platform mismatch" unless receipt["proof_platform"] == "fedora-44-x86_64"
+    errors << "bun: source-delivery spec SHA-256 mismatch" unless receipt.dig("spec", "sha256") == Digest::SHA256.hexdigest(spec)
+    errors << "bun: source-delivery spec size mismatch" unless receipt.dig("spec", "size_bytes") == spec.bytesize
+
+    generation = receipt.fetch("source_generation", {})
+    errors << "bun: source-delivery method mismatch" unless generation["method"] == "copr-git-scm-make_srpm"
+    errors << "bun: source-delivery network scope mismatch" unless generation["network_scope"] == "srpm-generation-only"
+    expected_counts = {
+      "direct_sources" => 23,
+      "generated_sources" => 2,
+      "declared_sources" => 25,
+      "patches" => 6
+    }
+    errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
+    errors << "bun: source-delivery closure count mismatch" unless generation["canonical_closure_inputs"] == 299
+    errors << "bun: source-delivery closure SHA-256 mismatch" unless generation["canonical_closure_sha256"] == dependency_stage["proof_receipt_sha256"]
+    expected_npm = {
+      "filename" => dependency_stage["npm_source_archive_filename"],
+      "size_bytes" => dependency_stage["npm_source_archive_bytes"],
+      "sha256" => dependency_stage["npm_source_archive_sha256"]
+    }
+    expected_cargo = {
+      "filename" => dependency_stage["cargo_vendor_archive_filename"],
+      "size_bytes" => dependency_stage["cargo_vendor_archive_bytes"],
+      "sha256" => dependency_stage["cargo_vendor_archive_sha256"]
+    }
+    errors << "bun: source-delivery npm archive mismatch" unless generation["npm_archive"] == expected_npm
+    errors << "bun: source-delivery Cargo archive mismatch" unless generation["cargo_archive"] == expected_cargo
+
+    srpm = receipt.fetch("srpm", {})
+    errors << "bun: source-delivery SRPM filename mismatch" unless srpm["filename"] == "bun-#{version}-#{spec_release}.fc44.src.rpm"
+    errors << "bun: source-delivery SRPM size is invalid" unless srpm["size_bytes"].is_a?(Integer) && srpm["size_bytes"].positive?
+    errors << "bun: source-delivery SRPM SHA-256 is invalid" unless srpm["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors << "bun: source-delivery SRPM digest check failed" unless srpm["digest_check"] == "ok"
+    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 32
+    %w[inventory_sha256 member_manifest_sha256].each do |key|
+      errors << "bun: source-delivery #{key} is invalid" unless srpm[key].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+
+    required_validation = %w[
+      direct_source_checksums_verified
+      canonical_closure_regenerated_verified
+      canonical_closure_byte_identity_verified
+      generated_source_checksums_verified
+      deterministic_materialization_verified
+      srpm_built
+      srpm_inventory_verified
+      source_members_byte_identical
+    ]
+    errors << "bun: source-delivery validation is incomplete" unless required_validation.all? { |key| receipt.dig("validation", key) == true }
+    errors << "bun: source-delivery proof incorrectly claims an RPM build" unless receipt.dig("validation", "rpm_build_executed") == false
+    errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
+
+    source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
+    errors << "bun: spec does not declare the complete Source0-Source24 layout" unless source_indexes == (0..24).to_a
+    npm_spec_filename = expected_npm["filename"].sub(version, "%{version}")
+    cargo_spec_filename = expected_cargo["filename"].sub(version, "%{version}")
+    errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source23:\s+#{Regexp.escape(npm_spec_filename)}$/)
+    errors << "bun: spec Cargo source filename mismatch" unless spec.match?(/^Source24:\s+#{Regexp.escape(cargo_spec_filename)}$/)
+    errors
+  rescue JSON::ParserError, KeyError => e
+    errors << "bun: invalid source-delivery proof receipt: #{e.message}"
+  end
+
   def validate_bun_minimized_webkit_source(package, webkit, version, spec)
     return [] unless package.name == "bun" && webkit.is_a?(Hash) && webkit.key?("jsc_only")
 
@@ -1450,6 +1533,7 @@ module Agentlab
     errors.concat(validate_bun_minimized_webkit_source(package, webkit, version, spec))
 
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
+    errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
 
     if seed.is_a?(Hash)
       errors << "bun: seed source must match the Bun release" unless seed["release_pin"] == "bun-v#{version}"

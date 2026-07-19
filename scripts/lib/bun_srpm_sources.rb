@@ -16,6 +16,7 @@ module Agentlab
     SCHEMA = "bun-srpm-source-bundles/v1"
     CLOSURE_SCHEMA = "bun-release-local-source-closure/v2"
     SHA256 = /\A[0-9a-f]{64}\z/
+    ARCHIVE_ROLES = %w[native_node npm cargo].freeze
     CARGO_EXTRA_FIELDS = %w[
       archive_root
       file_count
@@ -30,7 +31,8 @@ module Agentlab
 
     def materialize!(closure_path:, expected_closure_sha256:, expected_source_sha256:, expected_counts:,
                      cache_dir:, output_dir:, receipt_path:, workdir:, cargo_manifest_path:,
-                     cargo_archive_filename:, expected_cargo_archive: nil, check: false)
+                     cargo_archive_filename:, roles: ARCHIVE_ROLES, expected_npm_archive: nil,
+                     expected_cargo_archive: nil, check: false)
       closure_path = File.expand_path(closure_path)
       cache_dir = File.realpath(cache_dir)
       output_dir = File.expand_path(output_dir)
@@ -39,6 +41,10 @@ module Agentlab
       cargo_manifest_path = File.expand_path(cargo_manifest_path)
       unless valid_archive_name?(cargo_archive_filename)
         raise Agentlab::Error, "lol-html Cargo vendor archive filename is invalid"
+      end
+      roles = Array(roles).map(&:to_s)
+      unless roles.any? && roles.uniq.length == roles.length && (roles - ARCHIVE_ROLES).empty?
+        raise Agentlab::Error, "Bun source archive roles are invalid"
       end
 
       closure_bytes = File.binread(closure_path)
@@ -72,58 +78,83 @@ module Agentlab
       native_filename = "#{native_root}.tar.gz"
       npm_filename = "#{npm_root}.tar.gz"
 
-      native_staging = File.join(staging_dir, native_root)
-      npm_staging = File.join(staging_dir, npm_root)
-      cargo_staging = File.join(staging_dir, cargo_root)
-      stage_raw_bundle!(
-        cache_dir: cache_dir,
-        cache_subdir: "archives",
-        destination: File.join(native_staging, "archives"),
-        records: records.fetch("native") + records.fetch("node")
-      )
-      stage_raw_bundle!(
-        cache_dir: cache_dir,
-        cache_subdir: "npm",
-        destination: File.join(npm_staging, "npm"),
-        records: records.fetch("npm")
-      )
-      cargo_result = stage_cargo_vendor!(
-        cache_dir: cache_dir,
-        destination: cargo_staging,
-        records: records.fetch("cargo"),
-        checked_manifest_path: cargo_manifest_path
-      )
+      if roles.include?("native_node")
+        stage_raw_bundle!(
+          cache_dir: cache_dir,
+          cache_subdir: "archives",
+          destination: File.join(staging_dir, native_root, "archives"),
+          records: records.fetch("native") + records.fetch("node")
+        )
+      end
+      if roles.include?("npm")
+        stage_raw_bundle!(
+          cache_dir: cache_dir,
+          cache_subdir: "npm",
+          destination: File.join(staging_dir, npm_root, "npm"),
+          records: records.fetch("npm")
+        )
+      end
+      cargo_result = if roles.include?("cargo")
+                       stage_cargo_vendor!(
+                         cache_dir: cache_dir,
+                         destination: File.join(staging_dir, cargo_root),
+                         records: records.fetch("cargo"),
+                         checked_manifest_path: cargo_manifest_path
+                       )
+                     end
 
-      archive_specs = [
-        ["native_node", native_filename, staging_dir, native_root],
-        ["npm", npm_filename, staging_dir, npm_root],
-        ["cargo", cargo_archive_filename, staging_dir, cargo_root]
-      ]
-      generated_archives = archive_specs.to_h do |role, filename, parent, root|
+      archive_specs = []
+      archive_specs << ["native_node", native_filename, native_root] if roles.include?("native_node")
+      archive_specs << ["npm", npm_filename, npm_root] if roles.include?("npm")
+      archive_specs << ["cargo", cargo_archive_filename, cargo_root] if roles.include?("cargo")
+      generated_archives = archive_specs.to_h do |role, filename, root|
         generated = File.join(generated_dir, filename)
         comparison = File.join(comparison_dir, filename)
-        create_archive!(parent, root, generated)
-        create_archive!(parent, root, comparison)
+        create_archive!(staging_dir, root, generated)
+        create_archive!(staging_dir, root, comparison)
         unless FileUtils.compare_file(generated, comparison)
           raise Agentlab::Error, "Bun #{role.tr('_', '/')} source archive regeneration is not deterministic"
         end
         [role, generated]
       end
 
-      cargo_receipt = file_receipt(generated_archives.fetch("cargo"))
-      expected_cargo_verified = false
-      if expected_cargo_archive
-        unless expected_cargo_archive.fetch("filename") == cargo_archive_filename &&
-               expected_cargo_archive.fetch("sha256").to_s.match?(SHA256) &&
-               expected_cargo_archive.fetch("size_bytes").is_a?(Integer) &&
-               expected_cargo_archive.fetch("size_bytes").positive? &&
-               cargo_receipt.slice("filename", "sha256", "size_bytes") == expected_cargo_archive
-          raise Agentlab::Error, "materialized lol-html Cargo vendor archive does not match package metadata"
-        end
-        expected_cargo_verified = true
-      end
-
       summaries = records.transform_values { |members| manifest_summary(members) }
+      archives = {}
+      if roles.include?("native_node")
+        archives["native_node"] = {
+          "role" => "native-node-source-bundle",
+          "recipe" => "deterministic-archive-bundle/v1",
+          "compression" => "gzip-n",
+          "archive_root" => native_root
+        }.merge(manifest_summary(records.fetch("native") + records.fetch("node"))).merge(
+          file_receipt(generated_archives.fetch("native_node"))
+        )
+      end
+      if roles.include?("npm")
+        archives["npm"] = {
+          "role" => "npm-source-bundle",
+          "recipe" => "deterministic-archive-bundle/v1",
+          "compression" => "gzip-n",
+          "archive_root" => npm_root
+        }.merge(summaries.fetch("npm")).merge(file_receipt(generated_archives.fetch("npm")))
+      end
+      if roles.include?("cargo")
+        archives["cargo"] = {
+          "role" => "lolhtml-cargo-vendor",
+          "recipe" => "lolhtml-cargo-vendor/v1",
+          "compression" => "gzip-n",
+          "archive_root" => cargo_root,
+          "tree_sha256" => cargo_result.fetch("tree_sha256"),
+          "cargo_checksums_generated" => cargo_result.fetch("cargo_checksums_generated"),
+          "vendor_manifest" => cargo_result.fetch("vendor_manifest")
+        }.merge(summaries.fetch("cargo")).merge(file_receipt(generated_archives.fetch("cargo")))
+      end
+      expected_npm_verified = verify_expected_archive!(
+        archives["npm"], expected_npm_archive, "npm source"
+      )
+      expected_cargo_verified = verify_expected_archive!(
+        archives["cargo"], expected_cargo_archive, "lol-html Cargo vendor"
+      )
       receipt = {
         "schema" => SCHEMA,
         "package" => "bun",
@@ -134,31 +165,8 @@ module Agentlab
           "source_sha256" => closure.dig("source_tree", "source_sha256"),
           "target" => closure.fetch("target")
         },
-        "archives" => {
-          "native_node" => {
-            "role" => "native-node-source-bundle",
-            "recipe" => "deterministic-archive-bundle/v1",
-            "compression" => "gzip-n",
-            "archive_root" => native_root
-          }.merge(manifest_summary(records.fetch("native") + records.fetch("node"))).merge(
-            file_receipt(generated_archives.fetch("native_node"))
-          ),
-          "npm" => {
-            "role" => "npm-source-bundle",
-            "recipe" => "deterministic-archive-bundle/v1",
-            "compression" => "gzip-n",
-            "archive_root" => npm_root
-          }.merge(summaries.fetch("npm")).merge(file_receipt(generated_archives.fetch("npm"))),
-          "cargo" => {
-            "role" => "lolhtml-cargo-vendor",
-            "recipe" => "lolhtml-cargo-vendor/v1",
-            "compression" => "gzip-n",
-            "archive_root" => cargo_root,
-            "tree_sha256" => cargo_result.fetch("tree_sha256"),
-            "cargo_checksums_generated" => cargo_result.fetch("cargo_checksums_generated"),
-            "vendor_manifest" => cargo_result.fetch("vendor_manifest")
-          }.merge(summaries.fetch("cargo")).merge(cargo_receipt)
-        },
+        "selected_archive_roles" => roles,
+        "archives" => archives,
         "scope" => {
           "archive_generation_architecture_independent" => true,
           "closure_target" => closure.fetch("target"),
@@ -172,9 +180,10 @@ module Agentlab
           "cached_member_sizes_verified" => true,
           "cached_member_sha256_verified" => true,
           "safe_archive_paths_verified" => true,
-          "cargo_archive_contents_verified" => true,
-          "cargo_checksums_generated" => true,
-          "cargo_vendor_manifest_verified" => true,
+          "cargo_archive_contents_verified" => roles.include?("cargo"),
+          "cargo_checksums_generated" => roles.include?("cargo"),
+          "cargo_vendor_manifest_verified" => roles.include?("cargo"),
+          "expected_npm_archive_verified" => expected_npm_verified,
           "expected_cargo_archive_verified" => expected_cargo_verified,
           "bootstrap_seed_excluded" => true,
           "deterministic_regeneration_verified" => true,
@@ -185,11 +194,9 @@ module Agentlab
       }
       content = JSON.pretty_generate(receipt) + "\n"
 
-      output_paths = {
-        "native_node" => File.join(output_dir, native_filename),
-        "npm" => File.join(output_dir, npm_filename),
-        "cargo" => File.join(output_dir, cargo_archive_filename)
-      }
+      output_paths = generated_archives.to_h do |role, _path|
+        [role, File.join(output_dir, archives.fetch(role).fetch("filename"))]
+      end
       if check
         output_paths.each do |role, path|
           raise Agentlab::Error, "missing checked Bun source archive #{path}" unless File.file?(path)
@@ -237,6 +244,20 @@ module Agentlab
       unless expected_counts == actual_counts
         raise Agentlab::Error, "Bun source-closure counts do not match package metadata"
       end
+    end
+
+    def verify_expected_archive!(actual, expected, label)
+      return false unless expected
+      raise Agentlab::Error, "materialized #{label} archive was not selected" unless actual
+      unless expected.fetch("filename").is_a?(String) &&
+             expected.fetch("sha256").to_s.match?(SHA256) &&
+             expected.fetch("size_bytes").is_a?(Integer) &&
+             expected.fetch("size_bytes").positive? &&
+             actual.slice("filename", "sha256", "size_bytes") == expected
+        raise Agentlab::Error, "materialized #{label} archive does not match package metadata"
+      end
+
+      true
     end
 
     def source_records(closure)
