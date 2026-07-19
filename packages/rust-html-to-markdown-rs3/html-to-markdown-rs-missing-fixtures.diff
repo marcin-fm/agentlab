@@ -1,14 +1,3 @@
---- a/Cargo.toml
-+++ b/Cargo.toml
-@@ -509,7 +509,7 @@
- features = ["macros"]
- 
- [dependencies.regex]
--version = "1.13"
-+version = "1.12.4"
- 
- [dependencies.rmcp]
- version = "2.2.0"
 --- a/tests/commonmark_compliance_test.rs
 +++ b/tests/commonmark_compliance_test.rs
 @@ -1,5 +1,6 @@

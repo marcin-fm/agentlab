@@ -2,6 +2,6 @@
 
 ## Finalization status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for the Fedora 43, Fedora 44, and Rawhide x86_64/aarch64 matrix as an independently selected Kreuzberg dependency.
 
-Final direct-v4 metadata-fixes package for html-to-markdown-rs 3.8.3. Final F43/F44 rebuild, hosting, duplicate, and license review remain blockers.
+The package uses the exact crates.io `3.8.3` release, installs the MIT text from the exact release commit, and builds upstream's default `metadata` feature plus the dependency-free `testkit` feature required by the published integration tests. Fedora carries a narrow regex minimum adjustment and omits only the 11 tests whose repository-level fixture corpora are absent from the published crate; all other published tests remain enabled.

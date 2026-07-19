@@ -4,16 +4,25 @@
 
 %global crate html-to-markdown-rs
 %global source_sha256 c5b47de513bfcc3312a7521bd52ca1a287b0f85614d839c23b9873ff5c1465b7
+%global license_commit 41376152bb4a24ec53788a7c6537d75afb5360f4
+%global license_sha256 c63dc76a907b2511aed2745a09c36d5533df1d519c93622f2721b236a72743b7
 
 Name:           rust-html-to-markdown-rs3
 Version:        3.8.3
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        High-performance HTML to Markdown converter
 
 License:        MIT
 URL:            https://crates.io/crates/html-to-markdown-rs
-Source:         %{crates_source}
-Patch:          html-to-markdown-rs-fedora-crates.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# The crate archive omits the workspace-root license text; pin the release commit.
+Source1:        https://raw.githubusercontent.com/xberg-io/html-to-markdown/%{license_commit}/LICENSE#/%{crate}-%{version}-LICENSE
+# Fedora compatibility: lower only the regex minimum to Fedora's compatible 1.12.4 branch.
+# Not submitted upstream because upstream intentionally raised its workspace dependency in commit 7c9073049c0c02770ba6e4fbd331c3a23d7f8b3.
+Patch0:         html-to-markdown-rs-regex-fedora.diff
+# Fedora test selection: omit only 11 targets whose workspace fixture corpora are absent from the published crate.
+# Not submitted upstream because the complete upstream workspace includes and tests those fixtures.
+Patch1:         html-to-markdown-rs-missing-fixtures.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -33,7 +42,7 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENSE
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
 
@@ -147,25 +156,28 @@ use the "visitor" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_sha256}  %{SOURCE1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm0644 %{SOURCE1} LICENSE
 %cargo_prep
 
 %generate_buildrequires
-%cargo_generate_buildrequires -f inline-images,testkit
+%cargo_generate_buildrequires -f testkit
 
 %build
-%cargo_build -f inline-images,testkit
+%cargo_build -f testkit
 
 %install
-%cargo_install -f inline-images,testkit
+%cargo_install -f testkit
 
 %if %{with check}
 %check
-# The published crate omits the repository-level CommonMark JSON corpus.
-# Keep the test source, but exclude only that fixture-dependent target.
-%cargo_test -f inline-images,testkit -- -- --skip commonmark_compliance_test
+%cargo_test -f testkit
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 3.8.3-0.2
+- Enable the default metadata feature with exact license and fixture accounting.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 3.8.3-0.1
 - Avoid implementation-specific terminology in package metadata.
