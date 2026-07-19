@@ -1,0 +1,100 @@
+From 1efa270266b97bcdc1f77d679351c064fb88bc1b Mon Sep 17 00:00:00 2001
+From: John Harrison <johnharrison@gmail.com>
+Date: Thu, 16 Jul 2026 10:22:17 -0600
+Subject: [PATCH] =?UTF-8?q?fix:=20make=20the=20`time`=20feature=20compile?=
+ =?UTF-8?q?=20=E2=80=94=20replace=20the=20never-compiling=20From<Time>=20i?=
+ =?UTF-8?q?mpl=20(#527)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+`impl From<time::Time> for Object` referenced
+`FormatItem::StringLiteral("%Y%m%d%H%M%SZ")`, which does not exist in any
+released `time` 0.3 (the variants are Literal/Component/Compound/Optional/
+First) — and the argument is a chrono strftime pattern, which the `time`
+crate does not consume. Since `time` is a default feature, `cargo build`
+of lopdf 0.43.0/0.44.0 fails out of the box (#518), and downstream crates
+that enable the feature (e.g. printpdf 0.11.x) are uninstallable.
+
+A bare `time::Time` cannot form a valid PDF date anyway — PDF 32000-1
+§7.9.4 dates must begin with the year — so rather than patching the
+impl in place, replace it with `From<PrimitiveDateTime>` rendering
+`D:YYYYMMDDHHMMSSZ` (naive datetime taken as UTC): the `time`-crate
+counterpart of the existing `chrono::DateTime<Utc>` and `jiff::Timestamp`
+impls. Not a breaking change in practice: the replaced impl never compiled,
+so no downstream code can be using it.
+
+Adds a round-trip-shaped unit test pinning the emitted literal
+(`D:19981223195200Z`, the §3.8.3 example date).
+
+Fixes #518
+---
+ src/datetime.rs | 46 +++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 35 insertions(+), 11 deletions(-)
+
+diff --git a/src/datetime.rs b/src/datetime.rs
+--- a/src/datetime.rs
++++ b/src/datetime.rs
+@@ -92,18 +92,26 @@ fn try_from(value: super::DateTime) -> Result<Self, Self::Error> {
+ #[cfg(feature = "time")]
+ mod time_impl {
+     use crate::Object;
+-    use time::{OffsetDateTime, Time, format_description::FormatItem};
+-
+-    impl From<Time> for Object {
+-        fn from(date: Time) -> Self {
+-            // can only fail if the TIME_FMT_ENCODE_STR would be invalid
+-            Object::string_literal(
+-                format!(
+-                    "D:{}",
+-                    date.format(&FormatItem::StringLiteral("%Y%m%d%H%M%SZ")).unwrap()
++    use time::{OffsetDateTime, PrimitiveDateTime};
++
++    /// The naive datetime is taken to be UTC and rendered with the `Z` suffix
++    /// (PDF 32000-1 §7.9.4) — the `time`-crate counterpart of the
++    /// `chrono::DateTime<Utc>` and `jiff::Timestamp` impls above.
++    ///
++    /// (This replaces a `From<time::Time>` impl that never compiled — see
++    /// issue #518: it referenced a nonexistent `FormatItem::StringLiteral`
++    /// with a strftime pattern, and a bare time-of-day cannot form a valid
++    /// PDF date anyway, which must start at the year.)
++    impl From<PrimitiveDateTime> for Object {
++        fn from(date: PrimitiveDateTime) -> Self {
++            Object::string_literal({
++                // D:%Y%m%d%H%M%SZ
++                let format = time::format_description::parse_borrowed::<3>(
++                    "D:[year][month][day][hour][minute][second]Z",
+                 )
+-                .into_bytes(),
+-            )
++                .unwrap();
++                date.format(&format).unwrap()
++            })
+         }
+     }
+ 
+@@ -255,6 +263,22 @@ fn parse_datetime_time_missing_jiff() {
+     assert!(dt.is_some());
+ }
+ 
++#[cfg(feature = "time")]
++#[test]
++fn format_primitive_datetime_as_utc() {
++    use time::{Date, Month, PrimitiveDateTime, Time};
++
++    // The example date from the PDF reference (1.7, §3.8.3), as a naive
++    // datetime: it must serialize with the year first and the `Z` suffix.
++    let date = Date::from_calendar_date(1998, Month::December, 23).unwrap();
++    let time = Time::from_hms(19, 52, 0).unwrap();
++    let text: Object = PrimitiveDateTime::new(date, time).into();
++    match &text {
++        Object::String(bytes, _) => assert_eq!(bytes.as_slice(), b"D:19981223195200Z"),
++        other => panic!("expected a string literal, got {other:?}"),
++    }
++}
++
+ #[cfg(feature = "time")]
+ #[test]
+ fn parse_datetime() {
+-- 
+2.55.0

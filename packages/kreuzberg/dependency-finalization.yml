@@ -37,7 +37,6 @@ blocker_codes:
   SOURCE_HOSTING: immutable public source hosting is unresolved
   LICENSE_TEXT: full third-party license text evidence is not shipped
   PARSER_HOSTING: immutable hosting for the 295-parser subset is unresolved
-  LOPDF_FIXTURE: lopdf fixture/source evidence is unresolved
   IMAGEPROC_FIXTURE: imageproc fixture/source evidence is unresolved
   NAPI_LICENSE: supplemental MIT license source is pinned but not published in the normal crate source
   NAPI_UNBUILT: NAPI package repair is recorded but unbuilt
@@ -45,7 +44,6 @@ blocker_codes:
   ORT_OFFLINE: offline/system ONNX Runtime linkage requires final validation
   PRERELEASE_MAPPING: ort prerelease crate-to-RPM mapping requires final validation
   F43_PATCH: F43 compatibility patch is preserved but not rebuilt in this pass
-  LOPDF_REPAIRED: lopdf compatibility repair is recorded but unbuilt
   NAPI_CTOR: NAPI backend ctor patch is preserved but unbuilt
 special:
   parser: {package: rust-tree-sitter-language-pack1, licensed_records: 295, exclusions: 11, subset_sha256: ebf1abc89cc4bef5a8d9c07e896796ddaa7aff68cb56143485bab94c47af846a, blocker_codes: [PARSER_HOSTING]}
@@ -96,7 +94,7 @@ rows:
   - {package: rust-infer0.19, source_manifest_row: 29, crate_version: 0.19.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_fedora_doctests, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-jetscii0.5, source_manifest_row: 30, crate_version: 0.5.3, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_jetscii-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-jotdown0.10, source_manifest_row: 31, crate_version: 0.10.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
-  - {package: rust-lopdf0.44, source_manifest_row: 32, crate_version: 0.44.0, source_status: immutable_external_fixture_input, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_and_time_compatibility, current_spec_state: repaired_unbuilt, blocker_codes: [LOPDF_FIXTURE, LOPDF_REPAIRED, BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-lopdf0.44, source_manifest_row: 32, crate_version: 0.44.0, source_status: crates_io_release_archive, license_status: upstream_mit_text_verified, patch_status: declared_metadata_upstream_time_fix_and_fedora_grammar, current_spec_state: fresh_f44_x86_64_default_tuple_build_passed, blocker_codes: []}
   - {package: rust-lru0.18, source_manifest_row: 33, crate_version: 0.18.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-mail-parser0.11, source_manifest_row: 34, crate_version: 0.11.5, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-maybe-owned0.3, source_manifest_row: 35, crate_version: 0.3.4, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}

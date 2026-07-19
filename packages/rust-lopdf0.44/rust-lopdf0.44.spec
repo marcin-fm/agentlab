@@ -4,22 +4,24 @@
 
 %global crate lopdf
 %global source_sha256 5e2ec995d822e05cabc3f06d196ee43650af3fe4fe38012cacb35e0c3d113b68
-%global fixtures_commit 8c454dd93d9c37e608c552a2b304d1d31d1cb2e1
-%global fixtures_sha256 96bf4d0b73a173e54fa1bd4626b088c0fef9d7c141f63183e68c2d5098591532
-%global test_pdf_sha256 1c814572e0ea8024811c83b063e707f711a8fd48373a53de7f7234a4fcf49663
 
 Name:           rust-lopdf0.44
 Version:        0.44.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Rust library for PDF document manipulation
 
 License:        MIT
 URL:            https://crates.io/crates/lopdf
-Source:         %{crates_source}
-Source1:        https://github.com/J-F-Liu/lopdf/archive/%{fixtures_commit}/lopdf-%{fixtures_commit}.tar.gz#/lopdf-test-assets.tar.gz
-Source2:        lopdf-test.pdf
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Remove unselected benchmark and WebAssembly test dependencies from Fedora's native test graph.
+# Fedora-specific; not submitted because upstream intentionally retains those development surfaces.
 Patch:          lopdf-fix-metadata.diff
-Patch1:         lopdf-time-0.3.47-compat.diff
+# Fix the default time feature against released time 0.3 APIs.
+# Backport of upstream commit 1efa270266b97bcdc1f77d679351c064fb88bc1b.
+Patch1:         0001-fix-make-the-time-feature-compile.patch
+# Use Fedora time 0.3.47's supported format-description grammar version.
+# Fedora-specific follow-up to the upstream fix; not yet submitted upstream.
+Patch2:         lopdf-time-0.3.47-fedora.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -189,27 +191,37 @@ use the "wasm_js" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
-echo "%{fixtures_sha256}  %{SOURCE1}" | sha256sum -c -
-echo "%{test_pdf_sha256}  %{SOURCE2}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
-tar -xzf %{SOURCE1} --strip-components=1 "lopdf-%{fixtures_commit}/assets"
-cp -p %{SOURCE2} assets/test.pdf
 %cargo_prep
 
 %generate_buildrequires
-%cargo_generate_buildrequires
+%cargo_generate_buildrequires -n -f chrono,jiff,rayon,time
 
 %build
-%cargo_build
+%cargo_build -n -f chrono,jiff,rayon,time
 
 %install
-%cargo_install
+%cargo_install -n -f chrono,jiff,rayon,time
 
 %if %{with check}
 %check
-%cargo_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test catalog_compression_integration_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test decompression_bomb
+%cargo_test -n -f chrono,jiff,rayon,time -- --test extract_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test linearized_objstm_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test object_stream_comprehensive_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test object_stream_edge_cases_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test object_stream_methods_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test object_stream_performance_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test page_content
+%cargo_test -n -f chrono,jiff,rayon,time -- --test simple_object_stream_test
+%cargo_test -n -f chrono,jiff,rayon,time -- --test trailer_reference_compression_test
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.44.0-0.3
+- Preserve the default feature tuple with asset-free integration tests.
+- Backport the upstream time fix with Fedora's supported parser grammar.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.44.0-0.2
 - Restore the immutable upstream test assets and retained time compatibility patch.

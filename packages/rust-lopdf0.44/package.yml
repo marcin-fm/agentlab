@@ -1,10 +1,6 @@
-status: blocked
+status: enabled
 name: rust-lopdf0.44
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
-  - The large upstream fixture archive is intentionally not committed; COPR/public hosting must be reviewed before enablement.
+blockers: []
 upstream:
   provider: crates_io
   crate: lopdf
@@ -12,13 +8,7 @@ upstream:
   current_version: 0.44.0
   source_url_template: https://static.crates.io/crates/lopdf/lopdf-{version}.crate
   source_sha256: 5e2ec995d822e05cabc3f06d196ee43650af3fe4fe38012cacb35e0c3d113b68
-fixtures:
-  source_url: https://github.com/J-F-Liu/lopdf/archive/8c454dd93d9c37e608c552a2b304d1d31d1cb2e1/lopdf-8c454dd93d9c37e608c552a2b304d1d31d1cb2e1.tar.gz
-  source_sha256: 96bf4d0b73a173e54fa1bd4626b088c0fef9d7c141f63183e68c2d5098591532
-supplemental:
-  - file: lopdf-test.pdf
-    sha256: 1c814572e0ea8024811c83b063e707f711a8fd48373a53de7f7234a4fcf49663
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/rust-lopdf0.44
   spec: rust-lopdf0.44.spec

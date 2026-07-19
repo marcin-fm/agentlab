@@ -1,0 +1,29 @@
+--- a/src/datetime.rs
++++ b/src/datetime.rs
+@@ -106,7 +106,7 @@ mod time_impl {
+         fn from(date: PrimitiveDateTime) -> Self {
+             Object::string_literal({
+                 // D:%Y%m%d%H%M%SZ
+-                let format = time::format_description::parse_borrowed::<3>(
++                let format = time::format_description::parse_borrowed::<2>(
+                     "D:[year][month][day][hour][minute][second]Z",
+                 )
+                 .unwrap();
+@@ -119,7 +119,7 @@ mod time_impl {
+         fn from(date: OffsetDateTime) -> Self {
+             Object::string_literal({
+                 // D:%Y%m%d%H%M%S:%z'
+-                let format = time::format_description::parse_borrowed::<3>(
++                let format = time::format_description::parse_borrowed::<2>(
+                     "D:[year][month][day][hour][minute][second][offset_hour sign:mandatory]'[offset_minute]'",
+                 )
+                 .unwrap();
+@@ -136,7 +136,7 @@ mod time_impl {
+         type Error = time::Error;
+ 
+         fn try_from(value: super::DateTime) -> Result<OffsetDateTime, Self::Error> {
+-            let format = time::format_description::parse_borrowed::<3>(
++            let format = time::format_description::parse_borrowed::<2>(
+                 "[year][month][day][hour][minute][second][offset_hour sign:mandatory][offset_minute]",
+             )
+             .unwrap();
