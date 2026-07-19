@@ -973,6 +973,51 @@ class AgentlabTest < Minitest::Test
     )
   end
 
+  def test_validates_bun_dependency_staging_receipt
+    package = Agentlab.package_named("bun")
+    plan = package.data.fetch("build_plan")
+    stages = plan.fetch("stages")
+    spec = File.read(File.join(package.directory, "bun.spec"))
+
+    assert_empty(
+      Agentlab.validate_bun_dependency_staging(
+        package,
+        stages.fetch("dependency_staging"),
+        stages.fetch("source_delivery"),
+        stages.fetch("dependency_closure"),
+        plan.fetch("source_inputs").fetch("release_local_staging"),
+        "1.3.14",
+        spec
+      )
+    )
+
+    invalid_stage = stages.fetch("dependency_staging").merge("proof_receipt_sha256" => "0" * 64)
+    assert_includes(
+      Agentlab.validate_bun_dependency_staging(
+        package,
+        invalid_stage,
+        stages.fetch("source_delivery"),
+        stages.fetch("dependency_closure"),
+        plan.fetch("source_inputs").fetch("release_local_staging"),
+        "1.3.14",
+        spec
+      ),
+      "bun: dependency-staging proof receipt is missing or has wrong SHA-256"
+    )
+    assert_includes(
+      Agentlab.validate_bun_dependency_staging(
+        package,
+        stages.fetch("dependency_staging"),
+        stages.fetch("source_delivery"),
+        stages.fetch("dependency_closure"),
+        plan.fetch("source_inputs").fetch("release_local_staging"),
+        "1.3.14",
+        spec.sub("ruby %{SOURCE26}", "# removed")
+      ),
+      "bun: spec does not integrate the verified dependency-staging step"
+    )
+  end
+
   def test_validates_bun_minimized_webkit_source
     source_package = Agentlab.package_named("bun")
     Dir.mktmpdir do |directory|

@@ -28,6 +28,7 @@ module Agentlab
     dependency_closure
     source_delivery
     lolhtml_rpm_cargo
+    dependency_staging
     seed_build
     self_rebuild
     final
@@ -1208,7 +1209,8 @@ module Agentlab
     expected_counts = {
       "direct_sources" => 23,
       "generated_sources" => 2,
-      "declared_sources" => 25,
+      "packaging_sources" => 2,
+      "declared_sources" => 27,
       "patches" => 6
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
@@ -1232,7 +1234,7 @@ module Agentlab
     errors << "bun: source-delivery SRPM size is invalid" unless srpm["size_bytes"].is_a?(Integer) && srpm["size_bytes"].positive?
     errors << "bun: source-delivery SRPM SHA-256 is invalid" unless srpm["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: source-delivery SRPM digest check failed" unless srpm["digest_check"] == "ok"
-    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 32
+    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 34
     %w[inventory_sha256 member_manifest_sha256].each do |key|
       errors << "bun: source-delivery #{key} is invalid" unless srpm[key].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
@@ -1242,6 +1244,7 @@ module Agentlab
       canonical_closure_regenerated_verified
       canonical_closure_byte_identity_verified
       generated_source_checksums_verified
+      packaging_source_checksums_verified
       deterministic_materialization_verified
       srpm_built
       srpm_inventory_verified
@@ -1252,11 +1255,14 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source24 layout" unless source_indexes == (0..24).to_a
+    errors << "bun: spec does not declare the complete Source0-Source26 layout" unless source_indexes == (0..26).to_a
     npm_spec_filename = expected_npm["filename"].sub(version, "%{version}")
     cargo_spec_filename = expected_cargo["filename"].sub(version, "%{version}")
     errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source23:\s+#{Regexp.escape(npm_spec_filename)}$/)
     errors << "bun: spec Cargo source filename mismatch" unless spec.match?(/^Source24:\s+#{Regexp.escape(cargo_spec_filename)}$/)
+    staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
+    errors << "bun: spec closure source filename mismatch" unless spec.match?(/^Source25:\s+#{Regexp.escape(staging["closure_source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec staging helper filename mismatch" unless spec.match?(/^Source26:\s+#{Regexp.escape(staging["helper_source"].to_s)}$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -1349,6 +1355,115 @@ module Agentlab
     errors
   rescue JSON::ParserError => e
     ["bun: invalid lol-html RPM Cargo proof receipt: #{e.message}"]
+  end
+
+  def validate_bun_dependency_staging(package, stage, source_delivery_stage, dependency_stage, staging, version, spec)
+    return [] unless package.name == "bun" && stage.is_a?(Hash) && stage["state"] == "verified"
+
+    receipt_name = stage["proof_receipt"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_sha256 = stage["proof_receipt_sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: dependency-staging proof receipt is missing or has wrong SHA-256"]
+    end
+
+    errors = []
+    receipt = JSON.parse(File.read(receipt_path))
+    errors << "bun: unsupported dependency-staging proof schema" unless receipt["schema"] == "bun-release-local-source-staging-proof/v1"
+    errors << "bun: dependency-staging proof package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: dependency-staging proof release mismatch" unless receipt["release"].to_s == version
+    spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
+    errors << "bun: dependency-staging proof RPM release mismatch" unless receipt["rpm_release"] == spec_release
+    errors << "bun: dependency-staging proof platform mismatch" unless receipt["proof_platform"] == "fedora-44-x86_64"
+    errors << "bun: dependency-staging spec SHA-256 mismatch" unless receipt.dig("production_spec", "sha256") == Digest::SHA256.hexdigest(spec)
+    errors << "bun: dependency-staging spec size mismatch" unless receipt.dig("production_spec", "size_bytes") == spec.bytesize
+
+    closure = receipt.dig("inputs", "closure") || {}
+    errors << "bun: dependency-staging closure filename mismatch" unless closure["filename"] == staging["closure_source"]
+    errors << "bun: dependency-staging closure SHA-256 mismatch" unless closure["sha256"] == dependency_stage["proof_receipt_sha256"] && closure["sha256"] == staging["closure_sha256"]
+    helper = receipt.dig("inputs", "helper") || {}
+    errors << "bun: dependency-staging helper filename mismatch" unless helper["filename"] == staging["helper_source"]
+    errors << "bun: dependency-staging helper SHA-256 mismatch" unless helper["sha256"] == staging["helper_sha256"]
+    errors << "bun: dependency-staging helper size is invalid" unless helper["size_bytes"].is_a?(Integer) && helper["size_bytes"].positive?
+    npm_bundle = receipt.dig("inputs", "npm_bundle") || {}
+    errors << "bun: dependency-staging npm filename mismatch" unless npm_bundle["filename"] == dependency_stage["npm_source_archive_filename"]
+    errors << "bun: dependency-staging npm size mismatch" unless npm_bundle["size_bytes"] == dependency_stage["npm_source_archive_bytes"]
+    errors << "bun: dependency-staging npm SHA-256 mismatch" unless npm_bundle["sha256"] == dependency_stage["npm_source_archive_sha256"]
+
+    source_delivery_name = source_delivery_stage["proof_receipt"]
+    source_delivery_path = source_delivery_name.is_a?(String) && File.join(package.directory, source_delivery_name)
+    if source_delivery_path && File.file?(source_delivery_path)
+      source_delivery = JSON.parse(File.read(source_delivery_path))
+      errors << "bun: dependency-staging SRPM does not match source delivery" unless receipt["srpm"]&.slice("filename", "size_bytes", "sha256", "digest_check") == source_delivery["srpm"]&.slice("filename", "size_bytes", "sha256", "digest_check")
+    else
+      errors << "bun: dependency-staging source-delivery receipt is missing"
+    end
+
+    prep = receipt["prep"] || {}
+    errors << "bun: dependency-staging prep is not network isolated" unless prep["network_namespace"] == true
+    %w[log_sha256].each do |key|
+      errors << "bun: dependency-staging #{key} is invalid" unless prep[key].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+    errors << "bun: dependency-staging prep log size is invalid" unless prep["log_size_bytes"].is_a?(Integer) && prep["log_size_bytes"].positive?
+    staged_receipt = prep["staging_receipt"] || {}
+    errors << "bun: dependency-staging transient receipt SHA-256 is invalid" unless staged_receipt["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors << "bun: dependency-staging transient receipt size is invalid" unless staged_receipt["size_bytes"].is_a?(Integer) && staged_receipt["size_bytes"].positive?
+
+    native = prep["native"] || {}
+    errors << "bun: dependency-staging native source count mismatch" unless native["source_count"] == stage["native_source_count"] && native["staged_count"] == stage["native_source_count"]
+    errors << "bun: dependency-staging native cache count mismatch" unless native["tarball_cache_count"] == stage["native_tarball_cache_count"]
+    errors << "bun: dependency-staging prefetch count mismatch" unless native["prefetch_entry_count"] == stage["prefetch_entry_count"]
+    errors << "bun: dependency-staging native identity manifest is invalid" unless native["source_identity_manifest_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    node = prep["node_headers"] || {}
+    errors << "bun: dependency-staging Node version mismatch" unless node["version"] == "24.3.0"
+    errors << "bun: dependency-staging Node ABI mismatch" unless node["abi"] == "137"
+    errors << "bun: dependency-staging Node identity mismatch" unless node["identity"] == "24.3.0"
+
+    npm = prep["npm_cache"] || {}
+    errors << "bun: dependency-staging npm cache count mismatch" unless npm["cache_entries"] == stage["npm_cache_entries"]
+    errors << "bun: dependency-staging npm cache tree mismatch" unless npm["tree_sha256"] == stage["npm_cache_tree_sha256"] && npm["tree_sha256"] == staging["npm_cache_tree_sha256"]
+    %w[entries files directories file_bytes].each do |key|
+      expected = staging["npm_cache_#{key}"]
+      errors << "bun: dependency-staging npm #{key} mismatch" unless npm[key] == expected
+    end
+    errors << "bun: dependency-staging npm cache contains symlinks" unless npm["symlinks"] == 0
+    errors << "bun: dependency-staging npm manifest mismatch" unless npm["manifest_sha256"] == npm["tree_sha256"] && npm["manifest_lines"] == npm["entries"]
+
+    required_validation = %w[
+      production_spec_integration_verified
+      srpm_inputs_verified
+      direct_source_checksums_verified
+      native_sources_staged_verified
+      native_source_identities_verified
+      node_headers_staged_verified
+      node_headers_abi_verified
+      npm_cache_materialized_verified
+      npm_cache_tree_verified
+      network_isolation_verified
+      deterministic_staging_verified
+    ]
+    errors << "bun: dependency-staging validation is incomplete" unless required_validation.all? { |key| receipt.dig("validation", key) == true }
+    errors << "bun: dependency-staging receipt reproduction mismatch" unless receipt.dig("reproduction", "staging_receipt_byte_identical") == true
+    errors << "bun: dependency-staging npm reproduction mismatch" unless receipt.dig("reproduction", "npm_cache_manifest_byte_identical") == true
+    errors << "bun: dependency-staging second prep log SHA-256 is invalid" unless receipt.dig("reproduction", "second_network_isolated_prep_log_sha256").to_s.match?(/\A[0-9a-f]{64}\z/)
+    %w[bootstrap_seed_used npm_install_run final_bun_build_run rpm_build_executed rpm_installed].each do |key|
+      errors << "bun: dependency-staging proof incorrectly claims #{key}" unless receipt.dig("validation", key) == false
+    end
+
+    required_spec_fragments = [
+      "BuildRequires:  git-core",
+      "Source25:       bun-%{version}-release-local-source-closure.json",
+      "Source26:       bun-stage-release-local-sources",
+      "ruby %{SOURCE26}",
+      "--expected-npm-tree-sha256 \"%{npm_cache_tree_sha256}\"",
+      "--expected-npm-entries \"%{npm_cache_entries}\"",
+      "--expected-npm-file-bytes \"%{npm_cache_file_bytes}\""
+    ]
+    errors << "bun: spec does not integrate the verified dependency-staging step" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
+    errors
+  rescue JSON::ParserError, KeyError => e
+    ["bun: invalid dependency-staging proof receipt: #{e.message}"]
   end
 
   def validate_bun_minimized_webkit_source(package, webkit, version, spec)
@@ -1600,6 +1715,7 @@ module Agentlab
     webkit = source_inputs.is_a?(Hash) && source_inputs["webkit"]
     lolhtml = source_inputs.is_a?(Hash) && source_inputs["lolhtml"]
     npm_lock = source_inputs.is_a?(Hash) && source_inputs["npm_lock"]
+    release_local_staging = source_inputs.is_a?(Hash) && source_inputs["release_local_staging"]
     build_graph = source_inputs.is_a?(Hash) && source_inputs["build_graph"]
     seed = source_inputs.is_a?(Hash) && source_inputs["bootstrap_seed"]
 
@@ -1625,6 +1741,7 @@ module Agentlab
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
     errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
     errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
+    errors.concat(validate_bun_dependency_staging(package, stages["dependency_staging"], stages["source_delivery"], stages["dependency_closure"], release_local_staging, version, spec))
 
     if seed.is_a?(Hash)
       errors << "bun: seed source must match the Bun release" unless seed["release_pin"] == "bun-v#{version}"

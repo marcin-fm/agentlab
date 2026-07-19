@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v1",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.18",
+  "rpm_release": "0.0.19",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-19",
   "source_generation": {
@@ -10,7 +10,8 @@
     "network_scope": "srpm-generation-only",
     "direct_sources": 23,
     "generated_sources": 2,
-    "declared_sources": 25,
+    "packaging_sources": 2,
+    "declared_sources": 27,
     "patches": 6,
     "canonical_closure_inputs": 299,
     "canonical_closure_sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0",
@@ -27,24 +28,25 @@
   },
   "spec": {
     "filename": "bun.spec",
-    "size_bytes": 20287,
-    "sha256": "cf632afece5f46b134e07f4abea3c4be50c1cef9474d9bd01e9506706e3a10f9"
+    "size_bytes": 22074,
+    "sha256": "681c493d7ec80d222c4ee6c93339b47755bdfbae8bbbf2ad4707f1a9287f2457"
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.18.fc44.src.rpm",
-    "size_bytes": 322189267,
-    "sha256": "210c753b67c189d1baefaf7120242fc7a55c8681b4a1821f25b65b43e1480223",
+    "filename": "bun-1.3.14-0.0.19.fc44.src.rpm",
+    "size_bytes": 322305310,
+    "sha256": "1dd7044ad1c935fcc38b732057759622dda09bd2d4d26b46db6a7bd977a60fda",
     "digest_check": "ok",
-    "inventory_members": 32,
-    "inventory_sha256": "cfa4ee1c6045c828de6ee47e184f5cd5db48cbd6b2611d138340b99240f5a7fd",
-    "member_manifest_sha256": "48b583210cf119acfd444f5315f7a62a93ee7f700ba7c79b210553e47af46d9f",
-    "uncompressed_member_bytes": 326176392
+    "inventory_members": 34,
+    "inventory_sha256": "ad470b7ba8c00ca976591708318a710e7a9b7bebf1a5c96b1c0712cfa06f857d",
+    "member_manifest_sha256": "59677c6651d9d2e5aa842a8803eb47c4462dda28e192a460afbaa027d7811cb2",
+    "uncompressed_member_bytes": 326650689
   },
   "validation": {
     "direct_source_checksums_verified": true,
     "canonical_closure_regenerated_verified": true,
     "canonical_closure_byte_identity_verified": true,
     "generated_source_checksums_verified": true,
+    "packaging_source_checksums_verified": true,
     "deterministic_materialization_verified": true,
     "srpm_built": true,
     "srpm_inventory_verified": true,

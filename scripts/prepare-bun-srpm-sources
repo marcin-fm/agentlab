@@ -87,6 +87,7 @@ raise Agentlab::Error, "Bun source preparer requires bun.spec" unless File.basen
 specdir = File.dirname(spec)
 dependency_stage = package.data.fetch("build_plan").fetch("stages").fetch("dependency_closure")
 source_inputs = package.data.fetch("build_plan").fetch("source_inputs")
+staging = source_inputs.fetch("release_local_staging")
 closure_path = File.join(package.directory, dependency_stage.fetch("proof_receipt"))
 closure_bytes = File.binread(closure_path)
 unless Digest::SHA256.hexdigest(closure_bytes) == dependency_stage.fetch("proof_receipt_sha256")
@@ -113,6 +114,8 @@ end
 expected_sources[22] = "#{node_source.fetch('url')}#/#{node_source.fetch('archive')}"
 expected_sources[23] = npm_filename
 expected_sources[24] = cargo_filename
+expected_sources[25] = staging.fetch("closure_source")
+expected_sources[26] = staging.fetch("helper_source")
 actual_sources = expanded_sources(spec)
 unless actual_sources == expected_sources
   raise Agentlab::Error, "bun.spec Source declarations do not match the checked SRPM source layout"
@@ -126,6 +129,8 @@ direct_identities = [
 (native_sources + [node_source]).each_with_index do |source, offset|
   direct_identities << [offset + 3, source.fetch("sha256"), source.fetch("size_bytes")]
 end
+direct_identities << [25, staging.fetch("closure_sha256"), nil]
+direct_identities << [26, staging.fetch("helper_sha256"), nil]
 direct_identities.each do |index, sha256, size_bytes|
   verify_file!(
     File.join(specdir, source_filename(actual_sources.fetch(index))),

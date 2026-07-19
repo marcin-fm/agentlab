@@ -1,0 +1,552 @@
+#!/usr/bin/ruby
+# frozen_string_literal: true
+
+require "base64"
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "set"
+require "tmpdir"
+require "zlib"
+
+module BunReleaseLocalStaging
+  class Error < StandardError; end
+
+  module_function
+
+  def safe_relative_path(value)
+    return nil unless value.is_a?(String) && !value.empty? && !value.include?("\0")
+
+    path = Pathname(value)
+    return nil if path.absolute? || path.each_filename.any? { |part| [".", ".."].include?(part) }
+
+    path.to_s
+  end
+
+  def verify_file!(path, sha256:, size_bytes: nil)
+    raise Error, "missing source file #{path}" unless File.file?(path) && !File.symlink?(path)
+    raise Error, "source size mismatch: #{path}" if size_bytes && File.size(path) != size_bytes
+    raise Error, "source checksum mismatch: #{path}" unless Digest::SHA256.file(path).hexdigest == sha256
+  end
+
+  def run!(*command, chdir:, input: nil)
+    stdout, stderr, status = Open3.capture3(*command, chdir: chdir, stdin_data: input.to_s)
+    return stdout if status.success?
+
+    detail = stderr.strip.empty? ? stdout.strip : stderr.strip
+    raise Error, "command failed (#{command.join(' ')}): #{detail}"
+  end
+
+  def normalize_lf(content)
+    content.gsub("\r\n", "\n")
+  end
+
+  def archive_entries(archive, chdir:)
+    run!("tar", "--list", "--gzip", "--file", archive, chdir: chdir).lines.map(&:strip).reject(&:empty?)
+  end
+
+  def verify_archive_root!(archive, expected_root, chdir:)
+    roots = archive_entries(archive, chdir: chdir).map do |entry|
+      relative = safe_relative_path(entry.delete_suffix("/"))
+      raise Error, "unsafe archive path in #{archive}: #{entry}" unless relative
+
+      relative.split("/", 2).first
+    end.uniq
+    raise Error, "archive root mismatch for #{archive}: #{roots.inspect}" unless roots == [expected_root]
+  end
+
+  def extracted_stats(root)
+    files = 0
+    bytes = 0
+    symlinks = 0
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      next if [".", ".."].include?(File.basename(path))
+
+      if File.symlink?(path)
+        symlinks += 1
+      elsif File.file?(path)
+        files += 1
+        bytes += File.size(path)
+      end
+    end
+    { "files" => files, "file_bytes" => bytes, "symlinks" => symlinks }
+  end
+
+  def extract_rooted_archive!(archive, destination, expected_root, chdir:)
+    verify_archive_root!(archive, expected_root, chdir: chdir)
+    FileUtils.rm_rf(destination)
+    FileUtils.mkdir_p(destination)
+    run!(
+      "tar", "--extract", "--gzip", "--file", archive,
+      "--directory", destination, "--strip-components=1", "--no-same-owner",
+      chdir: chdir
+    )
+  end
+
+  def copy_verified!(source, destination, sha256)
+    FileUtils.mkdir_p(File.dirname(destination))
+    FileUtils.cp(source, destination, preserve: true)
+    verify_file!(destination, sha256: sha256)
+  end
+
+  def stage_native!(record, source_root, source_dir, tarball_cache, prefetch_dir)
+    archive = File.join(source_dir, record.fetch("archive"))
+    verify_file!(archive, sha256: record.fetch("sha256"), size_bytes: record.fetch("size_bytes"))
+    copy_verified!(archive, File.join(tarball_cache, record.fetch("archive")), record.fetch("sha256"))
+    prefetch = File.join(prefetch_dir, Digest::SHA256.hexdigest(record.fetch("url"))[0, 32])
+    copy_verified!(archive, prefetch, record.fetch("sha256"))
+
+    destination = File.join(source_root, "vendor", record.fetch("name"))
+    if record.fetch("name") == "lolhtml"
+      stamp = File.join(destination, ".ref")
+      unless File.file?(stamp) && File.read(stamp).strip == record.fetch("upstream_source_identity")
+        raise Error, "pre-staged lol-html source identity mismatch"
+      end
+      return {
+        "name" => record.fetch("name"),
+        "identity" => record.fetch("upstream_source_identity"),
+        "pre_staged" => true
+      }
+    end
+
+    extract_rooted_archive!(archive, destination, record.fetch("archive_root"), chdir: source_root)
+    stats = extracted_stats(destination)
+    expected_stats = {
+      "files" => record.fetch("file_count"),
+      "file_bytes" => record.fetch("unpacked_size_bytes"),
+      "symlinks" => record.fetch("symlink_count")
+    }
+    raise Error, "native source inventory mismatch: #{record.fetch('name')}" unless stats == expected_stats
+    raise Error, "native source contains hardlinks: #{record.fetch('name')}" unless record.fetch("hardlink_count").zero?
+
+    Array(record.fetch("patches")).each do |patch|
+      patch_path = File.join(source_root, patch.fetch("path"))
+      verify_file!(patch_path, sha256: patch.fetch("sha256"), size_bytes: patch.fetch("size_bytes"))
+      content = File.binread(patch_path)
+      case patch.fetch("kind")
+      when "patch"
+        run!(
+          "git", "apply", "--ignore-whitespace", "--ignore-space-change", "--no-index", "-",
+          chdir: destination, input: normalize_lf(content)
+        )
+      when "overlay"
+        File.binwrite(File.join(destination, File.basename(patch.fetch("path"))), content)
+      else
+        raise Error, "unsupported native source adjustment #{patch.fetch('kind')}"
+      end
+    end
+
+    File.write(File.join(destination, ".ref"), "#{record.fetch('upstream_source_identity')}\n")
+    {
+      "name" => record.fetch("name"),
+      "identity" => record.fetch("upstream_source_identity"),
+      "pre_staged" => false,
+      "patches" => Array(record.fetch("patches")).length
+    }
+  end
+
+  def stage_node_headers!(record, source_root, source_dir, prefetch_dir)
+    archive = File.join(source_dir, record.fetch("archive"))
+    verify_file!(archive, sha256: record.fetch("sha256"), size_bytes: record.fetch("size_bytes"))
+    prefetch = File.join(prefetch_dir, Digest::SHA256.hexdigest(record.fetch("url"))[0, 32])
+    copy_verified!(archive, prefetch, record.fetch("sha256"))
+
+    destination = File.join(source_root, "build", "release-local", "cache", "nodejs-headers-#{record.fetch('version')}")
+    extract_rooted_archive!(archive, destination, record.fetch("archive_root"), chdir: source_root)
+    stats = extracted_stats(destination)
+    expected_stats = {
+      "files" => record.fetch("file_count"),
+      "file_bytes" => record.fetch("unpacked_size_bytes"),
+      "symlinks" => record.fetch("symlink_count")
+    }
+    raise Error, "Node header inventory mismatch" unless stats == expected_stats
+    raise Error, "Node headers contain hardlinks" unless record.fetch("hardlink_count").zero?
+
+    %w[include/node/openssl include/node/uv include/node/uv.h].each do |relative|
+      FileUtils.rm_rf(File.join(destination, relative))
+    end
+    header = File.join(destination, record.fetch("node_version_header"))
+    verify_file!(header, sha256: record.fetch("node_version_header_sha256"))
+    unless File.read(header).match?(/^#define NODE_MODULE_VERSION\s+#{Regexp.escape(record.fetch('abi'))}$/)
+      raise Error, "Node header ABI mismatch"
+    end
+    File.write(File.join(destination, ".identity"), "#{record.fetch('version')}\n")
+    {
+      "version" => record.fetch("version"),
+      "abi" => record.fetch("abi"),
+      "identity" => record.fetch("version"),
+      "removed_paths" => 3
+    }
+  end
+
+  def parse_pax_headers(data)
+    headers = {}
+    offset = 0
+    while offset < data.bytesize
+      space = data.index(" ", offset)
+      raise Error, "invalid PAX header length" unless space
+
+      length = Integer(data.byteslice(offset, space - offset), 10)
+      record = data.byteslice(space + 1, length - (space - offset) - 1).delete_suffix("\n")
+      key, value = record.split("=", 2)
+      raise Error, "invalid PAX header value" unless key && value
+
+      headers[key] = value
+      offset += length
+    end
+    headers
+  end
+
+  def tar_header_path(header)
+    name = header.name.to_s.split("\0", 2).first
+    prefix = header.prefix.to_s.split("\0", 2).first
+    prefix.to_s.empty? ? name : "#{prefix}/#{name}"
+  end
+
+  def extract_npm_archive!(archive, destination, expected_root)
+    paths = Set.new
+    roots = Set.new
+    long_name = nil
+    local_pax = {}
+    global_pax = {}
+    FileUtils.mkdir_p(destination)
+
+    Zlib::GzipReader.open(archive) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          case entry.header.typeflag
+          when "L"
+            long_name = entry.read.delete_suffix("\0")
+            next
+          when "K"
+            entry.read
+            next
+          when "x"
+            local_pax = parse_pax_headers(entry.read)
+            next
+          when "g"
+            global_pax.merge!(parse_pax_headers(entry.read))
+            next
+          end
+
+          entry_name = local_pax["path"] || global_pax["path"] || long_name || tar_header_path(entry.header)
+          path = safe_relative_path(entry_name)
+          raise Error, "archive path escapes root: #{entry_name}" unless path
+
+          root, relative = path.split("/", 2)
+          roots << root unless root.nil? || root.empty? || root == "."
+          raise Error, "unexpected npm archive root #{root.inspect}" unless root == expected_root
+          if relative && !relative.empty?
+            raise Error, "npm archive contains duplicate path: #{relative}" unless paths.add?(relative)
+
+            target = File.join(destination, relative)
+            if entry.directory?
+              FileUtils.mkdir_p(target)
+              File.chmod(entry.header.mode & 0o777, target)
+            elsif entry.file?
+              FileUtils.mkdir_p(File.dirname(target))
+              File.open(target, "wb", entry.header.mode & 0o777) { |file| IO.copy_stream(entry, file) }
+            else
+              raise Error, "unsupported npm archive entry #{entry.header.typeflag.inspect}: #{path}"
+            end
+          end
+          long_name = nil
+          local_pax = {}
+        end
+      end
+    end
+    raise Error, "npm archive root mismatch for #{archive}" unless roots == Set[expected_root]
+  rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+    raise Error, "cannot extract #{archive}: #{e.message}"
+  end
+
+  def normalize_package_bins!(destination, manifest)
+    targets = case manifest["bin"]
+              when String then [manifest.fetch("bin")]
+              when Hash then manifest.fetch("bin").values
+              else []
+              end
+    if (bin_dir = Hash(manifest["directories"])["bin"])
+      relative_dir = safe_relative_path(bin_dir.delete_prefix("./"))
+      raise Error, "unsafe npm bin directory: #{bin_dir}" unless relative_dir
+
+      directory = File.join(destination, relative_dir)
+      if Dir.exist?(directory)
+        targets.concat(Dir.glob(File.join(directory, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+          path.delete_prefix("#{destination}/") if File.file?(path)
+        end)
+      end
+    end
+    conventional_bin = File.join(destination, "bin")
+    if Dir.exist?(conventional_bin)
+      targets.concat(Dir.glob(File.join(conventional_bin, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+        path.delete_prefix("#{destination}/") if File.file?(path)
+      end)
+    end
+
+    targets.uniq.each do |target|
+      relative = safe_relative_path(target.delete_prefix("./"))
+      raise Error, "unsafe npm bin target: #{target}" unless relative
+
+      path = File.join(destination, relative)
+      raise Error, "npm bin target is not a regular file: #{relative}" unless File.file?(path) && !File.symlink?(path)
+
+      File.chmod(0o777, path)
+    end
+  end
+
+  def wyhash11(input)
+    mask = (1 << 64) - 1
+    primes = [0xa0761d6478bd642f, 0xe7037ed1a0b428db, 0x8ebc6af09c88c6e3, 0x589965cc75374cc3, 0x1d8e4e27c47d124f]
+    bytes = input.b.bytes
+    raise Error, "unsupported long npm prerelease identifier: #{input}" if bytes.length > 8
+
+    read = lambda do |offset, length|
+      slice = bytes.slice(offset, length)
+      raise Error, "cannot read npm prerelease identifier bytes" unless slice&.length == length
+
+      slice.each_with_index.sum { |byte, index| byte << (index * 8) }
+    end
+    mum = lambda do |a, b|
+      product = (a & mask) * (b & mask)
+      ((product >> 64) ^ (product & mask)) & mask
+    end
+    mix0 = ->(a, b, seed) { mum.call(a ^ seed ^ primes[0], b ^ seed ^ primes[1]) }
+    value = case bytes.length
+            when 0 then 0
+            when 1 then mix0.call(read.call(0, 1), primes[4], 0)
+            when 2 then mix0.call(read.call(0, 2), primes[4], 0)
+            when 3 then mix0.call((read.call(0, 2) << 8) | read.call(2, 1), primes[4], 0)
+            when 4 then mix0.call(read.call(0, 4), primes[4], 0)
+            when 5 then mix0.call((read.call(0, 4) << 8) | read.call(4, 1), primes[4], 0)
+            when 6 then mix0.call((read.call(0, 4) << 16) | read.call(4, 2), primes[4], 0)
+            when 7 then mix0.call((read.call(0, 4) << 24) | (read.call(4, 2) << 8) | read.call(6, 1), primes[4], 0)
+            when 8 then mix0.call((read.call(0, 4) << 32) | read.call(4, 4), primes[4], 0)
+            end
+    mum.call(value ^ bytes.length, primes[4])
+  end
+
+  def source_cache_name(source, install_roots, semver_hashes)
+    if source.fetch("origin") == "registry"
+      version = source.fetch("source_version")
+      match = version.match(/\A(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+(.+))?\z/)
+      raise Error, "unsupported npm semver for Bun cache: #{version}" unless match
+
+      rendered = "#{match[1]}.#{match[2]}.#{match[3]}"
+      rendered += "-#{semver_hashes.fetch(match[4]).downcase}" if match[4]
+      rendered += "+#{semver_hashes.fetch(match[5]).upcase}" if match[5]
+      "#{source.fetch('source_name')}@#{rendered}@@@1"
+    else
+      reference = source.fetch("references").fetch(0)
+      root = install_roots.fetch(reference.fetch("install_root"))
+      resolution = root.fetch("sources").find do |record|
+        record.fetch("package_path") == reference.fetch("package_path") && record.fetch("origin") == "github"
+      end&.fetch("resolution")
+      match = resolution.to_s.match(/\Agithub:([^#]+)#([0-9a-f]+)\z/)
+      raise Error, "cannot derive Bun GitHub cache identity" unless match
+
+      "@GH@#{match[1].tr('/', '-')}-#{match[2]}@@@1"
+    end
+  end
+
+  def tree_receipt(root, manifest_path: nil)
+    entries = []
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      relative = path.delete_prefix("#{root}/")
+      next if relative.empty? || [".", ".."].include?(File.basename(path))
+
+      stat = File.lstat(path)
+      if stat.symlink?
+        target = File.readlink(path)
+        raise Error, "absolute symlink in staged npm cache: #{relative}" if Pathname(target).absolute?
+        entries << ["link", relative, target]
+      elsif stat.file?
+        entries << ["file", relative, format("%04o", stat.mode & 0o7777), stat.size, Digest::SHA256.file(path).hexdigest]
+      elsif stat.directory?
+        entries << ["directory", relative, format("%04o", stat.mode & 0o7777)]
+      else
+        raise Error, "unsupported staged npm cache entry: #{relative}"
+      end
+    end
+    serialized = entries.map { |entry| JSON.generate(entry) }.join("\n") + "\n"
+    File.write(manifest_path, serialized) if manifest_path
+    {
+      "entries" => entries.length,
+      "files" => entries.count { |entry| entry.fetch(0) == "file" },
+      "directories" => entries.count { |entry| entry.fetch(0) == "directory" },
+      "symlinks" => entries.count { |entry| entry.fetch(0) == "link" },
+      "file_bytes" => entries.sum { |entry| entry.fetch(0) == "file" ? entry.fetch(3) : 0 },
+      "sha256" => Digest::SHA256.hexdigest(serialized)
+    }
+  end
+
+  def stage_npm!(closure, bundle, cache_root, manifest_path, expectations, work_root)
+    sources = closure.dig("npm", "source_archives")
+    expected_count = closure.dig("npm", "summary", "unique_sources")
+    raise Error, "npm source count mismatch" unless sources.length == expected_count
+
+    install_roots = closure.dig("npm", "install_roots").to_h { |root| [root.fetch("path"), root] }
+    prerelease_parts = sources.filter_map do |source|
+      next unless source.fetch("origin") == "registry"
+
+      source.fetch("source_version").match(/\A\d+\.\d+\.\d+(?:-([^+]+))?(?:\+(.+))?\z/)&.captures
+    end.flatten.compact.uniq.sort
+    semver_hashes = prerelease_parts.to_h { |part| [part, format("%016x", wyhash11(part))] }
+
+    FileUtils.rm_rf(cache_root)
+    FileUtils.mkdir_p(cache_root)
+    Dir.mktmpdir("bun-npm-sources-", work_root) do |temporary|
+      verify_archive_root!(bundle, "bun-#{closure.fetch('release')}-npm-sources", chdir: work_root)
+      run!("tar", "--extract", "--gzip", "--file", bundle, "--directory", temporary, "--no-same-owner", chdir: work_root)
+      archive_root = File.join(temporary, "bun-#{closure.fetch('release')}-npm-sources", "npm")
+      raise Error, "npm source bundle lacks npm archive directory" unless Dir.exist?(archive_root)
+
+      names = Set.new
+      sources.each do |source|
+        archive = File.join(archive_root, source.fetch("archive"))
+        verify_file!(archive, sha256: source.fetch("sha256"), size_bytes: source.fetch("size_bytes"))
+        if source.fetch("origin") == "registry"
+          expected_sha512 = Base64.strict_decode64(source.fetch("integrity").delete_prefix("sha512-"))
+          raise Error, "npm archive integrity mismatch: #{source.fetch('archive')}" unless Digest::SHA512.file(archive).digest == expected_sha512
+        end
+
+        cache_name = source_cache_name(source, install_roots, semver_hashes)
+        raise Error, "duplicate Bun cache identity #{cache_name}" unless names.add?(cache_name)
+        destination = File.join(cache_root, cache_name)
+        extract_npm_archive!(archive, destination, source.fetch("archive_root"))
+        files = Dir.glob(File.join(destination, "**", "*"), File::FNM_DOTMATCH).select do |path|
+          File.file?(path) && ![".", ".."].include?(File.basename(path))
+        end
+        raise Error, "npm archive file count mismatch: #{cache_name}" unless files.length == source.fetch("file_count")
+        raise Error, "npm archive size mismatch: #{cache_name}" unless files.sum { |path| File.size(path) } == source.fetch("unpacked_size_bytes")
+
+        package_json = File.join(destination, "package.json")
+        raise Error, "materialized npm source lacks package.json: #{cache_name}" unless File.file?(package_json)
+        manifest = JSON.parse(File.read(package_json))
+        raise Error, "npm package identity mismatch: #{cache_name}" unless manifest.fetch("name") == source.fetch("package_name")
+        expected_version = source["package_version"]
+        raise Error, "npm package version mismatch: #{cache_name}" if expected_version && manifest.fetch("version") != expected_version
+        normalize_package_bins!(destination, manifest)
+        File.write(File.join(destination, ".bun-tag"), source.fetch("archive_root")) if source.fetch("origin") == "github"
+      end
+      raise Error, "materialized Bun cache entry count mismatch" unless names.length == expected_count
+    end
+
+    receipt = tree_receipt(cache_root, manifest_path: manifest_path)
+    expectations.each do |key, expected|
+      raise Error, "staged npm cache #{key} mismatch" unless receipt.fetch(key) == expected
+    end
+    receipt.merge("cache_entries" => expected_count, "semver_hashes" => semver_hashes)
+  end
+
+  def main(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.on("--source-root PATH") { |value| options[:source_root] = value }
+      parser.on("--closure PATH") { |value| options[:closure] = value }
+      parser.on("--npm-bundle PATH") { |value| options[:npm_bundle] = value }
+      parser.on("--npm-cache PATH") { |value| options[:npm_cache] = value }
+      parser.on("--prefetch-dir PATH") { |value| options[:prefetch_dir] = value }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+      parser.on("--npm-manifest PATH") { |value| options[:npm_manifest] = value }
+      parser.on("--expected-npm-tree-sha256 HASH") { |value| options[:npm_tree_sha256] = value }
+      parser.on("--expected-npm-entries N", Integer) { |value| options[:npm_entries] = value }
+      parser.on("--expected-npm-files N", Integer) { |value| options[:npm_files] = value }
+      parser.on("--expected-npm-directories N", Integer) { |value| options[:npm_directories] = value }
+      parser.on("--expected-npm-file-bytes N", Integer) { |value| options[:npm_file_bytes] = value }
+    end.parse!(argv)
+
+    required = %i[source_root closure npm_bundle npm_cache prefetch_dir receipt npm_manifest npm_tree_sha256 npm_entries npm_files npm_directories npm_file_bytes]
+    missing = required.reject { |key| options.key?(key) }
+    raise Error, "missing required options: #{missing.join(', ')}" unless missing.empty?
+
+    source_root = File.realpath(options.fetch(:source_root))
+    closure_path = File.realpath(options.fetch(:closure))
+    source_dir = File.dirname(closure_path)
+    npm_bundle = File.realpath(options.fetch(:npm_bundle))
+    closure_bytes = File.binread(closure_path)
+    closure = JSON.parse(closure_bytes)
+    unless closure.fetch("schema") == "bun-release-local-source-closure/v2" && closure.fetch("package") == "bun"
+      raise Error, "unsupported Bun release-local source closure"
+    end
+    unless closure.fetch("target") == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+      raise Error, "Bun release-local source closure target mismatch"
+    end
+
+    FileUtils.mkdir_p(File.dirname(options.fetch(:receipt)))
+    FileUtils.mkdir_p(File.dirname(options.fetch(:npm_manifest)))
+    FileUtils.mkdir_p(options.fetch(:prefetch_dir))
+    tarball_cache = File.join(source_root, "build", "release-local", "cache", "tarballs")
+    FileUtils.mkdir_p(tarball_cache)
+
+    native = closure.fetch("native_github_sources").map do |record|
+      stage_native!(record, source_root, source_dir, tarball_cache, options.fetch(:prefetch_dir))
+    end
+    raise Error, "expected 19 native source records" unless native.length == 19
+    node = stage_node_headers!(closure.fetch("node_headers"), source_root, source_dir, options.fetch(:prefetch_dir))
+    npm = stage_npm!(
+      closure,
+      npm_bundle,
+      options.fetch(:npm_cache),
+      options.fetch(:npm_manifest),
+      {
+        "sha256" => options.fetch(:npm_tree_sha256),
+        "entries" => options.fetch(:npm_entries),
+        "files" => options.fetch(:npm_files),
+        "directories" => options.fetch(:npm_directories),
+        "file_bytes" => options.fetch(:npm_file_bytes),
+        "symlinks" => 0
+      },
+      File.dirname(options.fetch(:npm_cache))
+    )
+
+    receipt = {
+      "schema" => "bun-release-local-source-staging/v1",
+      "package" => "bun",
+      "release" => closure.fetch("release"),
+      "target" => closure.fetch("target"),
+      "closure" => {
+        "path" => File.basename(closure_path),
+        "sha256" => Digest::SHA256.hexdigest(closure_bytes)
+      },
+      "native" => {
+        "source_count" => native.length,
+        "staged_count" => native.length,
+        "tarball_cache_count" => Dir.children(tarball_cache).length,
+        "records" => native
+      },
+      "node_headers" => node,
+      "prefetch" => {
+        "entry_count" => Dir.children(options.fetch(:prefetch_dir)).length
+      },
+      "npm_cache" => npm,
+      "validation" => {
+        "direct_source_checksums_verified" => true,
+        "native_sources_staged_verified" => true,
+        "native_source_identities_verified" => true,
+        "node_headers_staged_verified" => true,
+        "node_headers_abi_verified" => true,
+        "npm_cache_materialized_verified" => true,
+        "npm_cache_tree_verified" => true,
+        "network_used" => false,
+        "bootstrap_seed_used" => false,
+        "npm_install_run" => false,
+        "final_bun_build_run" => false
+      }
+    }
+    File.write(options.fetch(:receipt), JSON.pretty_generate(receipt) + "\n")
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  begin
+    BunReleaseLocalStaging.main(ARGV)
+  rescue BunReleaseLocalStaging::Error, JSON::ParserError, KeyError, Errno::ENOENT, ArgumentError => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end

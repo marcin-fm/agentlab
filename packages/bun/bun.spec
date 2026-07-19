@@ -34,10 +34,17 @@
 %global lolhtml_manifest_sha256 feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03
 %global lolhtml_lockfile_sha256 02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d
 %global lolhtml_source_identity 712928b3736f4aad
+%global release_local_closure_sha256 ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
+%global source_staging_helper_sha256 73f25a3a5e3640d749a69fa530d8fb0d2fcad93e1c8aa01460b829616a63aaaf
+%global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
+%global npm_cache_entries 4613
+%global npm_cache_files 3855
+%global npm_cache_directories 758
+%global npm_cache_file_bytes 121972064
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.18%{?dist}
+Release:        0.0.19%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -73,6 +80,10 @@ Source22:       https://nodejs.org/dist/v24.3.0/node-v24.3.0-headers.tar.gz#/nod
 Source23:       bun-%{version}-npm-sources.tar.gz
 # Generated during repository-backed SRPM construction from the checked lol-html Cargo lock closure.
 Source24:       bun-%{version}-lolhtml-cargo-vendor.tar.gz
+# Checked machine-readable contract for the direct and bundled dependency sources.
+Source25:       bun-%{version}-release-local-source-closure.json
+# Fedora packaging helper that reconstructs Bun's offline source/cache layout.
+Source26:       bun-stage-release-local-sources
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -104,6 +115,7 @@ BuildRequires:  clang21
 BuildRequires:  cmake
 BuildRequires:  flex
 BuildRequires:  gcc-c++
+BuildRequires:  git-core
 BuildRequires:  gperf
 BuildRequires:  libicu-devel
 BuildRequires:  libxml2-devel
@@ -137,10 +149,10 @@ the checked minimized WebKit/JSC source, builds its static libraries with LLVM 2
 and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
 three frozen npm installs are proven separately with networking unavailable.
 The RPM draft carries the complete checked dependency-source closure, stages
-the pinned lol-html source and vendored Cargo graph at Bun's production path,
-and verifies that static library through Fedora's Cargo macros. The other
-native and npm inputs, final Bun source-build graph, and relink payload
-integration remain blocked.
+the native dependency trees, Node.js headers, npm install cache, and vendored
+lol-html Cargo graph at Bun's production paths, and verifies the Cargo static
+library through Fedora macros. The source-built npm installs, final Bun build
+graph, and relink payload integration remain blocked.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -168,6 +180,8 @@ echo "%{zstd_sha256}  %{SOURCE21}" | sha256sum -c -
 echo "%{node_headers_sha256}  %{SOURCE22}" | sha256sum -c -
 echo "%{npm_sources_sha256}  %{SOURCE23}" | sha256sum -c -
 echo "%{cargo_vendor_sha256}  %{SOURCE24}" | sha256sum -c -
+echo "%{release_local_closure_sha256}  %{SOURCE25}" | sha256sum -c -
+echo "%{source_staging_helper_sha256}  %{SOURCE26}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -195,6 +209,23 @@ pushd vendor/lolhtml/c-api >/dev/null
 %cargo_prep -v cargo-vendor
 test "$(find cargo-vendor -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 43
 popd >/dev/null
+
+mkdir -p .build-tools
+ruby %{SOURCE26} \
+  --source-root "$PWD" \
+  --closure "%{SOURCE25}" \
+  --npm-bundle "%{SOURCE23}" \
+  --npm-cache "$PWD/.build-tools/bun-install-cache" \
+  --prefetch-dir "$PWD/.build-tools/prefetch/by-url" \
+  --receipt "$PWD/.build-tools/release-local-source-staging.json" \
+  --npm-manifest "$PWD/.build-tools/npm-cache-manifest.jsonl" \
+  --expected-npm-tree-sha256 "%{npm_cache_tree_sha256}" \
+  --expected-npm-entries "%{npm_cache_entries}" \
+  --expected-npm-files "%{npm_cache_files}" \
+  --expected-npm-directories "%{npm_cache_directories}" \
+  --expected-npm-file-bytes "%{npm_cache_file_bytes}"
+test -s .build-tools/release-local-source-staging.json
+test -s .build-tools/npm-cache-manifest.jsonl
 
 %build
 export HOME="$PWD/.build-home"
@@ -333,6 +364,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.19
+- Stage the native, Node.js, and npm dependency sources for the offline build graph.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.18
 - Stage and verify the vendored lol-html Cargo build with Fedora macros.
 
