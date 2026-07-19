@@ -29,7 +29,7 @@ diff --git a/crates/kreuzberg-node/typescript/cli.ts b/crates/kreuzberg-node/typ
  declare global {
    var __filename: string | undefined;
    var __dirname: string | undefined;
-@@ -32,12 +31,8 @@ function main(argv: string[]): number {
+@@ -32,14 +31,10 @@ function main(argv: string[]): number {
    const args = argv.slice(2);
  
 -  let cliPath: string | undefined;
@@ -37,9 +37,12 @@ diff --git a/crates/kreuzberg-node/typescript/cli.ts b/crates/kreuzberg-node/typ
 -    cliPath = which.sync("kreuzberg-cli");
 -  } catch {}
 -
-+  let cliPath: string | undefined = "/usr/bin/kreuzberg";
++  let cliPath: string | undefined = existsSync("/usr/bin/kreuzberg") ? "/usr/bin/kreuzberg" : undefined;
    if (!cliPath) {
      const __dirname = getDirectory();
-     const devBinary = join(__dirname, "..", "..", "..", "target", "release", "kreuzberg");
+-    const devBinary = join(__dirname, "..", "..", "..", "target", "release", "kreuzberg");
++    const devBinary = join(__dirname, "..", "..", "..", "target", "rpm", "kreuzberg");
      if (existsSync(devBinary)) {
        cliPath = devBinary;
+     }
+   }

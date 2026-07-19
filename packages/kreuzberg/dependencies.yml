@@ -6,11 +6,18 @@ source_inputs:
   source_archive:
     url: https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v4.10.2.tar.gz
     sha256: 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
-  generated_node_wrapper:
-    url: https://registry.npmjs.org/@kreuzberg/node/-/node-4.10.2.tgz
-    integrity: sha512-cOp4SpS4/dZ2MX4jJT8vvcb4KF6eM68JJPPs2ykUnH3+ypvdkJlZC92GOylczw0TNa3yiXB7EGBMrbicHCLbHw==
-    sha256: 44e344738f22c6d864046e14fd5a04c63f4f1451a6275934410bfa1f428f4025
-    preferred_source: Source0 crates/kreuzberg-node/typescript and tsup.config.ts
+  node_types:
+    url: https://registry.npmjs.org/@types/node/-/node-26.1.1.tgz
+    sha256: cb0bc3624d2e6bc233ec332a3aea6ac317c0aadb3301bfb797a34864546c1401
+  undici_types:
+    url: https://registry.npmjs.org/undici-types/-/undici-types-8.3.0.tgz
+    sha256: 07a721cb2cd0dd798c24757de34d14e8b640ff8fddef85d662e00b392562a1f2
+  node_native_loader:
+    path: kreuzberg-node-loader.js
+    role: Fedora integration source pending maintainer acceptance and upstream-status resolution
+  calamine_date_fixture:
+    path: kreuzberg-date-xlsx-fixture
+    role: deterministic local XLSX smoke fixture generator
 system_dependencies:
   nodejs:
     minimum: "22"
@@ -56,7 +63,7 @@ build_adjustments:
   tesseract: Disable the default source-download feature and link dynamically to Fedora Tesseract and Leptonica.
   feature_scope: Preserve documented Node extraction, OCR, PaddleOCR, layout, embeddings, and tree-sitter functionality while omitting API, MCP, OpenTelemetry, and Liter LLM server-only surfaces.
   target_scope: Remove wasm32-only dependency blocks from the selected native Linux crates before Fedora Cargo dependency generation.
-  node_native_loader: Install the Fedora-built N-API addon beside the published generated loader.
+  node_native_loader: Install the Fedora-built N-API addon beside the downstream Fedora loader and generated TypeScript outputs.
   cli: Install the source-built Rust CLI as /usr/bin/kreuzberg and patch the npm CLI proxy to execute it directly.
 closure_audit:
   audited_release: 4.10.2
@@ -68,10 +75,10 @@ closure_audit:
   native_sources_verified: true
   generated_sources_verified: true
   offline_verified: true
-  fedora_43_application: build_10739044_succeeded_x86_64_and_aarch64
-  fedora_44_application: build_10739040_succeeded_x86_64_and_aarch64
-  current_dependency_receipts: exact_current_252_of_252_package_chroot_pairs_succeeded
-  current_node_buildrequires_correction: proven_in_all_four_application_chroots
+  retained_0_0_5_fedora_43_application: build_10739044_succeeded_x86_64_and_aarch64
+  retained_0_0_5_fedora_44_application: build_10739040_succeeded_x86_64_and_aarch64
+  retained_0_0_5_dependency_receipts: exact_252_of_252_package_chroot_pairs_succeeded
+  retained_0_0_5_node_buildrequires_correction: proven_in_all_four_application_chroots
   aarch64_application: native_checks_and_node_napi_smokes_succeeded_on_f43_and_f44
   inspected_payloads: representative_x86_64_and_aarch64_cli_node_pairs_have_expected_architecture_and_no_rpath_or_runpath
   license_accounting: aggregate_spdx_and_exact_build_generated_394_row_inventories

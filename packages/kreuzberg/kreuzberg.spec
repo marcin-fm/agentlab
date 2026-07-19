@@ -4,20 +4,21 @@
 # Disabled by package.yml until the source-hosting, license, architecture, and
 # final clean-build gates are complete.
 %global source_sha256 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
-%global node_wrapper_sha256 44e344738f22c6d864046e14fd5a04c63f4f1451a6275934410bfa1f428f4025
+%global types_node_sha256 cb0bc3624d2e6bc233ec332a3aea6ac317c0aadb3301bfb797a34864546c1401
+%global undici_types_sha256 07a721cb2cd0dd798c24757de34d14e8b640ff8fddef85d662e00b392562a1f2
 
 Name:           kreuzberg
 Version:        4.10.2
-Release:        0.0.5%{?dist}
+Release:        0.0.7%{?dist}
 Summary:        Document intelligence toolkit and Node bindings
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND WTFPL AND Zlib AND bzip2-1.0.6
 URL:            https://github.com/kreuzberg-dev/kreuzberg-lts
 Source0:        https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v%{version}.tar.gz
-Source1:        https://registry.npmjs.org/@kreuzberg/node/-/node-%{version}.tgz
-# Adapt the generated npm wrapper to the RPM-owned CLI and remove prebuilt platforms.
-# Fedora-specific; not submitted upstream because this is RPM integration.
-Source2:        kreuzberg-node-wrapper-fedora.patch
+Source1:        https://registry.npmjs.org/@types/node/-/node-26.1.1.tgz
+Source2:        https://registry.npmjs.org/undici-types/-/undici-types-8.3.0.tgz
+Source3:        kreuzberg-node-loader.js
+Source4:        kreuzberg-date-xlsx-fixture
 # Select the Fedora CLI, Node, and FFI feature surface with system PDFium.
 # Fedora-specific; not submitted upstream because it is the RPM-selected surface.
 Patch0:         kreuzberg-system-pdfium.patch
@@ -87,12 +88,15 @@ BuildRequires:  chrpath
 BuildRequires:  gcc-c++
 BuildRequires:  nodejs >= 22
 BuildRequires:  nodejs-devel >= 22
+BuildRequires:  nodejs-esbuild
 BuildRequires:  nodejs-packaging
 BuildRequires:  pkgconfig(libonnxruntime) >= 1.18
 BuildRequires:  patch
 BuildRequires:  pkgconfig(pdfium) >= 5.0
 BuildRequires:  pkgconfig(tesseract)
 BuildRequires:  tar
+BuildRequires:  typescript >= 5.7.3
+BuildRequires:  zip
 
 # The selected integrations load these architecture-specific system libraries
 # at runtime, so their requirements are not reliably generated from ELF links.
@@ -117,16 +121,15 @@ Source-built N-API bindings for the Kreuzberg document intelligence library.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
-echo "%{node_wrapper_sha256}  %{SOURCE1}" | sha256sum -c -
+echo "%{types_node_sha256}  %{SOURCE1}" | sha256sum -c -
+echo "%{undici_types_sha256}  %{SOURCE2}" | sha256sum -c -
 %autosetup -p1 -n kreuzberg-lts-%{version}
 
-mkdir .node-wrapper
-tar -xzf %{SOURCE1} -C .node-wrapper --strip-components=1
-find .node-wrapper -type f \( -name '*.node' -o -name '*.so' -o -name '*.dll' -o -name '*.dylib' \) -print -quit | grep -q . && exit 1 || :
-patch --fuzz=0 -p1 -d .node-wrapper < %{SOURCE2}
-rm -f .node-wrapper/dist/cli.js.map .node-wrapper/dist/cli.mjs.map
-chmod 0644 .node-wrapper/package.json
-sed -i '1{/^#!\/usr\/bin\/env node$/d;}' .node-wrapper/dist/cli.d.ts .node-wrapper/dist/cli.d.mts
+mkdir -p crates/kreuzberg-node/node_modules/@types/node
+mkdir -p crates/kreuzberg-node/node_modules/undici-types
+tar -xzf %{SOURCE1} -C crates/kreuzberg-node/node_modules/@types/node --strip-components=1
+tar -xzf %{SOURCE2} -C crates/kreuzberg-node/node_modules/undici-types --strip-components=1
+install -pm0644 %{SOURCE3} crates/kreuzberg-node/index.js
 
 %cargo_prep
 
@@ -141,6 +144,23 @@ export ORT_OFFLINE=1
 export ORT_SKIP_DOWNLOAD=1
 export ORT_DYLIB_PATH=%{_libdir}/libonnxruntime.so
 export KREUZBERG_SKIP_FFI_ARTIFACTS=1
+
+pushd crates/kreuzberg-node
+/usr/bin/tsc --project tsconfig.json --emitDeclarationOnly --declaration --declarationMap false --sourceMap false
+for entry in index cli errors types; do
+  /usr/bin/esbuild "typescript/${entry}.ts" --bundle --platform=node --target=node22 \
+    --format=cjs --sourcemap --outfile="dist/${entry}.js" \
+    '--external:*.node' '--external:@kreuzberg/node-*' \
+    --external:sharp --external:./index.js --external:../index.js --external:../../index.js
+  /usr/bin/esbuild "typescript/${entry}.ts" --bundle --platform=node --target=node22 \
+    --format=esm --sourcemap --outfile="dist/${entry}.mjs" \
+    '--external:*.node' '--external:@kreuzberg/node-*' \
+    --external:sharp --external:./index.js --external:../index.js --external:../../index.js
+done
+sed -i '1{/^#!\/usr\/bin\/env node$/d;}' dist/cli.d.ts
+chmod 0755 dist/cli.js
+popd
+
 %cargo_build -- --package kreuzberg-cli --package kreuzberg-node
 /usr/bin/chrpath -d target/rpm/kreuzberg
 /usr/bin/chrpath -d target/rpm/libkreuzberg_node.so
@@ -163,6 +183,9 @@ export HF_HOME="$PWD/.cache/huggingface"
 %cargo_test -- --package kreuzberg-cli --bin kreuzberg
 %cargo_test -- --package kreuzberg-cli --test config_env_overrides_test --test contract_cli --test log_level_robustness
 %cargo_test -- --package kreuzberg-node
+
+/usr/bin/bash %{SOURCE4} "$PWD/date-smoke.xlsx"
+
 target/rpm/kreuzberg --version
 target/rpm/kreuzberg detect test_documents/text/fake_text.txt --format json > mime-check.json
 /usr/bin/grep -Fq '"mime_type": "text/plain"' mime-check.json
@@ -172,7 +195,13 @@ target/rpm/kreuzberg extract test_documents/text/fake_text.txt --format json > t
 target/rpm/kreuzberg extract test_documents/pdf/tiny.pdf --format json > pdf-check.json
 /usr/bin/grep -Eq '"mime_type"[[:space:]]*:[[:space:]]*"application/pdf"' pdf-check.json
 /usr/bin/grep -Fq 'Simple document' pdf-check.json
-rm -f mime-check.json text-check.json pdf-check.json
+target/rpm/kreuzberg extract test_documents/xlsx/excel_multi_sheet.xlsx --format json > xlsx-check.json
+/usr/bin/grep -Fq '"mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"' xlsx-check.json
+/usr/bin/grep -Fq 'Tomato' xlsx-check.json
+/usr/bin/grep -Fq 'Beetroot' xlsx-check.json
+target/rpm/kreuzberg extract date-smoke.xlsx --format json > date-check.json
+/usr/bin/grep -Fq '2035-02-13 12:00:00' date-check.json
+rm -f date-smoke.xlsx date-check.json mime-check.json text-check.json pdf-check.json xlsx-check.json
 
 case "%{_target_cpu}" in
   x86_64) node_arch=x64 ;;
@@ -180,17 +209,19 @@ case "%{_target_cpu}" in
   *) exit 1 ;;
 esac
 cp target/rpm/libkreuzberg_node.so \
-  ".node-wrapper/kreuzberg-node.linux-${node_arch}-gnu.node"
-NAPI_RS_NATIVE_LIBRARY_PATH="$PWD/.node-wrapper/kreuzberg-node.linux-${node_arch}-gnu.node" \
-  %{__nodejs} -e "const k=require('./.node-wrapper/dist/index.js'); const p='test_documents/text/fake_text.txt'; const r=k.extractFileSync(p); if (!k.__version__ || k.detectMimeTypeFromPath(p) !== 'text/plain' || r.mimeType !== 'text/plain' || !r.content.includes('Hamburgers are delicious')) process.exit(1)"
+  "crates/kreuzberg-node/kreuzberg-node.linux-${node_arch}-gnu.node"
+NAPI_RS_NATIVE_LIBRARY_PATH="$PWD/crates/kreuzberg-node/kreuzberg-node.linux-${node_arch}-gnu.node" \
+  %{__nodejs} -e "const k=require('./crates/kreuzberg-node/dist/index.js'); const p='test_documents/text/fake_text.txt'; const r=k.extractFileSync(p); if (!k.__version__ || k.detectMimeTypeFromPath(p) !== 'text/plain' || r.mimeType !== 'text/plain' || !r.content.includes('Hamburgers are delicious')) process.exit(1)"
+/usr/bin/env -u NAPI_RS_NATIVE_LIBRARY_PATH %{__nodejs} --input-type=module -e "const k=await import('./crates/kreuzberg-node/dist/index.mjs'); const p='test_documents/text/fake_text.txt'; const r=k.extractFileSync(p); if (!k.__version__ || k.detectMimeTypeFromPath(p) !== 'text/plain' || r.mimeType !== 'text/plain' || !r.content.includes('Hamburgers are delicious')) process.exit(1)"
+crates/kreuzberg-node/dist/cli.js --version
 %endif
 
 %install
 install -Dpm0755 target/rpm/kreuzberg %{buildroot}%{_bindir}/kreuzberg
 
 install -d %{buildroot}%{nodejs_sitearch}/@kreuzberg/node
-cp -a .node-wrapper/dist .node-wrapper/index.js .node-wrapper/index.d.ts \
-  .node-wrapper/package.json .node-wrapper/README.md \
+cp -a crates/kreuzberg-node/dist crates/kreuzberg-node/index.js \
+  crates/kreuzberg-node/package.json crates/kreuzberg-node/README.md \
   %{buildroot}%{nodejs_sitearch}/@kreuzberg/node/
 
 case "%{_target_cpu}" in
@@ -202,6 +233,12 @@ install -Dpm0755 target/rpm/libkreuzberg_node.so \
 
 install -Dpm0644 LICENSE.dependencies \
   %{buildroot}%{_licensedir}/%{name}/LICENSE.dependencies
+install -Dpm0644 LICENSE.dependencies \
+  %{buildroot}%{_licensedir}/nodejs-kreuzberg/LICENSE.dependencies
+cmp -s LICENSE.dependencies \
+  %{buildroot}%{_licensedir}/%{name}/LICENSE.dependencies
+cmp -s LICENSE.dependencies \
+  %{buildroot}%{_licensedir}/nodejs-kreuzberg/LICENSE.dependencies
 
 %files
 %license LICENSE
@@ -211,10 +248,18 @@ install -Dpm0644 LICENSE.dependencies \
 
 %files -n nodejs-kreuzberg
 %license LICENSE
+%license %{_licensedir}/nodejs-kreuzberg/LICENSE.dependencies
 %doc crates/kreuzberg-node/README.md
 %{nodejs_sitearch}/@kreuzberg/node/
 
 %changelog
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 4.10.2-0.0.7
+- Exercise Fedora calamine conversion without benchmark-only dev dependencies.
+- Ship the generated dependency license inventory with both runtime packages.
+
+* Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 4.10.2-0.0.6
+- Build the Node loader and declarations from tagged TypeScript source.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 4.10.2-0.0.5
 - Remove the upstream origin RUNPATH from the native Node addon.
 

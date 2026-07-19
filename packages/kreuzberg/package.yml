@@ -1,14 +1,15 @@
 name: kreuzberg
 status: blocked
 blockers:
-  - The published Node loader and declarations must be reproduced from the tagged TypeScript source with pinned offline tooling, or the nodejs-kreuzberg subpackage must be omitted.
+  - The TypeScript outputs are generated offline from the tagged source, but the small Fedora native loader remains a downstream Source file requiring maintainer acceptance and upstream-status resolution.
   - Public immutable hosting for the generated PDFium/Rust closure, 295-record parser subset, and external fixture sources is not available for SCM/COPR consumption.
   - Release-boundary approval is pending for the Chromium-pinned PDFium source package.
   - Final system-library ABI/runtime review remains for ONNX Runtime and PDFium; the retained smokes do not close hf-hub model-download or calamine date-behavior review.
-  - Full third-party license-text publication and a complete retained package-level rpmlint evidence set remain unresolved.
+  - Current-revision binary payload and package-level rpmlint evidence remain incomplete after the Node license-inventory correction.
 source_policy:
   rust_and_typescript_source: published v4.10.2 GitHub tag archive
-  generated_node_wrapper: published @kreuzberg/node 4.10.2 npm artifact with matching preferred source in Source0
+  generated_node_outputs: generated offline from Source0 TypeScript with Fedora TypeScript and esbuild packages
+  node_native_loader: small Fedora integration Source file; acceptance and upstream status remain pending
   node_runtime_dependencies: none; emnapi is unused by the native loader and the npm CLI is patched to the RPM-owned binary
   native_addon: built from Rust source with Fedora's toolchain
   pdfium: system library required; upstream binary downloads forbidden
@@ -33,16 +34,18 @@ copr:
 validation:
   pdfium_local_build: true
   rust_closure_local_build: true
-  current_dependency_receipts: exact_current_252_of_252_package_chroot_pairs_succeeded
-  f44_application: build_10739040_succeeded_x86_64_and_aarch64
-  f43_application: build_10739044_succeeded_x86_64_and_aarch64
-  application_builder_logs: four_retained_with_successful_native_checks
-  application_artifact_inspection: representative_x86_64_and_aarch64_cli_node_pairs_extracted_without_installation
+  retained_0_0_5_dependency_receipts: exact_252_of_252_package_chroot_pairs_succeeded
+  retained_0_0_5_f44_application: build_10739040_succeeded_x86_64_and_aarch64
+  retained_0_0_5_f43_application: build_10739044_succeeded_x86_64_and_aarch64
+  retained_0_0_5_application_builder_logs: four_with_successful_native_checks
+  retained_0_0_5_application_artifact_inspection: representative_x86_64_and_aarch64_cli_node_pairs_extracted_without_installation
+  local_0_0_7_f44_x86_64: passed_before_node_license_inventory_payload_correction
+  local_0_0_7_f43_x86_64: blocked_before_build_by_missing_pdfium_in_retained_dependency_repo
   architecture: x86_64_and_aarch64_proven_by_native_copr_checks_and_elf_headers
   rpath_runpath: absent_from_inspected_cli_and_native_addon_on_both_architectures
   license_accounting: exact_build_generated_394_row_inventories_and_aggregate_spdx
   cargo_macro_remediation: selected_package_buildrequires_and_standard_build_test_license_flow_proven
-  node_native_macro_remediation: exact_current_build_and_runtime_smokes_proven
+  node_native_macro_remediation: retained_0_0_5_and_local_0_0_7_runtime_smokes_proven
   package_rpmlint: complete_evidence_not_retained
   compatibility_patch_provenance: hf_hub_and_calamine_upstream_context_recorded
   forensic_license_collector: removed

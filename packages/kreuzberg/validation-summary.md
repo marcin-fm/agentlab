@@ -3,9 +3,9 @@
 Paths under `/srv/tmp` below are transient evidence references only and are not
 distributable source locations.
 
-## Current COPR Application Proof
+## Retained 0.0.5 COPR Application Proof
 
-The exact `4.10.2-0.0.5` application builds succeeded in the transient COPR
+The retained `4.10.2-0.0.5` application builds succeeded in the transient COPR
 project `marcin/agentlab-aarch64-proof-20260717-v1`:
 
 - F43 x86_64: build `10739044`; builder-log SHA-256 `22f84e1d32ae14cdd3b28e5a69ee598517f83017f0c33959505f37f7296728d0`.
@@ -57,7 +57,7 @@ split into 20 single-concern patches with adjacent purpose/upstream-status
 comments; every patch is below 200 changed lines, and the ordered series applies
 with zero fuzz and reproduces the former applied source tree.
 
-The current `0.0.5` draft defines the Fedora check bcond, generates selected
+The retained `0.0.5` draft defines the Fedora check bcond, generates selected
 package build requirements, uses Fedora Cargo build/test and workspace license
 macros, preserves Fedora Rust flags, installs the N-API package through the
 native Node path and filter, and removes RPATH/RUNPATH from both native outputs.
@@ -67,12 +67,28 @@ and Na'aman Hirschfeld's authorship without claiming exact backports; behavioral
 review beyond the retained test and smoke coverage remains pending.
 
 The 63 imported package records were finalized, all 40 dependency patch files
-byte-match their retained successful SRPM members, and all 252 exact current
+byte-match their retained successful SRPM members, and all 252 retained
 package/chroot pairs succeeded before the application builds. Immutable
-fixture/parser and PDFium/Rust closure hosting, full third-party license-text
-evidence, supplemental N-API license publication, ONNX Runtime/PDFium ABI and
-runtime review, PDFium release-boundary approval, and complete retained
+fixture/parser and PDFium/Rust closure hosting, downstream Node-loader approval
+and upstream-status resolution, ONNX Runtime/PDFium ABI and runtime review,
+PDFium release-boundary approval, and current-revision binary payload and
 package-level rpmlint evidence remain blockers.
+
+## Local 0.0.7 Evidence
+
+A Fedora 44 x86_64 Mock build of `4.10.2-0.0.7` completed before the later
+license-payload-only correction. It passed the Rust suites, CLI MIME/text/PDF/
+XLSX/date smokes, CommonJS and ESM Node extraction, and generated CLI execution.
+Extracted artifacts had no RPATH or RUNPATH and `rpmlint` reported zero errors
+and one missing-man-page warning. The subsequent spec correction installs the
+same nonempty generated `LICENSE.dependencies` inventory into both runtime
+packages; static expansion verifies both payload declarations, but no current
+binary package is claimed from that correction.
+
+The attempted Fedora 43 x86_64 verification stopped during dependency
+resolution because the retained local repository contains no provider for
+`pkgconfig(pdfium) >= 5.0`. Compilation did not start, so this is retained as an
+evidence-repository gap rather than a Kreuzberg build result.
 
 ## Parser Accounting
 
