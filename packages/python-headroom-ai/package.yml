@@ -54,7 +54,7 @@ build_validation:
   scoped_validator: passed
   repository_tests: 35 runs, 77 assertions, zero failures
   diff_check: passed
-  full_validator: blocked by unrelated rust-memoffset0.7, rust-nix0.26, and rust-polling2 chroot records
+  full_validator: passed after the Rawhide-only compatibility manifests recorded their stable-family omissions
   prior_mock_fedora_43: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
   prior_mock_fedora_44: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
   prior_native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed per chroot; 1 library test ignored

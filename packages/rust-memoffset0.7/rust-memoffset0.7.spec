@@ -7,7 +7,7 @@
 
 Name:           rust-memoffset0.7
 Version:        0.7.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Offset_of functionality for Rust structs
 
 License:        MIT
@@ -79,5 +79,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.7.1-0.2
+- Record the intentional Rawhide-only target scope.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.7.1-0.1
 - Add the Rawhide compatibility crate required by nix 0.26 socket support.

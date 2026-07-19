@@ -7,7 +7,7 @@
 
 Name:           rust-nix0.26
 Version:        0.26.4
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Rust friendly bindings to Unix APIs
 
 License:        MIT
@@ -135,6 +135,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.26.4-0.4
+- Record the intentional Rawhide-only target scope.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.26.4-0.3
 - Skip the flaky recvmm2 socket timing test excluded by Fedora.
 

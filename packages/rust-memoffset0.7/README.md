@@ -3,7 +3,9 @@
 Rawhide-only compatibility package for the published `memoffset 0.7.1` crate
 required by the `nix 0.26` `socket` feature. Fedora Rawhide provides
 `memoffset 0.9` but no compatible `0.7` provider, and RPM Fusion provides no
-replacement.
+replacement. Fedora 43 and Fedora 44 already provide compatible
+`rust-memoffset0.7-devel` 0.7.1 packages, so this package intentionally omits
+stable chroots.
 
 Generated with rust2rpm 28. The package exposes the empty default feature used
 by `nix 0.26` and the crate's released `unstable_const` feature interface.

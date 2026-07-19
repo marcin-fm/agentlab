@@ -2,7 +2,9 @@
 
 Rawhide-only compatibility package for the published `nix 0.26.4` crate
 required by `x11rb 0.12`. Fedora Rawhide provides newer incompatible branches
-but no `0.26` provider, and RPM Fusion provides no replacement.
+but no `0.26` provider, and RPM Fusion provides no replacement. Fedora 43 and
+Fedora 44 already provide compatible `rust-nix0.26-devel` 0.26.4 packages, so
+this package intentionally omits stable chroots.
 
 Generated with rust2rpm 28. The package exposes the `fs`, `poll`, `socket`, and
 `uio` interfaces selected by the existing X11 clipboard chain, plus the

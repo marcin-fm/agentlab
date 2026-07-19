@@ -11,7 +11,9 @@ upstream:
 source_policy:
   metadata_patch: Remove only the FreeBSD-only sysctl test dependency from the Linux build graph.
 duplicate_check:
-  checked: "2026-07-18"
+  checked: "2026-07-19"
+  fedora_43: rust-nix0.26-devel 0.26.4-5.fc43
+  fedora_44: rust-nix0.26-devel 0.26.4-6.fc44
   fedora_rawhide: incompatible nix 0.27 and newer branches only
   rpm_fusion_rawhide: absent
 validation:
@@ -23,5 +25,7 @@ copr:
   chroots:
     - fedora-rawhide-x86_64
     - fedora-rawhide-aarch64
+  omitted_target_families:
+    stable: Fedora 43 and Fedora 44 provide rust-nix0.26-devel 0.26.4 with the selected x11rb feature interfaces.
   subdir: packages/rust-nix0.26
   spec: rust-nix0.26.spec

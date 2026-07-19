@@ -44,7 +44,7 @@ current_static_validation:
   rpmlint: zero errors, zero warnings, one filtered
   yaml_parse: passed
   scoped_package_validator: passed
-  full_package_validator: blocked by unrelated rust-memoffset0.7, rust-nix0.26, and rust-polling2 chroot records
+  full_package_validator: passed after the Rawhide-only compatibility manifests recorded their stable-family omissions
   repository_tests: 35 runs, 77 assertions, zero failures
   diff_check: passed
 validation:

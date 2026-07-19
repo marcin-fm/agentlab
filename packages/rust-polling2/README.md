@@ -3,6 +3,8 @@
 Rawhide-only compatibility package for the published `polling 2.7.0` crate
 required by the `x11rb 0.12` test graph. Fedora Rawhide provides `polling 3`
 but no compatible `2.x` provider, and RPM Fusion provides no replacement.
+Fedora 43 and Fedora 44 already provide compatible `rust-polling2-devel`
+2.8.0 packages, so this package intentionally omits stable chroots.
 
 Generated with rust2rpm 28. The major-version package suffix follows current
 rust2rpm output and provides the default and `std` feature interfaces selected

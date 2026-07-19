@@ -4,7 +4,7 @@
 
 Name:           python-headroom-ai
 Version:        0.32.0
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Candidate from the scoped source probe; regenerate the selected closure in
@@ -103,6 +103,9 @@ PY
 %{_bindir}/headroom
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.6
+- Correct repository validation evidence for intentional Rawhide-only packages.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.5
 - Scope Cargo license accounting to the native extension and record its candidate aggregate SPDX expression.
 

@@ -11,7 +11,9 @@ upstream:
 source_policy:
   metadata_patch: Remove only Windows target dependencies from Fedora's Unix build graph.
 duplicate_check:
-  checked: "2026-07-18"
+  checked: "2026-07-19"
+  fedora_43: rust-polling2-devel 2.8.0-5.fc43
+  fedora_44: rust-polling2-devel 2.8.0-6.fc44
   fedora_rawhide: incompatible polling 3 branch only
   rpm_fusion_rawhide: absent
 validation:
@@ -22,5 +24,7 @@ copr:
   chroots:
     - fedora-rawhide-x86_64
     - fedora-rawhide-aarch64
+  omitted_target_families:
+    stable: Fedora 43 and Fedora 44 provide compatible rust-polling2-devel 2.8.0 packages for the selected x11rb test graph.
   subdir: packages/rust-polling2
   spec: rust-polling2.spec

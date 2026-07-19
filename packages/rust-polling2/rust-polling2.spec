@@ -7,7 +7,7 @@
 
 Name:           rust-polling2
 Version:        2.7.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Portable interface to epoll, kqueue, event ports, and IOCP
 
 License:        Apache-2.0 OR MIT
@@ -84,6 +84,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 2.7.0-0.2
+- Record the intentional Rawhide-only target scope.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.7.0-0.1
 - Add the Rawhide compatibility crate required by x11rb 0.12 tests.
 - Remove Windows-only dependencies from the Unix build graph.

@@ -9,7 +9,9 @@ upstream:
   source_url_template: https://static.crates.io/crates/memoffset/memoffset-{version}.crate
   source_sha256: 5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4
 duplicate_check:
-  checked: "2026-07-18"
+  checked: "2026-07-19"
+  fedora_43: rust-memoffset0.7-devel 0.7.1-6.fc43
+  fedora_44: rust-memoffset0.7-devel 0.7.1-7.fc44
   fedora_rawhide: incompatible memoffset 0.9 branch only
   rpm_fusion_rawhide: absent
 validation:
@@ -20,5 +22,7 @@ copr:
   chroots:
     - fedora-rawhide-x86_64
     - fedora-rawhide-aarch64
+  omitted_target_families:
+    stable: Fedora 43 and Fedora 44 provide rust-memoffset0.7-devel 0.7.1 for the selected nix 0.26 consumer.
   subdir: packages/rust-memoffset0.7
   spec: rust-memoffset0.7.spec
