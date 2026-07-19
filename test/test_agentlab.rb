@@ -1553,8 +1553,15 @@ class AgentlabTest < Minitest::Test
     refute(googletest.fetch("declared_text_resolvable"))
     assert_equal(3, license.dig("summary", "readme_chromium_ambiguous_comma_licenses"))
     assert_equal(8, license.dig("summary", "vendored_rust_legacy_slash_license_expressions"))
-    assert_equal(4, license.dig("summary", "readme_chromium_proposed_normalizations"))
+    assert_equal(0, license.dig("summary", "readme_chromium_proposed_normalizations"))
+    assert_equal(4, license.dig("summary", "readme_chromium_semantically_reviewed_normalizations"))
+    assert_equal(3, license.dig("summary", "readme_chromium_semantically_verified_declared_license_paths"))
     assert_equal(8, license.dig("summary", "vendored_rust_mechanically_normalized_license_expressions"))
+    clang_format = license.fetch("components").flat_map { |component| component.fetch("readme_chromium") }.find do |record|
+      record["path"] == "buildtools/clang_format/README.chromium"
+    end
+    assert_equal("(Apache-2.0 WITH LLVM-exception) AND NCSA", clang_format.fetch("normalized_expression"))
+    assert_equal("verified", clang_format.fetch("semantic_review_status"))
     assert_equal(2, license.fetch("scoped_parent_license_evidence").length)
     assert_equal(1_796, archive_graph.dig("archive", "object_input_count"))
     assert_equal(1_796, archive_graph.dig("archive", "member_count"))

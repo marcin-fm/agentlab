@@ -90,7 +90,7 @@ builds:
     status: not-run-blocked
 licenses:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c
+  receipt_sha256: 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
   known_draft_expression: MIT AND BSD-3-Clause
   downstream_allocator_shim: BSD-3-Clause
   candidate_license_files: 415
@@ -100,9 +100,10 @@ licenses:
   readme_chromium_verified_declared_license_paths: 228
   readme_chromium_ambiguous_comma_licenses: 3
   readme_chromium_legacy_bsd_licenses: 1
-  readme_chromium_proposed_normalizations: 4
+  readme_chromium_proposed_normalizations: 0
+  readme_chromium_semantically_reviewed_normalizations: 4
   readme_chromium_unmaterialized_declared_license_paths: 1
-  readme_chromium_semantically_verified_declared_license_paths: 0
+  readme_chromium_semantically_verified_declared_license_paths: 3
   vendored_rust_legacy_slash_license_expressions: 8
   vendored_rust_mechanically_normalized_license_expressions: 8
   git_component_inventory_complete: true

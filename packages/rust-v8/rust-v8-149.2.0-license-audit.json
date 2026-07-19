@@ -115,12 +115,12 @@
           "shipped": "no",
           "raw_license": "Apache-2.0, NCSA",
           "syntax_class": "ambiguous-comma-list",
-          "normalized_expression": null,
-          "proposed_expression": "Apache-2.0 AND NCSA",
-          "normalization_status": "proposed",
-          "normalization_reason": "exact declaration-specific evidence supplies a proposed SPDX expression; semantic text and Fedora allowability review remain pending",
+          "normalized_expression": "(Apache-2.0 WITH LLVM-exception) AND NCSA",
+          "proposed_expression": null,
+          "normalization_status": "semantically-reviewed",
+          "normalization_reason": "exact declaration-specific evidence establishes the normalized SPDX expression; Fedora allowability and aggregate-license review remain pending",
           "normalization_basis": "LLVM 547e3456660000a16fc5c2a2f819f1a2b5d35b5d llvm/LICENSE.TXT (SHA-256 8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee)",
-          "semantic_review_status": "pending"
+          "semantic_review_status": "verified"
         },
         {
           "path": "buildtools/third_party/mold/README.chromium",
@@ -3922,19 +3922,20 @@
               "verified": true,
               "source_path_present": true,
               "declared_text_scope": "materialized-source",
-              "semantic_review_verified": false,
-              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+              "semantic_review_verified": true,
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+              "semantic_review_expression": "Apache-2.0"
             }
           ],
           "license_file_verified": true,
           "raw_license": "Apache-2.0, BSD-3-Clause",
           "syntax_class": "ambiguous-comma-list",
           "normalized_expression": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
-          "proposed_expression": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
-          "normalization_status": "proposed-from-upstream-metadata",
-          "normalization_reason": "exact declaration-specific evidence supplies a proposed SPDX expression; semantic text and Fedora allowability review remain pending",
-          "normalization_basis": "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field",
-          "semantic_review_status": "pending"
+          "proposed_expression": null,
+          "normalization_status": "semantically-reviewed",
+          "normalization_reason": "exact declaration-specific evidence establishes the normalized SPDX expression; Fedora allowability and aggregate-license review remain pending",
+          "normalization_basis": "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field plus the checked Apache-2.0, MIT, and BSD-3-Clause texts",
+          "semantic_review_status": "verified"
         },
         {
           "path": "third_party/rust/equivalent/v1/README.chromium",
@@ -8060,27 +8061,29 @@
               "verified": true,
               "source_path_present": true,
               "declared_text_scope": "materialized-source",
-              "semantic_review_verified": false,
-              "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+              "semantic_review_verified": true,
+              "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+              "semantic_review_expression": "Apache-2.0"
             },
             {
               "path": "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/LICENSE-UNICODE",
               "verified": true,
               "source_path_present": true,
               "declared_text_scope": "materialized-source",
-              "semantic_review_verified": false,
-              "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+              "semantic_review_verified": true,
+              "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1",
+              "semantic_review_expression": "Unicode-3.0"
             }
           ],
           "license_file_verified": true,
           "raw_license": "Apache-2.0, Unicode-3.0",
           "syntax_class": "ambiguous-comma-list",
           "normalized_expression": "(MIT OR Apache-2.0) AND Unicode-3.0",
-          "proposed_expression": "(MIT OR Apache-2.0) AND Unicode-3.0",
-          "normalization_status": "proposed-from-upstream-metadata",
-          "normalization_reason": "exact declaration-specific evidence supplies a proposed SPDX expression; semantic text and Fedora allowability review remain pending",
-          "normalization_basis": "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field",
-          "semantic_review_status": "pending"
+          "proposed_expression": null,
+          "normalization_status": "semantically-reviewed",
+          "normalization_reason": "exact declaration-specific evidence establishes the normalized SPDX expression; Fedora allowability and aggregate-license review remain pending",
+          "normalization_basis": "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field plus the checked MIT, Apache-2.0, and Unicode-3.0 texts",
+          "semantic_review_status": "verified"
         },
         {
           "path": "third_party/rust/unicode_width/v0_2/README.chromium",
@@ -9152,11 +9155,11 @@
           "raw_license": "BSD",
           "syntax_class": "legacy-bsd-label",
           "normalized_expression": "BSD-3-Clause",
-          "proposed_expression": "BSD-3-Clause",
-          "normalization_status": "external-proposed",
-          "normalization_reason": "exact declaration-specific evidence supplies a proposed SPDX expression; semantic text and Fedora allowability review remain pending",
+          "proposed_expression": null,
+          "normalization_status": "semantically-reviewed",
+          "normalization_reason": "exact declaration-specific evidence establishes the normalized SPDX expression; Fedora allowability and aggregate-license review remain pending",
           "normalization_basis": "googletest 4fe3307fb2d9f86d19777c7eb0e4809e9694dde7 LICENSE (SHA-256 9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138)",
-          "semantic_review_status": "pending"
+          "semantic_review_status": "verified"
         },
         {
           "path": "v8/third_party/highway/README.chromium",
@@ -16754,13 +16757,14 @@
     "readme_chromium_without_license": 2,
     "readme_chromium_ambiguous_comma_licenses": 3,
     "readme_chromium_legacy_bsd_licenses": 1,
-    "readme_chromium_proposed_normalizations": 4,
+    "readme_chromium_proposed_normalizations": 0,
+    "readme_chromium_semantically_reviewed_normalizations": 4,
     "readme_chromium_with_declared_license_file": 228,
     "readme_chromium_with_verified_declared_license_file": 227,
     "readme_chromium_declared_license_paths": 229,
     "readme_chromium_verified_declared_license_paths": 228,
     "readme_chromium_unmaterialized_declared_license_paths": 1,
-    "readme_chromium_semantically_verified_declared_license_paths": 0,
+    "readme_chromium_semantically_verified_declared_license_paths": 3,
     "vendored_rust_packages": 268,
     "vendored_rust_source_packages": 216,
     "vendored_rust_placeholders": 52,
@@ -16793,5 +16797,5 @@
     "source_package_license_complete": false,
     "final_static_archive_license_complete": false
   },
-  "scope": "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, declaration-specific proposed expressions, scoped Chromium parent-text evidence, and embedded metadata that names intentionally unmaterialized DEPS test/tool sources; aggregate SPDX normalization, semantic text review, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
+  "scope": "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, four semantically reviewed declaration-specific expressions, scoped Chromium parent-text evidence, and embedded metadata that names intentionally unmaterialized DEPS test/tool sources; remaining semantic text review, aggregate SPDX normalization, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
 }

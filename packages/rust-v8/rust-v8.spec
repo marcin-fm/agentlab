@@ -4,14 +4,14 @@
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
 %global closure_sha256 bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de
-%global license_audit_sha256 f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c
+%global license_audit_sha256 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
 %global archive_graph_sha256 fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561
 %global system_rust_patch_sha256 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # MIT covers Rusty V8 and BSD-3-Clause covers the original downstream allocator
@@ -197,6 +197,10 @@ install -Dpm0644 out/fedora/obj/librusty_v8.a \
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.5
+- Semantically normalize four ambiguous Chromium license declarations.
+- Preserve the remaining Fedora and final static-license gates.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.4
 - Capture the retained prototype archive graph without claiming production closure.
 - Record mechanical license normalization and scoped Chromium parent evidence.

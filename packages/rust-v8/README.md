@@ -102,17 +102,20 @@ real vendored source package has a manifest license declaration and at least one
 candidate text. The audit resolves 228 of 229 paths explicitly declared by
 `README.chromium`. The sole unresolved path,
 `v8/third_party/googletest/src/LICENSE`, belongs to a `Shipped: no` test-only
-DEPS source that is intentionally not materialized. Exact proposed expressions
-are recorded for the three comma-separated declarations and the bare `BSD`
-label. All eight vendored Cargo slash alternatives are mechanically normalized
-to `MIT OR Apache-2.0`, while semantic text and Fedora allowability review remain
-separate gates. The audit also records the exact Chromium parent text and
+DEPS source that is intentionally not materialized. Exact evidence now
+semantically normalizes the three comma-separated declarations and the bare
+`BSD` label. In particular, clang-format is
+`(Apache-2.0 WITH LLVM-exception) AND NCSA`, not the earlier incomplete
+`Apache-2.0 AND NCSA` proposal. The encoding_rs, unicode-ident, and googletest
+expressions are also reviewed, and three materialized declared texts are
+semantically verified. All eight vendored Cargo slash alternatives remain
+mechanically normalized to `MIT OR Apache-2.0`. The audit also records the exact Chromium parent text and
 file-level header evidence for `tools/clang` and `tools/win`, without applying
-that text to whole components or their embedded third-party assets. Semantic
-text review, aggregate SPDX normalization, Fedora allowability, system-library,
-and final linked-archive decisions remain open. The receipt
+that text to whole components or their embedded third-party assets. Remaining
+semantic text review, aggregate SPDX normalization, Fedora allowability,
+system-library, and final linked-archive decisions remain open. The receipt
 SHA-256 is
-`f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c`.
+`4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e`.
 
 ## Prototype Result
 
@@ -138,7 +141,7 @@ link closure.
 
 ## Remaining Gates
 
-1. Complete semantic review of the proposed expressions, scoped parent-text cases, and embedded third-party assets.
+1. Complete semantic review of the remaining declarations, scoped parent-text cases, and embedded third-party assets.
 2. Review every required text, SPDX expression, and system-library decision for Fedora.
 3. Establish the final source-package and linked-static-archive license expressions.
 4. Run clean Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes.

@@ -22,27 +22,42 @@ UNMATERIALIZED_DEPS_DECLARATIONS = [
 ].freeze
 README_LICENSE_NORMALIZATIONS = {
   "buildtools/clang_format/README.chromium" => {
-    "proposed_expression" => "Apache-2.0 AND NCSA",
-    "normalization_status" => "proposed",
-    "normalization_basis" => "LLVM 547e3456660000a16fc5c2a2f819f1a2b5d35b5d llvm/LICENSE.TXT (SHA-256 8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee)"
+    "normalized_expression" => "(Apache-2.0 WITH LLVM-exception) AND NCSA",
+    "normalization_status" => "semantically-reviewed",
+    "normalization_basis" => "LLVM 547e3456660000a16fc5c2a2f819f1a2b5d35b5d llvm/LICENSE.TXT (SHA-256 8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee)",
+    "semantic_review_status" => "verified"
   },
   "third_party/rust/encoding_rs/v0_8/README.chromium" => {
     "normalized_expression" => "(Apache-2.0 OR MIT) AND BSD-3-Clause",
-    "proposed_expression" => "(Apache-2.0 OR MIT) AND BSD-3-Clause",
-    "normalization_status" => "proposed-from-upstream-metadata",
-    "normalization_basis" => "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field"
+    "normalization_status" => "semantically-reviewed",
+    "normalization_basis" => "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field plus the checked Apache-2.0, MIT, and BSD-3-Clause texts",
+    "semantic_review_status" => "verified"
   },
   "third_party/rust/unicode_ident/v1/README.chromium" => {
     "normalized_expression" => "(MIT OR Apache-2.0) AND Unicode-3.0",
-    "proposed_expression" => "(MIT OR Apache-2.0) AND Unicode-3.0",
-    "normalization_status" => "proposed-from-upstream-metadata",
-    "normalization_basis" => "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field"
+    "normalization_status" => "semantically-reviewed",
+    "normalization_basis" => "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field plus the checked MIT, Apache-2.0, and Unicode-3.0 texts",
+    "semantic_review_status" => "verified"
   },
   "v8/third_party/googletest/README.chromium" => {
     "normalized_expression" => "BSD-3-Clause",
-    "proposed_expression" => "BSD-3-Clause",
-    "normalization_status" => "external-proposed",
-    "normalization_basis" => "googletest 4fe3307fb2d9f86d19777c7eb0e4809e9694dde7 LICENSE (SHA-256 9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138)"
+    "normalization_status" => "semantically-reviewed",
+    "normalization_basis" => "googletest 4fe3307fb2d9f86d19777c7eb0e4809e9694dde7 LICENSE (SHA-256 9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138)",
+    "semantic_review_status" => "verified"
+  }
+}.freeze
+REVIEWED_DECLARED_LICENSE_TEXTS = {
+  "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/LICENSE-APACHE" => {
+    "sha256" => "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "expression" => "Apache-2.0"
+  },
+  "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/LICENSE-APACHE" => {
+    "sha256" => "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+    "expression" => "Apache-2.0"
+  },
+  "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/LICENSE-UNICODE" => {
+    "sha256" => "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1",
+    "expression" => "Unicode-3.0"
   }
 }.freeze
 CHROMIUM_PARENT_LICENSE = {
@@ -186,7 +201,7 @@ def readme_chromium_metadata(path, source_dir)
       if unmaterialized && fields["shipped"] != unmaterialized.fetch("expected_shipped")
         raise Agentlab::Error, "unmaterialized DEPS declaration shipping metadata changed for #{relative}"
       end
-      {
+      record = {
         "path" => relative,
         "verified" => verified,
         "source_path_present" => within_source && File.exist?(File.dirname(declared)),
@@ -200,6 +215,14 @@ def readme_chromium_metadata(path, source_dir)
         "semantic_review_verified" => false,
         "sha256" => verified ? Digest::SHA256.file(declared).hexdigest : nil
       }
+      if (review = REVIEWED_DECLARED_LICENSE_TEXTS[relative])
+        unless verified && record.fetch("sha256") == review.fetch("sha256")
+          raise Agentlab::Error, "reviewed declared license text changed for #{relative}"
+        end
+        record["semantic_review_verified"] = true
+        record["semantic_review_expression"] = review.fetch("expression")
+      end
+      record
     end
     fields["license_file_records"] = declared_records
     fields["license_file_verified"] = declared_records.all? { |record| record.fetch("verified") }
@@ -208,7 +231,7 @@ def readme_chromium_metadata(path, source_dir)
   fields.merge!(license_syntax_record(fields["license"]))
   if (normalization = README_LICENSE_NORMALIZATIONS[relative])
     fields.merge!(normalization)
-    fields["normalization_reason"] = "exact declaration-specific evidence supplies a proposed SPDX expression; semantic text and Fedora allowability review remain pending"
+    fields["normalization_reason"] = "exact declaration-specific evidence establishes the normalized SPDX expression; Fedora allowability and aggregate-license review remain pending"
   end
   fields
 end
@@ -454,6 +477,7 @@ receipt = {
     "readme_chromium_ambiguous_comma_licenses" => readme_records.count { |record| record["syntax_class"] == "ambiguous-comma-list" },
     "readme_chromium_legacy_bsd_licenses" => readme_records.count { |record| record["syntax_class"] == "legacy-bsd-label" },
     "readme_chromium_proposed_normalizations" => readme_records.count { |record| record["normalization_status"].to_s.start_with?("proposed", "external-proposed") },
+    "readme_chromium_semantically_reviewed_normalizations" => readme_records.count { |record| record["normalization_status"] == "semantically-reviewed" },
     "readme_chromium_with_declared_license_file" => readme_license_file_records.length,
     "readme_chromium_with_verified_declared_license_file" => readme_license_file_records.count { |record| record["license_file_verified"] == true },
     "readme_chromium_declared_license_paths" => readme_declared_license_paths.length,
@@ -492,7 +516,7 @@ receipt = {
     "source_package_license_complete" => false,
     "final_static_archive_license_complete" => false
   },
-  "scope" => "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, declaration-specific proposed expressions, scoped Chromium parent-text evidence, and embedded metadata that names intentionally unmaterialized DEPS test/tool sources; aggregate SPDX normalization, semantic text review, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
+  "scope" => "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, four semantically reviewed declaration-specific expressions, scoped Chromium parent-text evidence, and embedded metadata that names intentionally unmaterialized DEPS test/tool sources; remaining semantic text review, aggregate SPDX normalization, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
 }
 content = JSON.pretty_generate(receipt) + "\n"
 

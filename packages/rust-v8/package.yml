@@ -3,7 +3,7 @@ name: rust-v8
 status: blocked
 blockers:
 - The stable Fedora Rust and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream.
-- Candidate legal texts and all 216 real vendored Rust source packages are inventoried. One `Shipped: no` googletest declaration points into an intentionally unmaterialized test-only DEPS source. Exact proposed expressions now cover its bare BSD label and all three comma lists, all eight Cargo slash alternatives are mechanically normalized, and scoped Chromium parent evidence is recorded for the two tooling components. Semantic text review, embedded third-party review, Fedora SPDX review, system-library decisions, and the final aggregate License expression remain unresolved.
+- Candidate legal texts and all 216 real vendored Rust source packages are inventoried. One `Shipped: no` googletest declaration points into an intentionally unmaterialized test-only DEPS source. The bare BSD label and all three comma lists are semantically normalized from exact evidence, including LLVM's required exception, three declared texts are semantically verified, all eight Cargo slash alternatives are mechanically normalized, and scoped Chromium parent evidence is recorded for the two tooling components. Remaining semantic text review, embedded third-party review, Fedora SPDX review, system-library decisions, and the final aggregate License expression remain unresolved.
 - Network-isolated Fedora 43, Fedora 44, and Rawhide builds have not been run. The successful prototype is Fedora 44 x86_64 evidence only, and aarch64 is unverified.
 source_policy:
   rpm_build_network: forbidden
@@ -82,7 +82,7 @@ patches:
     upstream_status: not-submitted
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c
+  receipt_sha256: 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
   candidate_license_files: 415
   readme_chromium_records: 231
   vendored_rust_entries: 268
@@ -94,9 +94,10 @@ license_audit:
   readme_chromium_verified_declared_license_paths: 228
   readme_chromium_ambiguous_comma_licenses: 3
   readme_chromium_legacy_bsd_licenses: 1
-  readme_chromium_proposed_normalizations: 4
+  readme_chromium_proposed_normalizations: 0
+  readme_chromium_semantically_reviewed_normalizations: 4
   readme_chromium_unmaterialized_declared_license_paths: 1
-  readme_chromium_semantically_verified_declared_license_paths: 0
+  readme_chromium_semantically_verified_declared_license_paths: 3
   vendored_rust_legacy_slash_license_expressions: 8
   vendored_rust_mechanically_normalized_license_expressions: 8
   unmaterialized_declared_license_paths:

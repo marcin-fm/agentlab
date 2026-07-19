@@ -118,7 +118,7 @@ consumer_integration:
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: f8c6ecee2574b3bafa7627b79410e7c38778134d8ffe7ccc062e7ac96e219c0c
+  receipt_sha256: 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
@@ -138,9 +138,10 @@ license_audit:
   readme_chromium_verified_declared_license_paths: 228
   readme_chromium_ambiguous_comma_licenses: 3
   readme_chromium_legacy_bsd_licenses: 1
-  readme_chromium_proposed_normalizations: 4
+  readme_chromium_proposed_normalizations: 0
+  readme_chromium_semantically_reviewed_normalizations: 4
   readme_chromium_unmaterialized_declared_license_paths: 1
-  readme_chromium_semantically_verified_declared_license_paths: 0
+  readme_chromium_semantically_verified_declared_license_paths: 3
   vendored_rust_legacy_slash_license_expressions: 8
   vendored_rust_mechanically_normalized_license_expressions: 8
   scoped_parent_license_evidence_recorded: true

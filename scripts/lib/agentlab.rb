@@ -769,29 +769,38 @@ module Agentlab
     ]
     expected_readme_normalizations = {
       "buildtools/clang_format/README.chromium" => [
+        "(Apache-2.0 WITH LLVM-exception) AND NCSA",
         nil,
-        "Apache-2.0 AND NCSA",
-        "proposed",
-        "LLVM 547e3456660000a16fc5c2a2f819f1a2b5d35b5d llvm/LICENSE.TXT (SHA-256 8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee)"
+        "semantically-reviewed",
+        "LLVM 547e3456660000a16fc5c2a2f819f1a2b5d35b5d llvm/LICENSE.TXT (SHA-256 8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee)",
+        "verified"
       ],
       "third_party/rust/encoding_rs/v0_8/README.chromium" => [
         "(Apache-2.0 OR MIT) AND BSD-3-Clause",
-        "(Apache-2.0 OR MIT) AND BSD-3-Clause",
-        "proposed-from-upstream-metadata",
-        "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field"
+        nil,
+        "semantically-reviewed",
+        "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/Cargo.toml license field plus the checked Apache-2.0, MIT, and BSD-3-Clause texts",
+        "verified"
       ],
       "third_party/rust/unicode_ident/v1/README.chromium" => [
         "(MIT OR Apache-2.0) AND Unicode-3.0",
-        "(MIT OR Apache-2.0) AND Unicode-3.0",
-        "proposed-from-upstream-metadata",
-        "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field"
+        nil,
+        "semantically-reviewed",
+        "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/Cargo.toml license field plus the checked MIT, Apache-2.0, and Unicode-3.0 texts",
+        "verified"
       ],
       "v8/third_party/googletest/README.chromium" => [
         "BSD-3-Clause",
-        "BSD-3-Clause",
-        "external-proposed",
-        "googletest 4fe3307fb2d9f86d19777c7eb0e4809e9694dde7 LICENSE (SHA-256 9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138)"
+        nil,
+        "semantically-reviewed",
+        "googletest 4fe3307fb2d9f86d19777c7eb0e4809e9694dde7 LICENSE (SHA-256 9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138)",
+        "verified"
       ]
+    }
+    reviewed_declared_license_texts = {
+      "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8/LICENSE-APACHE" => "Apache-2.0",
+      "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/LICENSE-APACHE" => "Apache-2.0",
+      "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1/LICENSE-UNICODE" => "Unicode-3.0"
     }
     expected_syntax = lambda do |raw, allow_slash|
       if raw.nil?
@@ -828,7 +837,7 @@ module Agentlab
     validate_syntax = lambda do |record, raw, allow_slash, label|
       expected = expected_syntax.call(raw, allow_slash)
       if (normalization = expected_readme_normalizations[label])
-        expected[1, 4] = normalization
+        expected[1, 5] = normalization
       end
       actual = [
         record["syntax_class"],
@@ -846,7 +855,12 @@ module Agentlab
       errors << "rust-v8: README.chromium license syntax is unclassified" unless recognized_syntax_classes.include?(record["syntax_class"])
       validate_syntax.call(record, record["license"], false, record["path"])
       Array(record["license_file_records"]).each do |declared_path|
-        errors << "rust-v8: declared license text incorrectly claims semantic review" unless declared_path["semantic_review_verified"] == false
+        expected_expression = reviewed_declared_license_texts[declared_path["path"]]
+        expected_reviewed = !expected_expression.nil?
+        unless declared_path["semantic_review_verified"] == expected_reviewed &&
+               declared_path["semantic_review_expression"] == expected_expression
+          errors << "rust-v8: declared license text semantic review does not match #{declared_path['path']}"
+        end
       end
     end
     license_files.each do |record|
@@ -966,6 +980,7 @@ module Agentlab
       "readme_chromium_ambiguous_comma_licenses" => readme_records.count { |record| record["syntax_class"] == "ambiguous-comma-list" },
       "readme_chromium_legacy_bsd_licenses" => readme_records.count { |record| record["syntax_class"] == "legacy-bsd-label" },
       "readme_chromium_proposed_normalizations" => readme_records.count { |record| record["normalization_status"].to_s.start_with?("proposed", "external-proposed") },
+      "readme_chromium_semantically_reviewed_normalizations" => readme_records.count { |record| record["normalization_status"] == "semantically-reviewed" },
       "readme_chromium_with_declared_license_file" => readme_records.count { |record| record["license_file"] },
       "readme_chromium_with_verified_declared_license_file" => readme_records.count { |record| record["license_file_verified"] == true },
       "readme_chromium_declared_license_paths" => readme_records.sum { |record| Array(record["license_file_records"]).length },
@@ -1004,6 +1019,7 @@ module Agentlab
       "readme_chromium_ambiguous_comma_licenses" => "readme_chromium_ambiguous_comma_licenses",
       "readme_chromium_legacy_bsd_licenses" => "readme_chromium_legacy_bsd_licenses",
       "readme_chromium_proposed_normalizations" => "readme_chromium_proposed_normalizations",
+      "readme_chromium_semantically_reviewed_normalizations" => "readme_chromium_semantically_reviewed_normalizations",
       "readme_chromium_unmaterialized_declared_license_paths" => "readme_chromium_unmaterialized_declared_license_paths",
       "readme_chromium_semantically_verified_declared_license_paths" => "readme_chromium_semantically_verified_declared_license_paths",
       "vendored_rust_legacy_slash_license_expressions" => "vendored_rust_legacy_slash_license_expressions",
