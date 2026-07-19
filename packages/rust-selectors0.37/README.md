@@ -12,6 +12,6 @@ the installed Rust source carries MPL-2.0 notices.
 
 A Fedora 44 x86_64 Mock chain builds `rust-cssparser0.36` first and then proves
 that this package resolves `crate(cssparser/default) = 0.36.0`. All 12 unit
-tests pass; the one documentation example is ignored upstream. Configured
-publication remains blocked only on safe target-applicability integration and
-the ordered six-cell COPR builds.
+tests pass; the one documentation example is ignored upstream. The package is
+selected for the full Fedora 43, Fedora 44, and Rawhide matrix on both
+architectures after `rust-cssparser0.36`.

@@ -13,6 +13,5 @@ correct code-block attributes.
 
 A Fedora 44 x86_64 Mock build passes under the four-job cap with the required
 Agentlab repository. The retained documentation suite passes two tests and
-ignores four examples that are not executable tests. Configured publication
-remains blocked only on safe integration with the shared target-applicability
-registry and the six-cell COPR matrix.
+ignores four examples that are not executable tests. The package is selected
+for the full Fedora 43, Fedora 44, and Rawhide matrix on both architectures.

@@ -1,0 +1,268 @@
+schema: agentlab-target-applicability/v1
+
+roots:
+  ast-grep:
+    kind: application
+    releases: ["43", "44", rawhide]
+    reason: Selected native ast-grep CLI application.
+  rtk:
+    kind: application
+    releases: ["43", "44", rawhide]
+    reason: Selected native RTK CLI application.
+  rubygem-ferrum:
+    kind: core
+    releases: ["43", "44", rawhide]
+    reason: Selected reusable browser-control runtime for the maintained tool surface.
+  python-docling-mcp:
+    kind: application
+    releases: ["43", "44", rawhide]
+    reason: Selected Docling MCP server.
+  python-docling-core:
+    kind: core
+    releases: ["43", "44", rawhide]
+    reason: Maintainer-designated Docling core package for the complete default matrix.
+  python-serena-agent:
+    kind: application
+    releases: ["43", "44", rawhide]
+    reason: Maintainer-designated Serena MCP package for the complete default matrix.
+
+selected_consumers:
+  bun:
+    releases: ["43", "44", rawhide]
+    reason: Source-built Bun is selected with a Fedora system lol-html dependency.
+  kreuzberg:
+    releases: ["43", "44", rawhide]
+    reason: Released dependency closure selected for the blocked Kreuzberg application.
+  python-headroom-ai:
+    releases: ["43", "44", rawhide]
+    reason: Released dependency closure selected for the blocked non-ML Headroom surface.
+
+dependency_groups:
+  bun:
+    reason: Shared system dependency selected by the blocked Bun application.
+    packages:
+      - lol-html
+      - rust-cssparser0.36
+      - rust-selectors0.37
+  python-docling-core:
+    reason: Reusable dependencies selected by the Docling core package.
+    packages:
+      - python-doclang
+      - python-latex2mathml
+  python-docling-mcp:
+    reason: Reusable dependency selected by the Docling MCP service-client surface.
+    packages:
+      - python-docling-slim
+  python-serena-agent:
+    reason: Reusable dependencies selected by the packaged Serena headless stdio surface.
+    packages:
+      - python-mslex
+      - python-oslex
+      - python-overrides
+      - python-sensai-utils
+  rtk:
+    reason: Rust compatibility dependencies selected by RTK.
+    packages:
+      - rust-dirs5
+      - rust-dirs-sys0.4
+  ast-grep:
+    reason: Rust compatibility dependencies selected by ast-grep.
+    packages:
+      - rust-atty0.2
+      - rust-bit-set0.10
+      - rust-bit-vec0.9
+      - rust-cli-log2
+      - rust-crokey-proc_macros1
+      - rust-crokey1
+      - rust-deser-hjson2
+      - rust-file-size1
+      - rust-gethostname0.3
+      - rust-inquire0.9
+      - rust-lazy-regex-proc_macros3
+      - rust-lazy-regex3
+      - rust-ls-types0.0.6
+      - rust-memoffset0.7
+      - rust-minimad0.14
+      - rust-nix0.26
+      - rust-polling2
+      - rust-proc-status0.1
+      - rust-serde-sarif0.8
+      - rust-strict0.2
+      - rust-termimad0.34
+      - rust-terminal-clipboard0.4
+      - rust-tower-lsp-server0.23
+      - rust-tree-sitter-dart0.2
+      - rust-tree-sitter-kotlin-sg0.4
+      - rust-tree-sitter-md0.5
+      - rust-tree-sitter-php0.24
+      - rust-tree-sitter-rust0.24
+      - rust-typed-builder-macro0.21
+      - rust-typed-builder0.21
+      - rust-x11-clipboard0.8
+      - rust-x11rb-protocol0.12
+      - rust-x11rb0.12
+  kreuzberg:
+    reason: Rust compatibility dependencies selected by Kreuzberg.
+    packages:
+      - rust-biblatex0.12
+      - rust-biblib0.7
+      - rust-bufrw0.2
+      - rust-caseless0.2
+      - rust-cbc0.2
+      - rust-cfb0.14
+      - rust-cfb0.7
+      - rust-clipper-sys
+      - rust-codepage-strings1
+      - rust-comrak0.54
+      - rust-compressed-rtf1
+      - rust-convert_case0.11
+      - rust-dbase0.8
+      - rust-ecb0.2
+      - rust-entities1
+      - rust-fast_image_resize6
+      - rust-finl_unicode1
+      - rust-fmt2io1
+      - rust-geo-clipper0.9
+      - rust-geo-types0.7
+      - rust-hashify0.2
+      - rust-hayro-ccitt0.3
+      - rust-hayro-jbig2_0.3
+      - rust-html-to-markdown-rs3
+      - rust-imageproc0.27
+      - rust-infer0.19
+      - rust-jetscii0.5
+      - rust-jotdown0.10
+      - rust-lru0.18
+      - rust-lopdf0.44
+      - rust-mail-parser0.11
+      - rust-maybe-owned0.3
+      - rust-nalgebra0.35
+      - rust-napi-build2
+      - rust-napi-derive-backend5
+      - rust-napi-derive3
+      - rust-napi-sys3
+      - rust-napi3
+      - rust-oem_cp1
+      - rust-org0.3
+      - rust-ort-sys
+      - rust-outlook-pst1
+      - rust-percent-encoding-rfc3986_0.1
+      - rust-phf0.14
+      - rust-phf_generator0.14
+      - rust-phf_macros0.14
+      - rust-phf_shared0.14
+      - rust-piston-float1
+      - rust-rake0.3
+      - rust-roman-numerals-rs3
+      - rust-safe_arch1
+      - rust-serde_toon_format0.1
+      - rust-serde_yaml_ng0.10
+      - rust-sevenz-rust2_0.20
+      - rust-simba0.10
+      - rust-text-splitter0.32
+      - rust-utf16string0.2
+      - rust-vecmath1
+      - rust-weezl0.2
+      - rust-whatlang0.18
+      - rust-wide1
+  python-headroom-ai:
+    reason: Rust compatibility dependency selected by the non-ML Headroom surface.
+    packages:
+      - rust-fancy-regex0.17
+      - rust-tiktoken-rs0.11
+      - rust-unidiff0.4
+
+overrides:
+  rust-atty0.2:
+    releases: ["44", rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-atty-devel 0.2.14-16.fc43
+        capability: crate(atty) = 0.2.14
+        checked_on: "2026-07-19"
+  rust-cfb0.7:
+    releases: ["44", rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-cfb-devel 0.7.3-7.fc43
+        capability: crate(cfb) = 0.7.3
+        checked_on: "2026-07-19"
+  rust-dirs5:
+    releases: ["44", rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-dirs-devel 5.0.1-6.fc43
+        capability: crate(dirs) = 5.0.1
+        checked_on: "2026-07-19"
+  rust-dirs-sys0.4:
+    releases: ["44", rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-dirs-sys-devel 0.4.1-6.fc43
+        capability: crate(dirs-sys) = 0.4.1
+        checked_on: "2026-07-19"
+  rust-memoffset0.7:
+    releases: [rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-memoffset0.7-devel 0.7.1-6.fc43
+        capability: crate(memoffset) = 0.7.1
+        checked_on: "2026-07-19"
+      "44":
+        source: fedora
+        provider: rust-memoffset0.7-devel 0.7.1-7.fc44
+        capability: crate(memoffset) = 0.7.1
+        checked_on: "2026-07-19"
+  rust-nix0.26:
+    releases: [rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-nix0.26-devel 0.26.4-5.fc43
+        capability: crate(nix) = 0.26.4 with the selected feature interfaces
+        checked_on: "2026-07-19"
+      "44":
+        source: fedora
+        provider: rust-nix0.26-devel 0.26.4-6.fc44
+        capability: crate(nix) = 0.26.4 with the selected feature interfaces
+        checked_on: "2026-07-19"
+  rust-polling2:
+    releases: [rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-polling2-devel 2.8.0-5.fc43
+        capability: compatible polling 2 interface for the selected x11rb graph
+        checked_on: "2026-07-19"
+      "44":
+        source: fedora
+        provider: rust-polling2-devel 2.8.0-6.fc44
+        capability: compatible polling 2 interface for the selected x11rb graph
+        checked_on: "2026-07-19"
+  rust-geo-types0.7:
+    releases: ["43", "44"]
+    omitted:
+      rawhide:
+        source: fedora
+        provider: rust-geo-types-devel 0.7.19-1.fc45
+        capability: crate(geo-types) = 0.7.19
+        checked_on: "2026-07-19"
+  rust-unidiff0.4:
+    releases: ["43", "44"]
+    omitted:
+      rawhide:
+        source: fedora
+        provider: rust-unidiff-devel 0.4.0-1.fc45
+        capability: crate(unidiff) = 0.4.0
+        checked_on: "2026-07-19"
+
+secondary_consumers:
+  ast-grep:
+    - python-headroom-ai
+  python-docling-core:
+    - python-docling-mcp
