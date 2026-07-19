@@ -1,0 +1,24 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -104,11 +104,6 @@
+ name = "splitting"
+ path = "tests/splitting.rs"
+ 
+-[[bench]]
+-name = "bench"
+-path = "benches/bench.rs"
+-harness = false
+-
+ [dependencies.bit-set]
+ version = "0.8"
+ default-features = false
+@@ -135,9 +130,6 @@
+ version = "0.8"
+ default-features = false
+ 
+-[dev-dependencies.criterion]
+-version = "0.5"
+-
+ [dev-dependencies.matches]
+ version = "0.1.10"
+ 

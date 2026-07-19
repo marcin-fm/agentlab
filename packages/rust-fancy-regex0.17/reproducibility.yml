@@ -1,5 +1,5 @@
 package: rust-fancy-regex0.17
-version: 0.17.0-0.1
+version: 0.17.0-0.3
 source:
   url: https://static.crates.io/crates/fancy-regex/fancy-regex-0.17.0.crate
   sha256: 72cf461f865c862bb7dc573f643dd6a2b6842f7c30b07882b56bd148cc2761b8
@@ -8,8 +8,7 @@ source:
 build:
   generator: rust2rpm 28
   tests: all published library and integration tests
-  fedora_43_x86_64: pending
-  fedora_44_x86_64: pending
+  target_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64; live results are retained in the project playbook
 policy:
   produced_rpms_installed_on_host: false
   copr_mutated: false

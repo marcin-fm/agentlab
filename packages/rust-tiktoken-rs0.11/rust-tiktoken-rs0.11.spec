@@ -13,19 +13,24 @@
 
 Name:           rust-tiktoken-rs0.11
 Version:        0.11.0
-Release:        0.2%{?dist}
-Summary:        OpenAI-compatible byte pair tokenizer for Rust
+Release:        0.3%{?dist}
+Summary:        OpenAI-compatible byte pair encoding library for Rust
 
 License:        MIT
 URL:            https://crates.io/crates/tiktoken-rs
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 Source1:        https://raw.githubusercontent.com/zurawiki/tiktoken-rs/b1151970e4ae250b01352a80281c097e4a1c0cc5/LICENSE#/tiktoken-rs-LICENSE
 Source2:        https://raw.githubusercontent.com/openai/tiktoken/eedc856364506a9d4651645a0290eb0ba81e6935/LICENSE#/openai-tiktoken-LICENSE
+# Fedora packaging: do not compile the README example that requires the
+# optional async-openai feature, which is not selected by this package.
+# Upstream status: not submitted; upstream already documents that the example
+# requires the optional feature, but rustdoc cannot infer that from Markdown.
+Patch:          tiktoken-rs-0.11.0-optional-async-openai-doctest.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 
 %global _description %{expand:
-Byte pair encoding library compatible with OpenAI tokenizers.}
+Byte pair encoding library compatible with OpenAI token formats.}
 
 %description %{_description}
 
@@ -84,6 +89,10 @@ install -Dpm0644 %{SOURCE2} %{buildroot}%{crate_instdir}/OPENAI-LICENSE
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.11.0-0.3
+- Enable the independently selected Headroom tokenizer dependency.
+- Skip the doctest that requires the unselected async-openai feature.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.11.0-0.2
 - Retain the exact tokenizer branch required by Headroom 0.32.0.
 

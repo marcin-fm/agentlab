@@ -7,17 +7,22 @@
 
 Name:           rust-fancy-regex0.17
 Version:        0.17.0
-Release:        0.2%{?dist}
-Summary:        Regular expression engine with backreferences and look-around
+Release:        0.3%{?dist}
+Summary:        Regular expression engine with back references and look-around
 
 License:        MIT
 URL:            https://crates.io/crates/fancy-regex
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora packaging: omit the benchmark target and its Criterion-only
+# development dependency from the packaged crate graph.
+# Upstream status: not submitted because upstream intentionally retains the
+# benchmark, while Fedora does not package this benchmark-only dependency.
+Patch:          fancy-regex-0.17.0-no-benchmarks.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 
 %global _description %{expand:
-Regular expression engine supporting backreferences and look-around.}
+Regular expression engine supporting back references and look-around.}
 
 %description %{_description}
 
@@ -127,6 +132,10 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.17.0-0.3
+- Enable the independently selected Headroom tokenizer dependency.
+- Omit the benchmark-only Criterion dependency from Fedora's test graph.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.17.0-0.2
 - Retain the blocked draft for Headroom 0.32.0 exact tokenization.
 

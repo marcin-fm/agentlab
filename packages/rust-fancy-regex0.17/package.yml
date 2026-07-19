@@ -1,7 +1,12 @@
 name: rust-fancy-regex0.17
-status: blocked
-blockers:
-  - Released Headroom v0.32.0 still requires this branch through tiktoken-rs 0.11, but the parent remains blocked; do not build or enable this draft before the parent dependency and license gates are resolved.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.3 enables configured SCM publication across Headroom's six-cell target matrix; live results are retained in the project playbook.
+  source_identity: The immutable static crates.io archive matches the pinned source SHA-256 and includes the declared MIT project license text.
+  dependency_evidence: Released Headroom v0.32.0 selects tiktoken-rs 0.11, which unconditionally requires fancy-regex 0.17; the blocked parent is dependency context, not a package-local publication hold.
+  test_graph: Fedora omits only the benchmark target and its unavailable Criterion dependency; all published library and integration tests remain selected.
+  duplicate_audit: No crate(fancy-regex) = 0.17.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-19.
 upstream:
   provider: crates_io
   crate: fancy-regex
@@ -10,6 +15,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/fancy-regex/fancy-regex-{version}.crate
   source_sha256: 72cf461f865c862bb7dc573f643dd6a2b6842f7c30b07882b56bd148cc2761b8
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-fancy-regex0.17
   spec: rust-fancy-regex0.17.spec

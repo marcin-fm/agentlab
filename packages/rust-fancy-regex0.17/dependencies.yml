@@ -25,5 +25,5 @@ fedora:
   fedora_43: ordinary dependencies provided; fancy-regex 0.17 absent
   fedora_44: ordinary dependencies provided; fancy-regex 0.17 absent
 duplicate_checks:
-  fedora_43_44: absent
-  rpm_fusion_43_44: absent
+  fedora_43_44_rawhide: absent as checked on 2026-07-19
+  rpm_fusion_43_44_rawhide: absent as checked on 2026-07-19

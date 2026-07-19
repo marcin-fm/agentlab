@@ -1,7 +1,12 @@
 name: rust-tiktoken-rs0.11
-status: blocked
-blockers:
-  - Released Headroom v0.32.0 still requires this exact tokenizer branch, but the parent remains blocked; do not build or enable this draft before the parent dependency and license gates are resolved.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.3 enables configured SCM publication across Headroom's six-cell target matrix; live results are retained in the project playbook.
+  source_identity: The immutable static crates.io archive matches the pinned source SHA-256; exact release-commit sources provide the omitted project and vendored OpenAI MIT texts.
+  dependency_evidence: Released Headroom v0.32.0 unconditionally selects tiktoken-rs 0.11 with fixed tokenizer assets; optional API-client and heap-profiler features remain unselected.
+  test_graph: The default-feature build retains all unit tests and skips only the README doctest that imports the unselected optional async-openai feature.
+  duplicate_audit: No crate(tiktoken-rs) = 0.11.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-19.
 upstream:
   provider: crates_io
   crate: tiktoken-rs
@@ -17,6 +22,13 @@ supplemental:
     commit: eedc856364506a9d4651645a0290eb0ba81e6935
     sha256: 418cb499b436128d653d79941333a5437b7be2ea9213dcc2f04d15d5d2c51d86
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-tiktoken-rs0.11
   spec: rust-tiktoken-rs0.11.spec
