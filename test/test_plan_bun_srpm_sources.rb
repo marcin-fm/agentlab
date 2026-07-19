@@ -25,20 +25,30 @@ class PlanBunSrpmSourcesTest < Minitest::Test
     assert_equal("planned", plan.dig("delivery", "implementation_state"))
     assert_equal("srpm-generation-only", plan.dig("delivery", "planned_network_scope"))
     refute(plan.dig("delivery", "target_build_network_allowed"))
-    refute(plan.dig("delivery", "external_generated_artifact_host_required_by_design"))
+    assert(plan.dig("delivery", "external_generated_artifact_host_required_by_design"))
     refute(plan.dig("delivery", "make_srpm_materializer_integrated"))
     refute(plan.dig("delivery", "make_srpm_checksum_verification_integrated"))
     assert_equal({ "native" => 19, "node" => 1, "npm" => 236, "cargo" => 43 }, plan.fetch("input_summary").slice("native", "node", "npm", "cargo"))
-    assert_equal(%w[bun-release zig-source], plan.fetch("direct_sources").map { |source| source.fetch("role") })
+    assert_equal(%w[bun-release webkit-source zig-source], plan.fetch("direct_sources").map { |source| source.fetch("role") })
     assert_equal(
-      %w[lolhtml-cargo-vendor native-node-source-bundle npm-source-bundle webkit-source],
+      %w[lolhtml-cargo-vendor native-node-source-bundle npm-source-bundle],
       plan.fetch("generated_sources").map { |source| source.fetch("role") }
     )
-    webkit = plan.fetch("generated_sources").find { |source| source.fetch("role") == "webkit-source" }
+    webkit = plan.fetch("direct_sources").find { |source| source.fetch("role") == "webkit-source" }
     assert_equal("WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc.tar.gz", webkit.fetch("filename"))
-    assert_equal("bun-webkit-minimized-source/v2", webkit.fetch("recipe"))
-    assert_equal("38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d", webkit.fetch("expected_sha256"))
-    assert_equal(95_923_474, webkit.fetch("expected_size_bytes"))
+    assert_equal("https://github.com/marcin-fm/agentlab/releases/download/bun-sources-1.3.14-webkit-5488984d20e0/WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b-jsc.tar.gz", webkit.fetch("url"))
+    assert_equal("38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d", webkit.fetch("sha256"))
+    assert_equal(95_923_474, webkit.fetch("size_bytes"))
+    assert_equal("dcf7d67f6bced499d961d20c29a1dc12cead88650c7d9f79a830082969e744d8", webkit.fetch("tree_sha256"))
+    assert_equal("webkit-minimized-source-proof.json", webkit.fetch("source_receipt"))
+    assert_equal("01b4549178b6469c4969b46dc1a5e31c17efdfb84d684d5ca192935227c89680", webkit.fetch("source_receipt_sha256"))
+    assert_equal("bun-sources-1.3.14-webkit-5488984d20e0", webkit.fetch("release_tag"))
+    assert_equal(356_148_272, webkit.fetch("release_id"))
+    assert_equal("https://github.com/marcin-fm/agentlab/releases/tag/bun-sources-1.3.14-webkit-5488984d20e0", webkit.fetch("release_url"))
+    assert_equal("e5a37cdf6eedddc449d62fc327dd6860638d03e8", webkit.fetch("release_target_commit"))
+    assert_equal(true, webkit.fetch("release_immutable"))
+    assert_equal("https://github.com/marcin-fm/agentlab/attestations/35973789", webkit.fetch("artifact_attestation_url"))
+    assert_equal("https://github.com/marcin-fm/agentlab/actions/runs/29670935833", webkit.fetch("publication_run"))
     assert(plan.dig("delivery", "architecture_independent_outputs_required"))
     assert_equal([], plan.dig("delivery", "architecture_scoped_outputs"))
     assert(plan.dig("validation", "webkit_spec_integrated"))
@@ -52,8 +62,8 @@ class PlanBunSrpmSourcesTest < Minitest::Test
     output = run_script("--check")
 
     assert_includes(output, "Verified Bun 1.3.14 SRPM source plan")
-    assert_includes(output, "2 direct sources")
-    assert_includes(output, "4 generated sources")
+    assert_includes(output, "3 direct sources")
+    assert_includes(output, "3 generated sources")
     assert_includes(output, "299 checked closure inputs")
   end
 end

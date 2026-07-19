@@ -929,6 +929,40 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: minimized WebKit source receipt tree_sha256 mismatch")
       minimized["tree_sha256"] = original_tree_sha256
 
+      hosted_mutations = {
+        "archive_url" => ["https://sources.example.invalid/WebKit.tar.gz", "bun: minimized WebKit hosted archive URL mismatch"],
+        "release_tag" => ["wrong-tag", "bun: minimized WebKit release tag mismatch"],
+        "release_url" => ["https://sources.example.invalid/release", "bun: minimized WebKit release URL mismatch"],
+        "release_id" => [0, "bun: minimized WebKit release ID is invalid"],
+        "release_target_commit" => ["bad", "bun: minimized WebKit release target commit is invalid"],
+        "release_immutable" => [false, "bun: minimized WebKit release is not immutable"],
+        "artifact_attestation_url" => ["https://sources.example.invalid/attestation", "bun: minimized WebKit artifact attestation URL is invalid"],
+        "publication_run" => ["https://sources.example.invalid/run", "bun: minimized WebKit publication run URL is invalid"]
+      }
+      hosted_mutations.each do |key, (replacement, message)|
+        original = minimized.fetch(key)
+        minimized[key] = replacement
+        errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec)
+        assert_includes(errors, message)
+        minimized[key] = original
+      end
+
+      original_url = minimized.fetch("archive_url")
+      minimized["archive_hosted"] = false
+      errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec)
+      assert_includes(errors, "bun: minimized WebKit unhosted archive has a URL")
+      minimized["archive_hosted"] = true
+
+      minimized["archive_url"] = "not-a-url"
+      errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec)
+      assert_includes(errors, "bun: minimized WebKit hosted archive URL is invalid")
+      minimized["archive_url"] = original_url
+
+      original_release_id = minimized.delete("release_id")
+      errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec)
+      assert_includes(errors, "bun: minimized WebKit release ID is invalid")
+      minimized["release_id"] = original_release_id
+
       build_path = File.join(directory, minimized.fetch("source_build_proof_receipt"))
       build = JSON.parse(File.read(build_path))
       build.fetch("output").fetch("metadata").delete("compile_commands.json")
@@ -949,6 +983,32 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_bun_minimized_webkit_source(package, webkit, "1.3.14", spec.sub("ExclusiveArch:  x86_64", "ExclusiveArch:  aarch64"))
       assert_includes(errors, "bun: spec architecture does not match the build plan")
     end
+  end
+
+  def test_validates_bun_source_release_request
+    package = Agentlab.package_named("bun")
+    webkit = package.data.dig("build_plan", "source_inputs", "webkit")
+    source = webkit.fetch("jsc_only")
+    request = YAML.safe_load_file(File.join(Agentlab::ROOT, ".github", "source-release", "bun.yml"))
+
+    assert_empty(Agentlab.validate_bun_source_release_request(source, webkit, "1.3.14", request))
+    {
+      "archive_sha256" => "0" * 64,
+      "tag" => "wrong-tag",
+      "generator_commit" => "1" * 40,
+      "operation" => "stage",
+      "attempt" => 0
+    }.each do |key, replacement|
+      mutated = request.merge(key => replacement)
+      assert_includes(
+        Agentlab.validate_bun_source_release_request(source, webkit, "1.3.14", mutated),
+        "source-release request mismatch"
+      )
+    end
+    assert_includes(
+      Agentlab.validate_bun_source_release_request(source, webkit, "1.3.14", nil),
+      "source-release request mismatch"
+    )
   end
 
   def test_validates_bun_self_rebuild_receipts

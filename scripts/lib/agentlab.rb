@@ -1212,7 +1212,7 @@ module Agentlab
     errors << "bun: minimized WebKit acquisition method mismatch" unless source["acquisition"] == "deterministic_minimized_archive"
     errors << "bun: minimized WebKit source incorrectly claims a complete tree" unless source["source_tree_complete"] == false
     errors << "bun: minimized WebKit source is not marked JSC-only" unless source["jsc_only_source_subset"] == true
-    errors << "bun: minimized WebKit aarch64 Capstone scope is not verified" unless source["aarch64_capstone_scope_verified"] == true
+    errors << "bun: minimized WebKit aarch64 Capstone source scope is not verified" unless source["aarch64_capstone_source_scope_verified"] == true
     errors << "bun: minimized WebKit source does not retain Capstone" unless source["capstone_retained"] == true
     errors << "bun: minimized WebKit archive filename mismatch" unless source["archive_filename"] == expected_filename
     errors << "bun: minimized WebKit archive SHA-256 is invalid" unless source["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
@@ -1223,12 +1223,15 @@ module Agentlab
     if source["archive_hosted"] == false
       errors << "bun: minimized WebKit unhosted archive has a URL" unless source["archive_url"].nil?
     else
-      valid_url = begin
-        URI(source["archive_url"]).is_a?(URI::HTTPS)
-      rescue URI::InvalidURIError, TypeError
-        false
+      release_tag = "bun-sources-#{version}-webkit-#{webkit.fetch('commit')[0, 12]}"
+      errors.concat(validate_bun_hosted_webkit_release_metadata(source, webkit, version).map { |error| "bun: minimized WebKit #{error}" })
+      request_path = File.join(ROOT, ".github", "source-release", "bun.yml")
+      if File.file?(request_path)
+        request = YAML.safe_load_file(request_path)
+        errors.concat(validate_bun_source_release_request(source, webkit, version, request).map { |error| "bun: minimized WebKit #{error}" })
+      else
+        errors << "bun: minimized WebKit source-release request is missing"
       end
-      errors << "bun: minimized WebKit hosted archive URL is invalid" unless source["archive_hosted"] == true && valid_url
     end
 
     receipt_name = source["proof_receipt"]
@@ -1264,6 +1267,7 @@ module Agentlab
       errors << "bun: minimized WebKit receipt does not retain Capstone" unless receipt.dig("retained_scope", "capstone_retained") == true
       errors << "bun: minimized WebKit required-path scope is invalid" unless required_paths.is_a?(Array) && %w[CMakeLists.txt Source/JavaScriptCore/CMakeLists.txt Source/ThirdParty/capstone/CMakeLists.txt Source/ThirdParty/gtest/CMakeLists.txt].all? { |path| required_paths.include?(path) }
       errors << "bun: minimized WebKit excluded-path scope is invalid" unless excluded_paths.is_a?(Array) && %w[Source/WebCore LayoutTests].all? { |path| excluded_paths.include?(path) } && !excluded_paths.include?("Source/ThirdParty/capstone")
+      # The v2 receipt key is frozen by the published asset; package metadata uses the clearer source-scope name.
       verified = %w[canonical_source_verified safe_single_root_verified required_paths_verified excluded_paths_absent git_mode_semantics_normalized modes_and_symlinks_manifested deterministic_regeneration_verified archive_size_reduced jsc_only_source_subset aarch64_capstone_scope_verified]
       errors << "bun: minimized WebKit source receipt validation is incomplete" unless verified.all? { |key| receipt.dig("validation", key) == true }
       errors << "bun: minimized WebKit source receipt incorrectly claims completeness" unless receipt.dig("validation", "source_tree_complete") == false
@@ -1322,14 +1326,65 @@ module Agentlab
     end
 
     errors << "bun: spec does not bind the minimized WebKit SHA-256" unless spec.to_s.match?(/^%global\s+webkit_sha256\s+#{Regexp.escape(source['sha256'].to_s)}$/)
-    expected_source2 = source["archive_url"] || source["archive_filename"]
-    expected_source2 = expected_source2.gsub(webkit.fetch("commit"), "%{webkit_commit}")
+    if source["archive_hosted"] == true
+      source_tag = source.fetch("release_tag").gsub(version, "%{version}")
+      errors << "bun: spec does not bind the minimized WebKit release tag" unless spec.to_s.match?(/^%global\s+webkit_source_tag\s+#{Regexp.escape(source_tag)}$/)
+      source_filename = source.fetch("archive_filename").gsub(webkit.fetch("commit"), "%{webkit_commit}")
+      expected_source2 = "https://github.com/marcin-fm/agentlab/releases/download/%{webkit_source_tag}/#{source_filename}"
+    else
+      expected_source2 = source["archive_filename"].gsub(webkit.fetch("commit"), "%{webkit_commit}")
+    end
     errors << "bun: spec does not use the minimized WebKit Source2" unless spec.to_s.match?(/^Source2:\s+#{Regexp.escape(expected_source2)}$/)
     errors << "bun: spec architecture does not match the build plan" unless spec.to_s.match?(/^ExclusiveArch:\s+#{Regexp.escape(Array(build_architectures).join(" "))}$/)
 
     errors
-  rescue JSON::ParserError, KeyError => e
+  rescue JSON::ParserError, KeyError, Psych::SyntaxError => e
     errors << "bun: invalid minimized WebKit receipt: #{e.message}"
+  end
+
+  def validate_bun_hosted_webkit_release_metadata(source, webkit, version)
+    commit = webkit.fetch("commit")
+    filename = source.fetch("archive_filename")
+    release_tag = "bun-sources-#{version}-webkit-#{commit[0, 12]}"
+    archive_url = "https://github.com/marcin-fm/agentlab/releases/download/#{release_tag}/#{filename}"
+    release_url = "https://github.com/marcin-fm/agentlab/releases/tag/#{release_tag}"
+    valid_url = begin
+      URI(source["archive_url"]).is_a?(URI::HTTPS)
+    rescue URI::InvalidURIError, TypeError
+      false
+    end
+    errors = []
+    errors << "hosted archive URL is invalid" unless source["archive_hosted"] == true && valid_url
+    errors << "hosted archive URL mismatch" unless source["archive_url"] == archive_url
+    errors << "release tag mismatch" unless source["release_tag"] == release_tag
+    errors << "release URL mismatch" unless source["release_url"] == release_url
+    errors << "release ID is invalid" unless source["release_id"].is_a?(Integer) && source["release_id"].positive?
+    errors << "release target commit is invalid" unless source["release_target_commit"].to_s.match?(/\A[0-9a-f]{40}\z/)
+    errors << "release is not immutable" unless source["release_immutable"] == true
+    errors << "artifact attestation URL is invalid" unless source["artifact_attestation_url"].to_s.match?(%r{\Ahttps://github\.com/marcin-fm/agentlab/attestations/[1-9][0-9]*\z})
+    errors << "publication run URL is invalid" unless source["publication_run"].to_s.match?(%r{\Ahttps://github\.com/marcin-fm/agentlab/actions/runs/[1-9][0-9]*\z})
+    errors << "source receipt SHA-256 is invalid" unless source["proof_receipt_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors << "tree SHA-256 is invalid" unless source["tree_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors
+  rescue KeyError => e
+    ["release metadata is incomplete: #{e.message}"]
+  end
+
+  def validate_bun_source_release_request(source, webkit, version, request)
+    expected = {
+      "schema" => "agentlab-source-release-request/v1",
+      "package" => "bun",
+      "version" => version,
+      "webkit_commit" => webkit.fetch("commit"),
+      "archive_sha256" => source.fetch("sha256"),
+      "tag" => source.fetch("release_tag"),
+      "generator_commit" => source.fetch("release_target_commit")
+    }
+    valid = request.is_a?(Hash) && expected.all? { |key, value| request[key] == value } &&
+            request["operation"] == "publish" && request["attempt"].is_a?(Integer) && request["attempt"].positive?
+    valid ? [] : ["source-release request mismatch"]
+  rescue KeyError => e
+    ["source-release request metadata is incomplete: #{e.message}"]
   end
 
   def validate_bun_build_plan(package, spec)

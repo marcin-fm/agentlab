@@ -150,13 +150,24 @@ end
 generated_sources = []
 webkit_url = webkit_source["archive_url"]
 if webkit_url
-  raise Agentlab::Error, "hosted minimized WebKit metadata is not yet verified by the dependency closure" unless webkit_source["archive_hosted"] == true
+  release_errors = Agentlab.validate_bun_hosted_webkit_release_metadata(webkit_source, webkit, version)
+  raise Agentlab::Error, release_errors.join("; ") unless release_errors.empty?
   direct_sources << {
     "role" => "webkit-source",
     "filename" => webkit_source.fetch("archive_filename"),
     "url" => https_url!(webkit_url, "WebKit archive URL"),
     "sha256" => webkit_source.fetch("sha256"),
-    "size_bytes" => webkit_source.fetch("archive_size_bytes")
+    "size_bytes" => webkit_source.fetch("archive_size_bytes"),
+    "tree_sha256" => webkit_source.fetch("tree_sha256"),
+    "source_receipt" => webkit_source.fetch("proof_receipt"),
+    "source_receipt_sha256" => webkit_source.fetch("proof_receipt_sha256"),
+    "release_tag" => webkit_source.fetch("release_tag"),
+    "release_id" => webkit_source.fetch("release_id"),
+    "release_url" => https_url!(webkit_source.fetch("release_url"), "WebKit release URL"),
+    "release_target_commit" => webkit_source.fetch("release_target_commit"),
+    "release_immutable" => webkit_source.fetch("release_immutable"),
+    "artifact_attestation_url" => https_url!(webkit_source.fetch("artifact_attestation_url"), "WebKit artifact attestation URL"),
+    "publication_run" => https_url!(webkit_source.fetch("publication_run"), "WebKit publication run URL")
   }
 else
   generated_sources << {
@@ -235,7 +246,7 @@ plan = {
     "implementation_state" => "planned",
     "planned_network_scope" => "srpm-generation-only",
     "target_build_network_allowed" => false,
-    "external_generated_artifact_host_required_by_design" => false,
+    "external_generated_artifact_host_required_by_design" => true,
     "fedora_submission_storage" => "lookaside-cache",
     "architecture_independent_outputs_required" => true,
     "architecture_scoped_outputs" => [],
