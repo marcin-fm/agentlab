@@ -1,0 +1,161 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "optparse"
+require_relative "lib/agentlab"
+require_relative "lib/bun_srpm_sources"
+
+File.umask(0o022)
+
+package = Agentlab.package_named("bun")
+version = package.upstream.fetch("current_version").to_s
+dependency_stage = package.data.fetch("build_plan").fetch("stages").fetch("dependency_closure")
+closure_path = File.join(package.directory, dependency_stage.fetch("proof_receipt"))
+cache_dir = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
+output_dir = "/srv/tmp/agentlab-bun-srpm-sources-#{version}"
+receipt_path = File.join(output_dir, "bun-#{version}-srpm-source-bundles.json")
+workdir = "/srv/tmp/agentlab-bun-srpm-source-materializer-#{version}"
+force = false
+check = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/materialize-bun-srpm-sources [options]"
+  parser.on("--cache-dir PATH", "Checked Bun dependency-source cache") { |path| cache_dir = path }
+  parser.on("--output-dir PATH", "Directory for deterministic source archives") { |path| output_dir = path }
+  parser.on("--receipt PATH", "Detached source-bundle receipt") { |path| receipt_path = path }
+  parser.on("--workdir PATH", "Marked materializer directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--force", "Replace existing marked materializer output") { force = true }
+  parser.on("--check", "Rebuild and compare existing archives and receipt") { check = true }
+end.parse!
+
+raise Agentlab::Error, "--force and --check are mutually exclusive" if force && check
+
+def resolved_identity(path)
+  absolute = File.expand_path(path)
+  return File.realpath(absolute) if File.exist?(absolute) || File.symlink?(absolute)
+
+  missing = []
+  cursor = absolute
+  until File.exist?(cursor) || File.symlink?(cursor)
+    parent = File.dirname(cursor)
+    break if parent == cursor
+    missing.unshift(File.basename(cursor))
+    cursor = parent
+  end
+  File.expand_path(File.join(File.realpath(cursor), *missing))
+rescue Errno::ENOENT, Errno::ELOOP
+  absolute
+end
+
+def below_srv_tmp?(path)
+  path == "/srv/tmp" || path.start_with?("/srv/tmp/")
+end
+
+cache_dir = File.expand_path(cache_dir)
+output_dir = File.expand_path(output_dir)
+receipt_path = File.expand_path(receipt_path)
+workdir = File.expand_path(workdir)
+raise Agentlab::Error, "Bun source cache must be below /srv/tmp" unless cache_dir.start_with?("/srv/tmp/")
+raise Agentlab::Error, "Bun source output directory must be below /srv/tmp" unless output_dir.start_with?("/srv/tmp/")
+raise Agentlab::Error, "Bun source receipt must be below /srv/tmp" unless receipt_path.start_with?("/srv/tmp/")
+raise Agentlab::Error, "Bun source materializer workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+
+cargo_archive_filename = dependency_stage.fetch("cargo_vendor_archive_filename")
+unless Agentlab::BunSrpmSources.valid_archive_name?(cargo_archive_filename)
+  raise Agentlab::Error, "lol-html Cargo vendor archive filename is invalid"
+end
+output_files = [
+  File.join(output_dir, "bun-#{version}-native-node-sources.tar.gz"),
+  File.join(output_dir, "bun-#{version}-npm-sources.tar.gz"),
+  File.join(output_dir, cargo_archive_filename)
+]
+path_roles = {
+  "cache" => cache_dir,
+  "output_dir" => output_dir,
+  "receipt" => receipt_path,
+  "workdir" => workdir
+}.merge(output_files.each_with_index.to_h { |path, index| ["archive#{index + 1}", path] })
+path_roles.each do |role, path|
+  raise Agentlab::Error, "refusing symlinked #{role} path #{path}" if File.symlink?(path)
+end
+resolved_roles = path_roles.transform_values { |path| resolved_identity(path) }
+%w[cache output_dir receipt workdir archive1 archive2 archive3].each do |role|
+  resolved = resolved_roles.fetch(role)
+  raise Agentlab::Error, "#{role} path must resolve below /srv/tmp: #{resolved}" unless below_srv_tmp?(resolved)
+end
+collisions = resolved_roles.group_by { |_role, path| path }.select { |_path, entries| entries.length > 1 }
+unless collisions.empty?
+  descriptions = collisions.map { |path, entries| "#{entries.map(&:first).join('/')}=#{path}" }
+  raise Agentlab::Error, "Bun source materializer paths must be distinct: #{descriptions.join(', ')}"
+end
+resolved_workdir = resolved_roles.fetch("workdir")
+inside_workdir = resolved_roles.reject { |role, _path| role == "workdir" }.select do |_role, path|
+  path == resolved_workdir || path.start_with?("#{resolved_workdir}/")
+end
+unless inside_workdir.empty?
+  raise Agentlab::Error, "Bun source inputs and outputs must be outside the materializer workdir: #{inside_workdir.keys.join(', ')}"
+end
+
+marker = File.join(workdir, ".agentlab-bun-srpm-source-materializer")
+marker_content = "agentlab bun srpm source materializer\n"
+if Dir.exist?(workdir)
+  stat = File.lstat(workdir)
+  raise Agentlab::Error, "refusing symlinked materializer workdir #{workdir}" if stat.symlink?
+  raise Agentlab::Error, "refusing materializer workdir owned by another user" unless stat.uid == Process.uid
+  raise Agentlab::Error, "materializer workdir path changed during validation" unless File.realpath(workdir) == workdir
+  unless File.file?(marker) && File.read(marker) == marker_content
+    raise Agentlab::Error, "refusing unmarked materializer workdir #{workdir}"
+  end
+  unless force || check
+    raise Agentlab::Error, "materializer workdir exists; pass --force or --check"
+  end
+  FileUtils.rm_rf(workdir)
+end
+
+existing_outputs = output_files + [receipt_path]
+if check
+  missing = existing_outputs.reject { |path| File.file?(path) }
+  raise Agentlab::Error, "missing checked Bun source output #{missing.first}" unless missing.empty?
+elsif !force
+  existing = existing_outputs.find { |path| File.exist?(path) }
+  raise Agentlab::Error, "Bun source output exists; pass --force to replace #{existing}" if existing
+end
+
+FileUtils.mkdir_p(workdir)
+File.write(marker, marker_content)
+File.chmod(0o600, marker)
+FileUtils.mkdir_p(output_dir)
+
+expected_counts = {
+  "native" => dependency_stage.fetch("selected_github_archives"),
+  "node" => dependency_stage.fetch("selected_node_header_archives"),
+  "npm" => dependency_stage.fetch("unique_npm_source_archives"),
+  "cargo" => dependency_stage.fetch("selected_lolhtml_cargo_crates")
+}
+expected_cargo_archive = {
+  "filename" => cargo_archive_filename,
+  "sha256" => dependency_stage.fetch("cargo_vendor_archive_sha256"),
+  "size_bytes" => dependency_stage.fetch("cargo_vendor_archive_bytes")
+}
+receipt = Agentlab::BunSrpmSources.materialize!(
+  closure_path: closure_path,
+  expected_closure_sha256: dependency_stage.fetch("proof_receipt_sha256"),
+  expected_source_sha256: package.upstream.fetch("source_sha256"),
+  expected_counts: expected_counts,
+  cache_dir: cache_dir,
+  output_dir: output_dir,
+  receipt_path: receipt_path,
+  workdir: workdir,
+  cargo_manifest_path: File.join(package.directory, dependency_stage.fetch("cargo_vendor_manifest")),
+  cargo_archive_filename: cargo_archive_filename,
+  expected_cargo_archive: expected_cargo_archive,
+  check: check
+)
+
+verb = check ? "Verified" : "Created"
+puts "#{verb} deterministic Bun #{version} SRPM source bundles in #{output_dir}."
+receipt.fetch("archives").each_value do |archive|
+  puts "#{archive.fetch('filename')}: #{archive.fetch('size_bytes')} bytes, SHA-256 #{archive.fetch('sha256')}"
+end
+puts "Source-bundle receipt: #{receipt_path}"
