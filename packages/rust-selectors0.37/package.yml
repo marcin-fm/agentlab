@@ -1,0 +1,20 @@
+name: rust-selectors0.37
+status: blocked
+blockers:
+  - Target-applicability integration and configured SCM COPR matrix proof remain pending after rust-cssparser0.36 publication.
+validation:
+  source_identity: The immutable static crates.io archive matches the pinned SHA-256; MPL-2.0 notices are embedded in the installed Rust source.
+  duplicate_audit: Fedora 43, Fedora 44, and Rawhide provide only the incompatible selectors 0.31 branch; matching RPM Fusion repositories provide no 0.37 provider.
+  local_build: A Fedora 44 x86_64 Mock chain passed with the required Agentlab repository and freshly built rust-cssparser0.36 provider.
+  test_graph: All 12 unit tests pass; the one documentation example is intentionally ignored upstream.
+upstream:
+  provider: crates_io
+  crate: selectors
+  version_requirement: = 0.37.0
+  current_version: 0.37.0
+  source_url_template: https://static.crates.io/crates/selectors/selectors-{version}.crate
+  source_sha256: 2cfaaa6035167f0e604e42723c7650d59ee269ef220d7bbe0565602c8a0173b9
+copr:
+  enabled: false
+  subdir: packages/rust-selectors0.37
+  spec: rust-selectors0.37.spec

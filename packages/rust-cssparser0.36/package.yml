@@ -1,0 +1,20 @@
+name: rust-cssparser0.36
+status: blocked
+blockers:
+  - Target-applicability integration and configured SCM COPR matrix proof remain pending.
+validation:
+  source_identity: The immutable static crates.io archive matches the pinned SHA-256 and supplies the MPL-2.0 project text.
+  duplicate_audit: Fedora 43, Fedora 44, and Rawhide provide only the incompatible cssparser 0.35 branch; matching RPM Fusion repositories provide no 0.36 provider.
+  local_build: Fedora 44 x86_64 Mock passed with the required Agentlab repository and four-job cap.
+  test_graph: The published fixture corpus is intentionally absent; the retained documentation tests pass with two passed and four ignored.
+upstream:
+  provider: crates_io
+  crate: cssparser
+  version_requirement: = 0.36.0
+  current_version: 0.36.0
+  source_url_template: https://static.crates.io/crates/cssparser/cssparser-{version}.crate
+  source_sha256: dae61cf9c0abb83bd659dab65b7e4e38d8236824c85f0f804f173567bda257d2
+copr:
+  enabled: false
+  subdir: packages/rust-cssparser0.36
+  spec: rust-cssparser0.36.spec
