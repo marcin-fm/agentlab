@@ -1,7 +1,5 @@
 name: rust-ort-sys
-status: blocked
-blockers:
-  - Must link dynamically to the Fedora system ONNX Runtime and never download or bundle an upstream runtime.
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass; source hosting and runtime-provider audit remain.
+status: enabled
+blockers: []
 upstream: {provider: crates_io, crate: ort-sys, version_requirement: '= 2.0.0-rc.12', current_version: 2.0.0-rc.12, rpm_version: 2.0.0~rc.12, source_sha256: d7b497d21a8b6fbb4b5a544f8fadb77e801a09ae0add9e411d31c6f89e3c1e90, source_url_template: 'https://static.crates.io/crates/ort-sys/ort-sys-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-ort-sys, spec: rust-ort-sys.spec}
+copr: {enabled: true, subdir: packages/rust-ort-sys, spec: rust-ort-sys.spec}

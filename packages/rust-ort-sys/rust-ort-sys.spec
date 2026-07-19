@@ -8,12 +8,12 @@
 
 Name:           rust-ort-sys
 Version:        2.0.0~rc.12
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Unsafe Rust bindings for ONNX Runtime
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/ort-sys
-Source:         %{crates_source %{crate} %{crate_version}}
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{crate_version}.crate
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  pkgconfig(libonnxruntime) >= 1.18
 
@@ -82,7 +82,6 @@ This package contains library source for the std feature of %{crate}.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
-echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %autosetup -n %{crate}-%{crate_version}
 %cargo_prep
 
@@ -121,6 +120,8 @@ export ORT_PREFER_DYNAMIC_LINK=1
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.2
+- Validate the offline dynamic system ONNX Runtime package for publication.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.1
 - Add the initial repository packaging changelog.
-%autochangelog

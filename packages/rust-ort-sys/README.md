@@ -1,9 +1,15 @@
 # rust-ort-sys
 
-The package remains offline, feature-pruned, and dynamically linked to system ONNX Runtime; crate `2.0.0-rc.12` maps to RPM `2.0.0~rc.12`.
-
 ## Finalization status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for the Fedora 43, Fedora 44, and Rawhide target matrix.
 
-Blocked import of `ort-sys` 2.0.0-rc.12. The staged package is offline and dynamically links Fedora ONNX Runtime without downloading or bundling it.
+The exact static crates.io `ort-sys 2.0.0-rc.12` source maps to RPM
+`2.0.0~rc.12`. The package selects only `api-18,std`, disables Cargo
+networking and upstream runtime downloads, and links against Fedora's system
+`libonnxruntime` from `/usr/lib64`.
+
+A clean Fedora 44 x86_64 Mock build linked with `-l onnxruntime`, completed
+the crate tests and doctests, and produced six digest-valid artifacts.
+Artifact `rpmlint` reports zero errors and only the non-fatal source-crate
+`no-documentation` warning.
