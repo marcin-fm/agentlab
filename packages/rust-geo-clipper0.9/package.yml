@@ -1,9 +1,6 @@
-status: blocked
+status: enabled
 name: rust-geo-clipper0.9
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - The system-unbundled clipper-sys/provider closure requires final publication review.
-  - Public source hosting, Fedora/RPM Fusion duplicate, and license review are not finalized.
+blockers: []
 upstream:
   provider: crates_io
   crate: geo-clipper
@@ -12,6 +9,6 @@ upstream:
   source_url_template: https://static.crates.io/crates/geo-clipper/geo-clipper-{version}.crate
   source_sha256: 2370335cc0c40c7bc1e5b0ead27bdbb2132d54cfbb96248a4bdd65db1a6873aa
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/rust-geo-clipper0.9
   spec: rust-geo-clipper0.9.spec

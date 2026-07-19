@@ -7,12 +7,12 @@
 
 Name:           rust-geo-clipper0.9
 Version:        0.9.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Boolean operations on polygons
 
 License:        ISC
 URL:            https://crates.io/crates/geo-clipper
-Source:         %{crates_source}
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -67,5 +67,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.9.0-0.2
+- Enable the crate with the published system-polyclipping clipper-sys provider.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.9.0-0.1
 - Add the initial repository packaging changelog.

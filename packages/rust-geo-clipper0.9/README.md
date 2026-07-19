@@ -2,6 +2,9 @@
 
 ## Finalization status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for the Fedora 43, Fedora 44, and Rawhide target matrix.
 
-Final geo-clipper 0.9.0 spec from the successful F44 system-provider validation. The package remains blocked pending repository-wide rebuild, system-provider publication, hosting, duplicate, and license review.
+The package uses the exact ISC-licensed crates.io `geo-clipper 0.9.0` source.
+It depends on Agentlab's published `clipper-sys 0.8.0` crate, which links the
+matching Fedora `polyclipping 6.4.2` system library instead of compiling the
+bundled Clipper implementation.
