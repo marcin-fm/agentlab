@@ -1,7 +1,6 @@
 name: rust-text-splitter0.32
-status: blocked
-blockers:
-  - Final F44 direct-v3-text-splitter result staging passed, but source hosting and Fedora test-fixture review remain open.
+status: enabled
+blockers: []
 upstream:
   provider: crates_io
   crate: text-splitter
@@ -9,7 +8,22 @@ upstream:
   current_version: 0.32.0
   source_sha256: 3f3eeec76988617ff1434d754d7e8e197be2cb8981ea77c17e32f3f7a2c6f95e
   source_url_template: https://static.crates.io/crates/text-splitter/text-splitter-{version}.crate
+  source_commit: 8f2b263d34e3953318dfcda7ad8d97ac07393560
+license:
+  expression: MIT
+  file: LICENSE.txt
+  review: The exact published crate supplies the complete MIT text.
+selection:
+  consumer: kreuzberg
+  features:
+    - code
+    - markdown
+    - tokenizers
+  test_scope: Fixture-free library tests; published integration fixtures and network-fetched Hugging Face models are omitted.
+duplicate_review:
+  fedora: No exact crate(text-splitter) = 0.32.0 provider in Fedora 43, Fedora 44, or Rawhide.
+  rpmfusion: No rust-text-splitter package in matching free or nonfree repositories.
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/rust-text-splitter0.32
   spec: rust-text-splitter0.32.spec

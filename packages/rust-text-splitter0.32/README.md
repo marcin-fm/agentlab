@@ -2,8 +2,17 @@
 
 ## Finalization status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for Fedora 43, Fedora 44, and Rawhide on `x86_64` and
+`aarch64` as a selected Kreuzberg compatibility dependency.
 
-Final `direct-v3-text-splitter` package for `text-splitter 0.32.0`, including
-both Fedora compatibility patches. Blocked pending source hosting and test
-fixture review.
+The exact crates.io archive is the complete immutable package source and
+supplies its MIT license text. Upstream intentionally excludes integration
+fixtures from the published crate, so Fedora retains the fixture-free library
+tests and omits five unit tests that require excluded tokenizer data or
+network-fetched Hugging Face models. The selected Kreuzberg feature surface is
+`code,markdown,tokenizers` in every Cargo phase.
+
+A fresh Fedora 44 x86_64 Mock build passed all 101 selected tests. Its source
+and six noarch RPMs have valid digests, and artifact `rpmlint` reports zero
+errors or warnings. Final configured COPR matrix results remain repository
+publication evidence rather than a package-local build input.

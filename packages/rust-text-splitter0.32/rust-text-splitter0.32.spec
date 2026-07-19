@@ -7,13 +7,18 @@
 
 Name:           rust-text-splitter0.32
 Version:        0.32.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Split text into semantic chunks, up to a desired chunk size
 
 License:        MIT
 URL:            https://crates.io/crates/text-splitter
-Source:         %{crates_source}
+# crates.io release archive for the exact published crate.
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora carries tokenizers 0.22.2; this narrows the compatible dependency branch without changing the selected API.
+# Fedora-specific compatibility adjustment; not submitted because upstream intentionally moved to tokenizers 0.23.
 Patch:          text-splitter-fedora-tokenizers.diff
+# The published crate omits integration fixtures and some unit tests require network-fetched models.
+# Fedora-specific offline test reduction; not submitted because upstream intentionally tests the complete repository checkout.
 Patch:          text-splitter-fedora-tests.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -110,18 +115,20 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %cargo_generate_buildrequires -f code,markdown,tokenizers
 
 %build
-%cargo_build
+%cargo_build -f code,markdown,tokenizers
 
 %install
-%cargo_install
+%cargo_install -f code,markdown,tokenizers
 
 %if %{with check}
 %check
-%{__cargo} test %{__cargo_common_opts} --profile rpm --lib --tests --no-fail-fast
-%{__cargo} test %{__cargo_common_opts} --profile rpm --no-default-features --features code,markdown,tokenizers --lib --tests --no-fail-fast
+%cargo_test -f code,markdown,tokenizers -- --lib
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.2
+- Enable the fixture-free Fedora feature and test surface.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.1
 - Build text-splitter 0.32.0 with Fedora tokenizers compatibility
 - Retain inline tests and omit only unpublished fixture/snapshot tests
