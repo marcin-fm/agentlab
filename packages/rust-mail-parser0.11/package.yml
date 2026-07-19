@@ -1,9 +1,11 @@
-status: blocked
 name: rust-mail-parser0.11
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses the immutable static registry archive and enables configured SCM publication across Kreuzberg's six-cell target matrix; live results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256 and includes the declared Apache-2.0 and MIT project license texts.
+  dependency_evidence: The package retains the selected serde feature and excludes only the published fixture comparison already documented adjacent to the test.
+  duplicate_audit: No crate(mail-parser) = 0.11.5 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-19.
 upstream:
   provider: crates_io
   crate: mail-parser
@@ -12,6 +14,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/mail-parser/mail-parser-{version}.crate
   source_sha256: 47785d444be4d32c1709171c6219a90f667c0ad0ffe68b4b179e794f31f4f9e8
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-mail-parser0.11
   spec: rust-mail-parser0.11.spec

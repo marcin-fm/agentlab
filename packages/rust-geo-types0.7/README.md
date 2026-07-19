@@ -1,7 +1,10 @@
 # rust-geo-types0.7
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for Fedora 43 and Fedora 44 on x86_64 and aarch64.
+Fedora Rawhide already provides exact `geo-types 0.7.19`, so the Agentlab
+compatibility package intentionally omits Rawhide.
 
-Final geo-types 0.7.19 package inputs. Final F43/F44 rebuild, public hosting, duplicate, and license review remain blockers.
+The static crates.io archive is supplemented with the MIT and Apache-2.0 texts
+from the exact release commit because the workspace crate archive omits them.

@@ -7,12 +7,12 @@
 
 Name:           rust-mail-parser0.11
 Version:        0.11.5
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Fast and robust e-mail parsing library for Rust
 
 License:        Apache-2.0 OR MIT
 URL:            https://crates.io/crates/mail-parser
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -31,6 +31,8 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
+%license %{crate_instdir}/LICENSES/Apache-2.0.txt
+%license %{crate_instdir}/LICENSES/MIT.txt
 %license %{crate_instdir}/resources/eml/legacy/COPYING
 %license %{crate_instdir}/resources/eml/malformed/COPYING
 %license %{crate_instdir}/resources/eml/thirdparty/COPYING
@@ -115,10 +117,13 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %if %{with check}
 %check
 # The published JSON corpus differs for one serde-derived third-party fixture.
-# Keep the test source, but exclude only that fixture comparison from %check.
+# Keep the test source, but exclude only that fixture comparison from the test phase.
 %cargo_test -f serde -- -- --skip parsers::message::tests::parse_full_messages
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.11.5-0.2
+- Enable configured SCM publication and install the project license texts.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.11.5-0.1
 - Add the initial repository packaging changelog.

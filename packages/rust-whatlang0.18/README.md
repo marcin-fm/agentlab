@@ -1,8 +1,10 @@
 # rust-whatlang0.18
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and
+aarch64. The static crates.io archive is supplemented with the MIT text from the
+exact publishing commit because the archive include list omits it.
 
-Final direct-v3 Rust package import for `whatlang 0.18.0`, including its
-metadata patch. Blocked pending repository/source approval.
+The Fedora metadata patch removes only the unavailable development dependency
+`arbtest 0.2`; upstream retains it, and library sources are unchanged.

@@ -4,15 +4,21 @@
 
 %global crate geo-types
 %global source_sha256 94776032c45f950d30a13af6113c2ad5625316c9abfbccee4dd5a6695f8fe0f5
+%global license_commit 981be9feea12cdede572fb252064536cb8b287b1
+%global license_mit_sha256 2f8267b247fd81e9555a2e196e119a5b341bcae21011cd93985c312f1312f727
+%global license_apache_sha256 a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2
 
 Name:           rust-geo-types0.7
 Version:        0.7.19
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Geographic primitive data types
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/geo-types
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# The crate archive omits the workspace-root license texts; pin the release commit.
+Source1:        https://raw.githubusercontent.com/georust/geo/%{license_commit}/LICENSE-MIT#/geo-types-LICENSE-MIT
+Source2:        https://raw.githubusercontent.com/georust/geo/%{license_commit}/LICENSE-APACHE#/geo-types-LICENSE-APACHE
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -31,7 +37,8 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENSE-APACHE
+%license %{crate_instdir}/LICENSE-MIT
 %doc %{crate_instdir}/CHANGES.md
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
@@ -290,7 +297,11 @@ use the "use-rstar_0_9" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_mit_sha256}  %{SOURCE1}" | sha256sum -c -
+echo "%{license_apache_sha256}  %{SOURCE2}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm0644 %{SOURCE1} LICENSE-MIT
+install -pm0644 %{SOURCE2} LICENSE-APACHE
 %cargo_prep
 
 %generate_buildrequires
@@ -308,5 +319,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.7.19-0.2
+- Enable stable-release publication with exact upstream license texts.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.7.19-0.1
 - Add the initial changelog and clarify geographic type wording.

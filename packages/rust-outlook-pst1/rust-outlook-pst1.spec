@@ -4,15 +4,19 @@
 
 %global crate outlook-pst
 %global source_sha256 299eace9d895cc31490927d7de779f8e8f3deb5fb6bd1e68eb192aa1da19bd47
+%global license_commit 1397836e73b690dbb09663f66056012fced45ff9
+%global license_sha256 c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383
 
 Name:           rust-outlook-pst1
 Version:        1.2.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Outlook PST Store Provider in Rust
 
 License:        MIT
 URL:            https://crates.io/crates/outlook-pst
-Source:         %{crates_source}
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# The registry archive omits the workspace-root license text; pin its publishing commit.
+Source1:        https://raw.githubusercontent.com/microsoft/outlook-pst-rs/%{license_commit}/LICENSE#/outlook-pst-LICENSE
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -31,7 +35,7 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENSE
 %doc %{crate_instdir}/CHANGELOG.md
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
@@ -50,7 +54,9 @@ use the "default" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_sha256}  %{SOURCE1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm0644 %{SOURCE1} LICENSE
 %cargo_prep
 
 %generate_buildrequires
@@ -68,5 +74,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.2.0-0.2
+- Enable configured SCM publication with the exact upstream MIT text.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.2.0-0.1
 - Add the initial repository packaging changelog.

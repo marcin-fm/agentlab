@@ -4,16 +4,22 @@
 
 %global crate whatlang
 %global source_sha256 f5e8f38b596e2a359b755342473520a99421e43658548c79489ee221b728c107
+%global license_commit 584009bbdbd715681fc1c144ac986814104bedbc
+%global license_sha256 9fb62b415784b27e358a03677cac6b56de73425f4fdbb5f4ecf19650af5dfe0c
 
 Name:           rust-whatlang0.18
 Version:        0.18.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Fast and lightweight language identification library for Rust
 
 License:        MIT
 URL:            https://crates.io/crates/whatlang
-Source:         %{crates_source}
-Patch:          whatlang-fix-metadata.diff
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# The crate include list omits the project license text; pin the publishing commit.
+Source1:        https://raw.githubusercontent.com/greyblake/whatlang-rs/%{license_commit}/LICENSE#/whatlang-LICENSE
+# Fedora-specific: remove the unavailable arbtest 0.2 development dependency.
+# Not submitted upstream because upstream intentionally retains that test surface.
+Patch0:         whatlang-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
 
@@ -32,7 +38,7 @@ This package contains library source intended for building other packages which
 use the "%{crate}" crate.
 
 %files          devel
-# FIXME: no license files detected
+%license %{crate_instdir}/LICENSE
 %doc %{crate_instdir}/README.md
 %{crate_instdir}/
 
@@ -98,7 +104,9 @@ use the "serde" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{license_sha256}  %{SOURCE1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
+install -pm0644 %{SOURCE1} LICENSE
 %cargo_prep
 
 %generate_buildrequires
@@ -116,5 +124,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.18.0-0.2
+- Enable configured SCM publication with the exact upstream MIT text.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.18.0-0.1
 - Add the initial repository packaging changelog.

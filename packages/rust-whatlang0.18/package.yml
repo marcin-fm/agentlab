@@ -1,7 +1,11 @@
 name: rust-whatlang0.18
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses immutable crate and supplemental-license sources and enables configured SCM publication across Kreuzberg's six-cell target matrix; live results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256; its include list omits the MIT text, so the spec pins that text from the exact publishing commit.
+  patch_evidence: The Fedora-specific patch removes only the unavailable arbtest 0.2 development dependency; current upstream retains that test dependency and library sources are unchanged.
+  duplicate_audit: No crate(whatlang) = 0.18.0 or crate(arbtest) = 0.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-19.
 upstream:
   provider: crates_io
   crate: whatlang
@@ -9,7 +13,19 @@ upstream:
   current_version: 0.18.0
   source_sha256: f5e8f38b596e2a359b755342473520a99421e43658548c79489ee221b728c107
   source_url_template: https://static.crates.io/crates/whatlang/whatlang-{version}.crate
+supplemental:
+  license_url: https://raw.githubusercontent.com/greyblake/whatlang-rs/584009bbdbd715681fc1c144ac986814104bedbc/LICENSE
+  license_commit: 584009bbdbd715681fc1c144ac986814104bedbc
+  license_sha256: 9fb62b415784b27e358a03677cac6b56de73425f4fdbb5f4ecf19650af5dfe0c
+  install_name: LICENSE
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-whatlang0.18
   spec: rust-whatlang0.18.spec

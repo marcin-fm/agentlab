@@ -1,9 +1,10 @@
-status: blocked
 name: rust-geo-types0.7
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses immutable crate and supplemental-license sources and enables configured SCM publication for Fedora 43 and Fedora 44; live results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256; the archive omits workspace-root license texts, so the spec pins both texts from the exact publishing commit.
+  duplicate_audit: Fedora 43, Fedora 44, and matching RPM Fusion repositories provide no crate(geo-types) = 0.7.19 provider as checked on 2026-07-19; Fedora Rawhide provides rust-geo-types-devel 0.7.19.
 upstream:
   provider: crates_io
   crate: geo-types
@@ -11,7 +12,20 @@ upstream:
   current_version: 0.7.19
   source_url_template: https://static.crates.io/crates/geo-types/geo-types-{version}.crate
   source_sha256: 94776032c45f950d30a13af6113c2ad5625316c9abfbccee4dd5a6695f8fe0f5
+supplemental:
+  license_commit: 981be9feea12cdede572fb252064536cb8b287b1
+  license_mit_url: https://raw.githubusercontent.com/georust/geo/981be9feea12cdede572fb252064536cb8b287b1/LICENSE-MIT
+  license_mit_sha256: 2f8267b247fd81e9555a2e196e119a5b341bcae21011cd93985c312f1312f727
+  license_apache_url: https://raw.githubusercontent.com/georust/geo/981be9feea12cdede572fb252064536cb8b287b1/LICENSE-APACHE
+  license_apache_sha256: a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+  omitted_target_families:
+    rawhide: Fedora Rawhide provides rust-geo-types-devel 0.7.19 with crate(geo-types) = 0.7.19.
   subdir: packages/rust-geo-types0.7
   spec: rust-geo-types0.7.spec

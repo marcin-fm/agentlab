@@ -1,7 +1,10 @@
 # rust-mail-parser0.11
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and
+aarch64. It uses the immutable static crates.io archive and ships both project
+license texts plus the applicable fixture notices included by upstream.
 
-Final direct-v4 metadata-fixes package for mail-parser 0.11.5. Final F43/F44 rebuild, hosting, duplicate, and license review remain blockers.
+The selected `serde` feature surface and focused fixture-dependent test exclusion
+remain unchanged.

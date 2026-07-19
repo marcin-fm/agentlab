@@ -1,7 +1,10 @@
 name: rust-outlook-pst1
-status: blocked
-blockers:
-  - Retained F44 x86_64 staging artifacts exist, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.2 uses immutable crate and supplemental-license sources and enables configured SCM publication across Kreuzberg's six-cell target matrix; live results are retained in the project playbook.
+  source_identity: The static crates.io archive matches the pinned source SHA-256; the archive identifies the exact publishing commit and omits its workspace-root MIT text, which the spec pins separately.
+  duplicate_audit: No crate(outlook-pst) = 1.2.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-19.
 upstream:
   provider: crates_io
   crate: outlook-pst
@@ -9,7 +12,19 @@ upstream:
   current_version: 1.2.0
   source_sha256: 299eace9d895cc31490927d7de779f8e8f3deb5fb6bd1e68eb192aa1da19bd47
   source_url_template: https://static.crates.io/crates/outlook-pst/outlook-pst-{version}.crate
+supplemental:
+  license_url: https://raw.githubusercontent.com/microsoft/outlook-pst-rs/1397836e73b690dbb09663f66056012fced45ff9/LICENSE
+  license_commit: 1397836e73b690dbb09663f66056012fced45ff9
+  license_sha256: c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383
+  install_name: LICENSE
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-outlook-pst1
   spec: rust-outlook-pst1.spec

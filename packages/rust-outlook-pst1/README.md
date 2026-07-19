@@ -1,8 +1,10 @@
 # rust-outlook-pst1
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for Fedora 43, Fedora 44, and Rawhide on x86_64 and
+aarch64. The static crates.io archive is supplemented with the MIT text from the
+exact publishing commit because the workspace crate archive omits it.
 
-Final direct-v3 Rust package import for `outlook-pst 1.2.0`. Blocked pending
-repository/source approval.
+This is the released `outlook-pst 1.2.0` library surface without downstream
+behavior changes.
