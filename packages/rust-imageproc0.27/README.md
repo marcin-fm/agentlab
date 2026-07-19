@@ -1,7 +1,12 @@
 # rust-imageproc0.27
 
-## Finalization status
+## Publication status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is independently enabled for Fedora 43, Fedora 44, and Rawhide on
+`x86_64` and `aarch64`. Its blocked Kreuzberg parent is dependency context, not
+a package-local publication hold.
 
-Final direct-v4 imageproc 0.27.0 package inputs. The small DejaVuSans test fixture is included and hashed in `package.yml`; immutable fixture provenance/publication approval and duplicate/license review remain blockers.
+The published crate excludes upstream tests and examples. Fedora omits the one
+property-test module that references the excluded DejaVuSans fixture rather than
+redistributing the font as a supplemental source; all other native tests remain
+selected. Live build and artifact results are retained in the project playbook.

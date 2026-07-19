@@ -21,7 +21,7 @@
  debug = 2
 +
 --- imageproc-0.27.0/src/region_labelling.rs	2006-07-24T01:21:28+00:00
-+++ imageproc-0.27.0/src/region_labelling.rs	2026-07-15T20:38:48.980729+00:00
++++ imageproc-0.27.0/src/region_labelling.rs	2026-07-19T00:00:00+00:00
 @@ -245,6 +245,7 @@
  
  #[cfg(test)]
@@ -30,3 +30,14 @@
      extern crate wasm_bindgen_test;
  
      use image::{GrayImage, Luma};
+--- imageproc-0.27.0/src/drawing/text.rs	2006-07-24T01:21:28+00:00
++++ imageproc-0.27.0/src/drawing/text.rs	2026-07-19T00:00:00+00:00
+@@ -116,7 +116,7 @@
+ }
+ 
+ #[cfg(not(miri))]
+-#[cfg(test)]
++#[cfg(all(test, any()))]
+ mod proptests {
+     use super::*;
+     use crate::{

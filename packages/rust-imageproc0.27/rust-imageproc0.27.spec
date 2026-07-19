@@ -7,15 +7,16 @@
 
 Name:           rust-imageproc0.27
 Version:        0.27.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Image processing operations
 
 License:        MIT
 URL:            https://crates.io/crates/imageproc
-Source:         %{crates_source}
-# Tests require the upstream fixture omitted from the crates.io archive.
-Source1:        imageproc-0.27.0-DejaVuSans.ttf
-# Automatically generated patch to strip dependencies and normalize metadata
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora packaging: remove WASM-only metadata and the one property-test module
+# whose upstream font fixture is intentionally omitted from the crate archive.
+# Upstream status: not submitted because upstream retains its repository tests
+# and fixture; this patch only narrows Fedora's packaged-crate test graph.
 Patch:          imageproc-fix-metadata-auto.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -128,7 +129,6 @@ use the "text" feature of the "%{crate}" crate.
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
-install -Dpm 0644 %{SOURCE1} tests/data/fonts/DejaVuSans.ttf
 %cargo_prep
 
 %generate_buildrequires
@@ -146,5 +146,9 @@ install -Dpm 0644 %{SOURCE1} tests/data/fonts/DejaVuSans.ttf
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.27.0-0.2
+- Enable the independently selected image-processing dependency.
+- Omit the single property test requiring an unshipped font fixture.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 0.27.0-0.1
 - Restore the upstream DejaVuSans test fixture omitted from the crates.io archive.
