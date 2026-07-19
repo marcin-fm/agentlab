@@ -2,7 +2,8 @@ name: rust-whatlang0.18
 status: enabled
 blockers: []
 validation:
-  enablement_release: Release 0.2 uses immutable crate and supplemental-license sources and enables configured SCM publication across Kreuzberg's six-cell target matrix; live results are retained in the project playbook.
+  enablement_release: Release 0.3 uses immutable crate and supplemental-license sources, explicitly installs the license omitted by upstream's Cargo include list, and enables configured SCM publication across Kreuzberg's six-cell target matrix; live results are retained in the project playbook.
+  first_build: Release 0.2 build 10742363 passed source verification, patching, compilation, 57 unit tests, and 13 doctests in every target, then failed because cargo package omitted the supplemental license from the installed crate payload.
   source_identity: The static crates.io archive matches the pinned source SHA-256; its include list omits the MIT text, so the spec pins that text from the exact publishing commit.
   patch_evidence: The Fedora-specific patch removes only the unavailable arbtest 0.2 development dependency; current upstream retains that test dependency and library sources are unchanged.
   duplicate_audit: No crate(whatlang) = 0.18.0 or crate(arbtest) = 0.2 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-19.

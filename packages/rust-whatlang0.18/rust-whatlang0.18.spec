@@ -9,7 +9,7 @@
 
 Name:           rust-whatlang0.18
 Version:        0.18.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Fast and lightweight language identification library for Rust
 
 License:        MIT
@@ -117,6 +117,7 @@ install -pm0644 %{SOURCE1} LICENSE
 
 %install
 %cargo_install
+install -pm0644 LICENSE %{buildroot}%{crate_instdir}/LICENSE
 
 %if %{with check}
 %check
@@ -124,6 +125,9 @@ install -pm0644 %{SOURCE1} LICENSE
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.18.0-0.3
+- Install the supplemental license omitted by Cargo's explicit include list.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.18.0-0.2
 - Enable configured SCM publication with the exact upstream MIT text.
 
