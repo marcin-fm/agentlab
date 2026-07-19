@@ -52,17 +52,29 @@ jobs:
             commit = webkit.fetch("commit")
             tag = "bun-sources-#{version}-webkit-#{commit[0, 12]}"
             request = YAML.safe_load_file(".github/source-release/bun.yml")
+            attempt = Integer(request.fetch("attempt"))
+            operation = request.fetch("operation")
+            abort "source-release attempt must be positive" unless attempt.positive?
+            abort "unsupported source-release operation" unless %w[stage publish].include?(operation)
             expected_request = {
               "schema" => "agentlab-source-release-request/v1",
-              "attempt" => 3,
+              "attempt" => attempt,
+              "operation" => operation,
               "package" => "bun",
               "version" => version,
               "webkit_commit" => commit,
               "archive_sha256" => source.fetch("sha256"),
               "tag" => tag
             }
+            generator_commit = request["generator_commit"]
+            if operation == "publish"
+              abort "invalid source-release generator commit" unless generator_commit.to_s.match?(/\A[0-9a-f]{40}\z/)
+              expected_request["generator_commit"] = generator_commit
+            end
             abort "Bun source-release request does not match package metadata" unless request == expected_request
             values = {
+              "operation" => operation,
+              "generator_commit" => generator_commit,
               "version" => version,
               "tag" => tag,
               "repository_url" => webkit.fetch("repository_url"),
@@ -82,6 +94,7 @@ jobs:
           ' >> "$GITHUB_OUTPUT"
 
       - name: Refuse an existing release or tag
+        if: steps.metadata.outputs.operation == 'stage'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,6 +112,7 @@ jobs:
           fi
 
       - name: Recreate the canonical WebKit archive
+        if: steps.metadata.outputs.operation == 'stage'
         shell: bash
         env:
           REPOSITORY_URL: ${{ steps.metadata.outputs.repository_url }}
@@ -123,6 +137,7 @@ jobs:
           printf '%s  %s\n' "$CANONICAL_SHA256" "$canonical" | sha256sum -c -
 
       - name: Generate and verify release assets
+        if: steps.metadata.outputs.operation == 'stage'
         shell: bash
         env:
           CANONICAL_FILENAME: ${{ steps.metadata.outputs.canonical_filename }}
@@ -169,11 +184,13 @@ jobs:
           scripts/check-packages --package bun
 
       - name: Attest generated source assets
+        if: steps.metadata.outputs.operation == 'stage'
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
         with:
           subject-path: /srv/tmp/bun-source-release/*
 
       - name: Create and verify draft release
+        if: steps.metadata.outputs.operation == 'stage'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -232,3 +249,101 @@ jobs:
           done
           draft_url="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url)"
           printf 'Verified draft release: %s\n' "$draft_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify and publish immutable release
+        if: steps.metadata.outputs.operation == 'publish'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          GENERATOR_COMMIT: ${{ steps.metadata.outputs.generator_commit }}
+          ARCHIVE_FILENAME: ${{ steps.metadata.outputs.archive_filename }}
+          ARCHIVE_SHA256: ${{ steps.metadata.outputs.archive_sha256 }}
+          ARCHIVE_SIZE: ${{ steps.metadata.outputs.archive_size }}
+          RECEIPT_FILENAME: ${{ steps.metadata.outputs.receipt_filename }}
+          RECEIPT_SHA256: ${{ steps.metadata.outputs.receipt_sha256 }}
+          BUILD_RECEIPT_FILENAME: ${{ steps.metadata.outputs.build_receipt_filename }}
+          BUILD_RECEIPT_SHA256: ${{ steps.metadata.outputs.build_receipt_sha256 }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "refusing to publish a draft whose tag already exists: $TAG" >&2
+            exit 1
+          fi
+          releases=/srv/tmp/bun-source-releases.json
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" > "$releases"
+          release_id="$(ruby -rjson -e '
+            releases = JSON.parse(File.read(ARGV.fetch(0)))
+            matches = releases.select { |release| release["tag_name"] == ENV.fetch("TAG") }
+            abort "expected one source-release draft" unless matches.length == 1
+            release = matches.fetch(0)
+            abort "source release is not a draft" unless release["draft"] == true
+            abort "source release is already immutable" unless release["immutable"] == false
+            abort "source release target mismatch" unless release["target_commitish"] == ENV.fetch("GENERATOR_COMMIT")
+            puts release.fetch("id")
+          ' "$releases")"
+          assets=/srv/tmp/bun-source-release-assets.json
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" > "$assets"
+          download=/srv/tmp/bun-source-release-publish
+          rm -rf "$download"
+          mkdir -p "$download"
+          ruby -rjson -e '
+            expected = [
+              ENV.fetch("ARCHIVE_FILENAME"),
+              ENV.fetch("RECEIPT_FILENAME"),
+              ENV.fetch("BUILD_RECEIPT_FILENAME"),
+              "SOURCE_TOOLCHAIN.txt",
+              "SHA256SUMS"
+            ].sort
+            assets = JSON.parse(File.read(ARGV.fetch(0)))
+            actual = assets.map { |asset| asset.fetch("name") }.sort
+            abort "draft release asset names do not match" unless actual == expected
+            assets.each do |asset|
+              abort "draft release asset is not uploaded" unless asset["state"] == "uploaded"
+              abort "draft release asset size is invalid" unless asset["size"].is_a?(Integer) && asset["size"].positive?
+              abort "draft release asset digest is invalid" unless asset["digest"].to_s.match?(/\Asha256:[0-9a-f]{64}\z/)
+            end
+          ' "$assets"
+          while IFS=$'\t' read -r asset_id name; do
+            gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" > "$download/$name"
+          done < <(ruby -rjson -e 'JSON.parse(File.read(ARGV.fetch(0))).sort_by { |asset| asset.fetch("name") }.each { |asset| puts [asset.fetch("id"), asset.fetch("name")].join("\t") }' "$assets")
+          ruby -rjson -rdigest -e '
+            directory, response = ARGV
+            assets = JSON.parse(File.read(response))
+            assets.each do |asset|
+              path = File.join(directory, asset.fetch("name"))
+              digest = "sha256:#{Digest::SHA256.file(path).hexdigest}"
+              abort "downloaded draft asset digest mismatch: #{path}" unless asset.fetch("digest") == digest
+              abort "downloaded draft asset size mismatch: #{path}" unless asset.fetch("size") == File.size(path)
+            end
+            checksums = File.readlines(File.join(directory, "SHA256SUMS"), chomp: true).to_h do |line|
+              match = line.match(/\A([0-9a-f]{64})  ([^\/]+)\z/) or abort "invalid SHA256SUMS line"
+              [match[2], match[1]]
+            end
+            expected = Dir.children(directory).reject { |name| name == "SHA256SUMS" }.sort
+            abort "SHA256SUMS names do not match draft assets" unless checksums.keys.sort == expected
+            checksums.each do |name, sha256|
+              abort "SHA256SUMS digest mismatch: #{name}" unless Digest::SHA256.file(File.join(directory, name)).hexdigest == sha256
+            end
+          ' "$download" "$assets"
+          test "$(stat -c %s "$download/$ARCHIVE_FILENAME")" = "$ARCHIVE_SIZE"
+          printf '%s  %s\n' "$ARCHIVE_SHA256" "$download/$ARCHIVE_FILENAME" | sha256sum -c -
+          printf '%s  %s\n' "$RECEIPT_SHA256" "$download/$RECEIPT_FILENAME" | sha256sum -c -
+          printf '%s  %s\n' "$BUILD_RECEIPT_SHA256" "$download/$BUILD_RECEIPT_FILENAME" | sha256sum -c -
+          cmp --silent "$download/$RECEIPT_FILENAME" "packages/bun/$RECEIPT_FILENAME"
+          cmp --silent "$download/$BUILD_RECEIPT_FILENAME" "packages/bun/$BUILD_RECEIPT_FILENAME"
+          for path in "$download"/*; do
+            gh attestation verify "$path" -R "$GITHUB_REPOSITORY"
+          done
+          published=/srv/tmp/bun-source-release-published.json
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" \
+            -F draft=false \
+            -F make_latest=false > "$published"
+          ruby -rjson -e '
+            release = JSON.parse(File.read(ARGV.fetch(0)))
+            abort "published source release remains a draft" unless release["draft"] == false
+            abort "published source release is not immutable" unless release["immutable"] == true
+            abort "published source release tag mismatch" unless release["tag_name"] == ENV.fetch("TAG")
+            abort "published source release target mismatch" unless release["target_commitish"] == ENV.fetch("GENERATOR_COMMIT")
+            puts "Published immutable release: #{release.fetch("html_url")}"
+          ' "$published" | tee -a "$GITHUB_STEP_SUMMARY"
