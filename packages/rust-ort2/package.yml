@@ -1,7 +1,11 @@
 name: rust-ort2
-status: blocked
-blockers:
-  - Final F44 build passed in direct-v3-ort staging, but source hosting and system ONNX Runtime dependency review remain open.
+status: enabled
+blockers: []
+validation:
+  source_identity: The immutable static crates.io archive matches the pinned SHA-256 and supplies the MIT and Apache-2.0 texts.
+  system_provider: Fedora ONNX Runtime supplies the selected dynamic library API across Fedora 43, Fedora 44, and Rawhide.
+  local_build: Fedora 44 x86_64 Mock passed against the published rust-ort-sys provider with no source downloads.
+  test_graph: The exact api-18,load-dynamic,ndarray,std surface passes its library tests with only the unsupported custom-operator test skipped.
 upstream:
   provider: crates_io
   crate: ort
@@ -11,6 +15,6 @@ upstream:
   source_sha256: d7de3af33d24a745ffb8fab904b13478438d1cd52868e6f17735ef6e1f8bf133
   source_url_template: https://static.crates.io/crates/ort/ort-{version}.crate
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/rust-ort2
   spec: rust-ort2.spec

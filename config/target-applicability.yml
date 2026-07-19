@@ -145,6 +145,7 @@ dependency_groups:
       - rust-oem_cp1
       - rust-org0.3
       - rust-ort-sys
+      - rust-ort2
       - rust-outlook-pst1
       - rust-percent-encoding-rfc3986_0.1
       - rust-phf0.14

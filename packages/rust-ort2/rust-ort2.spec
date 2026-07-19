@@ -8,11 +8,11 @@
 
 Name:           rust-ort2
 Version:        2.0.0~rc.12
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Safe Rust wrapper for ONNX Runtime
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/ort
-Source:         %{crates_source %{crate} %{crate_version}}
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{crate_version}.crate
 # Select Fedora's available ndarray 0.16 compatibility branch.
 # Fedora-specific; not submitted upstream because the released crate selects ndarray 0.17.
 Patch:          ort-fedora-ndarray.diff
@@ -143,6 +143,9 @@ export ORT_DYLIB_PATH=%{_libdir}/libonnxruntime.so
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.4
+- Validate the system ONNX Runtime wrapper for publication.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.0.0~rc.12-0.3
 - Use Fedora Cargo macros for dependency generation, build, install, and tests.
 
