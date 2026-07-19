@@ -90,12 +90,18 @@ builds:
     status: not-run-blocked
 licenses:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
+  receipt_sha256: 19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef
+  fedora_evidence_receipt: rust-v8-149.2.0-fedora-license-evidence.json
+  fedora_evidence_receipt_sha256: b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
+  fedora_release: "44"
   known_draft_expression: MIT AND BSD-3-Clause
   downstream_allocator_shim: BSD-3-Clause
   candidate_license_files: 415
   vendored_rust_source_packages: 216
   vendored_rust_placeholders: 52
+  vendored_rust_fedora_exact_version_matches: 136
+  vendored_rust_fedora_version_different_matches: 26
+  vendored_rust_fedora_absent: 54
   readme_chromium_declared_license_paths: 229
   readme_chromium_verified_declared_license_paths: 228
   readme_chromium_ambiguous_comma_licenses: 3
@@ -107,6 +113,8 @@ licenses:
   vendored_rust_legacy_slash_license_expressions: 8
   vendored_rust_mechanically_normalized_license_expressions: 8
   git_component_inventory_complete: true
+  fedora_exact_version_license_metadata_recorded: true
+  linked_archive_selection_verified: false
   required_texts_verified: false
   fedora_allowed_spdx_verified: false
   final_static_archive_license_complete: false

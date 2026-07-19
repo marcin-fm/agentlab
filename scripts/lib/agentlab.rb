@@ -462,9 +462,11 @@ module Agentlab
     source_name = dependencies.dig("source_closure", "receipt")
     license_name = dependencies.dig("license_audit", "receipt")
     archive_graph_name = dependencies.dig("archive_graph", "receipt")
+    fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
     source_path = source_name.is_a?(String) && File.join(package.directory, source_name)
     license_path = license_name.is_a?(String) && File.join(package.directory, license_name)
     archive_graph_path = archive_graph_name.is_a?(String) && File.join(package.directory, archive_graph_name)
+    fedora_license_path = fedora_license_name.is_a?(String) && File.join(package.directory, fedora_license_name)
     unless source_path && File.file?(source_path)
       return ["rust-v8: recursive-source receipt is missing"]
     end
@@ -474,10 +476,14 @@ module Agentlab
     unless archive_graph_path && File.file?(archive_graph_path)
       return ["rust-v8: archive-graph witness is missing"]
     end
+    unless fedora_license_path && File.file?(fedora_license_path)
+      return ["rust-v8: Fedora license-evidence receipt is missing"]
+    end
 
     source_sha256 = Digest::SHA256.file(source_path).hexdigest
     license_sha256 = Digest::SHA256.file(license_path).hexdigest
     archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
+    fedora_license_sha256 = Digest::SHA256.file(fedora_license_path).hexdigest
     expected_source_hashes = [
       dependencies.dig("source_closure", "receipt_sha256"),
       package.data.dig("source_policy", "source_closure_receipt_sha256")
@@ -495,9 +501,17 @@ module Agentlab
     unless expected_archive_graph_hashes.all? { |value| value == archive_graph_sha256 }
       errors << "rust-v8: archive-graph witness SHA-256 does not match metadata"
     end
+    expected_fedora_license_hashes = [
+      dependencies.dig("fedora_license_evidence", "receipt_sha256"),
+      package.data.dig("fedora_license_evidence", "receipt_sha256")
+    ]
+    unless expected_fedora_license_hashes.all? { |value| value == fedora_license_sha256 }
+      errors << "rust-v8: Fedora license-evidence receipt SHA-256 does not match metadata"
+    end
     errors << "rust-v8: spec recursive-source SHA-256 does not match" unless spec[/^%global closure_sha256\s+(\h{64})$/, 1] == source_sha256
     errors << "rust-v8: spec license-audit SHA-256 does not match" unless spec[/^%global license_audit_sha256\s+(\h{64})$/, 1] == license_sha256
     errors << "rust-v8: spec archive-graph SHA-256 does not match" unless spec[/^%global archive_graph_sha256\s+(\h{64})$/, 1] == archive_graph_sha256
+    errors << "rust-v8: spec Fedora license-evidence SHA-256 does not match" unless spec[/^%global fedora_license_evidence_sha256\s+(\h{64})$/, 1] == fedora_license_sha256
 
     source = JSON.parse(File.read(source_path))
     errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v1"
@@ -579,6 +593,7 @@ module Agentlab
     errors << "rust-v8: spec Source21 does not select the recursive-source receipt" unless spec_sources[21] == source_name
     errors << "rust-v8: spec Source22 does not select the license-audit receipt" unless spec_sources[22] == license_name
     errors << "rust-v8: spec Source23 does not select the archive-graph witness" unless spec_sources[23] == archive_graph_name
+    errors << "rust-v8: spec Source24 does not select the Fedora license-evidence receipt" unless spec_sources[24] == fedora_license_name
     flat_helper = spec[/extract_flat\(\) \{\n(.*?)\n\}/m, 1].to_s
     wrapped_helper = spec[/extract_wrapped\(\) \{\n(.*?)\n\}/m, 1].to_s
     errors << "rust-v8: flat archive extraction helper is invalid" unless flat_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner') && !flat_helper.include?("--strip-components")
@@ -750,6 +765,78 @@ module Agentlab
       errors << "rust-v8: archive-graph validation overclaims #{flag}" unless archive_graph.dig("validation", flag) == false
     end
 
+    fedora_license = JSON.parse(File.read(fedora_license_path))
+    unless fedora_license["schema"] == "rust-v8-fedora-license-evidence/v1"
+      errors << "rust-v8: Fedora license-evidence schema is invalid"
+    end
+    errors << "rust-v8: Fedora license-evidence package does not match" unless fedora_license["package"] == package.name
+    errors << "rust-v8: Fedora license-evidence release does not match" unless fedora_license["release"].to_s == version
+    expected_fedora_target = { "fedora_release" => "44", "repositories" => %w[fedora updates] }
+    errors << "rust-v8: Fedora license-evidence target does not match" unless fedora_license["target"] == expected_fedora_target
+    fedora_records = fedora_license["records"]
+    unless fedora_records.is_a?(Array)
+      return errors << "rust-v8: Fedora license-evidence crate records are missing"
+    end
+    fedora_keys = fedora_records.map { |record| [record["crate"], record["version"]] }
+    errors << "rust-v8: Fedora license-evidence crate records are not sorted" unless fedora_keys == fedora_keys.sort
+    errors << "rust-v8: Fedora license-evidence crate records are duplicated" unless fedora_keys.uniq.length == fedora_keys.length
+    fedora_records.each do |record|
+      exact_providers = Array(record["exact_providers"])
+      other_providers = Array(record["other_providers"])
+      case record["status"]
+      when "exact"
+        unless exact_providers.any? && exact_providers.all? { |provider| provider["version"] == record["version"] }
+          errors << "rust-v8: Fedora exact-version provider evidence is invalid for #{record['crate']} #{record['version']}"
+        end
+      when "version-different"
+        unless exact_providers.empty? && other_providers.any? && other_providers.none? { |provider| provider["version"] == record["version"] }
+          errors << "rust-v8: Fedora version-different provider evidence is invalid for #{record['crate']} #{record['version']}"
+        end
+      when "absent"
+        unless exact_providers.empty? && other_providers.empty?
+          errors << "rust-v8: Fedora absent-provider evidence is invalid for #{record['crate']} #{record['version']}"
+        end
+      else
+        errors << "rust-v8: Fedora provider status is invalid for #{record['crate']} #{record['version']}"
+      end
+      (exact_providers + other_providers).each do |provider|
+        unless provider["license"].to_s.length.positive? && provider["source_rpm"].to_s.end_with?(".src.rpm")
+          errors << "rust-v8: Fedora provider metadata is incomplete for #{record['crate']} #{record['version']}"
+        end
+      end
+    end
+    expected_fedora_summary = {
+      "vendored_rust_source_packages" => fedora_records.length,
+      "exact" => fedora_records.count { |record| record["status"] == "exact" },
+      "version_different" => fedora_records.count { |record| record["status"] == "version-different" },
+      "absent" => fedora_records.count { |record| record["status"] == "absent" }
+    }
+    errors << "rust-v8: Fedora license-evidence summary is inconsistent" unless fedora_license["summary"] == expected_fedora_summary
+    errors << "rust-v8: Fedora exact-version package count does not match" unless expected_fedora_summary["exact"] == 136
+    errors << "rust-v8: Fedora version-different package count does not match" unless expected_fedora_summary["version_different"] == 26
+    errors << "rust-v8: Fedora absent package count does not match" unless expected_fedora_summary["absent"] == 54
+    %w[crate_inventory_matches_license_audit exact_matches_include_fedora_license_metadata].each do |flag|
+      errors << "rust-v8: Fedora license-evidence validation #{flag} is not true" unless fedora_license.dig("validation", flag) == true
+    end
+    %w[linked_archive_selection_verified fedora_allowed_spdx_verified final_static_archive_license_complete].each do |flag|
+      errors << "rust-v8: Fedora license evidence overclaims #{flag}" unless fedora_license.dig("validation", flag) == false
+    end
+    expected_fedora_metadata = {
+      "receipt" => fedora_license_name,
+      "receipt_sha256" => fedora_license_sha256,
+      "fedora_release" => "44",
+      "repositories" => %w[fedora updates],
+      "vendored_rust_source_packages" => 216,
+      "exact" => 136,
+      "version_different" => 26,
+      "absent" => 54,
+      "exact_matches_include_fedora_license_metadata" => true,
+      "linked_archive_selection_verified" => false,
+      "final_static_archive_license_complete" => false
+    }
+    errors << "rust-v8: package Fedora license-evidence metadata does not match" unless package.data["fedora_license_evidence"] == expected_fedora_metadata
+    errors << "rust-v8: dependency Fedora license-evidence metadata does not match" unless dependencies["fedora_license_evidence"] == expected_fedora_metadata
+
     license = JSON.parse(File.read(license_path))
     errors << "rust-v8: license-audit schema is invalid" unless license["schema"] == "rust-v8-license-audit/v1"
     errors << "rust-v8: license-audit release does not match" unless license["release"].to_s == version
@@ -873,6 +960,23 @@ module Agentlab
     end
     placeholders = vendored.select { |record| record["placeholder"] == true }
     source_packages = vendored.reject { |record| record["placeholder"] == true }
+    expected_fedora_reference = {
+      "path" => fedora_license_name,
+      "sha256" => fedora_license_sha256,
+      "target" => fedora_license.fetch("target"),
+      "summary" => fedora_license.fetch("summary"),
+      "scope" => fedora_license.dig("source", "scope")
+    }
+    unless license["fedora_license_evidence"] == expected_fedora_reference
+      errors << "rust-v8: license audit is not bound to the Fedora license-evidence receipt"
+    end
+    fedora_records_by_key = fedora_records.to_h do |record|
+      [[record["crate"], record["version"]], record]
+    end
+    source_package_keys = source_packages.map { |record| [record["name"], record["version"]] }
+    unless fedora_records_by_key.keys.sort == source_package_keys.sort
+      errors << "rust-v8: Fedora license-evidence inventory does not match vendored Rust source packages"
+    end
     errors << "rust-v8: vendored Rust source declaration inventory is incomplete" unless source_packages.all? { |record| record["manifest_license"] || record["manifest_license_file"] }
     errors << "rust-v8: vendored Rust candidate-text inventory is incomplete" unless source_packages.all? { |record| record["license_file_count"].to_i.positive? }
     errors << "rust-v8: vendored Rust license syntax inventory is incomplete" unless source_packages.all? { |record| recognized_syntax_classes.include?(record["syntax_class"]) }
@@ -885,6 +989,19 @@ module Agentlab
         license_basenames = license_paths.map { |path| File.basename(path).upcase }
         unless license_basenames.include?("LICENSE-MIT") && license_basenames.include?("LICENSE-APACHE")
           errors << "rust-v8: mechanical slash normalization lacks both texts for #{record['path']}"
+        end
+      end
+      if record["placeholder"] == true
+        errors << "rust-v8: vendored Rust placeholder has Fedora package evidence" if record.key?("fedora_license_evidence")
+      else
+        fedora_record = fedora_records_by_key[[record["name"], record["version"]]] || {}
+        expected = {
+          "status" => fedora_record["status"],
+          "exact_providers" => Array(fedora_record["exact_providers"]),
+          "other_providers" => Array(fedora_record["other_providers"])
+        }
+        unless record["fedora_license_evidence"] == expected
+          errors << "rust-v8: vendored Rust Fedora evidence does not match #{record['path']}"
         end
       end
     end
@@ -995,7 +1112,10 @@ module Agentlab
       "vendored_rust_source_packages_with_verified_manifest_license_file" => source_packages.count { |record| record["manifest_license_file_verified"] == true },
       "vendored_rust_source_packages_with_candidate_texts" => source_packages.count { |record| record["license_file_count"].to_i.positive? },
       "vendored_rust_legacy_slash_license_expressions" => source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" },
-      "vendored_rust_mechanically_normalized_license_expressions" => source_packages.count { |record| record["normalization_status"] == "mechanically-normalized" }
+      "vendored_rust_mechanically_normalized_license_expressions" => source_packages.count { |record| record["normalization_status"] == "mechanically-normalized" },
+      "vendored_rust_fedora_exact_version_matches" => expected_fedora_summary["exact"],
+      "vendored_rust_fedora_version_different_matches" => expected_fedora_summary["version_different"],
+      "vendored_rust_fedora_absent" => expected_fedora_summary["absent"]
     }
     errors << "rust-v8: license-audit summary is inconsistent" unless license_summary == expected_license_summary
     unmaterialized_declared_license_paths = readme_records.flat_map do |record|
@@ -1023,7 +1143,10 @@ module Agentlab
       "readme_chromium_unmaterialized_declared_license_paths" => "readme_chromium_unmaterialized_declared_license_paths",
       "readme_chromium_semantically_verified_declared_license_paths" => "readme_chromium_semantically_verified_declared_license_paths",
       "vendored_rust_legacy_slash_license_expressions" => "vendored_rust_legacy_slash_license_expressions",
-      "vendored_rust_mechanically_normalized_license_expressions" => "vendored_rust_mechanically_normalized_license_expressions"
+      "vendored_rust_mechanically_normalized_license_expressions" => "vendored_rust_mechanically_normalized_license_expressions",
+      "vendored_rust_fedora_exact_version_matches" => "vendored_rust_fedora_exact_version_matches",
+      "vendored_rust_fedora_version_different_matches" => "vendored_rust_fedora_version_different_matches",
+      "vendored_rust_fedora_absent" => "vendored_rust_fedora_absent"
     }.each do |metadata_key, summary_key|
       errors << "rust-v8: package license metadata #{metadata_key} does not match" unless package_license[metadata_key] == license_summary[summary_key]
       errors << "rust-v8: dependency license metadata #{metadata_key} does not match" unless dependency_license[metadata_key] == license_summary[summary_key]
@@ -1050,6 +1173,7 @@ module Agentlab
       unmaterialized_deps_declarations_classified
       vendored_rust_manifests_inventoried
       vendored_rust_placeholders_classified
+      vendored_rust_fedora_license_evidence_recorded
       vendored_rust_source_package_declarations_complete
       vendored_rust_source_package_candidate_texts_present
     ].each do |flag|
@@ -1118,6 +1242,11 @@ module Agentlab
       reproducibility = load_yaml(reproducibility_path)
       errors << "rust-v8: reproducibility source receipt SHA-256 does not match" unless reproducibility.dig("recursive_source", "receipt_sha256") == source_sha256
       errors << "rust-v8: reproducibility license receipt SHA-256 does not match" unless reproducibility.dig("licenses", "receipt_sha256") == license_sha256
+      unless reproducibility.dig("licenses", "fedora_evidence_receipt") == fedora_license_name &&
+             reproducibility.dig("licenses", "fedora_evidence_receipt_sha256") == fedora_license_sha256
+        errors << "rust-v8: reproducibility Fedora license-evidence receipt does not match"
+      end
+      errors << "rust-v8: reproducibility Fedora release does not match" unless reproducibility.dig("licenses", "fedora_release") == "44"
       errors << "rust-v8: reproducibility archive-graph receipt SHA-256 does not match" unless reproducibility.dig("archive_graph", "receipt_sha256") == archive_graph_sha256
       errors << "rust-v8: reproducibility archive-graph schema does not match" unless reproducibility.dig("archive_graph", "schema") == archive_graph["schema"]
       errors << "rust-v8: reproducibility archive-graph scope does not match" unless reproducibility.dig("archive_graph", "scope") == archive_graph.dig("witness", "scope")
@@ -1154,7 +1283,12 @@ module Agentlab
       errors << "rust-v8: reproducibility legacy-slash count does not match" unless reproducibility.dig("licenses", "vendored_rust_legacy_slash_license_expressions") == license_summary["vendored_rust_legacy_slash_license_expressions"]
       errors << "rust-v8: reproducibility proposed-normalization count does not match" unless reproducibility.dig("licenses", "readme_chromium_proposed_normalizations") == license_summary["readme_chromium_proposed_normalizations"]
       errors << "rust-v8: reproducibility mechanical-normalization count does not match" unless reproducibility.dig("licenses", "vendored_rust_mechanically_normalized_license_expressions") == license_summary["vendored_rust_mechanically_normalized_license_expressions"]
+      errors << "rust-v8: reproducibility Fedora exact-version count does not match" unless reproducibility.dig("licenses", "vendored_rust_fedora_exact_version_matches") == license_summary["vendored_rust_fedora_exact_version_matches"]
+      errors << "rust-v8: reproducibility Fedora version-different count does not match" unless reproducibility.dig("licenses", "vendored_rust_fedora_version_different_matches") == license_summary["vendored_rust_fedora_version_different_matches"]
+      errors << "rust-v8: reproducibility Fedora absent count does not match" unless reproducibility.dig("licenses", "vendored_rust_fedora_absent") == license_summary["vendored_rust_fedora_absent"]
       errors << "rust-v8: reproducibility Git-component license inventory is incomplete" unless reproducibility.dig("licenses", "git_component_inventory_complete") == true
+      errors << "rust-v8: reproducibility Fedora license metadata is incomplete" unless reproducibility.dig("licenses", "fedora_exact_version_license_metadata_recorded") == true
+      errors << "rust-v8: reproducibility metadata overclaims selected linkage" unless reproducibility.dig("licenses", "linked_archive_selection_verified") == false
     else
       errors << "rust-v8: reproducibility metadata is missing"
     end

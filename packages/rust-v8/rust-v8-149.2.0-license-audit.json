@@ -7,6 +7,24 @@
     "sha256": "bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de",
     "tree_sha256": "4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07"
   },
+  "fedora_license_evidence": {
+    "path": "rust-v8-149.2.0-fedora-license-evidence.json",
+    "sha256": "b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3",
+    "target": {
+      "fedora_release": "44",
+      "repositories": [
+        "fedora",
+        "updates"
+      ]
+    },
+    "summary": {
+      "vendored_rust_source_packages": 216,
+      "exact": 136,
+      "version_different": 26,
+      "absent": 54
+    },
+    "scope": "Fedora binary package metadata for crate-devel providers; exact-version matches reuse Fedora SPDX review but do not prove Rusty V8 linkage or final aggregate licensing"
+  },
   "components": [
     {
       "path": ".",
@@ -9375,7 +9393,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-addr2line-devel",
+              "version": "0.25.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-addr2line-0.25.1-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/adler2-v2",
@@ -9411,7 +9443,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-adler2-devel",
+              "version": "2.0.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "0BSD OR MIT OR Apache-2.0",
+              "source_rpm": "rust-adler2-2.0.1-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/ahash-v0_8",
@@ -9442,7 +9488,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-ahash-devel",
+              "version": "0.8.12",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-ahash-0.8.12-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/aho-corasick-v1",
@@ -9478,7 +9538,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-aho-corasick-devel",
+              "version": "1.1.4",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unlicense OR MIT",
+              "source_rpm": "rust-aho-corasick-1.1.4-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/android_system_properties-v0_1",
@@ -9509,7 +9583,12 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/anstyle-v1",
@@ -9540,7 +9619,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-anstyle-devel",
+              "version": "1.0.14",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-anstyle-1.0.14-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/antlr4rust-v0_5",
@@ -9566,7 +9659,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/anyhow-v1",
@@ -9597,7 +9695,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-anyhow-devel",
+              "version": "1.0.102",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-anyhow-1.0.102-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-anyhow-devel",
+              "version": "1.0.103",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-anyhow-1.0.103-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/arbitrary-int-v2",
@@ -9623,7 +9744,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/array-init-v2",
@@ -9654,7 +9780,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/arrayvec-v0_7",
@@ -9685,7 +9816,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-arrayvec-devel",
+              "version": "0.7.6",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-arrayvec-0.7.6-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-arrayvec-devel",
+              "version": "0.7.7",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-arrayvec-0.7.7-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/autocfg-v1",
@@ -9716,7 +9870,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-autocfg-devel",
+              "version": "1.5.0",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-autocfg-1.5.0-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-autocfg-devel",
+              "version": "1.5.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-autocfg-1.5.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/backtrace-v0_3",
@@ -9747,7 +9924,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-backtrace-devel",
+              "version": "0.3.76",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-backtrace-0.3.76-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/base64-v0_22",
@@ -9778,7 +9969,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-base64-devel",
+              "version": "0.22.1",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-base64-0.22.1-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/better_any-v0_2",
@@ -9809,7 +10014,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bincode-v2",
@@ -9835,7 +10045,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-bincode-devel",
+              "version": "2.0.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-bincode-2.0.1-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bincode_derive-v2",
@@ -9861,7 +10085,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-bincode_derive-devel",
+              "version": "2.0.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-bincode_derive-2.0.1-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bit-set-v0_8",
@@ -9892,7 +10130,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-bit-set-devel",
+              "version": "0.8.0",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-bit-set-0.8.0-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bit-vec-v0_8",
@@ -9923,7 +10175,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-bit-vec-devel",
+              "version": "0.8.0",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-bit-vec-0.8.0-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bitflags-v1",
@@ -9954,7 +10220,29 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-bitflags-devel",
+              "version": "2.11.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-bitflags-2.11.0-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-bitflags-devel",
+              "version": "2.13.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-bitflags-2.13.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bitflags-v2",
@@ -9985,7 +10273,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-bitflags-devel",
+              "version": "2.11.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-bitflags-2.11.0-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-bitflags-devel",
+              "version": "2.13.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-bitflags-2.13.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bumpalo-v3",
@@ -10041,7 +10351,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-bytemuck-devel",
+              "version": "1.25.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Zlib OR Apache-2.0 OR MIT",
+              "source_rpm": "rust-bytemuck-1.25.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bytemuck_derive-v1",
@@ -10077,7 +10401,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-bytemuck_derive-devel",
+              "version": "1.10.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Zlib OR Apache-2.0 OR MIT",
+              "source_rpm": "rust-bytemuck_derive-1.10.2-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/byteorder-lite-v0_1",
@@ -10108,7 +10446,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-byteorder-lite-devel",
+              "version": "0.1.0",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "Unlicense OR MIT",
+              "source_rpm": "rust-byteorder-lite-0.1.0-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/byteorder-v1",
@@ -10144,7 +10496,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-byteorder-devel",
+              "version": "1.5.0",
+              "release": "7.fc44",
+              "arch": "noarch",
+              "license": "Unlicense OR MIT",
+              "source_rpm": "rust-byteorder-1.5.0-7.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/bytes-v1",
@@ -10170,7 +10536,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-bytes-devel",
+              "version": "1.11.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-bytes-1.11.1-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-bytes-devel",
+              "version": "1.12.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-bytes-1.12.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/calendrical_calculations-v0_2",
@@ -10196,7 +10585,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-calendrical_calculations-devel",
+              "version": "0.2.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-calendrical_calculations-0.2.4-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-calendrical_calculations-devel",
+              "version": "0.2.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-calendrical_calculations-0.2.3-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/cc-v1",
@@ -10247,7 +10659,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-cfg-if-devel",
+              "version": "1.0.4",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-cfg-if-1.0.4-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/cfg_aliases-v0_2",
@@ -10273,7 +10699,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-cfg_aliases-devel",
+              "version": "0.2.1",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-cfg_aliases-0.2.1-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/chrono-v0_4",
@@ -10299,7 +10739,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-chrono-devel",
+              "version": "0.4.44",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-chrono-0.4.44-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/clap-v4",
@@ -10330,7 +10784,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-clap-devel",
+              "version": "4.6.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-clap-4.6.1-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-clap-devel",
+              "version": "4.5.60",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-clap-4.5.60-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/clap_builder-v4",
@@ -10361,7 +10838,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-clap_builder-devel",
+              "version": "4.6.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-clap_builder-4.6.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-clap_builder-devel",
+              "version": "4.5.60",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-clap_builder-4.5.60-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/clap_lex-v1",
@@ -10392,7 +10892,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-clap_lex-devel",
+              "version": "1.1.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-clap_lex-1.1.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-clap_lex-devel",
+              "version": "1.0.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-clap_lex-1.0.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/codespan-reporting-v0_13",
@@ -10418,7 +10941,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-codespan-reporting-devel",
+              "version": "0.13.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-codespan-reporting-0.13.1-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/const_format-v0_2",
@@ -10444,7 +10981,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-const_format-devel",
+              "version": "0.2.35",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Zlib",
+              "source_rpm": "rust-const_format-0.2.35-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/const_format_proc_macros-v0_2",
@@ -10470,7 +11021,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-const_format_proc_macros-devel",
+              "version": "0.2.34",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Zlib",
+              "source_rpm": "rust-const_format_proc_macros-0.2.34-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/const_panic-v0_2",
@@ -10496,7 +11061,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/core-foundation-sys-v0_8",
@@ -10527,7 +11097,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/core_maths-v0_1",
@@ -10553,7 +11128,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-core_maths-devel",
+              "version": "0.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-core_maths-0.1.1-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/crc32fast-v1",
@@ -10584,7 +11173,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-crc32fast-devel",
+              "version": "1.5.0",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-crc32fast-1.5.0-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/cxx-build-v1",
@@ -10635,7 +11238,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-cxx-devel",
+              "version": "1.0.194",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-cxx-1.0.194-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/cxxbridge-cmd-v1",
@@ -10666,7 +11283,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/cxxbridge-flags-v1",
@@ -10697,7 +11319,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-cxxbridge-flags-devel",
+              "version": "1.0.194",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-cxxbridge-flags-1.0.194-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/cxxbridge-macro-v1",
@@ -10728,7 +11364,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-cxxbridge-macro-devel",
+              "version": "1.0.194",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-cxxbridge-macro-1.0.194-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/derivre-v0_3",
@@ -10754,7 +11404,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/diplomat-runtime-v0_15",
@@ -10785,7 +11440,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/diplomat-v0_15",
@@ -10816,7 +11476,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/diplomat_core-v0_15",
@@ -10847,7 +11512,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/displaydoc-v0_2",
@@ -10878,7 +11548,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-displaydoc-devel",
+              "version": "0.2.5",
+              "release": "6.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-displaydoc-0.2.5-6.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-displaydoc-devel",
+              "version": "0.2.6",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-displaydoc-0.2.6-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/either-v1",
@@ -10909,7 +11602,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-either-devel",
+              "version": "1.15.0",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-either-1.15.0-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-either-devel",
+              "version": "1.16.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-either-1.16.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/encoding_rs-v0_8",
@@ -10950,7 +11666,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-encoding_rs-devel",
+              "version": "0.8.35",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+              "source_rpm": "rust-encoding_rs-0.8.35-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/equivalent-v1",
@@ -10981,7 +11711,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-equivalent-devel",
+              "version": "1.0.2",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-equivalent-1.0.2-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/erased-serde-v0_4",
@@ -11012,7 +11756,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-erased-serde-devel",
+              "version": "0.4.10",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-erased-serde-0.4.10-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/fdeflate-v0_3",
@@ -11043,7 +11801,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-fdeflate-devel",
+              "version": "0.3.7",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-fdeflate-0.3.7-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/fend-core-v1",
@@ -11069,7 +11841,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-fend-core-devel",
+              "version": "1.5.7",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-fend-core-1.5.7-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/find-msvc-tools-v0_1",
@@ -11115,7 +11901,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-fixed_decimal-devel",
+              "version": "0.7.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-fixed_decimal-0.7.2-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-fixed_decimal-devel",
+              "version": "0.7.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-fixed_decimal-0.7.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/flate2-v1",
@@ -11146,7 +11955,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-flate2-devel",
+              "version": "1.1.9",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-flate2-1.1.9-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/foldhash-v0_1",
@@ -11192,7 +12015,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-foldhash-devel",
+              "version": "0.2.0",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Zlib",
+              "source_rpm": "rust-foldhash-0.2.0-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/font-types-v0_11",
@@ -11223,7 +12060,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-font-types-devel",
+              "version": "0.11.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-font-types-0.11.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/fs2-v0_4",
@@ -11254,7 +12105,21 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-fs2-devel",
+              "version": "0.4.3",
+              "release": "28.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-fs2-0.4.3-28.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/getrandom-v0_3",
@@ -11285,7 +12150,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-getrandom-devel",
+              "version": "0.4.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-getrandom-0.4.2-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-getrandom-devel",
+              "version": "0.4.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-getrandom-0.4.3-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/getrandom-v0_4",
@@ -11316,7 +12203,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-getrandom-devel",
+              "version": "0.4.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-getrandom-0.4.2-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-getrandom-devel",
+              "version": "0.4.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-getrandom-0.4.3-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/gimli-v0_32",
@@ -11347,7 +12257,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-gimli-devel",
+              "version": "0.32.3",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-gimli-0.32.3-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/hashbrown-v0_15",
@@ -11378,7 +12302,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-hashbrown-devel",
+              "version": "0.16.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-hashbrown-0.16.1-2.fc44.src.rpm"
+            },
+            {
+              "package": "rust-hashbrown-devel",
+              "version": "0.17.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-hashbrown-0.17.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/hashbrown-v0_17",
@@ -11409,7 +12355,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-hashbrown-devel",
+              "version": "0.17.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-hashbrown-0.17.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-hashbrown-devel",
+              "version": "0.16.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-hashbrown-0.16.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/heck-v0_5",
@@ -11440,7 +12409,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-heck-devel",
+              "version": "0.5.0",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-heck-0.5.0-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/hex-v0_4",
@@ -11471,7 +12454,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-hex-devel",
+              "version": "0.4.3",
+              "release": "13.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-hex-0.4.3-13.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/hmac-sha256-v1",
@@ -11497,7 +12494,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/hostname-v0_4",
@@ -11523,7 +12525,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-hostname-devel",
+              "version": "0.4.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-hostname-0.4.2-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/iana-time-zone-haiku-v0_1",
@@ -11574,7 +12590,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-iana-time-zone-devel",
+              "version": "0.1.65",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-iana-time-zone-0.1.65-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_calendar-v2",
@@ -11600,7 +12630,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_calendar-devel",
+              "version": "2.2.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar-2.2.1-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_calendar-devel",
+              "version": "2.1.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar-2.1.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_calendar_data-v2",
@@ -11626,7 +12679,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_calendar_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_calendar_data-devel",
+              "version": "2.1.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar_data-2.1.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_casemap-v2",
@@ -11652,7 +12728,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_casemap_data-v2",
@@ -11678,7 +12759,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_collections-v2",
@@ -11704,7 +12790,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_collections-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_collections-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_collections-devel",
+              "version": "2.1.1",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_collections-2.1.1-5.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_decimal-v2",
@@ -11730,7 +12839,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_decimal-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_decimal-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_decimal-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_decimal-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_decimal_data-v2",
@@ -11756,7 +12888,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_decimal_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_decimal_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_decimal_data-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_decimal_data-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_experimental-v0_5",
@@ -11782,7 +12937,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_experimental_data-v0_5",
@@ -11808,7 +12968,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_list-v2",
@@ -11834,7 +12999,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_list_data-v2",
@@ -11860,7 +13030,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_locale-v2",
@@ -11886,7 +13061,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_locale-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_locale-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_locale_core-v2",
@@ -11912,7 +13110,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_locale_core-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_core-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_locale_core-devel",
+              "version": "2.1.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_core-2.1.1-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_locale_data-v2",
@@ -11938,7 +13159,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_locale_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_locale_data-devel",
+              "version": "2.1.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_data-2.1.2-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_normalizer-v2",
@@ -11964,7 +13208,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_normalizer-devel",
+              "version": "2.2.0",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_normalizer-2.2.0-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_normalizer-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_normalizer-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_normalizer_data-v2",
@@ -11990,7 +13257,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_normalizer_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_normalizer_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_normalizer_data-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_normalizer_data-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_pattern-v0_4",
@@ -12016,7 +13306,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_pattern-devel",
+              "version": "0.4.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_pattern-0.4.2-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_pattern-devel",
+              "version": "0.4.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_pattern-0.4.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_plurals-v2",
@@ -12042,7 +13355,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_plurals-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_plurals-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_plurals-devel",
+              "version": "2.1.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_plurals-2.1.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_plurals_data-v2",
@@ -12068,7 +13404,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_plurals_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_plurals_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_plurals_data-devel",
+              "version": "2.1.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_plurals_data-2.1.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_properties-v2",
@@ -12094,7 +13453,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_properties-devel",
+              "version": "2.2.0",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_properties-2.2.0-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_properties-devel",
+              "version": "2.1.2",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_properties-2.1.2-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_properties_data-v2",
@@ -12120,7 +13502,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_properties_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_properties_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_properties_data-devel",
+              "version": "2.1.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_properties_data-2.1.2-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/icu_provider-v2",
@@ -12146,7 +13551,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_provider-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_provider-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_provider-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_provider-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/id-arena-v2",
@@ -12197,7 +13625,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-image-devel",
+              "version": "0.25.10",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-image-0.25.10-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-image-devel",
+              "version": "0.25.9",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-image-0.25.9-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/indexmap-v2",
@@ -12228,7 +13679,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-indexmap-devel",
+              "version": "2.14.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-indexmap-2.14.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-indexmap-devel",
+              "version": "2.13.0",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-indexmap-2.13.0-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/itertools-v0_14",
@@ -12259,7 +13733,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-itertools-devel",
+              "version": "0.14.0",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-itertools-0.14.0-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-itertools-devel",
+              "version": "0.15.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-itertools-0.15.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/itoa-v1",
@@ -12290,7 +13787,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-itoa-devel",
+              "version": "1.0.18",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-itoa-1.0.18-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/ixdtf-v0_6",
@@ -12316,7 +13827,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-ixdtf-devel",
+              "version": "0.6.5",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-ixdtf-0.6.5-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-ixdtf-devel",
+              "version": "0.6.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-ixdtf-0.6.4-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/js-sys-v0_3",
@@ -12362,7 +13896,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/jxl_macros-v0_4",
@@ -12388,7 +13927,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/jxl_simd-v0_4",
@@ -12414,7 +13958,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/jxl_transforms-v0_4",
@@ -12440,7 +13989,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/konst-v0_2",
@@ -12466,7 +14020,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-konst-devel",
+              "version": "0.2.19",
+              "release": "6.fc44",
+              "arch": "noarch",
+              "license": "Zlib",
+              "source_rpm": "rust-konst-0.2.19-6.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/konst_macro_rules-v0_2",
@@ -12492,7 +14060,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-konst_macro_rules-devel",
+              "version": "0.2.19",
+              "release": "6.fc44",
+              "arch": "noarch",
+              "license": "Zlib",
+              "source_rpm": "rust-konst_macro_rules-0.2.19-6.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/lazy_static-v1",
@@ -12523,7 +14105,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-lazy_static-devel",
+              "version": "1.5.0",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-lazy_static-1.5.0-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/leb128fmt-v0_1",
@@ -12574,7 +14170,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-libc-devel",
+              "version": "0.2.183",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-libc-0.2.183-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-libc-devel",
+              "version": "0.2.186",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-libc-0.2.186-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/libm-v0_2",
@@ -12600,7 +14218,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-libm-devel",
+              "version": "0.2.15",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-libm-0.2.15-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/link-cplusplus-v1",
@@ -12646,7 +14278,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-litemap-devel",
+              "version": "0.8.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-litemap-0.8.2-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-litemap-devel",
+              "version": "0.8.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-litemap-0.8.1-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/llguidance-v1",
@@ -12672,7 +14327,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/lock_api-v0_4",
@@ -12703,7 +14363,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-lock_api-devel",
+              "version": "0.4.14",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-lock_api-0.4.14-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/log-v0_4",
@@ -12734,7 +14408,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-log-devel",
+              "version": "0.4.29",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-log-0.4.29-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-log-devel",
+              "version": "0.4.33",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-log-0.4.33-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/memchr-v2",
@@ -12770,7 +14467,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-memchr-devel",
+              "version": "2.8.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unlicense OR MIT",
+              "source_rpm": "rust-memchr-2.8.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-memchr-devel",
+              "version": "2.8.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unlicense OR MIT",
+              "source_rpm": "rust-memchr-2.8.3-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/memo-map-v0_3",
@@ -12796,7 +14516,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-memo-map-devel",
+              "version": "0.3.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-memo-map-0.3.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/minijinja-v2",
@@ -12827,7 +14561,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-minijinja-devel",
+              "version": "2.16.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-minijinja-2.16.0-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-minijinja-devel",
+              "version": "2.17.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-minijinja-2.17.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/miniz_oxide-v0_8",
@@ -12868,7 +14624,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-miniz_oxide-devel",
+              "version": "0.9.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Zlib OR Apache-2.0",
+              "source_rpm": "rust-miniz_oxide-0.9.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/moxcms-v0_8",
@@ -12899,7 +14669,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-moxcms-devel",
+              "version": "0.8.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause OR Apache-2.0",
+              "source_rpm": "rust-moxcms-0.8.1-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-moxcms-devel",
+              "version": "0.7.5",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause OR Apache-2.0",
+              "source_rpm": "rust-moxcms-0.7.5-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/murmur3-v0_4",
@@ -12930,7 +14723,12 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/nix-v0_30",
@@ -12956,7 +14754,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-nix-devel",
+              "version": "0.31.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-nix-0.31.2-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-nix-devel",
+              "version": "0.31.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-nix-0.31.3-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/num-bigint-v0_4",
@@ -12987,7 +14807,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-num-bigint-devel",
+              "version": "0.4.6",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-num-bigint-0.4.6-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-num-bigint-devel",
+              "version": "0.4.8",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-num-bigint-0.4.8-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/num-derive-v0_4",
@@ -13018,7 +14861,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-num-derive-devel",
+              "version": "0.4.2",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-num-derive-0.4.2-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/num-integer-v0_1",
@@ -13049,7 +14906,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-num-integer-devel",
+              "version": "0.1.46",
+              "release": "6.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-num-integer-0.1.46-6.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/num-rational-v0_4",
@@ -13080,7 +14951,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-num-rational-devel",
+              "version": "0.4.2",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-num-rational-0.4.2-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/num-traits-v0_2",
@@ -13111,7 +14996,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-num-traits-devel",
+              "version": "0.2.19",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-num-traits-0.2.19-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/num_enum-v0_7",
@@ -13147,7 +15046,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-num_enum-devel",
+              "version": "0.5.11",
+              "release": "7.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+              "source_rpm": "rust-num_enum-0.5.11-7.fc44.src.rpm"
+            },
+            {
+              "package": "rust-num_enum-devel",
+              "version": "0.7.6",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+              "source_rpm": "rust-num_enum-0.7.6-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/num_enum_derive-v0_7",
@@ -13183,7 +15104,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-num_enum_derive-devel",
+              "version": "0.5.11",
+              "release": "8.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+              "source_rpm": "rust-num_enum_derive-0.5.11-8.fc44.src.rpm"
+            },
+            {
+              "package": "rust-num_enum_derive-devel",
+              "version": "0.7.6",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+              "source_rpm": "rust-num_enum_derive-0.7.6-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/object-v0_37",
@@ -13214,7 +15157,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-object-devel",
+              "version": "0.38.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-object-0.38.1-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/once_cell-v1",
@@ -13245,7 +15202,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-once_cell-devel",
+              "version": "1.21.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-once_cell-1.21.4-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/ordered-float-v5",
@@ -13271,7 +15242,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-ordered-float-devel",
+              "version": "5.3.0",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-ordered-float-5.3.0-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-ordered-float-devel",
+              "version": "5.1.0",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-ordered-float-5.1.0-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/parking_lot-v0_12",
@@ -13302,7 +15296,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-parking_lot-devel",
+              "version": "0.12.5",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-parking_lot-0.12.5-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/parking_lot_core-v0_9",
@@ -13333,7 +15341,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-parking_lot_core-devel",
+              "version": "0.9.12",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-parking_lot_core-0.9.12-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/png-v0_18",
@@ -13364,7 +15386,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-png-devel",
+              "version": "0.18.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-png-0.18.1-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/potential_utf-v0_1",
@@ -13390,7 +15426,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-potential_utf-devel",
+              "version": "0.1.5",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-potential_utf-0.1.5-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-potential_utf-devel",
+              "version": "0.1.4",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-potential_utf-0.1.4-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/prettyplease-v0_2",
@@ -13461,7 +15520,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-proc-macro-error-attr2-devel",
+              "version": "2.0.0",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-proc-macro-error-attr2-2.0.0-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/proc-macro-error2-v2",
@@ -13492,7 +15565,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-proc-macro-error2-devel",
+              "version": "2.0.1",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-proc-macro-error2-2.0.1-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/proc-macro2-v1",
@@ -13523,7 +15610,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-proc-macro2-devel",
+              "version": "1.0.106",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-proc-macro2-1.0.106-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/prost-derive-v0_14",
@@ -13549,7 +15650,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-prost-derive-devel",
+              "version": "0.14.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-prost-derive-0.14.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-prost-derive-devel",
+              "version": "0.13.5",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-prost-derive-0.13.5-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/prost-v0_14",
@@ -13575,7 +15699,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-prost-devel",
+              "version": "0.14.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-prost-0.14.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-prost-devel",
+              "version": "0.13.5",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-prost-0.13.5-3.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/pxfm-v0_1",
@@ -13606,7 +15753,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-pxfm-devel",
+              "version": "0.1.23",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause OR Apache-2.0",
+              "source_rpm": "rust-pxfm-0.1.23-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/qr_code-v2",
@@ -13637,7 +15798,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/quote-v1",
@@ -13668,7 +15834,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-quote-devel",
+              "version": "1.0.45",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-quote-1.0.45-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-quote-devel",
+              "version": "1.0.46",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-quote-1.0.46-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/r-efi-v5",
@@ -13739,7 +15928,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/redox_syscall-v0_5",
@@ -13790,7 +15984,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-regex-automata-devel",
+              "version": "0.4.14",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-regex-automata-0.4.14-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-regex-automata-devel",
+              "version": "0.4.15",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-regex-automata-0.4.15-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/regex-syntax-v0_8",
@@ -13826,7 +16043,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-regex-syntax-devel",
+              "version": "0.8.10",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+              "source_rpm": "rust-regex-syntax-0.8.10-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-regex-syntax-devel",
+              "version": "0.8.11",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+              "source_rpm": "rust-regex-syntax-0.8.11-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/resb-v0_1",
@@ -13852,7 +16092,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/rustc-demangle-capi-v0_1",
@@ -13883,7 +16128,12 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/rustc-demangle-v0_1",
@@ -13914,7 +16164,29 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-rustc-demangle-devel",
+              "version": "0.1.26",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-rustc-demangle-0.1.26-2.fc44.src.rpm"
+            },
+            {
+              "package": "rust-rustc-demangle-devel",
+              "version": "0.1.28",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-rustc-demangle-0.1.28-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/rustversion-v1",
@@ -13945,7 +16217,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-rustversion-devel",
+              "version": "1.0.22",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-rustversion-1.0.22-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-rustversion-devel",
+              "version": "1.0.23",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-rustversion-1.0.23-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/ryu-v1",
@@ -13976,7 +16271,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-ryu-devel",
+              "version": "1.0.23",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR BSL-1.0",
+              "source_rpm": "rust-ryu-1.0.23-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/scopeguard-v1",
@@ -14007,7 +16316,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-scopeguard-devel",
+              "version": "1.2.0",
+              "release": "7.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-scopeguard-1.2.0-7.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/scratch-v1",
@@ -14078,7 +16401,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-serde-devel",
+              "version": "1.0.228",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-serde-1.0.228-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/serde_core-v1",
@@ -14109,7 +16446,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-serde_core-devel",
+              "version": "1.0.228",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-serde_core-1.0.228-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/serde_derive-v1",
@@ -14140,7 +16491,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-serde_derive-devel",
+              "version": "1.0.228",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-serde_derive-1.0.228-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/serde_json-v1",
@@ -14171,7 +16536,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-serde_json-devel",
+              "version": "1.0.149",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-serde_json-1.0.149-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-serde_json-devel",
+              "version": "1.0.150",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-serde_json-1.0.150-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/serde_json_lenient-v0_2",
@@ -14202,7 +16590,12 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/shlex-v1",
@@ -14248,7 +16641,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-simd-adler32-devel",
+              "version": "0.3.8",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-simd-adler32-0.3.8-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/skrifa-v0_42",
@@ -14279,7 +16686,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/small_ctor-v0_1",
@@ -14305,7 +16717,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/smallvec-v1",
@@ -14336,7 +16753,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-smallvec-devel",
+              "version": "1.15.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-smallvec-1.15.1-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/stable_deref_trait-v1",
@@ -14367,7 +16798,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-stable_deref_trait-devel",
+              "version": "1.2.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-stable_deref_trait-1.2.1-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/static_assertions-v1",
@@ -14398,7 +16843,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-static_assertions-devel",
+              "version": "1.1.0",
+              "release": "18.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-static_assertions-1.1.0-18.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/strck-v1",
@@ -14424,7 +16883,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/strsim-v0_11",
@@ -14450,7 +16914,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-strsim-devel",
+              "version": "0.11.1",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-strsim-0.11.1-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/strum-v0_27",
@@ -14476,7 +16954,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-strum-devel",
+              "version": "0.28.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-strum-0.28.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/strum-v0_28",
@@ -14502,7 +16994,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-strum-devel",
+              "version": "0.28.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-strum-0.28.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/strum_macros-v0_27",
@@ -14528,7 +17034,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-strum_macros-devel",
+              "version": "0.28.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-strum_macros-0.28.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/strum_macros-v0_28",
@@ -14554,7 +17074,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-strum_macros-devel",
+              "version": "0.28.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-strum_macros-0.28.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/subtle-v2",
@@ -14580,7 +17114,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-subtle-devel",
+              "version": "2.6.1",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "BSD-3-Clause",
+              "source_rpm": "rust-subtle-2.6.1-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-bundle-flac-v0_5",
@@ -14606,7 +17154,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-bundle-mp3-v0_5",
@@ -14632,7 +17185,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-codec-pcm-v0_5",
@@ -14658,7 +17216,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-codec-vorbis-v0_5",
@@ -14684,7 +17247,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-core-v0_5",
@@ -14710,7 +17278,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-metadata-v0_5",
@@ -14736,7 +17309,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-utils-xiph-v0_5",
@@ -14762,7 +17340,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/symphonia-v0_5",
@@ -14788,7 +17371,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/syn-v2",
@@ -14819,7 +17407,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-syn-devel",
+              "version": "2.0.117",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-syn-2.0.117-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-syn-devel",
+              "version": "2.0.118",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-syn-2.0.118-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/synstructure-v0_13",
@@ -14845,7 +17456,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-synstructure-devel",
+              "version": "0.13.2",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-synstructure-0.13.2-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2",
@@ -14876,7 +17501,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/temporal_rs-v0_2",
@@ -14907,7 +17537,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/termcolor-v1",
@@ -14943,7 +17578,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-termcolor-devel",
+              "version": "1.4.1",
+              "release": "6.fc44",
+              "arch": "noarch",
+              "license": "Unlicense OR MIT",
+              "source_rpm": "rust-termcolor-1.4.1-6.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/thiserror-impl-v2",
@@ -14974,7 +17623,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-thiserror-impl-devel",
+              "version": "2.0.18",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-thiserror-impl-2.0.18-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/thiserror-v2",
@@ -15005,7 +17668,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-thiserror-devel",
+              "version": "2.0.18",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-thiserror-2.0.18-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/timezone_provider-v0_2",
@@ -15036,7 +17713,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/tinystr-v0_8",
@@ -15062,7 +17744,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-tinystr-devel",
+              "version": "0.8.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-tinystr-0.8.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-tinystr-devel",
+              "version": "0.8.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-tinystr-0.8.2-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/toktrie-v1",
@@ -15088,7 +17793,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/toml_datetime-v1",
@@ -15174,7 +17884,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-typed-arena-devel",
+              "version": "2.0.2",
+              "release": "8.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-typed-arena-2.0.2-8.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/typed-path-v0_12",
@@ -15205,7 +17929,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-typed-path-devel",
+              "version": "0.12.3",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-typed-path-0.12.3-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/typeid-v1",
@@ -15236,7 +17974,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-typeid-devel",
+              "version": "1.0.3",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-typeid-1.0.3-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/typewit-v1",
@@ -15262,7 +18014,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/unicode-ident-v1",
@@ -15298,7 +18055,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-unicode-ident-devel",
+              "version": "1.0.24",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+              "source_rpm": "rust-unicode-ident-1.0.24-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/unicode-width-v0_2",
@@ -15334,7 +18105,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-unicode-width-devel",
+              "version": "0.2.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-unicode-width-0.2.2-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/unicode-xid-v0_2",
@@ -15370,7 +18155,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-unicode-xid-devel",
+              "version": "0.2.6",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-unicode-xid-0.2.6-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/unty-v0_0_4",
@@ -15401,7 +18200,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-unty-devel",
+              "version": "0.0.4",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-unty-0.0.4-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/utf8_iter-v1",
@@ -15437,7 +18250,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-utf8_iter-devel",
+              "version": "1.0.4",
+              "release": "6.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-utf8_iter-1.0.4-6.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/uuid-v1",
@@ -15468,7 +18295,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-uuid-devel",
+              "version": "1.23.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-uuid-1.23.0-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-uuid-devel",
+              "version": "1.23.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-uuid-1.23.4-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/version_check-v0_9",
@@ -15499,7 +18348,21 @@
         "normalization_status": "mechanically-normalized",
         "normalization_reason": "Fedora cargo2rpm converts legacy Cargo slash alternatives to OR; semantic text and Fedora allowability review remain separate",
         "normalization_basis": "Fedora cargo2rpm license.py legacy slash-alternative conversion",
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-version_check-devel",
+              "version": "0.9.5",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-version_check-0.9.5-4.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/virtue-v0_0_18",
@@ -15525,7 +18388,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-virtue-devel",
+              "version": "0.0.18",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-virtue-0.0.18-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/wasip2-v1",
@@ -15761,7 +18638,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/winapi-v0_3",
@@ -15892,7 +18774,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/windows-result-v0_4",
@@ -15963,7 +18850,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/windows-targets-v0_52",
@@ -15994,7 +18886,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/windows_aarch64_gnullvm-v0_52",
@@ -16045,7 +18942,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/windows_i686_gnu-v0_52",
@@ -16116,7 +19018,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/windows_x86_64_gnu-v0_52",
@@ -16187,7 +19094,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/winnow-v1",
@@ -16373,7 +19285,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-writeable-devel",
+              "version": "0.6.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-writeable-0.6.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-writeable-devel",
+              "version": "0.6.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-writeable-0.6.2-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/xml-v1",
@@ -16399,7 +19334,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-xml-devel",
+              "version": "1.2.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-xml-1.2.1-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/yoke-derive-v0_8",
@@ -16425,7 +19374,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-yoke-derive-devel",
+              "version": "0.8.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-yoke-derive-0.8.2-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-yoke-derive-devel",
+              "version": "0.8.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-yoke-derive-0.8.1-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/yoke-v0_8",
@@ -16451,7 +19423,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-yoke-devel",
+              "version": "0.8.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-yoke-0.8.1-2.fc44.src.rpm"
+            },
+            {
+              "package": "rust-yoke-devel",
+              "version": "0.8.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-yoke-0.8.3-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zerocopy-derive-v0_8",
@@ -16507,7 +19501,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "expression-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-zerocopy-devel",
+              "version": "0.8.42",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+              "source_rpm": "rust-zerocopy-0.8.42-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-zerocopy-devel",
+              "version": "0.8.52",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+              "source_rpm": "rust-zerocopy-0.8.52-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zerofrom-derive-v0_1",
@@ -16533,7 +19549,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-zerofrom-derive-devel",
+              "version": "0.1.7",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerofrom-derive-0.1.7-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-zerofrom-derive-devel",
+              "version": "0.1.6",
+              "release": "4.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerofrom-derive-0.1.6-4.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zerofrom-v0_1",
@@ -16559,7 +19598,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-zerofrom-devel",
+              "version": "0.1.6",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerofrom-0.1.6-5.fc44.src.rpm"
+            },
+            {
+              "package": "rust-zerofrom-devel",
+              "version": "0.1.8",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerofrom-0.1.8-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zerotrie-v0_2",
@@ -16585,7 +19646,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-zerotrie-devel",
+              "version": "0.2.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerotrie-0.2.4-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-zerotrie-devel",
+              "version": "0.2.3",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerotrie-0.2.3-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zerovec-derive-v0_11",
@@ -16611,7 +19695,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-zerovec-derive-devel",
+              "version": "0.11.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerovec-derive-0.11.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-zerovec-derive-devel",
+              "version": "0.11.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerovec-derive-0.11.2-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zerovec-v0_11",
@@ -16637,7 +19744,30 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-zerovec-devel",
+              "version": "0.11.6",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerovec-0.11.6-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-zerovec-devel",
+              "version": "0.11.5",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerovec-0.11.5-2.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zip-v8",
@@ -16663,7 +19793,29 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-zip-devel",
+              "version": "8.1.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-zip-8.1.0-1.fc44.src.rpm"
+            },
+            {
+              "package": "rust-zip-devel",
+              "version": "8.6.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-zip-8.6.0-1.fc44.src.rpm"
+            }
+          ]
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zmij-v1",
@@ -16689,7 +19841,21 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-zmij-devel",
+              "version": "1.0.21",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-zmij-1.0.21-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
       },
       {
         "path": "third_party/rust/chromium_crates_io/vendor/zoneinfo64-v0_3",
@@ -16715,7 +19881,12 @@
         "normalization_status": "syntax-only",
         "normalization_reason": "identifier-shaped declaration is not yet semantically or Fedora reviewed",
         "normalization_basis": null,
-        "semantic_review_status": "pending"
+        "semantic_review_status": "pending",
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
       }
     ]
   },
@@ -16773,7 +19944,10 @@
     "vendored_rust_source_packages_with_verified_manifest_license_file": 0,
     "vendored_rust_source_packages_with_candidate_texts": 216,
     "vendored_rust_legacy_slash_license_expressions": 8,
-    "vendored_rust_mechanically_normalized_license_expressions": 8
+    "vendored_rust_mechanically_normalized_license_expressions": 8,
+    "vendored_rust_fedora_exact_version_matches": 136,
+    "vendored_rust_fedora_version_different_matches": 26,
+    "vendored_rust_fedora_absent": 54
   },
   "validation": {
     "source_closure_verified": true,
@@ -16788,6 +19962,7 @@
     "unmaterialized_deps_declarations_classified": true,
     "vendored_rust_manifests_inventoried": true,
     "vendored_rust_placeholders_classified": true,
+    "vendored_rust_fedora_license_evidence_recorded": true,
     "vendored_rust_source_package_declarations_complete": true,
     "vendored_rust_source_package_candidate_texts_present": true,
     "license_expressions_normalized": false,
@@ -16797,5 +19972,5 @@
     "source_package_license_complete": false,
     "final_static_archive_license_complete": false
   },
-  "scope": "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, four semantically reviewed declaration-specific expressions, scoped Chromium parent-text evidence, and embedded metadata that names intentionally unmaterialized DEPS test/tool sources; remaining semantic text review, aggregate SPDX normalization, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
+  "scope": "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, four semantically reviewed declaration-specific expressions, scoped Chromium parent-text evidence, embedded metadata that names intentionally unmaterialized DEPS test/tool sources, and exact/version-different/absent Fedora 44 package-license evidence for all 216 real vendored Rust source packages; Fedora package metadata is reused as review evidence only and does not establish selected linkage, aggregate SPDX, required payload texts, system-library treatment, or final static-link accounting"
 }

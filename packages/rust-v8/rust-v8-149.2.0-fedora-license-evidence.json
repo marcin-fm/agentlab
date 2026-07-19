@@ -1,0 +1,3628 @@
+{
+  "schema": "rust-v8-fedora-license-evidence/v1",
+  "package": "rust-v8",
+  "release": "149.2.0",
+  "target": {
+    "fedora_release": "44",
+    "repositories": [
+      "fedora",
+      "updates"
+    ]
+  },
+  "source": {
+    "query": [
+      "dnf",
+      "repoquery",
+      "--available",
+      "--releasever=44",
+      "--repo=fedora",
+      "--repo=updates",
+      "--qf",
+      "%{name}|%{version}|%{release}|%{arch}|%{license}|%{sourcerpm}\u001e",
+      "--whatprovides=crate(addr2line),crate(adler2),crate(ahash),crate(aho-corasick),crate(android_system_properties),crate(anstyle),crate(antlr4rust),crate(anyhow),crate(arbitrary-int),crate(array-init),crate(arrayvec),crate(autocfg),crate(backtrace),crate(base64),crate(better_any),crate(bincode),crate(bincode_derive),crate(bit-set),crate(bit-vec),crate(bitflags),crate(bytemuck),crate(bytemuck_derive),crate(byteorder),crate(byteorder-lite),crate(bytes),crate(calendrical_calculations),crate(cfg-if),crate(cfg_aliases),crate(chrono),crate(clap),crate(clap_builder),crate(clap_lex),crate(codespan-reporting),crate(const_format),crate(const_format_proc_macros),crate(const_panic),crate(core-foundation-sys),crate(core_maths),crate(crc32fast),crate(cxx),crate(cxxbridge-cmd),crate(cxxbridge-flags),crate(cxxbridge-macro),crate(derivre),crate(diplomat),crate(diplomat-runtime),crate(diplomat_core),crate(displaydoc),crate(either),crate(encoding_rs),crate(equivalent),crate(erased-serde),crate(fdeflate),crate(fend-core),crate(fixed_decimal),crate(flate2),crate(foldhash),crate(font-types),crate(fs2),crate(getrandom),crate(gimli),crate(hashbrown),crate(heck),crate(hex),crate(hmac-sha256),crate(hostname),crate(iana-time-zone),crate(icu_calendar),crate(icu_calendar_data),crate(icu_casemap),crate(icu_casemap_data),crate(icu_collections),crate(icu_decimal),crate(icu_decimal_data),crate(icu_experimental),crate(icu_experimental_data),crate(icu_list),crate(icu_list_data),crate(icu_locale),crate(icu_locale_core),crate(icu_locale_data),crate(icu_normalizer),crate(icu_normalizer_data),crate(icu_pattern),crate(icu_plurals),crate(icu_plurals_data),crate(icu_properties),crate(icu_properties_data),crate(icu_provider),crate(image),crate(indexmap),crate(itertools),crate(itoa),crate(ixdtf),crate(jxl),crate(jxl_macros),crate(jxl_simd),crate(jxl_transforms),crate(konst),crate(konst_macro_rules),crate(lazy_static),crate(libc),crate(libm),crate(litemap),crate(llguidance),crate(lock_api),crate(log),crate(memchr),crate(memo-map),crate(minijinja),crate(miniz_oxide),crate(moxcms),crate(murmur3),crate(nix),crate(num-bigint),crate(num-derive),crate(num-integer),crate(num-rational),crate(num-traits),crate(num_enum),crate(num_enum_derive),crate(object),crate(once_cell),crate(ordered-float),crate(parking_lot),crate(parking_lot_core),crate(png),crate(potential_utf),crate(proc-macro-error-attr2),crate(proc-macro-error2),crate(proc-macro2),crate(prost),crate(prost-derive),crate(pxfm),crate(qr_code),crate(quote),crate(read-fonts),crate(regex-automata),crate(regex-syntax),crate(resb),crate(rustc-demangle),crate(rustc-demangle-capi),crate(rustversion),crate(ryu),crate(scopeguard),crate(serde),crate(serde_core),crate(serde_derive),crate(serde_json),crate(serde_json_lenient),crate(simd-adler32),crate(skrifa),crate(small_ctor),crate(smallvec),crate(stable_deref_trait),crate(static_assertions),crate(strck),crate(strsim),crate(strum),crate(strum_macros),crate(subtle),crate(symphonia),crate(symphonia-bundle-flac),crate(symphonia-bundle-mp3),crate(symphonia-codec-pcm),crate(symphonia-codec-vorbis),crate(symphonia-core),crate(symphonia-metadata),crate(symphonia-utils-xiph),crate(syn),crate(synstructure),crate(temporal_capi),crate(temporal_rs),crate(termcolor),crate(thiserror),crate(thiserror-impl),crate(timezone_provider),crate(tinystr),crate(toktrie),crate(typed-arena),crate(typed-path),crate(typeid),crate(typewit),crate(unicode-ident),crate(unicode-width),crate(unicode-xid),crate(unty),crate(utf8_iter),crate(uuid),crate(version_check),crate(virtue),crate(winapi-util),crate(windows-link),crate(windows-sys),crate(windows-targets),crate(windows_aarch64_msvc),crate(windows_i686_msvc),crate(windows_x86_64_msvc),crate(writeable),crate(xml),crate(yoke),crate(yoke-derive),crate(zerocopy),crate(zerofrom),crate(zerofrom-derive),crate(zerotrie),crate(zerovec),crate(zerovec-derive),crate(zip),crate(zmij),crate(zoneinfo64)"
+    ],
+    "query_format": "%{name}|%{version}|%{release}|%{arch}|%{license}|%{sourcerpm}\u001e",
+    "normalized_query_records_sha256": "e11bc8c4f0b364b52f40622c6d6a9cea913c86124a4f2bb7932392225898b043",
+    "scope": "Fedora binary package metadata for crate-devel providers; exact-version matches reuse Fedora SPDX review but do not prove Rusty V8 linkage or final aggregate licensing"
+  },
+  "records": [
+    {
+      "crate": "addr2line",
+      "version": "0.25.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-addr2line-devel",
+          "version": "0.25.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-addr2line-0.25.1-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "adler2",
+      "version": "2.0.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-adler2-devel",
+          "version": "2.0.1",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "0BSD OR MIT OR Apache-2.0",
+          "source_rpm": "rust-adler2-2.0.1-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "ahash",
+      "version": "0.8.12",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-ahash-devel",
+          "version": "0.8.12",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-ahash-0.8.12-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "aho-corasick",
+      "version": "1.1.4",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-aho-corasick-devel",
+          "version": "1.1.4",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unlicense OR MIT",
+          "source_rpm": "rust-aho-corasick-1.1.4-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "android_system_properties",
+      "version": "0.1.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "anstyle",
+      "version": "1.0.14",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-anstyle-devel",
+          "version": "1.0.14",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-anstyle-1.0.14-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "antlr4rust",
+      "version": "0.5.2",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "anyhow",
+      "version": "1.0.102",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-anyhow-devel",
+          "version": "1.0.102",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-anyhow-1.0.102-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-anyhow-devel",
+          "version": "1.0.103",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-anyhow-1.0.103-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "arbitrary-int",
+      "version": "2.1.1",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "array-init",
+      "version": "2.1.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "arrayvec",
+      "version": "0.7.6",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-arrayvec-devel",
+          "version": "0.7.6",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-arrayvec-0.7.6-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-arrayvec-devel",
+          "version": "0.7.7",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-arrayvec-0.7.7-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "autocfg",
+      "version": "1.5.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-autocfg-devel",
+          "version": "1.5.0",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-autocfg-1.5.0-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-autocfg-devel",
+          "version": "1.5.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-autocfg-1.5.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "backtrace",
+      "version": "0.3.76",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-backtrace-devel",
+          "version": "0.3.76",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-backtrace-0.3.76-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "base64",
+      "version": "0.22.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-base64-devel",
+          "version": "0.22.1",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-base64-0.22.1-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "better_any",
+      "version": "0.2.1",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "bincode",
+      "version": "2.0.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-bincode-devel",
+          "version": "2.0.1",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-bincode-2.0.1-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "bincode_derive",
+      "version": "2.0.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-bincode_derive-devel",
+          "version": "2.0.1",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-bincode_derive-2.0.1-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "bit-set",
+      "version": "0.8.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-bit-set-devel",
+          "version": "0.8.0",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-bit-set-0.8.0-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "bit-vec",
+      "version": "0.8.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-bit-vec-devel",
+          "version": "0.8.0",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-bit-vec-0.8.0-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "bitflags",
+      "version": "1.3.2",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-bitflags-devel",
+          "version": "2.11.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-bitflags-2.11.0-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-bitflags-devel",
+          "version": "2.13.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-bitflags-2.13.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "bitflags",
+      "version": "2.11.1",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-bitflags-devel",
+          "version": "2.11.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-bitflags-2.11.0-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-bitflags-devel",
+          "version": "2.13.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-bitflags-2.13.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "bytemuck",
+      "version": "1.25.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-bytemuck-devel",
+          "version": "1.25.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Zlib OR Apache-2.0 OR MIT",
+          "source_rpm": "rust-bytemuck-1.25.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "bytemuck_derive",
+      "version": "1.10.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-bytemuck_derive-devel",
+          "version": "1.10.2",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Zlib OR Apache-2.0 OR MIT",
+          "source_rpm": "rust-bytemuck_derive-1.10.2-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "byteorder",
+      "version": "1.5.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-byteorder-devel",
+          "version": "1.5.0",
+          "release": "7.fc44",
+          "arch": "noarch",
+          "license": "Unlicense OR MIT",
+          "source_rpm": "rust-byteorder-1.5.0-7.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "byteorder-lite",
+      "version": "0.1.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-byteorder-lite-devel",
+          "version": "0.1.0",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "Unlicense OR MIT",
+          "source_rpm": "rust-byteorder-lite-0.1.0-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "bytes",
+      "version": "1.11.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-bytes-devel",
+          "version": "1.11.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-bytes-1.11.1-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-bytes-devel",
+          "version": "1.12.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-bytes-1.12.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "calendrical_calculations",
+      "version": "0.2.4",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-calendrical_calculations-devel",
+          "version": "0.2.4",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-calendrical_calculations-0.2.4-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-calendrical_calculations-devel",
+          "version": "0.2.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-calendrical_calculations-0.2.3-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "cfg-if",
+      "version": "1.0.4",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-cfg-if-devel",
+          "version": "1.0.4",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-cfg-if-1.0.4-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "cfg_aliases",
+      "version": "0.2.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-cfg_aliases-devel",
+          "version": "0.2.1",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-cfg_aliases-0.2.1-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "chrono",
+      "version": "0.4.44",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-chrono-devel",
+          "version": "0.4.44",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-chrono-0.4.44-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "clap",
+      "version": "4.6.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-clap-devel",
+          "version": "4.6.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-clap-4.6.1-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-clap-devel",
+          "version": "4.5.60",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-clap-4.5.60-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "clap_builder",
+      "version": "4.6.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-clap_builder-devel",
+          "version": "4.6.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-clap_builder-4.6.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-clap_builder-devel",
+          "version": "4.5.60",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-clap_builder-4.5.60-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "clap_lex",
+      "version": "1.1.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-clap_lex-devel",
+          "version": "1.1.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-clap_lex-1.1.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-clap_lex-devel",
+          "version": "1.0.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-clap_lex-1.0.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "codespan-reporting",
+      "version": "0.13.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-codespan-reporting-devel",
+          "version": "0.13.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-codespan-reporting-0.13.1-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "const_format",
+      "version": "0.2.36",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-const_format-devel",
+          "version": "0.2.35",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Zlib",
+          "source_rpm": "rust-const_format-0.2.35-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "const_format_proc_macros",
+      "version": "0.2.34",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-const_format_proc_macros-devel",
+          "version": "0.2.34",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Zlib",
+          "source_rpm": "rust-const_format_proc_macros-0.2.34-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "const_panic",
+      "version": "0.2.15",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "core-foundation-sys",
+      "version": "0.8.7",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "core_maths",
+      "version": "0.1.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-core_maths-devel",
+          "version": "0.1.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-core_maths-0.1.1-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "crc32fast",
+      "version": "1.5.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-crc32fast-devel",
+          "version": "1.5.0",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-crc32fast-1.5.0-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "cxx",
+      "version": "1.0.194",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-cxx-devel",
+          "version": "1.0.194",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-cxx-1.0.194-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "cxxbridge-cmd",
+      "version": "1.0.194",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "cxxbridge-flags",
+      "version": "1.0.194",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-cxxbridge-flags-devel",
+          "version": "1.0.194",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-cxxbridge-flags-1.0.194-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "cxxbridge-macro",
+      "version": "1.0.194",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-cxxbridge-macro-devel",
+          "version": "1.0.194",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-cxxbridge-macro-1.0.194-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "derivre",
+      "version": "0.3.10",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "diplomat",
+      "version": "0.15.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "diplomat-runtime",
+      "version": "0.15.1",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "diplomat_core",
+      "version": "0.15.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "displaydoc",
+      "version": "0.2.5",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-displaydoc-devel",
+          "version": "0.2.5",
+          "release": "6.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-displaydoc-0.2.5-6.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-displaydoc-devel",
+          "version": "0.2.6",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-displaydoc-0.2.6-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "either",
+      "version": "1.15.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-either-devel",
+          "version": "1.15.0",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-either-1.15.0-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-either-devel",
+          "version": "1.16.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-either-1.16.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "encoding_rs",
+      "version": "0.8.35",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-encoding_rs-devel",
+          "version": "0.8.35",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+          "source_rpm": "rust-encoding_rs-0.8.35-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "equivalent",
+      "version": "1.0.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-equivalent-devel",
+          "version": "1.0.2",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-equivalent-1.0.2-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "erased-serde",
+      "version": "0.4.10",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-erased-serde-devel",
+          "version": "0.4.10",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-erased-serde-0.4.10-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "fdeflate",
+      "version": "0.3.7",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-fdeflate-devel",
+          "version": "0.3.7",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-fdeflate-0.3.7-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "fend-core",
+      "version": "1.5.8",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-fend-core-devel",
+          "version": "1.5.7",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-fend-core-1.5.7-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "fixed_decimal",
+      "version": "0.7.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-fixed_decimal-devel",
+          "version": "0.7.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-fixed_decimal-0.7.2-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-fixed_decimal-devel",
+          "version": "0.7.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-fixed_decimal-0.7.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "flate2",
+      "version": "1.1.9",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-flate2-devel",
+          "version": "1.1.9",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-flate2-1.1.9-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "foldhash",
+      "version": "0.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-foldhash-devel",
+          "version": "0.2.0",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Zlib",
+          "source_rpm": "rust-foldhash-0.2.0-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "font-types",
+      "version": "0.11.3",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-font-types-devel",
+          "version": "0.11.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-font-types-0.11.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "fs2",
+      "version": "0.4.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-fs2-devel",
+          "version": "0.4.3",
+          "release": "28.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-fs2-0.4.3-28.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "getrandom",
+      "version": "0.3.4",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-getrandom-devel",
+          "version": "0.4.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-getrandom-0.4.2-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-getrandom-devel",
+          "version": "0.4.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-getrandom-0.4.3-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "getrandom",
+      "version": "0.4.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-getrandom-devel",
+          "version": "0.4.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-getrandom-0.4.2-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-getrandom-devel",
+          "version": "0.4.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-getrandom-0.4.3-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "gimli",
+      "version": "0.32.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-gimli-devel",
+          "version": "0.32.3",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-gimli-0.32.3-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "hashbrown",
+      "version": "0.15.5",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-hashbrown-devel",
+          "version": "0.16.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-hashbrown-0.16.1-2.fc44.src.rpm"
+        },
+        {
+          "package": "rust-hashbrown-devel",
+          "version": "0.17.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-hashbrown-0.17.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "hashbrown",
+      "version": "0.17.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-hashbrown-devel",
+          "version": "0.17.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-hashbrown-0.17.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-hashbrown-devel",
+          "version": "0.16.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-hashbrown-0.16.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "heck",
+      "version": "0.5.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-heck-devel",
+          "version": "0.5.0",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-heck-0.5.0-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "hex",
+      "version": "0.4.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-hex-devel",
+          "version": "0.4.3",
+          "release": "13.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-hex-0.4.3-13.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "hmac-sha256",
+      "version": "1.1.14",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "hostname",
+      "version": "0.4.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-hostname-devel",
+          "version": "0.4.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-hostname-0.4.2-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "iana-time-zone",
+      "version": "0.1.65",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-iana-time-zone-devel",
+          "version": "0.1.65",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-iana-time-zone-0.1.65-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "icu_calendar",
+      "version": "2.2.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_calendar-devel",
+          "version": "2.2.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_calendar-2.2.1-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_calendar-devel",
+          "version": "2.1.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_calendar-2.1.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_calendar_data",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_calendar_data-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_calendar_data-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_calendar_data-devel",
+          "version": "2.1.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_calendar_data-2.1.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_casemap",
+      "version": "2.2.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "icu_casemap_data",
+      "version": "2.2.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "icu_collections",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_collections-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_collections-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_collections-devel",
+          "version": "2.1.1",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_collections-2.1.1-5.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_decimal",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_decimal-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_decimal-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_decimal-devel",
+          "version": "2.1.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_decimal-2.1.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_decimal_data",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_decimal_data-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_decimal_data-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_decimal_data-devel",
+          "version": "2.1.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_decimal_data-2.1.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_experimental",
+      "version": "0.5.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "icu_experimental_data",
+      "version": "0.5.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "icu_list",
+      "version": "2.2.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "icu_list_data",
+      "version": "2.2.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "icu_locale",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_locale-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_locale-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_locale-devel",
+          "version": "2.1.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_locale-2.1.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_locale_core",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_locale_core-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_locale_core-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_locale_core-devel",
+          "version": "2.1.1",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_locale_core-2.1.1-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_locale_data",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_locale_data-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_locale_data-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_locale_data-devel",
+          "version": "2.1.2",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_locale_data-2.1.2-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_normalizer",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_normalizer-devel",
+          "version": "2.2.0",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_normalizer-2.2.0-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_normalizer-devel",
+          "version": "2.1.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_normalizer-2.1.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_normalizer_data",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_normalizer_data-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_normalizer_data-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_normalizer_data-devel",
+          "version": "2.1.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_normalizer_data-2.1.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_pattern",
+      "version": "0.4.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_pattern-devel",
+          "version": "0.4.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_pattern-0.4.2-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_pattern-devel",
+          "version": "0.4.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_pattern-0.4.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_plurals",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_plurals-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_plurals-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_plurals-devel",
+          "version": "2.1.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_plurals-2.1.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_plurals_data",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_plurals_data-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_plurals_data-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_plurals_data-devel",
+          "version": "2.1.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_plurals_data-2.1.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_properties",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_properties-devel",
+          "version": "2.2.0",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_properties-2.2.0-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_properties-devel",
+          "version": "2.1.2",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_properties-2.1.2-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_properties_data",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_properties_data-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_properties_data-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_properties_data-devel",
+          "version": "2.1.2",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_properties_data-2.1.2-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "icu_provider",
+      "version": "2.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-icu_provider-devel",
+          "version": "2.2.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_provider-2.2.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-icu_provider-devel",
+          "version": "2.1.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-icu_provider-2.1.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "image",
+      "version": "0.25.10",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-image-devel",
+          "version": "0.25.10",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-image-0.25.10-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-image-devel",
+          "version": "0.25.9",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-image-0.25.9-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "indexmap",
+      "version": "2.14.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-indexmap-devel",
+          "version": "2.14.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-indexmap-2.14.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-indexmap-devel",
+          "version": "2.13.0",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-indexmap-2.13.0-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "itertools",
+      "version": "0.14.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-itertools-devel",
+          "version": "0.14.0",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-itertools-0.14.0-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-itertools-devel",
+          "version": "0.15.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-itertools-0.15.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "itoa",
+      "version": "1.0.18",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-itoa-devel",
+          "version": "1.0.18",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-itoa-1.0.18-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "ixdtf",
+      "version": "0.6.5",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-ixdtf-devel",
+          "version": "0.6.5",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-ixdtf-0.6.5-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-ixdtf-devel",
+          "version": "0.6.4",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-ixdtf-0.6.4-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "jxl",
+      "version": "0.4.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "jxl_macros",
+      "version": "0.4.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "jxl_simd",
+      "version": "0.4.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "jxl_transforms",
+      "version": "0.4.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "konst",
+      "version": "0.2.20",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-konst-devel",
+          "version": "0.2.19",
+          "release": "6.fc44",
+          "arch": "noarch",
+          "license": "Zlib",
+          "source_rpm": "rust-konst-0.2.19-6.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "konst_macro_rules",
+      "version": "0.2.19",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-konst_macro_rules-devel",
+          "version": "0.2.19",
+          "release": "6.fc44",
+          "arch": "noarch",
+          "license": "Zlib",
+          "source_rpm": "rust-konst_macro_rules-0.2.19-6.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "lazy_static",
+      "version": "1.5.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-lazy_static-devel",
+          "version": "1.5.0",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-lazy_static-1.5.0-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "libc",
+      "version": "0.2.185",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-libc-devel",
+          "version": "0.2.183",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-libc-0.2.183-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-libc-devel",
+          "version": "0.2.186",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-libc-0.2.186-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "libm",
+      "version": "0.2.16",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-libm-devel",
+          "version": "0.2.15",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-libm-0.2.15-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "litemap",
+      "version": "0.8.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-litemap-devel",
+          "version": "0.8.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-litemap-0.8.2-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-litemap-devel",
+          "version": "0.8.1",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-litemap-0.8.1-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "llguidance",
+      "version": "1.7.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "lock_api",
+      "version": "0.4.14",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-lock_api-devel",
+          "version": "0.4.14",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-lock_api-0.4.14-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "log",
+      "version": "0.4.29",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-log-devel",
+          "version": "0.4.29",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-log-0.4.29-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-log-devel",
+          "version": "0.4.33",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-log-0.4.33-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "memchr",
+      "version": "2.8.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-memchr-devel",
+          "version": "2.8.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unlicense OR MIT",
+          "source_rpm": "rust-memchr-2.8.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-memchr-devel",
+          "version": "2.8.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unlicense OR MIT",
+          "source_rpm": "rust-memchr-2.8.3-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "memo-map",
+      "version": "0.3.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-memo-map-devel",
+          "version": "0.3.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-memo-map-0.3.3-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "minijinja",
+      "version": "2.19.0",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-minijinja-devel",
+          "version": "2.16.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-minijinja-2.16.0-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-minijinja-devel",
+          "version": "2.17.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-minijinja-2.17.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "miniz_oxide",
+      "version": "0.8.9",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-miniz_oxide-devel",
+          "version": "0.9.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Zlib OR Apache-2.0",
+          "source_rpm": "rust-miniz_oxide-0.9.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "moxcms",
+      "version": "0.8.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-moxcms-devel",
+          "version": "0.8.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause OR Apache-2.0",
+          "source_rpm": "rust-moxcms-0.8.1-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-moxcms-devel",
+          "version": "0.7.5",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause OR Apache-2.0",
+          "source_rpm": "rust-moxcms-0.7.5-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "murmur3",
+      "version": "0.4.1",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "nix",
+      "version": "0.30.1",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-nix-devel",
+          "version": "0.31.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-nix-0.31.2-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-nix-devel",
+          "version": "0.31.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-nix-0.31.3-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "num-bigint",
+      "version": "0.4.6",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-num-bigint-devel",
+          "version": "0.4.6",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-num-bigint-0.4.6-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-num-bigint-devel",
+          "version": "0.4.8",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-num-bigint-0.4.8-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "num-derive",
+      "version": "0.4.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-num-derive-devel",
+          "version": "0.4.2",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-num-derive-0.4.2-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "num-integer",
+      "version": "0.1.46",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-num-integer-devel",
+          "version": "0.1.46",
+          "release": "6.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-num-integer-0.1.46-6.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "num-rational",
+      "version": "0.4.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-num-rational-devel",
+          "version": "0.4.2",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-num-rational-0.4.2-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "num-traits",
+      "version": "0.2.19",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-num-traits-devel",
+          "version": "0.2.19",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-num-traits-0.2.19-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "num_enum",
+      "version": "0.7.5",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-num_enum-devel",
+          "version": "0.5.11",
+          "release": "7.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+          "source_rpm": "rust-num_enum-0.5.11-7.fc44.src.rpm"
+        },
+        {
+          "package": "rust-num_enum-devel",
+          "version": "0.7.6",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+          "source_rpm": "rust-num_enum-0.7.6-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "num_enum_derive",
+      "version": "0.7.5",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-num_enum_derive-devel",
+          "version": "0.5.11",
+          "release": "8.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+          "source_rpm": "rust-num_enum_derive-0.5.11-8.fc44.src.rpm"
+        },
+        {
+          "package": "rust-num_enum_derive-devel",
+          "version": "0.7.6",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+          "source_rpm": "rust-num_enum_derive-0.7.6-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "object",
+      "version": "0.37.3",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-object-devel",
+          "version": "0.38.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-object-0.38.1-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "once_cell",
+      "version": "1.21.4",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-once_cell-devel",
+          "version": "1.21.4",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-once_cell-1.21.4-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "ordered-float",
+      "version": "5.3.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-ordered-float-devel",
+          "version": "5.3.0",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-ordered-float-5.3.0-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-ordered-float-devel",
+          "version": "5.1.0",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-ordered-float-5.1.0-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "parking_lot",
+      "version": "0.12.5",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-parking_lot-devel",
+          "version": "0.12.5",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-parking_lot-0.12.5-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "parking_lot_core",
+      "version": "0.9.12",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-parking_lot_core-devel",
+          "version": "0.9.12",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-parking_lot_core-0.9.12-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "png",
+      "version": "0.18.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-png-devel",
+          "version": "0.18.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-png-0.18.1-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "potential_utf",
+      "version": "0.1.5",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-potential_utf-devel",
+          "version": "0.1.5",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-potential_utf-0.1.5-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-potential_utf-devel",
+          "version": "0.1.4",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-potential_utf-0.1.4-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "proc-macro-error-attr2",
+      "version": "2.0.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-proc-macro-error-attr2-devel",
+          "version": "2.0.0",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-proc-macro-error-attr2-2.0.0-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "proc-macro-error2",
+      "version": "2.0.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-proc-macro-error2-devel",
+          "version": "2.0.1",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-proc-macro-error2-2.0.1-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "proc-macro2",
+      "version": "1.0.106",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-proc-macro2-devel",
+          "version": "1.0.106",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-proc-macro2-1.0.106-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "prost",
+      "version": "0.14.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-prost-devel",
+          "version": "0.14.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-prost-0.14.3-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-prost-devel",
+          "version": "0.13.5",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-prost-0.13.5-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "prost-derive",
+      "version": "0.14.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-prost-derive-devel",
+          "version": "0.14.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-prost-derive-0.14.3-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-prost-derive-devel",
+          "version": "0.13.5",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0",
+          "source_rpm": "rust-prost-derive-0.13.5-3.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "pxfm",
+      "version": "0.1.29",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-pxfm-devel",
+          "version": "0.1.23",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause OR Apache-2.0",
+          "source_rpm": "rust-pxfm-0.1.23-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "qr_code",
+      "version": "2.0.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "quote",
+      "version": "1.0.45",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-quote-devel",
+          "version": "1.0.45",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-quote-1.0.45-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-quote-devel",
+          "version": "1.0.46",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-quote-1.0.46-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "read-fonts",
+      "version": "0.39.2",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "regex-automata",
+      "version": "0.4.14",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-regex-automata-devel",
+          "version": "0.4.14",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-regex-automata-0.4.14-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-regex-automata-devel",
+          "version": "0.4.15",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-regex-automata-0.4.15-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "regex-syntax",
+      "version": "0.8.10",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-regex-syntax-devel",
+          "version": "0.8.10",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+          "source_rpm": "rust-regex-syntax-0.8.10-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-regex-syntax-devel",
+          "version": "0.8.11",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+          "source_rpm": "rust-regex-syntax-0.8.11-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "resb",
+      "version": "0.1.2",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "rustc-demangle",
+      "version": "0.1.27",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-rustc-demangle-devel",
+          "version": "0.1.26",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-rustc-demangle-0.1.26-2.fc44.src.rpm"
+        },
+        {
+          "package": "rust-rustc-demangle-devel",
+          "version": "0.1.28",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-rustc-demangle-0.1.28-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "rustc-demangle-capi",
+      "version": "0.1.1",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "rustversion",
+      "version": "1.0.22",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-rustversion-devel",
+          "version": "1.0.22",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-rustversion-1.0.22-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-rustversion-devel",
+          "version": "1.0.23",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-rustversion-1.0.23-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "ryu",
+      "version": "1.0.23",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-ryu-devel",
+          "version": "1.0.23",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR BSL-1.0",
+          "source_rpm": "rust-ryu-1.0.23-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "scopeguard",
+      "version": "1.2.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-scopeguard-devel",
+          "version": "1.2.0",
+          "release": "7.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-scopeguard-1.2.0-7.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "serde",
+      "version": "1.0.228",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-serde-devel",
+          "version": "1.0.228",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-serde-1.0.228-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "serde_core",
+      "version": "1.0.228",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-serde_core-devel",
+          "version": "1.0.228",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-serde_core-1.0.228-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "serde_derive",
+      "version": "1.0.228",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-serde_derive-devel",
+          "version": "1.0.228",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-serde_derive-1.0.228-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "serde_json",
+      "version": "1.0.149",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-serde_json-devel",
+          "version": "1.0.149",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-serde_json-1.0.149-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-serde_json-devel",
+          "version": "1.0.150",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-serde_json-1.0.150-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "serde_json_lenient",
+      "version": "0.2.4",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "simd-adler32",
+      "version": "0.3.9",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-simd-adler32-devel",
+          "version": "0.3.8",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-simd-adler32-0.3.8-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "skrifa",
+      "version": "0.42.1",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "small_ctor",
+      "version": "0.1.2",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "smallvec",
+      "version": "1.15.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-smallvec-devel",
+          "version": "1.15.1",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-smallvec-1.15.1-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "stable_deref_trait",
+      "version": "1.2.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-stable_deref_trait-devel",
+          "version": "1.2.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-stable_deref_trait-1.2.1-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "static_assertions",
+      "version": "1.1.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-static_assertions-devel",
+          "version": "1.1.0",
+          "release": "18.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-static_assertions-1.1.0-18.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "strck",
+      "version": "1.0.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "strsim",
+      "version": "0.11.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-strsim-devel",
+          "version": "0.11.1",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-strsim-0.11.1-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "strum",
+      "version": "0.27.2",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-strum-devel",
+          "version": "0.28.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-strum-0.28.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "strum",
+      "version": "0.28.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-strum-devel",
+          "version": "0.28.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-strum-0.28.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "strum_macros",
+      "version": "0.27.2",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-strum_macros-devel",
+          "version": "0.28.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-strum_macros-0.28.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "strum_macros",
+      "version": "0.28.0",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-strum_macros-devel",
+          "version": "0.28.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-strum_macros-0.28.0-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "subtle",
+      "version": "2.6.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-subtle-devel",
+          "version": "2.6.1",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "BSD-3-Clause",
+          "source_rpm": "rust-subtle-2.6.1-5.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia-bundle-flac",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia-bundle-mp3",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia-codec-pcm",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia-codec-vorbis",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia-core",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia-metadata",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "symphonia-utils-xiph",
+      "version": "0.5.5",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "syn",
+      "version": "2.0.117",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-syn-devel",
+          "version": "2.0.117",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-syn-2.0.117-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-syn-devel",
+          "version": "2.0.118",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-syn-2.0.118-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "synstructure",
+      "version": "0.13.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-synstructure-devel",
+          "version": "0.13.2",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-synstructure-0.13.2-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "temporal_capi",
+      "version": "0.2.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "temporal_rs",
+      "version": "0.2.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "termcolor",
+      "version": "1.4.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-termcolor-devel",
+          "version": "1.4.1",
+          "release": "6.fc44",
+          "arch": "noarch",
+          "license": "Unlicense OR MIT",
+          "source_rpm": "rust-termcolor-1.4.1-6.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "thiserror",
+      "version": "2.0.18",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-thiserror-devel",
+          "version": "2.0.18",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-thiserror-2.0.18-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "thiserror-impl",
+      "version": "2.0.18",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-thiserror-impl-devel",
+          "version": "2.0.18",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-thiserror-impl-2.0.18-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "timezone_provider",
+      "version": "0.2.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "tinystr",
+      "version": "0.8.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-tinystr-devel",
+          "version": "0.8.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-tinystr-0.8.3-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-tinystr-devel",
+          "version": "0.8.2",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-tinystr-0.8.2-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "toktrie",
+      "version": "1.7.3",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "typed-arena",
+      "version": "2.0.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-typed-arena-devel",
+          "version": "2.0.2",
+          "release": "8.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-typed-arena-2.0.2-8.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "typed-path",
+      "version": "0.12.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-typed-path-devel",
+          "version": "0.12.3",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-typed-path-0.12.3-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "typeid",
+      "version": "1.0.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-typeid-devel",
+          "version": "1.0.3",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-typeid-1.0.3-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "typewit",
+      "version": "1.15.2",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "unicode-ident",
+      "version": "1.0.24",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-unicode-ident-devel",
+          "version": "1.0.24",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+          "source_rpm": "rust-unicode-ident-1.0.24-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "unicode-width",
+      "version": "0.2.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-unicode-width-devel",
+          "version": "0.2.2",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-unicode-width-0.2.2-2.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "unicode-xid",
+      "version": "0.2.6",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-unicode-xid-devel",
+          "version": "0.2.6",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-unicode-xid-0.2.6-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "unty",
+      "version": "0.0.4",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-unty-devel",
+          "version": "0.0.4",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-unty-0.0.4-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "utf8_iter",
+      "version": "1.0.4",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-utf8_iter-devel",
+          "version": "1.0.4",
+          "release": "6.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-utf8_iter-1.0.4-6.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "uuid",
+      "version": "1.23.1",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-uuid-devel",
+          "version": "1.23.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-uuid-1.23.0-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-uuid-devel",
+          "version": "1.23.4",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Apache-2.0 OR MIT",
+          "source_rpm": "rust-uuid-1.23.4-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "version_check",
+      "version": "0.9.5",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-version_check-devel",
+          "version": "0.9.5",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "MIT OR Apache-2.0",
+          "source_rpm": "rust-version_check-0.9.5-4.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "virtue",
+      "version": "0.0.18",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-virtue-devel",
+          "version": "0.0.18",
+          "release": "3.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-virtue-0.0.18-3.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "winapi-util",
+      "version": "0.1.11",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "windows-link",
+      "version": "0.2.1",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "windows-sys",
+      "version": "0.52.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "windows-targets",
+      "version": "0.52.6",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "windows_aarch64_msvc",
+      "version": "0.52.6",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "windows_i686_msvc",
+      "version": "0.52.6",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "windows_x86_64_msvc",
+      "version": "0.52.6",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    },
+    {
+      "crate": "writeable",
+      "version": "0.6.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-writeable-devel",
+          "version": "0.6.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-writeable-0.6.3-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-writeable-devel",
+          "version": "0.6.2",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-writeable-0.6.2-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "xml",
+      "version": "1.2.1",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-xml-devel",
+          "version": "1.2.1",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-xml-1.2.1-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "yoke",
+      "version": "0.8.2",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-yoke-devel",
+          "version": "0.8.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-yoke-0.8.1-2.fc44.src.rpm"
+        },
+        {
+          "package": "rust-yoke-devel",
+          "version": "0.8.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-yoke-0.8.3-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "yoke-derive",
+      "version": "0.8.2",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-yoke-derive-devel",
+          "version": "0.8.2",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-yoke-derive-0.8.2-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-yoke-derive-devel",
+          "version": "0.8.1",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-yoke-derive-0.8.1-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zerocopy",
+      "version": "0.8.48",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-zerocopy-devel",
+          "version": "0.8.42",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+          "source_rpm": "rust-zerocopy-0.8.42-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-zerocopy-devel",
+          "version": "0.8.52",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+          "source_rpm": "rust-zerocopy-0.8.52-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zerofrom",
+      "version": "0.1.7",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-zerofrom-devel",
+          "version": "0.1.6",
+          "release": "5.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerofrom-0.1.6-5.fc44.src.rpm"
+        },
+        {
+          "package": "rust-zerofrom-devel",
+          "version": "0.1.8",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerofrom-0.1.8-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zerofrom-derive",
+      "version": "0.1.7",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-zerofrom-derive-devel",
+          "version": "0.1.7",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerofrom-derive-0.1.7-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-zerofrom-derive-devel",
+          "version": "0.1.6",
+          "release": "4.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerofrom-derive-0.1.6-4.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zerotrie",
+      "version": "0.2.4",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-zerotrie-devel",
+          "version": "0.2.4",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerotrie-0.2.4-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-zerotrie-devel",
+          "version": "0.2.3",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerotrie-0.2.3-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zerovec",
+      "version": "0.11.6",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-zerovec-devel",
+          "version": "0.11.6",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerovec-0.11.6-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-zerovec-devel",
+          "version": "0.11.5",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerovec-0.11.5-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zerovec-derive",
+      "version": "0.11.3",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-zerovec-derive-devel",
+          "version": "0.11.3",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerovec-derive-0.11.3-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": [
+        {
+          "package": "rust-zerovec-derive-devel",
+          "version": "0.11.2",
+          "release": "2.fc44",
+          "arch": "noarch",
+          "license": "Unicode-3.0",
+          "source_rpm": "rust-zerovec-derive-0.11.2-2.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zip",
+      "version": "8.5.1",
+      "status": "version-different",
+      "exact_providers": [],
+      "other_providers": [
+        {
+          "package": "rust-zip-devel",
+          "version": "8.1.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-zip-8.1.0-1.fc44.src.rpm"
+        },
+        {
+          "package": "rust-zip-devel",
+          "version": "8.6.0",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-zip-8.6.0-1.fc44.src.rpm"
+        }
+      ]
+    },
+    {
+      "crate": "zmij",
+      "version": "1.0.21",
+      "status": "exact",
+      "exact_providers": [
+        {
+          "package": "rust-zmij-devel",
+          "version": "1.0.21",
+          "release": "1.fc44",
+          "arch": "noarch",
+          "license": "MIT",
+          "source_rpm": "rust-zmij-1.0.21-1.fc44.src.rpm"
+        }
+      ],
+      "other_providers": []
+    },
+    {
+      "crate": "zoneinfo64",
+      "version": "0.3.0",
+      "status": "absent",
+      "exact_providers": [],
+      "other_providers": []
+    }
+  ],
+  "summary": {
+    "vendored_rust_source_packages": 216,
+    "exact": 136,
+    "version_different": 26,
+    "absent": 54
+  },
+  "validation": {
+    "crate_inventory_matches_license_audit": true,
+    "exact_matches_include_fedora_license_metadata": true,
+    "linked_archive_selection_verified": false,
+    "fedora_allowed_spdx_verified": false,
+    "final_static_archive_license_complete": false
+  }
+}

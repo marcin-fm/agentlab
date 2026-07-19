@@ -319,6 +319,7 @@ begin
 package = Agentlab.package_named("rust-v8")
 version = package.upstream.fetch("current_version").to_s
 source_receipt_path = File.join(package.directory, "rust-v8-#{version}-source-closure.json")
+fedora_receipt_path = File.join(package.directory, "rust-v8-#{version}-fedora-license-evidence.json")
 source_dir = nil
 output = File.join(package.directory, "rust-v8-#{version}-license-audit.json")
 check = false
@@ -333,6 +334,18 @@ end.parse!
 raise Agentlab::Error, "--source-dir is required" unless source_dir
 source_dir = File.realpath(source_dir)
 source_receipt = JSON.parse(File.read(source_receipt_path))
+fedora_receipt = JSON.parse(File.read(fedora_receipt_path))
+unless fedora_receipt.fetch("schema") == "rust-v8-fedora-license-evidence/v1" &&
+       fedora_receipt.fetch("package") == package.name &&
+       fedora_receipt.fetch("release") == version
+  raise Agentlab::Error, "Fedora license evidence does not match #{package.name} #{version}"
+end
+unless fedora_receipt.dig("validation", "crate_inventory_matches_license_audit") == true &&
+       fedora_receipt.dig("validation", "exact_matches_include_fedora_license_metadata") == true &&
+       fedora_receipt.dig("validation", "linked_archive_selection_verified") == false &&
+       fedora_receipt.dig("validation", "final_static_archive_license_complete") == false
+  raise Agentlab::Error, "Fedora license evidence validation state is inconsistent"
+end
 expected_tree_sha256 = source_receipt.dig("reconstruction", "tree_sha256")
 actual_tree_sha256 = Digest::SHA256.hexdigest(JSON.generate(tree_manifest(source_dir)))
 unless actual_tree_sha256 == expected_tree_sha256
@@ -445,6 +458,25 @@ declared_candidates = component_records.values.flat_map do |component|
 end
 declared_candidates.concat(vendor_packages.filter_map { |record| record["manifest_license"] })
 vendored_source_packages = vendor_packages.reject { |record| record.fetch("placeholder") }
+fedora_records = fedora_receipt.fetch("records")
+fedora_records_by_key = fedora_records.to_h do |record|
+  [[record.fetch("crate"), record.fetch("version")], record]
+end
+if fedora_records_by_key.length != fedora_records.length
+  raise Agentlab::Error, "Fedora license evidence contains duplicate crate records"
+end
+vendor_keys = vendored_source_packages.map { |record| [record.fetch("name"), record.fetch("version")] }.sort
+unless fedora_records_by_key.keys.sort == vendor_keys
+  raise Agentlab::Error, "Fedora license evidence crate inventory does not match the exact source tree"
+end
+vendored_source_packages.each do |record|
+  fedora = fedora_records_by_key.fetch([record.fetch("name"), record.fetch("version")])
+  record["fedora_license_evidence"] = {
+    "status" => fedora.fetch("status"),
+    "exact_providers" => fedora.fetch("exact_providers"),
+    "other_providers" => fedora.fetch("other_providers")
+  }
+end
 readme_license_file_records = readme_records.select { |record| record["license_file"] }
 readme_declared_license_paths = readme_license_file_records.flat_map { |record| record.fetch("license_file_records") }
 vendor_license_file_records = vendored_source_packages.select { |record| record["manifest_license_file"] }
@@ -457,6 +489,13 @@ receipt = {
     "path" => File.basename(source_receipt_path),
     "sha256" => Digest::SHA256.file(source_receipt_path).hexdigest,
     "tree_sha256" => expected_tree_sha256
+  },
+  "fedora_license_evidence" => {
+    "path" => File.basename(fedora_receipt_path),
+    "sha256" => Digest::SHA256.file(fedora_receipt_path).hexdigest,
+    "target" => fedora_receipt.fetch("target"),
+    "summary" => fedora_receipt.fetch("summary"),
+    "scope" => fedora_receipt.dig("source", "scope")
   },
   "components" => component_paths.map { |path| component_records.fetch(path) },
   "scoped_parent_license_evidence" => scoped_parent_license_evidence(source_dir, component_records),
@@ -492,7 +531,10 @@ receipt = {
     "vendored_rust_source_packages_with_verified_manifest_license_file" => vendor_license_file_records.count { |record| record["manifest_license_file_verified"] == true },
     "vendored_rust_source_packages_with_candidate_texts" => vendored_source_packages.count { |record| record.fetch("license_file_count").positive? },
     "vendored_rust_legacy_slash_license_expressions" => vendored_source_packages.count { |record| record["syntax_class"] == "legacy-slash-alternative" },
-    "vendored_rust_mechanically_normalized_license_expressions" => vendored_source_packages.count { |record| record["normalization_status"] == "mechanically-normalized" }
+    "vendored_rust_mechanically_normalized_license_expressions" => vendored_source_packages.count { |record| record["normalization_status"] == "mechanically-normalized" },
+    "vendored_rust_fedora_exact_version_matches" => fedora_receipt.dig("summary", "exact"),
+    "vendored_rust_fedora_version_different_matches" => fedora_receipt.dig("summary", "version_different"),
+    "vendored_rust_fedora_absent" => fedora_receipt.dig("summary", "absent")
   },
   "validation" => {
     "source_closure_verified" => true,
@@ -507,6 +549,7 @@ receipt = {
     "unmaterialized_deps_declarations_classified" => true,
     "vendored_rust_manifests_inventoried" => true,
     "vendored_rust_placeholders_classified" => true,
+    "vendored_rust_fedora_license_evidence_recorded" => true,
     "vendored_rust_source_package_declarations_complete" => vendored_source_packages.all? { |record| record["manifest_license"] || record["manifest_license_file"] },
     "vendored_rust_source_package_candidate_texts_present" => vendored_source_packages.all? { |record| record.fetch("license_file_count").positive? },
     "license_expressions_normalized" => false,
@@ -516,7 +559,7 @@ receipt = {
     "source_package_license_complete" => false,
     "final_static_archive_license_complete" => false
   },
-  "scope" => "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, four semantically reviewed declaration-specific expressions, scoped Chromium parent-text evidence, and embedded metadata that names intentionally unmaterialized DEPS test/tool sources; remaining semantic text review, aggregate SPDX normalization, required-text decisions, Fedora allowability, system-library treatment, and final static-link accounting remain unresolved"
+  "scope" => "candidate legal-text and declaration inventory for every exact Git component, including mechanical Cargo slash normalization, four semantically reviewed declaration-specific expressions, scoped Chromium parent-text evidence, embedded metadata that names intentionally unmaterialized DEPS test/tool sources, and exact/version-different/absent Fedora 44 package-license evidence for all 216 real vendored Rust source packages; Fedora package metadata is reused as review evidence only and does not establish selected linkage, aggregate SPDX, required payload texts, system-library treatment, or final static-link accounting"
 }
 content = JSON.pretty_generate(receipt) + "\n"
 

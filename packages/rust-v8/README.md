@@ -113,9 +113,17 @@ mechanically normalized to `MIT OR Apache-2.0`. The audit also records the exact
 file-level header evidence for `tools/clang` and `tools/win`, without applying
 that text to whole components or their embedded third-party assets. Remaining
 semantic text review, aggregate SPDX normalization, Fedora allowability,
-system-library, and final linked-archive decisions remain open. The receipt
-SHA-256 is
-`4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e`.
+system-library, and final linked-archive decisions remain open.
+
+`rust-v8-149.2.0-fedora-license-evidence.json` queries Fedora 44 `fedora` and
+`updates` crate-devel metadata for those exact 216 source packages. It records
+136 exact-version providers, 26 version-different providers, and 54 absent
+providers. Exact matches reuse Fedora's reviewed SPDX metadata and source-RPM
+identity, but do not establish that a crate is linked into `librusty_v8.a` or
+complete the final aggregate expression. Its SHA-256 is
+`b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
+The regenerated license-audit receipt binds that evidence at SHA-256
+`19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef`.
 
 ## Prototype Result
 
@@ -141,7 +149,7 @@ link closure.
 
 ## Remaining Gates
 
-1. Complete semantic review of the remaining declarations, scoped parent-text cases, and embedded third-party assets.
+1. Complete semantic review of Fedora-absent and materially version-different declarations, scoped parent-text cases, and embedded third-party assets.
 2. Review every required text, SPDX expression, and system-library decision for Fedora.
 3. Establish the final source-package and linked-static-archive license expressions.
 4. Run clean Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes.

@@ -4,14 +4,15 @@
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
 %global closure_sha256 bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de
-%global license_audit_sha256 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
+%global license_audit_sha256 19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef
 %global archive_graph_sha256 fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561
+%global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
 %global system_rust_patch_sha256 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # MIT covers Rusty V8 and BSD-3-Clause covers the original downstream allocator
@@ -43,6 +44,7 @@ Source20:       https://codeload.github.com/denoland/v8/tar.gz/73d19698991616a34
 Source21:       %{name}-%{version}-source-closure.json
 Source22:       %{name}-%{version}-license-audit.json
 Source23:       %{name}-%{version}-archive-graph.json
+Source24:       %{name}-%{version}-fedora-license-evidence.json
 # Guard Chromium nightly-only Rust behavior and use Fedora's stable toolchain.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
@@ -72,7 +74,9 @@ Git tree, and accept the Fedora stable-toolchain patches. A full gclient/DEPS
 checkout is not claimed; unmaterialized test and tooling dependencies remain
 separately classified. A retained Fedora 44 prototype witness matches 1,796
 selected object inputs to 1,796 archive members but does not establish production
-or final consumer link closure. Complete semantic license review,
+or final consumer link closure. Fedora 44 package metadata supplies exact-version
+license evidence for 136 of 216 real vendored Rust packages without claiming
+their linkage in the archive. Complete semantic license review,
 network-isolated Fedora builds, and architecture proof are not complete.
 
 %package static
@@ -87,9 +91,10 @@ consumers select it with `RUSTY_V8_ARCHIVE` during their own source builds.
 echo "%{closure_sha256}  %{SOURCE21}" | sha256sum -c -
 echo "%{license_audit_sha256}  %{SOURCE22}" | sha256sum -c -
 echo "%{archive_graph_sha256}  %{SOURCE23}" | sha256sum -c -
+echo "%{fedora_license_evidence_sha256}  %{SOURCE24}" | sha256sum -c -
 echo "%{system_rust_patch_sha256}  %{PATCH0}" | sha256sum -c -
 echo "%{gcc_patch_sha256}  %{PATCH1}" | sha256sum -c -
-python3 - "%{SOURCE21}" "%{SOURCE22}" "%{SOURCE23}" \
+python3 - "%{SOURCE21}" "%{SOURCE22}" "%{SOURCE23}" "%{SOURCE24}" \
   "%{SOURCE0}" "%{SOURCE1}" "%{SOURCE2}" "%{SOURCE3}" "%{SOURCE4}" \
   "%{SOURCE5}" "%{SOURCE6}" "%{SOURCE7}" "%{SOURCE8}" "%{SOURCE9}" \
   "%{SOURCE10}" "%{SOURCE11}" "%{SOURCE12}" "%{SOURCE13}" "%{SOURCE14}" \
@@ -103,7 +108,8 @@ import sys
 receipt = json.load(open(sys.argv[1], encoding="utf-8"))
 license_audit = json.load(open(sys.argv[2], encoding="utf-8"))
 archive_graph = json.load(open(sys.argv[3], encoding="utf-8"))
-sources = sys.argv[4:]
+fedora_license_evidence = json.load(open(sys.argv[4], encoding="utf-8"))
+sources = sys.argv[5:]
 components = receipt["components"]
 assert receipt["schema"] == "rust-v8-source-closure/v1"
 assert receipt["release"]["version"] == "%{version}"
@@ -122,9 +128,22 @@ assert license_audit["validation"]["declared_license_syntax_classified"] is True
 assert license_audit["validation"]["unmaterialized_deps_declarations_classified"] is True
 assert license_audit["validation"]["vendored_rust_source_package_declarations_complete"] is True
 assert license_audit["validation"]["vendored_rust_source_package_candidate_texts_present"] is True
+assert license_audit["validation"]["vendored_rust_fedora_license_evidence_recorded"] is True
 assert license_audit["validation"]["declared_license_text_semantic_review_complete"] is False
 assert license_audit["validation"]["required_license_texts_verified"] is False
 assert license_audit["validation"]["fedora_allowed_spdx_verified"] is False
+assert fedora_license_evidence["schema"] == "rust-v8-fedora-license-evidence/v1"
+assert fedora_license_evidence["release"] == "%{version}"
+assert fedora_license_evidence["summary"] == {
+    "vendored_rust_source_packages": 216,
+    "exact": 136,
+    "version_different": 26,
+    "absent": 54,
+}
+assert fedora_license_evidence["validation"]["exact_matches_include_fedora_license_metadata"] is True
+assert fedora_license_evidence["validation"]["linked_archive_selection_verified"] is False
+assert fedora_license_evidence["validation"]["final_static_archive_license_complete"] is False
+assert license_audit["fedora_license_evidence"]["sha256"] == "%{fedora_license_evidence_sha256}"
 assert archive_graph["schema"] == "rust-v8-archive-graph-witness/v1"
 assert archive_graph["source_closure_reference"]["sha256"] == "%{closure_sha256}"
 assert archive_graph["source_closure_reference"]["provenance_verified"] is False
@@ -197,6 +216,10 @@ install -Dpm0644 out/fedora/obj/librusty_v8.a \
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.6
+- Reuse Fedora 44 license metadata for 136 exact vendored Rust crate versions.
+- Keep selected-link and final aggregate-license decisions fail-closed.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.5
 - Semantically normalize four ambiguous Chromium license declarations.
 - Preserve the remaining Fedora and final static-license gates.

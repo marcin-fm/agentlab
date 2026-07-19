@@ -3,7 +3,7 @@ name: rust-v8
 status: blocked
 blockers:
 - The stable Fedora Rust and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream.
-- Candidate legal texts and all 216 real vendored Rust source packages are inventoried. One `Shipped: no` googletest declaration points into an intentionally unmaterialized test-only DEPS source. The bare BSD label and all three comma lists are semantically normalized from exact evidence, including LLVM's required exception, three declared texts are semantically verified, all eight Cargo slash alternatives are mechanically normalized, and scoped Chromium parent evidence is recorded for the two tooling components. Remaining semantic text review, embedded third-party review, Fedora SPDX review, system-library decisions, and the final aggregate License expression remain unresolved.
+- Candidate legal texts and all 216 real vendored Rust source packages are inventoried. Fedora 44 package metadata supplies exact-version SPDX evidence for 136 crates, version-different evidence for 26, and no provider for 54; this reuses Fedora review without claiming archive linkage. One `Shipped: no` googletest declaration points into an intentionally unmaterialized test-only DEPS source. The bare BSD label and all three comma lists are semantically normalized from exact evidence, including LLVM's required exception, three declared texts are semantically verified, all eight Cargo slash alternatives are mechanically normalized, and scoped Chromium parent evidence is recorded for the two tooling components. Remaining unmatched/version-different semantic review, embedded third-party review, Fedora allowability, system-library decisions, and the final aggregate License expression remain unresolved.
 - Network-isolated Fedora 43, Fedora 44, and Rawhide builds have not been run. The successful prototype is Fedora 44 x86_64 evidence only, and aarch64 is unverified.
 source_policy:
   rpm_build_network: forbidden
@@ -82,7 +82,7 @@ patches:
     upstream_status: not-submitted
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
+  receipt_sha256: 19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef
   candidate_license_files: 415
   readme_chromium_records: 231
   vendored_rust_entries: 268
@@ -100,6 +100,9 @@ license_audit:
   readme_chromium_semantically_verified_declared_license_paths: 3
   vendored_rust_legacy_slash_license_expressions: 8
   vendored_rust_mechanically_normalized_license_expressions: 8
+  vendored_rust_fedora_exact_version_matches: 136
+  vendored_rust_fedora_version_different_matches: 26
+  vendored_rust_fedora_absent: 54
   unmaterialized_declared_license_paths:
   - v8/third_party/googletest/src/LICENSE
   component_local_text_gaps:
@@ -109,6 +112,20 @@ license_audit:
   required_texts_verified: false
   declared_text_semantic_review_complete: false
   fedora_allowed_spdx_verified: false
+  final_static_archive_license_complete: false
+fedora_license_evidence:
+  receipt: rust-v8-149.2.0-fedora-license-evidence.json
+  receipt_sha256: b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
+  fedora_release: "44"
+  repositories:
+  - fedora
+  - updates
+  vendored_rust_source_packages: 216
+  exact: 136
+  version_different: 26
+  absent: 54
+  exact_matches_include_fedora_license_metadata: true
+  linked_archive_selection_verified: false
   final_static_archive_license_complete: false
 upstream:
   provider: github

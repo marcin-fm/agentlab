@@ -1,0 +1,118 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require_relative "lib/agentlab"
+
+begin
+package = Agentlab.package_named("rust-v8")
+version = package.upstream.fetch("current_version").to_s
+releasever = "44"
+repositories = %w[fedora updates]
+audit_path = File.join(package.directory, "rust-v8-#{version}-license-audit.json")
+output = File.join(package.directory, "rust-v8-#{version}-fedora-license-evidence.json")
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/acquire-rust-v8-fedora-license-evidence [options]"
+  parser.on("--releasever VERSION", "Fedora release to query (default: 44)") { |value| releasever = value }
+  parser.on("--repo REPOSITORY", "Repository to query; may be repeated") do |value|
+    repositories = [] if repositories == %w[fedora updates]
+    repositories << value
+  end
+  parser.on("--output PATH", "Evidence receipt path") { |value| output = value }
+end.parse!
+
+audit = JSON.parse(File.read(audit_path))
+crates = audit.dig("vendored_rust", "packages").reject { |record| record.fetch("placeholder") }
+capabilities = crates.map { |crate| "crate(#{crate.fetch('name')})" }.uniq.sort
+record_separator = "\x1e"
+format = "%{name}|%{version}|%{release}|%{arch}|%{license}|%{sourcerpm}#{record_separator}"
+command = ["dnf", "repoquery", "--available", "--releasever=#{releasever}"]
+repositories.each { |repository| command << "--repo=#{repository}" }
+command.concat(["--qf", format, "--whatprovides=#{capabilities.join(',')}"])
+
+stdout, stderr, status = Open3.capture3(*command)
+unless status.success?
+  raise Agentlab::Error, "Fedora crate query failed: #{stderr.strip}"
+end
+
+providers = stdout.split(record_separator).filter_map do |line|
+  fields = line.strip.split("|", 6)
+  next unless fields.length == 6 && fields.fetch(0).start_with?("rust-")
+
+  name, provider_version, provider_release, arch, license, source_rpm = fields
+  {
+    "package" => name,
+    "version" => provider_version,
+    "release" => provider_release,
+    "arch" => arch,
+    "license" => license,
+    "source_rpm" => source_rpm
+  }
+end.uniq.sort_by { |record| record.values_at("package", "version", "release", "arch") }
+providers_by_name = providers.group_by { |record| record.fetch("package") }
+
+records = crates.sort_by { |record| [record.fetch("name"), record.fetch("version")] }.map do |crate|
+  names = [
+    "rust-#{crate.fetch('name')}-devel",
+    "rust-#{crate.fetch('name').tr('_', '-')}-devel"
+  ].uniq
+  candidates = names.flat_map { |name| providers_by_name.fetch(name, []) }.uniq
+  exact = candidates.select { |provider| provider.fetch("version") == crate.fetch("version") }
+  status_name = if exact.any?
+                  "exact"
+                elsif candidates.any?
+                  "version-different"
+                else
+                  "absent"
+                end
+  {
+    "crate" => crate.fetch("name"),
+    "version" => crate.fetch("version"),
+    "status" => status_name,
+    "exact_providers" => exact,
+    "other_providers" => candidates.reject { |provider| exact.include?(provider) }
+  }
+end
+
+receipt = {
+  "schema" => "rust-v8-fedora-license-evidence/v1",
+  "package" => package.name,
+  "release" => version,
+  "target" => {
+    "fedora_release" => releasever,
+    "repositories" => repositories
+  },
+  "source" => {
+    "query" => command,
+    "query_format" => format,
+    "normalized_query_records_sha256" => Digest::SHA256.hexdigest(JSON.generate(providers)),
+    "scope" => "Fedora binary package metadata for crate-devel providers; exact-version matches reuse Fedora SPDX review but do not prove Rusty V8 linkage or final aggregate licensing"
+  },
+  "records" => records,
+  "summary" => {
+    "vendored_rust_source_packages" => records.length,
+    "exact" => records.count { |record| record.fetch("status") == "exact" },
+    "version_different" => records.count { |record| record.fetch("status") == "version-different" },
+    "absent" => records.count { |record| record.fetch("status") == "absent" }
+  },
+  "validation" => {
+    "crate_inventory_matches_license_audit" => true,
+    "exact_matches_include_fedora_license_metadata" => records.select { |record| record.fetch("status") == "exact" }
+                                                              .all? { |record| record.fetch("exact_providers").all? { |provider| !provider.fetch("license").empty? } },
+    "linked_archive_selection_verified" => false,
+    "fedora_allowed_spdx_verified" => false,
+    "final_static_archive_license_complete" => false
+  }
+}
+
+Agentlab.atomic_write(output, JSON.pretty_generate(receipt) + "\n")
+puts "Wrote Fedora #{releasever} license evidence for #{records.length} crates to #{output}."
+puts "Exact: #{receipt.dig('summary', 'exact')}; version-different: #{receipt.dig('summary', 'version_different')}; absent: #{receipt.dig('summary', 'absent')}."
+rescue Agentlab::Error, JSON::ParserError, KeyError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

@@ -118,7 +118,7 @@ consumer_integration:
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 4c582421d904f52101dacf0909226fbd7004e782e4c3428a0eeb4528456e325e
+  receipt_sha256: 19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
@@ -144,6 +144,9 @@ license_audit:
   readme_chromium_semantically_verified_declared_license_paths: 3
   vendored_rust_legacy_slash_license_expressions: 8
   vendored_rust_mechanically_normalized_license_expressions: 8
+  vendored_rust_fedora_exact_version_matches: 136
+  vendored_rust_fedora_version_different_matches: 26
+  vendored_rust_fedora_absent: 54
   scoped_parent_license_evidence_recorded: true
   unmaterialized_declared_license_paths:
   - v8/third_party/googletest/src/LICENSE
@@ -151,6 +154,20 @@ license_audit:
   declared_text_semantic_review_complete: false
   fedora_allowed_spdx_verified: false
   system_library_decisions_verified: false
+  final_static_archive_license_complete: false
+fedora_license_evidence:
+  receipt: rust-v8-149.2.0-fedora-license-evidence.json
+  receipt_sha256: b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
+  fedora_release: "44"
+  repositories:
+  - fedora
+  - updates
+  vendored_rust_source_packages: 216
+  exact: 136
+  version_different: 26
+  absent: 54
+  exact_matches_include_fedora_license_metadata: true
+  linked_archive_selection_verified: false
   final_static_archive_license_complete: false
 closure_audit:
   root_source_verified: true

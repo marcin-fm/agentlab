@@ -1542,6 +1542,7 @@ class AgentlabTest < Minitest::Test
     spec = File.read(package.spec_path)
     license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("license_audit", "receipt"))))
     archive_graph = JSON.parse(File.read(File.join(package.directory, dependencies.dig("archive_graph", "receipt"))))
+    fedora_license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("fedora_license_evidence", "receipt"))))
 
     assert_empty(Agentlab.validate_rust_v8_evidence(package, dependencies, spec))
     assert_equal(1, license.fetch("unmaterialized_deps_declarations").length)
@@ -1557,6 +1558,11 @@ class AgentlabTest < Minitest::Test
     assert_equal(4, license.dig("summary", "readme_chromium_semantically_reviewed_normalizations"))
     assert_equal(3, license.dig("summary", "readme_chromium_semantically_verified_declared_license_paths"))
     assert_equal(8, license.dig("summary", "vendored_rust_mechanically_normalized_license_expressions"))
+    assert_equal(136, fedora_license.dig("summary", "exact"))
+    assert_equal(26, fedora_license.dig("summary", "version_different"))
+    assert_equal(54, fedora_license.dig("summary", "absent"))
+    assert_equal(fedora_license.fetch("summary"), license.dig("fedora_license_evidence", "summary"))
+    assert(license.dig("validation", "vendored_rust_fedora_license_evidence_recorded"))
     clang_format = license.fetch("components").flat_map { |component| component.fetch("readme_chromium") }.find do |record|
       record["path"] == "buildtools/clang_format/README.chromium"
     end
@@ -1586,9 +1592,11 @@ class AgentlabTest < Minitest::Test
       source_name = dependencies.dig("source_closure", "receipt")
       license_name = dependencies.dig("license_audit", "receipt")
       archive_graph_name = dependencies.dig("archive_graph", "receipt")
+      fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
       FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
       FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
       FileUtils.cp(File.join(source_package.directory, archive_graph_name), File.join(directory, archive_graph_name))
+      FileUtils.cp(File.join(source_package.directory, fedora_license_name), File.join(directory, fedora_license_name))
       license_path = File.join(directory, license_name)
       license = JSON.parse(File.read(license_path))
       license.fetch("validation")["fedora_allowed_spdx_verified"] = true
@@ -1619,6 +1627,40 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_rejects_rust_v8_fedora_license_evidence_overclaim
+    source_package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    data = Marshal.load(Marshal.dump(source_package.data))
+    spec = File.read(source_package.spec_path)
+
+    Dir.mktmpdir do |directory|
+      receipt_names = %w[source_closure license_audit archive_graph fedora_license_evidence].map do |key|
+        dependencies.dig(key, "receipt")
+      end
+      receipt_names.each do |name|
+        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
+      end
+      fedora_name = dependencies.dig("fedora_license_evidence", "receipt")
+      fedora_path = File.join(directory, fedora_name)
+      fedora = JSON.parse(File.read(fedora_path))
+      fedora.fetch("validation")["linked_archive_selection_verified"] = true
+      File.write(fedora_path, JSON.pretty_generate(fedora) + "\n")
+      fedora_sha256 = Digest::SHA256.file(fedora_path).hexdigest
+      data.fetch("fedora_license_evidence")["receipt_sha256"] = fedora_sha256
+      dependencies = Marshal.load(Marshal.dump(dependencies))
+      dependencies.fetch("fedora_license_evidence")["receipt_sha256"] = fedora_sha256
+      spec = spec.sub(
+        /^%global fedora_license_evidence_sha256\s+\h{64}$/,
+        "%global fedora_license_evidence_sha256 #{fedora_sha256}"
+      )
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: Fedora license evidence overclaims linked_archive_selection_verified")
+    end
+  end
+
   def test_rejects_rust_v8_flat_archive_stripping
     package = Agentlab.package_named("rust-v8")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
@@ -1642,9 +1684,11 @@ class AgentlabTest < Minitest::Test
       source_name = dependencies.dig("source_closure", "receipt")
       license_name = dependencies.dig("license_audit", "receipt")
       archive_graph_name = dependencies.dig("archive_graph", "receipt")
+      fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
       FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
       FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
       FileUtils.cp(File.join(source_package.directory, archive_graph_name), File.join(directory, archive_graph_name))
+      FileUtils.cp(File.join(source_package.directory, fedora_license_name), File.join(directory, fedora_license_name))
       license_path = File.join(directory, license_name)
       license = JSON.parse(File.read(license_path))
       googletest = license.fetch("components").flat_map { |component| component.fetch("readme_chromium") }.find do |record|
@@ -1728,7 +1772,8 @@ class AgentlabTest < Minitest::Test
       source_name = dependencies.dig("source_closure", "receipt")
       license_name = dependencies.dig("license_audit", "receipt")
       archive_graph_name = dependencies.dig("archive_graph", "receipt")
-      [source_name, license_name, archive_graph_name].each do |name|
+      fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
+      [source_name, license_name, archive_graph_name, fedora_license_name].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       archive_graph_path = File.join(directory, archive_graph_name)
