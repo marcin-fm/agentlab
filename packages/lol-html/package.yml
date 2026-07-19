@@ -1,0 +1,98 @@
+name: lol-html
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.7 enables configured SCM publication across Bun's six-cell target matrix.
+  source_identity: The immutable upstream v3.0.0 archive matches commit 02f139c4437b2da666a50d32e11d9158cbe0a393 and the pinned source SHA-256.
+  test_graph: The packaged shared library passes all eight upstream C API suites without adding the Rust test-only dependency graph.
+  license_closure: The 29-entry linked closure has a checked aggregate SPDX expression, 44 crate-to-text mappings, and 28 deduplicated installed license texts; selectors' source-embedded MPL-2.0 notices match Fedora precedent.
+  consumer_boundary: Bun's final dynamic-link and HTMLRewriter proof remains consumer work, not a package-local publication hold.
+upstream:
+  provider: github
+  repository: cloudflare/lol-html
+  tag_prefix: v
+  current_version: 3.0.0
+  source_commit: 02f139c4437b2da666a50d32e11d9158cbe0a393
+  source_url_template: https://github.com/cloudflare/lol-html/archive/refs/tags/v{version}.tar.gz
+  source_sha256: 41ed4231fd05b1c73c0664f1f05f18b0d96a34aabf488e6cb601c3bdc7306af9
+source_closure:
+  network_builds: forbidden
+  cargo_lock_packages: 45
+  registry_crates: 43
+  git_sources: 0
+  vendor_archive: lol-html-3.0.0-cargo-vendor.tar.gz
+  vendor_archive_bytes: 4110371
+  vendor_archive_sha256: 55da2f37159c90797e8ddeb81535c31067a1b1f884f0de2779dd17467279639f
+  vendor_receipt: lol-html-3.0.0-cargo-vendor.json
+  vendor_receipt_sha256: 2f34f8e89868cef2eb84377bbdf3f83ee438cb0b6ed280ec0c677432320779fa
+  source_preparer: scripts/prepare-lol-html-srpm-sources
+  source_preparer_sha256: 7c61b27f8affd806a69e3bf62f6eda3f9e4ae17978339e6b493ff2292ebbc919
+c_api:
+  crate_version: 1.4.0
+  rust_version: 1.89
+  library: liblolhtml.so.1.4.0
+  soname: liblolhtml.so.1
+  pkgconfig: lol-html
+  header: lol_html.h
+  exported_symbols: 97
+  static_library_shipped: false
+  cargo_c_probe: passed with cargo-c 0.10.21 on Fedora 44 x86_64
+patches:
+  c_api_license:
+    file: lol-html-c-api-license.patch
+    sha256: 03b853b37f75dbd8c35f3c8a920163c198c45ad6cca1b6f819f9d85c960a6594
+    purpose: Record the root BSD-3-Clause license in the unpublished C API Cargo metadata.
+    upstream_status: not-submitted
+license_audit:
+  aggregate_expression: BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib
+  linked_license_entries: 29
+  license_dependencies_sha256: cd8b5eec2634147c47f82a6b3a5eeb95893f18ab84ddcad983189346f9a0329a
+  source_file_mappings: 44
+  unique_payload_files: 28
+  license_payload_manifest_sha256: 4c92aaab2bc59e6d1634ef5f3f4351ed7403999dc22ef2e9914aeb4d3537b429
+  selectors_mpl_notice_files: 16
+  vendor_manifest_entries: 41
+  vendor_manifest_sha256: 7888d3e9abab58ad0a218f12896337a9288e98fed840f36a6842c03ecba00d65
+  fedora_spdx_review_complete: true
+duplicate_check:
+  checked: "2026-07-19"
+  fedora_43_44_rawhide: absent
+  rpm_fusion_free_nonfree_43_44_rawhide: absent
+consumer_contract:
+  consumer: bun 1.3.14
+  build_requirement: pkgconfig(lol-html) >= 1.4.0
+  runtime_soname: liblolhtml.so.1
+  source_abi: lol_html_memory_settings_t includes graceful_bail_out_on_memory_limit_exceeded
+build_validation:
+  fedora_44_x86_64_cargo_c_layout_probe: passed
+  soname_probe: passed
+  pkgconfig_probe: passed
+  c_api_symbol_probe: passed
+  upstream_c_suites: 8 passed against the staged shared library
+  local_rpm_build: passed at 3.0.0-0.7.fc44
+  srpm_bytes: 4590890
+  srpm_sha256: 1f6c7039be9a87befa089583cd1fe905325b672db6e269d79fed90cd1f826d28
+  runtime_rpm_bytes: 460475
+  runtime_rpm_sha256: 0e126cb22ee87737681b3106fd72f834081f8fbbba680cad04c4c6e733188a79
+  devel_rpm_bytes: 16338
+  devel_rpm_sha256: 2a25fc761cc82188d266c3fdefde353aaf9321aa7ec749ca74a46085a2af3819
+  artifact_rpmlint: zero errors across 30 matrix artifacts; one expected generated Source1 URL warning per chroot
+  rpm_installed: false
+  mock_matrix:
+    fedora_43_x86_64: passed
+    fedora_43_aarch64: passed under software emulation
+    fedora_44_x86_64: passed
+    fedora_44_aarch64: passed under software emulation
+    fedora_rawhide_x86_64: passed
+    fedora_rawhide_aarch64: passed under software emulation
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  subdir: packages/lol-html
+  spec: lol-html.spec

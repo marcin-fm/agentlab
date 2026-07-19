@@ -1,0 +1,136 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "tempfile"
+require "tmpdir"
+require "uri"
+
+class SourcePreparationError < StandardError; end
+
+def run!(*argv, chdir: nil, env: {})
+  options = {}
+  options[:chdir] = chdir if chdir
+  stdout, stderr, status = Open3.capture3(env, *argv, **options)
+  $stdout.write(stdout)
+  $stderr.write(stderr)
+  return if status.success?
+
+  raise SourcePreparationError, "command failed: #{argv.join(' ')}"
+end
+
+def source_filename(value)
+  url, fragment = value.split("#", 2)
+  return fragment.delete_prefix("/") if fragment&.start_with?("/")
+
+  File.basename(URI(url).path)
+rescue URI::InvalidURIError
+  raise SourcePreparationError, "invalid source URL #{value.inspect}"
+end
+
+def expanded_sources(spec)
+  stdout, stderr, status = Open3.capture3("rpmspec", "-P", spec)
+  raise SourcePreparationError, "cannot expand #{spec}: #{stderr.strip}" unless status.success?
+
+  stdout.each_line.each_with_object({}) do |line, sources|
+    match = line.match(/\ASource(?<index>\d*):\s+(?<value>\S+)/)
+    next unless match
+
+    index = match[:index].empty? ? 0 : Integer(match[:index], 10)
+    sources[index] = match[:value]
+  end
+end
+
+def verify_file!(path, sha256:, size_bytes: nil)
+  raise SourcePreparationError, "missing source #{path}" unless File.file?(path)
+  raise SourcePreparationError, "refusing symlinked source #{path}" if File.symlink?(path)
+  if size_bytes && File.size(path) != size_bytes
+    raise SourcePreparationError, "source size mismatch: #{File.basename(path)}"
+  end
+  return if Digest::SHA256.file(path).hexdigest == sha256
+
+  raise SourcePreparationError, "source checksum mismatch: #{File.basename(path)}"
+end
+
+def atomic_copy(source, destination)
+  Tempfile.create([".lol-html-source-", ".tmp"], File.dirname(destination)) do |file|
+    file.binmode
+    File.open(source, "rb") { |input| IO.copy_stream(input, file) }
+    file.flush
+    file.fsync
+    File.chmod(0o644, file.path)
+    File.rename(file.path, destination)
+  end
+end
+
+begin
+spec = nil
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/prepare-lol-html-srpm-sources --spec PATH"
+  parser.on("--spec PATH", "lol-html spec path") { |path| spec = path }
+end.parse!
+
+raise SourcePreparationError, "--spec is required" unless spec
+spec = File.realpath(spec)
+raise SourcePreparationError, "source preparer requires lol-html.spec" unless File.basename(spec) == "lol-html.spec"
+
+specdir = File.dirname(spec)
+receipt_path = File.join(specdir, "lol-html-3.0.0-cargo-vendor.json")
+receipt = JSON.parse(File.read(receipt_path))
+source = receipt.fetch("source")
+vendor = receipt.fetch("vendor")
+c_api = receipt.fetch("c_api")
+sources = expanded_sources(spec)
+source_path = File.join(specdir, source_filename(sources.fetch(0)))
+output_path = File.join(specdir, vendor.fetch("filename"))
+verify_file!(source_path, sha256: source.fetch("sha256"))
+
+Dir.mktmpdir("agentlab-lol-html-srpm-preparation-", "/srv/tmp") do |temporary|
+  source_parent = File.join(temporary, "source")
+  FileUtils.mkdir_p(source_parent)
+  run!("tar", "--extract", "--gzip", "--no-same-owner", "--file", source_path, "--directory", source_parent)
+  source_dir = File.join(source_parent, source.fetch("archive_root"))
+  raise SourcePreparationError, "Source0 has an unexpected archive root" unless File.directory?(source_dir)
+
+  verify_file!(File.join(source_dir, "Cargo.toml"), sha256: source.fetch("root_manifest_sha256"))
+  verify_file!(File.join(source_dir, "c-api", "Cargo.toml"), sha256: c_api.fetch("upstream_manifest_sha256"))
+  verify_file!(File.join(source_dir, "c-api", "Cargo.lock"), sha256: c_api.fetch("lockfile_sha256"))
+  verify_file!(File.join(source_dir, "c-api", "include", "lol_html.h"), sha256: c_api.fetch("header_sha256"))
+
+  cargo_home = ENV.fetch("CARGO_HOME", File.join(temporary, "cargo-home"))
+  FileUtils.mkdir_p(cargo_home)
+  run!(
+    "cargo", "vendor", "--locked", "--versioned-dirs", "vendor",
+    chdir: File.join(source_dir, "c-api"),
+    env: { "CARGO_HOME" => cargo_home, "CARGO_NET_RETRY" => "3" }
+  )
+
+  vendor_dir = File.join(source_dir, "c-api", "vendor")
+  directories = Dir.children(vendor_dir).select { |entry| File.directory?(File.join(vendor_dir, entry)) }.sort
+  unless directories.length == vendor.fetch("directory_count")
+    raise SourcePreparationError, "Cargo vendor directory count mismatch"
+  end
+  unless directories.all? { |entry| File.file?(File.join(vendor_dir, entry, ".cargo-checksum.json")) }
+    raise SourcePreparationError, "Cargo vendor entry lacks .cargo-checksum.json"
+  end
+
+  tar_path = File.join(temporary, "#{vendor.fetch('filename').delete_suffix('.gz')}")
+  run!(
+    "tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--format=gnu",
+    "--create", "--file", tar_path, "--directory", File.join(source_dir, "c-api"), "vendor"
+  )
+  run!("gzip", "-n", "-9", tar_path)
+  generated = "#{tar_path}.gz"
+  verify_file!(generated, sha256: vendor.fetch("sha256"), size_bytes: vendor.fetch("size_bytes"))
+  atomic_copy(generated, output_path)
+end
+
+puts "Prepared and verified #{File.basename(output_path)}."
+rescue SourcePreparationError, JSON::ParserError, KeyError, Errno::ENOENT => e
+  warn "error: #{e.message}"
+  exit 1
+end

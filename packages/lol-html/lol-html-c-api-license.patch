@@ -1,0 +1,12 @@
+diff --git a/c-api/Cargo.toml b/c-api/Cargo.toml
+index bfb5c7e..fc024ea 100644
+--- a/c-api/Cargo.toml
++++ b/c-api/Cargo.toml
+@@ -7,6 +7,7 @@ edition = "2024"
+ links = "lolhtml"
+ rust-version = "1.89"
+ publish = false
++license = "BSD-3-Clause"
+ 
+ [features]
+ default = ["capi"]

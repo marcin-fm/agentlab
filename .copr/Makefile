@@ -33,6 +33,12 @@ srpm:
 			install -pm0755 "$(repo_root)/scripts/audit-bun-source-licenses" "$$(dirname "$(spec)")/audit-bun-source-licenses"; \
 			ruby "$(repo_root)/scripts/prepare-bun-srpm-sources" --spec "$(spec)"; \
 			;; \
+		lol-html.spec) \
+			command -v ruby-mri >/dev/null 2>&1 || dnf -y install ruby; \
+			command -v cargo >/dev/null 2>&1 || dnf -y install cargo; \
+			install -pm0755 "$(repo_root)/scripts/prepare-lol-html-srpm-sources" "$$(dirname "$(spec)")/prepare-lol-html-srpm-sources"; \
+			ruby-mri "$(repo_root)/scripts/prepare-lol-html-srpm-sources" --spec "$(spec)"; \
+			;; \
 	esac
 	rpmbuild -bs \
 		--define "_sourcedir $$(dirname "$(spec)")" \

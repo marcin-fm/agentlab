@@ -1,0 +1,56 @@
+{
+  "schema": "lol-html-cargo-vendor/v1",
+  "package": "lol-html",
+  "version": "3.0.0",
+  "source": {
+    "url": "https://github.com/cloudflare/lol-html/archive/refs/tags/v3.0.0.tar.gz",
+    "sha256": "41ed4231fd05b1c73c0664f1f05f18b0d96a34aabf488e6cb601c3bdc7306af9",
+    "commit": "02f139c4437b2da666a50d32e11d9158cbe0a393",
+    "archive_root": "lol-html-3.0.0",
+    "root_manifest_sha256": "2d8f421cd2934fd561e73ee7c24383dc329f5dddfc80f890299717f4cfd0a809"
+  },
+  "c_api": {
+    "version": "1.4.0",
+    "rust_version": "1.89",
+    "upstream_manifest_sha256": "b9b10ea74d6a798f76d69b069f764e99cddf6a67e5b14eded1dbfbaeea1faa8a",
+    "patched_manifest_sha256": "11a173c126f925a466a2554925207c377c6ba78863dd8f0a5f31a0bb46b78e8e",
+    "lockfile_sha256": "4fbb6a7b50b9e139fe44a8c652d6acbcbd4f93f2f127cf7b85b59dc5b59705ec",
+    "header_sha256": "7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293"
+  },
+  "vendor": {
+    "filename": "lol-html-3.0.0-cargo-vendor.tar.gz",
+    "directory_count": 43,
+    "size_bytes": 4110371,
+    "sha256": "55da2f37159c90797e8ddeb81535c31067a1b1f884f0de2779dd17467279639f",
+    "linked_manifest_count": 41,
+    "linked_manifest_sha256": "7888d3e9abab58ad0a218f12896337a9288e98fed840f36a6842c03ecba00d65"
+  },
+  "license_payload": {
+    "aggregate_expression": "BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib",
+    "linked_dependency_entries": 29,
+    "source_file_mappings": 44,
+    "unique_payload_files": 28,
+    "manifest_sha256": "4c92aaab2bc59e6d1634ef5f3f4351ed7403999dc22ef2e9914aeb4d3537b429",
+    "selectors": {
+      "version": "0.37.0",
+      "standalone_license_file": false,
+      "source_notice": "MPL-2.0 notice and retrieval URL in each source file",
+      "fedora_package_review": "https://bugzilla.redhat.com/show_bug.cgi?id=2124365",
+      "fedora_rawhide_package": "rust-selectors"
+    }
+  },
+  "c_tests": {
+    "top_level_suites": 8,
+    "runner": "Upstream C sources linked directly against the staged shared library",
+    "test_only_registry_crates_avoided": 4
+  },
+  "shared_library": {
+    "cargo_c_version": "0.10.21",
+    "filename": "liblolhtml.so.1.4.0",
+    "soname": "liblolhtml.so.1",
+    "pkgconfig": "lol-html",
+    "pkgconfig_version": "1.4.0",
+    "exported_c_api_symbols": 97
+  },
+  "scope": "Released lol-html C API production Cargo closure, linked license payload, upstream C test structure, and Fedora cargo-c shared-library layout; target Mock builds remain a separate gate."
+}
