@@ -1,10 +1,11 @@
-status: blocked
+status: enabled
 name: rust-comrak0.54
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - COPR enablement and package publication approval are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
-  - The Fedora 43 no-bon compatibility patch requires fresh repository validation.
+blockers: []
+validation:
+  enablement_release: Release 0.2 enables the independently selected Kreuzberg dependency across its six-cell target matrix; live results are retained in the project playbook.
+  source_identity: The immutable static crates.io archive matches the pinned source SHA-256 and supplies the declared BSD-2-Clause project text.
+  feature_boundary: The accepted Fedora interface retains the CLI feature but omits bon, its generated builder APIs, and the upstream cli-plus-bon default selection.
+  duplicate_audit: No crate(comrak) = 0.54.0 provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories as checked on 2026-07-19.
 upstream:
   provider: crates_io
   crate: comrak
@@ -13,6 +14,13 @@ upstream:
   source_url_template: https://static.crates.io/crates/comrak/comrak-{version}.crate
   source_sha256: 0d5910408554659ed848ff469e67ec83b30f179e72cec286cfdae64d1616f466
 copr:
-  enabled: false
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
   subdir: packages/rust-comrak0.54
   spec: rust-comrak0.54.spec

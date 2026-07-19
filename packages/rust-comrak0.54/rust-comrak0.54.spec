@@ -10,14 +10,23 @@
 
 Name:           rust-comrak0.54
 Version:        0.54.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        100% CommonMark-compatible GitHub Flavored Markdown parser
 
 License:        BSD-2-Clause
 URL:            https://crates.io/crates/comrak
-Source:         %{crates_source}
-# Automatically generated patch to strip dependencies and normalize metadata
+Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora packaging: remove benchmark-only and non-native target dependencies
+# that are unavailable or unused in Fedora's native packaged-crate test graph.
+# Upstream status: not submitted because upstream intentionally retains its
+# benchmark and WASM/iOS target support.
 Patch:          comrak-fix-metadata-auto.diff
+# Fedora compatibility: retain the CLI feature while omitting the unavailable
+# Fedora 43 bon 3 dependency and its generated builder APIs. The build script
+# registers dormant bon cfg guards as an expected disabled value.
+# The maintainer has accepted this reduced default interface temporarily.
+# Upstream status: not submitted because upstream intentionally supports bon;
+# this is a Fedora 43 dependency-availability choice.
 Patch1:         comrak-f43-no-bon.diff
 
 BuildRequires:  cargo-rpm-macros >= 26
@@ -233,5 +242,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.54.0-0.2
+- Enable the accepted Fedora no-bon compatibility interface.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.54.0-0.1
 - Add the initial repository packaging changelog.

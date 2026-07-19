@@ -11,7 +11,9 @@
      "shell-words",
      "xdg",
      "fmt2io",
-@@ -73,7 +71,5 @@
+@@ -71,9 +69,7 @@
+     "attributes",
+ ]
  default = [
 -    "cli",
      "syntect-onig",
@@ -19,7 +21,25 @@
  ]
  phoenix_heex = []
  shortcodes = ["emojis"]
-@@ -160,3 +156,0 @@
+@@ -157,10 +153,6 @@
+ features = ["derive"]
+ optional = true
+ 
 -[dependencies.bon]
 -version = "3"
 -optional = true
+-
+ [dependencies.caseless]
+ version = "0.2"
+
+--- comrak-0.54.0/build.rs
++++ comrak-0.54.0/build.rs
+@@ -3,6 +3,8 @@
+ use std::{env, path::PathBuf};
+ 
+ fn main() {
++    println!("cargo::rustc-check-cfg=cfg(feature, values(\"bon\"))");
++
+     let out_dir: PathBuf = env::var("OUT_DIR").unwrap().parse().unwrap();
+ 
+     // entity::lookup is handed just the inner entity name, like "amp" for
