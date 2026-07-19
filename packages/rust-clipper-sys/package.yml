@@ -1,7 +1,5 @@
 name: rust-clipper-sys
-status: blocked
-blockers:
-  - Requires the Fedora system polyclipping provider; bundled Clipper sources and license payload must remain excluded.
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass; source hosting remains unresolved.
+status: enabled
+blockers: []
 upstream: {provider: crates_io, crate: clipper-sys, version_requirement: '= 0.8.0', current_version: 0.8.0, source_sha256: b5141c32419064aef7322f754b92fd4ea53c360c1ad984ec38b58af533eba3ac, source_url_template: 'https://static.crates.io/crates/clipper-sys/clipper-sys-{version}.crate'}
-copr: {enabled: false, subdir: packages/rust-clipper-sys, spec: rust-clipper-sys.spec}
+copr: {enabled: true, subdir: packages/rust-clipper-sys, spec: rust-clipper-sys.spec}

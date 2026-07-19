@@ -2,6 +2,13 @@
 
 ## Finalization status
 
-The package remains `blocked` with COPR disabled. Retained F43/F44 x86_64 artifact evidence is summarized in `../kreuzberg/dependency-finalization.yml`. This no-full-rebuild pass provides current static validation rather than a new clean build or `rpmlint` result.
+The package is enabled for the Fedora 43, Fedora 44, and Rawhide target matrix.
 
-Blocked import of `clipper-sys` 0.8.0. The staged package deliberately links Fedora `polyclipping` and removes bundled Clipper sources from the payload.
+The exact crates.io `clipper-sys 0.8.0` source is ISC-licensed. Its bundled
+Clipper 6.4.2 implementation is not compiled or installed; the package builds
+the wrapper against Fedora's matching BSL-1.0 `polyclipping` shared library and
+removes the bundled implementation, header, and license from the crate payload.
+
+The retained test-only patch keeps backing arrays alive while upstream's FFI
+tests read their raw pointers. It does not change the public crate or runtime
+behavior.

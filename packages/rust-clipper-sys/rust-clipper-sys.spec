@@ -7,13 +7,18 @@
 
 Name:           rust-clipper-sys
 Version:        0.8.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Boolean operations on polygons (Clipper wrapper)
 
 License:        ISC
 URL:            https://crates.io/crates/clipper-sys
-Source:         %{crates_source}
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-specific: compile the ISC wrapper against Fedora's BSL-1.0
+# polyclipping 6.4.2 provider instead of the bundled matching Clipper source.
+# Not submitted upstream because it selects Fedora's system-library policy.
 Patch0:         clipper-sys-0.8.0-system-polyclipping.patch
+# Keep test-owned arrays alive while their raw pointers are used by the FFI
+# wrapper. Not submitted upstream; this changes only the published test code.
 Patch1:         clipper-sys-0.8.0-fix-test-lifetimes.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -114,6 +119,9 @@ rm -f %{buildroot}%{crate_instdir}/clipper/LICENSE.txt
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.8.0-0.2
+- Enable the crate with Fedora's system polyclipping 6.4.2 provider.
+- Document the system-library and test-lifetime patch status.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.8.0-0.1
 - Add the initial repository packaging changelog.
-%autochangelog
