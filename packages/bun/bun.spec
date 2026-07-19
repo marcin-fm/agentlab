@@ -30,10 +30,14 @@
 %global node_headers_sha256 045e9bf477cd5db0ec67f8c1a63ba7f784dedfe2c581e3d0ed09b88e9115dd07
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global cargo_vendor_sha256 299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57
+%global cargo_vendor_manifest_sha256 37dc9f2bef863d9b87e3e289ea9a783b6955bd961586be34ad0c37766522d187
+%global lolhtml_manifest_sha256 feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03
+%global lolhtml_lockfile_sha256 02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d
+%global lolhtml_source_identity 712928b3736f4aad
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.17%{?dist}
+Release:        0.0.18%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -90,7 +94,9 @@ Patch5:         bun-fedora-shared-cxx-runtime.patch
 
 ExclusiveArch:  x86_64
 
+BuildRequires:  binutils
 BuildRequires:  bison
+BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  clang20
 BuildRequires:  clang20-devel
 BuildRequires:  clang20-libs
@@ -130,10 +136,11 @@ Bun-pinned Zig fork without an external Zig executable, verifies and patches
 the checked minimized WebKit/JSC source, builds its static libraries with LLVM 21,
 and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
 three frozen npm installs are proven separately with networking unavailable.
-The RPM draft carries the complete checked dependency-source closure but stops
-before staging those inputs into Bun's build graph and compiling Bun itself.
-Separate local proofs cover the first and seed-free offline self-builds, but
-the final source-build graph and relink payload integration remain blocked.
+The RPM draft carries the complete checked dependency-source closure, stages
+the pinned lol-html source and vendored Cargo graph at Bun's production path,
+and verifies that static library through Fedora's Cargo macros. The other
+native and npm inputs, final Bun source-build graph, and relink payload
+integration remain blocked.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -177,11 +184,38 @@ tar -xf %{SOURCE2} -C vendor
 mv vendor/WebKit-%{webkit_commit} vendor/WebKit
 patch -d vendor/WebKit -p1 < %{PATCH1}
 
+mkdir -p vendor/lolhtml
+tar --extract --gzip --file %{SOURCE13} --strip-components=1 --directory vendor/lolhtml
+echo "%{lolhtml_manifest_sha256}  vendor/lolhtml/c-api/Cargo.toml" | sha256sum -c -
+echo "%{lolhtml_lockfile_sha256}  vendor/lolhtml/c-api/Cargo.lock" | sha256sum -c -
+printf '%s\n' '%{lolhtml_source_identity}' > vendor/lolhtml/.ref
+
+tar --extract --gzip --file %{SOURCE24} --directory vendor/lolhtml/c-api
+pushd vendor/lolhtml/c-api >/dev/null
+%cargo_prep -v cargo-vendor
+test "$(find cargo-vendor -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 43
+popd >/dev/null
+
 %build
 export HOME="$PWD/.build-home"
 export XDG_CACHE_HOME="$PWD/.build-cache"
 export GIT_SHA=%{bun_commit}
 mkdir -p "$HOME" "$XDG_CACHE_HOME"
+
+# This standalone check proves the staged vendored graph with Fedora's Cargo
+# profile. Bun's final build later rebuilds the same C API with its own
+# reviewed release flags into build/release/deps/lolhtml.
+pushd vendor/lolhtml/c-api >/dev/null
+%cargo_build
+%cargo_vendor_manifest
+ruby -e 'path = ARGV.fetch(0); text = File.read(path); changed = text.sub!(/^lol_html v2\.7\.2 \([^\n]+\)$/, "lol_html v2.7.2"); abort "missing local lol_html vendor record" unless changed; File.write(path, text)' cargo-vendor.txt
+echo "%{lolhtml_lockfile_sha256}  Cargo.lock" | sha256sum -c -
+echo "%{cargo_vendor_manifest_sha256}  cargo-vendor.txt" | sha256sum -c -
+test "$(wc -l < cargo-vendor.txt)" -eq 41
+test -s target/release/liblolhtml.a
+nm -g --defined-only target/release/liblolhtml.a | grep 'lol_html_' | LC_ALL=C sort -u > lolhtml-exported-symbols.txt
+test "$(wc -l < lolhtml-exported-symbols.txt)" -eq 97
+popd >/dev/null
 
 cmake -S .build-tools/zig -B .build-tools/zig-build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
@@ -299,6 +333,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.18
+- Stage and verify the vendored lol-html Cargo build with Fedora macros.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.17
 - Integrate the direct native and Node sources plus generated npm and Cargo sources.
 

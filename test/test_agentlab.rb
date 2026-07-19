@@ -931,6 +931,48 @@ class AgentlabTest < Minitest::Test
     )
   end
 
+  def test_validates_bun_lolhtml_rpm_cargo_receipt
+    package = Agentlab.package_named("bun")
+    plan = package.data.fetch("build_plan")
+    stages = plan.fetch("stages")
+    spec = File.read(File.join(package.directory, "bun.spec"))
+
+    assert_empty(
+      Agentlab.validate_bun_lolhtml_rpm_cargo(
+        package,
+        stages.fetch("lolhtml_rpm_cargo"),
+        stages.fetch("dependency_closure"),
+        plan.fetch("source_inputs").fetch("lolhtml"),
+        "1.3.14",
+        spec
+      )
+    )
+
+    invalid_stage = stages.fetch("lolhtml_rpm_cargo").merge("proof_receipt_sha256" => "0" * 64)
+    assert_includes(
+      Agentlab.validate_bun_lolhtml_rpm_cargo(
+        package,
+        invalid_stage,
+        stages.fetch("dependency_closure"),
+        plan.fetch("source_inputs").fetch("lolhtml"),
+        "1.3.14",
+        spec
+      ),
+      "bun: lol-html RPM Cargo proof receipt is missing or has wrong SHA-256"
+    )
+    assert_includes(
+      Agentlab.validate_bun_lolhtml_rpm_cargo(
+        package,
+        stages.fetch("lolhtml_rpm_cargo"),
+        stages.fetch("dependency_closure"),
+        plan.fetch("source_inputs").fetch("lolhtml"),
+        "1.3.14",
+        spec.sub("%cargo_vendor_manifest", "# removed")
+      ),
+      "bun: spec does not integrate the verified lol-html RPM Cargo stage"
+    )
+  end
+
   def test_validates_bun_minimized_webkit_source
     source_package = Agentlab.package_named("bun")
     Dir.mktmpdir do |directory|

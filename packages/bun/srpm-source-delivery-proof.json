@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v1",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.17",
+  "rpm_release": "0.0.18",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-19",
   "source_generation": {
@@ -27,18 +27,18 @@
   },
   "spec": {
     "filename": "bun.spec",
-    "size_bytes": 18230,
-    "sha256": "989da13ec04131347104bfc7762dc15e1b15425fe743164392796f83c373f241"
+    "size_bytes": 20287,
+    "sha256": "cf632afece5f46b134e07f4abea3c4be50c1cef9474d9bd01e9506706e3a10f9"
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.17.fc44.src.rpm",
-    "size_bytes": 322184174,
-    "sha256": "7984d0fced0c103d3642e03a93cfd57afc31a8259054ce23ea0f2b0c0e1c1f86",
+    "filename": "bun-1.3.14-0.0.18.fc44.src.rpm",
+    "size_bytes": 322189267,
+    "sha256": "210c753b67c189d1baefaf7120242fc7a55c8681b4a1821f25b65b43e1480223",
     "digest_check": "ok",
     "inventory_members": 32,
-    "inventory_sha256": "0d47854281710d42af689e0f377908f239da584c42b0ac72f068a9425b0cc93d",
-    "member_manifest_sha256": "57ad684ad5080d2339dfb57d64a032844e37100a8f51dd98da8cf46eb16eaf56",
-    "uncompressed_member_bytes": 326174335
+    "inventory_sha256": "cfa4ee1c6045c828de6ee47e184f5cd5db48cbd6b2611d138340b99240f5a7fd",
+    "member_manifest_sha256": "48b583210cf119acfd444f5315f7a62a93ee7f700ba7c79b210553e47af46d9f",
+    "uncompressed_member_bytes": 326176392
   },
   "validation": {
     "direct_source_checksums_verified": true,

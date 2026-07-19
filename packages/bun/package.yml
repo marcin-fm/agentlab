@@ -1,7 +1,7 @@
 name: bun
 status: blocked
 blockers:
-  - The complete checked dependency closure is carried by the SRPM but is not yet staged into Bun's final offline build graph.
+  - The lol-html Cargo subgraph is staged and verified, but the remaining native, Node, and npm inputs are not yet staged into Bun's final offline build graph.
   - The complete LGPL relink kit is not generated and shipped from the final RPM build.
   - Final bundled-license accounting, aarch64 build proof, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
@@ -84,6 +84,11 @@ build_plan:
       release_pin: bun-v1.3.14
       repository: cloudflare/lol-html
       commit: 77127cd2b8545998756e8d64e36ee2313c4bb312
+      source_archive: lolhtml-929339b1d898e66b.tar.gz
+      source_sha256: 2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379
+      source_identity: 712928b3736f4aad
+      manifest_sha256: feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03
+      lockfile_sha256: 02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d
       source_receipt: bun-1.3.14-release-local-source-closure.json
       patch: bun-lolhtml-fedora-stable-rust.patch
       patch_sha256: 1d530ec7a177285f0e6e819359547b9360b86e930968c4dadc196cce10425055
@@ -205,7 +210,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: c097517dadec87b2b3d5eafe606979bd99ef220393a7fc72982db5ed7a29d99e
+      proof_receipt_sha256: 45b0a12595b7f29b421329d9446502627f35372c785f375bafce6911faeb0091
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -214,6 +219,20 @@ build_plan:
       srpm_built_verified: true
       srpm_inventory_verified: true
       source_members_byte_identical_verified: true
+    lolhtml_rpm_cargo:
+      state: verified
+      proof_receipt: lolhtml-rpm-cargo-proof.json
+      proof_receipt_sha256: d701bdfab971270837eee516056ef30496b374dbaa1d72933364ea6f195ac971
+      source_staging_verified: true
+      cargo_prep_vendor_verified: true
+      cargo_build_macro_verified: true
+      cargo_vendor_manifest_verified: true
+      network_namespace_verified: true
+      static_library_verified: true
+      exported_c_api_verified: true
+      vendor_directory_count: 43
+      linked_vendor_package_count: 41
+      linked_vendor_manifest_sha256: 37dc9f2bef863d9b87e3e289ea9a783b6955bd961586be34ad0c37766522d187
     seed_build:
       state: verified
       bootstrap_seed_verified: true

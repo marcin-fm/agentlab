@@ -27,6 +27,7 @@ module Agentlab
     webkit_source_build
     dependency_closure
     source_delivery
+    lolhtml_rpm_cargo
     seed_build
     self_rebuild
     final
@@ -1261,6 +1262,95 @@ module Agentlab
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
   end
 
+  def validate_bun_lolhtml_rpm_cargo(package, stage, dependency_stage, lolhtml, version, spec)
+    return [] unless package.name == "bun" && stage.is_a?(Hash) && stage["state"] == "verified"
+
+    receipt_name = stage["proof_receipt"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_sha256 = stage["proof_receipt_sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: lol-html RPM Cargo proof receipt is missing or has wrong SHA-256"]
+    end
+
+    errors = []
+    receipt = JSON.parse(File.read(receipt_path))
+    errors << "bun: unsupported lol-html RPM Cargo proof schema" unless receipt["schema"] == "bun-lolhtml-rpm-cargo-proof/v1"
+    errors << "bun: lol-html RPM Cargo proof package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: lol-html RPM Cargo proof release mismatch" unless receipt["release"].to_s == version
+    spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
+    errors << "bun: lol-html RPM Cargo proof RPM release mismatch" unless receipt["rpm_release"] == spec_release
+    errors << "bun: lol-html RPM Cargo proof platform mismatch" unless receipt["proof_platform"] == "fedora-44-x86_64"
+    errors << "bun: lol-html RPM Cargo production spec SHA-256 mismatch" unless receipt.dig("production_spec", "sha256") == Digest::SHA256.hexdigest(spec)
+    errors << "bun: lol-html RPM Cargo production spec size mismatch" unless receipt.dig("production_spec", "size_bytes") == spec.bytesize
+
+    source = receipt.dig("inputs", "lolhtml_source") || {}
+    expected_source = {
+      "filename" => lolhtml["source_archive"],
+      "sha256" => lolhtml["source_sha256"],
+      "source_identity" => lolhtml["source_identity"],
+      "manifest_sha256" => lolhtml["manifest_sha256"],
+      "lockfile_sha256" => lolhtml["lockfile_sha256"]
+    }
+    expected_source.each do |key, value|
+      errors << "bun: lol-html RPM Cargo source #{key} mismatch" unless source[key] == value
+    end
+    vendor = receipt.dig("inputs", "cargo_vendor") || {}
+    errors << "bun: lol-html RPM Cargo vendor filename mismatch" unless vendor["filename"] == dependency_stage["cargo_vendor_archive_filename"]
+    errors << "bun: lol-html RPM Cargo vendor size mismatch" unless vendor["size_bytes"] == dependency_stage["cargo_vendor_archive_bytes"]
+    errors << "bun: lol-html RPM Cargo vendor SHA-256 mismatch" unless vendor["sha256"] == dependency_stage["cargo_vendor_archive_sha256"]
+    errors << "bun: lol-html RPM Cargo vendor directory count mismatch" unless vendor["directory_count"] == stage["vendor_directory_count"]
+
+    build = receipt["build"] || {}
+    errors << "bun: lol-html RPM Cargo job count mismatch" unless build["jobs"] == 4
+    %w[network_namespace cargo_offline cargo_prep_vendor_mode cargo_build_macro cargo_vendor_manifest_macro].each do |key|
+      errors << "bun: lol-html RPM Cargo proof lacks #{key}" unless build[key] == true
+    end
+    library = build["static_library"] || {}
+    errors << "bun: lol-html RPM Cargo static library path mismatch" unless library["path"] == "vendor/lolhtml/c-api/target/release/liblolhtml.a"
+    errors << "bun: lol-html RPM Cargo static library size is invalid" unless library["size_bytes"].is_a?(Integer) && library["size_bytes"].positive?
+    errors << "bun: lol-html RPM Cargo static library SHA-256 is invalid" unless library["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    symbols = build["exported_c_api_symbols"] || {}
+    errors << "bun: lol-html RPM Cargo C API symbol count mismatch" unless symbols["count"] == 97
+    errors << "bun: lol-html RPM Cargo C API symbol SHA-256 mismatch" unless symbols["sha256"] == "e27bce50176d5cd8a6861a760adcc324101b1eaec087027fa48691380df2cd70"
+    manifest = build["vendor_manifest"] || {}
+    errors << "bun: lol-html RPM Cargo linked vendor count mismatch" unless manifest["linked_package_count"] == stage["linked_vendor_package_count"]
+    errors << "bun: lol-html RPM Cargo linked vendor manifest mismatch" unless manifest["sha256"] == stage["linked_vendor_manifest_sha256"]
+    errors << "bun: lol-html RPM Cargo local path normalization mismatch" unless manifest["local_path_records_normalized"] == 1
+
+    required_validation = %w[
+      source_checksums_verified
+      manifest_and_lock_verified
+      vendor_directory_count_verified
+      fedora_cargo_prep_verified
+      fedora_cargo_build_verified
+      fedora_vendor_manifest_verified
+      network_isolation_verified
+      static_library_verified
+      exported_c_api_verified
+      production_spec_integration_verified
+    ]
+    errors << "bun: lol-html RPM Cargo validation is incomplete" unless required_validation.all? { |key| receipt.dig("validation", key) == true }
+    errors << "bun: lol-html RPM Cargo proof incorrectly claims an RPM build" unless receipt.dig("validation", "rpm_build_executed") == false
+    errors << "bun: lol-html RPM Cargo proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
+
+    required_spec_fragments = [
+      "BuildRequires:  cargo-rpm-macros >= 24",
+      "tar --extract --gzip --file %{SOURCE13} --strip-components=1 --directory vendor/lolhtml",
+      "printf '%s\\n' '%{lolhtml_source_identity}' > vendor/lolhtml/.ref",
+      "tar --extract --gzip --file %{SOURCE24} --directory vendor/lolhtml/c-api",
+      "%cargo_prep -v cargo-vendor",
+      "%cargo_build",
+      "%cargo_vendor_manifest",
+      "test \"$(wc -l < cargo-vendor.txt)\" -eq 41",
+      "grep 'lol_html_'"
+    ]
+    errors << "bun: spec does not integrate the verified lol-html RPM Cargo stage" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
+    errors
+  rescue JSON::ParserError => e
+    ["bun: invalid lol-html RPM Cargo proof receipt: #{e.message}"]
+  end
+
   def validate_bun_minimized_webkit_source(package, webkit, version, spec)
     return [] unless package.name == "bun" && webkit.is_a?(Hash) && webkit.key?("jsc_only")
 
@@ -1534,6 +1624,7 @@ module Agentlab
 
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
     errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
+    errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
 
     if seed.is_a?(Hash)
       errors << "bun: seed source must match the Bun release" unless seed["release_pin"] == "bun-v#{version}"
