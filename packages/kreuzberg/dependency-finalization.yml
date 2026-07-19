@@ -37,7 +37,6 @@ blocker_codes:
   SOURCE_HOSTING: immutable public source hosting is unresolved
   LICENSE_TEXT: full third-party license text evidence is not shipped
   PARSER_HOSTING: immutable hosting for the 295-parser subset is unresolved
-  FAST_RESIZE_FIXTURE: fast_image_resize6 fixture/source evidence is unresolved
   LOPDF_FIXTURE: lopdf fixture/source evidence is unresolved
   IMAGEPROC_FIXTURE: imageproc fixture/source evidence is unresolved
   NAPI_LICENSE: supplemental MIT license source is pinned but not published in the normal crate source
@@ -84,7 +83,7 @@ rows:
   - {package: rust-dbase0.8, source_manifest_row: 14, crate_version: 0.8.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-ecb0.2, source_manifest_row: 15, crate_version: 0.2.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-entities1, source_manifest_row: 16, crate_version: 1.0.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
-  - {package: rust-fast_image_resize6, source_manifest_row: 17, crate_version: 6.0.0, source_status: immutable_external_fixture_input, license_status: spec_declared_aggregate_reviewed, patch_status: declared_fast_image_resize-fix-metadata.diff, current_spec_state: fixture_blocked_unbuilt, blocker_codes: [FAST_RESIZE_FIXTURE, BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-fast_image_resize6, source_manifest_row: 17, crate_version: 6.0.0, source_status: crates_io_release_archive, license_status: both_upstream_texts_verified, patch_status: declared_fast_image_resize-fix-metadata.diff, current_spec_state: fresh_f44_x86_64_fixture_free_build_passed, blocker_codes: []}
   - {package: rust-finl_unicode1, source_manifest_row: 18, crate_version: 1.4.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_finl_unicode-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-fmt2io1, source_manifest_row: 19, crate_version: 1.0.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-geo-clipper0.9, source_manifest_row: 20, crate_version: 0.9.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}

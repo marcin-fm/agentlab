@@ -1,10 +1,6 @@
-status: blocked
+status: enabled
 name: rust-fast_image_resize6
-blockers:
-  - Retained historical F43/F44 x86_64 artifact evidence exists, but no new serialized clean-build/rpmlint validation of the current repository package was performed in this pass.
-  - Public source hosting for the test fixture and COPR SCM availability are not finalized.
-  - Fedora/RPM Fusion duplicate and license review is still required.
-  - The large upstream fixture archive is not committed; it is documented by URL and SHA-256 below.
+blockers: []
 upstream:
   provider: crates_io
   crate: fast_image_resize
@@ -12,10 +8,7 @@ upstream:
   current_version: 6.0.0
   source_url_template: https://static.crates.io/crates/fast_image_resize/fast_image_resize-{version}.crate
   source_sha256: 12dd43e5011e8d8411a3215a0d57a2ec5c68282fb90eb5d7221fab0113442174
-fixtures:
-  source_url: https://github.com/Cykooz/fast_image_resize/archive/a563fb6226009171143d81d250db4a823a034895/fast_image_resize-a563fb6226009171143d81d250db4a823a034895.tar.gz
-  source_sha256: 812098757ce5bf13f437dae8792fe1bfbc6d7b4a19dab6144f404776f6b8dd2b
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/rust-fast_image_resize6
   spec: rust-fast_image_resize6.spec

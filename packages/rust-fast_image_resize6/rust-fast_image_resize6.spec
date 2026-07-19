@@ -4,18 +4,15 @@
 
 %global crate fast_image_resize
 %global source_sha256 12dd43e5011e8d8411a3215a0d57a2ec5c68282fb90eb5d7221fab0113442174
-%global fixtures_commit a563fb6226009171143d81d250db4a823a034895
-%global fixtures_sha256 812098757ce5bf13f437dae8792fe1bfbc6d7b4a19dab6144f404776f6b8dd2b
 
 Name:           rust-fast_image_resize6
 Version:        6.0.0
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Library for fast image resizing with using of SIMD instructions
 
 License:        MIT OR Apache-2.0
 URL:            https://crates.io/crates/fast_image_resize
-Source:         %{crates_source}
-Source1:        https://github.com/Cykooz/fast_image_resize/archive/%{fixtures_commit}/fast_image_resize-%{fixtures_commit}.tar.gz
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # Prune benchmark/reference-comparison dependencies and metadata unused by the packaged library tests.
 # Fedora-specific; not submitted because upstream intentionally retains the benchmark comparison suite.
 Patch:          fast_image_resize-fix-metadata.diff
@@ -146,9 +143,6 @@ use the "std" feature of the "%{crate}" crate.
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1
-test "$(sha256sum %{SOURCE1} | cut -d ' ' -f 1)" = "%{fixtures_sha256}"
-tar -xzf %{SOURCE1} --strip-components=1 \
-  fast_image_resize-%{fixtures_commit}/data
 %cargo_prep
 
 %generate_buildrequires
@@ -162,42 +156,25 @@ tar -xzf %{SOURCE1} --strip-components=1 \
 
 %if %{with check}
 %check
-# image 0.25.10 changed luma conversion from the upstream-locked 0.25.6.
-# Keep all resize checks whose fixture inputs are unchanged.
-%cargo_test -f for_testing -- -- --skip not_u8x4::upscale_u8 \
-  --skip not_u8x4::upscale_u8x2 \
-  --skip not_u8x4::upscale_u16 \
-  --skip not_u8x4::upscale_u16x2 \
-  --skip not_u8x4::upscale_f32 \
-  --skip not_u8x4::upscale_f32x2 \
-  --skip not_u8x4::upscale_i32 \
-  --skip not_u8x4::downscale_u8 \
-  --skip not_u8x4::downscale_u8x2 \
-  --skip not_u8x4::downscale_u16 \
-  --skip not_u8x4::downscale_u16x2 \
-  --skip not_u8x4::downscale_f32 \
-  --skip not_u8x4::downscale_f32x2 \
-  --skip not_u8x4::downscale_i32
-
-# The test harness uses substring matching for --skip. Rerun unaffected
-# three- and four-channel cases with exact names.
-for test_name in \
-  not_u8x4::upscale_u8x3 \
-  not_u8x4::downscale_u8x3 \
-  not_u8x4::upscale_u16x3 \
-  not_u8x4::upscale_u16x4 \
-  not_u8x4::downscale_u16x3 \
-  not_u8x4::downscale_u16x4 \
-  not_u8x4::upscale_f32x3 \
-  not_u8x4::upscale_f32x4 \
-  not_u8x4::downscale_f32x3 \
-  not_u8x4::downscale_f32x4
-do
-  %cargo_test -f for_testing -- --test resize_tests -- "${test_name}" --exact
-done
+# Upstream's excluded data/ image fixtures have no redistribution-license
+# evidence. Run every unit, integration, and doctest that does not read them.
+%cargo_test -f for_testing -- --lib
+%cargo_test -f for_testing -- --test alpha_tests
+%cargo_test -f for_testing -- --test color_tests
+%cargo_test -f for_testing -- --test image_view
+%cargo_test -f for_testing -- --test images_tests -- --skip support_of_image_crate::use_dynamic_image --skip support_of_image_crate::use_image_buffer
+%cargo_test -f for_testing -- --test resize_tests -- resize_to_same_size --exact
+%cargo_test -f for_testing -- --test resize_tests -- resize_to_same_size_after_cropping --exact
+%cargo_test -f for_testing -- --test resize_tests -- resize_to_same_width_or_height_after_cropping --exact
+%cargo_test -f for_testing -- --test resize_tests -- not_u8x4::fractional_cropping --exact
+%cargo_test -f for_testing -- --test resize_tests -- u8x4::invalid_crop_box --exact
+%cargo_test -f for_testing -- --doc -- --skip 'src/lib.rs - (line 152)' --skip 'src/lib.rs - (line 197)'
 %endif
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 6.0.0-0.4
+- Omit unlicensed image fixtures and retain fixture-free tests.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 6.0.0-0.3
 - Run the fixture-aware test selection through Fedora's Cargo test macro.
 
