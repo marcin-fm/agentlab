@@ -88,11 +88,18 @@ class CodexCargoVendorTest < Minitest::Test
     receipt = JSON.parse(File.read(path))
 
     assert_equal(policy.fetch("cargo_supplemental_license_sources_sha256"), Digest::SHA256.file(path).hexdigest)
-    assert_equal(33, receipt.fetch("mappings").length)
-    assert_equal(17, receipt.fetch("unresolved").length)
-    assert_equal(15, receipt.dig("archive", "installable_texts"))
+    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v2", receipt.fetch("schema"))
+    assert_equal(41, receipt.fetch("mappings").length)
+    assert_equal(9, receipt.fetch("unresolved").length)
+    assert_equal(22, receipt.dig("archive", "installable_texts"))
     assert_equal("resolved-icu-data-comparison", receipt.dig("icu_mapping", "status"))
     assert_equal("1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612", receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }.fetch("expected_extracted_sha256"))
+    refute(receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }.fetch("install"))
+    assert_includes(receipt.dig("icu_mapping", "reason"), "byte-identical")
+    lock_free = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "lock_free_hashtable-0.1.4" }
+    assert_equal("48ae5c61c93c808e0831b27104d3bc7262f06bd4", lock_free.fetch("source_commit"))
+    assert_equal("exact-byte-equality", lock_free.dig("manifest_relation", "kind"))
+    assert_equal(lock_free.dig("manifest_relation", "upstream_sha256"), lock_free.dig("manifest_relation", "vendor_sha256"))
     assert(receipt.fetch("policy_holds").one? { |hold| hold.fetch("directory") == "notify-8.2.0" })
   end
 
@@ -100,7 +107,7 @@ class CodexCargoVendorTest < Minitest::Test
     receipt = JSON.parse(File.read(File.join(PACKAGE, "codex-cli-0.144.5-cargo-supplemental-license-sources.json")))
     icu_sources = receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" }
     assert_equal([nil], icu_sources.map { |source| source.fetch("expected_transport_sha256") }.uniq)
-    assert_equal(17, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
+    assert_equal(9, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
     refute(receipt.fetch("unresolved").any? { |item| item.fetch("crate_checksum") == "" })
     hold = receipt.fetch("policy_holds").fetch(0)
     assert_equal("CC0-1.0", hold.fetch("declared_expression"))
@@ -117,10 +124,10 @@ class CodexCargoVendorTest < Minitest::Test
       "missing-1" => { "checksum" => "good", "normalized_spdx_candidate" => "MIT" },
       "notify-8.2.0" => { "checksum" => "notify", "normalized_spdx_candidate" => "CC0-1.0" }
     }
-    unresolved = Array.new(17) { { "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" } }
+    unresolved = Array.new(9) { { "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" } }
     unresolved[0] = unresolved[0].merge("crate_checksum" => "bad")
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved, inventory, audit) }
-    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(16), inventory, audit) }
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(8), inventory, audit) }
     hold = { "crate_checksum" => "notify", "declared_expression" => "MIT", "license_text_sha256" => "text", "license_text_size_bytes" => 7 }
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_notify_hold!(hold, inventory, audit) }
     Dir.mktmpdir do |dir|
@@ -128,5 +135,45 @@ class CodexCargoVendorTest < Minitest::Test
       File.binwrite(path, "not-the-expected-transport")
       assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.verify_transport!(path, { "id" => "icu", "expected_transport_sha256" => "0" * 64 }) }
     end
+  end
+
+  def test_v2_provenance_rejection_helpers
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_mode!("made-up") }
+    relation = {
+      "kind" => "exact-byte-equality",
+      "upstream_sha256" => Digest::SHA256.hexdigest("upstream"), "upstream_size_bytes" => 8,
+      "vendor_sha256" => Digest::SHA256.hexdigest("vendor"), "vendor_size_bytes" => 6
+    }
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_release_manifest_relation!(relation, "wrong", "vendor") }
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_release_manifest_relation!(relation, "upstream", "different") }
+    canonical = {
+      "directory" => "fxhash-0.2.1", "crate_checksum" => "crate", "declared_expression" => "Apache-2.0 OR MIT",
+      "source_repository" => "https://github.com/cbreeden/fxhash", "provenance_mode" => "canonical-standard",
+      "source_ids" => ["mit", "apache"], "install_source_ids" => ["mit", "apache"],
+      "upstream_request" => { "url" => "https://github.com/other/fxhash/issues/9", "status" => "open", "scope" => "Ship the declared texts." },
+      "policy_basis" => "/srv/wikis/agentlab/policies.md:54",
+      "canonical_authority" => { "repository" => "https://github.com/spdx/license-list-data", "tag" => "v3.28.0", "commit" => "c4a7237ec8f4654e867546f9f409749300f1bf4c" }
+    }
+    sources = {
+      "mit" => { "immutable_url" => "https://raw.githubusercontent.com/spdx/license-list-data/c4a7237ec8f4654e867546f9f409749300f1bf4c/text/MIT.txt", "spdx_ids" => ["MIT"], "install" => true, "expected_extracted_sha256" => "m", "expected_extracted_size_bytes" => 1 },
+      "apache" => { "immutable_url" => "https://raw.githubusercontent.com/spdx/license-list-data/c4a7237ec8f4654e867546f9f409749300f1bf4c/text/Apache-2.0.txt", "spdx_ids" => ["Apache-2.0"], "install" => true, "expected_extracted_sha256" => "a", "expected_extracted_size_bytes" => 1 }
+    }
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
+    canonical["upstream_request"]["url"] = "https://github.com/cbreeden/fxhash/issues/9"
+    canonical["upstream_request"]["status"] = "closed"
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
+    canonical["upstream_request"]["status"] = "open"
+    canonical["canonical_authority"]["tag"] = "v0"
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
+    canonical["canonical_authority"]["tag"] = "v3.28.0"
+    canonical["policy_basis"] = "wrong"
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
+    canonical["policy_basis"] = "/srv/wikis/agentlab/policies.md:54"
+    canonical["source_commit"] = "0" * 40
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
+    canonical.delete("source_commit")
+    sources["apache-evidence"] = sources.fetch("apache").merge("install" => false, "expected_extracted_sha256" => "different")
+    canonical["source_ids"] = ["mit", "apache-evidence"]
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
   end
 end

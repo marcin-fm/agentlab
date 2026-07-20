@@ -23,7 +23,7 @@ srpm:
 					else \
 						filename="$${url##*/}"; \
 					fi; \
-					curl --fail --location --retry 3 --output "$$specdir/$$filename" "$$url"; \
+					test -f "$$specdir/$$filename" || curl --fail --location --retry 3 --output "$$specdir/$$filename" "$$url"; \
 					;; \
 			esac; \
 		done

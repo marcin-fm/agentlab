@@ -18,6 +18,8 @@ module CodexSupplementalLicenses
 
   ICU_PAYLOAD_SHA256 = "1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612"
   ICU_PAYLOAD_BYTES = 10_822_192
+  MAPPING_MODES = %w[cargo-vcs release-history canonical-standard].freeze
+  RELEASE_RELATIONS = %w[exact-byte-equality cargo-workspace-normalized].freeze
 
   def sha256(path) = Digest::SHA256.file(path).hexdigest
 
@@ -116,6 +118,8 @@ module CodexSupplementalLicenses
   def populate_mapping_evidence!(receipt)
     sources = receipt.fetch("sources").to_h { |source| [source.fetch("id"), source] }
     receipt.fetch("mappings").each do |mapping|
+      next if mapping.fetch("provenance_mode") == "canonical-standard"
+
       mapping["license_evidence"] = mapping.fetch("source_ids").map do |id|
         source = sources.fetch(id)
         parts = github_raw_parts!(source.fetch("immutable_url"))
@@ -147,6 +151,111 @@ module CodexSupplementalLicenses
     end
   end
 
+  def spdx_atoms(expression)
+    expression.scan(/[A-Za-z0-9.-]+/).reject { |atom| %w[AND OR WITH].include?(atom) }
+  end
+
+  def verify_spdx_coverage!(mapping, source_ids, sources)
+    covered = source_ids.flat_map { |id| sources.fetch(id).fetch("spdx_ids") }
+    raise CodexCargoVendor::Error, "mapping SPDX coverage mismatch: #{mapping.fetch('directory')}" unless (spdx_atoms(mapping.fetch("declared_expression")) - covered).empty?
+  end
+
+  def require_fields!(record, fields, label)
+    raise CodexCargoVendor::Error, "#{label} fields mismatch" unless fields.all? { |field| record.key?(field) }
+  end
+
+  def validate_release_manifest_structure!(relation)
+    require_fields!(relation, %w[kind upstream_sha256 upstream_size_bytes vendor_sha256 vendor_size_bytes], "release-history relation")
+    raise CodexCargoVendor::Error, "unknown release-history manifest relation" unless RELEASE_RELATIONS.include?(relation.fetch("kind"))
+    raise CodexCargoVendor::Error, "release-history manifest digest mismatch" unless %w[upstream_sha256 vendor_sha256].all? { |key| relation.fetch(key).match?(/\A[0-9a-f]{64}\z/) }
+    raise CodexCargoVendor::Error, "release-history manifest size mismatch" unless %w[upstream_size_bytes vendor_size_bytes].all? { |key| relation.fetch(key).is_a?(Integer) && relation.fetch(key).positive? }
+    if relation.fetch("kind") == "cargo-workspace-normalized"
+      explanation = relation.fetch("explanation")
+      raise CodexCargoVendor::Error, "missing normalized manifest relation explanation" unless explanation.is_a?(String) && !explanation.empty?
+    end
+  end
+
+  def verify_release_history!(mapping, vendor_root, sources, cache:, offline:)
+    upstream = source_bytes!(sources.fetch(mapping.fetch("release_manifest_source_id")), cache, offline:)
+    vendor = File.binread(File.join(vendor_root, mapping.fetch("directory"), "Cargo.toml.orig"))
+    validate_release_manifest_relation!(mapping.fetch("manifest_relation"), upstream, vendor)
+    verify_mapping_evidence!(mapping, sources, cache:, offline:)
+  end
+
+  def validate_release_manifest_relation!(relation, upstream, vendor)
+    validate_release_manifest_structure!(relation)
+    raise CodexCargoVendor::Error, "release-history upstream manifest SHA-256 mismatch" unless Digest::SHA256.hexdigest(upstream) == relation.fetch("upstream_sha256")
+    raise CodexCargoVendor::Error, "release-history upstream manifest size mismatch" unless upstream.bytesize == relation.fetch("upstream_size_bytes")
+    raise CodexCargoVendor::Error, "release-history vendor manifest SHA-256 mismatch" unless Digest::SHA256.hexdigest(vendor) == relation.fetch("vendor_sha256")
+    raise CodexCargoVendor::Error, "release-history vendor manifest size mismatch" unless vendor.bytesize == relation.fetch("vendor_size_bytes")
+    raise CodexCargoVendor::Error, "release-history manifest relation mismatch" if relation.fetch("kind") == "exact-byte-equality" && upstream != vendor
+    if relation.fetch("kind") == "cargo-workspace-normalized"
+      explanation = relation.fetch("explanation")
+      raise CodexCargoVendor::Error, "missing normalized manifest relation explanation" unless explanation.is_a?(String) && !explanation.empty?
+    end
+  end
+
+  def verify_canonical_standard!(mapping, sources, cache:, offline:)
+    validate_canonical_mapping!(mapping, sources)
+    mapping.fetch("source_ids").each { |id| source_bytes!(sources.fetch(id), cache, offline:) }
+  end
+
+  def validate_canonical_mapping!(mapping, sources)
+    forbidden = %w[source_commit package_path release_manifest_source_id manifest_relation license_evidence]
+    raise CodexCargoVendor::Error, "canonical mapping has false VCS fields" if forbidden.any? { |field| mapping.key?(field) }
+    request = mapping.fetch("upstream_request")
+    require_fields!(request, %w[url status scope], "canonical upstream request")
+    repository = normalized_repository!(mapping.fetch("source_repository"))
+    match = request.fetch("url").match(%r{\Ahttps://github\.com/(?<owner>[^/]+)/(?<repo>[^/]+)/issues/\d+\z})
+    raise CodexCargoVendor::Error, "canonical mapping needs an HTTPS GitHub issue" unless match && "#{match[:owner]}/#{match[:repo]}".downcase == repository
+    raise CodexCargoVendor::Error, "canonical upstream request status mismatch" unless request.fetch("status") == "open"
+    raise CodexCargoVendor::Error, "canonical upstream request scope missing" unless request.fetch("scope").is_a?(String) && !request.fetch("scope").empty?
+    raise CodexCargoVendor::Error, "canonical policy basis mismatch" unless mapping.fetch("policy_basis") == "/srv/wikis/agentlab/policies.md:54"
+    authority = mapping.fetch("canonical_authority")
+    raise CodexCargoVendor::Error, "canonical mapping authority mismatch" unless authority == { "repository" => "https://github.com/spdx/license-list-data", "tag" => "v3.28.0", "commit" => "c4a7237ec8f4654e867546f9f409749300f1bf4c" }
+    source_ids = mapping.fetch("source_ids")
+    source_ids.each do |id|
+      source = sources.fetch(id)
+      parts = github_raw_parts!(source.fetch("immutable_url"))
+      raise CodexCargoVendor::Error, "canonical mapping source mismatch" unless "#{parts.fetch('owner')}/#{parts.fetch('repo')}".downcase == "spdx/license-list-data" && parts.fetch("commit") == authority.fetch("commit")
+    end
+    verify_spdx_coverage!(mapping, source_ids, sources)
+    raise CodexCargoVendor::Error, "canonical mapping includes non-standard SPDX evidence" unless source_ids.flat_map { |id| sources.fetch(id).fetch("spdx_ids") }.sort.uniq == spdx_atoms(mapping.fetch("declared_expression")).sort
+  end
+
+  def validate_mapping_mode!(mode)
+    raise CodexCargoVendor::Error, "unknown supplemental provenance mode" unless MAPPING_MODES.include?(mode)
+  end
+
+  def validate_mapping_structure!(mapping, sources)
+    mode = mapping.fetch("provenance_mode")
+    validate_mapping_mode!(mode)
+    require_fields!(mapping, %w[directory crate_checksum declared_expression source_repository source_ids install_source_ids], "mapping")
+    normalized_repository!(mapping.fetch("source_repository"))
+    source_ids = mapping.fetch("source_ids")
+    install_ids = mapping.fetch("install_source_ids")
+    raise CodexCargoVendor::Error, "mapping source/install ids must be nonempty arrays" unless source_ids.is_a?(Array) && install_ids.is_a?(Array) && !source_ids.empty? && !install_ids.empty?
+    verify_spdx_coverage!(mapping, source_ids, sources)
+    verify_spdx_coverage!(mapping, install_ids, sources)
+    install_ids.each { |id| raise CodexCargoVendor::Error, "mapping installs noninstallable evidence" unless sources.fetch(id).fetch("install", true) }
+    spdx_atoms(mapping.fetch("declared_expression")).each do |atom|
+      evidence = source_ids.select { |id| sources.fetch(id).fetch("spdx_ids").include?(atom) }
+      installed = install_ids.select { |id| sources.fetch(id).fetch("spdx_ids").include?(atom) }
+      raise CodexCargoVendor::Error, "mapping evidence SPDX atom is not installed" if evidence.empty? || installed.empty? || evidence.any? { |id| !installed.any? { |installed_id| sources.fetch(installed_id).values_at("expected_extracted_sha256", "expected_extracted_size_bytes") == sources.fetch(id).values_at("expected_extracted_sha256", "expected_extracted_size_bytes") } }
+    end
+    case mode
+    when "cargo-vcs"
+      require_fields!(mapping, %w[source_commit package_path license_evidence], "cargo-vcs mapping")
+      raise CodexCargoVendor::Error, "cargo-vcs mapping has non-VCS fields" if %w[release_manifest_source_id manifest_relation upstream_request policy_basis canonical_authority].any? { |field| mapping.key?(field) }
+    when "release-history"
+      require_fields!(mapping, %w[source_commit package_path release_manifest_source_id manifest_relation license_evidence], "release-history mapping")
+      validate_release_manifest_structure!(mapping.fetch("manifest_relation"))
+      raise CodexCargoVendor::Error, "release-history mapping has canonical fields" if %w[upstream_request policy_basis canonical_authority].any? { |field| mapping.key?(field) }
+    when "canonical-standard"
+      validate_canonical_mapping!(mapping, sources)
+    end
+  end
+
   def extract_vendor!(archive, temporary, receipt)
     root = receipt.dig("inputs", "resolver_vendor_receipt", "vendor_tree_sha256")
     raise CodexCargoVendor::Error, "missing resolver vendor identity" unless root
@@ -167,7 +276,7 @@ module CodexSupplementalLicenses
   end
 
   def validate_unresolved!(unresolved, inventory_by_dir, audit_by_dir)
-    raise CodexCargoVendor::Error, "supplemental unresolved count drift" unless unresolved.length == 17
+    raise CodexCargoVendor::Error, "supplemental unresolved count drift" unless unresolved.length == 9
     unresolved.each do |item|
       inventory_item = inventory_by_dir.fetch(item.fetch("directory"))
       audit_item = audit_by_dir.fetch(item.fetch("directory"))
@@ -189,7 +298,7 @@ module CodexSupplementalLicenses
     end
     ids = receipt.fetch("sources").map { |source| source.fetch("id") }
     raise CodexCargoVendor::Error, "duplicate supplemental source id" unless ids.uniq.length == ids.length
-    install_names = receipt.fetch("sources").reject { |source| source.fetch("id") == "icu-data-payload" }.map { |source| source.fetch("install_filename") }
+    install_names = receipt.fetch("sources").select { |source| source.fetch("install", true) && source.fetch("id") != "icu-data-payload" }.map { |source| source.fetch("install_filename") }
     raise CodexCargoVendor::Error, "duplicate supplemental install filename" unless install_names.uniq.length == install_names.length
     sources = receipt.fetch("sources").to_h { |source| [source.fetch("id"), source] }
     sources.each_value do |source|
@@ -198,7 +307,7 @@ module CodexSupplementalLicenses
       raise CodexCargoVendor::Error, "non-immutable supplemental source URL: #{source.fetch('id')}" unless valid
     end
     mappings = receipt.fetch("mappings")
-    raise CodexCargoVendor::Error, "supplemental mapping count drift" unless mappings.length == 33
+    raise CodexCargoVendor::Error, "supplemental mapping count drift" unless mappings.length == 41
     mappings.each do |mapping|
       directory = mapping.fetch("directory")
       item = inventory_by_dir.fetch(directory)
@@ -206,17 +315,24 @@ module CodexSupplementalLicenses
       raise CodexCargoVendor::Error, "mapping is not Linux-linked: #{directory}" unless item.fetch("linked_linux")
       raise CodexCargoVendor::Error, "mapping unexpectedly has package text: #{directory}" unless item.fetch("license_texts").empty?
       raise CodexCargoVendor::Error, "mapping crate checksum mismatch: #{directory}" unless audit_item.fetch("checksum") == mapping.fetch("crate_checksum")
-      provenance = JSON.parse(File.read(File.join(vendor_root, directory, ".cargo_vcs_info.json")))
-      raise CodexCargoVendor::Error, "mapping VCS commit mismatch: #{directory}" unless provenance.dig("git", "sha1") == mapping.fetch("source_commit")
-      path = provenance["path_in_vcs"].to_s
-      path = "." if path.empty?
-      raise CodexCargoVendor::Error, "mapping VCS path mismatch: #{directory}" unless path == mapping.fetch("package_path")
+      mode = mapping.fetch("provenance_mode")
       source_ids = mapping.fetch("source_ids")
-      raise CodexCargoVendor::Error, "mapping source id mismatch: #{directory}" unless source_ids.all? { |id| ids.include?(id) }
-      atoms = audit_item.fetch("normalized_spdx_candidate").scan(/[A-Za-z0-9.-]+/).reject { |atom| %w[AND OR WITH].include?(atom) }
-      covered = source_ids.flat_map { |id| sources.fetch(id).fetch("spdx_ids") }
-      raise CodexCargoVendor::Error, "mapping SPDX coverage mismatch: #{directory}" unless (atoms - covered).empty?
-      verify_mapping_evidence!(mapping, sources, cache:, offline:) if cache
+      raise CodexCargoVendor::Error, "mapping source id mismatch: #{directory}" unless (source_ids + mapping.fetch("install_source_ids")).all? { |id| ids.include?(id) }
+      raise CodexCargoVendor::Error, "mapping declared expression mismatch: #{directory}" unless audit_item.fetch("normalized_spdx_candidate") == mapping.fetch("declared_expression")
+      validate_mapping_structure!(mapping, sources)
+      case mode
+      when "cargo-vcs"
+        provenance = JSON.parse(File.read(File.join(vendor_root, directory, ".cargo_vcs_info.json")))
+        raise CodexCargoVendor::Error, "mapping VCS commit mismatch: #{directory}" unless provenance.dig("git", "sha1") == mapping.fetch("source_commit")
+        path = provenance["path_in_vcs"].to_s
+        path = "." if path.empty?
+        raise CodexCargoVendor::Error, "mapping VCS path mismatch: #{directory}" unless path == mapping.fetch("package_path")
+        verify_mapping_evidence!(mapping, sources, cache:, offline:) if cache
+      when "release-history"
+        verify_release_history!(mapping, vendor_root, sources, cache:, offline:) if cache
+      when "canonical-standard"
+        verify_canonical_standard!(mapping, sources, cache:, offline:) if cache
+      end
     end
     unresolved = receipt.fetch("unresolved")
     validate_unresolved!(unresolved, inventory_by_dir, audit_by_dir)
@@ -230,14 +346,15 @@ module CodexSupplementalLicenses
     raise CodexCargoVendor::Error, "missing-text directory set drift" unless missing.length == 51 && missing == expected_missing && expected_missing.uniq.length == expected_missing.length
     hold = receipt.fetch("policy_holds").find { |item| item.fetch("directory") == "notify-8.2.0" }
     validate_notify_hold!(hold, inventory_by_dir, audit_by_dir)
-    used = (mappings.flat_map { |item| item.fetch("source_ids") } + icu.fetch("source_ids")) - ["icu-data-payload"]
-    installable = sources.reject { |id, _| id == "icu-data-payload" }.keys
+    used = (mappings.flat_map { |item| item.fetch("install_source_ids") } + icu.fetch("source_ids")) - ["icu-data-payload"]
+    installable = sources.select { |id, source| source.fetch("install", true) && id != "icu-data-payload" }.keys
     raise CodexCargoVendor::Error, "unused installable supplemental source" unless installable.sort == used.uniq.sort
   end
 
   def receipt_from_plan(plan, package)
     receipt = Marshal.load(Marshal.dump(plan))
-    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v1"
+    upgrade_v2!(receipt, package)
+    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v2"
     receipt["inputs"] = {
       "resolver_vendor_receipt" => { "path" => "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")), "vendor_tree_sha256" => plan.dig("release", "resolver_vendor_tree_sha256") },
       "license_text_inventory" => { "path" => "codex-cli-0.144.5-cargo-license-text-inventory.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")) },
@@ -246,8 +363,131 @@ module CodexSupplementalLicenses
     payload = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }
     payload["expected_extracted_sha256"] = ICU_PAYLOAD_SHA256
     payload["expected_extracted_size_bytes"] = ICU_PAYLOAD_BYTES
+    payload["install"] = false
+    payload.delete("install_filename")
     receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" }.each { |source| source["expected_transport_sha256"] = nil }
     receipt.fetch("icu_mapping")["status"] = "resolved-icu-data-comparison"
+    receipt.fetch("icu_mapping")["reason"] = "The crate payload is byte-identical to Chromium ICU common/icudtl.dat at the pinned commit. The matching ICU license text is installed; the binary payload remains comparison-only because it is already present in the vendored crate source."
+    receipt
+  end
+
+  def upgrade_v2!(receipt, package)
+    return normalize_v2!(receipt) if receipt["schema"] == "agentlab-codex-cargo-supplemental-license-sources/v2"
+
+    audit = JSON.parse(File.read(File.join(package, "codex-cli-0.144.5-selected-cargo-license-audit.json")))
+    expressions = audit.fetch("selected_packages").reject { |item| item.fetch("workspace_path_package") }.to_h { |item| ["#{item.fetch('name')}-#{item.fetch('version')}", item.fetch("normalized_spdx_candidate")] }
+    receipt.fetch("mappings").each do |mapping|
+      mapping["provenance_mode"] = "cargo-vcs"
+      mapping["declared_expression"] = expressions.fetch(mapping.fetch("directory"))
+    end
+    add_source = lambda do |id, url, sha, size, spdx, filename = nil|
+      receipt.fetch("sources") << {
+        "id" => id, "kind" => "raw", "immutable_url" => url,
+        "expected_transport_sha256" => nil, "member_path" => nil,
+        "expected_extracted_sha256" => sha, "expected_extracted_size_bytes" => size,
+        "spdx_ids" => spdx, "install" => !filename.nil?
+      }.tap { |source| source["install_filename"] = filename if filename }
+    end
+    add_source.call("cookie-factory-mit", "https://raw.githubusercontent.com/rust-bakery/cookie-factory/d36b805dbd7dd65f2df947235c5bcc573afe2c76/LICENSES/MIT.txt", "d09216dc1ea5f273997667935a8d6514d80f00b89fb6954ecc3a43e0a6e360de", 1065, ["MIT"], "cookie-factory-MIT.txt")
+    add_source.call("rmcp-apache", "https://raw.githubusercontent.com/modelcontextprotocol/rust-sdk/25220361d5540715294c501c289d79de4bec2bfc/LICENSE", "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a", 12227, ["Apache-2.0"], "rmcp-Apache-2.0.txt")
+    add_source.call("yasna-apache", "https://raw.githubusercontent.com/qnighy/yasna.rs/b7e65f9a4c317494cce2d18ea02b3d6eaaea7985/LICENSE-APACHE", "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2", 10847, ["Apache-2.0"], "yasna-Apache-2.0.txt")
+    add_source.call("yasna-mit", "https://raw.githubusercontent.com/qnighy/yasna.rs/b7e65f9a4c317494cce2d18ea02b3d6eaaea7985/LICENSE-MIT", "2a7df90e60fd5512b8bca35d3ce90e068f21c52d962855053fd1d9e2e7ca0f16", 1055, ["MIT"], "yasna-MIT.txt")
+    add_source.call("otel-semconv-manifest", "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/opentelemetry-semantic-conventions/Cargo.toml", "3744e96c4d47f248f4fbfc8f0bb1543fc7d3126528b0160b7b5c5fef9733bef9", 946, [])
+    add_source.call("allocative-manifest", "https://raw.githubusercontent.com/facebookexperimental/allocative/fc41670cf9cfebd86ba597925081577897112c51/allocative/Cargo.toml", "6649d016c5b1b3a286d6ae243e1dc6a3eb735147dee58c08f171d63edaf87da1", 2470, [])
+    add_source.call("allocative-apache", "https://raw.githubusercontent.com/facebookexperimental/allocative/fc41670cf9cfebd86ba597925081577897112c51/LICENSE-APACHE", "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a", 11324, ["Apache-2.0"])
+    add_source.call("lock-free-manifest", "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/shed/lock_free_hashtable/Cargo.toml", "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d", 493, [])
+    add_source.call("buck2-lock-free-mit", "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-MIT", "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93", 1088, ["MIT"], "buck2-MIT.txt")
+    add_source.call("buck2-lock-free-apache-evidence", "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-APACHE", "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a", 11324, ["Apache-2.0"])
+    add_source.call("apache-2.0-50e675", "https://raw.githubusercontent.com/facebook/buck2/e65e66a7af58e3dce3101536b0abbe58406c2733/LICENSE-APACHE", "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a", 11324, ["Apache-2.0"], "apache-2.0-50e675.txt")
+    add_source.call("static-interner-manifest", "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/shed/static_interner/Cargo.toml", "128b24fc8a75912725e46b93446b67283ceae6c8139bc7b7e118591ee6dbde30", 576, [])
+    add_source.call("buck2-bb-mit", "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/LICENSE-MIT", "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93", 1088, ["MIT"])
+    add_source.call("buck2-bb-apache", "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/LICENSE-APACHE", "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a", 11324, ["Apache-2.0"])
+    add_source.call("spdx-mit", "https://raw.githubusercontent.com/spdx/license-list-data/c4a7237ec8f4654e867546f9f409749300f1bf4c/text/MIT.txt", "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5", 1078, ["MIT"], "spdx-MIT.txt")
+    add_source.call("spdx-apache", "https://raw.githubusercontent.com/spdx/license-list-data/c4a7237ec8f4654e867546f9f409749300f1bf4c/text/Apache-2.0.txt", "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff", 10280, ["Apache-2.0"], "spdx-Apache-2.0.txt")
+    add = lambda do |directory, checksum, expression, repository, commit, path, ids, mode, extra = {}|
+      receipt.fetch("mappings") << { "directory" => directory, "crate_checksum" => checksum, "declared_expression" => expression, "source_repository" => repository, "source_commit" => commit, "package_path" => path, "source_ids" => ids, "install_source_ids" => ids, "provenance_mode" => mode }.merge(extra)
+    end
+    add.call("cookie-factory-0.3.3", "9885fa71e26b8ab7855e2ec7cae6e9b380edff76cd052e07c683a0319d51b3a2", "MIT", "https://github.com/rust-bakery/cookie-factory", "d36b805dbd7dd65f2df947235c5bcc573afe2c76", ".", ["cookie-factory-mit"], "cargo-vcs")
+    add.call("rmcp-1.8.0", "1d1f571c72940a19d9532fe52dbea8bc9912bf1d766c2970bb824056b86f3f59", "Apache-2.0", "https://github.com/modelcontextprotocol/rust-sdk", "25220361d5540715294c501c289d79de4bec2bfc", "crates/rmcp", ["rmcp-apache"], "cargo-vcs")
+    add.call("yasna-0.5.2", "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd", "MIT OR Apache-2.0", "https://github.com/qnighy/yasna.rs", "b7e65f9a4c317494cce2d18ea02b3d6eaaea7985", ".", ["yasna-apache", "yasna-mit"], "cargo-vcs")
+    release = lambda do |directory, checksum, expression, repository, commit, path, ids, manifest, kind, upstream_sha, upstream_size, vendor_sha, vendor_size, explanation = nil|
+      add.call(directory, checksum, expression, repository, commit, path, ids, "release-history", { "release_manifest_source_id" => manifest, "manifest_relation" => { "kind" => kind, "upstream_sha256" => upstream_sha, "upstream_size_bytes" => upstream_size, "vendor_sha256" => vendor_sha, "vendor_size_bytes" => vendor_size, "explanation" => explanation } })
+    end
+    release.call("opentelemetry-semantic-conventions-0.31.0", "e62e29dfe041afb8ed2a6c9737ab57db4907285d999ef8ad3a59092a36bdc846", "Apache-2.0", "https://github.com/open-telemetry/opentelemetry-rust", "285dc925f98403ff426acc70968f104dc820d4f2", "opentelemetry-semantic-conventions", ["opentelemetry-apache"], "otel-semconv-manifest", "exact-byte-equality", "3744e96c4d47f248f4fbfc8f0bb1543fc7d3126528b0160b7b5c5fef9733bef9", 946, "3744e96c4d47f248f4fbfc8f0bb1543fc7d3126528b0160b7b5c5fef9733bef9", 946)
+    release.call("allocative-0.3.6", "d8cf9afc79c83d514444b55df3935d317da54b1ce3b17a133c646889cc260de8", "Apache-2.0", "https://github.com/facebookexperimental/allocative", "fc41670cf9cfebd86ba597925081577897112c51", "allocative", ["allocative-apache"], "allocative-manifest", "exact-byte-equality", "6649d016c5b1b3a286d6ae243e1dc6a3eb735147dee58c08f171d63edaf87da1", 2470, "6649d016c5b1b3a286d6ae243e1dc6a3eb735147dee58c08f171d63edaf87da1", 2470)
+    release.call("lock_free_hashtable-0.1.4", "ebf3631712f5b790675292ff827af269f5d9f920c920b77dc41d0485e3719612", "MIT OR Apache-2.0", "https://github.com/facebook/buck2", "48ae5c61c93c808e0831b27104d3bc7262f06bd4", "shed/lock_free_hashtable", ["buck2-lock-free-mit", "buck2-lock-free-apache-evidence"], "lock-free-manifest", "exact-byte-equality", "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d", 493, "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d", 493)
+    release.call("static_interner-0.1.2", "fab44341fbf4deae6e8d5ab450f24e1b34e0b2439d39ac0e9b5215a4e5493263", "MIT OR Apache-2.0", "https://github.com/facebook/buck2", "bb9114292d98db0a2919d37d673bb27f930e6aa1", "shed/static_interner", ["buck2-bb-mit", "buck2-bb-apache"], "static-interner-manifest", "exact-byte-equality", "128b24fc8a75912725e46b93446b67283ceae6c8139bc7b7e118591ee6dbde30", 576, "128b24fc8a75912725e46b93446b67283ceae6c8139bc7b7e118591ee6dbde30", 576)
+    receipt.fetch("mappings") << { "directory" => "fxhash-0.2.1", "crate_checksum" => "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c", "declared_expression" => "Apache-2.0 OR MIT", "source_repository" => "https://github.com/cbreeden/fxhash", "source_ids" => ["spdx-mit", "spdx-apache"], "install_source_ids" => ["spdx-mit", "spdx-apache"], "provenance_mode" => "canonical-standard", "upstream_request" => { "url" => "https://github.com/cbreeden/fxhash/issues/9", "status" => "open", "scope" => "Request that the published fxhash crate ship its declared Apache-2.0 and MIT license texts." }, "policy_basis" => "/srv/wikis/agentlab/policies.md:54", "canonical_authority" => { "repository" => "https://github.com/spdx/license-list-data", "tag" => "v3.28.0", "commit" => "c4a7237ec8f4654e867546f9f409749300f1bf4c" } }
+    resolved = %w[allocative-0.3.6 cookie-factory-0.3.3 fxhash-0.2.1 lock_free_hashtable-0.1.4 rmcp-1.8.0 static_interner-0.1.2 yasna-0.5.2 opentelemetry-semantic-conventions-0.31.0]
+    receipt["unresolved"].reject! { |item| resolved.include?(item.fetch("directory")) }
+    normalize_v2!(receipt)
+  end
+
+  def normalize_v2!(receipt)
+    sources = receipt.fetch("sources")
+    rename = { "starlark-apache" => "starlark-apache-evidence", "buck2-e65-mit" => "buck2-lock-free-mit", "buck2-e65-apache" => "apache-2.0-50e675" }
+    sources.each do |source|
+      source["id"] = rename.fetch(source.fetch("id"), source.fetch("id"))
+      source["install"] = false if source.fetch("id") == "starlark-apache-evidence"
+      if source.fetch("id") == "lock-free-manifest"
+        source["immutable_url"] = "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/shed/lock_free_hashtable/Cargo.toml"
+        source["expected_extracted_sha256"] = "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d"
+        source["expected_extracted_size_bytes"] = 493
+      end
+      if source.fetch("id") == "buck2-lock-free-mit"
+        source["immutable_url"] = "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-MIT"
+      end
+      if source.fetch("id") == "apache-2.0-50e675"
+        source["install"] = true
+        source["install_filename"] = "apache-2.0-50e675.txt"
+      end
+    end
+    unless sources.any? { |source| source.fetch("id") == "buck2-lock-free-apache-evidence" }
+      sources << {
+        "id" => "buck2-lock-free-apache-evidence", "kind" => "raw",
+        "immutable_url" => "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-APACHE",
+        "expected_transport_sha256" => nil, "member_path" => nil,
+        "expected_extracted_sha256" => "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+        "expected_extracted_size_bytes" => 11324, "spdx_ids" => ["Apache-2.0"], "install" => false
+      }
+    end
+    payload = sources.find { |source| source.fetch("id") == "icu-data-payload" }
+    payload["install"] = false
+    payload.delete("install_filename")
+    receipt.fetch("icu_mapping")["reason"] = "The crate payload is byte-identical to Chromium ICU common/icudtl.dat at the pinned commit. The matching ICU license text is installed; the binary payload remains comparison-only because it is already present in the vendored crate source."
+    receipt.fetch("mappings").each do |mapping|
+      mapping["source_ids"] = mapping.fetch("source_ids").map { |id| rename.fetch(id, id) }
+      mapping["license_evidence"].each { |item| item["source_id"] = rename.fetch(item.fetch("source_id"), item.fetch("source_id")) } if mapping.key?("license_evidence")
+      mapping["install_source_ids"] ||= mapping.fetch("source_ids") if mapping.fetch("provenance_mode") == "cargo-vcs"
+      mapping["install_source_ids"] = mapping.fetch("install_source_ids").map { |id| id == "starlark-apache-evidence" ? "apache-2.0-50e675" : id } if mapping.key?("install_source_ids")
+      case mapping.fetch("directory")
+      when "opentelemetry-semantic-conventions-0.31.0"
+        mapping["install_source_ids"] = ["opentelemetry-apache"]
+      when "allocative-0.3.6"
+        mapping["install_source_ids"] = ["apache-2.0-50e675"]
+      when "lock_free_hashtable-0.1.4"
+        mapping["source_commit"] = "48ae5c61c93c808e0831b27104d3bc7262f06bd4"
+        mapping["source_ids"] = ["buck2-lock-free-mit", "buck2-lock-free-apache-evidence"]
+        mapping["install_source_ids"] = ["buck2-lock-free-mit", "apache-2.0-50e675"]
+        mapping["manifest_relation"] = {
+          "kind" => "exact-byte-equality",
+          "upstream_sha256" => "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d",
+          "upstream_size_bytes" => 493,
+          "vendor_sha256" => "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d",
+          "vendor_size_bytes" => 493,
+          "explanation" => nil
+        }
+      when "static_interner-0.1.2"
+        mapping["install_source_ids"] = ["buck2-lock-free-mit", "apache-2.0-50e675"]
+      when "fxhash-0.2.1"
+        mapping["install_source_ids"] = ["spdx-mit", "spdx-apache"]
+        mapping.delete("source_commit")
+        mapping.delete("package_path")
+        mapping.delete("upstream_request_status")
+        mapping.delete("license_evidence")
+        mapping["upstream_request"] = { "url" => "https://github.com/cbreeden/fxhash/issues/9", "status" => "open", "scope" => "Request that the published fxhash crate ship its declared Apache-2.0 and MIT license texts." } unless mapping.fetch("upstream_request").is_a?(Hash)
+      end
+    end
     receipt
   end
 
@@ -262,7 +502,7 @@ module CodexSupplementalLicenses
       vendored_payload = File.binread(File.join(vendor_root, icu.fetch("directory"), "src", "icudtl.dat"))
       raise CodexCargoVendor::Error, "ICU payload does not match vendored deno_core_icudata" unless payload == vendored_payload
 
-      texts = receipt.fetch("sources").reject { |source| source.fetch("id") == "icu-data-payload" }.map do |source|
+      texts = receipt.fetch("sources").select { |source| source.fetch("install", true) && source.fetch("id") != "icu-data-payload" }.map do |source|
         [source, source_bytes!(source, cache, offline:)]
       end
       texts.each do |source, bytes|
@@ -286,7 +526,7 @@ module CodexSupplementalLicenses
   end
 
   def verify_archive!(receipt, archive)
-    expected = receipt.fetch("sources").reject { |source| source.fetch("id") == "icu-data-payload" }.to_h do |source|
+    expected = receipt.fetch("sources").select { |source| source.fetch("install", true) && source.fetch("id") != "icu-data-payload" }.to_h do |source|
       [source.fetch("install_filename"), source]
     end
     root = receipt.dig("archive", "root")

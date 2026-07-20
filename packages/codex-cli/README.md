@@ -179,11 +179,12 @@ source as linked. A nested candidate does not prove package-level legal closure,
 and a missing candidate does not prove that no usable upstream text exists; each
 unresolved package still needs an exact text mapping and Fedora review.
 
-The checked supplemental-source receipt resolves 33 Linux-linked crates through
-exact parent-workspace or upstream texts and supplies 15 installable texts. It
-also proves the embedded `deno_core_icudata` ICU payload against the pinned
-Chromium ICU member, while retaining 16 canonical-text cases, one OpenTelemetry
-provenance case, and the `notify` CC0 allowed-content review as explicit holds.
+The checked v2 supplemental-source receipt resolves 41 Linux-linked crates and
+supplies 22 deduplicated installable texts. It distinguishes Cargo VCS evidence,
+release-history manifest evidence, and a checked SPDX canonical-standard source
+for `fxhash`; release manifests and ICU data remain comparison-only. Nine crates
+still require an upstream request and/or exact release binding,
+and the `notify` CC0 allowed-content review remains an explicit hold.
 
 This is not the final RPM license closure. Fedora-allowed SPDX review, package
 license texts, and the recursive Rusty V8/Chromium native static inventory are

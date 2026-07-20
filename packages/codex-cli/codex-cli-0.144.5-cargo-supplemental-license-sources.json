@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-codex-cargo-supplemental-license-sources/v1",
+  "schema": "agentlab-codex-cargo-supplemental-license-sources/v2",
   "release": {
     "name": "codex-cli",
     "version": "0.144.5",
@@ -127,7 +127,7 @@
       "install_filename": "opentelemetry-Apache-2.0.txt"
     },
     {
-      "id": "starlark-apache",
+      "id": "starlark-apache-evidence",
       "kind": "raw",
       "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/8978f3cd91b2908e1e61f6b58f84293097abf8f1/LICENSE",
       "expected_transport_sha256": null,
@@ -137,7 +137,8 @@
       "spdx_ids": [
         "Apache-2.0"
       ],
-      "install_filename": "starlark-Apache-2.0.txt"
+      "install_filename": "starlark-Apache-2.0.txt",
+      "install": false
     },
     {
       "id": "rama-apache",
@@ -225,7 +226,215 @@
         "NAIST-2003",
         "LicenseRef-Fedora-Public-Domain"
       ],
-      "install_filename": "deno-core-icudata-icudtl.dat"
+      "install": false
+    },
+    {
+      "id": "cookie-factory-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/rust-bakery/cookie-factory/d36b805dbd7dd65f2df947235c5bcc573afe2c76/LICENSES/MIT.txt",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "d09216dc1ea5f273997667935a8d6514d80f00b89fb6954ecc3a43e0a6e360de",
+      "expected_extracted_size_bytes": 1065,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": true,
+      "install_filename": "cookie-factory-MIT.txt"
+    },
+    {
+      "id": "rmcp-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/modelcontextprotocol/rust-sdk/25220361d5540715294c501c289d79de4bec2bfc/LICENSE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+      "expected_extracted_size_bytes": 12227,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": true,
+      "install_filename": "rmcp-Apache-2.0.txt"
+    },
+    {
+      "id": "yasna-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/qnighy/yasna.rs/b7e65f9a4c317494cce2d18ea02b3d6eaaea7985/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "expected_extracted_size_bytes": 10847,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": true,
+      "install_filename": "yasna-Apache-2.0.txt"
+    },
+    {
+      "id": "yasna-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/qnighy/yasna.rs/b7e65f9a4c317494cce2d18ea02b3d6eaaea7985/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "2a7df90e60fd5512b8bca35d3ce90e068f21c52d962855053fd1d9e2e7ca0f16",
+      "expected_extracted_size_bytes": 1055,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": true,
+      "install_filename": "yasna-MIT.txt"
+    },
+    {
+      "id": "otel-semconv-manifest",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/opentelemetry-semantic-conventions/Cargo.toml",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "3744e96c4d47f248f4fbfc8f0bb1543fc7d3126528b0160b7b5c5fef9733bef9",
+      "expected_extracted_size_bytes": 946,
+      "spdx_ids": [],
+      "install": false
+    },
+    {
+      "id": "allocative-manifest",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/allocative/fc41670cf9cfebd86ba597925081577897112c51/allocative/Cargo.toml",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "6649d016c5b1b3a286d6ae243e1dc6a3eb735147dee58c08f171d63edaf87da1",
+      "expected_extracted_size_bytes": 2470,
+      "spdx_ids": [],
+      "install": false
+    },
+    {
+      "id": "allocative-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/allocative/fc41670cf9cfebd86ba597925081577897112c51/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "expected_extracted_size_bytes": 11324,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": false
+    },
+    {
+      "id": "lock-free-manifest",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/shed/lock_free_hashtable/Cargo.toml",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d",
+      "expected_extracted_size_bytes": 493,
+      "spdx_ids": [],
+      "install": false
+    },
+    {
+      "id": "buck2-lock-free-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "expected_extracted_size_bytes": 1088,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": true,
+      "install_filename": "buck2-MIT.txt"
+    },
+    {
+      "id": "apache-2.0-50e675",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/e65e66a7af58e3dce3101536b0abbe58406c2733/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "expected_extracted_size_bytes": 11324,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": true,
+      "install_filename": "apache-2.0-50e675.txt"
+    },
+    {
+      "id": "static-interner-manifest",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/shed/static_interner/Cargo.toml",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "128b24fc8a75912725e46b93446b67283ceae6c8139bc7b7e118591ee6dbde30",
+      "expected_extracted_size_bytes": 576,
+      "spdx_ids": [],
+      "install": false
+    },
+    {
+      "id": "buck2-bb-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "expected_extracted_size_bytes": 1088,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": false
+    },
+    {
+      "id": "buck2-bb-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "expected_extracted_size_bytes": 11324,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": false
+    },
+    {
+      "id": "spdx-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/spdx/license-list-data/c4a7237ec8f4654e867546f9f409749300f1bf4c/text/MIT.txt",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+      "expected_extracted_size_bytes": 1078,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": true,
+      "install_filename": "spdx-MIT.txt"
+    },
+    {
+      "id": "spdx-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/spdx/license-list-data/c4a7237ec8f4654e867546f9f409749300f1bf4c/text/Apache-2.0.txt",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
+      "expected_extracted_size_bytes": 10280,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": true,
+      "install_filename": "spdx-Apache-2.0.txt"
+    },
+    {
+      "id": "buck2-lock-free-apache-evidence",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "expected_extracted_size_bytes": 11324,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": false
     }
   ],
   "mappings": [
@@ -255,6 +464,12 @@
           "expected_sha256": "fe56c030c2d8c3404a37fe711cebb27ebea13d0aacf7e3524db4198335ad8cd1",
           "expected_size_bytes": 1077
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rage-apache",
+        "rage-mit"
       ]
     },
     {
@@ -283,6 +498,12 @@
           "expected_sha256": "fe56c030c2d8c3404a37fe711cebb27ebea13d0aacf7e3524db4198335ad8cd1",
           "expected_size_bytes": 1077
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rage-apache",
+        "rage-mit"
       ]
     },
     {
@@ -303,6 +524,11 @@
           "expected_sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d",
           "expected_size_bytes": 1062
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT",
+      "install_source_ids": [
+        "simd-mit"
       ]
     },
     {
@@ -323,6 +549,11 @@
           "expected_sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d",
           "expected_size_bytes": 1062
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT",
+      "install_source_ids": [
+        "simd-mit"
       ]
     },
     {
@@ -351,6 +582,12 @@
           "expected_sha256": "016fcc02048817d628b04b140c54db290fd9d29a5e8a55b77871194e810716ac",
           "expected_size_bytes": 1053
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0 OR MIT",
+      "install_source_ids": [
+        "fluent-apache",
+        "fluent-mit"
       ]
     },
     {
@@ -371,6 +608,11 @@
           "expected_sha256": "9369f62987b3a116111f2edfdc4cc72633e44ddc94d5d0c68659cf537b76a31f",
           "expected_size_bytes": 1070
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT",
+      "install_source_ids": [
+        "include-dir-mit"
       ]
     },
     {
@@ -399,6 +641,12 @@
           "expected_sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
           "expected_size_bytes": 1023
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0 OR MIT",
+      "install_source_ids": [
+        "pluralrules-apache",
+        "pluralrules-mit"
       ]
     },
     {
@@ -419,6 +667,11 @@
           "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
           "expected_size_bytes": 11357
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "opentelemetry-apache"
       ]
     },
     {
@@ -439,6 +692,11 @@
           "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
           "expected_size_bytes": 11357
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "opentelemetry-apache"
       ]
     },
     {
@@ -459,6 +717,11 @@
           "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
           "expected_size_bytes": 11357
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "opentelemetry-apache"
       ]
     },
     {
@@ -479,6 +742,11 @@
           "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
           "expected_size_bytes": 11357
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "opentelemetry-apache"
       ]
     },
     {
@@ -499,6 +767,11 @@
           "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
           "expected_size_bytes": 11357
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "opentelemetry-apache"
       ]
     },
     {
@@ -519,6 +792,11 @@
           "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
           "expected_size_bytes": 11357
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "opentelemetry-apache"
       ]
     },
     {
@@ -529,16 +807,21 @@
       "source_commit": "8978f3cd91b2908e1e61f6b58f84293097abf8f1",
       "package_path": "pagable",
       "source_ids": [
-        "starlark-apache"
+        "starlark-apache-evidence"
       ],
       "license_evidence": [
         {
-          "source_id": "starlark-apache",
+          "source_id": "starlark-apache-evidence",
           "repository_path": "LICENSE",
           "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/8978f3cd91b2908e1e61f6b58f84293097abf8f1/LICENSE",
           "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
           "expected_size_bytes": 11324
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "apache-2.0-50e675"
       ]
     },
     {
@@ -549,16 +832,21 @@
       "source_commit": "0c8d107ab963362ba47ee3ab9e0173bc39bd101d",
       "package_path": "starlark",
       "source_ids": [
-        "starlark-apache"
+        "starlark-apache-evidence"
       ],
       "license_evidence": [
         {
-          "source_id": "starlark-apache",
+          "source_id": "starlark-apache-evidence",
           "repository_path": "LICENSE",
           "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/0c8d107ab963362ba47ee3ab9e0173bc39bd101d/LICENSE",
           "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
           "expected_size_bytes": 11324
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "apache-2.0-50e675"
       ]
     },
     {
@@ -569,16 +857,21 @@
       "source_commit": "0c8d107ab963362ba47ee3ab9e0173bc39bd101d",
       "package_path": "starlark_map",
       "source_ids": [
-        "starlark-apache"
+        "starlark-apache-evidence"
       ],
       "license_evidence": [
         {
-          "source_id": "starlark-apache",
+          "source_id": "starlark-apache-evidence",
           "repository_path": "LICENSE",
           "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/0c8d107ab963362ba47ee3ab9e0173bc39bd101d/LICENSE",
           "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
           "expected_size_bytes": 11324
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "Apache-2.0",
+      "install_source_ids": [
+        "apache-2.0-50e675"
       ]
     },
     {
@@ -607,6 +900,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -635,6 +934,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -663,6 +968,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -691,6 +1002,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -719,6 +1036,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -747,6 +1070,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -775,6 +1104,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -803,6 +1138,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -831,6 +1172,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -859,6 +1206,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -887,6 +1240,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -915,6 +1274,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -943,6 +1308,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -971,6 +1342,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -999,6 +1376,12 @@
           "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
           "expected_size_bytes": 1092
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT OR Apache-2.0",
+      "install_source_ids": [
+        "rama-apache",
+        "rama-mit"
       ]
     },
     {
@@ -1019,6 +1402,11 @@
           "expected_sha256": "e24a56698aa6feaf3a02272b3624f9dc255d982970c5ed97ac4525a95056a5b3",
           "expected_size_bytes": 1056
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT",
+      "install_source_ids": [
+        "tonic-mit"
       ]
     },
     {
@@ -1039,6 +1427,268 @@
           "expected_sha256": "db7f7f8e7236a2d0b41b855b2501b7b913caebbcda6ce498637a304ad1706ce1",
           "expected_size_bytes": 1073
         }
+      ],
+      "provenance_mode": "cargo-vcs",
+      "declared_expression": "MIT",
+      "install_source_ids": [
+        "ts-rs-mit"
+      ]
+    },
+    {
+      "directory": "cookie-factory-0.3.3",
+      "crate_checksum": "9885fa71e26b8ab7855e2ec7cae6e9b380edff76cd052e07c683a0319d51b3a2",
+      "declared_expression": "MIT",
+      "source_repository": "https://github.com/rust-bakery/cookie-factory",
+      "source_commit": "d36b805dbd7dd65f2df947235c5bcc573afe2c76",
+      "package_path": ".",
+      "source_ids": [
+        "cookie-factory-mit"
+      ],
+      "provenance_mode": "cargo-vcs",
+      "license_evidence": [
+        {
+          "source_id": "cookie-factory-mit",
+          "repository_path": "LICENSES/MIT.txt",
+          "immutable_url": "https://raw.githubusercontent.com/rust-bakery/cookie-factory/d36b805dbd7dd65f2df947235c5bcc573afe2c76/LICENSES/MIT.txt",
+          "expected_sha256": "d09216dc1ea5f273997667935a8d6514d80f00b89fb6954ecc3a43e0a6e360de",
+          "expected_size_bytes": 1065
+        }
+      ],
+      "install_source_ids": [
+        "cookie-factory-mit"
+      ]
+    },
+    {
+      "directory": "rmcp-1.8.0",
+      "crate_checksum": "1d1f571c72940a19d9532fe52dbea8bc9912bf1d766c2970bb824056b86f3f59",
+      "declared_expression": "Apache-2.0",
+      "source_repository": "https://github.com/modelcontextprotocol/rust-sdk",
+      "source_commit": "25220361d5540715294c501c289d79de4bec2bfc",
+      "package_path": "crates/rmcp",
+      "source_ids": [
+        "rmcp-apache"
+      ],
+      "provenance_mode": "cargo-vcs",
+      "license_evidence": [
+        {
+          "source_id": "rmcp-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/modelcontextprotocol/rust-sdk/25220361d5540715294c501c289d79de4bec2bfc/LICENSE",
+          "expected_sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+          "expected_size_bytes": 12227
+        }
+      ],
+      "install_source_ids": [
+        "rmcp-apache"
+      ]
+    },
+    {
+      "directory": "yasna-0.5.2",
+      "crate_checksum": "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/qnighy/yasna.rs",
+      "source_commit": "b7e65f9a4c317494cce2d18ea02b3d6eaaea7985",
+      "package_path": ".",
+      "source_ids": [
+        "yasna-apache",
+        "yasna-mit"
+      ],
+      "provenance_mode": "cargo-vcs",
+      "license_evidence": [
+        {
+          "source_id": "yasna-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/qnighy/yasna.rs/b7e65f9a4c317494cce2d18ea02b3d6eaaea7985/LICENSE-APACHE",
+          "expected_sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "expected_size_bytes": 10847
+        },
+        {
+          "source_id": "yasna-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/qnighy/yasna.rs/b7e65f9a4c317494cce2d18ea02b3d6eaaea7985/LICENSE-MIT",
+          "expected_sha256": "2a7df90e60fd5512b8bca35d3ce90e068f21c52d962855053fd1d9e2e7ca0f16",
+          "expected_size_bytes": 1055
+        }
+      ],
+      "install_source_ids": [
+        "yasna-apache",
+        "yasna-mit"
+      ]
+    },
+    {
+      "directory": "opentelemetry-semantic-conventions-0.31.0",
+      "crate_checksum": "e62e29dfe041afb8ed2a6c9737ab57db4907285d999ef8ad3a59092a36bdc846",
+      "declared_expression": "Apache-2.0",
+      "source_repository": "https://github.com/open-telemetry/opentelemetry-rust",
+      "source_commit": "285dc925f98403ff426acc70968f104dc820d4f2",
+      "package_path": "opentelemetry-semantic-conventions",
+      "source_ids": [
+        "opentelemetry-apache"
+      ],
+      "provenance_mode": "release-history",
+      "release_manifest_source_id": "otel-semconv-manifest",
+      "manifest_relation": {
+        "kind": "exact-byte-equality",
+        "upstream_sha256": "3744e96c4d47f248f4fbfc8f0bb1543fc7d3126528b0160b7b5c5fef9733bef9",
+        "upstream_size_bytes": 946,
+        "vendor_sha256": "3744e96c4d47f248f4fbfc8f0bb1543fc7d3126528b0160b7b5c5fef9733bef9",
+        "vendor_size_bytes": 946,
+        "explanation": null
+      },
+      "license_evidence": [
+        {
+          "source_id": "opentelemetry-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+          "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "expected_size_bytes": 11357
+        }
+      ],
+      "install_source_ids": [
+        "opentelemetry-apache"
+      ]
+    },
+    {
+      "directory": "allocative-0.3.6",
+      "crate_checksum": "d8cf9afc79c83d514444b55df3935d317da54b1ce3b17a133c646889cc260de8",
+      "declared_expression": "Apache-2.0",
+      "source_repository": "https://github.com/facebookexperimental/allocative",
+      "source_commit": "fc41670cf9cfebd86ba597925081577897112c51",
+      "package_path": "allocative",
+      "source_ids": [
+        "allocative-apache"
+      ],
+      "provenance_mode": "release-history",
+      "release_manifest_source_id": "allocative-manifest",
+      "manifest_relation": {
+        "kind": "exact-byte-equality",
+        "upstream_sha256": "6649d016c5b1b3a286d6ae243e1dc6a3eb735147dee58c08f171d63edaf87da1",
+        "upstream_size_bytes": 2470,
+        "vendor_sha256": "6649d016c5b1b3a286d6ae243e1dc6a3eb735147dee58c08f171d63edaf87da1",
+        "vendor_size_bytes": 2470,
+        "explanation": null
+      },
+      "license_evidence": [
+        {
+          "source_id": "allocative-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/allocative/fc41670cf9cfebd86ba597925081577897112c51/LICENSE-APACHE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ],
+      "install_source_ids": [
+        "apache-2.0-50e675"
+      ]
+    },
+    {
+      "directory": "lock_free_hashtable-0.1.4",
+      "crate_checksum": "ebf3631712f5b790675292ff827af269f5d9f920c920b77dc41d0485e3719612",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/facebook/buck2",
+      "source_commit": "48ae5c61c93c808e0831b27104d3bc7262f06bd4",
+      "package_path": "shed/lock_free_hashtable",
+      "source_ids": [
+        "buck2-lock-free-mit",
+        "buck2-lock-free-apache-evidence"
+      ],
+      "provenance_mode": "release-history",
+      "release_manifest_source_id": "lock-free-manifest",
+      "manifest_relation": {
+        "kind": "exact-byte-equality",
+        "upstream_sha256": "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d",
+        "upstream_size_bytes": 493,
+        "vendor_sha256": "94eca265bbc37b34b0c1e6f5ad8992e1c06d47c5cd9402e9824abdcddbb0c70d",
+        "vendor_size_bytes": 493,
+        "explanation": null
+      },
+      "license_evidence": [
+        {
+          "source_id": "buck2-lock-free-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-MIT",
+          "expected_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+          "expected_size_bytes": 1088
+        },
+        {
+          "source_id": "buck2-lock-free-apache-evidence",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/48ae5c61c93c808e0831b27104d3bc7262f06bd4/LICENSE-APACHE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ],
+      "install_source_ids": [
+        "buck2-lock-free-mit",
+        "apache-2.0-50e675"
+      ]
+    },
+    {
+      "directory": "static_interner-0.1.2",
+      "crate_checksum": "fab44341fbf4deae6e8d5ab450f24e1b34e0b2439d39ac0e9b5215a4e5493263",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/facebook/buck2",
+      "source_commit": "bb9114292d98db0a2919d37d673bb27f930e6aa1",
+      "package_path": "shed/static_interner",
+      "source_ids": [
+        "buck2-bb-mit",
+        "buck2-bb-apache"
+      ],
+      "provenance_mode": "release-history",
+      "release_manifest_source_id": "static-interner-manifest",
+      "manifest_relation": {
+        "kind": "exact-byte-equality",
+        "upstream_sha256": "128b24fc8a75912725e46b93446b67283ceae6c8139bc7b7e118591ee6dbde30",
+        "upstream_size_bytes": 576,
+        "vendor_sha256": "128b24fc8a75912725e46b93446b67283ceae6c8139bc7b7e118591ee6dbde30",
+        "vendor_size_bytes": 576,
+        "explanation": null
+      },
+      "license_evidence": [
+        {
+          "source_id": "buck2-bb-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/LICENSE-MIT",
+          "expected_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+          "expected_size_bytes": 1088
+        },
+        {
+          "source_id": "buck2-bb-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/bb9114292d98db0a2919d37d673bb27f930e6aa1/LICENSE-APACHE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ],
+      "install_source_ids": [
+        "buck2-lock-free-mit",
+        "apache-2.0-50e675"
+      ]
+    },
+    {
+      "directory": "fxhash-0.2.1",
+      "crate_checksum": "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c",
+      "declared_expression": "Apache-2.0 OR MIT",
+      "source_repository": "https://github.com/cbreeden/fxhash",
+      "source_ids": [
+        "spdx-mit",
+        "spdx-apache"
+      ],
+      "provenance_mode": "canonical-standard",
+      "upstream_request": {
+        "url": "https://github.com/cbreeden/fxhash/issues/9",
+        "status": "open",
+        "scope": "Request that the published fxhash crate ship its declared Apache-2.0 and MIT license texts."
+      },
+      "policy_basis": "/srv/wikis/agentlab/policies.md:54",
+      "canonical_authority": {
+        "repository": "https://github.com/spdx/license-list-data",
+        "tag": "v3.28.0",
+        "commit": "c4a7237ec8f4654e867546f9f409749300f1bf4c"
+      },
+      "install_source_ids": [
+        "spdx-mit",
+        "spdx-apache"
       ]
     }
   ],
@@ -1055,26 +1705,14 @@
       "icu-license-wrapper",
       "icu-data-payload"
     ],
-    "reason": "The crate README identifies its raw payload as Rusty V8 third_party/icu/common/icudtl.dat. The exact payload member hash and size have not been independently retained, so this mapping is intentionally non-installable."
+    "reason": "The crate payload is byte-identical to Chromium ICU common/icudtl.dat at the pinned commit. The matching ICU license text is installed; the binary payload remains comparison-only because it is already present in the vendored crate source."
   },
   "unresolved": [
-    {
-      "directory": "allocative-0.3.6",
-      "crate_checksum": "d8cf9afc79c83d514444b55df3935d317da54b1ce3b17a133c646889cc260de8",
-      "declared_expression": "Apache-2.0",
-      "reason": "Published crate omits usable license text; canonical standard text requires legal approval."
-    },
     {
       "directory": "bech32-0.9.1",
       "crate_checksum": "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445",
       "declared_expression": "MIT",
       "reason": "Published crate omits usable license text; newer 0.12.0 archive includes LICENSE-MIT but is not this selected dependency."
-    },
-    {
-      "directory": "cookie-factory-0.3.3",
-      "crate_checksum": "9885fa71e26b8ab7855e2ec7cae6e9b380edff76cd052e07c683a0319d51b3a2",
-      "declared_expression": "MIT",
-      "reason": "Published crate omits usable license text; canonical standard text requires legal approval."
     },
     {
       "directory": "debugserver-types-0.5.0",
@@ -1095,12 +1733,6 @@
       "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
     },
     {
-      "directory": "fxhash-0.2.1",
-      "crate_checksum": "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c",
-      "declared_expression": "Apache-2.0 OR MIT",
-      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
-    },
-    {
       "directory": "io_tee-0.1.1",
       "crate_checksum": "4b3f7cef34251886990511df1c61443aa928499d598a9473929ab5a90a527304",
       "declared_expression": "MIT OR Apache-2.0",
@@ -1111,18 +1743,6 @@
       "crate_checksum": "761e49ec5fd8a5a463f9b84e877c373d888935b71c6be78f3767fe2ae6bed18e",
       "declared_expression": "Apache-2.0 OR MIT",
       "reason": "Published crate omits usable license text; newer 0.2.5 archive also omits usable text."
-    },
-    {
-      "directory": "lock_free_hashtable-0.1.4",
-      "crate_checksum": "ebf3631712f5b790675292ff827af269f5d9f920c920b77dc41d0485e3719612",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
-    },
-    {
-      "directory": "rmcp-1.8.0",
-      "crate_checksum": "1d1f571c72940a19d9532fe52dbea8bc9912bf1d766c2970bb824056b86f3f59",
-      "declared_expression": "Apache-2.0",
-      "reason": "Published crate omits usable license text; newer 2.2.0 archive also omits usable text."
     },
     {
       "directory": "sorted_vector_map-0.2.1",
@@ -1137,28 +1757,10 @@
       "reason": "Published crate omits usable license text; newer 0.2.4 archive also omits usable text."
     },
     {
-      "directory": "static_interner-0.1.2",
-      "crate_checksum": "fab44341fbf4deae6e8d5ab450f24e1b34e0b2439d39ac0e9b5215a4e5493263",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; newer 0.1.3 archive also omits usable text."
-    },
-    {
       "directory": "strong_hash-0.1.0",
       "crate_checksum": "0831334aea34390b6b6ec7af0a27f9ee6324ad3a69463e6b240d83d6b7bce9c9",
       "declared_expression": "MIT OR Apache-2.0",
       "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
-    },
-    {
-      "directory": "yasna-0.5.2",
-      "crate_checksum": "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; newer 0.6.0 archive includes LICENSE-APACHE and LICENSE-MIT but is not this selected dependency."
-    },
-    {
-      "directory": "opentelemetry-semantic-conventions-0.31.0",
-      "crate_checksum": "e62e29dfe041afb8ed2a6c9737ab57db4907285d999ef8ad3a59092a36bdc846",
-      "declared_expression": "Apache-2.0",
-      "reason": "Published crate omits usable text and .cargo_vcs_info.json does not record an immutable parent commit or package path; mutable repository metadata is not override evidence."
     }
   ],
   "policy_holds": [
@@ -1190,7 +1792,7 @@
   "archive": {
     "filename": "codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz",
     "root": "codex-cli-0.144.5-supplemental-license-sources",
-    "installable_texts": 15,
+    "installable_texts": 22,
     "transport_identity_required": false
   }
 }
