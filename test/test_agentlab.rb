@@ -447,6 +447,48 @@ class AgentlabTest < Minitest::Test
     assert_equal("146.0.7678.0", Agentlab.latest_upstream_version(package))
   end
 
+  def test_validates_pdfium_hosted_source
+    source_package = Agentlab.package_named("pdfium")
+    spec = File.read(File.join(source_package.directory, "pdfium.spec"))
+
+    assert_empty(Agentlab.validate_pdfium_source(source_package, spec))
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("source_policy")["generated_archive_sha256"] = "0" * 64
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    errors = Agentlab.validate_pdfium_source(package, spec)
+    assert_includes(errors, "pdfium: generated archive SHA-256 mismatch")
+
+    errors = Agentlab.validate_pdfium_source(source_package, spec.sub("releases/download/%{source_tag}", "releases/download/wrong-tag"))
+    assert_includes(errors, "pdfium: spec does not use the hosted Source0")
+  end
+
+  def test_validates_pdfium_source_release_request
+    package = Agentlab.package_named("pdfium")
+    closure = YAML.safe_load_file(File.join(package.directory, "source-closure.yml"))
+    request = YAML.safe_load_file(File.join(Agentlab::ROOT, ".github", "source-release", "pdfium.yml"))
+
+    assert_empty(Agentlab.validate_pdfium_source_release_request(package, closure, request))
+    publish = request.merge("operation" => "publish", "generator_commit" => "1" * 40)
+    assert_empty(Agentlab.validate_pdfium_source_release_request(package, closure, publish))
+    {
+      "archive_sha256" => "0" * 64,
+      "tag" => "wrong-tag",
+      "operation" => "publish",
+      "attempt" => 0
+    }.each do |key, replacement|
+      mutated = request.merge(key => replacement)
+      assert_includes(
+        Agentlab.validate_pdfium_source_release_request(package, closure, mutated),
+        "source-release request mismatch"
+      )
+    end
+    assert_includes(
+      Agentlab.validate_pdfium_source_release_request(package, closure, publish.merge("generator_commit" => "bad")),
+      "source-release request mismatch"
+    )
+  end
+
   def test_package_chroots_override_project_defaults
     package = Agentlab::Package.new(
       directory: Dir.tmpdir,

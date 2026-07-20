@@ -2225,6 +2225,116 @@ module Agentlab
     ["source-release request metadata is incomplete: #{e.message}"]
   end
 
+  def validate_pdfium_source_release_request(package, closure, request)
+    version = package.upstream.fetch("current_version").to_s
+    policy = package.data.fetch("source_policy")
+    source = package.data.fetch("source_closure")
+    expected = {
+      "schema" => "agentlab-source-release-request/v1",
+      "package" => "pdfium",
+      "version" => version,
+      "chromium_commit" => closure.fetch("chromium").fetch("commit"),
+      "pdfium_commit" => closure.fetch("pdfium").fetch("commit"),
+      "upstream_archive_sha256" => closure.fetch("chromium").fetch("archive").fetch("sha256"),
+      "archive_sha256" => source.fetch("output_sha256"),
+      "archive_size_bytes" => source.fetch("output_size_bytes"),
+      "tree_sha256" => source.fetch("output_tree_sha256"),
+      "tag" => policy.fetch("release_tag")
+    }
+    valid = request.is_a?(Hash) && request["attempt"].is_a?(Integer) && request["attempt"].positive? &&
+            %w[stage publish].include?(request["operation"])
+    return ["source-release request mismatch"] unless valid
+
+    expected["attempt"] = request.fetch("attempt")
+    expected["operation"] = request.fetch("operation")
+    if request["operation"] == "publish"
+      generator_commit = request["generator_commit"]
+      return ["source-release request mismatch"] unless generator_commit.to_s.match?(/\A[0-9a-f]{40}\z/)
+
+      expected["generator_commit"] = generator_commit
+    end
+    request == expected ? [] : ["source-release request mismatch"]
+  rescue KeyError => e
+    ["source-release request metadata is incomplete: #{e.message}"]
+  end
+
+  def validate_pdfium_source(package, spec)
+    return [] unless package.name == "pdfium"
+
+    errors = []
+    version = package.upstream.fetch("current_version").to_s
+    policy = package.data.fetch("source_policy")
+    source = package.data.fetch("source_closure")
+    policy_path = File.join(package.directory, "source-closure.yml")
+    receipt_name = "pdfium-#{version}-source-receipt.json"
+    receipt_path = File.join(package.directory, receipt_name)
+    generator_path = File.join(ROOT, "scripts", "prepare-pdfium-srpm-sources")
+    request_path = File.join(ROOT, ".github", "source-release", "pdfium.yml")
+    makefile_path = File.join(ROOT, ".copr", "Makefile")
+    closure = YAML.safe_load_file(policy_path)
+    receipt = JSON.parse(File.read(receipt_path))
+    prepared = closure.fetch("source_preparation")
+    pdfium_commit = closure.fetch("pdfium").fetch("commit")
+    tag = "pdfium-sources-#{version}-pdfium-#{pdfium_commit[0, 12]}"
+    filename = "pdfium-#{version}-source.tar.gz"
+    archive_url = "https://github.com/marcin-fm/agentlab/releases/download/#{tag}/#{filename}"
+    release_url = "https://github.com/marcin-fm/agentlab/releases/tag/#{tag}"
+
+    errors << "pdfium: generated archive transport identity is not required" unless policy["generated_archive_transport_identity_required"] == true
+    errors << "pdfium: remote generated source asset is not required" unless policy["remote_generated_asset_required"] == true
+    errors << "pdfium: source closure method mismatch" unless source["method"] == "github-actions-immutable-release"
+    errors << "pdfium: source release tag mismatch" unless policy["release_tag"] == tag
+    errors << "pdfium: source archive URL mismatch" unless policy["archive_url"] == archive_url
+    errors << "pdfium: source release URL mismatch" unless policy["release_url"] == release_url
+    errors << "pdfium: immutable release is not required" unless policy["immutable_release_required"] == true
+    errors << "pdfium: artifact attestation is not required" unless policy["artifact_attestation_required"] == true
+
+    expected_archive_sha256 = source.fetch("output_sha256")
+    expected_archive_size = source.fetch("output_size_bytes")
+    expected_tree_sha256 = source.fetch("output_tree_sha256")
+    errors << "pdfium: generated archive SHA-256 mismatch" unless policy["generated_archive_sha256"] == expected_archive_sha256 && prepared["output_sha256"] == expected_archive_sha256 && receipt.dig("output", "sha256") == expected_archive_sha256
+    errors << "pdfium: generated archive size mismatch" unless policy["generated_archive_size_bytes"] == expected_archive_size && prepared["output_size_bytes"] == expected_archive_size && receipt.dig("output", "size_bytes") == expected_archive_size
+    errors << "pdfium: generated tree SHA-256 mismatch" unless prepared["output_tree_sha256"] == expected_tree_sha256 && receipt.dig("output", "tree_sha256") == expected_tree_sha256
+    errors << "pdfium: source archive filename mismatch" unless prepared["output"] == filename && receipt.dig("output", "filename") == filename
+    errors << "pdfium: source archive release metadata mismatch" unless prepared["release_tag"] == tag && prepared["archive_url"] == archive_url && receipt.dig("release", "tag") == tag && receipt.dig("release", "archive_url") == archive_url
+    errors << "pdfium: source archive release controls are incomplete" unless prepared["immutable_release_required"] == true && prepared["artifact_attestation_required"] == true && receipt.dig("release", "immutable_required") == true && receipt.dig("release", "artifact_attestation_required") == true
+
+    {
+      policy_path => source.fetch("policy_sha256"),
+      receipt_path => source.fetch("receipt_sha256"),
+      generator_path => source.fetch("generator_sha256")
+    }.each do |path, sha256|
+      unless sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && File.file?(path) && Digest::SHA256.file(path).hexdigest == sha256
+        errors << "pdfium: checked source metadata hash mismatch: #{File.basename(path)}"
+      end
+    end
+    errors << "pdfium: source policy receipt hash mismatch" unless receipt.dig("source_policy", "sha256") == source["policy_sha256"]
+    errors << "pdfium: source generator receipt hash mismatch" unless receipt.dig("generator", "sha256") == source["generator_sha256"]
+    errors << "pdfium: unsupported source receipt schema" unless receipt["schema"] == "pdfium-source-preparation/v1"
+    errors << "pdfium: source receipt transport controls are incomplete" unless receipt.dig("output", "transport_identity_required") == true && receipt.dig("validation", "generated_archive_transport_identity_required") == true && receipt.dig("validation", "remote_generated_asset_required") == true
+
+    errors << "pdfium: spec source tag mismatch" unless spec.match?(/^%global source_tag #{Regexp.escape(tag.gsub(version, "%{version}"))}$/)
+    errors << "pdfium: spec source SHA-256 mismatch" unless spec.match?(/^%global source_sha256 #{Regexp.escape(expected_archive_sha256)}$/)
+    errors << "pdfium: spec source size mismatch" unless spec.match?(/^%global source_size #{expected_archive_size}$/)
+    expected_source0 = "https://github.com/marcin-fm/agentlab/releases/download/%{source_tag}/pdfium-%{version}-source.tar.gz"
+    errors << "pdfium: spec does not use the hosted Source0" unless spec.match?(/^Source0:\s+#{Regexp.escape(expected_source0)}$/)
+    errors << "pdfium: spec does not verify Source0 bytes" unless spec.include?('echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -') && spec.include?('test "$(stat -c %%s %{SOURCE0})" = "%{source_size}"')
+    errors << "pdfium: spec does not verify the hosted Source0 tree" unless spec.include?("ruby %{SOURCE3} --output %{SOURCE0} --receipt %{SOURCE1} --check")
+
+    makefile = File.read(makefile_path)
+    errors << "pdfium: COPR source builder still generates Source0" if makefile.include?("pdfium.spec)") || makefile.include?("prepare-pdfium-srpm-sources\" --spec")
+    if File.file?(request_path)
+      request = YAML.safe_load_file(request_path)
+      errors.concat(validate_pdfium_source_release_request(package, closure, request).map { |error| "pdfium: #{error}" })
+    else
+      errors << "pdfium: source-release request is missing"
+    end
+
+    errors
+  rescue JSON::ParserError, KeyError, Psych::SyntaxError, Errno::ENOENT => e
+    ["pdfium: invalid source release metadata: #{e.message}"]
+  end
+
   def validate_bun_build_plan(package, spec)
     return [] unless package.name == "bun"
 

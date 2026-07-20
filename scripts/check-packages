@@ -288,6 +288,8 @@ packages.each do |package|
 
   errors.concat(Agentlab.validate_bun_build_plan(package, spec))
 
+  errors.concat(Agentlab.validate_pdfium_source(package, spec))
+
   next unless Agentlab.command_available?("rpmspec")
 
   _stdout, stderr, status = Agentlab.capture(["rpmspec", "-P", package.spec_path])
