@@ -474,7 +474,7 @@ class AgentlabTest < Minitest::Test
     {
       "archive_sha256" => "0" * 64,
       "tag" => "wrong-tag",
-      "operation" => "publish",
+      "operation" => "invalid",
       "attempt" => 0
     }.each do |key, replacement|
       mutated = request.merge(key => replacement)
