@@ -1,10 +1,10 @@
-# Disabled by package.yml pending immutable source hosting, release-boundary
-# approval, and successful native aarch64 proof builds.
-%global source_sha256 1880e1d7d4659f589e63a319d8967cf5e584085e1e817667d51356ad6ad1b7ef
-%global source_closure_sha256 27749bcd3fab8c6dc5f621882823d6c43ca8c437193a56998a0c46b6be71a140
-%global source_manifest_sha256 3751903dfbd79d53a969f96f05eed44200c0737a7a9a1c16d71ca501121cca45
-%global source_policy_sha256 bceac435331b957027ef4f86bbd43a38d9941488aaee24f246243fcd4eeedc77
-%global source_receipt_sha256 bd6b304cabeab431ab504bcf39477bc759593f974e0290a8b56d4d2d6d462991
+# Disabled by package.yml pending release-boundary and private ABI/runtime
+# approval. Source0 is generated from the official Chromium lite archive by
+# the configured SCM source builder and verified by its exact tree in %%prep.
+%global source_sha256 b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875
+%global source_receipt_sha256 2931893f5a9e615797de3bf4b498ef34aa7e538329095aea2309a017f98bd0bc
+%global source_policy_sha256 892d6a6fde9abe97c2ee06e07be5b02ba014265deebba2a7d4cfe8929aaf5302
+%global source_preparer_sha256 686fd65fe5ef65cc46d43a97d628f7fd884d67486d027f8de71ac8d64a88b512
 %global agg_license_sha256 7c9a090bc2f7a49601bfb39e5504850feb7edc5ac2eba980610f6148a5538b43
 %global third_party_notices_sha256 caa7153703e3bf5e968b6f22a1c8b94d6732a0bd9f10bb6a5b3a9da5ff97f34e
 # Chromium already adds .gdb_index sections when linking with LLD.
@@ -29,23 +29,22 @@
 
 Name:           pdfium
 Version:        146.0.7678.0
-Release:        0.0.4%{?dist}
+Release:        0.0.5%{?dist}
 Summary:        PDF rendering library used by Chromium
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
 URL:            https://pdfium.googlesource.com/pdfium/
-Source0:        pdfium-%{version}.tar.gz
-Source1:        pdfium-%{version}-source-closure.tar.zst
-Source2:        pdfium-%{version}-source-closure.json
-Source3:        source-closure.yml
-Source4:        pdfium-%{version}-closure-receipt.json
-Source5:        AGG-LICENSE.txt
-Source6:        THIRD-PARTY-NOTICES.txt
-# Drop simdutf from an embedder-test target omitted by Fedora's reduced build.
-# Fedora-specific; not submitted because Fedora does not build that test surface.
+Source0:        pdfium-%{version}-source.tar.gz
+Source1:        pdfium-%{version}-source-receipt.json
+Source2:        source-closure.yml
+Source3:        prepare-pdfium-srpm-sources
+Source4:        AGG-LICENSE.txt
+Source5:        THIRD-PARTY-NOTICES.txt
+# Drop simdutf and test-font dependencies from targets omitted by Fedora's reduced build.
+# Fedora-specific; not submitted because Fedora does not build those test surfaces.
 Patch0:         pdfium-drop-simdutf-test-dependency.patch
-# Select Fedora's native x86_64 and aarch64 Clang target and compiler-rt layouts.
-# Fedora-specific; not submitted because it follows Fedora's toolchain layout.
+# Select Fedora's Clang target/runtime layouts and omit two bundled-Clang-only flags.
+# Fedora-specific; the feature-detection removal follows Fedora Chromium policy.
 Patch1:         pdfium-fedora-clang-target.patch
 # Give private Abseil and ICU components collision-free PDFium library names.
 # Fedora-specific boundary; upstream does not install these components system-wide.
@@ -81,6 +80,9 @@ BuildRequires:  openjpeg2-devel
 BuildRequires:  pkgconf-pkg-config
 BuildRequires:  python3
 BuildRequires:  python3-jinja2
+BuildRequires:  ruby
+BuildRequires:  ruby-default-gems
+BuildRequires:  rubygem-json
 BuildRequires:  zlib-ng-compat-devel
 
 %description
@@ -96,77 +98,19 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 Public FPDF headers and pkg-config metadata for PDFium.
 
 %prep
-echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
-echo "%{source_closure_sha256}  %{SOURCE1}" | sha256sum -c -
-echo "%{source_manifest_sha256}  %{SOURCE2}" | sha256sum -c -
-echo "%{source_policy_sha256}  %{SOURCE3}" | sha256sum -c -
-echo "%{source_receipt_sha256}  %{SOURCE4}" | sha256sum -c -
-echo "%{agg_license_sha256}  %{SOURCE5}" | sha256sum -c -
-echo "%{third_party_notices_sha256}  %{SOURCE6}" | sha256sum -c -
+echo "%{source_receipt_sha256}  %{SOURCE1}" | sha256sum -c -
+echo "%{source_policy_sha256}  %{SOURCE2}" | sha256sum -c -
+echo "%{source_preparer_sha256}  %{SOURCE3}" | sha256sum -c -
+echo "%{agg_license_sha256}  %{SOURCE4}" | sha256sum -c -
+echo "%{third_party_notices_sha256}  %{SOURCE5}" | sha256sum -c -
+TMPDIR=%{_tmppath} ruby %{SOURCE3} --output %{SOURCE0} --receipt %{SOURCE1} --check
 %setup -q -n pdfium-%{version}
 patch --batch --fuzz=0 -p1 < %{PATCH0}
-
-python3 - "%{SOURCE2}" "%{SOURCE4}" <<'PY'
-import json
-import sys
-
-manifest = json.load(open(sys.argv[1], encoding="utf-8"))
-receipt = json.load(open(sys.argv[2], encoding="utf-8"))
-expected = {
-    "pdfium": "efbbd0fc95825e049ad790911356e0b689418899",
-    "chromium-build": "06d247cb917bb5fac3103b1b7dccb75368a553ce",
-    "chromium-buildtools": "6a18683f555b4ac8b05ac8395c29c84483ac9588",
-    "abseil": "675d3d37ecbec78fd51378c6774c45715b1e4382",
-    "fast-float": "cb1d42aaa1e14b09e1452cfdef373d051b8c02a4",
-    "icu": "a86a32e67b8d1384b33f8fa48c83a6079b86f8cd",
-    "test-fonts": "7f51783942943e965cd56facf786544ccfc07713",
-}
-
-assert manifest["schema"] == 1
-assert manifest["package"] == "pdfium"
-assert manifest["version"] == "%{version}"
-assert manifest["consumer"] == {"name": "kreuzberg", "version": "4.10.2"}
-assert manifest["target"] == {"os": "linux", "architectures": ["x86_64", "aarch64"]}
-assert all(value == "forbidden" for value in manifest["build_policy"].values() if isinstance(value, str))
-assert {patch["file"]: patch["sha256"] for patch in manifest["fedora_patches"]} == {
-    "pdfium-drop-simdutf-test-dependency.patch": "849a32a628d4ac5bb87d2eb8cac5395e938551e50aaf44b3ef6060c00557b5df",
-    "pdfium-fedora-clang-target.patch": "09f3badac7487cb01f7d7d90c414173230bfca3a155684f12cd23c930ac9a99c",
-    "pdfium-private-component-names.patch": "7244edaa8d2164c5fb1b18b424777f86856af757f87dd7e0aff70d4b869a9945",
-    "pdfium-fedora-build-id.patch": "773e5b8e0cbca0b9888d9616466df8f53f6bf05787b22cc5c4143e7780cefb2b",
-    "pdfium-versioned-sonames.patch": "b1d76926fc311801dd0b19ef37f22e0773c7dcb1a66aa85f146de64a4ccf0e47",
-    "pdfium-embed-icu-data.patch": "6d9eab4ba09b001431495f90ade4366c0a628fd10917eb27d77718e3e3b58e6c",
-}
-sources = {source["id"]: source for source in manifest["sources"]}
-assert set(sources) == set(expected)
-for source_id, revision in expected.items():
-    assert sources[source_id]["revision"] == revision
-    assert sources[source_id]["resolved_commit"] == revision
-    assert len(sources[source_id]["archive_sha256"]) == 64
-
-assert receipt == {
-    "schema": 1,
-    "package": "pdfium",
-    "version": "%{version}",
-    "source_count": 7,
-    "source_sha256": "%{source_sha256}",
-    "closure_sha256": "%{source_closure_sha256}",
-    "manifest_sha256": "%{source_manifest_sha256}",
-    "source_policy_sha256": "%{source_policy_sha256}",
-}
-PY
-
-tar --zstd -xf %{SOURCE1} -C .
 patch --batch --fuzz=0 -p1 < %{PATCH1}
 patch --batch --fuzz=0 -p1 < %{PATCH2}
 patch --batch --fuzz=0 -p1 < %{PATCH3}
 patch --batch --fuzz=0 -p1 < %{PATCH4}
 patch --batch --fuzz=0 -p1 < %{PATCH5}
-
-cat > build/config/gclient_args.gni <<'EOF'
-build_with_chromium = false
-checkout_android = false
-checkout_skia = false
-EOF
 
 %build
 mkdir -p out/Release
@@ -254,9 +198,9 @@ install -Dpm0644 LICENSE \
   %{buildroot}%{_licensedir}/%{name}/LICENSE.pdfium
 install -Dpm0644 third_party/icu/LICENSE \
   %{buildroot}%{_licensedir}/%{name}/LICENSE.icu
-install -Dpm0644 %{SOURCE5} \
+install -Dpm0644 %{SOURCE4} \
   %{buildroot}%{_licensedir}/%{name}/AGG-LICENSE.txt
-install -Dpm0644 %{SOURCE6} \
+install -Dpm0644 %{SOURCE5} \
   %{buildroot}%{_licensedir}/%{name}/THIRD-PARTY-NOTICES.txt
 
 install -d %{buildroot}%{_libdir}/pkgconfig
@@ -289,6 +233,11 @@ EOF
 %{_libdir}/pkgconfig/pdfium.pc
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.5
+- Generate one checked Source0 from Chromium's official lite archive at SCM SRPM time.
+- Remove bundled buildtools binaries and unused test-font sources.
+- Adapt Chromium's release build files to Fedora Clang 22.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.4
 - Record successful Fedora 43 and 44 aarch64 COPR proof in the source policy.
 

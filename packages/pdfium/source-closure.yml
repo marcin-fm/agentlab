@@ -1,4 +1,4 @@
-schema: 1
+schema: 2
 package: pdfium
 version: 146.0.7678.0
 consumer:
@@ -7,6 +7,12 @@ consumer:
 chromium:
   tag: 146.0.7678.0
   commit: deeb2f3a6598ee15f0f71708aec735580a9e68b4
+  archive:
+    url: https://commondatastorage.googleapis.com/chromium-browser-official/chromium-146.0.7678.0-lite.tar.xz
+    filename: chromium-146.0.7678.0-lite.tar.xz
+    root: chromium-146.0.7678.0
+    size_bytes: 1474309344
+    sha256: b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875
 pdfium:
   commit: efbbd0fc95825e049ad790911356e0b689418899
 target:
@@ -25,42 +31,68 @@ build_policy:
     - gn
     - lld
     - ninja-build
-sources:
+source_preparation:
+  method: copr-git-scm-make_srpm
+  generator: prepare-pdfium-srpm-sources
+  output: pdfium-146.0.7678.0-source.tar.gz
+  output_root: pdfium-146.0.7678.0
+  output_tree_file_records: 15141
+  output_tree_sha256: edcbeca5eb923a7127416246377ea0ac927a7a54f6cb388fb2c4411b9ae3af60
+  generated_archive_transport_identity_required: false
+  selected_paths_and_links_safe: true
+selected_sources:
   - id: pdfium
-    path: .
-    git_url: https://pdfium.googlesource.com/pdfium
+    archive_path: third_party/pdfium
+    output_path: .
     revision: efbbd0fc95825e049ad790911356e0b689418899
+    tree_file_records: 4891
+    tree_sha256: e172339ff816457248efc3c4ed21adab91db9d168765e22383998b0d7a15da31
     license: Apache-2.0 AND BSD-3-Clause
   - id: chromium-build
-    path: build
-    git_url: https://chromium.googlesource.com/chromium/src/build
-    revision: 06d247cb917bb5fac3103b1b7dccb75368a553ce
+    archive_path: build
+    output_path: build
+    revision: deeb2f3a6598ee15f0f71708aec735580a9e68b4
+    provenance: Chromium release tree; intentionally newer than PDFium's standalone DEPS pin
+    tree_file_records: 1458
+    tree_sha256: 60ddc6619286de5ae4e8d046c68613f58f8d75428a72776a467474d22c6f0f68
     license: BSD-3-Clause
   - id: chromium-buildtools
-    path: buildtools
-    git_url: https://chromium.googlesource.com/chromium/src/buildtools
+    archive_path: buildtools
+    output_path: buildtools
     revision: 6a18683f555b4ac8b05ac8395c29c84483ac9588
+    tree_file_records: 84
+    tree_sha256: 76045245f4cedf29c74106f42106f2dc10cda1773379341166f441d87bdb4e0d
     license: BSD-3-Clause
   - id: abseil
-    path: third_party/abseil-cpp
-    git_url: https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp
+    archive_path: third_party/abseil-cpp
+    output_path: third_party/abseil-cpp
     revision: 675d3d37ecbec78fd51378c6774c45715b1e4382
+    tree_file_records: 1619
+    tree_sha256: fa5b6a4274bdd0cb1f20dcae021dac976c3c80caa988b57e82d9461957a7388f
     license: Apache-2.0
   - id: fast-float
-    path: third_party/fast_float/src
-    git_url: https://chromium.googlesource.com/external/github.com/fastfloat/fast_float
+    archive_path: third_party/fast_float/src
+    output_path: third_party/fast_float/src
     revision: cb1d42aaa1e14b09e1452cfdef373d051b8c02a4
+    tree_file_records: 100
+    tree_sha256: a7dc489826edf39b143fbff7d2776d7b24d8c1ff277deaf11b1d7b7744b153f5
     license: Apache-2.0 OR MIT
   - id: icu
-    path: third_party/icu
-    git_url: https://chromium.googlesource.com/chromium/deps/icu
+    archive_path: third_party/icu
+    output_path: third_party/icu
     revision: a86a32e67b8d1384b33f8fa48c83a6079b86f8cd
+    tree_file_records: 6995
+    tree_sha256: d643dfbbdcdb3f5c7b0f010b508475c0da867074ab00914dec22ce3ec149a9b5
     license: Unicode-3.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND LicenseRef-Fedora-Public-Domain
-  - id: test-fonts
-    path: third_party/test_fonts
-    git_url: https://chromium.googlesource.com/chromium/src/third_party/test_fonts
-    revision: 7f51783942943e965cd56facf786544ccfc07713
-    license: BSD-3-Clause
+excluded_archive_paths:
+  - path: buildtools/linux64
+    tree_file_records: 3
+    tree_sha256: b1447b17bcadf23ded363054e94913b53d462d081fa0c00f9c7b9911c1a53155
+    reason: Chromium-provided GN and clang-format binaries are replaced by Fedora tools.
+  - path: buildtools/linux64-format
+    tree_file_records: 3
+    tree_sha256: 825db9ce368d94d1838c972f4768293567f127ab95f0ef0e3a0542d56bf72c86
+    reason: Chromium-provided clang-format binary is not used by the RPM build.
 system_libraries:
   - fontconfig
   - freetype2
@@ -71,21 +103,21 @@ system_libraries:
   - libtiff-4
   - zlib
 fedora_patches:
-  - id: drop-simdutf-test-dependency
+  - id: drop-unused-test-dependencies
     file: pdfium-drop-simdutf-test-dependency.patch
-    sha256: 849a32a628d4ac5bb87d2eb8cac5395e938551e50aaf44b3ef6060c00557b5df
-    purpose: Remove an unavailable dependency from an unbuilt embedder-test target.
+    sha256: e06d2d2d0de096bbadc6589c8bb35525764fe9e1d990cf16ddaf977734c19c75
+    purpose: Remove unavailable dependencies from unbuilt test-only targets.
   - id: fedora-clang-target
     file: pdfium-fedora-clang-target.patch
-    sha256: 09f3badac7487cb01f7d7d90c414173230bfca3a155684f12cd23c930ac9a99c
-    purpose: Use Fedora's x86_64 and aarch64 Clang target triples and compiler-rt layouts.
+    sha256: ea10e60b5a46a327753f77e6f4e7749e4d59c870c01738a22d89b36dc1e7d704
+    purpose: Use Fedora Clang target layouts and omit two bundled-Clang-only flags.
   - id: private-component-names
     file: pdfium-private-component-names.patch
     sha256: 7244edaa8d2164c5fb1b18b424777f86856af757f87dd7e0aff70d4b869a9945
     purpose: Give pinned Abseil and ICU component libraries collision-free PDFium SONAMEs.
   - id: fedora-build-id
     file: pdfium-fedora-build-id.patch
-    sha256: 773e5b8e0cbca0b9888d9616466df8f53f6bf05787b22cc5c4143e7780cefb2b
+    sha256: c1215d39c1b24b8c21dfc5f8451ef1e84315c67f6aba77792cc6c6069f967d8a
     purpose: Use SHA-1 build IDs compatible with RPM's build-id link hierarchy.
   - id: versioned-sonames
     file: pdfium-versioned-sonames.patch
@@ -97,15 +129,17 @@ fedora_patches:
     purpose: Embed ICU data in PDFium's private ICU component instead of requiring icudtl.dat at runtime.
 excluded_sources:
   - Chromium Clang and sysroots
-  - CIPD GN and Ninja binaries
+  - Chromium buildtools binaries
   - depot_tools
-  - PDFium test corpus
+  - PDFium test fonts and corpus
   - simdutf, referenced only by an unbuilt embedder-test target removed by the Fedora patch
   - PartitionAlloc
   - Skia
   - V8
   - Rust PNG and Fontations
 verification:
+  official_archive_transport_verified: true
+  official_archive_selected_trees_verified: true
   source_closure_generated: true
   fedora_43_x86_64_gn: true
   fedora_44_x86_64_gn: true
@@ -113,6 +147,7 @@ verification:
   fedora_44_x86_64_build: true
   fedora_43_aarch64_build: true
   fedora_44_aarch64_build: true
+  official_archive_fedora_44_x86_64_build: true
   aarch64_copr_build_id: 10737741
   exported_fpdf_symbols: true
   c_api_smoke: true

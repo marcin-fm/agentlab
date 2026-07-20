@@ -1,13 +1,20 @@
 From: Marcin FM <marcin@lgic.pl>
-Subject: [PATCH] Drop the unavailable simdutf embedder-test dependency
+Subject: [PATCH] Drop unavailable dependencies from unbuilt test targets
 
 The reduced Fedora package builds the shared PDFium library and performs a
 direct FPDF C API smoke test. It does not build PDFium's embedder-test targets.
-Avoid requiring the separately pinned Chromium simdutf source merely while GN
-parses this unused test-only target.
+Avoid requiring the separately pinned Chromium simdutf and test-font sources
+merely while GN parses unused test-only targets.
 
 --- a/testing/BUILD.gn
 +++ b/testing/BUILD.gn
+@@ -40,6 +40,5 @@ source_set("test_support") {
+   public_deps = [
+     ":path_service",
+-    "//third_party/test_fonts",
+   ]
+   deps = [
+     "../:pdfium_public_headers",
 @@ -202,6 +202,5 @@ source_set("embedder_test_support") {
      "//testing/gmock",
      "//testing/gtest",

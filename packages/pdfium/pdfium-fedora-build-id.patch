@@ -7,6 +7,6 @@ build.
 
 --- a/build/config/compiler/BUILD.gn
 +++ b/build/config/compiler/BUILD.gn
-@@ -515 +515 @@
+@@ -516 +516 @@
 -        ldflags += [ "-Wl,--build-id=fast" ]
 +        ldflags += [ "-Wl,--build-id=sha1" ]

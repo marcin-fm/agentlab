@@ -1,0 +1,110 @@
+{
+  "schema": "pdfium-source-preparation/v1",
+  "package": "pdfium",
+  "version": "146.0.7678.0",
+  "upstream": {
+    "url": "https://commondatastorage.googleapis.com/chromium-browser-official/chromium-146.0.7678.0-lite.tar.xz",
+    "filename": "chromium-146.0.7678.0-lite.tar.xz",
+    "archive_root": "chromium-146.0.7678.0",
+    "size_bytes": 1474309344,
+    "sha256": "b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875"
+  },
+  "source_policy": {
+    "path": "source-closure.yml",
+    "sha256": "892d6a6fde9abe97c2ee06e07be5b02ba014265deebba2a7d4cfe8929aaf5302"
+  },
+  "selected_sources": [
+    {
+      "id": "pdfium",
+      "archive_path": "third_party/pdfium",
+      "output_path": ".",
+      "revision": "efbbd0fc95825e049ad790911356e0b689418899",
+      "tree_file_records": 4891,
+      "tree_sha256": "e172339ff816457248efc3c4ed21adab91db9d168765e22383998b0d7a15da31"
+    },
+    {
+      "id": "chromium-build",
+      "archive_path": "build",
+      "output_path": "build",
+      "revision": "deeb2f3a6598ee15f0f71708aec735580a9e68b4",
+      "tree_file_records": 1458,
+      "tree_sha256": "60ddc6619286de5ae4e8d046c68613f58f8d75428a72776a467474d22c6f0f68"
+    },
+    {
+      "id": "chromium-buildtools",
+      "archive_path": "buildtools",
+      "output_path": "buildtools",
+      "revision": "6a18683f555b4ac8b05ac8395c29c84483ac9588",
+      "tree_file_records": 84,
+      "tree_sha256": "76045245f4cedf29c74106f42106f2dc10cda1773379341166f441d87bdb4e0d"
+    },
+    {
+      "id": "abseil",
+      "archive_path": "third_party/abseil-cpp",
+      "output_path": "third_party/abseil-cpp",
+      "revision": "675d3d37ecbec78fd51378c6774c45715b1e4382",
+      "tree_file_records": 1619,
+      "tree_sha256": "fa5b6a4274bdd0cb1f20dcae021dac976c3c80caa988b57e82d9461957a7388f"
+    },
+    {
+      "id": "fast-float",
+      "archive_path": "third_party/fast_float/src",
+      "output_path": "third_party/fast_float/src",
+      "revision": "cb1d42aaa1e14b09e1452cfdef373d051b8c02a4",
+      "tree_file_records": 100,
+      "tree_sha256": "a7dc489826edf39b143fbff7d2776d7b24d8c1ff277deaf11b1d7b7744b153f5"
+    },
+    {
+      "id": "icu",
+      "archive_path": "third_party/icu",
+      "output_path": "third_party/icu",
+      "revision": "a86a32e67b8d1384b33f8fa48c83a6079b86f8cd",
+      "tree_file_records": 6995,
+      "tree_sha256": "d643dfbbdcdb3f5c7b0f010b508475c0da867074ab00914dec22ce3ec149a9b5"
+    }
+  ],
+  "excluded_archive_paths": [
+    {
+      "path": "buildtools/linux64",
+      "tree_file_records": 3,
+      "tree_sha256": "b1447b17bcadf23ded363054e94913b53d462d081fa0c00f9c7b9911c1a53155",
+      "reason": "Chromium-provided GN and clang-format binaries are replaced by Fedora tools"
+    },
+    {
+      "path": "buildtools/linux64-format",
+      "tree_file_records": 3,
+      "tree_sha256": "825db9ce368d94d1838c972f4768293567f127ab95f0ef0e3a0542d56bf72c86",
+      "reason": "Chromium-provided clang-format binary is not used by the RPM build"
+    }
+  ],
+  "output": {
+    "filename": "pdfium-146.0.7678.0-source.tar.gz",
+    "archive_root": "pdfium-146.0.7678.0",
+    "tree_file_records": 15141,
+    "tree_sha256": "edcbeca5eb923a7127416246377ea0ac927a7a54f6cb388fb2c4411b9ae3af60",
+    "transport_identity_required": false
+  },
+  "generator": {
+    "path": "prepare-pdfium-srpm-sources",
+    "sha256": "686fd65fe5ef65cc46d43a97d628f7fd884d67486d027f8de71ac8d64a88b512"
+  },
+  "archive_normalization": {
+    "sort": "name",
+    "mtime": 0,
+    "uid": 0,
+    "gid": 0,
+    "format": "gnu",
+    "gzip_level": 9,
+    "gzip_name_and_timestamp": false
+  },
+  "validation": {
+    "upstream_transport_identity_verified": true,
+    "selected_tree_identities_verified": true,
+    "selected_paths_and_links_safe": true,
+    "excluded_path_set_exact": true,
+    "generated_tree_verified": true,
+    "generated_archive_reextracts_identically": true,
+    "generated_archive_transport_identity_required": false,
+    "remote_generated_asset_required": false
+  }
+}

@@ -6,18 +6,24 @@ a matching standalone release tag, so the RPM version identifies the published
 Chromium release while the exact subordinate PDFium commit is recorded
 separately as provenance.
 
-The source closure is generated with deterministic `git archive` output. This
-is required because repeated downloads from Gitiles `+archive` produce
-different gzip bytes for the same commit. The RPM build must not invoke
-`gclient`, CIPD, GCS downloads, remote execution, or Chromium-provided binary
-toolchains.
+The SCM source builder downloads Chromium's official `146.0.7678.0` lite
+archive, verifies its published SHA-256, and generates one compact Source0 from
+the exact PDFium, Chromium build/buildtools, Abseil, fast_float, and ICU trees.
+It removes Chromium-provided GN and clang-format binaries, omits unbuilt test
+font sources, and verifies the generated archive by its exact safe tree rather
+than compressor-specific bytes. No custom release asset is required. The RPM
+build must not invoke `gclient`, CIPD, GCS downloads, remote execution, or
+Chromium-provided binary toolchains.
 
 The draft builds versioned `libpdfium.so.146` plus private, collision-free
 Abseil and ICU component libraries on native `x86_64` and `aarch64` targets.
 The Fedora Clang patch selects each architecture's `redhat-linux-gnu` target and
 compiler-rt directory. V8, XFA, Skia, Rust PNG, Fontations, PartitionAlloc,
 tests, and corpora are disabled. Fedora provides GN, Ninja, Clang, and the
-selected system image/font libraries. Local and clean Fedora 43 and 44 x86_64
+selected system image/font libraries. The Chromium release build files contain
+two flags supported only by its newer bundled Clang; the Fedora toolchain patch
+removes those flags while retaining array-bounds instrumentation and traps.
+Local and clean Fedora 43 and 44 x86_64
 builds passed with FPDF export, C API, pkg-config, and extracted-payload
 consumer tests. Exact-current transient COPR build `10737741` passed natively on Fedora 43
 and 44 aarch64 with the same checks, including the architecture-specific Clang
@@ -29,7 +35,9 @@ third-party license notices. The final embedded-data revision passed clean
 Fedora 43 and 44 builds and extracted-payload validation. The private component
 names, versioned SONAMEs, and embedded ICU-data ownership form a Fedora-specific
 package, ABI, and runtime boundary that still requires explicit approval. The
-package remains blocked for that review, immutable public source hosting,
-and approval of the subordinate source boundary pinned by the Chromium release.
+package remains blocked for that review, approval of the subordinate source
+boundary pinned by the Chromium release, and one clean Mock rebuild of the new
+official-archive source path. Current Mock attempts stopped before
+initialization because another build held the shared Fedora 44 root.
 The aarch64 proof used a separate transient COPR project and does not enable
 this package in `marcin/agentlab`.

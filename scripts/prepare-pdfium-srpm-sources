@@ -1,0 +1,515 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "find"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "tempfile"
+require "tmpdir"
+require "uri"
+require "zlib"
+
+module PdfiumSources
+  class Error < StandardError; end
+
+  def self.atomic_write(path, content)
+    Tempfile.create([".pdfium-source-", ".tmp"], File.dirname(path)) do |file|
+      file.binmode
+      file.write(content)
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+end
+
+PACKAGE = "pdfium"
+VERSION = "146.0.7678.0"
+UPSTREAM_URL = "https://commondatastorage.googleapis.com/chromium-browser-official/chromium-#{VERSION}-lite.tar.xz"
+UPSTREAM_FILENAME = "chromium-#{VERSION}-lite.tar.xz"
+UPSTREAM_ROOT = "chromium-#{VERSION}"
+UPSTREAM_SIZE_BYTES = 1_474_309_344
+UPSTREAM_SHA256 = "b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875"
+OUTPUT_FILENAME = "pdfium-#{VERSION}-source.tar.gz"
+OUTPUT_ROOT = "pdfium-#{VERSION}"
+OUTPUT_TREE_RECORDS = 15_141
+OUTPUT_TREE_SHA256 = "edcbeca5eb923a7127416246377ea0ac927a7a54f6cb388fb2c4411b9ae3af60"
+RECEIPT_FILENAME = "pdfium-#{VERSION}-source-receipt.json"
+SOURCE_POLICY_FILENAME = "source-closure.yml"
+SOURCE_POLICY_SHA256 = "892d6a6fde9abe97c2ee06e07be5b02ba014265deebba2a7d4cfe8929aaf5302"
+SCRIPT_FILENAME = "prepare-pdfium-srpm-sources"
+GCLIENT_ARGS = <<~GN.freeze
+  build_with_chromium = false
+  checkout_android = false
+  checkout_skia = false
+GN
+
+SELECTED_SOURCES = [
+  {
+    "id" => "pdfium",
+    "archive_path" => "third_party/pdfium",
+    "output_path" => ".",
+    "revision" => "efbbd0fc95825e049ad790911356e0b689418899",
+    "tree_file_records" => 4_891,
+    "tree_sha256" => "e172339ff816457248efc3c4ed21adab91db9d168765e22383998b0d7a15da31"
+  },
+  {
+    "id" => "chromium-build",
+    "archive_path" => "build",
+    "output_path" => "build",
+    "revision" => "deeb2f3a6598ee15f0f71708aec735580a9e68b4",
+    "tree_file_records" => 1_458,
+    "tree_sha256" => "60ddc6619286de5ae4e8d046c68613f58f8d75428a72776a467474d22c6f0f68"
+  },
+  {
+    "id" => "chromium-buildtools",
+    "archive_path" => "buildtools",
+    "output_path" => "buildtools",
+    "revision" => "6a18683f555b4ac8b05ac8395c29c84483ac9588",
+    "tree_file_records" => 84,
+    "tree_sha256" => "76045245f4cedf29c74106f42106f2dc10cda1773379341166f441d87bdb4e0d"
+  },
+  {
+    "id" => "abseil",
+    "archive_path" => "third_party/abseil-cpp",
+    "output_path" => "third_party/abseil-cpp",
+    "revision" => "675d3d37ecbec78fd51378c6774c45715b1e4382",
+    "tree_file_records" => 1_619,
+    "tree_sha256" => "fa5b6a4274bdd0cb1f20dcae021dac976c3c80caa988b57e82d9461957a7388f"
+  },
+  {
+    "id" => "fast-float",
+    "archive_path" => "third_party/fast_float/src",
+    "output_path" => "third_party/fast_float/src",
+    "revision" => "cb1d42aaa1e14b09e1452cfdef373d051b8c02a4",
+    "tree_file_records" => 100,
+    "tree_sha256" => "a7dc489826edf39b143fbff7d2776d7b24d8c1ff277deaf11b1d7b7744b153f5"
+  },
+  {
+    "id" => "icu",
+    "archive_path" => "third_party/icu",
+    "output_path" => "third_party/icu",
+    "revision" => "a86a32e67b8d1384b33f8fa48c83a6079b86f8cd",
+    "tree_file_records" => 6_995,
+    "tree_sha256" => "d643dfbbdcdb3f5c7b0f010b508475c0da867074ab00914dec22ce3ec149a9b5"
+  }
+].freeze
+
+EXCLUDED_PATHS = [
+  {
+    "path" => "buildtools/linux64",
+    "tree_file_records" => 3,
+    "tree_sha256" => "b1447b17bcadf23ded363054e94913b53d462d081fa0c00f9c7b9911c1a53155",
+    "reason" => "Chromium-provided GN and clang-format binaries are replaced by Fedora tools"
+  },
+  {
+    "path" => "buildtools/linux64-format",
+    "tree_file_records" => 3,
+    "tree_sha256" => "825db9ce368d94d1838c972f4768293567f127ab95f0ef0e3a0542d56bf72c86",
+    "reason" => "Chromium-provided clang-format binary is not used by the RPM build"
+  }
+].freeze
+
+def run!(*command, **options)
+  output, error, status = Open3.capture3(*command, **options)
+  return output if status.success?
+
+  detail = error.strip.empty? ? output.strip : error.strip
+  raise PdfiumSources::Error, "command failed: #{command.join(' ')}#{detail.empty? ? '' : ": #{detail}"}"
+end
+
+def verify_file!(path, sha256:, size_bytes: nil)
+  raise PdfiumSources::Error, "missing PDFium source #{path}" unless File.file?(path)
+  raise PdfiumSources::Error, "refusing symlinked PDFium source #{path}" if File.symlink?(path)
+  if size_bytes && File.size(path) != size_bytes
+    raise PdfiumSources::Error, "PDFium source size mismatch: #{File.basename(path)}"
+  end
+  unless Digest::SHA256.file(path).hexdigest == sha256
+    raise PdfiumSources::Error, "PDFium source checksum mismatch: #{File.basename(path)}"
+  end
+end
+
+def safe_archive_path(path)
+  clean = Pathname(path).cleanpath.to_s
+  return nil if Pathname(path).absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def safe_link?(path, target)
+  return false if target.to_s.empty? || Pathname(target).absolute?
+
+  resolved = Pathname(File.join(File.dirname(path), target)).cleanpath.to_s
+  resolved != ".." && !resolved.start_with?("../")
+end
+
+def parse_pax_headers(data)
+  offset = 0
+  headers = {}
+  while offset < data.bytesize
+    space = data.index(" ", offset)
+    raise PdfiumSources::Error, "invalid PAX header length" unless space
+
+    length = data.byteslice(offset, space - offset).to_i
+    unless length.positive? && offset + length <= data.bytesize
+      raise PdfiumSources::Error, "invalid PAX header record"
+    end
+
+    record = data.byteslice(space + 1, length - (space - offset) - 1).delete_suffix("\n")
+    key, value = record.split("=", 2)
+    raise PdfiumSources::Error, "invalid PAX header value" unless key && value
+
+    headers[key] = value
+    offset += length
+  end
+  headers
+end
+
+def tar_header_path(header)
+  name = header.name.to_s.split("\0", 2).first.to_s
+  prefix = header.prefix.to_s.split("\0", 2).first.to_s
+  prefix.empty? ? name : "#{prefix}/#{name}"
+end
+
+def inspect_output_archive(path)
+  paths = {}
+  roots = {}
+  long_name = nil
+  long_link = nil
+  local_pax = {}
+  global_pax = {}
+
+  Zlib::GzipReader.open(path) do |gzip|
+    Gem::Package::TarReader.new(gzip) do |tar|
+      tar.each do |entry|
+        case entry.header.typeflag
+        when "L"
+          long_name = entry.read.delete_suffix("\0")
+          next
+        when "K"
+          long_link = entry.read.delete_suffix("\0")
+          next
+        when "x"
+          local_pax = parse_pax_headers(entry.read)
+          next
+        when "g"
+          global_pax.merge!(parse_pax_headers(entry.read))
+          next
+        end
+
+        entry_name = local_pax["path"] || global_pax["path"] || long_name || tar_header_path(entry.header)
+        link_name = local_pax["linkpath"] || global_pax["linkpath"] || long_link ||
+                    entry.header.linkname.to_s.split("\0", 2).first
+        clean = safe_archive_path(entry_name)
+        raise PdfiumSources::Error, "archive path escapes root: #{entry_name}" unless clean
+        raise PdfiumSources::Error, "archive contains duplicate path: #{clean}" if paths.key?(clean)
+
+        paths[clean] = true
+        root = clean.split("/", 2).first
+        roots[root] = true unless root.nil? || root.empty? || root == "."
+        if entry.file? || entry.directory?
+          # Content is verified after extraction.
+        elsif entry.header.typeflag == "2"
+          unless safe_link?(clean, link_name)
+            raise PdfiumSources::Error, "archive link escapes root: #{clean} -> #{link_name}"
+          end
+        elsif entry.header.typeflag == "1"
+          raise PdfiumSources::Error, "generated archive contains hard link: #{clean} -> #{link_name}"
+        else
+          raise PdfiumSources::Error, "unsupported archive entry #{entry.header.typeflag.inspect}: #{clean}"
+        end
+
+        long_name = nil
+        long_link = nil
+        local_pax = {}
+      end
+    end
+  end
+
+  raise PdfiumSources::Error, "archive root does not match #{OUTPUT_ROOT}" unless roots.keys == [OUTPUT_ROOT]
+rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+  raise PdfiumSources::Error, "cannot inspect PDFium output archive: #{e.message}"
+end
+
+def tree_manifest(root)
+  records = []
+  Find.find(root) do |entry|
+    next if entry == root
+
+    relative = entry.delete_prefix("#{root}/")
+    stat = File.lstat(entry)
+    if stat.file?
+      records << [relative, stat.executable? ? "100755" : "100644", Digest::SHA256.file(entry).hexdigest]
+    elsif stat.symlink?
+      records << [relative, "120000", Digest::SHA256.hexdigest(File.readlink(entry))]
+    elsif !stat.directory?
+      raise PdfiumSources::Error, "unsupported extracted source entry #{relative}"
+    end
+  end
+  records.sort
+end
+
+def verify_safe_tree!(root)
+  Find.find(root) do |entry|
+    next unless File.symlink?(entry)
+
+    relative = entry.delete_prefix("#{root}/")
+    target = File.readlink(entry)
+    unless safe_link?(relative, target)
+      raise PdfiumSources::Error, "extracted source link escapes root: #{relative} -> #{target}"
+    end
+  end
+end
+
+def verify_tree!(root, records:, sha256:, label:)
+  manifest = tree_manifest(root)
+  actual_sha256 = Digest::SHA256.hexdigest(JSON.generate(manifest))
+  unless manifest.length == records && actual_sha256 == sha256
+    raise PdfiumSources::Error, "#{label} tree identity mismatch"
+  end
+  manifest
+end
+
+def expanded_sources(spec)
+  output = run!("rpmspec", "-P", spec)
+  output.each_line.each_with_object({}) do |line, sources|
+    match = line.match(/\ASource(?<index>\d*):\s+(?<value>\S+)/)
+    next unless match
+
+    index = match[:index].empty? ? 0 : Integer(match[:index], 10)
+    raise PdfiumSources::Error, "duplicate Source#{index} in #{spec}" if sources.key?(index)
+
+    sources[index] = match[:value]
+  end
+end
+
+def copy_selected_tree(source, destination)
+  if destination.end_with?("/.")
+    FileUtils.mkdir_p(destination.delete_suffix("/."))
+    Dir.children(source).each do |entry|
+      FileUtils.cp_r(File.join(source, entry), destination, preserve: true)
+    end
+  else
+    FileUtils.mkdir_p(File.dirname(destination))
+    FileUtils.cp_r(source, destination, preserve: true)
+  end
+end
+
+def verify_output_archive!(path, extraction)
+  inspect_output_archive(path)
+  FileUtils.rm_rf(extraction)
+  FileUtils.mkdir_p(extraction)
+  run!("tar", "-xzf", path, "-C", extraction, "--no-same-owner")
+  root = File.join(extraction, OUTPUT_ROOT)
+  verify_safe_tree!(root)
+  manifest = verify_tree!(
+    root,
+    records: OUTPUT_TREE_RECORDS,
+    sha256: OUTPUT_TREE_SHA256,
+    label: "generated PDFium source"
+  )
+  EXCLUDED_PATHS.each do |excluded|
+    if File.exist?(File.join(root, excluded.fetch("path")))
+      raise PdfiumSources::Error, "excluded source is present: #{excluded.fetch('path')}"
+    end
+  end
+  if File.exist?(File.join(root, "third_party", "test_fonts"))
+    raise PdfiumSources::Error, "unused test-font source is present"
+  end
+  unless File.binread(File.join(root, "build", "config", "gclient_args.gni")) == GCLIENT_ARGS
+    raise PdfiumSources::Error, "generated gclient_args.gni mismatch"
+  end
+  manifest
+end
+
+def source_receipt
+  {
+    "schema" => "pdfium-source-preparation/v1",
+    "package" => PACKAGE,
+    "version" => VERSION,
+    "upstream" => {
+      "url" => UPSTREAM_URL,
+      "filename" => UPSTREAM_FILENAME,
+      "archive_root" => UPSTREAM_ROOT,
+      "size_bytes" => UPSTREAM_SIZE_BYTES,
+      "sha256" => UPSTREAM_SHA256
+    },
+    "source_policy" => {
+      "path" => SOURCE_POLICY_FILENAME,
+      "sha256" => SOURCE_POLICY_SHA256
+    },
+    "selected_sources" => SELECTED_SOURCES,
+    "excluded_archive_paths" => EXCLUDED_PATHS,
+    "output" => {
+      "filename" => OUTPUT_FILENAME,
+      "archive_root" => OUTPUT_ROOT,
+      "tree_file_records" => OUTPUT_TREE_RECORDS,
+      "tree_sha256" => OUTPUT_TREE_SHA256,
+      "transport_identity_required" => false
+    },
+    "generator" => {
+      "path" => SCRIPT_FILENAME,
+      "sha256" => Digest::SHA256.file(__FILE__).hexdigest
+    },
+    "archive_normalization" => {
+      "sort" => "name",
+      "mtime" => 0,
+      "uid" => 0,
+      "gid" => 0,
+      "format" => "gnu",
+      "gzip_level" => 9,
+      "gzip_name_and_timestamp" => false
+    },
+    "validation" => {
+      "upstream_transport_identity_verified" => true,
+      "selected_tree_identities_verified" => true,
+      "selected_paths_and_links_safe" => true,
+      "excluded_path_set_exact" => true,
+      "generated_tree_verified" => true,
+      "generated_archive_reextracts_identically" => true,
+      "generated_archive_transport_identity_required" => false,
+      "remote_generated_asset_required" => false
+    }
+  }
+end
+
+begin
+  input = nil
+  output = nil
+  spec = nil
+  receipt_path = nil
+  write_receipt = nil
+  check = false
+
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/prepare-pdfium-srpm-sources [options]"
+    parser.on("--spec PATH", "PDFium spec whose source directory receives Source0") { |path| spec = path }
+    parser.on("--input PATH", "Previously acquired official Chromium lite archive") { |path| input = path }
+    parser.on("--output PATH", "Generated compact PDFium source archive") { |path| output = path }
+    parser.on("--receipt PATH", "Checked source-preparation receipt") { |path| receipt_path = path }
+    parser.on("--write-receipt PATH", "Write the generated source-preparation receipt") { |path| write_receipt = path }
+    parser.on("--check", "Verify an existing generated source archive") { check = true }
+  end.parse!
+
+  if spec
+    spec = File.realpath(spec)
+    raise PdfiumSources::Error, "PDFium source preparer requires pdfium.spec" unless File.basename(spec) == "pdfium.spec"
+
+    specdir = File.dirname(spec)
+    output ||= File.join(specdir, OUTPUT_FILENAME)
+    receipt_path ||= File.join(specdir, RECEIPT_FILENAME)
+    expected_sources = {
+      0 => OUTPUT_FILENAME,
+      1 => RECEIPT_FILENAME,
+      2 => SOURCE_POLICY_FILENAME,
+      3 => SCRIPT_FILENAME,
+      4 => "AGG-LICENSE.txt",
+      5 => "THIRD-PARTY-NOTICES.txt"
+    }
+    unless expanded_sources(spec) == expected_sources
+      raise PdfiumSources::Error, "pdfium.spec Source declarations do not match the checked SRPM source layout"
+    end
+    verify_file!(File.join(specdir, SOURCE_POLICY_FILENAME), sha256: SOURCE_POLICY_SHA256)
+  end
+
+  raise PdfiumSources::Error, "--output or --spec is required" unless output
+  raise PdfiumSources::Error, "--receipt, --write-receipt, or --spec is required" unless receipt_path || write_receipt
+
+  expected_receipt = JSON.pretty_generate(source_receipt) + "\n"
+  temporary_root = ENV.fetch("TMPDIR", Dir.tmpdir)
+  Dir.mktmpdir("agentlab-pdfium-source-", temporary_root) do |temporary|
+    if check
+      raise PdfiumSources::Error, "missing generated PDFium source #{output}" unless File.file?(output)
+      verify_output_archive!(output, File.join(temporary, "checked"))
+    else
+      upstream = input ? File.realpath(input) : File.join(temporary, UPSTREAM_FILENAME)
+      unless input
+        run!(
+          "curl", "--fail", "--location", "--retry", "3", "--silent", "--show-error",
+          "--output", upstream, UPSTREAM_URL
+        )
+      end
+      verify_file!(upstream, sha256: UPSTREAM_SHA256, size_bytes: UPSTREAM_SIZE_BYTES)
+
+      extraction = File.join(temporary, "upstream")
+      FileUtils.mkdir_p(extraction)
+      members = SELECTED_SOURCES.map { |source| "#{UPSTREAM_ROOT}/#{source.fetch('archive_path')}" }
+      run!(
+        "tar", "--extract", "--file", upstream, "--directory", extraction,
+        "--no-same-owner", "--no-same-permissions", "--delay-directory-restore", *members
+      )
+      upstream_root = File.join(extraction, UPSTREAM_ROOT)
+      verify_safe_tree!(upstream_root)
+      SELECTED_SOURCES.each do |source|
+        verify_tree!(
+          File.join(upstream_root, source.fetch("archive_path")),
+          records: source.fetch("tree_file_records"),
+          sha256: source.fetch("tree_sha256"),
+          label: source.fetch("id")
+        )
+      end
+      EXCLUDED_PATHS.each do |excluded|
+        verify_tree!(
+          File.join(upstream_root, excluded.fetch("path")),
+          records: excluded.fetch("tree_file_records"),
+          sha256: excluded.fetch("tree_sha256"),
+          label: excluded.fetch("path")
+        )
+      end
+
+      source_parent = File.join(temporary, "source")
+      source_root = File.join(source_parent, OUTPUT_ROOT)
+      FileUtils.mkdir_p(source_root)
+      SELECTED_SOURCES.each do |source|
+        destination = source.fetch("output_path") == "." ? File.join(source_root, ".") :
+                      File.join(source_root, source.fetch("output_path"))
+        copy_selected_tree(File.join(upstream_root, source.fetch("archive_path")), destination)
+      end
+      EXCLUDED_PATHS.each { |excluded| FileUtils.rm_rf(File.join(source_root, excluded.fetch("path"))) }
+      gclient_args = File.join(source_root, "build", "config", "gclient_args.gni")
+      FileUtils.mkdir_p(File.dirname(gclient_args))
+      File.write(gclient_args, GCLIENT_ARGS)
+      verify_safe_tree!(source_root)
+      verify_tree!(
+        source_root,
+        records: OUTPUT_TREE_RECORDS,
+        sha256: OUTPUT_TREE_SHA256,
+        label: "generated PDFium source"
+      )
+
+      generated = File.join(temporary, OUTPUT_FILENAME)
+      statuses = Open3.pipeline(
+        [
+          "tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner",
+          "--format=gnu", "-cf", "-", OUTPUT_ROOT
+        ],
+        ["gzip", "-n", "-9"],
+        chdir: source_parent,
+        out: generated
+      )
+      raise PdfiumSources::Error, "PDFium source archive generation failed" unless statuses.all?(&:success?)
+      verify_output_archive!(generated, File.join(temporary, "verification"))
+      PdfiumSources.atomic_write(output, File.binread(generated))
+    end
+  end
+
+  if write_receipt
+    PdfiumSources.atomic_write(write_receipt, expected_receipt)
+  elsif receipt_path
+    raise PdfiumSources::Error, "missing source-preparation receipt #{receipt_path}" unless File.file?(receipt_path)
+    unless File.binread(receipt_path) == expected_receipt
+      raise PdfiumSources::Error, "source-preparation receipt is stale: #{receipt_path}"
+    end
+  end
+
+  puts "Verified PDFium #{VERSION} source tree #{OUTPUT_TREE_SHA256}."
+rescue PdfiumSources::Error, JSON::ParserError, KeyError, OptionParser::ParseError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end
