@@ -1,11 +1,11 @@
 name: pdfium
-status: blocked
-blockers:
-  - The release-pinned subordinate PDFium commit policy boundary has not been approved for enablement.
+status: enabled
+blockers: []
 source_policy:
   version_identity: Chromium release 146.0.7678.0
   pdfium_revision: efbbd0fc95825e049ad790911356e0b689418899
   provenance: PDFium revision pinned by the published Chromium release consumed by Kreuzberg 4.10.2
+  version_identity_boundary: accepted by the maintainer for the current package on 2026-07-20
   source_archive: GitHub Actions-generated deterministic subset of the official Chromium lite archive
   upstream_archive_sha256: b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875
   upstream_archive_size_bytes: 1474309344
@@ -56,7 +56,7 @@ build_validation:
   embedded_icu_data: passed without external icudtl.dat
   official_archive_fedora_44_x86_64: passed all 755 Ninja steps and direct C consumer smoke
   private_abi_runtime_boundary: accepted by the maintainer for the current package on 2026-07-20
-  hosted_source_validation: primary marcin/agentlab configured-SCM matrix authorized instead of another local Mock run
+  hosted_source_validation: primary marcin/agentlab configured-SCM build 10751721 succeeded in all six target cells at release 0.0.7
   rpmlint: zero errors; four expected local-source and devel warnings per chroot
 duplicate_check:
   checked: "2026-07-15"
@@ -68,6 +68,6 @@ upstream:
   source_url_template: https://github.com/marcin-fm/agentlab/releases/download/pdfium-sources-{version}-pdfium-efbbd0fc9582/pdfium-{version}-source.tar.gz
   source_sha256: c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/pdfium
   spec: pdfium.spec

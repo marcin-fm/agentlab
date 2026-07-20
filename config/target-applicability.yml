@@ -100,8 +100,9 @@ dependency_groups:
       - rust-x11rb-protocol0.12
       - rust-x11rb0.12
   kreuzberg:
-    reason: Rust compatibility dependencies selected by Kreuzberg.
+    reason: Runtime and Rust compatibility dependencies selected by Kreuzberg.
     packages:
+      - pdfium
       - rust-biblatex0.12
       - rust-biblib0.7
       - rust-bufrw0.2

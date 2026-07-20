@@ -55,7 +55,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | ast-grep | 0.44.1 | enabled | Clean F43/F44 mock builds, tests, CLI smoke, and aggregate linked-license audit passed |
 | mermaid-cli | 11.16.0 | blocked | F43/F44 builds pass; immutable generated-source hosting and upstream bundling record remain |
 | kreuzberg | 4.10.2 | blocked | System PDFium provider, Rust/Node closures, license audit, and clean builds remain |
-| pdfium | 146.0.7678.0 | blocked | Deterministic closure generated; Fedora GN/Ninja proof, license audit, and subordinate-source policy decision remain |
+| pdfium | 146.0.7678.0 | enabled | Immutable Chromium-pinned source, private ABI, embedded ICU, and six-cell configured-SCM proof accepted |
 | python-docling-mcp | 2.1.0 | enabled | Base stdio generation/manipulation plus an explicit bounded remote-conversion package; clean F43/F44 MCP smokes and zero-error rpmlint passed |
 | python-doclang | 0.7.3 | enabled | Reusable Docling prerequisite; clean F43/F44 builds and installed schema/CLI smokes passed |
 | python-latex2mathml | 3.81.0 | enabled | Reusable Docling prerequisite; hatchling substitution and F43/F44 conversion smokes passed |

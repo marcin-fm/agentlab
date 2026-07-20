@@ -1,10 +1,11 @@
 # PDFium
 
-This blocked package targets the PDFium source revision used by Chromium
-`146.0.7678.0` and required by Kreuzberg LTS `4.10.2`. PDFium does not publish
-a matching standalone release tag, so the RPM version identifies the published
-Chromium release while the exact subordinate PDFium commit is recorded
-separately as provenance.
+This package targets the PDFium source revision used by Chromium `146.0.7678.0`
+and required by Kreuzberg LTS `4.10.2`. PDFium does not publish a matching
+standalone release tag, so the RPM version identifies the published Chromium
+release while the exact subordinate PDFium commit is recorded separately as
+provenance. The maintainer accepted this release boundary for the current
+package on July 20, 2026.
 
 GitHub Actions downloads Chromium's official `146.0.7678.0` lite archive,
 verifies its published SHA-256, and generates one compact Source0 from the exact
@@ -36,7 +37,7 @@ unlocated `icudtl.dat` file. The RPM installs PDFium, ICU, AGG, and consolidated
 third-party license notices. The final embedded-data revision passed clean
 Fedora 43 and 44 builds and extracted-payload validation. On July 20, 2026, the
 maintainer accepted the private component names, versioned SONAMEs, and embedded
-ICU-data ownership for the current package. The package remains blocked only
-for approval of the subordinate source boundary pinned by the Chromium release.
-The next source-hosting validation is an explicitly authorized configured-SCM
-build in the primary `marcin/agentlab` COPR instead of another local Mock run.
+ICU-data ownership for the current package. Primary configured-SCM build
+`10751721` then succeeded as release `0.0.7` in Fedora 43, Fedora 44, and Rawhide
+on both supported architectures. Release `0.0.8` enables the accepted package
+for the same six-cell matrix.

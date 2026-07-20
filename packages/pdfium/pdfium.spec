@@ -1,6 +1,6 @@
-# Disabled by package.yml pending release-boundary approval. The private
-# ABI/runtime boundary is accepted for the current package. Source0 is generated
-# and attested by GitHub Actions from the official Chromium lite archive, then
+# The Chromium release identity, private ABI/runtime boundary, and generated
+# source closure are accepted for the current package. Source0 is generated and
+# attested by GitHub Actions from the official Chromium lite archive, then
 # verified by bytes and exact tree here.
 %global source_tag pdfium-sources-%{version}-pdfium-efbbd0fc9582
 %global source_sha256 c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
@@ -32,7 +32,7 @@
 
 Name:           pdfium
 Version:        146.0.7678.0
-Release:        0.0.7%{?dist}
+Release:        0.0.8%{?dist}
 Summary:        PDF rendering library used by Chromium
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
@@ -238,6 +238,10 @@ EOF
 %{_libdir}/pkgconfig/pdfium.pc
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.8
+- Enable the accepted Chromium-pinned PDFium provider for Kreuzberg.
+- Record the successful primary six-target configured-SCM proof.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.7
 - Record acceptance of the private PDFium ABI and embedded ICU runtime boundary.
 - Validate the hosted source through an authorized primary COPR configured-SCM build.
