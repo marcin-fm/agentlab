@@ -5,7 +5,7 @@ upstream_v8: 14.9.207.2
 source_closure:
   schema: rust-v8-source-closure/v4
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: e86c05dd2e2d8a83aae389f03aaf80c67da5da6138ed35b2dea71fdc088bdf79
+  receipt_sha256: 183e349327b4b486b59e67a143c3d6707d384b5a4f215d49a9aab961486762ce
   root_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
   recursive_components: 21
   recursive_submodules: 20
@@ -28,7 +28,7 @@ source_closure:
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: acd2f53e0302309300e6368ae95c7ff75b2b62dec4b10d1b15951413ed447f7a
+  receipt_sha256: a9022821c222b006d123c5b868f491a9945310b04e0689d424307143e49f2c44
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
   object_input_count: 1795
@@ -40,7 +40,7 @@ archive_graph:
   final_consumer_link_closure_verified: false
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: f851204f991b41327deae800b3b82023424676bbedc40b3f61fea47a9074b304
+  receipt_sha256: 21b88a39b964c737fd4fd04981bd6fa45b45b05047f495ffa94d929d3c378e73
   v8_component_build_available: true
   upstream_supported: false
   existing_rust_consumers_supported: false
@@ -76,7 +76,7 @@ build_configuration:
   use_lld: true
   use_custom_libcxx: false
   symbol_level: 1
-  line_tables_only: true
+  line_tables_only: false
   no_inline_line_tables: false
   clang_base_path: /usr
   clang_version: "22"
@@ -91,7 +91,7 @@ build_configuration:
   toolchain_supports_rust_thin_lto: false
 patches:
 - file: rust-v8-system-rust-toolchain.patch
-  sha256: 3cd3f7631fdd6e60b2d1a523944b7020064c08035149bf20780d3d0a4e4fc83f
+  sha256: f2a15b771f78bb5145619e93461e40a18345a132edfca202364f0b5d22666874
   purpose: Guard Chromium nightly-only Rust behavior, use the explicit Fedora stable toolchain and libclang layout, and link stable allocator shims for Temporal Rust.
   upstream_status: not-submitted
   zero_fuzz_dry_run: passed
@@ -135,7 +135,7 @@ consumer_integration:
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 23ed7ac9b10d3ccc6a3ac278bda80caf6e47ebcb0be2b6030dd688da4dc8791c
+  receipt_sha256: 91a3c92f4e2f97221f9881a8362d3c7988ed8b943ac579230e08e0d24317ffff
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
@@ -174,7 +174,7 @@ license_audit:
   final_static_archive_license_complete: false
 static_license:
   receipt: rust-v8-149.2.0-static-license.json
-  receipt_sha256: d36fc8c461cbe73e6b09ac0df53ea4355b734c832adcef175cc7a06b170596a1
+  receipt_sha256: 47afb139fa00ca43c3569b059878e9632f80a1858211e2048a5080bd9d307dec
   expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
   selected_archive_objects: 1795
   required_license_texts: 24

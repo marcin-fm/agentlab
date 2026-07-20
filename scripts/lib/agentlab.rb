@@ -690,7 +690,7 @@ module Agentlab
       use_lld = true
       use_custom_libcxx = false
       symbol_level = 1
-      line_tables_only = true
+      line_tables_only = false
       no_inline_line_tables = false
       clang_base_path = "/usr"
       clang_version = "22"

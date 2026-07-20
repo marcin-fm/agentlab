@@ -68,7 +68,7 @@ consumers use it.
 The package retains only `rust-v8-static`. A dynamic package can be reconsidered
 if upstream defines a shared target and build-script mode with a maintained
 loader and ABI contract. The receipt SHA-256 is
-`f851204f991b41327deae800b3b82023424676bbedc40b3f61fea47a9074b304`.
+`21b88a39b964c737fd4fd04981bd6fa45b45b05047f495ffa94d929d3c378e73`.
 
 ## Source Evidence
 
@@ -93,7 +93,7 @@ recursive Git tree except for those three reviewed exclusions, at SHA-256
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
 archive hash, component-tree hash, source-filter provenance, and RPM source
 number. Its SHA-256 is
-`e86c05dd2e2d8a83aae389f03aaf80c67da5da6138ed35b2dea71fdc088bdf79`.
+`183e349327b4b486b59e67a143c3d6707d384b5a4f215d49a9aab961486762ce`.
 `rust-v8-149.2.0-source-filter.json` binds the exact upstream and filtered trees,
 the three exclusions, and the checked generator script. Its SHA-256 is
 `a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa`.
@@ -138,7 +138,7 @@ Every identifier is allowed by the installed Fedora license data. The receipt
 also records that the 31 implicit Rust rlibs and system libraries are not
 embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
-`d36fc8c461cbe73e6b09ac0df53ea4355b734c832adcef175cc7a06b170596a1`.
+`47afb139fa00ca43c3569b059878e9632f80a1858211e2048a5080bd9d307dec`.
 
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
@@ -170,7 +170,7 @@ identity, but do not establish that a crate is linked into `librusty_v8.a` or
 complete the final aggregate expression. Its SHA-256 is
 `b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
 The regenerated license-audit receipt binds that evidence at SHA-256
-`23ed7ac9b10d3ccc6a3ac278bda80caf6e47ebcb0be2b6030dd688da4dc8791c`.
+`91a3c92f4e2f97221f9881a8362d3c7988ed8b943ac579230e08e0d24317ffff`.
 
 ## Prototype Result
 
@@ -188,7 +188,7 @@ The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
 classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
 records its separate `temporal_capi` dependency. No googletest input appears in
 the selected graph. The witness SHA-256 is
-`acd2f53e0302309300e6368ae95c7ff75b2b62dec4b10d1b15951413ed447f7a`.
+`a9022821c222b006d123c5b868f491a9945310b04e0689d424307143e49f2c44`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer

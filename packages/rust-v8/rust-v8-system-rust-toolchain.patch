@@ -270,6 +270,18 @@ diff --git a/build/rust/std/BUILD.gn b/build/rust/std/BUILD.gn
        }
  
        # For the rustc sysroot we must include even the rlibs we don't pass to
+diff --git a/build/toolchain/linux/BUILD.gn b/build/toolchain/linux/BUILD.gn
+--- a/build/toolchain/linux/BUILD.gn
++++ b/build/toolchain/linux/BUILD.gn
+@@ -31,7 +31,7 @@ clang_toolchain("clang_arm64") {
+ }
+ 
+ gcc_toolchain("arm64") {
+-  toolprefix = "aarch64-linux-gnu-"
++  toolprefix = host_cpu == "arm64" ? "" : "aarch64-linux-gnu-"
+ 
+   cc = "${toolprefix}gcc"
+   cxx = "${toolprefix}g++"
 diff --git a/v8/BUILD.gn b/v8/BUILD.gn
 --- a/v8/BUILD.gn
 +++ b/v8/BUILD.gn
