@@ -2,7 +2,7 @@
 name: codex-cli
 status: blocked
 blockers:
-- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement materialize and resolve reproducibly. A selected-aware audit now identifies 873 Linux-linked Cargo packages, but the 1,124-source archive is evidence only and still needs maintainer review, immutable RPM hosting, complete license texts, and Fedora macro integration.
+- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement now materialize through the repository-backed SCM source builder as a semantically verified 1,124-directory Cargo source. The remaining Cargo gate is complete license-text and Fedora SPDX approval, not source hosting.
 - Selected crate v8 149.2.0 now has a separate blocked rust-v8-static provider draft. The local Fedora stable-toolchain prototype built and ran without the Chromium Rust binary toolchain, but the provider still lacks immutable recursive sources, complete licenses, accepted patches, and network-isolated Fedora 43/44/Rawhide proof.
 - Offline Fedora 43, Fedora 44, and Rawhide builds, tests, final linked-license approval, and payload validation have not been completed.
 source_policy:
@@ -30,16 +30,25 @@ source_policy:
   resolver_active_all_target_packages: 157
   resolver_inactive_optional_packages: 82
   resolver_vendor_receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
-  resolver_vendor_receipt_sha256: fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b
+  resolver_vendor_receipt_sha256: e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c
   resolver_vendor_directories: 1124
   resolver_vendor_tree_sha256: c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe
   resolver_vendor_manifest_sha256: 5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8
-  resolver_vendor_config_sha256: 5d5df5008cf7389f8da7b690846f72eecda85b6cac6570506b3cd479dc5ffa27
-  resolver_vendor_archive_sha256: 7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b
-  resolver_vendor_archive_bytes: 231939492
+  resolver_vendor_config_sha256: 921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89
+  resolver_vendor_observed_archive_sha256: 7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b
+  resolver_vendor_observed_archive_bytes: 231939492
+  resolver_vendor_archive_transport_identity_required: false
   resolver_vendor_reproducible: true
   resolver_vendor_standalone_resolvable: true
-  resolver_vendor_production_build_input: false
+  resolver_vendor_production_build_input: true
+  resolver_vendor_source_delivery: repository-backed-srpm-generation
+  resolver_vendor_semantic_verification: archive-safety-directory-set-cargo-checksums-tree-identity-and-offline-resolution
+  cargo_audit_script: audit-codex-cargo-closure
+  cargo_audit_script_sha256: 87a0a8f6cc63fce3242387232c7df2dd38d39cf6905fb43073cc1099389ffeb2
+  cargo_source_preparer: prepare-codex-cargo-srpm-sources
+  cargo_source_preparer_sha256: ef05768e31d52be01a03852d277ca0db24eeb75d7502f370da5f6a3f5517fe57
+  cargo_vendor_verifier: codex_cargo_vendor.rb
+  cargo_vendor_verifier_sha256: 592117f96061018db833418eebcf89a9a4a16f8a4e8c5e02d4e7d9daaa97d0fc
   selected_cargo_license_audit: codex-cli-0.144.5-selected-cargo-license-audit.json
   selected_cargo_license_audit_sha256: 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
   selected_cargo_linked_linux_packages: 873

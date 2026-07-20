@@ -1,0 +1,245 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "rbconfig"
+require "tempfile"
+require "tmpdir"
+require "uri"
+require_relative "lib/codex_cargo_vendor"
+
+module CodexCargoSourcePreparer
+  module_function
+
+  def expanded_sources(spec)
+    output = CodexCargoVendor.run!({}, "rpmspec", "-P", spec)
+    output.each_line.each_with_object({}) do |line, sources|
+      match = line.match(/\ASource(?<index>\d*):\s+(?<value>\S+)/)
+      next unless match
+
+      index = match[:index].empty? ? 0 : Integer(match[:index], 10)
+      raise CodexCargoVendor::Error, "duplicate Source#{index}" if sources.key?(index)
+
+      sources[index] = match[:value]
+    end
+  end
+
+  def source_filename(value)
+    url, fragment = value.split("#", 2)
+    return fragment.delete_prefix("/") if fragment&.start_with?("/")
+
+    File.basename(URI(url).path)
+  rescue URI::InvalidURIError
+    File.basename(value)
+  end
+
+  def atomic_copy(source, destination)
+    Tempfile.create([".codex-cargo-source-", ".tmp"], File.dirname(destination)) do |file|
+      file.binmode
+      File.open(source, "rb") { |input| IO.copy_stream(input, file) }
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, destination)
+    end
+  end
+
+  def normalize_lock!(source_dir, closure)
+    lock_path = File.join(source_dir, "codex-rs", "Cargo.lock")
+    lock = File.read(lock_path)
+    release = closure.fetch("release")
+    normalization = release.fetch("lock_normalization")
+    unless Digest::SHA256.hexdigest(lock) == release.fetch("source_cargo_lock_sha256")
+      raise CodexCargoVendor::Error, "Codex source Cargo.lock identity mismatch"
+    end
+    from = normalization.fetch("from_version")
+    to = normalization.fetch("to_version")
+    pattern = /^version = #{Regexp.escape(from.dump)}$/
+    unless lock.scan(pattern).length == normalization.fetch("local_package_count")
+      raise CodexCargoVendor::Error, "Codex Cargo.lock normalization count mismatch"
+    end
+    normalized = lock.gsub(pattern, "version = #{to.dump}")
+    unless Digest::SHA256.hexdigest(normalized) == release.fetch("normalized_cargo_lock_sha256")
+      raise CodexCargoVendor::Error, "Codex normalized Cargo.lock identity mismatch"
+    end
+    File.write(lock_path, normalized)
+  end
+
+  def populate_cargo_cache!(source_dir, cargo_home, closure, supplement, temporary, offline: false)
+    manifest = File.join(source_dir, "codex-rs", "Cargo.toml")
+    command = [
+      "cargo", "tree", "--manifest-path", manifest, "--locked", "--package", "codex-cli",
+      "-Z", "avoid-dev-deps", "--edges", "normal,build"
+    ]
+    environment = { "CARGO_HOME" => cargo_home, "RUSTC_BOOTSTRAP" => "1" }
+    command << "--offline" if offline
+    CodexCargoVendor.run!(environment, *(command + ["--target", closure.dig("selection", "target_triple")]))
+    CodexCargoVendor.run!(environment, *(command + ["--target", "all"]))
+
+    cache_roots = Dir.glob(File.join(cargo_home, "registry", "cache", "*")).select { |path| File.directory?(path) }
+    raise CodexCargoVendor::Error, "expected one Cargo registry cache, found #{cache_roots.length}" unless cache_roots.one?
+
+    packages = (closure.fetch("packages") + supplement.fetch("packages")).select do |package|
+      package.fetch("origin") == "registry"
+    end
+    packages.each do |package|
+      filename = "#{package.fetch('name')}-#{package.fetch('version')}.crate"
+      path = File.join(cache_roots.first, filename)
+      next unless File.file?(path)
+      next if Digest::SHA256.file(path).hexdigest == package.fetch("checksum")
+
+      raise CodexCargoVendor::Error, "Cargo cache checksum mismatch: #{filename}"
+    end
+    missing = packages.reject do |package|
+      File.file?(File.join(cache_roots.first, "#{package.fetch('name')}-#{package.fetch('version')}.crate"))
+    end
+    if offline && !missing.empty?
+      raise CodexCargoVendor::Error, "retained Cargo cache is incomplete: #{missing.length} registry archives missing"
+    end
+    unless missing.empty?
+      config = File.join(temporary, "curl-crates.conf")
+      File.open(config, "w") do |file|
+        file.puts("fail", "location", "retry = 3", "silent", "show-error", "parallel", "parallel-max = 4")
+        missing.each do |package|
+          filename = "#{package.fetch('name')}-#{package.fetch('version')}.crate"
+          file.puts(
+            "url = \"https://static.crates.io/crates/#{package.fetch('name')}/#{filename}\"",
+            "output = #{File.join(cache_roots.first, filename).dump}",
+            "next"
+          )
+        end
+      end
+      CodexCargoVendor.run!({}, "curl", "--config", config)
+    end
+    packages.each do |package|
+      filename = "#{package.fetch('name')}-#{package.fetch('version')}.crate"
+      path = File.join(cache_roots.first, filename)
+      unless File.file?(path) && Digest::SHA256.file(path).hexdigest == package.fetch("checksum")
+        raise CodexCargoVendor::Error, "Cargo archive identity mismatch: #{filename}"
+      end
+    end
+  end
+
+  def prepare!(spec, cache_dir: nil, offline_cache: false)
+    spec = File.realpath(spec)
+    raise CodexCargoVendor::Error, "source preparer requires codex-cli.spec" unless File.basename(spec) == "codex-cli.spec"
+
+    specdir = File.dirname(spec)
+    sources = expanded_sources(spec)
+    expected_indexes = (0..12).to_a
+    raise CodexCargoVendor::Error, "codex-cli.spec source layout mismatch" unless sources.keys.sort == expected_indexes
+
+    paths = sources.transform_values { |source| File.join(specdir, source_filename(source)) }
+    closure_path = paths.fetch(1)
+    supplement_path = paths.fetch(3)
+    receipt_path = paths.fetch(4)
+    closure = JSON.parse(File.read(closure_path))
+    supplement = JSON.parse(File.read(supplement_path))
+    source0 = paths.fetch(0)
+    unless Digest::SHA256.file(source0).hexdigest == closure.dig("release", "source_sha256")
+      raise CodexCargoVendor::Error, "Codex Source0 identity mismatch"
+    end
+
+    Dir.mktmpdir("agentlab-codex-srpm-sources-", "/srv/tmp") do |temporary|
+      source_parent = File.join(temporary, "source")
+      FileUtils.mkdir_p(source_parent)
+      CodexCargoVendor.run!({}, "tar", "--extract", "--gzip", "--no-same-owner", "--file", source0, "--directory", source_parent)
+      source_dir = File.join(source_parent, "codex-#{closure.dig('release', 'source_commit')}")
+      raise CodexCargoVendor::Error, "Codex Source0 archive root mismatch" unless File.directory?(source_dir)
+
+      lock_path = File.join(source_dir, "codex-rs", "Cargo.lock")
+      original_lock = File.read(lock_path)
+      normalize_lock!(source_dir, closure)
+      cargo_home = cache_dir ? File.expand_path(cache_dir) : File.join(temporary, "cargo-home")
+      FileUtils.mkdir_p(cargo_home)
+      populate_cargo_cache!(source_dir, cargo_home, closure, supplement, temporary, offline: offline_cache)
+      File.write(lock_path, original_lock)
+
+      output_dir = File.join(temporary, "output")
+      CodexCargoVendor.run!(
+        {}, RbConfig.ruby, File.join(__dir__, "audit-codex-cargo-closure"),
+        "--source-dir", source_dir,
+        "--cargo-home", cargo_home,
+        "--work-dir-root", temporary,
+        "--output", closure_path,
+        "--resolver-output", supplement_path,
+        "--materialize-resolver-vendor", output_dir,
+        "--resolver-vendor-receipt", receipt_path,
+        "--check"
+      )
+      normalize_lock!(source_dir, closure)
+
+      generated = {
+        10 => File.join(output_dir, File.basename(paths.fetch(10))),
+        11 => File.join(output_dir, File.basename(paths.fetch(11))),
+        12 => File.join(output_dir, File.basename(paths.fetch(12)))
+      }
+      CodexCargoVendor.verify!(
+        source_dir:,
+        archive: generated.fetch(10),
+        manifest: generated.fetch(11),
+        config: generated.fetch(12),
+        receipt_path:,
+        closure_path:,
+        supplement_path:,
+        work_dir_root: temporary
+      )
+      generated.each { |index, path| atomic_copy(path, paths.fetch(index)) }
+    end
+    puts "Prepared Codex resolver-complete Cargo SRPM sources in #{specdir}."
+  end
+end
+
+begin
+  options = {}
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/prepare-codex-cargo-srpm-sources [options]"
+    parser.on("--spec PATH", "Generate resolver-complete Cargo sources for codex-cli.spec") { |path| options[:spec] = path }
+    parser.on("--cache-dir PATH", "Retained Cargo cache for local source-generation retries") { |path| options[:cache_dir] = path }
+    parser.on("--offline-cache", "Require the retained Cargo cache without network access") { options[:offline_cache] = true }
+    parser.on("--check", "Verify existing resolver-complete Cargo source artifacts") { options[:check] = true }
+    parser.on("--source-dir PATH") { |path| options[:source_dir] = path }
+    parser.on("--archive PATH") { |path| options[:archive] = path }
+    parser.on("--manifest PATH") { |path| options[:manifest] = path }
+    parser.on("--config PATH") { |path| options[:config] = path }
+    parser.on("--receipt PATH") { |path| options[:receipt] = path }
+    parser.on("--closure PATH") { |path| options[:closure] = path }
+    parser.on("--supplement PATH") { |path| options[:supplement] = path }
+    parser.on("--work-dir-root PATH") { |path| options[:work_dir_root] = path }
+  end.parse!
+
+  if options[:check]
+    required = %i[source_dir archive manifest config receipt closure supplement]
+    missing = required.reject { |key| options[key] }
+    raise CodexCargoVendor::Error, "missing check options: #{missing.join(', ')}" unless missing.empty?
+
+    CodexCargoVendor.verify!(
+      source_dir: File.realpath(options.fetch(:source_dir)),
+      archive: File.realpath(options.fetch(:archive)),
+      manifest: File.realpath(options.fetch(:manifest)),
+      config: File.realpath(options.fetch(:config)),
+      receipt_path: File.realpath(options.fetch(:receipt)),
+      closure_path: File.realpath(options.fetch(:closure)),
+      supplement_path: File.realpath(options.fetch(:supplement)),
+      work_dir_root: File.realpath(options.fetch(:work_dir_root, ENV.fetch("TMPDIR", "/srv/tmp")))
+    )
+  elsif options[:spec]
+    if options[:offline_cache] && !options[:cache_dir]
+      raise CodexCargoVendor::Error, "--offline-cache requires --cache-dir"
+    end
+    CodexCargoSourcePreparer.prepare!(
+      options.fetch(:spec),
+      cache_dir: options[:cache_dir],
+      offline_cache: options.fetch(:offline_cache, false)
+    )
+  else
+    raise CodexCargoVendor::Error, "--spec or --check is required"
+  end
+rescue CodexCargoVendor::Error, JSON::ParserError, KeyError, OptionParser::ParseError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

@@ -115,12 +115,27 @@ resolver-only sources. Both the 1,004-package selected target and the
 - archive size: `231,939,492` bytes
 - receipt: `fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b`
 
-This proves the source model, not its final packaging integration. The archive
-is not immutably hosted, the resolver-only license metadata has not been
-approved as part of the RPM source inventory, and `%cargo_vendor_manifest`,
-complete `bundled(crate(...))` metadata, final aggregate linked-license
-approval, license texts, and the no-crate-devel application layout remain later
-gates. The spec remains fail-closed.
+The source model is now integrated through the repository-backed COPR SCM path.
+`scripts/prepare-codex-cargo-srpm-sources` populates only the selected and
+resolver-supplement identities, reuses the checked audit materializer, and adds
+the generated archive, manifest, and Cargo configuration to the SRPM. `%prep`
+rechecks the safe single-root archive, exact directory set, every Cargo
+checksum, the complete vendor-tree identity, and selected/all-target offline
+resolution before running `%cargo_prep -N`. Fedora's `%cargo_vendor_manifest`
+cannot represent this package-scoped source plan because Cargo2RPM expands the
+complete 128-member workspace with all features and development edges, which
+immediately requests the deliberately excluded `rules_rust` source. The spec
+instead passes the exact checked 1,124-entry manifest through
+`cargo2rpm parse-vendor-manifest`, requires 1,124 unique bundled Provides, and
+ships that manifest as `cargo-vendor.txt`.
+
+Generated gzip bytes and the source builder's exact Cargo version are not part
+of the normative contract. The semantic tree SHA-256 remains
+`c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe`;
+any Cargo normalization change that alters that tree fails closed. The package
+still stops before compilation because complete `bundled(crate(...))` metadata,
+final aggregate linked-license approval, required license texts, and the
+no-crate-devel application build/install/test flow remain later gates.
 
 ## Selected Cargo License Accounting
 

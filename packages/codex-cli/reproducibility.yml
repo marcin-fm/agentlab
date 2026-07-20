@@ -64,6 +64,24 @@ selected_cargo_vendor_evidence:
   resolver_blocker: Inactive-target dependency metadata in selected manifests requires sources outside the exact Linux build closure; adding those sources broadens source and license accounting.
   immutable_hosting: false
   production_build_input: false
+resolver_cargo_vendor_source:
+  status: repository-backed-semantic-source-contract
+  receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
+  receipt_sha256: e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c
+  vendor_directories: 1124
+  vendor_tree_sha256: c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe
+  vendor_manifest_sha256: 5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8
+  cargo_config_sha256: 921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89
+  generated_archive_transport_identity_required: false
+  source_builder: scripts/prepare-codex-cargo-srpm-sources
+  semantic_verification:
+  - safe single-root archive
+  - exact reviewed directory set
+  - registry and Git Cargo checksums
+  - complete vendor tree identity
+  - selected-target and all-target empty-Cargo-home resolution
+  production_build_input: true
+  compilation_started: false
 selected_cargo_license_audit:
   status: passed-deterministic-cargo-metadata-accounting
   receipt: codex-cli-0.144.5-selected-cargo-license-audit.json

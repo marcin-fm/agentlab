@@ -82,9 +82,9 @@ resolver_supplement_evidence:
   identity_evidence: Cargo.lock source and checksum plus checksum-verified normalized Cargo manifest license metadata.
   authoritative_linux_closure_changed: false
 resolver_vendor_evidence:
-  status: reproducible-resolver-complete-directory-source-evidence
+  status: repository-backed-resolver-complete-directory-source
   receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
-  receipt_sha256: fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b
+  receipt_sha256: e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c
   independent_runs: 2
   byte_identical_receipts: true
   vendor_directories: 1124
@@ -95,15 +95,17 @@ resolver_vendor_evidence:
   git_repositories: 5
   tree_sha256: c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe
   manifest_sha256: 5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8
-  config_sha256: 5d5df5008cf7389f8da7b690846f72eecda85b6cac6570506b3cd479dc5ffa27
-  archive_sha256: 7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b
-  archive_bytes: 231939492
+  config_sha256: 921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89
+  observed_archive_sha256: 7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b
+  observed_archive_bytes: 231939492
+  archive_transport_identity_required: false
   selected_target_offline_packages: 1004
   all_target_offline_packages: 1161
   empty_cargo_home_resolution: true
   standalone_offline_directory_source_verified: true
-  production_build_input: false
-  immutable_hosting: false
+  production_build_input: true
+  source_delivery: repository-backed-srpm-generation
+  immutable_hosting: not-required
 selected_cargo_license_evidence:
   status: deterministic-cargo-manifest-license-accounting
   receipt: codex-cli-0.144.5-selected-cargo-license-audit.json

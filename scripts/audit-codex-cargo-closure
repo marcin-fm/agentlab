@@ -967,9 +967,6 @@ def cargo_resolver_vendor_config(receipt, vendor_root_name)
   <<~TOML
     # Authoritative selected Linux sources plus a separately recorded
     # resolver-only all-target normal/build supplement.
-    [net]
-    offline = true
-
     [source.crates-io]
     replace-with = "vendored-sources"
 
@@ -1261,13 +1258,12 @@ def materialize_resolver_vendor!(
       )
       tree = vendor_tree_receipt(vendor_root)
       deterministic_tar_gz!(output_root, vendor_root_name, archive_path, workdir)
-      cargo_version = capture_command({ "CARGO_HOME" => cargo_home }, ["cargo", "--version"], "Cargo version query").strip
       selected_external = receipt.fetch("packages").count { |package| %w[registry git].include?(package.fetch("origin")) }
       resolver_external = resolver_supplement.fetch("packages").count do |package|
         %w[registry git].include?(package.fetch("origin"))
       end
       vendor_receipt = {
-        "schema" => "agentlab-codex-resolver-cargo-vendor/v1",
+        "schema" => "agentlab-codex-resolver-cargo-vendor/v2",
         "release" => receipt.fetch("release").slice("version", "source_tag", "source_commit", "source_sha256", "normalized_cargo_lock_sha256"),
         "selection" => receipt.fetch("selection"),
         "closure_receipt" => {
@@ -1288,11 +1284,11 @@ def materialize_resolver_vendor!(
         },
         "generator" => {
           "script" => "scripts/audit-codex-cargo-closure",
-          "cargo_version" => cargo_version,
           "registry_materialization" => "checked archive extraction with generated Cargo checksums",
           "git_materialization" => "Cargo package-normalized selected Git packages with restored pinned selected-source dependencies",
           "resolver_strategy" => "non-development workspace-manifest and external lock dependency fixed point, with Cargo all-target resolution as the active-target witness",
-          "transient_dependency_directories_archived" => false
+          "transient_dependency_directories_archived" => false,
+          "exact_cargo_version_is_normative" => false
         },
         "resolution" => {
           "standalone_offline_directory_source_verified" => true,
@@ -1313,10 +1309,11 @@ def materialize_resolver_vendor!(
         },
         "archive" => {
           "name" => File.basename(archive_path),
-          "size_bytes" => File.size(archive_path),
-          "sha256" => Digest::SHA256.file(archive_path).hexdigest
+          "root" => vendor_root_name,
+          "transport_identity_required" => false,
+          "tree_identity_required" => true
         },
-        "scope" => "resolver-complete Cargo directory-source evidence; not a Codex build proof, selected linked-license closure, or publication artifact"
+        "scope" => "resolver-complete Cargo directory-source contract for repository-backed SRPM generation; not a Codex build proof or selected linked-license closure"
       }
       rendered = JSON.pretty_generate(vendor_receipt) + "\n"
       Agentlab.atomic_write(receipt_path, rendered)
@@ -1330,7 +1327,7 @@ def materialize_resolver_vendor!(
         end
       end
 
-      puts "Materialized #{expected_directories.length} resolver-complete Cargo sources: tree #{tree.fetch('sha256')}, archive #{vendor_receipt.dig('archive', 'sha256')}"
+      puts "Materialized #{expected_directories.length} resolver-complete Cargo sources: tree #{tree.fetch('sha256')}"
     end
   rescue StandardError
     FileUtils.rm_rf(vendor_root)

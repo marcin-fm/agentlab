@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-codex-resolver-cargo-vendor/v1",
+  "schema": "agentlab-codex-resolver-cargo-vendor/v2",
   "release": {
     "version": "0.144.5",
     "source_tag": "rust-v0.144.5",
@@ -37,11 +37,11 @@
   },
   "generator": {
     "script": "scripts/audit-codex-cargo-closure",
-    "cargo_version": "cargo 1.96.1 (356927216 2026-06-26) (Fedora 1.96.1-1.fc44)",
     "registry_materialization": "checked archive extraction with generated Cargo checksums",
     "git_materialization": "Cargo package-normalized selected Git packages with restored pinned selected-source dependencies",
     "resolver_strategy": "non-development workspace-manifest and external lock dependency fixed point, with Cargo all-target resolution as the active-target witness",
-    "transient_dependency_directories_archived": false
+    "transient_dependency_directories_archived": false,
+    "exact_cargo_version_is_normative": false
   },
   "resolution": {
     "standalone_offline_directory_source_verified": true,
@@ -120,12 +120,13 @@
   "cargo_config": {
     "name": "codex-cli-0.144.5-resolver-cargo-vendor.config.toml",
     "purpose": "offline source replacement for the authoritative Linux closure plus the separate resolver-only supplement",
-    "sha256": "5d5df5008cf7389f8da7b690846f72eecda85b6cac6570506b3cd479dc5ffa27"
+    "sha256": "921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89"
   },
   "archive": {
     "name": "codex-cli-0.144.5-resolver-cargo-vendor.tar.gz",
-    "size_bytes": 231939492,
-    "sha256": "7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b"
+    "root": "codex-cli-0.144.5-resolver-cargo-vendor",
+    "transport_identity_required": false,
+    "tree_identity_required": true
   },
-  "scope": "resolver-complete Cargo directory-source evidence; not a Codex build proof, selected linked-license closure, or publication artifact"
+  "scope": "resolver-complete Cargo directory-source contract for repository-backed SRPM generation; not a Codex build proof or selected linked-license closure"
 }

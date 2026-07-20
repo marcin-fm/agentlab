@@ -7,15 +7,18 @@
 %global closure_sha256 a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
 %global vendor_receipt_sha256 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
 %global resolver_supplement_sha256 a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff
-%global resolver_vendor_receipt_sha256 fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b
+%global resolver_vendor_receipt_sha256 e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c
 %global license_audit_sha256 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
 %global source_lock_sha256 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
 %global normalized_lock_sha256 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
+%global cargo_audit_sha256 87a0a8f6cc63fce3242387232c7df2dd38d39cf6905fb43073cc1099389ffeb2
+%global source_preparer_sha256 ef05768e31d52be01a03852d277ca0db24eeb75d7502f370da5f6a3f5517fe57
+%global vendor_verifier_sha256 592117f96061018db833418eebcf89a9a4a16f8a4e8c5e02d4e7d9daaa97d0fc
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.7%{?dist}
+Release:        0.8%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -29,6 +32,12 @@ Source3:        %{name}-%{version}-cargo-resolver-supplement.json
 Source4:        %{name}-%{version}-resolver-cargo-vendor-receipt.json
 Source5:        %{name}-fedora-config.toml
 Source6:        %{name}-%{version}-selected-cargo-license-audit.json
+Source7:        audit-codex-cargo-closure
+Source8:        prepare-codex-cargo-srpm-sources
+Source9:        codex_cargo_vendor.rb
+Source10:       %{name}-%{version}-resolver-cargo-vendor.tar.gz
+Source11:       %{name}-%{version}-resolver-cargo-vendor.txt
+Source12:       %{name}-%{version}-resolver-cargo-vendor.config.toml
 
 # Fedora packaging: make doctor suppress its network version probe when the
 # centrally managed update setting is disabled.
@@ -47,20 +56,22 @@ ExclusiveArch:  x86_64
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  rust >= 1.95
+BuildRequires:  ruby
+BuildRequires:  ruby-default-gems
+BuildRequires:  rubygem-json
 BuildRequires:  rusty-v8-static(abi) = 149.2.0
 
 %description
 Codex CLI is an open-source coding agent that runs in a terminal and integrates
 with local developer tools.
 
-This source-build draft is intentionally blocked. The selected Cargo closure
-and separate resolver-only supplement materialize reproducibly and resolve
-offline as evidence, but the combined archive is not an immutable RPM source or
-approved license closure. The selected-aware Cargo audit now distinguishes 873
-Linux-linked packages from compile-time and resolver-only identities, but the
-package must not produce an RPM until source publication and integration,
-the separate Rusty V8 provider, complete license evidence, and offline builds
-are proven.
+This source-build draft is intentionally blocked. Its repository-backed source
+builder materializes the selected Cargo closure and resolver-only supplement as
+a semantically verified offline source, but the selected-aware Cargo audit's
+873 Linux-linked packages do not yet have complete license-text approval. The
+package must not produce an RPM until the Rusty V8 provider, final aggregate
+license evidence, the build/install/test flow, and offline Fedora builds are
+proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -76,6 +87,31 @@ echo "%{source_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
 test "$(grep -cx 'version = "0\.0\.0"' codex-rs/Cargo.lock)" -eq 132
 sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
 echo "%{normalized_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
+echo "%{cargo_audit_sha256}  %{SOURCE7}" | sha256sum -c -
+echo "%{source_preparer_sha256}  %{SOURCE8}" | sha256sum -c -
+echo "%{vendor_verifier_sha256}  %{SOURCE9}" | sha256sum -c -
+install -d -m0755 .agentlab-codex-source-tools/lib
+install -pm0755 %{SOURCE8} .agentlab-codex-source-tools/prepare-codex-cargo-srpm-sources
+install -pm0644 %{SOURCE9} .agentlab-codex-source-tools/lib/codex_cargo_vendor.rb
+ruby .agentlab-codex-source-tools/prepare-codex-cargo-srpm-sources \
+  --check \
+  --source-dir "$PWD" \
+  --archive %{SOURCE10} \
+  --manifest %{SOURCE11} \
+  --config %{SOURCE12} \
+  --receipt %{SOURCE4} \
+  --closure %{SOURCE1} \
+  --supplement %{SOURCE3} \
+  --work-dir-root %{_tmppath}
+tar --extract --gzip --file %{SOURCE10} --directory codex-rs
+pushd codex-rs >/dev/null
+%cargo_prep -N
+cat %{SOURCE12} >> .cargo/config.toml
+%{__cargo_to_rpm} -p %{SOURCE11} parse-vendor-manifest > cargo-bundled-provides.txt
+test "$(wc -l < cargo-bundled-provides.txt)" -eq 1124
+install -pm0644 %{SOURCE11} cargo-vendor.txt
+cmp cargo-vendor.txt %{SOURCE11}
+popd >/dev/null
 echo 'codex-cli is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
@@ -91,6 +127,12 @@ install -Dpm0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/codex/config.toml
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.8
+- Generate the resolver-complete Cargo source through the repository SCM path.
+- Verify the semantic vendor tree and prepare Fedora's offline Cargo metadata.
+- Repair the ordered Fedora update-policy patch application.
+- Keep compilation blocked pending licenses, Rusty V8 completion, and build proof.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.7
 - Select the separate blocked Rusty V8 149.2.0 ABI provider contract.
 - Match Codex's default crate feature to the system-libstdc++ archive link mode.

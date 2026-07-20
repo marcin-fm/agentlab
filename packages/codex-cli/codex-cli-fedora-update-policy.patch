@@ -75,27 +75,19 @@ diff --git a/codex-rs/tui/src/updates.rs b/codex-rs/tui/src/updates.rs
 diff --git a/codex-rs/cli/src/doctor/updates.rs b/codex-rs/cli/src/doctor/updates.rs
 --- a/codex-rs/cli/src/doctor/updates.rs
 +++ b/codex-rs/cli/src/doctor/updates.rs
-@@ -10,6 +10,7 @@ use std::path::Path;
- 
- use codex_core::config::Config;
- use codex_install_context::InstallContext;
- use codex_install_context::InstallMethod;
-+use codex_install_context::is_fedora_package;
- use serde::Deserialize;
- 
-@@ -38,7 +39,10 @@ pub(super) fn updates_check(config: &Config) -> DoctorCheck {
+@@ -38,7 +38,10 @@ pub(super) fn updates_check(config: &Config) -> DoctorCheck {
              "check for update on startup: {}",
              config.check_for_update_on_startup
          ),
 -        format!("update action: {}", update_action_label(&install_context)),
 +        format!(
 +            "update action: {}",
-+            update_action_label(&install_context, is_fedora_package())
++            update_action_label(&install_context, codex_install_context::is_fedora_package())
 +        ),
      ];
      let version_file = config.codex_home.join(VERSION_FILE_NAME);
      push_cached_version_details(&mut details, &version_file);
-@@ -129,7 +133,11 @@ fn push_cached_version_details(details: &mut Vec<String>, version_file: &Path) {
+@@ -129,7 +132,11 @@ fn push_cached_version_details(details: &mut Vec<String>, version_file: &Path) {
      }
  }
  
@@ -108,7 +100,7 @@ diff --git a/codex-rs/cli/src/doctor/updates.rs b/codex-rs/cli/src/doctor/update
      match &context.method {
          InstallMethod::Npm => "npm install -g @openai/codex",
          InstallMethod::Bun => "bun install -g @openai/codex",
-@@ -219,25 +227,30 @@ mod tests {
+@@ -219,25 +226,30 @@ mod tests {
      #[test]
      fn update_action_labels_install_contexts() {
 +        let other = InstallContext {
