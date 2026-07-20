@@ -138,6 +138,14 @@ selected_cargo_license_evidence:
   vendor_directories_with_top_level_license_texts: 1016
   vendor_directories_without_top_level_license_texts: 108
   linked_linux_directories_without_top_level_license_texts: 54
+  supplemental_license_sources:
+    receipt: codex-cli-0.144.5-cargo-supplemental-license-sources.json
+    receipt_sha256: 68971e9cf98fe4ed0ec919f1445f57f5e8055bd81c046b64476985cbf0ce7bf3
+    verified_mappings: 33
+    unresolved: 17
+    installable_texts: 15
+    icu_payload_comparison: resolved
+    notify_cc0_policy_hold: required
 lock_normalization:
   status: verified-prep-transform
   source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
@@ -244,7 +252,7 @@ selected_special_sources:
     - Use system libstdc++, GCC, and LLD; fix two default-preserving V8 GCC/include portability defects.
   upstreamable_path: Add an opt-in no-download system-toolchain mode that preserves current defaults, then upstream the stable custom-toolchain and V8 portability fixes proven by the local prototype.
   separate_package_decision: Selected. The blocked rust-v8 source package owns the recursive Chromium/V8 source, stable-toolchain patches, static archive, architecture proof, and provider license closure; Codex remains responsible for final static-link license propagation.
-  separate_package_readiness: The provider draft records exact commits and zero-fuzz patches but remains blocked pending immutable recursive archives, upstream resolution, aggregate licenses, and network-isolated Fedora 43/44/Rawhide builds.
+  separate_package_readiness: Release 149.2.0-0.14 succeeded in Fedora 43, Fedora 44, and Rawhide x86_64 COPR cells in build 10752577 and satisfies Codex's exact provider capability there. The provider remains blocked by failed aarch64 cells while the 0.15 correction is active, final static-license and consumer closure, and unsubmitted patches.
   distro_precedent: openSUSE rusty_v8 149.4.0 uses source mode with a 274625900-byte prebuilt Chromium Rust toolchain, which is forbidden by this package policy.
 closure_audit:
   production_source_selection_verified: true

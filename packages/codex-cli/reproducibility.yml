@@ -123,6 +123,16 @@ cargo_license_text_inventory:
     linked_linux_directories_without_top_level_license_texts: 54
   all_vendor_directories_accounted: true
   legal_review_complete: false
+supplemental_cargo_license_sources:
+  receipt: codex-cli-0.144.5-cargo-supplemental-license-sources.json
+  receipt_sha256: 68971e9cf98fe4ed0ec919f1445f57f5e8055bd81c046b64476985cbf0ce7bf3
+  mappings: 33
+  unresolved: 17
+  archive_installable_texts: 15
+  archive_transport_identity_required: false
+  icu_payload_sha256: 1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612
+  icu_payload_bytes: 10822192
+  notify_cc0_allowed_content_review: required
 package_build_contract:
   cargo_package: codex-cli
   binary: codex
@@ -160,10 +170,19 @@ special_source_audit:
       build_network_isolation: not-enforced
       isolated_buildroot: false
       upstream_changes_submitted: false
-    separate_rust_v8_package: selected-provider-draft-blocked
+    separate_rust_v8_package: x86_64-provider-cells-succeeded-matrix-and-license-closure-blocked
     provider: rusty-v8-static(abi) = 149.2.0
     provider_archive: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
     provider_link_environment: GN_ARGS=use_custom_libcxx=false
+    provider_build: 10752577
+    provider_release: 149.2.0-0.14
+    provider_x86_64_cells:
+    - fedora-43-x86_64
+    - fedora-44-x86_64
+    - fedora-rawhide-x86_64
+    provider_x86_64_status: succeeded
+    provider_aarch64_status: failed-clang-only-mmark-bti-property
+    provider_active_correction_release: 149.2.0-0.15
     selected_crate_features:
     - default
     - use_custom_libcxx

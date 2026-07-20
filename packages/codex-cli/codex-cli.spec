@@ -12,14 +12,16 @@
 %global source_lock_sha256 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
 %global normalized_lock_sha256 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
 %global cargo_audit_sha256 87a0a8f6cc63fce3242387232c7df2dd38d39cf6905fb43073cc1099389ffeb2
-%global source_preparer_sha256 629a6bf9b2c6e78a74939832a9df55eaefee2acf20a03dd0332c8ca62cf15536
+%global source_preparer_sha256 d134aa208cf7264e99dbab683b762faf3fee009b25290d6c6b97b55c35702c09
 %global vendor_verifier_sha256 f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
 %global license_text_receipt_sha256 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
+%global supplemental_license_receipt_sha256 68971e9cf98fe4ed0ec919f1445f57f5e8055bd81c046b64476985cbf0ce7bf3
+%global supplemental_license_preparer_sha256 293309a8d77b78a1a14630dd128a8fa9344e535ac092e65458d08cc7dc3a1ceb
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.9%{?dist}
+Release:        0.10%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -40,6 +42,9 @@ Source10:       %{name}-%{version}-resolver-cargo-vendor.tar.gz
 Source11:       %{name}-%{version}-resolver-cargo-vendor.txt
 Source12:       %{name}-%{version}-resolver-cargo-vendor.config.toml
 Source13:       %{name}-%{version}-cargo-license-text-inventory.json
+Source14:       %{name}-%{version}-cargo-supplemental-license-sources.json
+Source15:       %{name}-%{version}-cargo-supplemental-license-sources.tar.gz
+Source16:       prepare-codex-cargo-license-sources
 
 # Fedora packaging: make doctor suppress its network version probe when the
 # centrally managed update setting is disabled.
@@ -71,9 +76,9 @@ This source-build draft is intentionally blocked. Its repository-backed source
 builder materializes the selected Cargo closure and resolver-only supplement as
 a semantically verified offline source, but the selected-aware Cargo audit's
 873 Linux-linked packages do not yet have complete license-text approval. The
-package must not produce an RPM until the Rusty V8 provider, final aggregate
-license evidence, the build/install/test flow, and offline Fedora builds are
-proven.
+package must not produce an RPM until the Rusty V8 final static-license and
+consumer closure, final aggregate license evidence, the build/install/test
+flow, and offline Fedora builds are proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -93,9 +98,12 @@ echo "%{cargo_audit_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{source_preparer_sha256}  %{SOURCE8}" | sha256sum -c -
 echo "%{vendor_verifier_sha256}  %{SOURCE9}" | sha256sum -c -
 echo "%{license_text_receipt_sha256}  %{SOURCE13}" | sha256sum -c -
+echo "%{supplemental_license_receipt_sha256}  %{SOURCE14}" | sha256sum -c -
+echo "%{supplemental_license_preparer_sha256}  %{SOURCE16}" | sha256sum -c -
 install -d -m0755 .agentlab-codex-source-tools/lib
 install -pm0755 %{SOURCE8} .agentlab-codex-source-tools/prepare-codex-cargo-srpm-sources
 install -pm0644 %{SOURCE9} .agentlab-codex-source-tools/lib/codex_cargo_vendor.rb
+install -pm0755 %{SOURCE16} .agentlab-codex-source-tools/prepare-codex-cargo-license-sources
 ruby .agentlab-codex-source-tools/prepare-codex-cargo-srpm-sources \
   --check \
   --source-dir "$PWD" \
@@ -108,6 +116,14 @@ ruby .agentlab-codex-source-tools/prepare-codex-cargo-srpm-sources \
   --license-audit %{SOURCE6} \
   --license-texts %{SOURCE13} \
   --work-dir-root %{_tmppath}
+ruby .agentlab-codex-source-tools/prepare-codex-cargo-license-sources \
+  --check \
+  --receipt %{SOURCE14} \
+  --archive %{SOURCE15} \
+  --vendor-archive %{SOURCE10} \
+  --cache-dir %{_tmppath}/codex-supplemental-license-cache \
+  --offline-cache
+tar --extract --gzip --file %{SOURCE15} --directory codex-rs
 tar --extract --gzip --file %{SOURCE10} --directory codex-rs
 pushd codex-rs >/dev/null
 %cargo_prep -N
@@ -132,6 +148,8 @@ popd >/dev/null
 install -Dpm0755 codex-rs/target/rpm/codex %{buildroot}%{_bindir}/codex
 install -Dpm0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/codex/config.toml
 install -Dpm0644 codex-rs/cargo-vendor.txt %{buildroot}%{_licensedir}/%{name}/cargo-vendor.txt
+install -d -m0755 %{buildroot}%{_licensedir}/%{name}/supplemental
+install -pm0644 codex-rs/codex-cli-%{version}-supplemental-license-sources/*.txt %{buildroot}%{_licensedir}/%{name}/supplemental/
 
 %check
 %if %{with check}
@@ -148,10 +166,16 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %files
 %license LICENSE
 %license %{_licensedir}/%{name}/cargo-vendor.txt
+%license %{_licensedir}/%{name}/supplemental/*.txt
 %{_bindir}/codex
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.10
+- Add checked supplemental Cargo license sources and ICU data comparison.
+- Keep unresolved canonical-text, CC0-content, and native-static review blocked.
+- Record the successful Rusty V8 x86_64 provider cells without clearing its remaining gates.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.9
 - Inventory package-local Cargo license texts with exact graph roles.
 - Define the package-scoped build, install, bundled Provides, and smoke checks.

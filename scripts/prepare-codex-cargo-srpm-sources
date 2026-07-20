@@ -130,8 +130,8 @@ module CodexCargoSourcePreparer
 
     specdir = File.dirname(spec)
     sources = expanded_sources(spec)
-    expected_indexes = (0..13).to_a
-    raise CodexCargoVendor::Error, "codex-cli.spec source layout mismatch" unless sources.keys.sort == expected_indexes
+    required_indexes = (0..13).to_a
+    raise CodexCargoVendor::Error, "codex-cli.spec source layout mismatch" unless (sources.keys & required_indexes) == required_indexes
 
     paths = sources.transform_values { |source| File.join(specdir, source_filename(source)) }
     closure_path = paths.fetch(1)

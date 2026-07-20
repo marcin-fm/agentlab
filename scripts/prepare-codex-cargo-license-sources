@@ -1,0 +1,380 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "uri"
+require "rubygems/package"
+require "set"
+require "tmpdir"
+require "zlib"
+require_relative "lib/codex_cargo_vendor"
+
+module CodexSupplementalLicenses
+  module_function
+
+  ICU_PAYLOAD_SHA256 = "1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612"
+  ICU_PAYLOAD_BYTES = 10_822_192
+
+  def sha256(path) = Digest::SHA256.file(path).hexdigest
+
+  def source_filename(value)
+    url, fragment = value.split("#", 2)
+    return fragment.delete_prefix("/") if fragment&.start_with?("/")
+
+    File.basename(url)
+  end
+
+  def sources_from_spec(spec)
+    CodexCargoVendor.run!({}, "rpmspec", "-P", spec).each_line.each_with_object({}) do |line, sources|
+      match = line.match(/\ASource(?<index>\d*):\s+(?<value>\S+)/)
+      next unless match
+
+      sources[Integer(match[:index].empty? ? "0" : match[:index], 10)] = match[:value]
+    end
+  end
+
+  def cache_path(cache, source)
+    # Multiple logical members may share one immutable transport archive.
+    File.join(cache, "#{Digest::SHA256.hexdigest(source.fetch('immutable_url'))}.source")
+  end
+
+  def acquire!(source, cache, offline:)
+    path = cache_path(cache, source)
+    if File.file?(path)
+      verify_transport!(path, source)
+      return path
+    end
+    raise CodexCargoVendor::Error, "offline cache misses #{source.fetch('id')}" if offline
+
+    FileUtils.mkdir_p(cache)
+    temporary = "#{path}.tmp-#{Process.pid}"
+    CodexCargoVendor.run!({}, "curl", "--fail", "--location", "--retry", "3", "--output", temporary, source.fetch("immutable_url"))
+    verify_transport!(temporary, source)
+    File.rename(temporary, path)
+    path
+  ensure
+    FileUtils.rm_f(temporary) if defined?(temporary) && temporary && File.exist?(temporary)
+  end
+
+  def verify_transport!(path, source)
+    expected = source["expected_transport_sha256"]
+    return unless expected
+
+    raise CodexCargoVendor::Error, "transport SHA-256 mismatch: #{source.fetch('id')}" unless sha256(path) == expected
+  end
+
+  def archive_member!(archive, member)
+    found = nil
+    Zlib::GzipReader.open(archive) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          path = CodexCargoVendor.tar_header_path(entry.header)
+          next unless entry.file? && path == member
+          raise CodexCargoVendor::Error, "duplicate archive member #{member}" if found
+
+          found = entry.read
+        end
+      end
+    end
+    raise CodexCargoVendor::Error, "missing archive member #{member}" unless found
+
+    found
+  end
+
+  def source_bytes!(source, cache, offline:)
+    path = acquire!(source, cache, offline:)
+    bytes = source.fetch("kind") == "raw" ? File.binread(path) : archive_member!(path, source.fetch("member_path"))
+    expected = source.fetch("expected_extracted_sha256")
+    expected_size = source.fetch("expected_extracted_size_bytes")
+    raise CodexCargoVendor::Error, "source SHA-256 mismatch: #{source.fetch('id')}" unless Digest::SHA256.hexdigest(bytes) == expected
+    raise CodexCargoVendor::Error, "source size mismatch: #{source.fetch('id')}" if expected_size && bytes.bytesize != expected_size
+
+    bytes
+  end
+
+  def github_raw_parts!(url)
+    match = url.match(%r{\Ahttps://raw\.githubusercontent\.com/(?<owner>[^/]+)/(?<repo>[^/]+)/(?<commit>[0-9a-f]{40})/(?<path>.+)\z})
+    raise CodexCargoVendor::Error, "non-immutable raw evidence URL" unless match
+
+    match.named_captures
+  end
+
+  def normalized_repository!(url)
+    uri = URI(url)
+    raise CodexCargoVendor::Error, "unsupported source repository" unless uri.scheme == "https" && uri.host == "github.com"
+
+    parts = uri.path.split("/").reject(&:empty?)
+    raise CodexCargoVendor::Error, "unsupported source repository" unless parts.length == 2
+
+    parts.join("/").downcase
+  end
+
+  def populate_mapping_evidence!(receipt)
+    sources = receipt.fetch("sources").to_h { |source| [source.fetch("id"), source] }
+    receipt.fetch("mappings").each do |mapping|
+      mapping["license_evidence"] = mapping.fetch("source_ids").map do |id|
+        source = sources.fetch(id)
+        parts = github_raw_parts!(source.fetch("immutable_url"))
+        path = parts.fetch("path")
+        {
+          "source_id" => id,
+          "repository_path" => path,
+          "immutable_url" => "https://raw.githubusercontent.com/#{parts.fetch('owner')}/#{parts.fetch('repo')}/#{mapping.fetch('source_commit')}/#{path}",
+          "expected_sha256" => source.fetch("expected_extracted_sha256"),
+          "expected_size_bytes" => source.fetch("expected_extracted_size_bytes")
+        }
+      end
+    end
+  end
+
+  def verify_mapping_evidence!(mapping, sources, cache:, offline:)
+    repository = normalized_repository!(mapping.fetch("source_repository"))
+    evidence = mapping.fetch("license_evidence")
+    raise CodexCargoVendor::Error, "mapping evidence count mismatch: #{mapping.fetch('directory')}" unless evidence.length == mapping.fetch("source_ids").length
+    evidence.each do |item|
+      source = sources.fetch(item.fetch("source_id"))
+      parts = github_raw_parts!(item.fetch("immutable_url"))
+      raise CodexCargoVendor::Error, "mapping evidence repository mismatch: #{mapping.fetch('directory')}" unless "#{parts.fetch('owner')}/#{parts.fetch('repo')}".downcase == repository
+      raise CodexCargoVendor::Error, "mapping evidence commit mismatch: #{mapping.fetch('directory')}" unless parts.fetch("commit") == mapping.fetch("source_commit")
+      raise CodexCargoVendor::Error, "mapping evidence path mismatch: #{mapping.fetch('directory')}" unless parts.fetch("path") == item.fetch("repository_path")
+      raise CodexCargoVendor::Error, "mapping evidence source mismatch: #{mapping.fetch('directory')}" unless item.fetch("expected_sha256") == source.fetch("expected_extracted_sha256") && item.fetch("expected_size_bytes") == source.fetch("expected_extracted_size_bytes")
+      evidence_source = source.merge("id" => "evidence-#{mapping.fetch('directory')}-#{source.fetch('id')}", "immutable_url" => item.fetch("immutable_url"), "expected_transport_sha256" => nil)
+      source_bytes!(evidence_source, cache, offline:)
+    end
+  end
+
+  def extract_vendor!(archive, temporary, receipt)
+    root = receipt.dig("inputs", "resolver_vendor_receipt", "vendor_tree_sha256")
+    raise CodexCargoVendor::Error, "missing resolver vendor identity" unless root
+    vendor_name = "codex-cli-0.144.5-resolver-cargo-vendor"
+    CodexCargoVendor.extract_archive!(archive, temporary, vendor_name)
+    File.join(temporary, vendor_name)
+  end
+
+  def checked_inputs!(receipt, package)
+    resolver = JSON.parse(File.read(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")))
+    inventory_path = File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")
+    audit_path = File.join(package, "codex-cli-0.144.5-selected-cargo-license-audit.json")
+    raise CodexCargoVendor::Error, "supplemental receipt release mismatch" unless receipt.dig("release", "name") == "codex-cli" && receipt.dig("release", "version") == "0.144.5"
+    raise CodexCargoVendor::Error, "supplemental receipt resolver identity mismatch" unless receipt.dig("inputs", "resolver_vendor_receipt", "sha256") == sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")) && receipt.dig("inputs", "resolver_vendor_receipt", "vendor_tree_sha256") == resolver.dig("vendor_tree", "sha256")
+    raise CodexCargoVendor::Error, "supplemental receipt inventory identity mismatch" unless receipt.dig("inputs", "license_text_inventory", "sha256") == sha256(inventory_path)
+    raise CodexCargoVendor::Error, "supplemental receipt audit identity mismatch" unless receipt.dig("inputs", "selected_cargo_license_audit", "sha256") == sha256(audit_path)
+    [resolver, JSON.parse(File.read(inventory_path)), JSON.parse(File.read(audit_path))]
+  end
+
+  def validate_unresolved!(unresolved, inventory_by_dir, audit_by_dir)
+    raise CodexCargoVendor::Error, "supplemental unresolved count drift" unless unresolved.length == 17
+    unresolved.each do |item|
+      inventory_item = inventory_by_dir.fetch(item.fetch("directory"))
+      audit_item = audit_by_dir.fetch(item.fetch("directory"))
+      raise CodexCargoVendor::Error, "unresolved record mismatch: #{item.fetch('directory')}" unless inventory_item.fetch("linked_linux") && inventory_item.fetch("license_texts").empty? && audit_item.fetch("checksum") == item.fetch("crate_checksum") && audit_item.fetch("normalized_spdx_candidate") == item.fetch("declared_expression")
+    end
+  end
+
+  def validate_notify_hold!(hold, inventory_by_dir, audit_by_dir)
+    notify_inventory = inventory_by_dir.fetch("notify-8.2.0")
+    notify_audit = audit_by_dir.fetch("notify-8.2.0")
+    text = notify_inventory.fetch("license_texts").find { |item| item.fetch("path") == "LICENSE-CC0" }
+    raise CodexCargoVendor::Error, "notify CC0 policy hold mismatch" unless hold && hold.fetch("crate_checksum") == notify_audit.fetch("checksum") && hold.fetch("declared_expression") == notify_audit.fetch("normalized_spdx_candidate") && text && hold.fetch("license_text_sha256") == text.fetch("sha256") && hold.fetch("license_text_size_bytes") == text.fetch("size_bytes")
+  end
+
+  def verify_mappings!(receipt, vendor_root, inventory, audit, cache: nil, offline: true)
+    inventory_by_dir = inventory.fetch("packages").to_h { |item| [item.fetch("directory"), item] }
+    audit_by_dir = audit.fetch("selected_packages").reject { |item| item.fetch("workspace_path_package") }.to_h do |item|
+      ["#{item.fetch('name')}-#{item.fetch('version')}", item]
+    end
+    ids = receipt.fetch("sources").map { |source| source.fetch("id") }
+    raise CodexCargoVendor::Error, "duplicate supplemental source id" unless ids.uniq.length == ids.length
+    install_names = receipt.fetch("sources").reject { |source| source.fetch("id") == "icu-data-payload" }.map { |source| source.fetch("install_filename") }
+    raise CodexCargoVendor::Error, "duplicate supplemental install filename" unless install_names.uniq.length == install_names.length
+    sources = receipt.fetch("sources").to_h { |source| [source.fetch("id"), source] }
+    sources.each_value do |source|
+      immutable = source.fetch("immutable_url")
+      valid = source.fetch("kind") == "raw" ? immutable.match?(%r{\Ahttps://raw\.githubusercontent\.com/[^/]+/[^/]+/[0-9a-f]{40}/.+\z}) : immutable.match?(%r{\Ahttps://chromium\.googlesource\.com/.+/\+archive/[0-9a-f]{40}\.tar\.gz\z})
+      raise CodexCargoVendor::Error, "non-immutable supplemental source URL: #{source.fetch('id')}" unless valid
+    end
+    mappings = receipt.fetch("mappings")
+    raise CodexCargoVendor::Error, "supplemental mapping count drift" unless mappings.length == 33
+    mappings.each do |mapping|
+      directory = mapping.fetch("directory")
+      item = inventory_by_dir.fetch(directory)
+      audit_item = audit_by_dir.fetch(directory)
+      raise CodexCargoVendor::Error, "mapping is not Linux-linked: #{directory}" unless item.fetch("linked_linux")
+      raise CodexCargoVendor::Error, "mapping unexpectedly has package text: #{directory}" unless item.fetch("license_texts").empty?
+      raise CodexCargoVendor::Error, "mapping crate checksum mismatch: #{directory}" unless audit_item.fetch("checksum") == mapping.fetch("crate_checksum")
+      provenance = JSON.parse(File.read(File.join(vendor_root, directory, ".cargo_vcs_info.json")))
+      raise CodexCargoVendor::Error, "mapping VCS commit mismatch: #{directory}" unless provenance.dig("git", "sha1") == mapping.fetch("source_commit")
+      path = provenance["path_in_vcs"].to_s
+      path = "." if path.empty?
+      raise CodexCargoVendor::Error, "mapping VCS path mismatch: #{directory}" unless path == mapping.fetch("package_path")
+      source_ids = mapping.fetch("source_ids")
+      raise CodexCargoVendor::Error, "mapping source id mismatch: #{directory}" unless source_ids.all? { |id| ids.include?(id) }
+      atoms = audit_item.fetch("normalized_spdx_candidate").scan(/[A-Za-z0-9.-]+/).reject { |atom| %w[AND OR WITH].include?(atom) }
+      covered = source_ids.flat_map { |id| sources.fetch(id).fetch("spdx_ids") }
+      raise CodexCargoVendor::Error, "mapping SPDX coverage mismatch: #{directory}" unless (atoms - covered).empty?
+      verify_mapping_evidence!(mapping, sources, cache:, offline:) if cache
+    end
+    unresolved = receipt.fetch("unresolved")
+    validate_unresolved!(unresolved, inventory_by_dir, audit_by_dir)
+    icu = receipt.fetch("icu_mapping")
+    icu_inventory = inventory_by_dir.fetch(icu.fetch("directory"))
+    icu_audit = audit_by_dir.fetch(icu.fetch("directory"))
+    icu_vcs = JSON.parse(File.read(File.join(vendor_root, icu.fetch("directory"), ".cargo_vcs_info.json")))
+    raise CodexCargoVendor::Error, "ICU mapping mismatch" unless icu.fetch("status") == "resolved-icu-data-comparison" && icu_inventory.fetch("linked_linux") && icu_inventory.fetch("license_texts").empty? && icu_audit.fetch("checksum") == icu.fetch("crate_checksum") && icu_vcs.dig("git", "sha1") == icu.fetch("source_commit") && (icu_vcs["path_in_vcs"].to_s.empty? ? "." : icu_vcs["path_in_vcs"]) == icu.fetch("package_path") && icu.fetch("wrapper_expression") == "MIT" && icu.fetch("payload_expression") == "Unicode-3.0 AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND NAIST-2003 AND LicenseRef-Fedora-Public-Domain" && icu.fetch("source_ids") == %w[icu-license-wrapper icu-data-payload]
+    missing = inventory.fetch("packages").select { |item| item.fetch("linked_linux") && item.fetch("license_texts").empty? }.map { |item| item.fetch("directory") }.sort
+    expected_missing = (mappings.map { |item| item.fetch("directory") } + unresolved.map { |item| item.fetch("directory") } + [icu.fetch("directory")]).sort
+    raise CodexCargoVendor::Error, "missing-text directory set drift" unless missing.length == 51 && missing == expected_missing && expected_missing.uniq.length == expected_missing.length
+    hold = receipt.fetch("policy_holds").find { |item| item.fetch("directory") == "notify-8.2.0" }
+    validate_notify_hold!(hold, inventory_by_dir, audit_by_dir)
+    used = (mappings.flat_map { |item| item.fetch("source_ids") } + icu.fetch("source_ids")) - ["icu-data-payload"]
+    installable = sources.reject { |id, _| id == "icu-data-payload" }.keys
+    raise CodexCargoVendor::Error, "unused installable supplemental source" unless installable.sort == used.uniq.sort
+  end
+
+  def receipt_from_plan(plan, package)
+    receipt = Marshal.load(Marshal.dump(plan))
+    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v1"
+    receipt["inputs"] = {
+      "resolver_vendor_receipt" => { "path" => "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")), "vendor_tree_sha256" => plan.dig("release", "resolver_vendor_tree_sha256") },
+      "license_text_inventory" => { "path" => "codex-cli-0.144.5-cargo-license-text-inventory.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")) },
+      "selected_cargo_license_audit" => { "path" => "codex-cli-0.144.5-selected-cargo-license-audit.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-selected-cargo-license-audit.json")) }
+    }
+    payload = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }
+    payload["expected_extracted_sha256"] = ICU_PAYLOAD_SHA256
+    payload["expected_extracted_size_bytes"] = ICU_PAYLOAD_BYTES
+    receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" }.each { |source| source["expected_transport_sha256"] = nil }
+    receipt.fetch("icu_mapping")["status"] = "resolved-icu-data-comparison"
+    receipt
+  end
+
+  def generate!(receipt, cache:, output:, vendor_archive:, package:, offline:)
+    _resolver, inventory, audit = checked_inputs!(receipt, package)
+    Dir.mktmpdir("agentlab-codex-license-sources-", "/srv/tmp") do |temporary|
+      vendor_root = extract_vendor!(vendor_archive, temporary, receipt)
+      verify_mappings!(receipt, vendor_root, inventory, audit)
+      icu = receipt.fetch("icu_mapping")
+      payload_source = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }
+      payload = source_bytes!(payload_source, cache, offline:)
+      vendored_payload = File.binread(File.join(vendor_root, icu.fetch("directory"), "src", "icudtl.dat"))
+      raise CodexCargoVendor::Error, "ICU payload does not match vendored deno_core_icudata" unless payload == vendored_payload
+
+      texts = receipt.fetch("sources").reject { |source| source.fetch("id") == "icu-data-payload" }.map do |source|
+        [source, source_bytes!(source, cache, offline:)]
+      end
+      texts.each do |source, bytes|
+        source["expected_extracted_size_bytes"] = bytes.bytesize
+        source["expected_extracted_sha256"] ||= Digest::SHA256.hexdigest(bytes)
+      end
+      populate_mapping_evidence!(receipt)
+      verify_mappings!(receipt, vendor_root, inventory, audit, cache:, offline:)
+      root = "codex-cli-#{receipt.dig('release', 'version')}-supplemental-license-sources"
+      File.open(output, "wb") do |file|
+        Zlib::GzipWriter.wrap(file) do |gzip|
+          Gem::Package::TarWriter.new(gzip) do |tar|
+            texts.sort_by { |source, _| source.fetch("install_filename") }.each do |source, bytes|
+              tar.add_file_simple("#{root}/#{source.fetch('install_filename')}", 0o644, bytes.bytesize) { |entry| entry.write(bytes) }
+            end
+          end
+        end
+      end
+      receipt["archive"] = { "filename" => File.basename(output), "root" => root, "installable_texts" => texts.length, "transport_identity_required" => false }
+    end
+  end
+
+  def verify_archive!(receipt, archive)
+    expected = receipt.fetch("sources").reject { |source| source.fetch("id") == "icu-data-payload" }.to_h do |source|
+      [source.fetch("install_filename"), source]
+    end
+    root = receipt.dig("archive", "root")
+    seen = {}
+    Zlib::GzipReader.open(archive) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          raise CodexCargoVendor::Error, "non-file supplemental archive entry" unless entry.file?
+          path = CodexCargoVendor.tar_header_path(entry.header)
+          raise CodexCargoVendor::Error, "unsafe supplemental archive path" unless path.start_with?("#{root}/") && !path.delete_prefix("#{root}/").include?("/")
+          name = path.delete_prefix("#{root}/")
+          source = expected.fetch(name) { raise CodexCargoVendor::Error, "unexpected supplemental archive member #{name}" }
+          raise CodexCargoVendor::Error, "duplicate supplemental archive member #{name}" if seen.key?(name)
+          bytes = entry.read
+          raise CodexCargoVendor::Error, "supplemental text SHA-256 mismatch: #{name}" unless Digest::SHA256.hexdigest(bytes) == source.fetch("expected_extracted_sha256")
+          raise CodexCargoVendor::Error, "supplemental text size mismatch: #{name}" unless bytes.bytesize == source.fetch("expected_extracted_size_bytes")
+          seen[name] = true
+        end
+      end
+    end
+    raise CodexCargoVendor::Error, "supplemental archive member set mismatch" unless seen.keys.sort == expected.keys.sort
+  end
+
+  def check!(receipt, archive:, vendor_archive:, package:)
+    _resolver, inventory, audit = checked_inputs!(receipt, package)
+    Dir.mktmpdir("agentlab-codex-license-check-", "/srv/tmp") do |temporary|
+      vendor_root = extract_vendor!(vendor_archive, temporary, receipt)
+      verify_mappings!(receipt, vendor_root, inventory, audit)
+      payload = File.binread(File.join(vendor_root, receipt.dig("icu_mapping", "directory"), "src", "icudtl.dat"))
+      raise CodexCargoVendor::Error, "vendored ICU payload SHA-256 mismatch" unless Digest::SHA256.hexdigest(payload) == ICU_PAYLOAD_SHA256
+      raise CodexCargoVendor::Error, "vendored ICU payload size mismatch" unless payload.bytesize == ICU_PAYLOAD_BYTES
+    end
+    verify_archive!(receipt, archive)
+  end
+
+  def parse_options
+    options = {}
+    OptionParser.new do |parser|
+      parser.on("--spec PATH") { |value| options[:spec] = value }
+      parser.on("--plan PATH") { |value| options[:plan] = value }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+      parser.on("--archive PATH") { |value| options[:archive] = value }
+      parser.on("--vendor-archive PATH") { |value| options[:vendor_archive] = value }
+      parser.on("--cache-dir PATH") { |value| options[:cache] = value }
+      parser.on("--offline-cache") { options[:offline] = true }
+      parser.on("--refresh") { options[:refresh] = true }
+      parser.on("--check") { options[:check] = true }
+    end.parse!
+    options
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+begin
+  options = CodexSupplementalLicenses.parse_options
+  if options[:spec]
+    spec = File.realpath(options.fetch(:spec))
+    package = File.dirname(spec)
+    sources = CodexSupplementalLicenses.sources_from_spec(spec)
+    receipt_path = options[:receipt] || File.join(package, CodexSupplementalLicenses.source_filename(sources.fetch(14)))
+    archive = options[:archive] || File.join(package, CodexSupplementalLicenses.source_filename(sources.fetch(15)))
+    vendor_archive = options[:vendor_archive] || File.join(package, CodexSupplementalLicenses.source_filename(sources.fetch(10)))
+  else
+    receipt_path = options.fetch(:receipt)
+    archive = options.fetch(:archive)
+    vendor_archive = options.fetch(:vendor_archive)
+    package = File.dirname(receipt_path)
+  end
+  receipt = if options[:refresh]
+              CodexSupplementalLicenses.receipt_from_plan(JSON.parse(File.read(options.fetch(:plan))), package)
+            else
+              JSON.parse(File.read(receipt_path))
+            end
+  if options[:check]
+    CodexSupplementalLicenses.check!(receipt, archive:, vendor_archive:, package:)
+  else
+    cache = File.expand_path(options.fetch(:cache, "/srv/tmp/agentlab-codex-supplemental-license-validation/cache"))
+    CodexSupplementalLicenses.generate!(receipt, cache:, output: archive, vendor_archive:, package:, offline: options.fetch(:offline, false))
+    rendered = JSON.pretty_generate(receipt) + "\n"
+    if options[:refresh]
+      File.write(receipt_path, rendered)
+    elsif File.binread(receipt_path) != rendered
+      raise CodexCargoVendor::Error, "supplemental receipt is stale; use --refresh to rewrite"
+    end
+  end
+  puts "Prepared Codex supplemental license sources."
+rescue CodexCargoVendor::Error, JSON::ParserError, KeyError, OptionParser::ParseError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end
+end

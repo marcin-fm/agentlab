@@ -41,8 +41,10 @@ srpm:
 			install -d -m0755 /srv/tmp; \
 			install -pm0755 "$(repo_root)/scripts/audit-codex-cargo-closure" "$$(dirname "$(spec)")/audit-codex-cargo-closure"; \
 			install -pm0755 "$(repo_root)/scripts/prepare-codex-cargo-srpm-sources" "$$(dirname "$(spec)")/prepare-codex-cargo-srpm-sources"; \
+			install -pm0755 "$(repo_root)/scripts/prepare-codex-cargo-license-sources" "$$(dirname "$(spec)")/prepare-codex-cargo-license-sources"; \
 			install -pm0644 "$(repo_root)/scripts/lib/codex_cargo_vendor.rb" "$$(dirname "$(spec)")/codex_cargo_vendor.rb"; \
 			ruby "$(repo_root)/scripts/prepare-codex-cargo-srpm-sources" --spec "$(spec)"; \
+			ruby "$(repo_root)/scripts/prepare-codex-cargo-license-sources" --spec "$(spec)"; \
 			;; \
 		rust-v8.spec) \
 			ruby-mri -rjson -roptparse -rpathname -rrubygems/package -rtempfile -rtmpdir -rzlib -e '' >/dev/null 2>&1 || dnf -y install ruby ruby-default-gems rubygem-json; \

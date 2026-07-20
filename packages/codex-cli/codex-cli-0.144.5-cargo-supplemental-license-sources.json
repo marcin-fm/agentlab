@@ -1,0 +1,1196 @@
+{
+  "schema": "agentlab-codex-cargo-supplemental-license-sources/v1",
+  "release": {
+    "name": "codex-cli",
+    "version": "0.144.5",
+    "source_tag": "rust-v0.144.5",
+    "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
+    "resolver_vendor_tree_sha256": "c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe",
+    "license_text_inventory_sha256": "6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9"
+  },
+  "sources": [
+    {
+      "id": "rage-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/str4d/rage/1465e602c83c5e4d3db8f58d9bdfc2a10063f90d/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "3708458dee7f359ac6c9c5558023ed481be87e5372c43ebd7f2ca7ad23c12026",
+      "expected_extracted_size_bytes": 10848,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install_filename": "rage-Apache-2.0.txt"
+    },
+    {
+      "id": "rage-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/str4d/rage/1465e602c83c5e4d3db8f58d9bdfc2a10063f90d/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "fe56c030c2d8c3404a37fe711cebb27ebea13d0aacf7e3524db4198335ad8cd1",
+      "expected_extracted_size_bytes": 1077,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "rage-MIT.txt"
+    },
+    {
+      "id": "simd-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/LICENSE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d",
+      "expected_extracted_size_bytes": 1062,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "simd-MIT.txt"
+    },
+    {
+      "id": "fluent-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/projectfluent/fluent-langneg-rs/7fdc590466ea63ca2367ac10fb1b881fe561f1a8/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "expected_extracted_size_bytes": 11357,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install_filename": "fluent-langneg-Apache-2.0.txt"
+    },
+    {
+      "id": "fluent-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/projectfluent/fluent-langneg-rs/7fdc590466ea63ca2367ac10fb1b881fe561f1a8/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "016fcc02048817d628b04b140c54db290fd9d29a5e8a55b77871194e810716ac",
+      "expected_extracted_size_bytes": 1053,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "fluent-langneg-MIT.txt"
+    },
+    {
+      "id": "include-dir-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/Michael-F-Bryan/include_dir/d742c6fffce99ee89da91b934e7ce6fb2a82680c/LICENSE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "9369f62987b3a116111f2edfdc4cc72633e44ddc94d5d0c68659cf537b76a31f",
+      "expected_extracted_size_bytes": 1070,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "include-dir-MIT.txt"
+    },
+    {
+      "id": "pluralrules-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "expected_extracted_size_bytes": 9723,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install_filename": "intl-pluralrules-Apache-2.0.txt"
+    },
+    {
+      "id": "pluralrules-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "expected_extracted_size_bytes": 1023,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "intl-pluralrules-MIT.txt"
+    },
+    {
+      "id": "opentelemetry-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "expected_extracted_size_bytes": 11357,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install_filename": "opentelemetry-Apache-2.0.txt"
+    },
+    {
+      "id": "starlark-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/8978f3cd91b2908e1e61f6b58f84293097abf8f1/LICENSE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "expected_extracted_size_bytes": 11324,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install_filename": "starlark-Apache-2.0.txt"
+    },
+    {
+      "id": "rama-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+      "expected_extracted_size_bytes": 9722,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install_filename": "rama-Apache-2.0.txt"
+    },
+    {
+      "id": "rama-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+      "expected_extracted_size_bytes": 1092,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "rama-MIT.txt"
+    },
+    {
+      "id": "tonic-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/hyperium/tonic/ed4bafc35af7a284357cf4e77e26b9c3eb0266ca/LICENSE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "e24a56698aa6feaf3a02272b3624f9dc255d982970c5ed97ac4525a95056a5b3",
+      "expected_extracted_size_bytes": 1056,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "tonic-MIT.txt"
+    },
+    {
+      "id": "ts-rs-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/Aleph-Alpha/ts-rs/1dce5297090804082e9639d2b7d851ba815aa359/LICENSE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "db7f7f8e7236a2d0b41b855b2501b7b913caebbcda6ce498637a304ad1706ce1",
+      "expected_extracted_size_bytes": 1073,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install_filename": "ts-rs-MIT.txt"
+    },
+    {
+      "id": "icu-license-wrapper",
+      "kind": "archive_member",
+      "immutable_url": "https://chromium.googlesource.com/chromium/deps/icu/+archive/ee5f27adc28bd3f15b2c293f726d14d2e336cbd5.tar.gz",
+      "expected_transport_sha256": null,
+      "member_path": "LICENSE",
+      "expected_extracted_sha256": "451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca",
+      "expected_extracted_size_bytes": 26487,
+      "spdx_ids": [
+        "Unicode-3.0",
+        "Unicode-DFS-2016",
+        "BSD-2-Clause",
+        "BSD-3-Clause",
+        "NAIST-2003",
+        "LicenseRef-Fedora-Public-Domain"
+      ],
+      "install_filename": "deno-core-icudata-icu-LICENSE.txt"
+    },
+    {
+      "id": "icu-data-payload",
+      "kind": "archive_member",
+      "immutable_url": "https://chromium.googlesource.com/chromium/deps/icu/+archive/ee5f27adc28bd3f15b2c293f726d14d2e336cbd5.tar.gz",
+      "expected_transport_sha256": null,
+      "member_path": "common/icudtl.dat",
+      "expected_extracted_sha256": "1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612",
+      "expected_extracted_size_bytes": 10822192,
+      "spdx_ids": [
+        "Unicode-3.0",
+        "Unicode-DFS-2016",
+        "BSD-2-Clause",
+        "BSD-3-Clause",
+        "NAIST-2003",
+        "LicenseRef-Fedora-Public-Domain"
+      ],
+      "install_filename": "deno-core-icudata-icudtl.dat"
+    }
+  ],
+  "mappings": [
+    {
+      "directory": "age-0.11.2",
+      "crate_checksum": "bf640be7658959746f1f0f2faab798f6098a9436a8e18e148d18bc9875e13c4b",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/str4d/rage",
+      "source_commit": "1465e602c83c5e4d3db8f58d9bdfc2a10063f90d",
+      "package_path": "age",
+      "source_ids": [
+        "rage-apache",
+        "rage-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rage-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/str4d/rage/1465e602c83c5e4d3db8f58d9bdfc2a10063f90d/LICENSE-APACHE",
+          "expected_sha256": "3708458dee7f359ac6c9c5558023ed481be87e5372c43ebd7f2ca7ad23c12026",
+          "expected_size_bytes": 10848
+        },
+        {
+          "source_id": "rage-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/str4d/rage/1465e602c83c5e4d3db8f58d9bdfc2a10063f90d/LICENSE-MIT",
+          "expected_sha256": "fe56c030c2d8c3404a37fe711cebb27ebea13d0aacf7e3524db4198335ad8cd1",
+          "expected_size_bytes": 1077
+        }
+      ]
+    },
+    {
+      "directory": "age-core-0.11.0",
+      "crate_checksum": "e2bf6a89c984ca9d850913ece2da39e1d200563b0a94b002b253beee4c5acf99",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/str4d/rage",
+      "source_commit": "17446612f865c705e44fe392d9d41dd102fed137",
+      "package_path": "age-core",
+      "source_ids": [
+        "rage-apache",
+        "rage-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rage-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/str4d/rage/17446612f865c705e44fe392d9d41dd102fed137/LICENSE-APACHE",
+          "expected_sha256": "3708458dee7f359ac6c9c5558023ed481be87e5372c43ebd7f2ca7ad23c12026",
+          "expected_size_bytes": 10848
+        },
+        {
+          "source_id": "rage-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/str4d/rage/17446612f865c705e44fe392d9d41dd102fed137/LICENSE-MIT",
+          "expected_sha256": "fe56c030c2d8c3404a37fe711cebb27ebea13d0aacf7e3524db4198335ad8cd1",
+          "expected_size_bytes": 1077
+        }
+      ]
+    },
+    {
+      "directory": "base64-simd-0.8.0",
+      "crate_checksum": "339abbe78e73178762e23bea9dfd08e697eb3f3301cd4be981c0f78ba5859195",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/Nugine/simd",
+      "source_commit": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+      "package_path": "crates/base64-simd",
+      "source_ids": [
+        "simd-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "simd-mit",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/LICENSE",
+          "expected_sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d",
+          "expected_size_bytes": 1062
+        }
+      ]
+    },
+    {
+      "directory": "vsimd-0.8.0",
+      "crate_checksum": "5c3082ca00d5a5ef149bb8b555a72ae84c9c59f7250f013ac822ac2e49b19c64",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/Nugine/simd",
+      "source_commit": "d74c030d9dc4f3cae02146d1f497ff62726ef09a",
+      "package_path": "crates/vsimd",
+      "source_ids": [
+        "simd-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "simd-mit",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/LICENSE",
+          "expected_sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d",
+          "expected_size_bytes": 1062
+        }
+      ]
+    },
+    {
+      "directory": "fluent-langneg-0.13.1",
+      "crate_checksum": "7eebbe59450baee8282d71676f3bfed5689aeab00b27545e83e5f14b1195e8b0",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/projectfluent/fluent-langneg-rs",
+      "source_commit": "7fdc590466ea63ca2367ac10fb1b881fe561f1a8",
+      "package_path": ".",
+      "source_ids": [
+        "fluent-apache",
+        "fluent-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "fluent-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/projectfluent/fluent-langneg-rs/7fdc590466ea63ca2367ac10fb1b881fe561f1a8/LICENSE-APACHE",
+          "expected_sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+          "expected_size_bytes": 11357
+        },
+        {
+          "source_id": "fluent-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/projectfluent/fluent-langneg-rs/7fdc590466ea63ca2367ac10fb1b881fe561f1a8/LICENSE-MIT",
+          "expected_sha256": "016fcc02048817d628b04b140c54db290fd9d29a5e8a55b77871194e810716ac",
+          "expected_size_bytes": 1053
+        }
+      ]
+    },
+    {
+      "directory": "include_dir-0.7.4",
+      "crate_checksum": "923d117408f1e49d914f1a379a309cffe4f18c05cf4e3d12e613a15fc81bd0dd",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/Michael-F-Bryan/include_dir",
+      "source_commit": "d742c6fffce99ee89da91b934e7ce6fb2a82680c",
+      "package_path": "include_dir",
+      "source_ids": [
+        "include-dir-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "include-dir-mit",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/Michael-F-Bryan/include_dir/d742c6fffce99ee89da91b934e7ce6fb2a82680c/LICENSE",
+          "expected_sha256": "9369f62987b3a116111f2edfdc4cc72633e44ddc94d5d0c68659cf537b76a31f",
+          "expected_size_bytes": 1070
+        }
+      ]
+    },
+    {
+      "directory": "intl_pluralrules-7.0.2",
+      "crate_checksum": "078ea7b7c29a2b4df841a7f6ac8775ff6074020c6776d48491ce2268e068f972",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/zbraniecki/pluralrules",
+      "source_commit": "d0715d5b7cca72e228d6e6c4de154bd30dfdd06a",
+      "package_path": "intl_pluralrules",
+      "source_ids": [
+        "pluralrules-apache",
+        "pluralrules-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "pluralrules-apache",
+          "repository_path": "intl_pluralrules/LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-APACHE",
+          "expected_sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "expected_size_bytes": 9723
+        },
+        {
+          "source_id": "pluralrules-mit",
+          "repository_path": "intl_pluralrules/LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-MIT",
+          "expected_sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "expected_size_bytes": 1023
+        }
+      ]
+    },
+    {
+      "directory": "opentelemetry-0.31.0",
+      "crate_checksum": "b84bcd6ae87133e903af7ef497404dda70c60d0ea14895fc8a5e6722754fc2a0",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/open-telemetry/opentelemetry-rust",
+      "source_commit": "285dc925f98403ff426acc70968f104dc820d4f2",
+      "package_path": "opentelemetry",
+      "source_ids": [
+        "opentelemetry-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "opentelemetry-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+          "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "expected_size_bytes": 11357
+        }
+      ]
+    },
+    {
+      "directory": "opentelemetry-appender-tracing-0.31.1",
+      "crate_checksum": "ef6a1ac5ca3accf562b8c306fa8483c85f4390f768185ab775f242f7fe8fdcc2",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/open-telemetry/opentelemetry-rust",
+      "source_commit": "00f97c948e95beb7b2c966fcdb5f946c2a89baeb",
+      "package_path": "opentelemetry-appender-tracing",
+      "source_ids": [
+        "opentelemetry-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "opentelemetry-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/00f97c948e95beb7b2c966fcdb5f946c2a89baeb/LICENSE",
+          "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "expected_size_bytes": 11357
+        }
+      ]
+    },
+    {
+      "directory": "opentelemetry-http-0.31.0",
+      "crate_checksum": "d7a6d09a73194e6b66df7c8f1b680f156d916a1a942abf2de06823dd02b7855d",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/open-telemetry/opentelemetry-rust",
+      "source_commit": "285dc925f98403ff426acc70968f104dc820d4f2",
+      "package_path": "opentelemetry-http",
+      "source_ids": [
+        "opentelemetry-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "opentelemetry-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+          "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "expected_size_bytes": 11357
+        }
+      ]
+    },
+    {
+      "directory": "opentelemetry-otlp-0.31.0",
+      "crate_checksum": "7a2366db2dca4d2ad033cad11e6ee42844fd727007af5ad04a1730f4cb8163bf",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/open-telemetry/opentelemetry-rust",
+      "source_commit": "285dc925f98403ff426acc70968f104dc820d4f2",
+      "package_path": "opentelemetry-otlp",
+      "source_ids": [
+        "opentelemetry-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "opentelemetry-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+          "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "expected_size_bytes": 11357
+        }
+      ]
+    },
+    {
+      "directory": "opentelemetry-proto-0.31.0",
+      "crate_checksum": "a7175df06de5eaee9909d4805a3d07e28bb752c34cab57fa9cff549da596b30f",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/open-telemetry/opentelemetry-rust",
+      "source_commit": "285dc925f98403ff426acc70968f104dc820d4f2",
+      "package_path": "opentelemetry-proto",
+      "source_ids": [
+        "opentelemetry-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "opentelemetry-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+          "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "expected_size_bytes": 11357
+        }
+      ]
+    },
+    {
+      "directory": "opentelemetry_sdk-0.31.0",
+      "crate_checksum": "e14ae4f5991976fd48df6d843de219ca6d31b01daaab2dad5af2badeded372bd",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/open-telemetry/opentelemetry-rust",
+      "source_commit": "285dc925f98403ff426acc70968f104dc820d4f2",
+      "package_path": "opentelemetry-sdk",
+      "source_ids": [
+        "opentelemetry-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "opentelemetry-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+          "expected_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "expected_size_bytes": 11357
+        }
+      ]
+    },
+    {
+      "directory": "pagable-0.4.1",
+      "crate_checksum": "3658968938a4d1eaa1987e69dcd84b01fb067c5b3416dccc8d71373b6ded6821",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/facebook/starlark-rust",
+      "source_commit": "8978f3cd91b2908e1e61f6b58f84293097abf8f1",
+      "package_path": "pagable",
+      "source_ids": [
+        "starlark-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "starlark-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/8978f3cd91b2908e1e61f6b58f84293097abf8f1/LICENSE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ]
+    },
+    {
+      "directory": "starlark-0.14.2",
+      "crate_checksum": "9062e866918dc4c9701c98ac99f7f4fa9e4b3b4edce306e147393bc75458c4fc",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/facebook/starlark-rust",
+      "source_commit": "0c8d107ab963362ba47ee3ab9e0173bc39bd101d",
+      "package_path": "starlark",
+      "source_ids": [
+        "starlark-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "starlark-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/0c8d107ab963362ba47ee3ab9e0173bc39bd101d/LICENSE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ]
+    },
+    {
+      "directory": "starlark_map-0.14.2",
+      "crate_checksum": "234877898fd216af93b2f5798b08cbbdc1a2e8f16a622a258b1db23a61a1c4ba",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/facebook/starlark-rust",
+      "source_commit": "0c8d107ab963362ba47ee3ab9e0173bc39bd101d",
+      "package_path": "starlark_map",
+      "source_ids": [
+        "starlark-apache"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "starlark-apache",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/starlark-rust/0c8d107ab963362ba47ee3ab9e0173bc39bd101d/LICENSE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ]
+    },
+    {
+      "directory": "rama-core-0.3.0-alpha.4",
+      "crate_checksum": "0b93751ab27c9d151e84c1100057eab3f2a6a1378bc31b62abd416ecb1847658",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-core",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-dns-0.3.0-alpha.4",
+      "crate_checksum": "e340fef2799277e204260b17af01bc23604712092eacd6defe40167f304baed8",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-dns",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-error-0.3.0-alpha.4",
+      "crate_checksum": "3c452aba1beb7e29b873ff32f304536164cffcc596e786921aea64e858ff8f40",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-error",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-http-0.3.0-alpha.4",
+      "crate_checksum": "453d60af031e23af2d48995e41b17023f6150044738680508b63671f8d7417dd",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-http",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-http-backend-0.3.0-alpha.4",
+      "crate_checksum": "f3ff6a3c8ae690be8167e43777ba0bf6b0c8c2f6de165c538666affe2a32fd81",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-http-backend",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-http-core-0.3.0-alpha.4",
+      "crate_checksum": "3822be6703e010afec0bcfeb5dbb6e5a3b23ca5689d9b1215b66ce6446653b77",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-http-core",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-http-headers-0.3.0-alpha.4",
+      "crate_checksum": "9d74fe0cd9bd4440827dc6dc0f504cf66065396532e798891dee2c1b740b2285",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-http-headers",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-http-types-0.3.0-alpha.4",
+      "crate_checksum": "b6dae655a72da5f2b97cfacb67960d8b28c5025e62707b4c8c5f0c5c9843a444",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-http-types",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-net-0.3.0-alpha.4",
+      "crate_checksum": "b28ee9e1e5d39264414b71f5c33e7fbb66b382c3fac456fe0daad39cf5509933",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-net",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-socks5-0.3.0-alpha.4",
+      "crate_checksum": "5468b263516daaf258de32542c1974b7cbe962363ad913dcb669f5d46db0ef3e",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-socks5",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-tcp-0.3.0-alpha.4",
+      "crate_checksum": "fe60cd604f91196b3659a1b28945add2e8b10bd0b4e6373c93d024fb3197704b",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-tcp",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-tls-rustls-0.3.0-alpha.4",
+      "crate_checksum": "536d47f6b269fb20dffd45e4c04aa8b340698b3509326e3c36e444b4f33ce0d6",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-tls-rustls",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-udp-0.3.0-alpha.4",
+      "crate_checksum": "36ed05e0ecac73e084e92a3a8b1fbf16fdae8958c506f0f0eada180a2d99eef4",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-udp",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-unix-0.3.0-alpha.4",
+      "crate_checksum": "91acb16d571428ba4cece072dfab90d2667cdfa910a7b3cb4530c3f31542d708",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-unix",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "rama-utils-0.3.0-alpha.4",
+      "crate_checksum": "bf28b18ba4a57f8334d7992d3f8020194ea359b246ae6f8f98b8df524c7a14ef",
+      "status": "parent-workspace",
+      "source_repository": "https://github.com/plabayo/rama",
+      "source_commit": "4733273a10a791762e2b7727850032b0c9b8536d",
+      "package_path": "rama-utils",
+      "source_ids": [
+        "rama-apache",
+        "rama-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "rama-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+          "expected_sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+          "expected_size_bytes": 9722
+        },
+        {
+          "source_id": "rama-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+          "expected_sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+          "expected_size_bytes": 1092
+        }
+      ]
+    },
+    {
+      "directory": "tonic-prost-0.14.3",
+      "crate_checksum": "d6c55a2d6a14174563de34409c9f92ff981d006f56da9c6ecd40d9d4a31500b0",
+      "status": "exact-upstream",
+      "source_repository": "https://github.com/hyperium/tonic",
+      "source_commit": "ed4bafc35af7a284357cf4e77e26b9c3eb0266ca",
+      "package_path": "tonic-prost",
+      "source_ids": [
+        "tonic-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "tonic-mit",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/hyperium/tonic/ed4bafc35af7a284357cf4e77e26b9c3eb0266ca/LICENSE",
+          "expected_sha256": "e24a56698aa6feaf3a02272b3624f9dc255d982970c5ed97ac4525a95056a5b3",
+          "expected_size_bytes": 1056
+        }
+      ]
+    },
+    {
+      "directory": "ts-rs-11.1.0",
+      "crate_checksum": "4994acea2522cd2b3b85c1d9529a55991e3ad5e25cdcd3de9d505972c4379424",
+      "status": "exact-upstream",
+      "source_repository": "https://github.com/Aleph-Alpha/ts-rs",
+      "source_commit": "1dce5297090804082e9639d2b7d851ba815aa359",
+      "package_path": "ts-rs",
+      "source_ids": [
+        "ts-rs-mit"
+      ],
+      "license_evidence": [
+        {
+          "source_id": "ts-rs-mit",
+          "repository_path": "LICENSE",
+          "immutable_url": "https://raw.githubusercontent.com/Aleph-Alpha/ts-rs/1dce5297090804082e9639d2b7d851ba815aa359/LICENSE",
+          "expected_sha256": "db7f7f8e7236a2d0b41b855b2501b7b913caebbcda6ce498637a304ad1706ce1",
+          "expected_size_bytes": 1073
+        }
+      ]
+    }
+  ],
+  "icu_mapping": {
+    "directory": "deno_core_icudata-0.77.0",
+    "crate_checksum": "a9efff8990a82c1ae664292507e1a5c6749ddd2312898cdf9cd7cb1fd4bc64c6",
+    "status": "resolved-icu-data-comparison",
+    "source_repository": "https://github.com/denoland/deno_core_icudata",
+    "source_commit": "83537ba16a4bf1645fc8322e81f7aaf0149a8922",
+    "package_path": ".",
+    "wrapper_expression": "MIT",
+    "payload_expression": "Unicode-3.0 AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND NAIST-2003 AND LicenseRef-Fedora-Public-Domain",
+    "source_ids": [
+      "icu-license-wrapper",
+      "icu-data-payload"
+    ],
+    "reason": "The crate README identifies its raw payload as Rusty V8 third_party/icu/common/icudtl.dat. The exact payload member hash and size have not been independently retained, so this mapping is intentionally non-installable."
+  },
+  "unresolved": [
+    {
+      "directory": "allocative-0.3.6",
+      "crate_checksum": "d8cf9afc79c83d514444b55df3935d317da54b1ce3b17a133c646889cc260de8",
+      "declared_expression": "Apache-2.0",
+      "reason": "Published crate omits usable license text; canonical standard text requires legal approval."
+    },
+    {
+      "directory": "bech32-0.9.1",
+      "crate_checksum": "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445",
+      "declared_expression": "MIT",
+      "reason": "Published crate omits usable license text; newer 0.12.0 archive includes LICENSE-MIT but is not this selected dependency."
+    },
+    {
+      "directory": "cookie-factory-0.3.3",
+      "crate_checksum": "9885fa71e26b8ab7855e2ec7cae6e9b380edff76cd052e07c683a0319d51b3a2",
+      "declared_expression": "MIT",
+      "reason": "Published crate omits usable license text; canonical standard text requires legal approval."
+    },
+    {
+      "directory": "debugserver-types-0.5.0",
+      "crate_checksum": "2bf6834a70ed14e8e4e41882df27190bea150f1f6ecf461f1033f8739cd8af4a",
+      "declared_expression": "MIT",
+      "reason": "Published crate omits usable license text; canonical standard text requires legal approval."
+    },
+    {
+      "directory": "display_container-0.9.0",
+      "crate_checksum": "0a110a75c96bedec8e65823dea00a1d710288b7a369d95fd8a0f5127639466fa",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
+    },
+    {
+      "directory": "eventsource-stream-0.2.3",
+      "crate_checksum": "74fef4569247a5f429d9156b9d0a2599914385dd189c539334c625d8099d90ab",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
+    },
+    {
+      "directory": "fxhash-0.2.1",
+      "crate_checksum": "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c",
+      "declared_expression": "Apache-2.0 OR MIT",
+      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
+    },
+    {
+      "directory": "io_tee-0.1.1",
+      "crate_checksum": "4b3f7cef34251886990511df1c61443aa928499d598a9473929ab5a90a527304",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
+    },
+    {
+      "directory": "linux-keyutils-0.2.4",
+      "crate_checksum": "761e49ec5fd8a5a463f9b84e877c373d888935b71c6be78f3767fe2ae6bed18e",
+      "declared_expression": "Apache-2.0 OR MIT",
+      "reason": "Published crate omits usable license text; newer 0.2.5 archive also omits usable text."
+    },
+    {
+      "directory": "lock_free_hashtable-0.1.4",
+      "crate_checksum": "ebf3631712f5b790675292ff827af269f5d9f920c920b77dc41d0485e3719612",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
+    },
+    {
+      "directory": "rmcp-1.8.0",
+      "crate_checksum": "1d1f571c72940a19d9532fe52dbea8bc9912bf1d766c2970bb824056b86f3f59",
+      "declared_expression": "Apache-2.0",
+      "reason": "Published crate omits usable license text; newer 2.2.0 archive also omits usable text."
+    },
+    {
+      "directory": "sorted_vector_map-0.2.1",
+      "crate_checksum": "94bf565ee1681b4473aa5a9d71d807347c28021bd1d8947cb626b02f42a0141f",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
+    },
+    {
+      "directory": "sse-stream-0.2.1",
+      "crate_checksum": "eb4dc4d33c68ec1f27d386b5610a351922656e1fdf5c05bbaad930cd1519479a",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; newer 0.2.4 archive also omits usable text."
+    },
+    {
+      "directory": "static_interner-0.1.2",
+      "crate_checksum": "fab44341fbf4deae6e8d5ab450f24e1b34e0b2439d39ac0e9b5215a4e5493263",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; newer 0.1.3 archive also omits usable text."
+    },
+    {
+      "directory": "strong_hash-0.1.0",
+      "crate_checksum": "0831334aea34390b6b6ec7af0a27f9ee6324ad3a69463e6b240d83d6b7bce9c9",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
+    },
+    {
+      "directory": "yasna-0.5.2",
+      "crate_checksum": "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd",
+      "declared_expression": "MIT OR Apache-2.0",
+      "reason": "Published crate omits usable license text; newer 0.6.0 archive includes LICENSE-APACHE and LICENSE-MIT but is not this selected dependency."
+    },
+    {
+      "directory": "opentelemetry-semantic-conventions-0.31.0",
+      "crate_checksum": "e62e29dfe041afb8ed2a6c9737ab57db4907285d999ef8ad3a59092a36bdc846",
+      "declared_expression": "Apache-2.0",
+      "reason": "Published crate omits usable text and .cargo_vcs_info.json does not record an immutable parent commit or package path; mutable repository metadata is not override evidence."
+    }
+  ],
+  "policy_holds": [
+    {
+      "directory": "notify-8.2.0",
+      "crate_checksum": "4d3d07927151ff8575b7087f245456e549fea62edf0ec4e565a5ee50c8402bc3",
+      "declared_expression": "CC0-1.0",
+      "license_text_path": "LICENSE-CC0",
+      "license_text_sha256": "e0456cbab4f7b5e7203e678faff37eadbdfef02e822db3b7a52a1dd9d3dc514a",
+      "license_text_size_bytes": 7007,
+      "hold": "Fedora allowed-content review required before final aggregate approval."
+    }
+  ],
+  "inputs": {
+    "resolver_vendor_receipt": {
+      "path": "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json",
+      "sha256": "e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c",
+      "vendor_tree_sha256": "c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe"
+    },
+    "license_text_inventory": {
+      "path": "codex-cli-0.144.5-cargo-license-text-inventory.json",
+      "sha256": "6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9"
+    },
+    "selected_cargo_license_audit": {
+      "path": "codex-cli-0.144.5-selected-cargo-license-audit.json",
+      "sha256": "530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8"
+    }
+  },
+  "archive": {
+    "filename": "codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz",
+    "root": "codex-cli-0.144.5-supplemental-license-sources",
+    "installable_texts": 15,
+    "transport_identity_required": false
+  }
+}

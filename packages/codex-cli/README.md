@@ -179,6 +179,12 @@ source as linked. A nested candidate does not prove package-level legal closure,
 and a missing candidate does not prove that no usable upstream text exists; each
 unresolved package still needs an exact text mapping and Fedora review.
 
+The checked supplemental-source receipt resolves 33 Linux-linked crates through
+exact parent-workspace or upstream texts and supplies 15 installable texts. It
+also proves the embedded `deno_core_icudata` ICU payload against the pinned
+Chromium ICU member, while retaining 16 canonical-text cases, one OpenTelemetry
+provenance case, and the `notify` CC0 allowed-content review as explicit holds.
+
 This is not the final RPM license closure. Fedora-allowed SPDX review, package
 license texts, and the recursive Rusty V8/Chromium native static inventory are
 still incomplete. The audit therefore leaves final binary license completeness
@@ -213,10 +219,13 @@ Rust target compiled, `mksnapshot` linked, and the final 160,316,016-byte
 An offline path consumer linked that archive with the published 149.2.0 binding
 file and executed JavaScript, printing `Fedora Rusty V8`.
 
-That prototype is evidence, not a package-ready provider. Its exact source,
-consumer contract, and two zero-fuzz patch groups now live in the separate
-blocked `packages/rust-v8` draft. The `rust-v8-static` package provides
-`rusty-v8-static(abi) = 149.2.0` and installs
+That prototype has since become the separate blocked `packages/rust-v8`
+provider. Release `149.2.0-0.14` completed source-bound COPR builds on Fedora
+43, Fedora 44, and Rawhide `x86_64` in build `10752577`, satisfying Codex's
+exact `rusty-v8-static(abi) = 149.2.0` provider requirement for this package's
+target. All three `aarch64` cells failed on V8's Clang-only
+`-mmark-bti-property`; the provider remains matrix-blocked while the `0.15`
+correction is active. The provider installs
 `/usr/lib64/rust-v8/149.2.0/librusty_v8.a`; Codex keeps the published crate
 binding and selects the archive through `RUSTY_V8_ARCHIVE`.
 
@@ -226,12 +235,12 @@ while the Fedora archive uses system libstdc++. `%build` therefore also exports
 matching dynamic libstdc++ link flag. An offline smoke with that exact feature
 and environment tuple prints `Fedora Rusty V8`.
 
-The separate package boundary is now selected because the crate already accepts
-an external exact-version archive and the Chromium/V8 build concern is reusable.
-It does not remove Codex's final static-link license obligations. The provider
-remains blocked until all 20 submodules are immutable RPM inputs, the patches
-are accepted or fully reviewed downstream, the recursive license closure is
-complete, and network-isolated Fedora 43, Fedora 44, and Rawhide builds pass.
+The separate package boundary is selected because the crate already accepts an
+external exact-version archive and the Chromium/V8 build concern is reusable.
+The successful `x86_64` provider cells do not remove Codex's final static-link
+license obligations. Rusty V8 still requires final static-license and consumer
+closure, while Codex still requires its own linked-license, build, test, and
+payload proof.
 openSUSE's nearby `rusty_v8 149.4.0` package demonstrates the scale of the
 source build but still supplies a prohibited 274,625,900-byte prebuilt Chromium
 Rust toolchain.
