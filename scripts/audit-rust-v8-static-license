@@ -220,7 +220,7 @@ begin
   archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
   source_filter_sha256 = Digest::SHA256.file(source_filter_path).hexdigest
 
-  raise Agentlab::Error, "source receipt is not the reviewed filtered closure" unless source_receipt["schema"] == "rust-v8-source-closure/v2"
+  raise Agentlab::Error, "source receipt is not the reviewed filtered closure" unless source_receipt["schema"] == "rust-v8-source-closure/v4"
   unless archive_graph.dig("source_closure_reference", "sha256") == source_sha256
     raise Agentlab::Error, "archive graph is not bound to the current source receipt"
   end

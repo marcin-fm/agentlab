@@ -556,7 +556,7 @@ module Agentlab
     errors << "rust-v8: spec static-license SHA-256 does not match" unless spec[/^%global static_license_sha256\s+(\h{64})$/, 1] == static_license_sha256
 
     source = JSON.parse(File.read(source_path))
-    errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v2"
+    errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v4"
     errors << "rust-v8: recursive-source release does not match" unless source.dig("release", "version").to_s == version
     closure_scope = source.fetch("closure_scope", {})
     unless closure_scope["kind"] == "git-submodule-closure-with-reviewed-source-filter"
@@ -583,15 +583,16 @@ module Agentlab
       filtered_v8 = component["path"] == "v8"
       errors << "rust-v8: component #{component['path']} has invalid RPM source number" unless component["rpm_source"] == index
       errors << "rust-v8: component #{component['path']} has an invalid commit" unless component["commit"].to_s.match?(/\A[0-9a-f]{40}\z/)
-      errors << "rust-v8: component #{component['path']} has an invalid archive SHA-256" unless archive["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
       errors << "rust-v8: component #{component['path']} has an invalid tree SHA-256" unless archive["tree_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+      errors << "rust-v8: component #{component['path']} requires archive transport identity" unless archive["transport_identity_required"] == false
       unless archive["content_modes_and_symlinks_match_git"] == !filtered_v8 &&
              archive["content_modes_and_symlinks_match_git_except_reviewed_exclusions"] == true
         errors << "rust-v8: component #{component['path']} archive tree verification state is invalid"
       end
-      errors << "rust-v8: component #{component['path']} archive size is invalid" unless archive["bytes"].to_i.positive?
       if filtered_v8
-        unless archive["generated"] == true && archive["url"].nil? && archive.dig("source_filter", "sha256") == source_filter_sha256
+        unless archive["generated"] == true && archive["url"].nil? &&
+               archive["transport_identity_required"] == false &&
+               archive.dig("source_filter", "sha256") == source_filter_sha256
           errors << "rust-v8: generated V8 source metadata is invalid"
         end
       else
@@ -604,7 +605,6 @@ module Agentlab
     end
 
     summary = source.fetch("source_summary", {})
-    errors << "rust-v8: recursive-source archive byte total does not match" unless summary["archive_bytes"] == archives.sum { |archive| archive["bytes"] }
     errors << "rust-v8: recursive-source file total does not match" unless summary["archive_files"] == archives.sum { |archive| archive["file_count"] }
     errors << "rust-v8: recursive-source component tree total does not match" unless summary["component_tree_file_records"] == archives.sum { |archive| archive["tree_file_records"] }
     errors << "rust-v8: recursive-source combined tree count does not match" unless source.dig("reconstruction", "file_records") == summary["archive_files"]
@@ -665,6 +665,13 @@ module Agentlab
     errors << "rust-v8: spec Source27 does not select the static-license receipt" unless spec_sources[27] == static_license_name
     errors << "rust-v8: spec Source28 does not select the allocator license" unless spec_sources[28] == "rust-v8-stable-system-allocator-license.txt"
     errors << "rust-v8: spec Source29 does not select the source preparer" unless spec_sources[29] == "prepare-rust-v8-srpm-sources"
+    errors << "rust-v8: spec Source30 does not select the package README" unless spec_sources[30] == "README.md"
+    unless spec.include?('TMPDIR="%{_tmppath}" ruby "%{SOURCE29}"') &&
+           spec.include?('--output "%{SOURCE20}" --receipt "%{SOURCE26}" --check') &&
+           spec.include?('--closure "%{SOURCE21}"') &&
+           spec.include?('--source "%{SOURCE0}"') && spec.include?('--source "%{SOURCE20}"')
+      errors << "rust-v8: spec does not verify the generated V8 source semantically"
+    end
     flat_helper = spec[/extract_flat\(\) \{\n(.*?)\n\}/m, 1].to_s
     wrapped_helper = spec[/extract_wrapped\(\) \{\n(.*?)\n\}/m, 1].to_s
     errors << "rust-v8: flat archive extraction helper is invalid" unless flat_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner') && !flat_helper.include?("--strip-components")
@@ -677,16 +684,48 @@ module Agentlab
     patch_lines.each do |line|
       errors << "rust-v8: spec does not apply #{line.split.last}" unless spec.lines.map(&:strip).include?(line)
     end
-    expected_stop_block = <<~SPEC
-      echo 'rust-v8 filtered sources and prototype static licensing are complete; production Fedora build and architecture gates remain blocked' >&2
-      exit 1
-
-      %build
-    SPEC
-    errors << "rust-v8: deliberate remaining-gates stop is missing" unless spec.include?(expected_stop_block)
+    expected_gn_args = <<~GN.chomp
+      is_debug = false
+      is_clang = false
+      use_lld = true
+      use_custom_libcxx = false
+      symbol_level = 1
+      line_tables_only = true
+      no_inline_line_tables = false
+      clang_base_path = "/usr"
+      clang_version = "22"
+      v8_enable_sandbox = false
+      v8_enable_pointer_compression = false
+      v8_enable_v8_checks = false
+      rusty_v8_enable_simdutf = false
+      treat_warnings_as_errors = false
+      rust_sysroot_absolute = "/usr"
+      rust_bindgen_root = "/usr"
+      toolchain_supports_rust_thin_lto = false
+    GN
+    actual_gn_args = spec[/cat > out\/fedora\/args\.gn <<'GN'\n(.*?)\nGN$/m, 1]
+    errors << "rust-v8: spec GN arguments do not match the retained graph" unless actual_gn_args == expected_gn_args
+    errors << "rust-v8: spec does not select both supported architectures" unless spec.lines.map(&:strip).include?("ExclusiveArch:  x86_64 aarch64")
+    errors << "rust-v8: spec does not generate the GN build" unless spec.lines.map(&:strip).include?("gn gen out/fedora")
+    errors << "rust-v8: spec does not retain static archive debug sections" unless spec.lines.map(&:strip).include?("%global debug_package %{nil}")
+    unless spec.lines.map(&:strip).include?('rustc_version="$(rpm -q --qf \'%{VERSION}-Fedora-%{VERSION}-%{RELEASE}\' rust)"') &&
+           spec.lines.map(&:strip).include?('printf \'rustc_version = "%s"\\n\' "$rustc_version" >> out/fedora/args.gn')
+      errors << "rust-v8: spec does not bind the buildroot rustc version"
+    end
+    unless spec.lines.map(&:strip).include?("%{__ninja} -C out/fedora -j%{_smp_build_ncpus} obj/librusty_v8.a")
+      errors << "rust-v8: spec does not build the exact Rusty V8 target"
+    end
+    errors << "rust-v8: spec retains a pre-build stop" if spec.lines.map(&:strip).include?("exit 1")
+    unless spec.include?('["ninja", "-C", "out/fedora", "-t", "query", "obj/librusty_v8.a"]') &&
+           spec.include?('lines_sha256(objects) == receipt["archive"]["object_input_paths_sha256"]') &&
+           spec.include?('lines_sha256(rlibs) == receipt["archive"]["implicit_rust_rlib_paths_sha256"]') &&
+           spec.include?('lines_sha256(members) == receipt["archive"]["member_names_sha256"]') &&
+           spec.include?('sorted(members) == sorted(os.path.basename(path) for path in objects)')
+      errors << "rust-v8: spec does not verify the production archive graph"
+    end
 
     source_filter = JSON.parse(File.read(source_filter_path))
-    unless source_filter["schema"] == "rust-v8-source-filter/v1" && source_filter["release"].to_s == version
+    unless source_filter["schema"] == "rust-v8-source-filter/v3" && source_filter["release"].to_s == version
       errors << "rust-v8: source-filter receipt identity is invalid"
     end
     expected_filtered_paths = %w[
@@ -696,8 +735,13 @@ module Agentlab
     ]
     errors << "rust-v8: source-filter exclusions do not match" unless source_filter.fetch("excluded_paths", []).map { |record| record["path"] } == expected_filtered_paths
     filtered_component = components.find { |component| component["path"] == "v8" }
-    unless source_filter["output"] == filtered_component&.dig("archive")&.slice("filename", "archive_root", "bytes", "sha256", "tree_file_records", "tree_sha256")
+    unless source_filter["output"] == filtered_component&.dig("archive")&.slice("filename", "archive_root", "tree_file_records", "tree_sha256")
       errors << "rust-v8: source-filter output does not match the generated V8 source"
+    end
+    if source_filter.fetch("output", {}).key?("bytes") || source_filter.fetch("output", {}).key?("sha256") ||
+       source_filter.dig("upstream", "transport_identity_required") != false ||
+       source_filter.dig("validation", "generated_archive_transport_identity_required") != false
+      errors << "rust-v8: source-filter receipt requires generated transport identity"
     end
     source_preparer_path = File.expand_path("../../scripts/prepare-rust-v8-srpm-sources", package.directory)
     source_preparer_sha256 = if File.file?(source_preparer_path)
@@ -777,6 +821,7 @@ module Agentlab
     end
     errors << "rust-v8: spec does not install the static license map" unless spec.include?('receipt["static_archive"]["required_license_texts"]')
     errors << "rust-v8: spec does not mark the static license payload" unless spec.include?("%license %{_licensedir}/%{name}-static/*")
+    errors << "rust-v8: spec does not install package documentation" unless spec.include?("%doc %{_docdir}/%{name}-static/README.md")
     unless spec.include?('os.path.getsize(source) != record["bytes"]') && spec.include?('hashlib.file_digest(stream, "sha256")')
       errors << "rust-v8: spec does not verify installed license text identities"
     end
@@ -1449,8 +1494,11 @@ module Agentlab
       actual = File.file?(patch_path) && Digest::SHA256.file(patch_path).hexdigest
       errors << "rust-v8: patch SHA-256 does not match #{patch.fetch('file')}" unless actual == patch["sha256"]
     end
-    errors << "rust-v8: package source archive total does not match" unless package.data.dig("source_policy", "source_archive_bytes") == summary["archive_bytes"]
-    errors << "rust-v8: dependency source archive total does not match" unless dependencies.dig("source_closure", "archive_bytes") == summary["archive_bytes"]
+    unless package.data.dig("source_policy", "archive_transport_identity_required") == false &&
+           dependencies.dig("source_closure", "archive_transport_identity_required") == false &&
+           source.dig("validation", "archive_transport_identity_required") == false
+      errors << "rust-v8: generated source transport policy does not match"
+    end
     errors << "rust-v8: package reconstructed file count does not match" unless package.data.dig("source_policy", "reconstructed_file_records") == source.dig("reconstruction", "file_records")
     errors << "rust-v8: dependency reconstructed tree SHA-256 does not match" unless dependencies.dig("source_closure", "reconstructed_tree_sha256") == source.dig("reconstruction", "tree_sha256")
     errors << "rust-v8: package source closure kind does not match" unless package.data.dig("source_policy", "closure_kind") == closure_scope["kind"]
@@ -1517,7 +1565,6 @@ module Agentlab
       unless reproducibility.dig("archive_graph", "final_consumer_link_closure_verified") == false
         errors << "rust-v8: reproducibility metadata overclaims final consumer link closure"
       end
-      errors << "rust-v8: reproducibility archive total does not match" unless reproducibility.dig("recursive_source", "archive_bytes") == summary["archive_bytes"]
       errors << "rust-v8: reproducibility tree SHA-256 does not match" unless reproducibility.dig("recursive_source", "reconstructed_tree_sha256") == source.dig("reconstruction", "tree_sha256")
       errors << "rust-v8: reproducibility source closure kind does not match" unless reproducibility.dig("recursive_source", "closure_kind") == closure_scope["kind"]
       errors << "rust-v8: reproducibility metadata overclaims a full DEPS checkout" unless reproducibility.dig("recursive_source", "full_deps_checkout_verified") == false
@@ -1527,6 +1574,9 @@ module Agentlab
       errors << "rust-v8: reproducibility metadata omits the generated filtered source" unless reproducibility.dig("recursive_source", "recursive_rpm_source_generated") == true
       errors << "rust-v8: reproducibility direct-source count does not match" unless reproducibility.dig("recursive_source", "direct_public_rpm_sources") == 20
       errors << "rust-v8: reproducibility generated-source count does not match" unless reproducibility.dig("recursive_source", "generated_filtered_rpm_sources") == 1
+      unless reproducibility.dig("recursive_source", "archive_transport_identity_required") == false
+        errors << "rust-v8: reproducibility metadata requires generated transport identity"
+      end
       unless reproducibility.dig("recursive_source", "source_filter_receipt") == source_filter_name &&
              reproducibility.dig("recursive_source", "source_filter_receipt_sha256") == source_filter_sha256
         errors << "rust-v8: reproducibility source-filter receipt does not match"

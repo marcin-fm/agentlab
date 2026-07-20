@@ -1594,6 +1594,7 @@ class AgentlabTest < Minitest::Test
     package = Agentlab.package_named("rust-v8")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
     spec = File.read(package.spec_path)
+    source = JSON.parse(File.read(File.join(package.directory, dependencies.dig("source_closure", "receipt"))))
     license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("license_audit", "receipt"))))
     archive_graph = JSON.parse(File.read(File.join(package.directory, dependencies.dig("archive_graph", "receipt"))))
     fedora_license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("fedora_license_evidence", "receipt"))))
@@ -1642,7 +1643,17 @@ class AgentlabTest < Minitest::Test
     assert_empty(archive_graph.dig("archive", "selected_googletest_inputs"))
     refute(archive_graph.dig("validation", "selected_build_dependency_closure_verified"))
     assert_equal(3, source_filter.fetch("excluded_paths").length)
+    assert_equal("rust-v8-source-filter/v3", source_filter.fetch("schema"))
+    refute(source_filter.fetch("output").key?("bytes"))
+    refute(source_filter.fetch("output").key?("sha256"))
+    refute(source_filter.dig("upstream", "transport_identity_required"))
+    refute(source_filter.dig("validation", "generated_archive_transport_identity_required"))
     refute(source_filter.dig("validation", "cc0_executable_source_present"))
+    filtered_archive = source.fetch("components").find { |component| component.fetch("path") == "v8" }.fetch("archive")
+    refute(filtered_archive.fetch("transport_identity_required"))
+    source.fetch("components").each do |component|
+      refute(component.fetch("archive").fetch("transport_identity_required"))
+    end
     assert_equal(1_795, static_license.dig("selected_graph", "archive_objects"))
     assert_equal(24, static_license.dig("static_archive", "required_license_texts").length)
     assert(static_license.dig("validation", "fedora_allowed_spdx_verified"))
@@ -1949,13 +1960,21 @@ class AgentlabTest < Minitest::Test
     assert_includes(errors, "rust-v8: archive-graph metadata overclaims embedded Rust rlibs")
   end
 
-  def test_rejects_rust_v8_nonterminal_fail_closed_stop
+  def test_rejects_incomplete_rust_v8_production_build
     package = Agentlab.package_named("rust-v8")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
-    spec = File.read(package.spec_path).sub("\nexit 1\n\n%build", "\n# exit 1\n\n%build")
+    spec = File.read(package.spec_path)
+               .sub("ExclusiveArch:  x86_64 aarch64", "ExclusiveArch:  x86_64")
+               .sub("gn gen out/fedora", "# gn gen out/fedora")
+               .sub("%{__ninja} -C out/fedora -j%{_smp_build_ncpus} obj/librusty_v8.a", "# missing Ninja build")
+               .sub('assert lines_sha256(objects) == receipt["archive"]["object_input_paths_sha256"]', "# missing graph digest check")
+               .sub("assert sorted(members) == sorted(os.path.basename(path) for path in objects)", "assert members")
 
     errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
 
-    assert_includes(errors, "rust-v8: deliberate remaining-gates stop is missing")
+    assert_includes(errors, "rust-v8: spec does not select both supported architectures")
+    assert_includes(errors, "rust-v8: spec does not generate the GN build")
+    assert_includes(errors, "rust-v8: spec does not build the exact Rusty V8 target")
+    assert_includes(errors, "rust-v8: spec does not verify the production archive graph")
   end
 end

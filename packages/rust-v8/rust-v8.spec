@@ -1,24 +1,26 @@
 # Disabled by package.yml. This spec reconstructs and patches the exact Git
-# submodule source closure, then aborts until every remaining gate is complete.
+# submodule source closure for local production-build proof; publication remains
+# blocked until the package metadata gates are complete.
 %bcond check 1
+%global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77
-%global license_audit_sha256 e7be944f052d2286d3498a7e84b8cd9b5d45d0b7dc57551344d84fabe612825c
-%global archive_graph_sha256 be4c0d52a3459b54daae2fb176649c31e31c56033bfdcac2c90ba35ca01aace5
+%global closure_sha256 695a42c503934471f9651039669b6e1746ab9197642bc278f0c052c25bf316ca
+%global license_audit_sha256 df76850a94652dfb651265bfef9322ee26634a54a538bb00165c3b7344843081
+%global archive_graph_sha256 322617d6be730713c4d729cdac8516fd5f46014385927c9b4dbedfa53d354522
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 ce2f4724ef2ed77ff1d939fc7829c92e0c04e4fe42d6e89fc5c979b01d1e568a
-%global source_filter_sha256 c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2
-%global static_license_sha256 a28492724efbfe96cc586b8e43881bf7792d8b315fc275a3280b87acebfdbf97
+%global dynamic_linking_sha256 5aa9ec197e67a9144efc2dd61e0a3f0fb00ca74392e6cf1a73763ba09908f5ca
+%global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
+%global static_license_sha256 5d82b1878d518b6ca328f3cf57667ef10c91dbdec929b31f730df335a3c17e99
 %global system_rust_patch_sha256 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
-%global source_preparer_sha256 7cc8ef075a4a8b4d733146865584fdcfb6c1299cf37359254a91471e1d5556ec
+%global source_preparer_sha256 cf49573ca92537748b029bb1cbf89dd1dc871126c72de8b3ff6cb09325cb027c
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.8%{?dist}
+Release:        0.10%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -55,6 +57,7 @@ Source26:       %{name}-%{version}-source-filter.json
 Source27:       %{name}-%{version}-static-license.json
 Source28:       %{name}-stable-system-allocator-license.txt
 Source29:       prepare-rust-v8-srpm-sources
+Source30:       README.md
 # Guard Chromium nightly-only Rust behavior and use Fedora's stable toolchain.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
@@ -65,31 +68,41 @@ Patch1:         %{name}-gcc-portability.patch
 # Fedora-specific; not submitted while V8 carries the sources unconditionally.
 Patch2:         %{name}-disable-unused-siphash.patch
 
-ExclusiveArch:  x86_64
+ExclusiveArch:  x86_64 aarch64
 
 BuildRequires:  bindgen-cli >= 0.72
+BuildRequires:  binutils
 BuildRequires:  clang-libs >= 19
 BuildRequires:  gcc-c++
 BuildRequires:  gn
 BuildRequires:  lld
 BuildRequires:  ninja-build
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(gmodule-2.0)
+BuildRequires:  pkgconfig(gobject-2.0)
+BuildRequires:  pkgconfig(gthread-2.0)
 BuildRequires:  python3
+BuildRequires:  python-unversioned-command
 BuildRequires:  rust >= 1.91
 BuildRequires:  rustfmt
+BuildRequires:  ruby
+BuildRequires:  ruby-default-gems
+BuildRequires:  rubygem-json
 
 %description
 Rusty V8 provides Rust bindings to Google's V8 JavaScript engine. This source
 package builds the exact static archive consumed by the `v8 149.2.0` crate.
 
-This draft is intentionally blocked. The root and 19 submodule archives are
-direct immutable RPM inputs; the exact V8 archive is deterministically filtered
-at SRPM time to remove three unused CC0 SipHash files. The resulting 21-component
+This draft is intentionally blocked. The root and 19 nested Git component
+archives are commit-addressed RPM inputs. The exact V8 input is filtered at SRPM
+time to remove three unused CC0 SipHash files. Every archive is accepted by its
+exact tree rather than compressor-specific bytes. The resulting 21-component
 tree matches Git except for those reviewed exclusions and accepts the three
-Fedora patches. A full gclient/DEPS checkout is not claimed. A retained Fedora
-44 prototype witness matches 1,795 selected objects to 1,795 archive members and
-has a complete selected static-license expression and text map. Production
-source-bound builds, final consumer Rust rlibs, and architecture proof remain
-separate blocked gates.
+Fedora patches. A full Chromium dependency-client checkout is not claimed. A
+retained Fedora 44 prototype witness matches 1,795 selected objects to 1,795
+archive members and has a complete selected static-license expression and text
+map. Production source-bound builds, final consumer Rust libraries, and
+architecture proof remain separate blocked gates.
 
 %package static
 Summary:        Exact-version Rusty V8 static archive
@@ -112,6 +125,16 @@ echo "%{source_preparer_sha256}  %{SOURCE29}" | sha256sum -c -
 echo "%{system_rust_patch_sha256}  %{PATCH0}" | sha256sum -c -
 echo "%{gcc_patch_sha256}  %{PATCH1}" | sha256sum -c -
 echo "%{siphash_patch_sha256}  %{PATCH2}" | sha256sum -c -
+TMPDIR="%{_tmppath}" ruby "%{SOURCE29}" \
+  --output "%{SOURCE20}" --receipt "%{SOURCE26}" --check \
+  --closure "%{SOURCE21}" \
+  --source "%{SOURCE0}" --source "%{SOURCE1}" --source "%{SOURCE2}" \
+  --source "%{SOURCE3}" --source "%{SOURCE4}" --source "%{SOURCE5}" \
+  --source "%{SOURCE6}" --source "%{SOURCE7}" --source "%{SOURCE8}" \
+  --source "%{SOURCE9}" --source "%{SOURCE10}" --source "%{SOURCE11}" \
+  --source "%{SOURCE12}" --source "%{SOURCE13}" --source "%{SOURCE14}" \
+  --source "%{SOURCE15}" --source "%{SOURCE16}" --source "%{SOURCE17}" \
+  --source "%{SOURCE18}" --source "%{SOURCE19}" --source "%{SOURCE20}"
 python3 - "%{SOURCE21}" "%{SOURCE22}" "%{SOURCE23}" "%{SOURCE24}" "%{SOURCE25}" \
   "%{SOURCE26}" "%{SOURCE27}" \
   "%{SOURCE0}" "%{SOURCE1}" "%{SOURCE2}" "%{SOURCE3}" "%{SOURCE4}" \
@@ -133,7 +156,7 @@ source_filter = json.load(open(sys.argv[6], encoding="utf-8"))
 static_license = json.load(open(sys.argv[7], encoding="utf-8"))
 sources = sys.argv[8:]
 components = receipt["components"]
-assert receipt["schema"] == "rust-v8-source-closure/v2"
+assert receipt["schema"] == "rust-v8-source-closure/v4"
 assert receipt["release"]["version"] == "%{version}"
 assert len(components) == len(sources) == 21
 assert receipt["closure_scope"]["kind"] == "git-submodule-closure-with-reviewed-source-filter"
@@ -179,13 +202,13 @@ assert dynamic_linking["shared_provider"]["upstream_supported"] is False
 assert dynamic_linking["shared_provider"]["existing_rust_consumers_supported"] is False
 assert dynamic_linking["decision"]["package_shared_library"] is False
 assert dynamic_linking["decision"]["retain_exact_static_provider"] is True
-assert source_filter["schema"] == "rust-v8-source-filter/v1"
+assert source_filter["schema"] == "rust-v8-source-filter/v3"
 assert source_filter["release"] == "%{version}"
 assert source_filter["output"]["filename"] == os.path.basename(sources[20])
-assert source_filter["output"]["bytes"] == components[20]["archive"]["bytes"]
-assert source_filter["output"]["sha256"] == components[20]["archive"]["sha256"]
+assert source_filter["output"]["archive_root"] == components[20]["archive"]["archive_root"]
 assert source_filter["output"]["tree_file_records"] == components[20]["archive"]["tree_file_records"]
 assert source_filter["output"]["tree_sha256"] == components[20]["archive"]["tree_sha256"]
+assert source_filter["validation"]["generated_archive_transport_identity_required"] is False
 assert source_filter["validation"]["cc0_executable_source_present"] is False
 assert receipt["source_filter"]["sha256"] == "%{source_filter_sha256}"
 assert static_license["schema"] == "rust-v8-static-license/v1"
@@ -217,9 +240,9 @@ for index, (component, source) in enumerate(zip(components, sources)):
     archive = component["archive"]
     assert component["rpm_source"] == index
     assert os.path.basename(source) == archive["filename"]
-    assert os.path.getsize(source) == archive["bytes"]
-    with open(source, "rb") as stream:
-        assert hashlib.file_digest(stream, "sha256").hexdigest() == archive["sha256"]
+    assert archive["transport_identity_required"] is False
+    if index == 20:
+        assert archive["generated"] is True
 PY
 
 %setup -q -n rusty_v8-%{source_commit}
@@ -260,14 +283,80 @@ patch --batch --fuzz=0 -p1 < %{PATCH0}
 patch --batch --fuzz=0 -p1 < %{PATCH1}
 patch --batch --fuzz=0 -p1 < %{PATCH2}
 
-echo 'rust-v8 filtered sources and prototype static licensing are complete; production Fedora build and architecture gates remain blocked' >&2
-exit 1
-
 %build
+mkdir -p out/fedora
+cat > out/fedora/args.gn <<'GN'
+is_debug = false
+is_clang = false
+use_lld = true
+use_custom_libcxx = false
+symbol_level = 1
+line_tables_only = true
+no_inline_line_tables = false
+clang_base_path = "/usr"
+clang_version = "22"
+v8_enable_sandbox = false
+v8_enable_pointer_compression = false
+v8_enable_v8_checks = false
+rusty_v8_enable_simdutf = false
+treat_warnings_as_errors = false
+rust_sysroot_absolute = "/usr"
+rust_bindgen_root = "/usr"
+toolchain_supports_rust_thin_lto = false
+GN
+rustc_version="$(rpm -q --qf '%{VERSION}-Fedora-%{VERSION}-%{RELEASE}' rust)"
+printf 'rustc_version = "%s"\n' "$rustc_version" >> out/fedora/args.gn
+gn gen out/fedora
+%{__ninja} -C out/fedora -j%{_smp_build_ncpus} obj/librusty_v8.a
+
+%check
+%if %{with check}
+python3 - "%{SOURCE23}" <<'PY'
+import hashlib
+import json
+import os
+import subprocess
+import sys
+
+receipt = json.load(open(sys.argv[1], encoding="utf-8"))
+archive = "out/fedora/obj/librusty_v8.a"
+assert os.path.isfile(archive)
+query = subprocess.check_output(
+    ["ninja", "-C", "out/fedora", "-t", "query", "obj/librusty_v8.a"],
+    text=True,
+)
+lines = query.splitlines()
+start = lines.index("  input: alink") + 1
+inputs = []
+for line in lines[start:]:
+    if line == "  outputs:":
+        break
+    if line.startswith("    "):
+        value = line.strip()
+        if not value.startswith("||"):
+            inputs.append(value.removeprefix("| "))
+objects = [path for path in inputs if path.endswith(".o")]
+rlibs = [path for path in inputs if path.endswith(".rlib")]
+members = subprocess.check_output(["ar", "t", archive], text=True).splitlines()
+
+def lines_sha256(values):
+    return hashlib.sha256(("\n".join(sorted(values)) + "\n").encode()).hexdigest()
+
+assert len(objects) == receipt["archive"]["object_input_count"]
+assert len(rlibs) == receipt["archive"]["implicit_rust_rlib_count"]
+assert lines_sha256(objects) == receipt["archive"]["object_input_paths_sha256"]
+assert lines_sha256(rlibs) == receipt["archive"]["implicit_rust_rlib_paths_sha256"]
+assert lines_sha256(members) == receipt["archive"]["member_names_sha256"]
+assert sorted(members) == sorted(os.path.basename(path) for path in objects)
+assert not any("googletest" in path or "/gtest/" in path or "/gmock/" in path for path in inputs)
+assert not any("halfsiphash" in path for path in inputs)
+PY
+%endif
 
 %install
 install -Dpm0644 out/fedora/obj/librusty_v8.a \
   %{buildroot}%{_libdir}/rust-v8/%{version}/librusty_v8.a
+install -Dpm0644 %{SOURCE30} %{buildroot}%{_docdir}/%{name}-static/README.md
 python3 - "%{SOURCE27}" "%{buildroot}%{_licensedir}/%{name}-static" <<'PY'
 import json
 import hashlib
@@ -292,9 +381,25 @@ PY
 
 %files static
 %license %{_licensedir}/%{name}-static/*
+%doc %{_docdir}/%{name}-static/README.md
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.10
+- Allow native configured-SCM proof builds on x86_64 and aarch64.
+- Keep architecture-specific graph and license evidence fail-closed.
+
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.9
+- Validate the generated V8 source by its exact filtered tree instead of gzip bytes.
+- Verify every commit archive by its exact tree without tracking generated assets.
+- Run the exact retained GN/Ninja graph for a source-bound Fedora build proof.
+- Provide Chromium's unversioned Python command through the Fedora package.
+- Declare the GLib pkg-config interfaces required by Chromium's Linux config.
+- Bind Chromium's custom Rust toolchain check to normalized Fedora RPM identity.
+- Keep debug sections embedded in the generated static archive.
+- Ship the package design and consumer contract as runtime documentation.
+- Build line-table debug information into static archive members.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.8
 - Remove the unused CC0 SipHash implementation from the reviewed source input.
 - Record the complete retained static-archive expression and exact license texts.

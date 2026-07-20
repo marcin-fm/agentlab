@@ -3,12 +3,10 @@ target_release: 149.2.0
 target_triple: x86_64-unknown-linux-gnu
 upstream_v8: 14.9.207.2
 source_closure:
-  schema: rust-v8-source-closure/v2
+  schema: rust-v8-source-closure/v4
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77
+  receipt_sha256: 695a42c503934471f9651039669b6e1746ab9197642bc278f0c052c25bf316ca
   root_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
-  root_archive_sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-  root_archive_bytes: 340819
   recursive_components: 21
   recursive_submodules: 20
   closure_kind: git-submodule-closure-with-reviewed-source-filter
@@ -21,16 +19,16 @@ source_closure:
   reviewed_filtered_git_submodule_closure_verified: true
   direct_public_rpm_sources: 20
   generated_filtered_rpm_sources: 1
-  archive_bytes: 153137489
+  archive_transport_identity_required: false
   unpacked_size_bytes: 733558141
   reconstructed_file_records: 60911
   reconstructed_tree_sha256: 6c09e1a9ca0c3d1bfea49a40e0be5abcb12ca5a3c92983e667cec499f47bcc1d
   source_filter_receipt: rust-v8-149.2.0-source-filter.json
-  source_filter_receipt_sha256: c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2
+  source_filter_receipt_sha256: a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: be4c0d52a3459b54daae2fb176649c31e31c56033bfdcac2c90ba35ca01aace5
+  receipt_sha256: 322617d6be730713c4d729cdac8516fd5f46014385927c9b4dbedfa53d354522
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
   object_input_count: 1795
@@ -42,7 +40,7 @@ archive_graph:
   final_consumer_link_closure_verified: false
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: ce2f4724ef2ed77ff1d939fc7829c92e0c04e4fe42d6e89fc5c979b01d1e568a
+  receipt_sha256: 5aa9ec197e67a9144efc2dd61e0a3f0fb00ca74392e6cf1a73763ba09908f5ca
   v8_component_build_available: true
   upstream_supported: false
   existing_rust_consumers_supported: false
@@ -77,8 +75,8 @@ build_configuration:
   is_clang: false
   use_lld: true
   use_custom_libcxx: false
-  symbol_level: 0
-  line_tables_only: false
+  symbol_level: 1
+  line_tables_only: true
   no_inline_line_tables: false
   clang_base_path: /usr
   clang_version: "22"
@@ -89,6 +87,7 @@ build_configuration:
   treat_warnings_as_errors: false
   rust_sysroot_absolute: /usr
   rust_bindgen_root: /usr
+  rustc_version: buildroot-rust-version-release
   toolchain_supports_rust_thin_lto: false
 patches:
 - file: rust-v8-system-rust-toolchain.patch
@@ -136,7 +135,7 @@ consumer_integration:
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: e7be944f052d2286d3498a7e84b8cd9b5d45d0b7dc57551344d84fabe612825c
+  receipt_sha256: df76850a94652dfb651265bfef9322ee26634a54a538bb00165c3b7344843081
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
@@ -175,7 +174,7 @@ license_audit:
   final_static_archive_license_complete: false
 static_license:
   receipt: rust-v8-149.2.0-static-license.json
-  receipt_sha256: a28492724efbfe96cc586b8e43881bf7792d8b315fc275a3280b87acebfdbf97
+  receipt_sha256: 5d82b1878d518b6ca328f3cf57667ef10c91dbdec929b31f730df335a3c17e99
   expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
   selected_archive_objects: 1795
   required_license_texts: 24

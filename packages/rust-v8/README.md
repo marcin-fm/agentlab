@@ -68,7 +68,7 @@ consumers use it.
 The package retains only `rust-v8-static`. A dynamic package can be reconsidered
 if upstream defines a shared target and build-script mode with a maintained
 loader and ABI contract. The receipt SHA-256 is
-`ce2f4724ef2ed77ff1d939fc7829c92e0c04e4fe42d6e89fc5c979b01d1e568a`.
+`5aa9ec197e67a9144efc2dd61e0a3f0fb00ca74392e6cf1a73763ba09908f5ca`.
 
 ## Source Evidence
 
@@ -78,23 +78,25 @@ has SHA-256
 `8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a`.
 
 The root archive does not contain the required submodule contents. The spec uses
-19 direct commit-addressed submodule archives plus one deterministic V8 archive
-generated at SRPM time from its exact upstream commit. That source filter removes
-only the unused CC0 SipHash license, header, and implementation while
+19 direct commit-addressed submodule archives plus one V8 archive generated at
+SRPM time from its exact upstream commit. These hosting services generate commit
+tarballs dynamically, so compressed bytes are not the contract. Safe paths and
+links, archive layout/root, exact component trees, and the reviewed exclusions
+are verified in `%prep`. The V8 source filter removes only the unused CC0
+SipHash license, header, and implementation while
 `v8_use_siphash=false`; `rust-v8-disable-unused-siphash.patch` makes the existing
 feature boundary explicit in GN. The 20 direct public inputs plus one generated
-input total 153,137,489 bytes and reconstruct 60,911 file, mode, and symlink
-records. They match the exact recursive Git tree except for those three reviewed
-exclusions, at SHA-256
+input reconstruct 60,911 file, mode, and symlink records. They match the exact
+recursive Git tree except for those three reviewed exclusions, at SHA-256
 `6c09e1a9ca0c3d1bfea49a40e0be5abcb12ca5a3c92983e667cec499f47bcc1d`.
 
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
 archive hash, component-tree hash, source-filter provenance, and RPM source
 number. Its SHA-256 is
-`fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77`.
+`695a42c503934471f9651039669b6e1746ab9197642bc278f0c052c25bf316ca`.
 `rust-v8-149.2.0-source-filter.json` binds the exact upstream and filtered trees,
 the three exclusions, and the checked generator script. Its SHA-256 is
-`c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2`.
+`a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa`.
 No remote generated asset or separate hosting service is required.
 
 This receipt proves the exact `.gitmodules` closure, not a full `gclient sync`.
@@ -135,7 +137,7 @@ Every identifier is allowed by the installed Fedora license data. The receipt
 also records that the 31 implicit Rust rlibs and system libraries are not
 embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
-`a28492724efbfe96cc586b8e43881bf7792d8b315fc275a3280b87acebfdbf97`.
+`5d82b1878d518b6ca328f3cf57667ef10c91dbdec929b31f730df335a3c17e99`.
 
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
@@ -167,7 +169,7 @@ identity, but do not establish that a crate is linked into `librusty_v8.a` or
 complete the final aggregate expression. Its SHA-256 is
 `b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
 The regenerated license-audit receipt binds that evidence at SHA-256
-`e7be944f052d2286d3498a7e84b8cd9b5d45d0b7dc57551344d84fabe612825c`.
+`df76850a94652dfb651265bfef9322ee26634a54a538bb00165c3b7344843081`.
 
 ## Prototype Result
 
@@ -185,7 +187,7 @@ The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
 classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
 records its separate `temporal_capi` dependency. No googletest input appears in
 the selected graph. The witness SHA-256 is
-`be4c0d52a3459b54daae2fb176649c31e31c56033bfdcac2c90ba35ca01aace5`.
+`322617d6be730713c4d729cdac8516fd5f46014385927c9b4dbedfa53d354522`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer
@@ -199,6 +201,7 @@ link closure.
 4. Submit or otherwise resolve the three downstream system-toolchain, portability, and source-selection patches.
 
 The spec verifies every source through the checked receipt, reconstructs the
-reviewed filtered tree, applies all three patches, verifies the static-license
-receipt, then aborts before compilation while the production and architecture
-gates remain open. The package is disabled in COPR.
+reviewed filtered tree, applies all three patches, runs the exact retained
+GN/Ninja graph, and checks the selected object/member structure. This local
+production-build path does not close final consumer licensing, architecture, or
+upstream-patch gates. The package remains disabled in COPR.

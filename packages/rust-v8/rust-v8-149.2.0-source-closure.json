@@ -1,5 +1,5 @@
 {
-  "schema": "rust-v8-source-closure/v2",
+  "schema": "rust-v8-source-closure/v4",
   "release": {
     "crate": "v8",
     "version": "149.2.0",
@@ -10,7 +10,8 @@
   "root_source": {
     "url": "https://codeload.github.com/denoland/rusty_v8/tar.gz/5d0e31ea6bf67f4559faa759b91e22bc3f1cd696",
     "bytes": 340819,
-    "sha256": "8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a"
+    "sha256": "8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a",
+    "transport_identity_required": false
   },
   "components": [
     {
@@ -32,7 +33,8 @@
         "file_count": 151,
         "unpacked_size_bytes": 1770532,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -54,7 +56,8 @@
         "file_count": 1474,
         "unpacked_size_bytes": 7595749,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -76,7 +79,8 @@
         "file_count": 83,
         "unpacked_size_bytes": 241837,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -98,7 +102,8 @@
         "file_count": 1639,
         "unpacked_size_bytes": 19899634,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -120,7 +125,8 @@
         "file_count": 92,
         "unpacked_size_bytes": 5096952,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -142,7 +148,8 @@
         "file_count": 110,
         "unpacked_size_bytes": 536375,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -164,7 +171,8 @@
         "file_count": 31,
         "unpacked_size_bytes": 398207,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -186,7 +194,8 @@
         "file_count": 278,
         "unpacked_size_bytes": 9489471,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -208,7 +217,8 @@
         "file_count": 6995,
         "unpacked_size_bytes": 223955116,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -230,7 +240,8 @@
         "file_count": 34,
         "unpacked_size_bytes": 490074,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -252,7 +263,8 @@
         "file_count": 12293,
         "unpacked_size_bytes": 61202026,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -274,7 +286,8 @@
         "file_count": 161,
         "unpacked_size_bytes": 6429132,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -296,7 +309,8 @@
         "file_count": 76,
         "unpacked_size_bytes": 865307,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -318,7 +332,8 @@
         "file_count": 6925,
         "unpacked_size_bytes": 26414005,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -340,7 +355,8 @@
         "file_count": 15,
         "unpacked_size_bytes": 27154,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -362,7 +378,8 @@
         "file_count": 400,
         "unpacked_size_bytes": 3501928,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -384,7 +401,8 @@
         "file_count": 10120,
         "unpacked_size_bytes": 196097090,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -406,7 +424,8 @@
         "file_count": 6,
         "unpacked_size_bytes": 3219229,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -428,7 +447,8 @@
         "file_count": 1004,
         "unpacked_size_bytes": 3049324,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -450,7 +470,8 @@
         "file_count": 91,
         "unpacked_size_bytes": 646860,
         "symlink_count": 0,
-        "hardlink_count": 0
+        "hardlink_count": 0,
+        "transport_identity_required": false
       }
     },
     {
@@ -462,8 +483,6 @@
         "url": null,
         "filename": "rust-v8-149.2.0-v8-73d19698991616a34a00ca691a6e697dbb69e2ef-filtered-siphash.tar.gz",
         "layout": "github-wrapper",
-        "bytes": 32317952,
-        "sha256": "c992db0320a397123e24a6895d18191b58ef78c08d6cf8c97b657bc04381aef3",
         "tree_file_records": 18933,
         "tree_sha256": "84d84c21846355df8f3b629c50715924a3119ab7702a12a9ba8502d3a69019bb",
         "content_modes_and_symlinks_match_git": false,
@@ -475,9 +494,10 @@
         "hardlink_count": 0,
         "generated": true,
         "generator": "scripts/prepare-rust-v8-srpm-sources",
+        "transport_identity_required": false,
         "source_filter": {
           "path": "rust-v8-149.2.0-source-filter.json",
-          "sha256": "c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2",
+          "sha256": "a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa",
           "excluded_paths": [
             "third_party/siphash/LICENSE",
             "third_party/siphash/halfsiphash.cc",
@@ -490,8 +510,7 @@
           "url": "https://codeload.github.com/denoland/v8/tar.gz/73d19698991616a34a00ca691a6e697dbb69e2ef",
           "filename": "rust-v8-149.2.0-v8-73d19698991616a34a00ca691a6e697dbb69e2ef.tar.gz",
           "archive_root": "v8-73d19698991616a34a00ca691a6e697dbb69e2ef",
-          "bytes": 32678156,
-          "sha256": "63a19755f87d8366c5112c341e0d4fcdb10bf9706d6acb55cf581b9afee9361a",
+          "transport_identity_required": false,
           "tree_file_records": 18936,
           "tree_sha256": "babf9f9482b4f4c5781d686f8c7723a0f9404fdc6e2c1b3c30c320ac3dee1e36"
         }
@@ -556,12 +575,12 @@
     "selected_build_dependency_closure_verified": false,
     "recursive_component_archive_trees_match_git_except_reviewed_exclusions": true,
     "recursive_source_tree_matches_git_except_reviewed_exclusions": true,
-    "reviewed_filtered_git_submodule_closure_verified": true
+    "reviewed_filtered_git_submodule_closure_verified": true,
+    "archive_transport_identity_required": false
   },
   "source_summary": {
     "component_archives": 21,
     "submodule_archives": 20,
-    "archive_bytes": 153137489,
     "archive_files": 60911,
     "unpacked_size_bytes": 733558141,
     "component_tree_file_records": 60911,
@@ -584,7 +603,7 @@
   },
   "source_filter": {
     "path": "rust-v8-149.2.0-source-filter.json",
-    "sha256": "c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2",
+    "sha256": "a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa",
     "component_path": "v8",
     "excluded_paths": [
       "v8/third_party/siphash/LICENSE",

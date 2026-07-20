@@ -32,13 +32,9 @@ COMMIT = "73d19698991616a34a00ca691a6e697dbb69e2ef"
 UPSTREAM_URL = "https://codeload.github.com/denoland/v8/tar.gz/#{COMMIT}"
 UPSTREAM_FILENAME = "rust-v8-#{VERSION}-v8-#{COMMIT}.tar.gz"
 UPSTREAM_ROOT = "v8-#{COMMIT}"
-UPSTREAM_BYTES = 32_678_156
-UPSTREAM_SHA256 = "63a19755f87d8366c5112c341e0d4fcdb10bf9706d6acb55cf581b9afee9361a"
 UPSTREAM_TREE_RECORDS = 18_936
 UPSTREAM_TREE_SHA256 = "babf9f9482b4f4c5781d686f8c7723a0f9404fdc6e2c1b3c30c320ac3dee1e36"
 OUTPUT_FILENAME = "rust-v8-#{VERSION}-v8-#{COMMIT}-filtered-siphash.tar.gz"
-OUTPUT_BYTES = 32_317_952
-OUTPUT_SHA256 = "c992db0320a397123e24a6895d18191b58ef78c08d6cf8c97b657bc04381aef3"
 OUTPUT_TREE_RECORDS = 18_933
 OUTPUT_TREE_SHA256 = "84d84c21846355df8f3b629c50715924a3119ab7702a12a9ba8502d3a69019bb"
 EXCLUDED_PATHS = {
@@ -96,7 +92,7 @@ def tar_header_path(header)
   prefix.empty? ? name : "#{prefix}/#{name}"
 end
 
-def inspect_archive(path)
+def inspect_archive(path, expected_root: nil)
   paths = {}
   roots = {}
   long_name = nil
@@ -147,9 +143,11 @@ def inspect_archive(path)
     end
   end
 
-  raise Agentlab::Error, "archive root does not match #{UPSTREAM_ROOT}" unless roots.keys == [UPSTREAM_ROOT]
+  if expected_root && roots.keys != [expected_root]
+    raise Agentlab::Error, "archive root does not match #{expected_root}"
+  end
 rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
-  raise Agentlab::Error, "cannot inspect upstream archive: #{e.message}"
+  raise Agentlab::Error, "cannot inspect source archive: #{e.message}"
 end
 
 def tree_manifest(root)
@@ -170,13 +168,21 @@ def tree_manifest(root)
   records.sort
 end
 
-def verify_identity!(path, bytes, sha256, label)
-  actual_bytes = File.size(path)
-  actual_sha256 = Digest::SHA256.file(path).hexdigest
-  return if actual_bytes == bytes && actual_sha256 == sha256
-
-  raise Agentlab::Error,
-        "#{label} identity mismatch: bytes=#{actual_bytes} sha256=#{actual_sha256}"
+def verify_filtered_archive!(path, extraction)
+  inspect_archive(path, expected_root: UPSTREAM_ROOT)
+  FileUtils.rm_rf(extraction)
+  FileUtils.mkdir_p(extraction)
+  run!("tar", "-xzf", path, "-C", extraction, "--no-same-owner")
+  root = File.join(extraction, UPSTREAM_ROOT)
+  manifest = tree_manifest(root)
+  unless manifest.length == OUTPUT_TREE_RECORDS &&
+         Digest::SHA256.hexdigest(JSON.generate(manifest)) == OUTPUT_TREE_SHA256
+    raise Agentlab::Error, "filtered V8 tree identity mismatch"
+  end
+  EXCLUDED_PATHS.each_key do |relative|
+    raise Agentlab::Error, "excluded source is present: #{relative}" if File.exist?(File.join(root, relative))
+  end
+  manifest
 end
 
 def run!(*command, **options)
@@ -187,9 +193,43 @@ def run!(*command, **options)
   raise Agentlab::Error, "command failed: #{command.join(' ')}#{detail.empty? ? '' : ": #{detail}"}"
 end
 
+def verify_source_closure!(receipt_path, sources, extraction_parent)
+  closure = JSON.parse(File.read(receipt_path))
+  unless closure.fetch("schema") == "rust-v8-source-closure/v4"
+    raise Agentlab::Error, "source-closure receipt schema mismatch"
+  end
+  components = closure.fetch("components")
+  unless components.length == sources.length
+    raise Agentlab::Error, "source-closure archive count mismatch"
+  end
+
+  components.zip(sources).each_with_index do |(component, source), index|
+    archive = component.fetch("archive")
+    unless component.fetch("rpm_source") == index && File.basename(source) == archive.fetch("filename")
+      raise Agentlab::Error, "source-closure archive order mismatch for #{component.fetch('path')}"
+    end
+    unless archive.fetch("transport_identity_required") == false
+      raise Agentlab::Error, "source-closure archive requires transport identity for #{component.fetch('path')}"
+    end
+
+    expected_root = archive["archive_root"]
+    inspect_archive(source, expected_root: expected_root)
+    extraction = File.join(extraction_parent, format("%02d", index))
+    FileUtils.rm_rf(extraction)
+    FileUtils.mkdir_p(extraction)
+    run!("tar", "-xzf", source, "-C", extraction, "--no-same-owner")
+    root = expected_root ? File.join(extraction, expected_root) : extraction
+    manifest = tree_manifest(root)
+    unless manifest.length == archive.fetch("tree_file_records") &&
+           Digest::SHA256.hexdigest(JSON.generate(manifest)) == archive.fetch("tree_sha256")
+      raise Agentlab::Error, "source-closure tree identity mismatch for #{component.fetch('path')}"
+    end
+  end
+end
+
 def receipt
   {
-    "schema" => "rust-v8-source-filter/v1",
+    "schema" => "rust-v8-source-filter/v3",
     "package" => "rust-v8",
     "release" => VERSION,
     "upstream" => {
@@ -198,16 +238,13 @@ def receipt
       "url" => UPSTREAM_URL,
       "filename" => UPSTREAM_FILENAME,
       "archive_root" => UPSTREAM_ROOT,
-      "bytes" => UPSTREAM_BYTES,
-      "sha256" => UPSTREAM_SHA256,
+      "transport_identity_required" => false,
       "tree_file_records" => UPSTREAM_TREE_RECORDS,
       "tree_sha256" => UPSTREAM_TREE_SHA256
     },
     "output" => {
       "filename" => OUTPUT_FILENAME,
       "archive_root" => UPSTREAM_ROOT,
-      "bytes" => OUTPUT_BYTES,
-      "sha256" => OUTPUT_SHA256,
       "tree_file_records" => OUTPUT_TREE_RECORDS,
       "tree_sha256" => OUTPUT_TREE_SHA256
     },
@@ -233,12 +270,14 @@ def receipt
       "gzip_name_and_timestamp" => false
     },
     "validation" => {
-      "upstream_identity_verified" => true,
+      "upstream_tree_identity_verified" => true,
+      "upstream_transport_identity_required" => false,
       "upstream_tree_verified" => true,
       "archive_paths_and_links_safe" => true,
       "excluded_path_set_exact" => true,
       "filtered_tree_verified" => true,
       "filtered_archive_reextracts_identically" => true,
+      "generated_archive_transport_identity_required" => false,
       "cc0_executable_source_present" => false,
       "remote_generated_asset_required" => false
     }
@@ -252,6 +291,8 @@ begin
   receipt_path = nil
   write_receipt = nil
   check = false
+  closure_path = nil
+  sources = []
   OptionParser.new do |parser|
     parser.banner = "Usage: scripts/prepare-rust-v8-srpm-sources [options]"
     parser.on("--spec PATH", "Rusty V8 spec whose source directory receives the filtered archive") { |path| spec = path }
@@ -260,6 +301,8 @@ begin
     parser.on("--receipt PATH", "Checked source-filter receipt") { |path| receipt_path = path }
     parser.on("--write-receipt PATH", "Write the generated receipt") { |path| write_receipt = path }
     parser.on("--check", "Verify an existing output and receipt") { check = true }
+    parser.on("--closure PATH", "Checked recursive source-closure receipt") { |path| closure_path = path }
+    parser.on("--source PATH", "Source archive to verify in RPM source-number order") { |path| sources << path }
   end.parse!
 
   if spec
@@ -272,61 +315,60 @@ begin
   raise Agentlab::Error, "--receipt or --spec is required" unless receipt_path || write_receipt
 
   expected_receipt = JSON.pretty_generate(receipt) + "\n"
-  Dir.mktmpdir("agentlab-rust-v8-filter-", "/srv/tmp") do |temporary|
-    upstream = input ? File.realpath(input) : File.join(temporary, UPSTREAM_FILENAME)
-    unless input
-      run!("curl", "--fail", "--location", "--retry", "3", "--silent", "--show-error", "--output", upstream, UPSTREAM_URL)
-    end
-    verify_identity!(upstream, UPSTREAM_BYTES, UPSTREAM_SHA256, "upstream V8 archive")
-    inspect_archive(upstream)
-
-    extraction = File.join(temporary, "source")
-    FileUtils.mkdir_p(extraction)
-    run!("tar", "-xzf", upstream, "-C", extraction, "--no-same-owner")
-    root = File.join(extraction, UPSTREAM_ROOT)
-    upstream_manifest = tree_manifest(root)
-    unless upstream_manifest.length == UPSTREAM_TREE_RECORDS &&
-           Digest::SHA256.hexdigest(JSON.generate(upstream_manifest)) == UPSTREAM_TREE_SHA256
-      raise Agentlab::Error, "upstream V8 tree identity mismatch"
-    end
-
-    EXCLUDED_PATHS.each do |relative, metadata|
-      path = File.join(root, relative)
-      unless File.file?(path) && Digest::SHA256.file(path).hexdigest == metadata.fetch("sha256")
-        raise Agentlab::Error, "excluded source identity mismatch: #{relative}"
-      end
-      FileUtils.rm_f(path)
-    end
-
-    filtered_manifest = tree_manifest(root)
-    unless filtered_manifest.length == OUTPUT_TREE_RECORDS &&
-           Digest::SHA256.hexdigest(JSON.generate(filtered_manifest)) == OUTPUT_TREE_SHA256
-      raise Agentlab::Error, "filtered V8 tree identity mismatch"
-    end
-
-    generated = File.join(temporary, OUTPUT_FILENAME)
-    statuses = Open3.pipeline(
-      ["tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--format=gnu", "-cf", "-", UPSTREAM_ROOT],
-      ["gzip", "-n", "-9"],
-      chdir: extraction,
-      out: generated
-    )
-    raise Agentlab::Error, "filtered archive generation failed" unless statuses.all?(&:success?)
-    verify_identity!(generated, OUTPUT_BYTES, OUTPUT_SHA256, "filtered V8 archive")
-    inspect_archive(generated)
-
-    verification = File.join(temporary, "verification")
-    FileUtils.mkdir_p(verification)
-    run!("tar", "-xzf", generated, "-C", verification, "--no-same-owner")
-    verify_manifest = tree_manifest(File.join(verification, UPSTREAM_ROOT))
-    raise Agentlab::Error, "filtered archive re-extraction mismatch" unless verify_manifest == filtered_manifest
-
+  temporary_root = ENV.fetch("TMPDIR", "/srv/tmp")
+  Dir.mktmpdir("agentlab-rust-v8-filter-", temporary_root) do |temporary|
     if check
       raise Agentlab::Error, "missing filtered V8 archive #{output}" unless File.file?(output)
-      verify_identity!(output, OUTPUT_BYTES, OUTPUT_SHA256, "checked filtered V8 archive")
+      verify_filtered_archive!(output, File.join(temporary, "checked"))
     else
+      upstream = input ? File.realpath(input) : File.join(temporary, UPSTREAM_FILENAME)
+      unless input
+        run!("curl", "--fail", "--location", "--retry", "3", "--silent", "--show-error", "--output", upstream, UPSTREAM_URL)
+      end
+      inspect_archive(upstream, expected_root: UPSTREAM_ROOT)
+
+      extraction = File.join(temporary, "source")
+      FileUtils.mkdir_p(extraction)
+      run!("tar", "-xzf", upstream, "-C", extraction, "--no-same-owner")
+      root = File.join(extraction, UPSTREAM_ROOT)
+      upstream_manifest = tree_manifest(root)
+      unless upstream_manifest.length == UPSTREAM_TREE_RECORDS &&
+             Digest::SHA256.hexdigest(JSON.generate(upstream_manifest)) == UPSTREAM_TREE_SHA256
+        raise Agentlab::Error, "upstream V8 tree identity mismatch"
+      end
+
+      EXCLUDED_PATHS.each do |relative, metadata|
+        path = File.join(root, relative)
+        unless File.file?(path) && Digest::SHA256.file(path).hexdigest == metadata.fetch("sha256")
+          raise Agentlab::Error, "excluded source identity mismatch: #{relative}"
+        end
+        FileUtils.rm_f(path)
+      end
+
+      filtered_manifest = tree_manifest(root)
+      unless filtered_manifest.length == OUTPUT_TREE_RECORDS &&
+             Digest::SHA256.hexdigest(JSON.generate(filtered_manifest)) == OUTPUT_TREE_SHA256
+        raise Agentlab::Error, "filtered V8 tree identity mismatch"
+      end
+
+      generated = File.join(temporary, OUTPUT_FILENAME)
+      statuses = Open3.pipeline(
+        ["tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--format=gnu", "-cf", "-", UPSTREAM_ROOT],
+        ["gzip", "-n", "-9"],
+        chdir: extraction,
+        out: generated
+      )
+      raise Agentlab::Error, "filtered archive generation failed" unless statuses.all?(&:success?)
+      verify_manifest = verify_filtered_archive!(generated, File.join(temporary, "verification"))
+      raise Agentlab::Error, "filtered archive re-extraction mismatch" unless verify_manifest == filtered_manifest
+
       Agentlab.atomic_write(output, File.binread(generated))
       File.chmod(0o644, output)
+    end
+    if closure_path
+      verify_source_closure!(closure_path, sources, File.join(temporary, "closure"))
+    elsif !sources.empty?
+      raise Agentlab::Error, "--source requires --closure"
     end
   end
 
@@ -338,7 +380,7 @@ begin
       raise Agentlab::Error, "source-filter receipt is stale: #{receipt_path}"
     end
   end
-  puts "Verified deterministic Rusty V8 filtered source #{OUTPUT_SHA256}."
+  puts "Verified Rusty V8 filtered source tree #{OUTPUT_TREE_SHA256}."
 rescue Agentlab::Error, JSON::ParserError, KeyError, OptionParser::ParseError, SystemCallError => e
   warn "error: #{e.message}"
   exit 1

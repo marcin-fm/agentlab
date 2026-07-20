@@ -1,5 +1,5 @@
 {
-  "schema": "rust-v8-source-filter/v1",
+  "schema": "rust-v8-source-filter/v3",
   "package": "rust-v8",
   "release": "149.2.0",
   "upstream": {
@@ -8,22 +8,19 @@
     "url": "https://codeload.github.com/denoland/v8/tar.gz/73d19698991616a34a00ca691a6e697dbb69e2ef",
     "filename": "rust-v8-149.2.0-v8-73d19698991616a34a00ca691a6e697dbb69e2ef.tar.gz",
     "archive_root": "v8-73d19698991616a34a00ca691a6e697dbb69e2ef",
-    "bytes": 32678156,
-    "sha256": "63a19755f87d8366c5112c341e0d4fcdb10bf9706d6acb55cf581b9afee9361a",
+    "transport_identity_required": false,
     "tree_file_records": 18936,
     "tree_sha256": "babf9f9482b4f4c5781d686f8c7723a0f9404fdc6e2c1b3c30c320ac3dee1e36"
   },
   "output": {
     "filename": "rust-v8-149.2.0-v8-73d19698991616a34a00ca691a6e697dbb69e2ef-filtered-siphash.tar.gz",
     "archive_root": "v8-73d19698991616a34a00ca691a6e697dbb69e2ef",
-    "bytes": 32317952,
-    "sha256": "c992db0320a397123e24a6895d18191b58ef78c08d6cf8c97b657bc04381aef3",
     "tree_file_records": 18933,
     "tree_sha256": "84d84c21846355df8f3b629c50715924a3119ab7702a12a9ba8502d3a69019bb"
   },
   "generator": {
     "path": "prepare-rust-v8-srpm-sources",
-    "sha256": "7cc8ef075a4a8b4d733146865584fdcfb6c1299cf37359254a91471e1d5556ec"
+    "sha256": "cf49573ca92537748b029bb1cbf89dd1dc871126c72de8b3ff6cb09325cb027c"
   },
   "excluded_paths": [
     {
@@ -55,12 +52,14 @@
     "gzip_name_and_timestamp": false
   },
   "validation": {
-    "upstream_identity_verified": true,
+    "upstream_tree_identity_verified": true,
+    "upstream_transport_identity_required": false,
     "upstream_tree_verified": true,
     "archive_paths_and_links_safe": true,
     "excluded_path_set_exact": true,
     "filtered_tree_verified": true,
     "filtered_archive_reextracts_identically": true,
+    "generated_archive_transport_identity_required": false,
     "cc0_executable_source_present": false,
     "remote_generated_asset_required": false
   }

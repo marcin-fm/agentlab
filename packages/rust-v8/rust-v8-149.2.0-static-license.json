@@ -4,16 +4,16 @@
   "release": "149.2.0",
   "source_closure_reference": {
     "path": "rust-v8-149.2.0-source-closure.json",
-    "sha256": "fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77"
+    "sha256": "695a42c503934471f9651039669b6e1746ab9197642bc278f0c052c25bf316ca"
   },
   "archive_graph_reference": {
     "path": "rust-v8-149.2.0-archive-graph.json",
-    "sha256": "be4c0d52a3459b54daae2fb176649c31e31c56033bfdcac2c90ba35ca01aace5",
+    "sha256": "322617d6be730713c4d729cdac8516fd5f46014385927c9b4dbedfa53d354522",
     "scope": "fedora-44-x86_64-prototype"
   },
   "source_filter_reference": {
     "path": "rust-v8-149.2.0-source-filter.json",
-    "sha256": "c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2",
+    "sha256": "a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa",
     "excluded_paths": [
       "v8/third_party/siphash/LICENSE",
       "v8/third_party/siphash/halfsiphash.cc",

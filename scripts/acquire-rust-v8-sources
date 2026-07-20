@@ -354,15 +354,13 @@ receipt = JSON.parse(File.read(receipt_path))
 source_filter_path = File.join(package.directory, "rust-v8-#{version}-source-filter.json")
 raise Agentlab::Error, "missing Rusty V8 source-filter receipt #{source_filter_path}" unless File.file?(source_filter_path)
 source_filter = JSON.parse(File.read(source_filter_path))
-unless source_filter.fetch("schema") == "rust-v8-source-filter/v1" &&
+unless source_filter.fetch("schema") == "rust-v8-source-filter/v3" &&
        source_filter.fetch("release") == version
   raise Agentlab::Error, "Rusty V8 source-filter receipt identity mismatch"
 end
 source_filter_sha256 = Digest::SHA256.file(source_filter_path).hexdigest
 filtered_output = source_filter.fetch("output")
-unless File.basename(filtered_v8_archive) == filtered_output.fetch("filename") &&
-       File.size(filtered_v8_archive) == filtered_output.fetch("bytes") &&
-       Digest::SHA256.file(filtered_v8_archive).hexdigest == filtered_output.fetch("sha256")
+unless File.basename(filtered_v8_archive) == filtered_output.fetch("filename")
   raise Agentlab::Error, "filtered V8 archive does not match source-filter receipt"
 end
 release = receipt.fetch("release")
@@ -401,12 +399,6 @@ end
 reference_modules = gitmodules_entries(File.join(reference_tree, ".gitmodules"))
 unless receipt_modules == reference_modules
   raise Agentlab::Error, "source receipt does not match the exact-tag .gitmodules paths and URLs"
-end
-
-root_bytes = File.size(root_archive)
-root_sha256 = Digest::SHA256.file(root_archive).hexdigest
-unless root_bytes == root_source.fetch("bytes") && root_sha256 == root_source.fetch("sha256")
-  raise Agentlab::Error, "root archive does not match the checked root_source identity"
 end
 
 records = components.each_with_index.map do |component, index|
@@ -458,8 +450,7 @@ records = components.each_with_index.map do |component, index|
     "url" => filtered_v8 ? nil : url,
     "filename" => filename,
     "layout" => layout,
-    "bytes" => File.size(archive),
-    "sha256" => Digest::SHA256.file(archive).hexdigest,
+    "transport_identity_required" => false,
     "tree_file_records" => component_manifest.length,
     "tree_sha256" => Digest::SHA256.hexdigest(JSON.generate(component_manifest)),
     "content_modes_and_symlinks_match_git" => !filtered_v8,
@@ -469,6 +460,7 @@ records = components.each_with_index.map do |component, index|
     archive_record.merge!(
       "generated" => true,
       "generator" => "scripts/prepare-rust-v8-srpm-sources",
+      "transport_identity_required" => false,
       "source_filter" => {
         "path" => File.basename(source_filter_path),
         "sha256" => source_filter_sha256,
@@ -508,7 +500,7 @@ manifest = compare_trees!(
   label: "filtered recursive source"
 )
 tree_sha256 = Digest::SHA256.hexdigest(JSON.generate(manifest))
-receipt["schema"] = "rust-v8-source-closure/v2"
+receipt["schema"] = "rust-v8-source-closure/v4"
 receipt["components"] = records
 receipt["source_filter"] = {
   "path" => File.basename(source_filter_path),
@@ -526,7 +518,6 @@ receipt["closure_scope"] = {
 receipt["source_summary"] = {
   "component_archives" => records.length,
   "submodule_archives" => records.length - 1,
-  "archive_bytes" => records.sum { |component| component.dig("archive", "bytes") },
   "archive_files" => records.sum { |component| component.dig("archive", "file_count") },
   "unpacked_size_bytes" => records.sum { |component| component.dig("archive", "unpacked_size_bytes") },
   "component_tree_file_records" => records.sum { |component| component.dig("archive", "tree_file_records") },
@@ -572,6 +563,7 @@ receipt.fetch("validation").merge!(
   "recursive_source_tree_matches_git" => false,
   "recursive_source_tree_matches_git_except_reviewed_exclusions" => true,
   "immutable_recursive_rpm_source_verified" => verify_spec_sources,
+  "archive_transport_identity_required" => false,
   "exact_git_submodule_closure_verified" => false,
   "reviewed_filtered_git_submodule_closure_verified" => true,
   "full_deps_checkout_verified" => false,
