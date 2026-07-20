@@ -2322,7 +2322,9 @@ module Agentlab
     errors << "pdfium: spec does not verify the hosted Source0 tree" unless spec.include?("ruby %{SOURCE3} --output %{SOURCE0} --receipt %{SOURCE1} --check")
 
     makefile = File.read(makefile_path)
-    errors << "pdfium: COPR source builder still generates Source0" if makefile.include?("pdfium.spec)") || makefile.include?("prepare-pdfium-srpm-sources\" --spec")
+    errors << "pdfium: COPR source builder still generates Source0" if makefile.include?("prepare-pdfium-srpm-sources\" --spec")
+    expected_generator_copy = 'install -pm0755 "$(repo_root)/scripts/prepare-pdfium-srpm-sources" "$$(dirname "$(spec)")/prepare-pdfium-srpm-sources";'
+    errors << "pdfium: COPR source builder does not retain the Source3 verifier" unless makefile.include?(expected_generator_copy)
     if File.file?(request_path)
       request = YAML.safe_load_file(request_path)
       errors.concat(validate_pdfium_source_release_request(package, closure, request).map { |error| "pdfium: #{error}" })

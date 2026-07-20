@@ -33,6 +33,9 @@ srpm:
 			install -pm0755 "$(repo_root)/scripts/audit-bun-source-licenses" "$$(dirname "$(spec)")/audit-bun-source-licenses"; \
 			ruby "$(repo_root)/scripts/prepare-bun-srpm-sources" --spec "$(spec)"; \
 			;; \
+		pdfium.spec) \
+			install -pm0755 "$(repo_root)/scripts/prepare-pdfium-srpm-sources" "$$(dirname "$(spec)")/prepare-pdfium-srpm-sources"; \
+			;; \
 		rust-v8.spec) \
 			ruby-mri -rjson -roptparse -rpathname -rrubygems/package -rtempfile -rtmpdir -rzlib -e '' >/dev/null 2>&1 || dnf -y install ruby ruby-default-gems rubygem-json; \
 			install -d -m0755 /srv/tmp; \
