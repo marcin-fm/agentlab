@@ -2,9 +2,9 @@
 
 RTK `0.43.0` is a useful early proof package because the current `cx` container downloads its unsigned upstream RPM directly. Agentlab will instead build the tagged Apache-2.0 source release.
 
-The spec removes `rusqlite`'s bundled SQLite feature and uses Fedora Rust macros. Fedora 43 satisfies its generated crate requirements. Fedora 44 uses source-built compatibility packages for the released `dirs` `5.0.1` and `dirs-sys` `0.4.1` crates, while retaining Fedora's versioned `rusqlite`, `libsqlite3-sys`, and system SQLite packages.
+The spec removes `rusqlite`'s bundled SQLite feature and uses Fedora Rust macros. Release `0.6` carries a separate Fedora dependency patch from upstream's `dirs` `5` declaration to Fedora's common `dirs` `6.0.0` and `dirs-sys` `0.5.0` branches. The complete configured COPR matrix is required before retiring the existing compatibility packages.
 
-Historical Fedora 43 and Fedora 44 x86_64 clean Mock builds of `0.43.0-0.2` passed 2,287 tests with eight ignored and produced the same 114-record linked dependency inventory. The live `0.43.0-0.5` spec defines the Fedora check bcond, requests test dependencies when checks are enabled, and guards the test and SQLite runtime smokes consistently.
+The fresh Fedora 44 x86_64 Mock build of `0.43.0-0.6` resolves Fedora's `dirs 6.0.0` and `dirs-sys 0.5.0`, passes 2,245 tests with eight ignored, and produces a 114-record linked dependency inventory. The spec defines the Fedora check bcond, requests test dependencies when checks are enabled, and guards the test and SQLite runtime smokes consistently. The extracted RPM also passes a global Codex initialization dry-run under an isolated home directory.
 
 The runtime RPM retains the upstream Apache-2.0 `LICENSE`, the aggregate SPDX expression, and Fedora's macro-generated `LICENSE.dependencies` inventory. The former collector, copied system-provider license tree, and provider-NEVRA payload are removed; historical provider receipts remain repository-side audit evidence only.
 

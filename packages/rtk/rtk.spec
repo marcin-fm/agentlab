@@ -5,7 +5,7 @@
 
 Name:           rtk
 Version:        0.43.0
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        CLI proxy that reduces command output sent to language models
 
 License:        Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
@@ -14,6 +14,9 @@ Source0:        https://github.com/rtk-ai/rtk/archive/refs/tags/v%{version}.tar.
 # Link RTK against Fedora system SQLite instead of compiling rusqlite's bundled copy.
 # Upstream support is proposed in https://github.com/rtk-ai/rtk/pull/2404; Fedora selects it unconditionally.
 Patch0:         rtk-use-system-sqlite.patch
+# Use Fedora's common dirs 6 branch and remove the need for dirs 5 compatibility packages.
+# Fedora-specific and not submitted upstream; v0.43.0 and current upstream branches still select dirs 5.
+Patch1:         rtk-use-dirs6.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  binutils
@@ -56,6 +59,9 @@ install -Dpm0644 LICENSE.dependencies \
 %{_bindir}/rtk
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.6
+- Migrate to Fedora's common dirs 6 dependency branch.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.43.0-0.5
 - Generate test dependencies through the Fedora check bcond.
 - Remove the copied system-provider license corpus from the runtime payload.

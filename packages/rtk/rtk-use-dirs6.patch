@@ -1,0 +1,12 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 6e21bde..389e9bc 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -23,6 +23,6 @@ serde = { version = "1", features = ["derive"] }
+ serde_json = { version = "1", features = ["preserve_order"] }
+ colored = "2"
+-dirs = "5"
++dirs = "6"
+ rusqlite = "0.31"
+ toml = "0.8"
+ chrono = "0.4"

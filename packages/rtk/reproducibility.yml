@@ -4,18 +4,10 @@ source_inputs:
   rtk:
     url: https://github.com/rtk-ai/rtk/archive/refs/tags/v0.43.0.tar.gz
     sha256: 196bec9e9b438f0b8cd0198f68e05f072ccdfdec2c2655a3562d6ea357fa485b
-  dirs:
-    url: https://static.crates.io/crates/dirs/dirs-5.0.1.crate
-    sha256: 44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225
-    applies_to: fedora-44
-  dirs-sys:
-    url: https://static.crates.io/crates/dirs-sys/dirs-sys-0.4.1.crate
-    sha256: 520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c
-    applies_to: fedora-44
 patches:
   rtk-use-system-sqlite.patch: e9f2b1d08874a2bd46ca87ea671cec389bb0bc71dc82d29262c50eb3ccc4df0d
-  dirs-sys-fix-metadata-auto.diff: c668f7b6bb5c658eed85acec48214a35d3d69ad4432fb34522063d64be019bf6
-historical_spec_sha256: c8a22f20620dfc46c4de1018fe18df2365b6c6b67c5b40984b3bcead3932100c
+  rtk-use-dirs6.patch: 21060dec32a786d0735357a17100866f9b99475d64e0f486699071d3fd87a478
+current_spec_sha256: 42c2d499db38cf93309716c1fb294a20d84a9294f18168224405963d4b3603bd
 closure:
   dependency_inventory_records: 114
   resolved_crate_versions: 114
@@ -23,8 +15,8 @@ closure:
   registry_owner_rows: 369
   fedora_43_provider_source_rpms: 117
   fedora_44_provider_source_rpms: 116
-  local_compatibility_crates: 2
-  dependency_inventory_sha256: efe3c0966d0d745513ed61c0699a0240ac14b19287e6d99b9e18f6b337c8646b
+  local_compatibility_crates: 0
+  dependency_inventory_sha256: 4a9661effe7b75e05207d312e9dd4c4b789037a580194b4b2b3bdbbbe221ccaf
   fedora_43_provider_manifest_sha256: f119ad6c076946bb224edf08d53095e318d08298f5a01233fe4b2c815b76b6be
   fedora_44_provider_manifest_sha256: 3394d9f72b0d552a051dcf068cdbdf73073f55ce9083fe2c6fae875107e10c53
 license_policy:
@@ -35,21 +27,20 @@ license_policy:
   provider_receipts: repository-only historical evidence
 validation:
   fedora-43-x86_64:
-    result: passed
-    executed_tests: 2287
-    ignored_tests: 8
-    rpmlint_errors: 0
-    rpmlint_warning: no upstream manual page
-    sqlite_elf_needed: libsqlite3.so.0
-    sqlite_database_smoke: passed
+    result: pending configured matrix proof
   fedora-44-x86_64:
     result: passed
-    executed_tests: 2287
+    dirs: 6.0.0
+    dirs_sys: 0.5.0
+    executed_tests: 2245
     ignored_tests: 8
     rpmlint_errors: 0
     rpmlint_warning: no upstream manual page
     sqlite_elf_needed: libsqlite3.so.0
     sqlite_database_smoke: passed
+    extracted_dirs_api_smoke: passed
+  fedora-rawhide-x86_64:
+    result: pending configured matrix proof
 artifacts:
   fedora_43:
     srpm_sha256: 8537c52c1b1a3867f2b82dc6bb19bc0a109b60a9ce4789dec43951f3e5f58bcd

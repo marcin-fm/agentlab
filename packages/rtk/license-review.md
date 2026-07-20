@@ -1,11 +1,12 @@
 # RTK License Review
 
-RTK `0.43.0-0.2` was clean-built on Fedora 43 and Fedora 44. Both historical
-builds produced the same 114-record linked dependency inventory. The retained
+RTK `0.43.0-0.6` was clean-built on Fedora 44 with Fedora's `dirs 6.0.0` and
+`dirs-sys 0.5.0` providers. The build produced a 114-record linked dependency
+inventory. The retained historical
 repository-side provider receipt contains 370 rows: one RTK workspace row and
 369 owning Fedora binary-package rows. Those rows resolve to 117 source RPMs on
-Fedora 43 and 116 on Fedora 44; Fedora 44 uses the local `dirs` `5.0.1` and
-`dirs-sys` `0.4.1` compatibility packages.
+Fedora 43 and 116 on Fedora 44; those receipts predate the `dirs 6` migration
+and remain repository-side historical evidence only.
 
 The recorded aggregate expression is:
 
@@ -13,7 +14,7 @@ The recorded aggregate expression is:
 
 All selected identifiers are Fedora-allowed. The historical
 `LICENSE.dependencies` has SHA-256
-`efe3c0966d0d745513ed61c0699a0240ac14b19287e6d99b9e18f6b337c8646b`.
+`4a9661effe7b75e05207d312e9dd4c4b789037a580194b4b2b3bdbbbe221ccaf`.
 The provider receipts have SHA-256
 `f119ad6c076946bb224edf08d53095e318d08298f5a01233fe4b2c815b76b6be`
 for Fedora 43 and
@@ -28,8 +29,10 @@ identified as requiring a package-specific copy of a system provider's license
 directory. The package retains the upstream `LICENSE`, the aggregate SPDX
 expression, and Fedora's standard macro-generated `LICENSE.dependencies`.
 
-The `dirs` and `dirs-sys` compatibility source packages ship their own MIT and
-Apache-2.0 texts. Their licenses remain represented in RTK's aggregate linked
-closure when those compatibility packages are selected by Fedora 44. The
-historical chroot builds passed 2,287 tests with eight ignored and zero
-`rpmlint` errors; current matrix results are recorded separately after rebuild.
+Fedora's `dirs 6` and `dirs-sys 0.5` packages provide the same MIT and
+Apache-2.0 license classes already represented by RTK's aggregate expression.
+The current Fedora 44 build passed 2,245 tests with eight ignored. Artifact
+`rpmlint` reports zero errors and only the expected missing-man-page warning;
+the extracted binary retains system SQLite linkage and passes the runtime and
+isolated-home directory API smokes. Full configured-matrix results remain the
+publication and compatibility-package retirement gate.
