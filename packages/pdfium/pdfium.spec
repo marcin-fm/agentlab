@@ -1,6 +1,7 @@
-# Disabled by package.yml pending release-boundary and private ABI/runtime
-# approval. Source0 is generated and attested by GitHub Actions from the
-# official Chromium lite archive, then verified by bytes and exact tree here.
+# Disabled by package.yml pending release-boundary approval. The private
+# ABI/runtime boundary is accepted for the current package. Source0 is generated
+# and attested by GitHub Actions from the official Chromium lite archive, then
+# verified by bytes and exact tree here.
 %global source_tag pdfium-sources-%{version}-pdfium-efbbd0fc9582
 %global source_sha256 c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
 %global source_size 70932985
@@ -31,7 +32,7 @@
 
 Name:           pdfium
 Version:        146.0.7678.0
-Release:        0.0.6%{?dist}
+Release:        0.0.7%{?dist}
 Summary:        PDF rendering library used by Chromium
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
@@ -237,6 +238,10 @@ EOF
 %{_libdir}/pkgconfig/pdfium.pc
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.7
+- Record acceptance of the private PDFium ABI and embedded ICU runtime boundary.
+- Validate the hosted source through an authorized primary COPR configured-SCM build.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.6
 - Consume the deterministic PDFium source closure from an immutable, attested GitHub release.
 - Verify both Source0 transport identity and its exact selected source tree without build-time networking.

@@ -26,21 +26,17 @@ tests, and corpora are disabled. Fedora provides GN, Ninja, Clang, and the
 selected system image/font libraries. The Chromium release build files contain
 two flags supported only by its newer bundled Clang; the Fedora toolchain patch
 removes those flags while retaining array-bounds instrumentation and traps.
-Local and clean Fedora 43 and 44 x86_64
-builds passed with FPDF export, C API, pkg-config, and extracted-payload
-consumer tests. Exact-current transient COPR build `10737741` passed natively on Fedora 43
-and 44 aarch64 with the same checks, including the architecture-specific Clang
-target and compiler-rt path.
+Local and clean Fedora 43 and 44 x86_64 builds passed with FPDF export, C API,
+pkg-config, and extracted-payload consumer tests. Exact-current transient COPR
+build `10737741` passed natively on Fedora 43 and 44 aarch64 with the same
+checks, including the architecture-specific Clang target and compiler-rt path.
 
 ICU data is embedded in the private ICU component rather than shipped as an
 unlocated `icudtl.dat` file. The RPM installs PDFium, ICU, AGG, and consolidated
 third-party license notices. The final embedded-data revision passed clean
-Fedora 43 and 44 builds and extracted-payload validation. The private component
-names, versioned SONAMEs, and embedded ICU-data ownership form a Fedora-specific
-package, ABI, and runtime boundary that still requires explicit approval. The
-package remains blocked for that review, approval of the subordinate source
-boundary pinned by the Chromium release, and one clean Mock rebuild of the
-GitHub-hosted official-archive subset. Current Mock attempts stopped before
-initialization because another build held the shared Fedora 44 root.
-The aarch64 proof used a separate transient COPR project and does not enable
-this package in `marcin/agentlab`.
+Fedora 43 and 44 builds and extracted-payload validation. On July 20, 2026, the
+maintainer accepted the private component names, versioned SONAMEs, and embedded
+ICU-data ownership for the current package. The package remains blocked only
+for approval of the subordinate source boundary pinned by the Chromium release.
+The next source-hosting validation is an explicitly authorized configured-SCM
+build in the primary `marcin/agentlab` COPR instead of another local Mock run.

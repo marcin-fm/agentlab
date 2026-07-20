@@ -2,8 +2,6 @@ name: pdfium
 status: blocked
 blockers:
   - The release-pinned subordinate PDFium commit policy boundary has not been approved for enablement.
-  - The private component names, versioned SONAMEs, and embedded ICU-data boundary require explicit approval.
-  - The GitHub-hosted official-archive subset needs one clean Fedora 44 x86_64 Mock rebuild; current attempts stopped before initialization because another build held the shared Mock root.
 source_policy:
   version_identity: Chromium release 146.0.7678.0
   pdfium_revision: efbbd0fc95825e049ad790911356e0b689418899
@@ -57,6 +55,8 @@ build_validation:
   extracted_pkgconfig_consumer_smoke: passed
   embedded_icu_data: passed without external icudtl.dat
   official_archive_fedora_44_x86_64: passed all 755 Ninja steps and direct C consumer smoke
+  private_abi_runtime_boundary: accepted by the maintainer for the current package on 2026-07-20
+  hosted_source_validation: primary marcin/agentlab configured-SCM matrix authorized instead of another local Mock run
   rpmlint: zero errors; four expected local-source and devel warnings per chroot
 duplicate_check:
   checked: "2026-07-15"
