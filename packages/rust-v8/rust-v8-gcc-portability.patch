@@ -1,11 +1,24 @@
 From: Marcin FM <marcin@lgic.pl>
-Subject: [PATCH] Fix V8 GCC preprocessing and include completeness
+Subject: [PATCH] Fix V8 GCC preprocessing, flags, and include completeness
 
-GCC does not accept Clang's `__has_warning` predicate in a compound `#if`, and
-one Wasm source relies on a transitive include for managed object definitions.
-Keep Clang warning handling unchanged while making the conditions portable and
-include the required definition directly.
+GCC does not accept Clang's `__has_warning` predicate in a compound `#if`, the
+Linux GCC assembly path receives a Clang-only BTI marker, and one Wasm source
+relies on a transitive include for managed object definitions. Keep Clang warning
+handling unchanged while making the Fedora GCC path portable and include the
+required definition directly.
 ---
+diff --git a/v8/BUILD.gn b/v8/BUILD.gn
+--- a/v8/BUILD.gn
++++ b/v8/BUILD.gn
+@@ -1621,6 +1621,7 @@
+   if (v8_current_cpu == "arm64") {
+     defines += [ "V8_TARGET_ARCH_ARM64" ]
+-    if (current_cpu == "arm64" && v8_control_flow_integrity && is_clang) {
++    if (current_cpu == "arm64" && v8_control_flow_integrity && is_clang &&
++        !is_linux) {
+       # Mark assembly code as BTI-compatible.
+       asmflags = [ "-mmark-bti-property" ]
+     }
 diff --git a/v8/src/base/macros.h b/v8/src/base/macros.h
 --- a/v8/src/base/macros.h
 +++ b/v8/src/base/macros.h
