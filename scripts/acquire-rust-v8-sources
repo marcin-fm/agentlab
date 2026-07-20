@@ -305,7 +305,11 @@ def verify_spec_sources!(spec_path, records)
   records.each do |component|
     number = component.fetch("rpm_source")
     archive = component.fetch("archive")
-    expected = "#{archive.fetch('url')}\#/#{archive.fetch('filename')}"
+    expected = if archive["generated"]
+                 archive.fetch("filename")
+               else
+                 "#{archive.fetch('url')}\#/#{archive.fetch('filename')}"
+               end
     actual = sources[number]
     raise Agentlab::Error, "spec Source#{number} does not match #{component.fetch('path')}" unless actual == expected
   end
@@ -319,6 +323,7 @@ workdir = "/srv/tmp/agentlab-rust-v8-#{version}/source-acquisition"
 output = File.join(workdir, "rust-v8-#{version}-source-closure.candidate.json")
 root_archive = nil
 reference_tree = nil
+filtered_v8_archive = nil
 check = false
 verify_spec_sources = false
 
@@ -326,6 +331,9 @@ OptionParser.new do |parser|
   parser.banner = "Usage: scripts/acquire-rust-v8-sources --root-archive PATH --reference-tree PATH [options]"
   parser.on("--root-archive PATH", "Previously verified Rusty V8 root archive") { |path| root_archive = path }
   parser.on("--reference-tree PATH", "Clean exact-tag recursive Git submodule checkout") { |path| reference_tree = path }
+  parser.on("--filtered-v8-archive PATH", "Checked V8 archive produced by prepare-rust-v8-srpm-sources") do |path|
+    filtered_v8_archive = path
+  end
   parser.on("--workdir PATH", "Marked resumable work directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Generated source-closure receipt") { |path| output = path }
   parser.on("--check", "Verify cached archives and the checked receipt without downloading") { check = true }
@@ -336,11 +344,27 @@ end.parse!
 
 raise Agentlab::Error, "--root-archive is required" unless root_archive
 raise Agentlab::Error, "--reference-tree is required" unless reference_tree
+raise Agentlab::Error, "--filtered-v8-archive is required" unless filtered_v8_archive
 root_archive = File.realpath(root_archive)
 reference_tree = File.realpath(reference_tree)
+filtered_v8_archive = File.realpath(filtered_v8_archive)
 raise Agentlab::Error, "missing source-closure receipt #{receipt_path}" unless File.file?(receipt_path)
 
 receipt = JSON.parse(File.read(receipt_path))
+source_filter_path = File.join(package.directory, "rust-v8-#{version}-source-filter.json")
+raise Agentlab::Error, "missing Rusty V8 source-filter receipt #{source_filter_path}" unless File.file?(source_filter_path)
+source_filter = JSON.parse(File.read(source_filter_path))
+unless source_filter.fetch("schema") == "rust-v8-source-filter/v1" &&
+       source_filter.fetch("release") == version
+  raise Agentlab::Error, "Rusty V8 source-filter receipt identity mismatch"
+end
+source_filter_sha256 = Digest::SHA256.file(source_filter_path).hexdigest
+filtered_output = source_filter.fetch("output")
+unless File.basename(filtered_v8_archive) == filtered_output.fetch("filename") &&
+       File.size(filtered_v8_archive) == filtered_output.fetch("bytes") &&
+       Digest::SHA256.file(filtered_v8_archive).hexdigest == filtered_output.fetch("sha256")
+  raise Agentlab::Error, "filtered V8 archive does not match source-filter receipt"
+end
 release = receipt.fetch("release")
 raise Agentlab::Error, "source receipt release mismatch" unless release.fetch("version") == version
 raise Agentlab::Error, "reference tree is dirty" unless run!("git", "-C", reference_tree, "status", "--short", "--ignore-submodules=none").strip.empty?
@@ -388,9 +412,12 @@ end
 records = components.each_with_index.map do |component, index|
   url = archive_url(component, root_source)
   layout = archive_layout(url)
-  filename = archive_filename(version, component)
+  filtered_v8 = component.fetch("path") == "v8"
+  filename = filtered_v8 ? filtered_output.fetch("filename") : archive_filename(version, component)
   archive = if component.fetch("path") == "."
               root_archive
+            elsif filtered_v8
+              filtered_v8_archive
             else
               cached = File.join(archives_dir, filename)
               raise Agentlab::Error, "missing cached archive #{cached}" if check && !File.file?(cached)
@@ -419,43 +446,78 @@ records = components.each_with_index.map do |component, index|
                 end
   component_validation = File.join(component_validation_parent, format("%02d", index))
   extract_component(archive, component_validation, layout)
+  filtered_exclusions = filtered_v8 ? source_filter.fetch("excluded_paths").map { |record| record.fetch("path") } : []
   component_manifest = compare_trees!(
     component_validation,
     component_reference,
-    expected_excluded_paths: descendants,
+    expected_excluded_paths: descendants + filtered_exclusions,
     label: "archive for #{component.fetch('path')}"
   )
 
+  archive_record = {
+    "url" => filtered_v8 ? nil : url,
+    "filename" => filename,
+    "layout" => layout,
+    "bytes" => File.size(archive),
+    "sha256" => Digest::SHA256.file(archive).hexdigest,
+    "tree_file_records" => component_manifest.length,
+    "tree_sha256" => Digest::SHA256.hexdigest(JSON.generate(component_manifest)),
+    "content_modes_and_symlinks_match_git" => !filtered_v8,
+    "content_modes_and_symlinks_match_git_except_reviewed_exclusions" => true
+  }.merge(inspection)
+  if filtered_v8
+    archive_record.merge!(
+      "generated" => true,
+      "generator" => "scripts/prepare-rust-v8-srpm-sources",
+      "source_filter" => {
+        "path" => File.basename(source_filter_path),
+        "sha256" => source_filter_sha256,
+        "excluded_paths" => filtered_exclusions
+      },
+      "upstream_archive" => source_filter.fetch("upstream")
+    )
+  end
   component.merge(
     "rpm_source" => index,
-    "archive" => {
-      "url" => url,
-      "filename" => filename,
-      "layout" => layout,
-      "bytes" => File.size(archive),
-      "sha256" => Digest::SHA256.file(archive).hexdigest,
-      "tree_file_records" => component_manifest.length,
-      "tree_sha256" => Digest::SHA256.hexdigest(JSON.generate(component_manifest)),
-      "content_modes_and_symlinks_match_git" => true
-    }.merge(inspection)
+    "archive" => archive_record
   )
 end
 
 root_record = records.first
 extract_component(root_archive, reconstructed, root_record.dig("archive", "layout"))
 records.drop(1).each do |component|
+  component_archive = if component.fetch("path") == "v8"
+                        filtered_v8_archive
+                      else
+                        File.join(archives_dir, component.dig("archive", "filename"))
+                      end
   extract_component(
-    File.join(archives_dir, component.dig("archive", "filename")),
+    component_archive,
     File.join(reconstructed, component.fetch("path")),
     component.dig("archive", "layout")
   )
 end
 
-manifest = compare_trees!(reconstructed, reference_tree)
+recursive_exclusions = source_filter.fetch("excluded_paths").map do |record|
+  "v8/#{record.fetch('path')}"
+end
+manifest = compare_trees!(
+  reconstructed,
+  reference_tree,
+  expected_excluded_paths: recursive_exclusions,
+  label: "filtered recursive source"
+)
 tree_sha256 = Digest::SHA256.hexdigest(JSON.generate(manifest))
+receipt["schema"] = "rust-v8-source-closure/v2"
 receipt["components"] = records
+receipt["source_filter"] = {
+  "path" => File.basename(source_filter_path),
+  "sha256" => source_filter_sha256,
+  "component_path" => "v8",
+  "excluded_paths" => recursive_exclusions
+}
 receipt["closure_scope"] = {
-  "kind" => "exact-git-submodule-closure",
+  "kind" => "git-submodule-closure-with-reviewed-source-filter",
   "git_components" => records.length,
   "git_submodules" => records.length - 1,
   "full_deps_checkout_claimed" => false,
@@ -467,24 +529,51 @@ receipt["source_summary"] = {
   "archive_bytes" => records.sum { |component| component.dig("archive", "bytes") },
   "archive_files" => records.sum { |component| component.dig("archive", "file_count") },
   "unpacked_size_bytes" => records.sum { |component| component.dig("archive", "unpacked_size_bytes") },
-  "component_tree_file_records" => records.sum { |component| component.dig("archive", "tree_file_records") }
+  "component_tree_file_records" => records.sum { |component| component.dig("archive", "tree_file_records") },
+  "direct_public_rpm_sources" => records.count { |component| !component.dig("archive", "generated") },
+  "generated_filtered_rpm_sources" => records.count { |component| component.dig("archive", "generated") }
 }
+receipt["patches"] = [
+  {
+    "name" => "rust-v8-system-rust-toolchain.patch",
+    "sha256" => "3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976",
+    "zero_fuzz_dry_run" => true,
+    "upstream_status" => "not-submitted"
+  },
+  {
+    "name" => "rust-v8-gcc-portability.patch",
+    "sha256" => "6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2",
+    "zero_fuzz_dry_run" => true,
+    "upstream_status" => "not-submitted"
+  },
+  {
+    "name" => "rust-v8-disable-unused-siphash.patch",
+    "sha256" => "899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca",
+    "zero_fuzz_dry_run" => true,
+    "upstream_status" => "not-submitted"
+  }
+]
+receipt.delete("prototype")
 receipt["reconstruction"] = {
   "reference_commit" => reference_commit,
   "file_records" => manifest.length,
   "tree_sha256" => tree_sha256,
-  "content_modes_and_symlinks_match_recursive_git" => true
+  "content_modes_and_symlinks_match_recursive_git" => false,
+  "content_modes_and_symlinks_match_recursive_git_except_reviewed_exclusions" => true
 }
 verify_spec_sources!(package.spec_path, records) if verify_spec_sources
 receipt.fetch("validation").merge!(
   "root_archive_identity_verified" => true,
   "gitmodules_paths_and_urls_verified" => true,
   "recursive_component_archives_verified" => true,
-  "recursive_component_archive_trees_match_git" => true,
+  "recursive_component_archive_trees_match_git" => false,
+  "recursive_component_archive_trees_match_git_except_reviewed_exclusions" => true,
   "recursive_source_tree_reconstructed" => true,
-  "recursive_source_tree_matches_git" => true,
+  "recursive_source_tree_matches_git" => false,
+  "recursive_source_tree_matches_git_except_reviewed_exclusions" => true,
   "immutable_recursive_rpm_source_verified" => verify_spec_sources,
-  "exact_git_submodule_closure_verified" => true,
+  "exact_git_submodule_closure_verified" => false,
+  "reviewed_filtered_git_submodule_closure_verified" => true,
   "full_deps_checkout_verified" => false,
   "selected_build_dependency_closure_verified" => false
 )

@@ -3,33 +3,38 @@ target_release: 149.2.0
 target_triple: x86_64-unknown-linux-gnu
 upstream_v8: 14.9.207.2
 source_closure:
-  schema: rust-v8-source-closure/v1
+  schema: rust-v8-source-closure/v2
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de
+  receipt_sha256: fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77
   root_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
   root_archive_sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
   root_archive_bytes: 340819
   recursive_components: 21
   recursive_submodules: 20
-  closure_kind: exact-git-submodule-closure
+  closure_kind: git-submodule-closure-with-reviewed-source-filter
   full_deps_checkout_verified: false
   selected_build_dependency_closure_verified: false
   component_commits_materialized: true
   component_archive_hashes_complete: true
   immutable_recursive_archive: true
-  direct_public_rpm_sources: 21
-  archive_bytes: 153497693
-  unpacked_size_bytes: 733567144
-  reconstructed_file_records: 60914
-  reconstructed_tree_sha256: 4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07
+  exact_git_submodule_closure_verified: false
+  reviewed_filtered_git_submodule_closure_verified: true
+  direct_public_rpm_sources: 20
+  generated_filtered_rpm_sources: 1
+  archive_bytes: 153137489
+  unpacked_size_bytes: 733558141
+  reconstructed_file_records: 60911
+  reconstructed_tree_sha256: 6c09e1a9ca0c3d1bfea49a40e0be5abcb12ca5a3c92983e667cec499f47bcc1d
+  source_filter_receipt: rust-v8-149.2.0-source-filter.json
+  source_filter_receipt_sha256: c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561
+  receipt_sha256: be4c0d52a3459b54daae2fb176649c31e31c56033bfdcac2c90ba35ca01aace5
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
-  object_input_count: 1796
-  member_count: 1796
+  object_input_count: 1795
+  member_count: 1795
   implicit_rust_rlib_count: 31
   implicit_rust_rlibs_embedded_in_archive: false
   prototype_selected_archive_graph_captured: true
@@ -37,7 +42,7 @@ archive_graph:
   final_consumer_link_closure_verified: false
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: 266a51befb8037f3460ed0259ec1aa8c277b9d9a1bb07d47bbb4d7cd92ab5f50
+  receipt_sha256: ce2f4724ef2ed77ff1d939fc7829c92e0c04e4fe42d6e89fc5c979b01d1e568a
   v8_component_build_available: true
   upstream_supported: false
   existing_rust_consumers_supported: false
@@ -96,14 +101,19 @@ patches:
   purpose: Preserve Clang warning handling while making V8 preprocessing valid under GCC and add one required direct include.
   upstream_status: not-submitted
   zero_fuzz_dry_run: passed
+- file: rust-v8-disable-unused-siphash.patch
+  sha256: 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
+  purpose: Select the CC0 SipHash implementation only when V8's existing v8_use_siphash feature is enabled so the disabled source can be omitted.
+  upstream_status: not-submitted
+  zero_fuzz_dry_run: passed
 output:
   source_package: rust-v8
   binary_package: rust-v8-static
   provider_capability: rusty-v8-static(abi) = 149.2.0
   archive_name: librusty_v8.a
   archive_path: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
-  archive_sha256_from_prototype: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
-  archive_bytes_from_prototype: 160316016
+  archive_sha256_from_prototype: ea107f29106ef88a313b03bc6ff714fc4e1c1a5db822df646c8d5f0a82bca334
+  archive_bytes_from_prototype: 160314390
 consumer_integration:
   cargo_crate: v8 149.2.0
   selected_features:
@@ -126,12 +136,12 @@ consumer_integration:
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef
+  receipt_sha256: e7be944f052d2286d3498a7e84b8cd9b5d45d0b7dc57551344d84fabe612825c
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
   git_component_inventory_complete: true
-  candidate_license_files: 415
+  candidate_license_files: 414
   components_without_local_license_files:
   - tools/clang
   - tools/win
@@ -163,6 +173,18 @@ license_audit:
   fedora_allowed_spdx_verified: false
   system_library_decisions_verified: false
   final_static_archive_license_complete: false
+static_license:
+  receipt: rust-v8-149.2.0-static-license.json
+  receipt_sha256: a28492724efbfe96cc586b8e43881bf7792d8b315fc275a3280b87acebfdbf97
+  expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
+  selected_archive_objects: 1795
+  required_license_texts: 24
+  implicit_rust_rlibs: 31
+  implicit_rust_rlibs_embedded: false
+  fedora_allowed_spdx_verified: true
+  required_license_texts_verified: true
+  prototype_static_archive_license_complete: true
+  production_static_archive_license_complete: false
 fedora_license_evidence:
   receipt: rust-v8-149.2.0-fedora-license-evidence.json
   receipt_sha256: b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
@@ -181,8 +203,10 @@ closure_audit:
   root_source_verified: true
   recursive_commits_recorded: true
   recursive_component_archives_verified: true
+  reviewed_filtered_git_submodule_closure_verified: true
   patches_verified: true
   prototype_selected_archive_graph_captured: true
+  prototype_static_archive_license_complete: true
   prototype_selected_build_sources_verified: false
   production_build_sources_verified: false
   network_isolated_build_verified: false

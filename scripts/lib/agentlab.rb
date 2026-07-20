@@ -464,11 +464,15 @@ module Agentlab
     archive_graph_name = dependencies.dig("archive_graph", "receipt")
     fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
     dynamic_linking_name = dependencies.dig("dynamic_linking", "receipt")
+    source_filter_name = dependencies.dig("source_closure", "source_filter_receipt")
+    static_license_name = dependencies.dig("static_license", "receipt")
     source_path = source_name.is_a?(String) && File.join(package.directory, source_name)
     license_path = license_name.is_a?(String) && File.join(package.directory, license_name)
     archive_graph_path = archive_graph_name.is_a?(String) && File.join(package.directory, archive_graph_name)
     fedora_license_path = fedora_license_name.is_a?(String) && File.join(package.directory, fedora_license_name)
     dynamic_linking_path = dynamic_linking_name.is_a?(String) && File.join(package.directory, dynamic_linking_name)
+    source_filter_path = source_filter_name.is_a?(String) && File.join(package.directory, source_filter_name)
+    static_license_path = static_license_name.is_a?(String) && File.join(package.directory, static_license_name)
     unless source_path && File.file?(source_path)
       return ["rust-v8: recursive-source receipt is missing"]
     end
@@ -484,12 +488,20 @@ module Agentlab
     unless dynamic_linking_path && File.file?(dynamic_linking_path)
       return ["rust-v8: dynamic-linking receipt is missing"]
     end
+    unless source_filter_path && File.file?(source_filter_path)
+      return ["rust-v8: source-filter receipt is missing"]
+    end
+    unless static_license_path && File.file?(static_license_path)
+      return ["rust-v8: static-license receipt is missing"]
+    end
 
     source_sha256 = Digest::SHA256.file(source_path).hexdigest
     license_sha256 = Digest::SHA256.file(license_path).hexdigest
     archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
     fedora_license_sha256 = Digest::SHA256.file(fedora_license_path).hexdigest
     dynamic_linking_sha256 = Digest::SHA256.file(dynamic_linking_path).hexdigest
+    source_filter_sha256 = Digest::SHA256.file(source_filter_path).hexdigest
+    static_license_sha256 = Digest::SHA256.file(static_license_path).hexdigest
     expected_source_hashes = [
       dependencies.dig("source_closure", "receipt_sha256"),
       package.data.dig("source_policy", "source_closure_receipt_sha256")
@@ -521,17 +533,35 @@ module Agentlab
     unless expected_dynamic_linking_hashes.all? { |value| value == dynamic_linking_sha256 }
       errors << "rust-v8: dynamic-linking receipt SHA-256 does not match metadata"
     end
+    expected_source_filter_hashes = [
+      dependencies.dig("source_closure", "source_filter_receipt_sha256"),
+      package.data.dig("source_policy", "source_filter_receipt_sha256")
+    ]
+    unless expected_source_filter_hashes.all? { |value| value == source_filter_sha256 }
+      errors << "rust-v8: source-filter receipt SHA-256 does not match metadata"
+    end
+    expected_static_license_hashes = [
+      dependencies.dig("static_license", "receipt_sha256"),
+      package.data.dig("static_license", "receipt_sha256")
+    ]
+    unless expected_static_license_hashes.all? { |value| value == static_license_sha256 }
+      errors << "rust-v8: static-license receipt SHA-256 does not match metadata"
+    end
     errors << "rust-v8: spec recursive-source SHA-256 does not match" unless spec[/^%global closure_sha256\s+(\h{64})$/, 1] == source_sha256
     errors << "rust-v8: spec license-audit SHA-256 does not match" unless spec[/^%global license_audit_sha256\s+(\h{64})$/, 1] == license_sha256
     errors << "rust-v8: spec archive-graph SHA-256 does not match" unless spec[/^%global archive_graph_sha256\s+(\h{64})$/, 1] == archive_graph_sha256
     errors << "rust-v8: spec Fedora license-evidence SHA-256 does not match" unless spec[/^%global fedora_license_evidence_sha256\s+(\h{64})$/, 1] == fedora_license_sha256
     errors << "rust-v8: spec dynamic-linking SHA-256 does not match" unless spec[/^%global dynamic_linking_sha256\s+(\h{64})$/, 1] == dynamic_linking_sha256
+    errors << "rust-v8: spec source-filter SHA-256 does not match" unless spec[/^%global source_filter_sha256\s+(\h{64})$/, 1] == source_filter_sha256
+    errors << "rust-v8: spec static-license SHA-256 does not match" unless spec[/^%global static_license_sha256\s+(\h{64})$/, 1] == static_license_sha256
 
     source = JSON.parse(File.read(source_path))
-    errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v1"
+    errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v2"
     errors << "rust-v8: recursive-source release does not match" unless source.dig("release", "version").to_s == version
     closure_scope = source.fetch("closure_scope", {})
-    errors << "rust-v8: source receipt does not identify the exact Git submodule closure" unless closure_scope["kind"] == "exact-git-submodule-closure"
+    unless closure_scope["kind"] == "git-submodule-closure-with-reviewed-source-filter"
+      errors << "rust-v8: source receipt does not identify the reviewed filtered Git submodule closure"
+    end
     errors << "rust-v8: source receipt overclaims a full DEPS checkout" unless closure_scope["full_deps_checkout_claimed"] == false
     unless closure_scope["selected_build_dependency_closure_claimed"] == false
       errors << "rust-v8: source receipt overclaims selected-build dependency closure"
@@ -550,16 +580,26 @@ module Agentlab
     errors << "rust-v8: recursive-source archive metadata is incomplete" unless archives.length == components.length
     components.each_with_index do |component, index|
       archive = component["archive"] || {}
+      filtered_v8 = component["path"] == "v8"
       errors << "rust-v8: component #{component['path']} has invalid RPM source number" unless component["rpm_source"] == index
       errors << "rust-v8: component #{component['path']} has an invalid commit" unless component["commit"].to_s.match?(/\A[0-9a-f]{40}\z/)
       errors << "rust-v8: component #{component['path']} has an invalid archive SHA-256" unless archive["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
       errors << "rust-v8: component #{component['path']} has an invalid tree SHA-256" unless archive["tree_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
-      errors << "rust-v8: component #{component['path']} archive tree is unverified" unless archive["content_modes_and_symlinks_match_git"] == true
+      unless archive["content_modes_and_symlinks_match_git"] == !filtered_v8 &&
+             archive["content_modes_and_symlinks_match_git_except_reviewed_exclusions"] == true
+        errors << "rust-v8: component #{component['path']} archive tree verification state is invalid"
+      end
       errors << "rust-v8: component #{component['path']} archive size is invalid" unless archive["bytes"].to_i.positive?
-      begin
-        errors << "rust-v8: component #{component['path']} archive URL must use HTTPS" unless URI(archive["url"]).is_a?(URI::HTTPS)
-      rescue URI::InvalidURIError, TypeError
-        errors << "rust-v8: component #{component['path']} archive URL is invalid"
+      if filtered_v8
+        unless archive["generated"] == true && archive["url"].nil? && archive.dig("source_filter", "sha256") == source_filter_sha256
+          errors << "rust-v8: generated V8 source metadata is invalid"
+        end
+      else
+        begin
+          errors << "rust-v8: component #{component['path']} archive URL must use HTTPS" unless URI(archive["url"]).is_a?(URI::HTTPS)
+        rescue URI::InvalidURIError, TypeError
+          errors << "rust-v8: component #{component['path']} archive URL is invalid"
+        end
       end
     end
 
@@ -569,19 +609,31 @@ module Agentlab
     errors << "rust-v8: recursive-source component tree total does not match" unless summary["component_tree_file_records"] == archives.sum { |archive| archive["tree_file_records"] }
     errors << "rust-v8: recursive-source combined tree count does not match" unless source.dig("reconstruction", "file_records") == summary["archive_files"]
     errors << "rust-v8: recursive-source combined tree SHA-256 is invalid" unless source.dig("reconstruction", "tree_sha256").to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors << "rust-v8: recursive-source direct-source count does not match" unless summary["direct_public_rpm_sources"] == 20
+    errors << "rust-v8: recursive-source generated-source count does not match" unless summary["generated_filtered_rpm_sources"] == 1
+    unless source.dig("reconstruction", "content_modes_and_symlinks_match_recursive_git") == false &&
+           source.dig("reconstruction", "content_modes_and_symlinks_match_recursive_git_except_reviewed_exclusions") == true
+      errors << "rust-v8: recursive-source filtered reconstruction state is invalid"
+    end
     %w[
       root_archive_identity_verified
       gitmodules_paths_and_urls_verified
       recursive_component_archives_verified
-      recursive_component_archive_trees_match_git
       recursive_source_tree_reconstructed
-      recursive_source_tree_matches_git
       immutable_recursive_rpm_source_verified
-      exact_git_submodule_closure_verified
+      recursive_component_archive_trees_match_git_except_reviewed_exclusions
+      recursive_source_tree_matches_git_except_reviewed_exclusions
+      reviewed_filtered_git_submodule_closure_verified
     ].each do |flag|
       errors << "rust-v8: recursive-source validation #{flag} is not true" unless source.dig("validation", flag) == true
     end
-    %w[full_deps_checkout_verified selected_build_dependency_closure_verified].each do |flag|
+    %w[
+      recursive_component_archive_trees_match_git
+      recursive_source_tree_matches_git
+      exact_git_submodule_closure_verified
+      full_deps_checkout_verified
+      selected_build_dependency_closure_verified
+    ].each do |flag|
       errors << "rust-v8: recursive-source validation overclaims #{flag}" unless source.dig("validation", flag) == false
     end
 
@@ -596,7 +648,7 @@ module Agentlab
     end
     components.each do |component|
       archive = component.fetch("archive")
-      expected = "#{archive.fetch('url')}#/#{archive.fetch('filename')}"
+      expected = archive["generated"] ? archive.fetch("filename") : "#{archive.fetch('url')}#/#{archive.fetch('filename')}"
       errors << "rust-v8: spec Source#{component.fetch('rpm_source')} does not match the receipt" unless spec_sources[component.fetch("rpm_source")] == expected
       extraction = archive.fetch("layout") == "github-wrapper" ? "extract_wrapped" : "extract_flat"
       unless component.fetch("path") == "."
@@ -609,24 +661,56 @@ module Agentlab
     errors << "rust-v8: spec Source23 does not select the archive-graph witness" unless spec_sources[23] == archive_graph_name
     errors << "rust-v8: spec Source24 does not select the Fedora license-evidence receipt" unless spec_sources[24] == fedora_license_name
     errors << "rust-v8: spec Source25 does not select the dynamic-linking receipt" unless spec_sources[25] == dynamic_linking_name
+    errors << "rust-v8: spec Source26 does not select the source-filter receipt" unless spec_sources[26] == source_filter_name
+    errors << "rust-v8: spec Source27 does not select the static-license receipt" unless spec_sources[27] == static_license_name
+    errors << "rust-v8: spec Source28 does not select the allocator license" unless spec_sources[28] == "rust-v8-stable-system-allocator-license.txt"
+    errors << "rust-v8: spec Source29 does not select the source preparer" unless spec_sources[29] == "prepare-rust-v8-srpm-sources"
     flat_helper = spec[/extract_flat\(\) \{\n(.*?)\n\}/m, 1].to_s
     wrapped_helper = spec[/extract_wrapped\(\) \{\n(.*?)\n\}/m, 1].to_s
     errors << "rust-v8: flat archive extraction helper is invalid" unless flat_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner') && !flat_helper.include?("--strip-components")
     errors << "rust-v8: wrapped archive extraction helper is invalid" unless wrapped_helper.include?('tar -xzf "$2" -C "$1" --no-same-owner --strip-components=1')
     patch_lines = [
       "patch --batch --fuzz=0 -p1 < %{PATCH0}",
-      "patch --batch --fuzz=0 -p1 < %{PATCH1}"
+      "patch --batch --fuzz=0 -p1 < %{PATCH1}",
+      "patch --batch --fuzz=0 -p1 < %{PATCH2}"
     ]
     patch_lines.each do |line|
       errors << "rust-v8: spec does not apply #{line.split.last}" unless spec.lines.map(&:strip).include?(line)
     end
     expected_stop_block = <<~SPEC
-      echo 'rust-v8 Git submodule sources are complete; DEPS selection, licensing, and Fedora build gates remain blocked' >&2
+      echo 'rust-v8 filtered sources and prototype static licensing are complete; production Fedora build and architecture gates remain blocked' >&2
       exit 1
 
       %build
     SPEC
     errors << "rust-v8: deliberate remaining-gates stop is missing" unless spec.include?(expected_stop_block)
+
+    source_filter = JSON.parse(File.read(source_filter_path))
+    unless source_filter["schema"] == "rust-v8-source-filter/v1" && source_filter["release"].to_s == version
+      errors << "rust-v8: source-filter receipt identity is invalid"
+    end
+    expected_filtered_paths = %w[
+      third_party/siphash/LICENSE
+      third_party/siphash/halfsiphash.cc
+      third_party/siphash/halfsiphash.h
+    ]
+    errors << "rust-v8: source-filter exclusions do not match" unless source_filter.fetch("excluded_paths", []).map { |record| record["path"] } == expected_filtered_paths
+    filtered_component = components.find { |component| component["path"] == "v8" }
+    unless source_filter["output"] == filtered_component&.dig("archive")&.slice("filename", "archive_root", "bytes", "sha256", "tree_file_records", "tree_sha256")
+      errors << "rust-v8: source-filter output does not match the generated V8 source"
+    end
+    source_preparer_path = File.expand_path("../../scripts/prepare-rust-v8-srpm-sources", package.directory)
+    source_preparer_sha256 = if File.file?(source_preparer_path)
+                               Digest::SHA256.file(source_preparer_path).hexdigest
+                             else
+                               spec[/^%global source_preparer_sha256\s+(\h{64})$/, 1]
+                             end
+    unless source_filter.dig("generator", "path") == "prepare-rust-v8-srpm-sources" &&
+           source_filter.dig("generator", "sha256") == source_preparer_sha256
+      errors << "rust-v8: source-filter generator identity does not match"
+    end
+    errors << "rust-v8: spec source-preparer SHA-256 does not match" unless spec[/^%global source_preparer_sha256\s+(\h{64})$/, 1] == source_preparer_sha256
+    errors << "rust-v8: source-filter validation does not reject CC0 executable source" unless source_filter.dig("validation", "cc0_executable_source_present") == false
 
     archive_graph = JSON.parse(File.read(archive_graph_path))
     errors << "rust-v8: archive-graph schema is invalid" unless archive_graph["schema"] == "rust-v8-archive-graph-witness/v1"
@@ -637,6 +721,64 @@ module Agentlab
     end
     unless source_reference["provenance_verified"] == false
       errors << "rust-v8: archive-graph source reference overclaims provenance"
+    end
+
+    static_license = JSON.parse(File.read(static_license_path))
+    errors << "rust-v8: static-license schema is invalid" unless static_license["schema"] == "rust-v8-static-license/v1"
+    errors << "rust-v8: static-license release does not match" unless static_license["release"].to_s == version
+    unless static_license.dig("source_closure_reference", "path") == source_name &&
+           static_license.dig("source_closure_reference", "sha256") == source_sha256 &&
+           static_license.dig("archive_graph_reference", "path") == archive_graph_name &&
+           static_license.dig("archive_graph_reference", "sha256") == archive_graph_sha256 &&
+           static_license.dig("source_filter_reference", "path") == source_filter_name &&
+           static_license.dig("source_filter_reference", "sha256") == source_filter_sha256
+      errors << "rust-v8: static-license receipt references do not match"
+    end
+    expected_static_expression = "Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)"
+    errors << "rust-v8: static-license expression does not match" unless static_license.dig("static_archive", "expression") == expected_static_expression
+    errors << "rust-v8: spec License expression does not match" unless spec[/^License:\s+(.+)$/, 1] == expected_static_expression
+    static_components = Array(static_license.dig("static_archive", "components"))
+    static_texts = Array(static_license.dig("static_archive", "required_license_texts"))
+    errors << "rust-v8: static-license component count does not match" unless static_components.length == 17
+    errors << "rust-v8: static-license text count does not match" unless static_texts.length == 24
+    errors << "rust-v8: static-license installed filenames are duplicated" unless static_texts.map { |record| record["install_name"] }.uniq.length == static_texts.length
+    static_texts.each do |record|
+      errors << "rust-v8: static-license text SHA-256 is invalid for #{record['path']}" unless record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+    expected_static_metadata = {
+      "receipt" => static_license_name,
+      "receipt_sha256" => static_license_sha256,
+      "expression" => expected_static_expression,
+      "selected_archive_objects" => 1_795,
+      "required_license_texts" => 24,
+      "implicit_rust_rlibs" => 31,
+      "implicit_rust_rlibs_embedded" => false,
+      "fedora_allowed_spdx_verified" => true,
+      "required_license_texts_verified" => true,
+      "prototype_static_archive_license_complete" => true,
+      "production_static_archive_license_complete" => false
+    }
+    errors << "rust-v8: package static-license metadata does not match" unless package.data["static_license"] == expected_static_metadata
+    errors << "rust-v8: dependency static-license metadata does not match" unless dependencies["static_license"] == expected_static_metadata
+    %w[
+      selected_archive_graph_bound
+      selected_component_evidence_verified
+      required_license_texts_verified
+      fedora_allowed_spdx_verified
+      reviewed_siphash_exclusion_verified
+      prototype_static_archive_license_complete
+      nonembedded_rust_rlibs_excluded
+      system_library_texts_excluded
+    ].each do |flag|
+      errors << "rust-v8: static-license validation #{flag} is not true" unless static_license.dig("validation", flag) == true
+    end
+    unless static_license.dig("validation", "production_static_archive_license_complete") == false
+      errors << "rust-v8: static-license receipt overclaims production closure"
+    end
+    errors << "rust-v8: spec does not install the static license map" unless spec.include?('receipt["static_archive"]["required_license_texts"]')
+    errors << "rust-v8: spec does not mark the static license payload" unless spec.include?("%license %{_licensedir}/%{name}-static/*")
+    unless spec.include?('os.path.getsize(source) != record["bytes"]') && spec.include?('hashlib.file_digest(stream, "sha256")')
+      errors << "rust-v8: spec does not verify installed license text identities"
     end
     expected_witness = {
       "scope" => "fedora-44-x86_64-prototype",
@@ -670,10 +812,10 @@ module Agentlab
     errors << "rust-v8: archive-graph target is invalid" unless graph_gn["target"] == "//:rusty_v8" && graph_gn["ninja_target"] == "obj/librusty_v8.a"
     errors << "rust-v8: archive-graph GN arguments do not match the prototype" unless graph_gn["args"] == expected_gn_args
     expected_graph_files = {
-      "args_file" => ["args.gn", 495, "146a99adb7670d59fb90ff41ee856ca6c157ab2df63e00a5f415fedcb3eb6827"],
-      "build_ninja" => ["build.ninja", 110_413, "af47aff087dfaa63b3f5968e347e75dcf0b8f6c67ef820f262ad086336cd10e7"],
-      "target_ninja" => ["obj/rusty_v8.ninja", 105_650, "4f69925e507b0269e40d763092d739a8d8c6da24c903d11e246d99ca40cdbdbd"],
-      "toolchain_ninja" => ["toolchain.ninja", 272_804, "99210fedbca6c1d7994cb9db8d27fae7d3385680406c3c72ff75f898995a178c"]
+      "args_file" => ["args.gn", 495, "6ff33d34c11a371c268ad9c6f0a357b5afa21449f80ea1e220f87cf5b0d87a28"],
+      "build_ninja" => ["build.ninja", 110_416, "56563bdc7a689d381339f9927a062d1300f904d185b739cd92c21ef96e5fd916"],
+      "target_ninja" => ["obj/rusty_v8.ninja", 105_604, "f146a59066b3faa3cc170e970b2a40402db7316808a2eb744e683a61e7e68093"],
+      "toolchain_ninja" => ["toolchain.ninja", 272_864, "49122a064a61df37a4762b9a96b053f73c5d3d4f44ef4f388f4efc2f7bde4f90"]
     }
     expected_graph_files.each do |key, (path, bytes, sha256)|
       record = graph_gn.fetch(key, {})
@@ -690,7 +832,7 @@ module Agentlab
       "v8/src" => 37,
       "v8/third_party" => 9,
       "v8/torque_generated_definitions" => 246,
-      "v8/v8_base_without_compiler" => 586,
+      "v8/v8_base_without_compiler" => 585,
       "v8/v8_bigint" => 9,
       "v8/v8_compiler" => 186,
       "v8/v8_heap_base" => 7,
@@ -701,21 +843,21 @@ module Agentlab
     graph_archive = archive_graph.fetch("archive", {})
     expected_archive_identity = {
       "path" => "obj/librusty_v8.a",
-      "bytes" => 160_316_016,
-      "sha256" => "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719"
+      "bytes" => 160_314_390,
+      "sha256" => "ea107f29106ef88a313b03bc6ff714fc4e1c1a5db822df646c8d5f0a82bca334"
     }
     expected_archive_identity.each do |key, value|
       errors << "rust-v8: archive-graph archive #{key} does not match" unless graph_archive[key] == value
     end
-    errors << "rust-v8: archive-graph object count does not match" unless graph_archive["object_input_count"] == 1_796
-    unless graph_archive["object_input_paths_sha256"] == "040b6f5002bb0fd318f727166a586bf90ce1d08cd42dbdc9389da1be5eabcaef"
+    errors << "rust-v8: archive-graph object count does not match" unless graph_archive["object_input_count"] == 1_795
+    unless graph_archive["object_input_paths_sha256"] == "e513350fe3ef60dae9d6d88aee96e9e630c155337f8be3f9bf8edc161d7b3ba2"
       errors << "rust-v8: archive-graph object path digest does not match"
     end
     errors << "rust-v8: archive-graph prefix counts do not match" unless graph_archive["object_input_prefix_counts"] == expected_prefix_counts
     errors << "rust-v8: archive-graph prefix count total does not match" unless expected_prefix_counts.values.sum == graph_archive["object_input_count"]
-    errors << "rust-v8: archive member count does not match" unless graph_archive["member_count"] == 1_796
-    errors << "rust-v8: archive unique-member count does not match" unless graph_archive["unique_member_names"] == 1_777
-    unless graph_archive["member_names_sha256"] == "2ae10bb5907a2f9e6f5bad215f34ce7fe4134f1e6ffe2c592a3ede0108fe320c"
+    errors << "rust-v8: archive member count does not match" unless graph_archive["member_count"] == 1_795
+    errors << "rust-v8: archive unique-member count does not match" unless graph_archive["unique_member_names"] == 1_776
+    unless graph_archive["member_names_sha256"] == "8582cf86663b5e522a136821b7ec5069e8dce6a92f61f3e6829cf0cf805cf443"
       errors << "rust-v8: archive member digest does not match"
     end
     unless graph_archive["member_name_multiset_matches_object_basenames"] == true
@@ -735,9 +877,9 @@ module Agentlab
 
     graph_consumer = archive_graph.fetch("consumer_witness", {})
     expected_consumer_files = {
-      "binary" => ["target/debug/rust-v8-exact-consumer", 83_227_944, "1e92184fa9cc5c29b305cc61bfe1d9c14b96e39bd0dcc8da06ea5f190dd3a9f6"],
-      "copied_archive" => ["target/debug/gn_out/obj/librusty_v8.a", 160_316_016, "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719"],
-      "cargo_fingerprint" => ["target/debug/.fingerprint/v8-00037795b4eafb5d/lib-v8.json", 742, "cf39fc5a541729b3cb06cbdea16d6e4add2b0759ef0309548022fc15f403ad8a"]
+      "binary" => ["target/debug/rust-v8-exact-consumer", 83_213_856, "7b4b406e4b2f3d13301346fae717b94ee244d70c6e1b4485600122813ff6a942"],
+      "copied_archive" => ["target/debug/gn_out/obj/librusty_v8.a", 160_314_390, "ea107f29106ef88a313b03bc6ff714fc4e1c1a5db822df646c8d5f0a82bca334"],
+      "cargo_fingerprint" => ["target/debug/.fingerprint/v8-00037795b4eafb5d/lib-v8.json", 741, "e48e5612813a7282b99f915c00dbcc2136068936314f25b893b1bb33b7987d6d"]
     }
     expected_consumer_files.each do |key, (path, bytes, sha256)|
       record = graph_consumer.fetch(key, {})
@@ -1382,7 +1524,13 @@ module Agentlab
       unless reproducibility.dig("recursive_source", "selected_build_dependency_closure_verified") == false
         errors << "rust-v8: reproducibility metadata overclaims selected-build dependency closure"
       end
-      errors << "rust-v8: reproducibility metadata incorrectly claims a generated recursive archive" unless reproducibility.dig("recursive_source", "recursive_rpm_source_generated") == false
+      errors << "rust-v8: reproducibility metadata omits the generated filtered source" unless reproducibility.dig("recursive_source", "recursive_rpm_source_generated") == true
+      errors << "rust-v8: reproducibility direct-source count does not match" unless reproducibility.dig("recursive_source", "direct_public_rpm_sources") == 20
+      errors << "rust-v8: reproducibility generated-source count does not match" unless reproducibility.dig("recursive_source", "generated_filtered_rpm_sources") == 1
+      unless reproducibility.dig("recursive_source", "source_filter_receipt") == source_filter_name &&
+             reproducibility.dig("recursive_source", "source_filter_receipt_sha256") == source_filter_sha256
+        errors << "rust-v8: reproducibility source-filter receipt does not match"
+      end
       errors << "rust-v8: reproducibility license candidate count does not match" unless reproducibility.dig("licenses", "candidate_license_files") == license_summary["license_candidate_files"]
       errors << "rust-v8: reproducibility vendored Rust source count does not match" unless reproducibility.dig("licenses", "vendored_rust_source_packages") == license_summary["vendored_rust_source_packages"]
       errors << "rust-v8: reproducibility vendored Rust placeholder count does not match" unless reproducibility.dig("licenses", "vendored_rust_placeholders") == license_summary["vendored_rust_placeholders"]
@@ -1400,6 +1548,18 @@ module Agentlab
       errors << "rust-v8: reproducibility Git-component license inventory is incomplete" unless reproducibility.dig("licenses", "git_component_inventory_complete") == true
       errors << "rust-v8: reproducibility Fedora license metadata is incomplete" unless reproducibility.dig("licenses", "fedora_exact_version_license_metadata_recorded") == true
       errors << "rust-v8: reproducibility metadata overclaims selected linkage" unless reproducibility.dig("licenses", "linked_archive_selection_verified") == false
+      unless reproducibility.dig("licenses", "static_receipt") == static_license_name &&
+             reproducibility.dig("licenses", "static_receipt_sha256") == static_license_sha256
+        errors << "rust-v8: reproducibility static-license receipt does not match"
+      end
+      errors << "rust-v8: reproducibility static object count does not match" unless reproducibility.dig("licenses", "selected_archive_objects") == 1_795
+      errors << "rust-v8: reproducibility static text count does not match" unless reproducibility.dig("licenses", "required_license_texts") == 24
+      errors << "rust-v8: reproducibility required texts are not verified" unless reproducibility.dig("licenses", "required_texts_verified") == true
+      errors << "rust-v8: reproducibility Fedora SPDX status is incomplete" unless reproducibility.dig("licenses", "fedora_allowed_spdx_verified") == true
+      errors << "rust-v8: reproducibility prototype static license is incomplete" unless reproducibility.dig("licenses", "prototype_static_archive_license_complete") == true
+      unless reproducibility.dig("licenses", "production_static_archive_license_complete") == false
+        errors << "rust-v8: reproducibility overclaims production static licensing"
+      end
     else
       errors << "rust-v8: reproducibility metadata is missing"
     end

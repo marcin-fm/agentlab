@@ -1,0 +1,345 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "find"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "tempfile"
+require "tmpdir"
+require "zlib"
+
+module Agentlab
+  class Error < StandardError; end
+
+  def self.atomic_write(path, content)
+    Tempfile.create([".rust-v8-source-", ".tmp"], File.dirname(path)) do |file|
+      file.binmode
+      file.write(content)
+      file.flush
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+end
+
+VERSION = "149.2.0"
+COMMIT = "73d19698991616a34a00ca691a6e697dbb69e2ef"
+UPSTREAM_URL = "https://codeload.github.com/denoland/v8/tar.gz/#{COMMIT}"
+UPSTREAM_FILENAME = "rust-v8-#{VERSION}-v8-#{COMMIT}.tar.gz"
+UPSTREAM_ROOT = "v8-#{COMMIT}"
+UPSTREAM_BYTES = 32_678_156
+UPSTREAM_SHA256 = "63a19755f87d8366c5112c341e0d4fcdb10bf9706d6acb55cf581b9afee9361a"
+UPSTREAM_TREE_RECORDS = 18_936
+UPSTREAM_TREE_SHA256 = "babf9f9482b4f4c5781d686f8c7723a0f9404fdc6e2c1b3c30c320ac3dee1e36"
+OUTPUT_FILENAME = "rust-v8-#{VERSION}-v8-#{COMMIT}-filtered-siphash.tar.gz"
+OUTPUT_BYTES = 32_317_952
+OUTPUT_SHA256 = "c992db0320a397123e24a6895d18191b58ef78c08d6cf8c97b657bc04381aef3"
+OUTPUT_TREE_RECORDS = 18_933
+OUTPUT_TREE_SHA256 = "84d84c21846355df8f3b629c50715924a3119ab7702a12a9ba8502d3a69019bb"
+EXCLUDED_PATHS = {
+  "third_party/siphash/LICENSE" => {
+    "sha256" => "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673",
+    "license" => "CC0-1.0"
+  },
+  "third_party/siphash/halfsiphash.cc" => {
+    "sha256" => "6bf060c9846f521a8f8098b3ae09b4bd6cb870387f1616510f18ab344d657e19",
+    "license" => "CC0-1.0"
+  },
+  "third_party/siphash/halfsiphash.h" => {
+    "sha256" => "af6adbcde89ab703a9d50c6bf106e2e5269110b2ae26cabddcebef12c2095701",
+    "license" => "CC0-1.0"
+  }
+}.freeze
+
+def safe_archive_path(path)
+  clean = Pathname(path).cleanpath.to_s
+  return nil if Pathname(path).absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def safe_link?(path, target)
+  return false if target.to_s.empty? || Pathname(target).absolute?
+
+  resolved = Pathname(File.join(File.dirname(path), target)).cleanpath.to_s
+  resolved != ".." && !resolved.start_with?("../")
+end
+
+def parse_pax_headers(data)
+  offset = 0
+  headers = {}
+  while offset < data.bytesize
+    space = data.index(" ", offset)
+    raise Agentlab::Error, "invalid PAX header length" unless space
+
+    length = data.byteslice(offset, space - offset).to_i
+    raise Agentlab::Error, "invalid PAX header record" unless length.positive? && offset + length <= data.bytesize
+
+    record = data.byteslice(space + 1, length - (space - offset) - 1).delete_suffix("\n")
+    key, value = record.split("=", 2)
+    raise Agentlab::Error, "invalid PAX header value" unless key && value
+
+    headers[key] = value
+    offset += length
+  end
+  headers
+end
+
+def tar_header_path(header)
+  name = header.name.to_s.split("\0", 2).first.to_s
+  prefix = header.prefix.to_s.split("\0", 2).first.to_s
+  prefix.empty? ? name : "#{prefix}/#{name}"
+end
+
+def inspect_archive(path)
+  paths = {}
+  roots = {}
+  long_name = nil
+  long_link = nil
+  local_pax = {}
+  global_pax = {}
+
+  Zlib::GzipReader.open(path) do |gzip|
+    Gem::Package::TarReader.new(gzip) do |tar|
+      tar.each do |entry|
+        case entry.header.typeflag
+        when "L"
+          long_name = entry.read.delete_suffix("\0")
+          next
+        when "K"
+          long_link = entry.read.delete_suffix("\0")
+          next
+        when "x"
+          local_pax = parse_pax_headers(entry.read)
+          next
+        when "g"
+          global_pax.merge!(parse_pax_headers(entry.read))
+          next
+        end
+
+        entry_name = local_pax["path"] || global_pax["path"] || long_name || tar_header_path(entry.header)
+        link_name = local_pax["linkpath"] || global_pax["linkpath"] || long_link ||
+                    entry.header.linkname.to_s.split("\0", 2).first
+        clean = safe_archive_path(entry_name)
+        raise Agentlab::Error, "archive path escapes root: #{entry_name}" unless clean
+        raise Agentlab::Error, "archive contains duplicate path: #{clean}" if paths.key?(clean)
+
+        paths[clean] = true
+        root = clean.split("/", 2).first
+        roots[root] = true unless root.nil? || root.empty? || root == "."
+        if entry.file? || entry.directory?
+          # Content is validated after extraction.
+        elsif entry.header.typeflag == "2" || entry.header.typeflag == "1"
+          raise Agentlab::Error, "archive link escapes root: #{clean} -> #{link_name}" unless safe_link?(clean, link_name)
+        else
+          raise Agentlab::Error, "unsupported archive entry #{entry.header.typeflag.inspect}: #{clean}"
+        end
+
+        long_name = nil
+        long_link = nil
+        local_pax = {}
+      end
+    end
+  end
+
+  raise Agentlab::Error, "archive root does not match #{UPSTREAM_ROOT}" unless roots.keys == [UPSTREAM_ROOT]
+rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+  raise Agentlab::Error, "cannot inspect upstream archive: #{e.message}"
+end
+
+def tree_manifest(root)
+  records = []
+  Find.find(root) do |entry|
+    next if entry == root
+
+    relative = entry.delete_prefix("#{root}/")
+    stat = File.lstat(entry)
+    if stat.file?
+      records << [relative, stat.executable? ? "100755" : "100644", Digest::SHA256.file(entry).hexdigest]
+    elsif stat.symlink?
+      records << [relative, "120000", Digest::SHA256.hexdigest(File.readlink(entry))]
+    elsif !stat.directory?
+      raise Agentlab::Error, "unsupported extracted source entry #{relative}"
+    end
+  end
+  records.sort
+end
+
+def verify_identity!(path, bytes, sha256, label)
+  actual_bytes = File.size(path)
+  actual_sha256 = Digest::SHA256.file(path).hexdigest
+  return if actual_bytes == bytes && actual_sha256 == sha256
+
+  raise Agentlab::Error,
+        "#{label} identity mismatch: bytes=#{actual_bytes} sha256=#{actual_sha256}"
+end
+
+def run!(*command, **options)
+  output, error, status = Open3.capture3(*command, **options)
+  return output if status.success?
+
+  detail = error.strip.empty? ? output.strip : error.strip
+  raise Agentlab::Error, "command failed: #{command.join(' ')}#{detail.empty? ? '' : ": #{detail}"}"
+end
+
+def receipt
+  {
+    "schema" => "rust-v8-source-filter/v1",
+    "package" => "rust-v8",
+    "release" => VERSION,
+    "upstream" => {
+      "component_path" => "v8",
+      "commit" => COMMIT,
+      "url" => UPSTREAM_URL,
+      "filename" => UPSTREAM_FILENAME,
+      "archive_root" => UPSTREAM_ROOT,
+      "bytes" => UPSTREAM_BYTES,
+      "sha256" => UPSTREAM_SHA256,
+      "tree_file_records" => UPSTREAM_TREE_RECORDS,
+      "tree_sha256" => UPSTREAM_TREE_SHA256
+    },
+    "output" => {
+      "filename" => OUTPUT_FILENAME,
+      "archive_root" => UPSTREAM_ROOT,
+      "bytes" => OUTPUT_BYTES,
+      "sha256" => OUTPUT_SHA256,
+      "tree_file_records" => OUTPUT_TREE_RECORDS,
+      "tree_sha256" => OUTPUT_TREE_SHA256
+    },
+    "generator" => {
+      "path" => "prepare-rust-v8-srpm-sources",
+      "sha256" => Digest::SHA256.file(__FILE__).hexdigest
+    },
+    "excluded_paths" => EXCLUDED_PATHS.map do |path, metadata|
+      {
+        "path" => path,
+        "sha256" => metadata.fetch("sha256"),
+        "license" => metadata.fetch("license"),
+        "reason" => "unused executable source is not Fedora-acceptable for a new package when v8_use_siphash is false"
+      }
+    end,
+    "archive_normalization" => {
+      "sort" => "name",
+      "mtime" => 0,
+      "uid" => 0,
+      "gid" => 0,
+      "format" => "gnu",
+      "gzip_level" => 9,
+      "gzip_name_and_timestamp" => false
+    },
+    "validation" => {
+      "upstream_identity_verified" => true,
+      "upstream_tree_verified" => true,
+      "archive_paths_and_links_safe" => true,
+      "excluded_path_set_exact" => true,
+      "filtered_tree_verified" => true,
+      "filtered_archive_reextracts_identically" => true,
+      "cc0_executable_source_present" => false,
+      "remote_generated_asset_required" => false
+    }
+  }
+end
+
+begin
+  input = nil
+  output = nil
+  spec = nil
+  receipt_path = nil
+  write_receipt = nil
+  check = false
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/prepare-rust-v8-srpm-sources [options]"
+    parser.on("--spec PATH", "Rusty V8 spec whose source directory receives the filtered archive") { |path| spec = path }
+    parser.on("--input PATH", "Previously acquired immutable upstream V8 archive") { |path| input = path }
+    parser.on("--output PATH", "Filtered V8 archive output") { |path| output = path }
+    parser.on("--receipt PATH", "Checked source-filter receipt") { |path| receipt_path = path }
+    parser.on("--write-receipt PATH", "Write the generated receipt") { |path| write_receipt = path }
+    parser.on("--check", "Verify an existing output and receipt") { check = true }
+  end.parse!
+
+  if spec
+    spec = File.realpath(spec)
+    specdir = File.dirname(spec)
+    output ||= File.join(specdir, OUTPUT_FILENAME)
+    receipt_path ||= File.join(specdir, "rust-v8-#{VERSION}-source-filter.json")
+  end
+  raise Agentlab::Error, "--output or --spec is required" unless output
+  raise Agentlab::Error, "--receipt or --spec is required" unless receipt_path || write_receipt
+
+  expected_receipt = JSON.pretty_generate(receipt) + "\n"
+  Dir.mktmpdir("agentlab-rust-v8-filter-", "/srv/tmp") do |temporary|
+    upstream = input ? File.realpath(input) : File.join(temporary, UPSTREAM_FILENAME)
+    unless input
+      run!("curl", "--fail", "--location", "--retry", "3", "--silent", "--show-error", "--output", upstream, UPSTREAM_URL)
+    end
+    verify_identity!(upstream, UPSTREAM_BYTES, UPSTREAM_SHA256, "upstream V8 archive")
+    inspect_archive(upstream)
+
+    extraction = File.join(temporary, "source")
+    FileUtils.mkdir_p(extraction)
+    run!("tar", "-xzf", upstream, "-C", extraction, "--no-same-owner")
+    root = File.join(extraction, UPSTREAM_ROOT)
+    upstream_manifest = tree_manifest(root)
+    unless upstream_manifest.length == UPSTREAM_TREE_RECORDS &&
+           Digest::SHA256.hexdigest(JSON.generate(upstream_manifest)) == UPSTREAM_TREE_SHA256
+      raise Agentlab::Error, "upstream V8 tree identity mismatch"
+    end
+
+    EXCLUDED_PATHS.each do |relative, metadata|
+      path = File.join(root, relative)
+      unless File.file?(path) && Digest::SHA256.file(path).hexdigest == metadata.fetch("sha256")
+        raise Agentlab::Error, "excluded source identity mismatch: #{relative}"
+      end
+      FileUtils.rm_f(path)
+    end
+
+    filtered_manifest = tree_manifest(root)
+    unless filtered_manifest.length == OUTPUT_TREE_RECORDS &&
+           Digest::SHA256.hexdigest(JSON.generate(filtered_manifest)) == OUTPUT_TREE_SHA256
+      raise Agentlab::Error, "filtered V8 tree identity mismatch"
+    end
+
+    generated = File.join(temporary, OUTPUT_FILENAME)
+    statuses = Open3.pipeline(
+      ["tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--format=gnu", "-cf", "-", UPSTREAM_ROOT],
+      ["gzip", "-n", "-9"],
+      chdir: extraction,
+      out: generated
+    )
+    raise Agentlab::Error, "filtered archive generation failed" unless statuses.all?(&:success?)
+    verify_identity!(generated, OUTPUT_BYTES, OUTPUT_SHA256, "filtered V8 archive")
+    inspect_archive(generated)
+
+    verification = File.join(temporary, "verification")
+    FileUtils.mkdir_p(verification)
+    run!("tar", "-xzf", generated, "-C", verification, "--no-same-owner")
+    verify_manifest = tree_manifest(File.join(verification, UPSTREAM_ROOT))
+    raise Agentlab::Error, "filtered archive re-extraction mismatch" unless verify_manifest == filtered_manifest
+
+    if check
+      raise Agentlab::Error, "missing filtered V8 archive #{output}" unless File.file?(output)
+      verify_identity!(output, OUTPUT_BYTES, OUTPUT_SHA256, "checked filtered V8 archive")
+    else
+      Agentlab.atomic_write(output, File.binread(generated))
+      File.chmod(0o644, output)
+    end
+  end
+
+  if write_receipt
+    Agentlab.atomic_write(write_receipt, expected_receipt)
+  elsif receipt_path
+    raise Agentlab::Error, "missing source-filter receipt #{receipt_path}" unless File.file?(receipt_path)
+    unless File.binread(receipt_path) == expected_receipt
+      raise Agentlab::Error, "source-filter receipt is stale: #{receipt_path}"
+    end
+  end
+  puts "Verified deterministic Rusty V8 filtered source #{OUTPUT_SHA256}."
+rescue Agentlab::Error, JSON::ParserError, KeyError, OptionParser::ParseError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

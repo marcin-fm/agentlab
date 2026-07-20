@@ -1,0 +1,67 @@
+{
+  "schema": "rust-v8-source-filter/v1",
+  "package": "rust-v8",
+  "release": "149.2.0",
+  "upstream": {
+    "component_path": "v8",
+    "commit": "73d19698991616a34a00ca691a6e697dbb69e2ef",
+    "url": "https://codeload.github.com/denoland/v8/tar.gz/73d19698991616a34a00ca691a6e697dbb69e2ef",
+    "filename": "rust-v8-149.2.0-v8-73d19698991616a34a00ca691a6e697dbb69e2ef.tar.gz",
+    "archive_root": "v8-73d19698991616a34a00ca691a6e697dbb69e2ef",
+    "bytes": 32678156,
+    "sha256": "63a19755f87d8366c5112c341e0d4fcdb10bf9706d6acb55cf581b9afee9361a",
+    "tree_file_records": 18936,
+    "tree_sha256": "babf9f9482b4f4c5781d686f8c7723a0f9404fdc6e2c1b3c30c320ac3dee1e36"
+  },
+  "output": {
+    "filename": "rust-v8-149.2.0-v8-73d19698991616a34a00ca691a6e697dbb69e2ef-filtered-siphash.tar.gz",
+    "archive_root": "v8-73d19698991616a34a00ca691a6e697dbb69e2ef",
+    "bytes": 32317952,
+    "sha256": "c992db0320a397123e24a6895d18191b58ef78c08d6cf8c97b657bc04381aef3",
+    "tree_file_records": 18933,
+    "tree_sha256": "84d84c21846355df8f3b629c50715924a3119ab7702a12a9ba8502d3a69019bb"
+  },
+  "generator": {
+    "path": "prepare-rust-v8-srpm-sources",
+    "sha256": "7cc8ef075a4a8b4d733146865584fdcfb6c1299cf37359254a91471e1d5556ec"
+  },
+  "excluded_paths": [
+    {
+      "path": "third_party/siphash/LICENSE",
+      "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673",
+      "license": "CC0-1.0",
+      "reason": "unused executable source is not Fedora-acceptable for a new package when v8_use_siphash is false"
+    },
+    {
+      "path": "third_party/siphash/halfsiphash.cc",
+      "sha256": "6bf060c9846f521a8f8098b3ae09b4bd6cb870387f1616510f18ab344d657e19",
+      "license": "CC0-1.0",
+      "reason": "unused executable source is not Fedora-acceptable for a new package when v8_use_siphash is false"
+    },
+    {
+      "path": "third_party/siphash/halfsiphash.h",
+      "sha256": "af6adbcde89ab703a9d50c6bf106e2e5269110b2ae26cabddcebef12c2095701",
+      "license": "CC0-1.0",
+      "reason": "unused executable source is not Fedora-acceptable for a new package when v8_use_siphash is false"
+    }
+  ],
+  "archive_normalization": {
+    "sort": "name",
+    "mtime": 0,
+    "uid": 0,
+    "gid": 0,
+    "format": "gnu",
+    "gzip_level": 9,
+    "gzip_name_and_timestamp": false
+  },
+  "validation": {
+    "upstream_identity_verified": true,
+    "upstream_tree_verified": true,
+    "archive_paths_and_links_safe": true,
+    "excluded_path_set_exact": true,
+    "filtered_tree_verified": true,
+    "filtered_archive_reextracts_identically": true,
+    "cc0_executable_source_present": false,
+    "remote_generated_asset_required": false
+  }
+}

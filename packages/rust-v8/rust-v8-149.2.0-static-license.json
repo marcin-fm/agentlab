@@ -1,0 +1,453 @@
+{
+  "schema": "rust-v8-static-license/v1",
+  "package": "rust-v8",
+  "release": "149.2.0",
+  "source_closure_reference": {
+    "path": "rust-v8-149.2.0-source-closure.json",
+    "sha256": "fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77"
+  },
+  "archive_graph_reference": {
+    "path": "rust-v8-149.2.0-archive-graph.json",
+    "sha256": "be4c0d52a3459b54daae2fb176649c31e31c56033bfdcac2c90ba35ca01aace5",
+    "scope": "fedora-44-x86_64-prototype"
+  },
+  "source_filter_reference": {
+    "path": "rust-v8-149.2.0-source-filter.json",
+    "sha256": "c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2",
+    "excluded_paths": [
+      "v8/third_party/siphash/LICENSE",
+      "v8/third_party/siphash/halfsiphash.cc",
+      "v8/third_party/siphash/halfsiphash.h"
+    ]
+  },
+  "selected_graph": {
+    "archive_objects": 1795,
+    "archive_object_paths_sha256": "e513350fe3ef60dae9d6d88aee96e9e630c155337f8be3f9bf8edc161d7b3ba2",
+    "compile_dependency_files": 4416,
+    "compile_dependency_paths_sha256": "77e6de79a5e1f3a6677d64c8b7e3c9ef6f69dbfef8d5170f955b1f191f302afb",
+    "transitive_input_files": 6314,
+    "transitive_input_paths_sha256": "62c61cee1b402a971558ebeb048a436a01a9f80cfbc3881d2d8ad70dc7c53465",
+    "implicit_rust_rlibs": 31,
+    "implicit_rust_rlibs_embedded": false
+  },
+  "static_archive": {
+    "expression": "Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)",
+    "components": [
+      {
+        "name": "rusty-v8-and-deno-bridge",
+        "expression": "MIT",
+        "selected_paths": [
+          "src/binding.cc"
+        ]
+      },
+      {
+        "name": "v8-core",
+        "expression": "BSD-3-Clause",
+        "selected_paths": [
+          "v8/src/init/v8.cc"
+        ]
+      },
+      {
+        "name": "abseil",
+        "expression": "Apache-2.0 AND LicenseRef-Fedora-Public-Domain",
+        "selected_paths": [
+          "third_party/abseil-cpp/absl/base/config.h",
+          "third_party/abseil-cpp/absl/time/internal/cctz/src/tzfile.h"
+        ]
+      },
+      {
+        "name": "highway",
+        "expression": "Apache-2.0",
+        "selected_paths": [
+          "third_party/highway/src/hwy/highway.h"
+        ],
+        "fedora_reuse": "Fedora 44 highway-devel 1.3.0 selects Apache-2.0; the exact selected headers carry SPDX Apache-2.0"
+      },
+      {
+        "name": "icu-code-and-data",
+        "expression": "Unicode-3.0 AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND NAIST-2003 AND LicenseRef-Fedora-Public-Domain",
+        "selected_paths": [
+          "third_party/icu/source/common/unicode/utypes.h",
+          "third_party/icu/common/icudtl.dat"
+        ],
+        "fedora_reuse": "Fedora 44 ICU 77.1 supplies the legacy and bundled-data terms; the exact retained ICU LICENSE additionally identifies current code as Unicode-3.0"
+      },
+      {
+        "name": "simdutf",
+        "expression": "MIT AND BSD-3-Clause",
+        "selected_paths": [
+          "third_party/simdutf/simdutf.cpp",
+          "third_party/simdutf/simdutf.h"
+        ]
+      },
+      {
+        "name": "dragonbox",
+        "expression": "Apache-2.0 WITH LLVM-exception OR BSL-1.0",
+        "selected_paths": [
+          "third_party/dragonbox/src/include/dragonbox/dragonbox.h"
+        ]
+      },
+      {
+        "name": "fast-float",
+        "expression": "Apache-2.0 OR BSL-1.0 OR MIT",
+        "selected_paths": [
+          "third_party/fast_float/src/include/fast_float/fast_float.h"
+        ]
+      },
+      {
+        "name": "fp16",
+        "expression": "MIT",
+        "selected_paths": [
+          "third_party/fp16/src/include/fp16/fp16.h"
+        ]
+      },
+      {
+        "name": "v8-inspector-protocol",
+        "expression": "BSD-3-Clause",
+        "selected_paths": [
+          "v8/third_party/inspector_protocol/crdtp/cbor.h"
+        ]
+      },
+      {
+        "name": "rapidhash-v8",
+        "expression": "BSD-2-Clause AND Unlicense",
+        "selected_paths": [
+          "v8/third_party/rapidhash-v8/rapidhash.h",
+          "v8/third_party/rapidhash-v8/secret.h"
+        ]
+      },
+      {
+        "name": "fdlibm-ieee754",
+        "expression": "LicenseRef-Fedora-UltraPermissive",
+        "selected_paths": [
+          "v8/src/base/ieee754.cc"
+        ]
+      },
+      {
+        "name": "xsum",
+        "expression": "MIT",
+        "selected_paths": [
+          "v8/src/builtins/builtins-math-xsum.cc"
+        ]
+      },
+      {
+        "name": "valgrind-client-header",
+        "expression": "BSD-Protection",
+        "selected_paths": [
+          "v8/third_party/valgrind/valgrind.h"
+        ]
+      },
+      {
+        "name": "googletest-production-header",
+        "expression": "BSD-3-Clause",
+        "selected_paths": [
+          "third_party/googletest/src/googletest/include/gtest/gtest_prod.h",
+          "v8/testing/gtest/include/gtest/gtest_prod.h"
+        ]
+      },
+      {
+        "name": "python-powersort",
+        "expression": "Python-2.0.1",
+        "selected_paths": [
+          "v8/third_party/v8/builtins/array-sort.tq"
+        ]
+      },
+      {
+        "name": "temporal-capi-cpp-bindings",
+        "expression": "MIT OR Apache-2.0",
+        "selected_paths": [
+          "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/bindings/cpp/temporal_rs/Calendar.hpp"
+        ],
+        "note": "Checked-in generated C++ bindings are archived; the 31 Rust rlibs remain separate consumer inputs"
+      }
+    ],
+    "required_license_texts": [
+      {
+        "path": "LICENSE",
+        "install_name": "rusty-v8-MIT.txt",
+        "expressions": [
+          "MIT"
+        ],
+        "scope": "complete-text",
+        "bytes": 1078,
+        "sha256": "1c6356fb751d45f0c53093ebf8a7f5e580e802f51999178e19d60f3ec39e147d"
+      },
+      {
+        "path": "v8/LICENSE",
+        "install_name": "v8-BSD-3-Clause.txt",
+        "expressions": [
+          "BSD-3-Clause"
+        ],
+        "scope": "complete-text",
+        "bytes": 3093,
+        "sha256": "6ab33af8774a0f396ee3aeeb761e3229057682d6f9fa7f572e390c2cb3a6e509"
+      },
+      {
+        "path": "third_party/abseil-cpp/LICENSE",
+        "install_name": "abseil-Apache-2.0.txt",
+        "expressions": [
+          "Apache-2.0"
+        ],
+        "scope": "complete-text",
+        "bytes": 11361,
+        "sha256": "c79a7fea0e3cac04cd43f20e7b648e5a0ff8fa5344e644b0ee09ca1162b62747"
+      },
+      {
+        "path": "third_party/abseil-cpp/absl/time/internal/cctz/src/tzfile.h",
+        "install_name": "cctz-tzfile-public-domain.h",
+        "expressions": [
+          "LicenseRef-Fedora-Public-Domain"
+        ],
+        "scope": "file-level-notice",
+        "bytes": 4289,
+        "sha256": "aa2e888e0b66a1f726eb9947ca649cca9f4b215a7416391b538deee2867d661b"
+      },
+      {
+        "path": "third_party/highway/src/LICENSE",
+        "install_name": "highway-LICENSE.txt",
+        "expressions": [
+          "Apache-2.0"
+        ],
+        "scope": "component-text",
+        "bytes": 20785,
+        "sha256": "e340270d4f64384569a91d546acb5b094d69ce47f0c015db77abb74dc6f815af"
+      },
+      {
+        "path": "third_party/icu/LICENSE",
+        "install_name": "icu-LICENSE.txt",
+        "expressions": [
+          "Unicode-3.0",
+          "Unicode-DFS-2016",
+          "BSD-2-Clause",
+          "BSD-3-Clause",
+          "NAIST-2003",
+          "LicenseRef-Fedora-Public-Domain"
+        ],
+        "scope": "complete-text-and-notices",
+        "bytes": 26487,
+        "sha256": "451167c55c0fa447cc2d5632714f5e3c567fe4f1e1badefab2c1333852198aca"
+      },
+      {
+        "path": "third_party/simdutf/LICENSE",
+        "install_name": "simdutf-MIT.txt",
+        "expressions": [
+          "MIT"
+        ],
+        "scope": "complete-text",
+        "bytes": 1059,
+        "sha256": "fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f"
+      },
+      {
+        "path": "third_party/simdutf/simdutf.h",
+        "install_name": "simdutf-BSD-3-Clause.h",
+        "expressions": [
+          "BSD-3-Clause"
+        ],
+        "scope": "file-level-notice",
+        "bytes": 276419,
+        "sha256": "0ace8c5b81085678b586e12ca6a99a6ea65a707f007a1121ee54356ff1991359"
+      },
+      {
+        "path": "third_party/dragonbox/src/LICENSE-Apache2-LLVM",
+        "install_name": "dragonbox-Apache-2.0-LLVM.txt",
+        "expressions": [
+          "Apache-2.0 WITH LLVM-exception"
+        ],
+        "scope": "complete-text",
+        "bytes": 12262,
+        "sha256": "9e45e856bedccee9f67254082ca11851d954de2fed7448c4bed19ad9aab99a91"
+      },
+      {
+        "path": "third_party/dragonbox/src/LICENSE-Boost",
+        "install_name": "dragonbox-BSL-1.0.txt",
+        "expressions": [
+          "BSL-1.0"
+        ],
+        "scope": "complete-text",
+        "bytes": 1338,
+        "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+      },
+      {
+        "path": "third_party/fast_float/src/LICENSE-APACHE",
+        "install_name": "fast-float-Apache-2.0.txt",
+        "expressions": [
+          "Apache-2.0"
+        ],
+        "scope": "complete-text",
+        "bytes": 10767,
+        "sha256": "097a889aa954d04e088b790b10a4014d6189561d0a6013935a73ce3d4ddaaf06"
+      },
+      {
+        "path": "third_party/fast_float/src/LICENSE-BOOST",
+        "install_name": "fast-float-BSL-1.0.txt",
+        "expressions": [
+          "BSL-1.0"
+        ],
+        "scope": "complete-text",
+        "bytes": 1337,
+        "sha256": "8d8291caf1cee26d23acf3eb67c9f9a2d58f1c681b16a4fbe8cbfb9e3c0b5a9b"
+      },
+      {
+        "path": "third_party/fast_float/src/LICENSE-MIT",
+        "install_name": "fast-float-MIT.txt",
+        "expressions": [
+          "MIT"
+        ],
+        "scope": "complete-text",
+        "bytes": 1079,
+        "sha256": "e562f3f974ced7e69dd1db77b820b36bcf8f30377f1aa105723fba449c53c4e6"
+      },
+      {
+        "path": "third_party/fp16/src/LICENSE",
+        "install_name": "fp16-MIT.txt",
+        "expressions": [
+          "MIT"
+        ],
+        "scope": "complete-text",
+        "bytes": 1157,
+        "sha256": "17e4f539024be2749ee729d1e2f01d24cef12ece8c9bf18e91a4349be29c80bf"
+      },
+      {
+        "path": "v8/third_party/inspector_protocol/LICENSE",
+        "install_name": "inspector-protocol-BSD-3-Clause.txt",
+        "expressions": [
+          "BSD-3-Clause"
+        ],
+        "scope": "complete-text",
+        "bytes": 1537,
+        "sha256": "450ebb9e9e50c2809d9ca581931fc8946d8d5aa0c8c35aae9ac471342fe4a88e"
+      },
+      {
+        "path": "v8/third_party/rapidhash-v8/LICENSE",
+        "install_name": "rapidhash-BSD-2-Clause.txt",
+        "expressions": [
+          "BSD-2-Clause"
+        ],
+        "scope": "complete-text",
+        "bytes": 1705,
+        "sha256": "db672df7faf793fbe28b8074fdd10822363e1525816b45c9627754885de842b0"
+      },
+      {
+        "path": "v8/third_party/rapidhash-v8/secret.h",
+        "install_name": "rapidhash-secret-Unlicense.h",
+        "expressions": [
+          "Unlicense"
+        ],
+        "scope": "file-level-notice",
+        "bytes": 6658,
+        "sha256": "105f18fae2b46a2b0747c6618f782d30a3938f8031ba59c9d802c6bba59b8291"
+      },
+      {
+        "path": "v8/src/base/ieee754.cc",
+        "install_name": "fdlibm-ultra-permissive.cc",
+        "expressions": [
+          "LicenseRef-Fedora-UltraPermissive"
+        ],
+        "scope": "file-level-notice",
+        "bytes": 101392,
+        "sha256": "f1ac72f9846e2425a24ef0d3cd705edb6a1f578bd3422e81f23154cd001f17ce"
+      },
+      {
+        "path": "v8/src/builtins/builtins-math-xsum.cc",
+        "install_name": "xsum-MIT.cc",
+        "expressions": [
+          "MIT"
+        ],
+        "scope": "file-level-notice",
+        "bytes": 8028,
+        "sha256": "6b5b9f92aa216c4f784738b03645c6b4d214c315309a04c7c5e6a92daf02411a"
+      },
+      {
+        "path": "v8/third_party/valgrind/LICENSE",
+        "install_name": "valgrind-BSD-Protection.txt",
+        "expressions": [
+          "BSD-Protection"
+        ],
+        "scope": "complete-text",
+        "bytes": 2439,
+        "sha256": "ebf25b8ce59c9e8883acd1ca75b6fc121937ca034f666c4077d2be739d2e1622"
+      },
+      {
+        "path": "third_party/googletest/src/googletest/include/gtest/gtest_prod.h",
+        "install_name": "googletest-BSD-3-Clause.h",
+        "expressions": [
+          "BSD-3-Clause"
+        ],
+        "scope": "file-level-complete-text",
+        "bytes": 2519,
+        "sha256": "97f9b6a96d244226c8df755c87f4bf8532e7df1ff4fcaf78f7532622a8e125b5"
+      },
+      {
+        "path": "v8/third_party/v8/builtins/LICENSE",
+        "install_name": "python-powersort-Python-2.0.1.txt",
+        "expressions": [
+          "Python-2.0.1"
+        ],
+        "scope": "complete-text",
+        "bytes": 12763,
+        "sha256": "b9a6d9320b8f2693e8d41e496ce56caadacaddcca9be2a64a61749278f425cf2"
+      },
+      {
+        "path": "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/LICENSE-Apache",
+        "install_name": "temporal-capi-Apache-2.0.txt",
+        "expressions": [
+          "Apache-2.0"
+        ],
+        "scope": "complete-text",
+        "bytes": 11333,
+        "sha256": "4e6bdc19db64d455dbddc0ee2f53ecba556f0226d4558954b5f02673c7358e59"
+      },
+      {
+        "path": "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/LICENSE-MIT",
+        "install_name": "temporal-capi-MIT.txt",
+        "expressions": [
+          "MIT"
+        ],
+        "scope": "complete-text",
+        "bytes": 1060,
+        "sha256": "073d3574ac6389e263360572b331e045dda7ac5cdba239ce5bdb02f299ef47bb"
+      }
+    ]
+  },
+  "source_only": {
+    "downstream_allocator_shim": {
+      "expression": "BSD-3-Clause",
+      "embedded_in_static_archive": false,
+      "patch": {
+        "path": "rust-v8-system-rust-toolchain.patch",
+        "sha256": "3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976"
+      },
+      "license_text": {
+        "path": "rust-v8-stable-system-allocator-license.txt",
+        "sha256": "813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558"
+      }
+    },
+    "implicit_rust_rlibs": {
+      "count": 31,
+      "embedded_in_static_archive": false,
+      "final_consumer_license_obligation": true
+    }
+  },
+  "system_libraries": {
+    "copied_into_static_archive": false,
+    "consumer_elf_needed": [
+      "ld-linux-x86-64.so.2",
+      "libc.so.6",
+      "libgcc_s.so.1",
+      "libm.so.6",
+      "libstdc++.so.6"
+    ]
+  },
+  "validation": {
+    "selected_archive_graph_bound": true,
+    "selected_component_evidence_verified": true,
+    "required_license_texts_verified": true,
+    "fedora_allowed_spdx_verified": true,
+    "reviewed_siphash_exclusion_verified": true,
+    "prototype_static_archive_license_complete": true,
+    "production_static_archive_license_complete": false,
+    "nonembedded_rust_rlibs_excluded": true,
+    "system_library_texts_excluded": true
+  },
+  "scope": "complete license expression and exact text map for the retained Fedora 44 x86_64 1,795-object static archive graph; production source-bound rebuild, final consumer Rust rlibs, other architectures, and system library payloads remain separate"
+}

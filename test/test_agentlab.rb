@@ -1536,6 +1536,18 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def rust_v8_receipt_names(dependencies)
+    %w[source_closure license_audit archive_graph fedora_license_evidence dynamic_linking static_license].map do |key|
+      dependencies.dig(key, "receipt")
+    end + [dependencies.dig("source_closure", "source_filter_receipt")]
+  end
+
+  def copy_rust_v8_receipts(source_package, dependencies, directory)
+    rust_v8_receipt_names(dependencies).each do |name|
+      FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
+    end
+  end
+
   def test_validates_rust_v8_evidence
     package = Agentlab.package_named("rust-v8")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
@@ -1544,6 +1556,8 @@ class AgentlabTest < Minitest::Test
     archive_graph = JSON.parse(File.read(File.join(package.directory, dependencies.dig("archive_graph", "receipt"))))
     fedora_license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("fedora_license_evidence", "receipt"))))
     dynamic_linking = JSON.parse(File.read(File.join(package.directory, dependencies.dig("dynamic_linking", "receipt"))))
+    source_filter = JSON.parse(File.read(File.join(package.directory, dependencies.dig("source_closure", "source_filter_receipt"))))
+    static_license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("static_license", "receipt"))))
 
     assert_empty(Agentlab.validate_rust_v8_evidence(package, dependencies, spec))
     assert_equal(1, license.fetch("unmaterialized_deps_declarations").length)
@@ -1578,13 +1592,20 @@ class AgentlabTest < Minitest::Test
     assert_equal("(Apache-2.0 WITH LLVM-exception) AND NCSA", clang_format.fetch("normalized_expression"))
     assert_equal("verified", clang_format.fetch("semantic_review_status"))
     assert_equal(2, license.fetch("scoped_parent_license_evidence").length)
-    assert_equal(1_796, archive_graph.dig("archive", "object_input_count"))
-    assert_equal(1_796, archive_graph.dig("archive", "member_count"))
+    assert_equal(1_795, archive_graph.dig("archive", "object_input_count"))
+    assert_equal(1_795, archive_graph.dig("archive", "member_count"))
     assert_equal(31, archive_graph.dig("archive", "implicit_rust_rlib_count"))
     refute(archive_graph.dig("archive", "implicit_rust_rlibs_embedded_in_archive"))
     refute(archive_graph.dig("archive", "member_contents_match_object_contents_verified"))
     assert_empty(archive_graph.dig("archive", "selected_googletest_inputs"))
     refute(archive_graph.dig("validation", "selected_build_dependency_closure_verified"))
+    assert_equal(3, source_filter.fetch("excluded_paths").length)
+    refute(source_filter.dig("validation", "cc0_executable_source_present"))
+    assert_equal(1_795, static_license.dig("selected_graph", "archive_objects"))
+    assert_equal(24, static_license.dig("static_archive", "required_license_texts").length)
+    assert(static_license.dig("validation", "fedora_allowed_spdx_verified"))
+    assert(static_license.dig("validation", "prototype_static_archive_license_complete"))
+    refute(static_license.dig("validation", "production_static_archive_license_complete"))
     license.dig("vendored_rust", "packages").each do |record|
       paths = record.fetch("license_files").map { |license_file| license_file.fetch("path") }
       assert_equal(paths.sort, paths)
@@ -1603,11 +1624,7 @@ class AgentlabTest < Minitest::Test
       archive_graph_name = dependencies.dig("archive_graph", "receipt")
       fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
       dynamic_linking_name = dependencies.dig("dynamic_linking", "receipt")
-      FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
-      FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
-      FileUtils.cp(File.join(source_package.directory, archive_graph_name), File.join(directory, archive_graph_name))
-      FileUtils.cp(File.join(source_package.directory, fedora_license_name), File.join(directory, fedora_license_name))
-      FileUtils.cp(File.join(source_package.directory, dynamic_linking_name), File.join(directory, dynamic_linking_name))
+      copy_rust_v8_receipts(source_package, dependencies, directory)
       license_path = File.join(directory, license_name)
       license = JSON.parse(File.read(license_path))
       license.fetch("validation")["fedora_allowed_spdx_verified"] = true
@@ -1645,12 +1662,7 @@ class AgentlabTest < Minitest::Test
     spec = File.read(source_package.spec_path)
 
     Dir.mktmpdir do |directory|
-      receipt_names = %w[source_closure license_audit archive_graph fedora_license_evidence dynamic_linking].map do |key|
-        dependencies.dig(key, "receipt")
-      end
-      receipt_names.each do |name|
-        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
-      end
+      copy_rust_v8_receipts(source_package, dependencies, directory)
       fedora_name = dependencies.dig("fedora_license_evidence", "receipt")
       fedora_path = File.join(directory, fedora_name)
       fedora = JSON.parse(File.read(fedora_path))
@@ -1679,12 +1691,7 @@ class AgentlabTest < Minitest::Test
     spec = File.read(source_package.spec_path)
 
     Dir.mktmpdir do |directory|
-      receipt_names = %w[source_closure license_audit archive_graph fedora_license_evidence dynamic_linking].map do |key|
-        dependencies.dig(key, "receipt")
-      end
-      receipt_names.each do |name|
-        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
-      end
+      copy_rust_v8_receipts(source_package, dependencies, directory)
       dynamic_name = dependencies.dig("dynamic_linking", "receipt")
       dynamic_path = File.join(directory, dynamic_name)
       dynamic = JSON.parse(File.read(dynamic_path))
@@ -1707,6 +1714,34 @@ class AgentlabTest < Minitest::Test
 
       assert_includes(errors, "rust-v8: dynamic-linking package decision does not match")
       assert_includes(errors, "rust-v8: dynamic-linking validation state does not match")
+    end
+  end
+
+  def test_rejects_rust_v8_static_license_overclaim
+    source_package = Agentlab.package_named("rust-v8")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    data = Marshal.load(Marshal.dump(source_package.data))
+    spec = File.read(source_package.spec_path)
+
+    Dir.mktmpdir do |directory|
+      copy_rust_v8_receipts(source_package, dependencies, directory)
+      static_name = dependencies.dig("static_license", "receipt")
+      static_path = File.join(directory, static_name)
+      static_license = JSON.parse(File.read(static_path))
+      static_license.fetch("validation")["production_static_archive_license_complete"] = true
+      File.write(static_path, JSON.pretty_generate(static_license) + "\n")
+      static_sha256 = Digest::SHA256.file(static_path).hexdigest
+      data.fetch("static_license")["receipt_sha256"] = static_sha256
+      data.fetch("static_license")["production_static_archive_license_complete"] = true
+      dependencies = Marshal.load(Marshal.dump(dependencies))
+      dependencies.fetch("static_license")["receipt_sha256"] = static_sha256
+      dependencies.fetch("static_license")["production_static_archive_license_complete"] = true
+      spec = spec.sub(/^%global static_license_sha256\s+\h{64}$/, "%global static_license_sha256 #{static_sha256}")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)
+
+      assert_includes(errors, "rust-v8: static-license receipt overclaims production closure")
     end
   end
 
@@ -1735,11 +1770,7 @@ class AgentlabTest < Minitest::Test
       archive_graph_name = dependencies.dig("archive_graph", "receipt")
       fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
       dynamic_linking_name = dependencies.dig("dynamic_linking", "receipt")
-      FileUtils.cp(File.join(source_package.directory, source_name), File.join(directory, source_name))
-      FileUtils.cp(File.join(source_package.directory, license_name), File.join(directory, license_name))
-      FileUtils.cp(File.join(source_package.directory, archive_graph_name), File.join(directory, archive_graph_name))
-      FileUtils.cp(File.join(source_package.directory, fedora_license_name), File.join(directory, fedora_license_name))
-      FileUtils.cp(File.join(source_package.directory, dynamic_linking_name), File.join(directory, dynamic_linking_name))
+      copy_rust_v8_receipts(source_package, dependencies, directory)
       license_path = File.join(directory, license_name)
       license = JSON.parse(File.read(license_path))
       googletest = license.fetch("components").flat_map { |component| component.fetch("readme_chromium") }.find do |record|
@@ -1825,9 +1856,7 @@ class AgentlabTest < Minitest::Test
       archive_graph_name = dependencies.dig("archive_graph", "receipt")
       fedora_license_name = dependencies.dig("fedora_license_evidence", "receipt")
       dynamic_linking_name = dependencies.dig("dynamic_linking", "receipt")
-      [source_name, license_name, archive_graph_name, fedora_license_name, dynamic_linking_name].each do |name|
-        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
-      end
+      copy_rust_v8_receipts(source_package, dependencies, directory)
       archive_graph_path = File.join(directory, archive_graph_name)
       archive_graph = JSON.parse(File.read(archive_graph_path))
       archive_graph.fetch("validation")["selected_build_dependency_closure_verified"] = true

@@ -4,7 +4,7 @@
   "release": "149.2.0",
   "source_closure_reference": {
     "path": "rust-v8-149.2.0-source-closure.json",
-    "sha256": "bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de",
+    "sha256": "fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77",
     "provenance_verified": false
   },
   "witness": {
@@ -33,37 +33,37 @@
       "rusty_v8_enable_simdutf": false,
       "treat_warnings_as_errors": false,
       "rust_sysroot_absolute": "/usr",
-      "rustc_version": "1.96.1-Fedora-1.96.1-1.fc44",
       "rust_bindgen_root": "/usr",
+      "rustc_version": "1.96.1-Fedora-1.96.1-1.fc44",
       "toolchain_supports_rust_thin_lto": false
     },
     "args_file": {
       "path": "args.gn",
       "bytes": 495,
-      "sha256": "146a99adb7670d59fb90ff41ee856ca6c157ab2df63e00a5f415fedcb3eb6827"
+      "sha256": "6ff33d34c11a371c268ad9c6f0a357b5afa21449f80ea1e220f87cf5b0d87a28"
     },
     "build_ninja": {
       "path": "build.ninja",
-      "bytes": 110413,
-      "sha256": "af47aff087dfaa63b3f5968e347e75dcf0b8f6c67ef820f262ad086336cd10e7"
+      "bytes": 110416,
+      "sha256": "56563bdc7a689d381339f9927a062d1300f904d185b739cd92c21ef96e5fd916"
     },
     "target_ninja": {
       "path": "obj/rusty_v8.ninja",
-      "bytes": 105650,
-      "sha256": "4f69925e507b0269e40d763092d739a8d8c6da24c903d11e246d99ca40cdbdbd"
+      "bytes": 105604,
+      "sha256": "f146a59066b3faa3cc170e970b2a40402db7316808a2eb744e683a61e7e68093"
     },
     "toolchain_ninja": {
       "path": "toolchain.ninja",
-      "bytes": 272804,
-      "sha256": "99210fedbca6c1d7994cb9db8d27fae7d3385680406c3c72ff75f898995a178c"
+      "bytes": 272864,
+      "sha256": "49122a064a61df37a4762b9a96b053f73c5d3d4f44ef4f388f4efc2f7bde4f90"
     }
   },
   "archive": {
     "path": "obj/librusty_v8.a",
-    "bytes": 160316016,
-    "sha256": "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719",
-    "object_input_count": 1796,
-    "object_input_paths_sha256": "040b6f5002bb0fd318f727166a586bf90ce1d08cd42dbdc9389da1be5eabcaef",
+    "bytes": 160314390,
+    "sha256": "ea107f29106ef88a313b03bc6ff714fc4e1c1a5db822df646c8d5f0a82bca334",
+    "object_input_count": 1795,
+    "object_input_paths_sha256": "e513350fe3ef60dae9d6d88aee96e9e630c155337f8be3f9bf8edc161d7b3ba2",
     "object_input_prefix_counts": {
       "rusty_v8": 2,
       "src/deno_inspector": 8,
@@ -75,7 +75,7 @@
       "v8/src": 37,
       "v8/third_party": 9,
       "v8/torque_generated_definitions": 246,
-      "v8/v8_base_without_compiler": 586,
+      "v8/v8_base_without_compiler": 585,
       "v8/v8_bigint": 9,
       "v8/v8_compiler": 186,
       "v8/v8_heap_base": 7,
@@ -83,9 +83,9 @@
       "v8/v8_libplatform": 13,
       "v8/v8_snapshot": 3
     },
-    "member_count": 1796,
-    "unique_member_names": 1777,
-    "member_names_sha256": "2ae10bb5907a2f9e6f5bad215f34ce7fe4134f1e6ffe2c592a3ede0108fe320c",
+    "member_count": 1795,
+    "unique_member_names": 1776,
+    "member_names_sha256": "8582cf86663b5e522a136821b7ec5069e8dce6a92f61f3e6829cf0cf805cf443",
     "member_name_multiset_matches_object_basenames": true,
     "member_contents_match_object_contents_verified": false,
     "implicit_rust_rlib_count": 31,
@@ -96,13 +96,13 @@
   "consumer_witness": {
     "binary": {
       "path": "target/debug/rust-v8-exact-consumer",
-      "bytes": 83227944,
-      "sha256": "1e92184fa9cc5c29b305cc61bfe1d9c14b96e39bd0dcc8da06ea5f190dd3a9f6"
+      "bytes": 83213856,
+      "sha256": "7b4b406e4b2f3d13301346fae717b94ee244d70c6e1b4485600122813ff6a942"
     },
     "copied_archive": {
       "path": "target/debug/gn_out/obj/librusty_v8.a",
-      "bytes": 160316016,
-      "sha256": "07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719"
+      "bytes": 160314390,
+      "sha256": "ea107f29106ef88a313b03bc6ff714fc4e1c1a5db822df646c8d5f0a82bca334"
     },
     "archive_copy_sha256_matches": true,
     "cargo_build_output": {
@@ -113,8 +113,8 @@
     },
     "cargo_fingerprint": {
       "path": "target/debug/.fingerprint/v8-00037795b4eafb5d/lib-v8.json",
-      "bytes": 742,
-      "sha256": "cf39fc5a541729b3cb06cbdea16d6e4add2b0759ef0309548022fc15f403ad8a"
+      "bytes": 741,
+      "sha256": "e48e5612813a7282b99f915c00dbcc2136068936314f25b893b1bb33b7987d6d"
     },
     "cargo_features": [
       "use_custom_libcxx"

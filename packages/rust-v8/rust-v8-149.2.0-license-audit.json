@@ -4,8 +4,8 @@
   "release": "149.2.0",
   "source_closure": {
     "path": "rust-v8-149.2.0-source-closure.json",
-    "sha256": "bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de",
-    "tree_sha256": "4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07"
+    "sha256": "fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77",
+    "tree_sha256": "6c09e1a9ca0c3d1bfea49a40e0be5abcb12ca5a3c92983e667cec499f47bcc1d"
   },
   "fedora_license_evidence": {
     "path": "rust-v8-149.2.0-fedora-license-evidence.json",
@@ -9015,7 +9015,7 @@
     {
       "path": "v8",
       "url": "https://github.com/denoland/v8.git",
-      "archive_url": "https://codeload.github.com/denoland/v8/tar.gz/73d19698991616a34a00ca691a6e697dbb69e2ef",
+      "archive_url": null,
       "commit": "73d19698991616a34a00ca691a6e697dbb69e2ef",
       "license_files": [
         {
@@ -9112,11 +9112,6 @@
           "path": "v8/third_party/re2/LICENSE",
           "bytes": 1558,
           "sha256": "6040cda75d90b1738292a631d89934c411ef7ffd543c4d6a1b7edfc8edf29449"
-        },
-        {
-          "path": "v8/third_party/siphash/LICENSE",
-          "bytes": 6555,
-          "sha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673"
         },
         {
           "path": "v8/third_party/utf8-decoder/LICENSE",
@@ -9270,7 +9265,7 @@
           "semantic_review_status": "pending"
         }
       ],
-      "license_file_count": 26,
+      "license_file_count": 25,
       "readme_chromium_count": 4,
       "declared_license_candidates": [
         "Apache-2.0",
@@ -19922,7 +19917,7 @@
     "components": 21,
     "components_with_license_files": 19,
     "components_without_license_files": 2,
-    "license_candidate_files": 415,
+    "license_candidate_files": 414,
     "readme_chromium_records": 231,
     "readme_chromium_with_license": 229,
     "readme_chromium_without_license": 2,

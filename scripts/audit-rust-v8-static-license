@@ -1,0 +1,362 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require "set"
+require_relative "lib/agentlab"
+
+STATIC_EXPRESSION = "Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)"
+
+COMPONENTS = [
+  {
+    "name" => "rusty-v8-and-deno-bridge",
+    "expression" => "MIT",
+    "selected_paths" => ["src/binding.cc"]
+  },
+  {
+    "name" => "v8-core",
+    "expression" => "BSD-3-Clause",
+    "selected_paths" => ["v8/src/init/v8.cc"]
+  },
+  {
+    "name" => "abseil",
+    "expression" => "Apache-2.0 AND LicenseRef-Fedora-Public-Domain",
+    "selected_paths" => [
+      "third_party/abseil-cpp/absl/base/config.h",
+      "third_party/abseil-cpp/absl/time/internal/cctz/src/tzfile.h"
+    ]
+  },
+  {
+    "name" => "highway",
+    "expression" => "Apache-2.0",
+    "selected_paths" => ["third_party/highway/src/hwy/highway.h"],
+    "fedora_reuse" => "Fedora 44 highway-devel 1.3.0 selects Apache-2.0; the exact selected headers carry SPDX Apache-2.0"
+  },
+  {
+    "name" => "icu-code-and-data",
+    "expression" => "Unicode-3.0 AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND NAIST-2003 AND LicenseRef-Fedora-Public-Domain",
+    "selected_paths" => [
+      "third_party/icu/source/common/unicode/utypes.h",
+      "third_party/icu/common/icudtl.dat"
+    ],
+    "fedora_reuse" => "Fedora 44 ICU 77.1 supplies the legacy and bundled-data terms; the exact retained ICU LICENSE additionally identifies current code as Unicode-3.0"
+  },
+  {
+    "name" => "simdutf",
+    "expression" => "MIT AND BSD-3-Clause",
+    "selected_paths" => ["third_party/simdutf/simdutf.cpp", "third_party/simdutf/simdutf.h"]
+  },
+  {
+    "name" => "dragonbox",
+    "expression" => "Apache-2.0 WITH LLVM-exception OR BSL-1.0",
+    "selected_paths" => ["third_party/dragonbox/src/include/dragonbox/dragonbox.h"]
+  },
+  {
+    "name" => "fast-float",
+    "expression" => "Apache-2.0 OR BSL-1.0 OR MIT",
+    "selected_paths" => ["third_party/fast_float/src/include/fast_float/fast_float.h"]
+  },
+  {
+    "name" => "fp16",
+    "expression" => "MIT",
+    "selected_paths" => ["third_party/fp16/src/include/fp16/fp16.h"]
+  },
+  {
+    "name" => "v8-inspector-protocol",
+    "expression" => "BSD-3-Clause",
+    "selected_paths" => ["v8/third_party/inspector_protocol/crdtp/cbor.h"]
+  },
+  {
+    "name" => "rapidhash-v8",
+    "expression" => "BSD-2-Clause AND Unlicense",
+    "selected_paths" => [
+      "v8/third_party/rapidhash-v8/rapidhash.h",
+      "v8/third_party/rapidhash-v8/secret.h"
+    ]
+  },
+  {
+    "name" => "fdlibm-ieee754",
+    "expression" => "LicenseRef-Fedora-UltraPermissive",
+    "selected_paths" => ["v8/src/base/ieee754.cc"]
+  },
+  {
+    "name" => "xsum",
+    "expression" => "MIT",
+    "selected_paths" => ["v8/src/builtins/builtins-math-xsum.cc"]
+  },
+  {
+    "name" => "valgrind-client-header",
+    "expression" => "BSD-Protection",
+    "selected_paths" => ["v8/third_party/valgrind/valgrind.h"]
+  },
+  {
+    "name" => "googletest-production-header",
+    "expression" => "BSD-3-Clause",
+    "selected_paths" => [
+      "third_party/googletest/src/googletest/include/gtest/gtest_prod.h",
+      "v8/testing/gtest/include/gtest/gtest_prod.h"
+    ]
+  },
+  {
+    "name" => "python-powersort",
+    "expression" => "Python-2.0.1",
+    "selected_paths" => ["v8/third_party/v8/builtins/array-sort.tq"]
+  },
+  {
+    "name" => "temporal-capi-cpp-bindings",
+    "expression" => "MIT OR Apache-2.0",
+    "selected_paths" => [
+      "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/bindings/cpp/temporal_rs/Calendar.hpp"
+    ],
+    "note" => "Checked-in generated C++ bindings are archived; the 31 Rust rlibs remain separate consumer inputs"
+  }
+].freeze
+
+LICENSE_TEXTS = [
+  ["LICENSE", "rusty-v8-MIT.txt", ["MIT"], "complete-text"],
+  ["v8/LICENSE", "v8-BSD-3-Clause.txt", ["BSD-3-Clause"], "complete-text"],
+  ["third_party/abseil-cpp/LICENSE", "abseil-Apache-2.0.txt", ["Apache-2.0"], "complete-text"],
+  ["third_party/abseil-cpp/absl/time/internal/cctz/src/tzfile.h", "cctz-tzfile-public-domain.h", ["LicenseRef-Fedora-Public-Domain"], "file-level-notice"],
+  ["third_party/highway/src/LICENSE", "highway-LICENSE.txt", ["Apache-2.0"], "component-text"],
+  ["third_party/icu/LICENSE", "icu-LICENSE.txt", ["Unicode-3.0", "Unicode-DFS-2016", "BSD-2-Clause", "BSD-3-Clause", "NAIST-2003", "LicenseRef-Fedora-Public-Domain"], "complete-text-and-notices"],
+  ["third_party/simdutf/LICENSE", "simdutf-MIT.txt", ["MIT"], "complete-text"],
+  ["third_party/simdutf/simdutf.h", "simdutf-BSD-3-Clause.h", ["BSD-3-Clause"], "file-level-notice"],
+  ["third_party/dragonbox/src/LICENSE-Apache2-LLVM", "dragonbox-Apache-2.0-LLVM.txt", ["Apache-2.0 WITH LLVM-exception"], "complete-text"],
+  ["third_party/dragonbox/src/LICENSE-Boost", "dragonbox-BSL-1.0.txt", ["BSL-1.0"], "complete-text"],
+  ["third_party/fast_float/src/LICENSE-APACHE", "fast-float-Apache-2.0.txt", ["Apache-2.0"], "complete-text"],
+  ["third_party/fast_float/src/LICENSE-BOOST", "fast-float-BSL-1.0.txt", ["BSL-1.0"], "complete-text"],
+  ["third_party/fast_float/src/LICENSE-MIT", "fast-float-MIT.txt", ["MIT"], "complete-text"],
+  ["third_party/fp16/src/LICENSE", "fp16-MIT.txt", ["MIT"], "complete-text"],
+  ["v8/third_party/inspector_protocol/LICENSE", "inspector-protocol-BSD-3-Clause.txt", ["BSD-3-Clause"], "complete-text"],
+  ["v8/third_party/rapidhash-v8/LICENSE", "rapidhash-BSD-2-Clause.txt", ["BSD-2-Clause"], "complete-text"],
+  ["v8/third_party/rapidhash-v8/secret.h", "rapidhash-secret-Unlicense.h", ["Unlicense"], "file-level-notice"],
+  ["v8/src/base/ieee754.cc", "fdlibm-ultra-permissive.cc", ["LicenseRef-Fedora-UltraPermissive"], "file-level-notice"],
+  ["v8/src/builtins/builtins-math-xsum.cc", "xsum-MIT.cc", ["MIT"], "file-level-notice"],
+  ["v8/third_party/valgrind/LICENSE", "valgrind-BSD-Protection.txt", ["BSD-Protection"], "complete-text"],
+  ["third_party/googletest/src/googletest/include/gtest/gtest_prod.h", "googletest-BSD-3-Clause.h", ["BSD-3-Clause"], "file-level-complete-text"],
+  ["v8/third_party/v8/builtins/LICENSE", "python-powersort-Python-2.0.1.txt", ["Python-2.0.1"], "complete-text"],
+  ["third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/LICENSE-Apache", "temporal-capi-Apache-2.0.txt", ["Apache-2.0"], "complete-text"],
+  ["third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/LICENSE-MIT", "temporal-capi-MIT.txt", ["MIT"], "complete-text"]
+].freeze
+
+def capture!(*command)
+  stdout, stderr, status = Open3.capture3(*command)
+  return stdout if status.success?
+
+  raise Agentlab::Error, "#{command.join(' ')} failed: #{stderr.strip}"
+end
+
+def archive_inputs(gn_out)
+  query = capture!("ninja", "-C", gn_out, "-t", "query", "obj/librusty_v8.a")
+  lines = query.lines.drop_while { |line| line != "  input: alink\n" }.drop(1)
+  inputs = lines.take_while { |line| line != "  outputs:\n" }.filter_map do |line|
+    next unless line.start_with?("    ")
+
+    value = line.strip.delete_prefix("| ")
+    value unless value.start_with?("||")
+  end
+  [inputs.select { |path| path.end_with?(".o") }, inputs.select { |path| path.end_with?(".rlib") }]
+end
+
+def selected_compile_dependencies(gn_out, source_root, objects)
+  selected = objects.to_set
+  dependencies = Set.new
+  current = false
+  capture!("ninja", "-C", gn_out, "-t", "deps").each_line do |line|
+    if line =~ /\A(\S+\.o): #deps/
+      current = selected.include?(Regexp.last_match(1))
+    elsif current && line.start_with?("    ")
+      absolute = File.expand_path(line.strip, gn_out)
+      dependencies << absolute.delete_prefix("#{source_root}/") if absolute.start_with?("#{source_root}/") && File.file?(absolute)
+    elsif line.strip.empty?
+      current = false
+    end
+  end
+  dependencies
+end
+
+def selected_transitive_inputs(gn_out, source_root)
+  capture!("ninja", "-C", gn_out, "-t", "inputs", "obj/librusty_v8.a").lines.filter_map do |line|
+    absolute = File.expand_path(line.strip, gn_out)
+    absolute.delete_prefix("#{source_root}/") if absolute.start_with?("#{source_root}/") && File.file?(absolute)
+  end.to_set
+end
+
+def paths_digest(paths)
+  Digest::SHA256.hexdigest(paths.to_a.sort.join("\n") + "\n")
+end
+
+begin
+  package = Agentlab.package_named("rust-v8")
+  version = package.upstream.fetch("current_version").to_s
+  source_root = nil
+  gn_out = nil
+  output = File.join(package.directory, "rust-v8-#{version}-static-license.json")
+  check = false
+
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/audit-rust-v8-static-license --source-root PATH --gn-out PATH [options]"
+    parser.on("--source-root PATH", "Exact patched Rusty V8 source tree") { |path| source_root = path }
+    parser.on("--gn-out PATH", "Retained GN output directory") { |path| gn_out = path }
+    parser.on("--output PATH", "Canonical static-license receipt") { |path| output = path }
+    parser.on("--check", "Verify the checked receipt") { check = true }
+  end.parse!
+
+  raise Agentlab::Error, "--source-root is required" unless source_root
+  raise Agentlab::Error, "--gn-out is required" unless gn_out
+  source_root = File.realpath(source_root)
+  gn_out = File.realpath(gn_out)
+
+  source_receipt_path = File.join(package.directory, "rust-v8-#{version}-source-closure.json")
+  archive_graph_path = File.join(package.directory, "rust-v8-#{version}-archive-graph.json")
+  source_filter_path = File.join(package.directory, "rust-v8-#{version}-source-filter.json")
+  source_receipt = JSON.parse(File.read(source_receipt_path))
+  archive_graph = JSON.parse(File.read(archive_graph_path))
+  source_filter = JSON.parse(File.read(source_filter_path))
+  source_sha256 = Digest::SHA256.file(source_receipt_path).hexdigest
+  archive_graph_sha256 = Digest::SHA256.file(archive_graph_path).hexdigest
+  source_filter_sha256 = Digest::SHA256.file(source_filter_path).hexdigest
+
+  raise Agentlab::Error, "source receipt is not the reviewed filtered closure" unless source_receipt["schema"] == "rust-v8-source-closure/v2"
+  unless archive_graph.dig("source_closure_reference", "sha256") == source_sha256
+    raise Agentlab::Error, "archive graph is not bound to the current source receipt"
+  end
+  unless source_receipt.dig("source_filter", "sha256") == source_filter_sha256
+    raise Agentlab::Error, "source filter is not bound to the current source receipt"
+  end
+
+  objects, rlibs = archive_inputs(gn_out)
+  unless objects.length == 1_795 && rlibs.length == 31 && archive_graph.dig("archive", "object_input_count") == objects.length
+    raise Agentlab::Error, "selected archive graph identity changed"
+  end
+  compile_dependencies = selected_compile_dependencies(gn_out, source_root, objects)
+  transitive_inputs = selected_transitive_inputs(gn_out, source_root)
+  selected_paths = compile_dependencies | transitive_inputs
+
+  components = COMPONENTS.map do |component|
+    component.fetch("selected_paths").each do |path|
+      raise Agentlab::Error, "selected license evidence is absent from the graph: #{path}" unless selected_paths.include?(path)
+    end
+    component
+  end
+
+  license_texts = LICENSE_TEXTS.map do |path, install_name, expressions, scope|
+    absolute = File.join(source_root, path)
+    raise Agentlab::Error, "missing required license evidence #{path}" unless File.file?(absolute)
+    {
+      "path" => path,
+      "install_name" => install_name,
+      "expressions" => expressions,
+      "scope" => scope,
+      "bytes" => File.size(absolute),
+      "sha256" => Digest::SHA256.file(absolute).hexdigest
+    }
+  end
+  install_names = license_texts.map { |record| record.fetch("install_name") }
+  raise Agentlab::Error, "duplicate installed license filename" unless install_names.uniq.length == install_names.length
+
+  excluded_siphash = source_filter.fetch("excluded_paths").map { |record| "v8/#{record.fetch('path')}" }
+  excluded_siphash.each do |path|
+    raise Agentlab::Error, "excluded SipHash source is still present: #{path}" if File.exist?(File.join(source_root, path))
+  end
+
+  license_data = JSON.parse(File.read("/usr/share/fedora-license-data/licenses/fedora-licenses.json")).values
+  allowed = license_data.to_h do |record|
+    [record.dig("license", "expression"), Array(record.dig("license", "status")).include?("allowed")]
+  end
+  identifiers = %w[
+    Apache-2.0 BSD-2-Clause BSD-3-Clause BSD-Protection BSL-1.0
+    LicenseRef-Fedora-Public-Domain LicenseRef-Fedora-UltraPermissive MIT
+    NAIST-2003 Python-2.0.1 Unicode-3.0 Unicode-DFS-2016 Unlicense
+  ] + ["Apache-2.0 WITH LLVM-exception"]
+  disallowed = identifiers.reject { |identifier| allowed[identifier] }
+  raise Agentlab::Error, "Fedora-disallowed selected license identifiers: #{disallowed.join(', ')}" unless disallowed.empty?
+
+  allocator_license_path = File.join(package.directory, "rust-v8-stable-system-allocator-license.txt")
+  allocator_patch_path = File.join(package.directory, "rust-v8-system-rust-toolchain.patch")
+  receipt = {
+    "schema" => "rust-v8-static-license/v1",
+    "package" => package.name,
+    "release" => version,
+    "source_closure_reference" => {
+      "path" => File.basename(source_receipt_path),
+      "sha256" => source_sha256
+    },
+    "archive_graph_reference" => {
+      "path" => File.basename(archive_graph_path),
+      "sha256" => archive_graph_sha256,
+      "scope" => archive_graph.dig("witness", "scope")
+    },
+    "source_filter_reference" => {
+      "path" => File.basename(source_filter_path),
+      "sha256" => source_filter_sha256,
+      "excluded_paths" => excluded_siphash
+    },
+    "selected_graph" => {
+      "archive_objects" => objects.length,
+      "archive_object_paths_sha256" => paths_digest(objects),
+      "compile_dependency_files" => compile_dependencies.length,
+      "compile_dependency_paths_sha256" => paths_digest(compile_dependencies),
+      "transitive_input_files" => transitive_inputs.length,
+      "transitive_input_paths_sha256" => paths_digest(transitive_inputs),
+      "implicit_rust_rlibs" => rlibs.length,
+      "implicit_rust_rlibs_embedded" => false
+    },
+    "static_archive" => {
+      "expression" => STATIC_EXPRESSION,
+      "components" => components,
+      "required_license_texts" => license_texts
+    },
+    "source_only" => {
+      "downstream_allocator_shim" => {
+        "expression" => "BSD-3-Clause",
+        "embedded_in_static_archive" => false,
+        "patch" => {
+          "path" => File.basename(allocator_patch_path),
+          "sha256" => Digest::SHA256.file(allocator_patch_path).hexdigest
+        },
+        "license_text" => {
+          "path" => File.basename(allocator_license_path),
+          "sha256" => Digest::SHA256.file(allocator_license_path).hexdigest
+        }
+      },
+      "implicit_rust_rlibs" => {
+        "count" => rlibs.length,
+        "embedded_in_static_archive" => false,
+        "final_consumer_license_obligation" => true
+      }
+    },
+    "system_libraries" => {
+      "copied_into_static_archive" => false,
+      "consumer_elf_needed" => archive_graph.dig("consumer_witness", "elf_needed")
+    },
+    "validation" => {
+      "selected_archive_graph_bound" => true,
+      "selected_component_evidence_verified" => true,
+      "required_license_texts_verified" => true,
+      "fedora_allowed_spdx_verified" => true,
+      "reviewed_siphash_exclusion_verified" => true,
+      "prototype_static_archive_license_complete" => true,
+      "production_static_archive_license_complete" => false,
+      "nonembedded_rust_rlibs_excluded" => true,
+      "system_library_texts_excluded" => true
+    },
+    "scope" => "complete license expression and exact text map for the retained Fedora 44 x86_64 1,795-object static archive graph; production source-bound rebuild, final consumer Rust rlibs, other architectures, and system library payloads remain separate"
+  }
+  content = JSON.pretty_generate(receipt) + "\n"
+
+  if check
+    raise Agentlab::Error, "missing checked static-license receipt #{output}" unless File.file?(output)
+    raise Agentlab::Error, "Rusty V8 static-license receipt is stale: #{output}" unless File.binread(output) == content
+    puts "Verified #{components.length} selected components and #{license_texts.length} required license texts."
+  else
+    Agentlab.atomic_write(output, content)
+    puts "Wrote #{components.length} selected components and #{license_texts.length} required license texts to #{output}."
+  end
+rescue Agentlab::Error, JSON::ParserError, KeyError, SystemCallError => e
+  warn "error: #{e.message}"
+  exit 1
+end

@@ -1,0 +1,42 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Select SipHash sources only when V8 enables SipHash
+
+V8 defaults v8_use_siphash to false and guards every production call with the
+matching V8_USE_SIPHASH define, but its core target still compiles and packages
+the unused CC0-licensed implementation. Select the header and implementation
+only when that existing feature flag is enabled. Agentlab keeps the flag false,
+so this changes no selected runtime behavior and permits removing the unused
+source from the Fedora source archive.
+---
+diff --git a/v8/BUILD.gn b/v8/BUILD.gn
+--- a/v8/BUILD.gn
++++ b/v8/BUILD.gn
+@@ -4692,10 +4692,13 @@ v8_header_set("v8_internal_headers") {
+     "src/zone/zone.h",
+     "third_party/rapidhash-v8/rapidhash.h",
+     "third_party/rapidhash-v8/secret.h",
+-    "third_party/siphash/halfsiphash.h",
+     "third_party/utf8-decoder/utf8-decoder.h",
+   ]
+ 
++  if (v8_use_siphash) {
++    sources += [ "third_party/siphash/halfsiphash.h" ]
++  }
++
+   if (v8_enable_snapshot_compression) {
+     sources += [ "src/snapshot/snapshot-compression.h" ]
+   }
+@@ -6326,9 +6329,12 @@ v8_cluster_source_set("v8_base_without_compiler") {
+     "src/zone/type-stats.cc",
+     "src/zone/zone-segment.cc",
+     "src/zone/zone.cc",
+-    "third_party/siphash/halfsiphash.cc",
+   ]
+ 
++  if (v8_use_siphash) {
++    sources += [ "third_party/siphash/halfsiphash.cc" ]
++  }
++
+   if (v8_enable_snapshot_compression) {
+     sources += [ "src/snapshot/snapshot-compression.cc" ]
+   }

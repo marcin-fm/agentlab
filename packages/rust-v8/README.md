@@ -68,7 +68,7 @@ consumers use it.
 The package retains only `rust-v8-static`. A dynamic package can be reconsidered
 if upstream defines a shared target and build-script mode with a maintained
 loader and ABI contract. The receipt SHA-256 is
-`266a51befb8037f3460ed0259ec1aa8c277b9d9a1bb07d47bbb4d7cd92ab5f50`.
+`ce2f4724ef2ed77ff1d939fc7829c92e0c04e4fe42d6e89fc5c979b01d1e568a`.
 
 ## Source Evidence
 
@@ -77,17 +77,25 @@ The root tag `v149.2.0` resolves to commit
 has SHA-256
 `8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a`.
 
-The root archive does not contain the required submodule contents. The spec adds
-all 20 exact commit-addressed GitHub codeload or Chromium Gitiles archives as
-direct RPM inputs. The 153,497,693 bytes of checked archives reconstruct
-60,914 file, mode, and symlink records and match the clean recursive Git tree at
-SHA-256
-`4de1088a4c1262fb07c8aa050261ea5adb4ea2f6f2da7bfe10908db5188f3b07`.
+The root archive does not contain the required submodule contents. The spec uses
+19 direct commit-addressed submodule archives plus one deterministic V8 archive
+generated at SRPM time from its exact upstream commit. That source filter removes
+only the unused CC0 SipHash license, header, and implementation while
+`v8_use_siphash=false`; `rust-v8-disable-unused-siphash.patch` makes the existing
+feature boundary explicit in GN. The 20 direct public inputs plus one generated
+input total 153,137,489 bytes and reconstruct 60,911 file, mode, and symlink
+records. They match the exact recursive Git tree except for those three reviewed
+exclusions, at SHA-256
+`6c09e1a9ca0c3d1bfea49a40e0be5abcb12ca5a3c92983e667cec499f47bcc1d`.
 
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
-archive hash, component-tree hash, and RPM source number. Its SHA-256 is
-`bc0a06c17002afa555daf5ed5349afd23575aac0661daa02c9fffd7e97d326de`.
-No generated aggregate archive or separate hosting service is required.
+archive hash, component-tree hash, source-filter provenance, and RPM source
+number. Its SHA-256 is
+`fee800b3815ecee1e52cb75a4eeba2925a2cd3b561161330020a5317cac2eb77`.
+`rust-v8-149.2.0-source-filter.json` binds the exact upstream and filtered trees,
+the three exclusions, and the checked generator script. Its SHA-256 is
+`c3e6ec58ed18453d371e575a120ecc62e894af1fcc43be60c573da4bb591bef2`.
+No remote generated asset or separate hosting service is required.
 
 This receipt proves the exact `.gitmodules` closure, not a full `gclient sync`.
 V8's `DEPS` also names test, benchmark, and tooling sources that the direct
@@ -104,18 +112,32 @@ stable allocator shims needed by the Temporal Rust graph.
 preprocessor conditions valid under GCC and adding one direct include required
 by the Wasm build.
 
-Both patches pass zero-fuzz dry-runs against a fresh exact-tag recursive tree.
+`rust-v8-disable-unused-siphash.patch` moves the SipHash header and implementation
+behind V8's existing `v8_use_siphash` feature. Agentlab keeps that feature false,
+so omitting the three CC0 source files changes no selected runtime behavior.
+
+All three patches pass zero-fuzz dry-runs against a fresh exact-tag recursive tree.
 The spec now reconstructs that tree from the checked RPM sources and applies the
-patches before reaching its deliberate remaining-gates stop. Neither patch has
-been submitted upstream. The new allocator shim is original downstream
-BSD-3-Clause code by Marcin FM.
+patches before reaching its deliberate remaining-gates stop. None of the three
+patches has been submitted upstream. The new allocator shim is original
+downstream BSD-3-Clause code by Marcin FM.
 
-The known draft source-package license expression is therefore
-`MIT AND BSD-3-Clause`. It remains provisional until the recursive Chromium,
-V8, third-party, and vendored Rust declarations and texts are normalized,
-reviewed for Fedora, and converted into the final aggregate expression.
+The retained Fedora 44 x86_64 static archive expression is:
 
-`rust-v8-149.2.0-license-audit.json` currently hashes 415 candidate legal texts
+```text
+Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
+```
+
+`rust-v8-149.2.0-static-license.json` binds that expression to the exact 1,795
+archive objects, 4,416 compile-dependency files, selected generated/data inputs,
+17 reviewed component groups, and 24 exact license texts or file-level notices.
+Every identifier is allowed by the installed Fedora license data. The receipt
+also records that the 31 implicit Rust rlibs and system libraries are not
+embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
+SHA-256 is
+`a28492724efbfe96cc586b8e43881bf7792d8b315fc275a3280b87acebfdbf97`.
+
+`rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
 entries: 216 real source packages and 52 generated empty placeholders. Every
 real vendored source package has a manifest license declaration and at least one
@@ -131,9 +153,11 @@ expressions are also reviewed, and three materialized declared texts are
 semantically verified. All eight vendored Cargo slash alternatives remain
 mechanically normalized to `MIT OR Apache-2.0`. The audit also records the exact Chromium parent text and
 file-level header evidence for `tools/clang` and `tools/win`, without applying
-that text to whole components or their embedded third-party assets. Remaining
-semantic text review, aggregate SPDX normalization, Fedora allowability,
-system-library, and final linked-archive decisions remain open.
+that text to whole components or their embedded third-party assets. The broad
+source audit remains acceptance evidence for every source input, but it is
+intentionally separate from the selected binary expression. Source-only
+build/test/tool material and nonembedded Rust rlibs are not promoted into the
+`rust-v8-static` `License:` field.
 
 `rust-v8-149.2.0-fedora-license-evidence.json` queries Fedora 44 `fedora` and
 `updates` crate-devel metadata for those exact 216 source packages. It records
@@ -143,25 +167,25 @@ identity, but do not establish that a crate is linked into `librusty_v8.a` or
 complete the final aggregate expression. Its SHA-256 is
 `b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
 The regenerated license-audit receipt binds that evidence at SHA-256
-`19157d53ed1b8e4427897bb6ea639ba45c5294a97e17a8ec4fe63d88bf4878ef`.
+`e7be944f052d2286d3498a7e84b8cd9b5d45d0b7dc57551344d84fabe612825c`.
 
 ## Prototype Result
 
 The local Fedora 44 x86_64 proof used stable Rust `1.96.1`, GCC `16.1.1`, LLD
 `22.1.8`, GN `2437`, Ninja `1.13.2`, system libstdc++, and no Chromium Rust
-binary toolchain. It built the Temporal Rust target and a 160,316,016-byte
-`librusty_v8.a` with SHA-256
-`07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719`.
+binary toolchain. It built the Temporal Rust target and, after the reviewed
+SipHash exclusion, a 160,314,390-byte `librusty_v8.a` with SHA-256
+`ea107f29106ef88a313b03bc6ff714fc4e1c1a5db822df646c8d5f0a82bca334`.
 An offline Cargo consumer linked the archive and printed `Fedora Rusty V8`.
 
 `rust-v8-149.2.0-archive-graph.json` now preserves a canonical retained witness for
-that retained prototype. The `//:rusty_v8` Ninja query contains 1,796 selected
-object inputs, and the archive contains the same 1,796 member-basename multiset.
+that retained prototype. The `//:rusty_v8` Ninja query contains 1,795 selected
+object inputs, and the archive contains the same 1,795 member-basename multiset.
 The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
 classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
 records its separate `temporal_capi` dependency. No googletest input appears in
 the selected graph. The witness SHA-256 is
-`fbf59c5066a74274a801542ea74fc0944d7be0298626dd987a2fdde4123ab561`.
+`be4c0d52a3459b54daae2fb176649c31e31c56033bfdcac2c90ba35ca01aace5`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer
@@ -169,13 +193,12 @@ link closure.
 
 ## Remaining Gates
 
-1. Complete semantic review of Fedora-absent and materially version-different declarations, scoped parent-text cases, and embedded third-party assets.
-2. Review every required text, SPDX expression, and system-library decision for Fedora.
-3. Establish the final source-package and linked-static-archive license expressions.
-4. Run clean Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes.
-5. Prove aarch64 or retain an explicitly reviewed architecture restriction.
-6. Submit or otherwise resolve the downstream system-toolchain and portability patches.
+1. Run source-bound, network-isolated Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes, regenerating the selected-license receipt from each graph.
+2. Prove aarch64 or retain an explicitly reviewed architecture restriction.
+3. Complete the final consumer license closure for the 31 separately linked Rust rlibs.
+4. Submit or otherwise resolve the three downstream system-toolchain, portability, and source-selection patches.
 
 The spec verifies every source through the checked receipt, reconstructs the
-recursive tree, applies both patches, then aborts before compilation while the
-remaining legal and build gates are open. The package is disabled in COPR.
+reviewed filtered tree, applies all three patches, verifies the static-license
+receipt, then aborts before compilation while the production and architecture
+gates remain open. The package is disabled in COPR.
