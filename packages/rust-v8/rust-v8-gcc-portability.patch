@@ -1,11 +1,11 @@
 From: Marcin FM <marcin@lgic.pl>
 Subject: [PATCH] Fix V8 GCC preprocessing, flags, and include completeness
 
-GCC does not accept Clang's `__has_warning` predicate in a compound `#if`, the
-V8 and ICU ARM64 assembly paths receive a Clang-only BTI marker, and one Wasm
-source relies on a transitive include for managed object definitions. Keep Clang
-warning handling unchanged while making the Fedora GCC path portable and include
-the required definition directly.
+GCC does not accept Clang's `__has_warning` predicate in a compound `#if`, ICU's
+ARM64 assembly path adds a Clang-only BTI marker without checking the compiler,
+and one Wasm source relies on a transitive include for managed object definitions.
+Keep Clang behavior unchanged while making the Fedora GCC path portable and
+include the required definition directly.
 ---
 diff --git a/third_party/icu/BUILD.gn b/third_party/icu/BUILD.gn
 --- a/third_party/icu/BUILD.gn
@@ -19,20 +19,6 @@ diff --git a/third_party/icu/BUILD.gn b/third_party/icu/BUILD.gn
          import("//build/config/arm.gni")
          if (arm_control_flow_integrity == "standard" ||
              arm_control_flow_integrity == "bti+pac") {
-diff --git a/v8/BUILD.gn b/v8/BUILD.gn
---- a/v8/BUILD.gn
-+++ b/v8/BUILD.gn
-@@ -1620,10 +1620,6 @@
-   }
-   if (v8_current_cpu == "arm64") {
-     defines += [ "V8_TARGET_ARCH_ARM64" ]
--    if (current_cpu == "arm64" && v8_control_flow_integrity && is_clang) {
--      # Mark assembly code as BTI-compatible.
--      asmflags = [ "-mmark-bti-property" ]
--    }
-   }
- 
-   # Mips64el simulators.
 diff --git a/v8/src/base/macros.h b/v8/src/base/macros.h
 --- a/v8/src/base/macros.h
 +++ b/v8/src/base/macros.h

@@ -18,7 +18,7 @@ source_policy:
   full_deps_checkout_verified: false
   selected_build_dependency_closure_verified: false
   source_closure_receipt: rust-v8-149.2.0-source-closure.json
-  source_closure_receipt_sha256: 4feb8b6adeeaee71be8f76bc464a5fb91a932f50bd85ab0b9a75c12e00b15d6b
+  source_closure_receipt_sha256: c1e6a0b0ea067acd1e7ae2ac513a2aa4b709da5129cb9db7ee99c1fc7648ad57
   recursive_components: 21
   direct_public_rpm_sources: 20
   generated_filtered_rpm_sources: 1
@@ -45,7 +45,7 @@ consumer_contract:
   static_link_license_propagation: required in every consumer
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: a5bb716e01b4c20c5b99c844f53051582089adc323ec7621482819d90f908a5a
+  receipt_sha256: 48c4d31106d4def55aecd8f33ad50711ae7f8e2f427e7f17c97136a9006acb3f
   v8_component_build_available: true
   upstream_supported: false
   existing_rust_consumers_supported: false
@@ -71,7 +71,7 @@ prototype:
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: 8a4f932dc8fc94ee18af8887c744bcd0839ca6ea035b47696763035aa551d9e0
+  receipt_sha256: 81821b175ac5831fc92ac7683c99c4be4c2f479eb9b37da505ffe951425b239a
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
   object_input_count: 1795
@@ -89,7 +89,7 @@ patches:
     upstream_status: not-submitted
   gcc_portability:
     file: rust-v8-gcc-portability.patch
-    sha256: f0a7b475cbf82e3905e2d63329647e9e52a19c11a47e0160df6ea3b194c0c049
+    sha256: ff66712a0f90eb64ec7f25ef8b0b2e168541238ca7e9e30b7d830540b8f39ede
     zero_fuzz_dry_run: passed
     upstream_status: not-submitted
   disable_unused_siphash:
@@ -99,7 +99,7 @@ patches:
     upstream_status: not-submitted
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 314eb0f34636f0f1a713d886856c752b8dad8f8032f109b7022d1c66288a4083
+  receipt_sha256: 479ea7d359134dae24e53e7f67ae1bd16e5206689207759a0264997197b11052
   candidate_license_files: 414
   readme_chromium_records: 231
   vendored_rust_entries: 268
@@ -132,7 +132,7 @@ license_audit:
   final_static_archive_license_complete: false
 static_license:
   receipt: rust-v8-149.2.0-static-license.json
-  receipt_sha256: 0f2b2d6980b379914a08bf0d162c1e185248499a7d95c30e6825c1b82cceeea8
+  receipt_sha256: 4d3f5b655bafbc04ea5895d68995b2ffd7ca0e48980ad3f97029177391683ffa
   expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
   selected_archive_objects: 1795
   required_license_texts: 24

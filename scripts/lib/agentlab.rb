@@ -686,14 +686,17 @@ module Agentlab
     end
     expected_gn_args = <<~GN.chomp
       is_debug = false
+      %ifarch aarch64
+      is_clang = true
+      %else
       is_clang = false
+      %endif
       use_lld = true
       use_custom_libcxx = false
       symbol_level = 1
       line_tables_only = false
       no_inline_line_tables = false
       clang_base_path = "/usr"
-      clang_version = "22"
       v8_enable_sandbox = false
       v8_enable_pointer_compression = false
       v8_enable_v8_checks = false
@@ -705,6 +708,12 @@ module Agentlab
     GN
     actual_gn_args = spec[/cat > out\/fedora\/args\.gn <<'GN'\n(.*?)\nGN$/m, 1]
     errors << "rust-v8: spec GN arguments do not match the retained graph" unless actual_gn_args == expected_gn_args
+    errors << "rust-v8: spec does not require the Fedora Clang compiler" unless spec.lines.map(&:strip).include?("BuildRequires:  clang >= 19")
+    unless spec.lines.map(&:strip).include?('clang_version="$(clang -dumpversion)"') &&
+           spec.lines.map(&:strip).include?('clang_version="${clang_version%%%%.*}"') &&
+           spec.lines.map(&:strip).include?('printf \'clang_version = "%s"\\n\' "$clang_version" >> out/fedora/args.gn')
+      errors << "rust-v8: spec does not bind the buildroot Clang resource version"
+    end
     errors << "rust-v8: spec does not select both supported architectures" unless spec.lines.map(&:strip).include?("ExclusiveArch:  x86_64 aarch64")
     errors << "rust-v8: spec does not generate the GN build" unless spec.lines.map(&:strip).include?("gn gen out/fedora")
     errors << "rust-v8: spec does not retain static archive debug sections" unless spec.lines.map(&:strip).include?("%global debug_package %{nil}")

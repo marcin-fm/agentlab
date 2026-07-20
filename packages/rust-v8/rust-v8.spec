@@ -5,22 +5,22 @@
 %global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 4feb8b6adeeaee71be8f76bc464a5fb91a932f50bd85ab0b9a75c12e00b15d6b
-%global license_audit_sha256 314eb0f34636f0f1a713d886856c752b8dad8f8032f109b7022d1c66288a4083
-%global archive_graph_sha256 8a4f932dc8fc94ee18af8887c744bcd0839ca6ea035b47696763035aa551d9e0
+%global closure_sha256 c1e6a0b0ea067acd1e7ae2ac513a2aa4b709da5129cb9db7ee99c1fc7648ad57
+%global license_audit_sha256 479ea7d359134dae24e53e7f67ae1bd16e5206689207759a0264997197b11052
+%global archive_graph_sha256 81821b175ac5831fc92ac7683c99c4be4c2f479eb9b37da505ffe951425b239a
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 a5bb716e01b4c20c5b99c844f53051582089adc323ec7621482819d90f908a5a
+%global dynamic_linking_sha256 48c4d31106d4def55aecd8f33ad50711ae7f8e2f427e7f17c97136a9006acb3f
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 0f2b2d6980b379914a08bf0d162c1e185248499a7d95c30e6825c1b82cceeea8
+%global static_license_sha256 4d3f5b655bafbc04ea5895d68995b2ffd7ca0e48980ad3f97029177391683ffa
 %global system_rust_patch_sha256 36d5b76fd4010b15a9134fcc9474eab32bd1de3599e31d28052133b4bb01eb1e
-%global gcc_patch_sha256 f0a7b475cbf82e3905e2d63329647e9e52a19c11a47e0160df6ea3b194c0c049
+%global gcc_patch_sha256 ff66712a0f90eb64ec7f25ef8b0b2e168541238ca7e9e30b7d830540b8f39ede
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
 %global source_preparer_sha256 cf49573ca92537748b029bb1cbf89dd1dc871126c72de8b3ff6cb09325cb027c
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.17%{?dist}
+Release:        0.18%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -61,7 +61,7 @@ Source30:       README.md
 # Guard Chromium nightly-only Rust behavior and use Fedora's stable toolchain.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
-# Make V8 and ICU's ARM64 assembly paths GCC-compatible and add one required include.
+# Keep Clang-only warning and ICU behavior portable on Fedora GCC.
 # Fedora-specific; not submitted while the GCC build boundary is reviewed.
 Patch1:         %{name}-gcc-portability.patch
 # Keep the already-disabled SipHash implementation out of the selected graph.
@@ -72,7 +72,7 @@ ExclusiveArch:  x86_64 aarch64
 
 BuildRequires:  bindgen-cli >= 0.72
 BuildRequires:  binutils
-BuildRequires:  clang-libs >= 19
+BuildRequires:  clang >= 19
 BuildRequires:  gcc-c++
 BuildRequires:  gn
 BuildRequires:  libatomic
@@ -288,14 +288,17 @@ patch --batch --fuzz=0 -p1 < %{PATCH2}
 mkdir -p out/fedora
 cat > out/fedora/args.gn <<'GN'
 is_debug = false
+%ifarch aarch64
+is_clang = true
+%else
 is_clang = false
+%endif
 use_lld = true
 use_custom_libcxx = false
 symbol_level = 1
 line_tables_only = false
 no_inline_line_tables = false
 clang_base_path = "/usr"
-clang_version = "22"
 v8_enable_sandbox = false
 v8_enable_pointer_compression = false
 v8_enable_v8_checks = false
@@ -305,6 +308,9 @@ rust_sysroot_absolute = "/usr"
 rust_bindgen_root = "/usr"
 toolchain_supports_rust_thin_lto = false
 GN
+clang_version="$(clang -dumpversion)"
+clang_version="${clang_version%%%%.*}"
+printf 'clang_version = "%s"\n' "$clang_version" >> out/fedora/args.gn
 rustc_version="$(rpm -q --qf '%{VERSION}-Fedora-%{VERSION}-%{RELEASE}' rust)"
 printf 'rustc_version = "%s"\n' "$rustc_version" >> out/fedora/args.gn
 gn gen out/fedora
@@ -386,6 +392,10 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.18
+- Use Fedora Clang for V8's upstream-oriented aarch64 compiler path.
+- Derive the Chromium Clang resource version from the buildroot compiler.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.17
 - Keep ICU's Clang-only ARM64 assembly marker out of the Fedora GCC build.
 

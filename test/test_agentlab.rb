@@ -1603,6 +1603,9 @@ class AgentlabTest < Minitest::Test
     static_license = JSON.parse(File.read(File.join(package.directory, dependencies.dig("static_license", "receipt"))))
 
     assert_empty(Agentlab.validate_rust_v8_evidence(package, dependencies, spec))
+    assert_includes(spec, "%ifarch aarch64\nis_clang = true\n%else\nis_clang = false\n%endif")
+    assert_includes(spec, 'clang_version="$(clang -dumpversion)"')
+    assert_includes(spec, 'clang_version="${clang_version%%%%.*}"')
     assert_equal(1, license.fetch("unmaterialized_deps_declarations").length)
     googletest = license.fetch("unmaterialized_deps_declarations").fetch(0)
     assert_equal("v8/third_party/googletest/src", googletest.fetch("source_path"))
