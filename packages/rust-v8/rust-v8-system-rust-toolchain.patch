@@ -59,6 +59,16 @@ diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
  }
  
  # The BUILDCONFIG file sets this config on targets by default, which means when
+@@ -3353,6 +3355,8 @@ config("minimal_symbols") {
+       # to switch. TODO: Adopt that in controlled way.
+       cflags += [ "-gdwarf-4" ]
+-      rustflags += [ "-Zdwarf-version=4" ]
++      if (rustc_nightly_capability) {
++        rustflags += [ "-Zdwarf-version=4" ]
++      }
+     }
+ 
+     if (use_dwarf5) {
 diff --git a/build/config/gcc/BUILD.gn b/build/config/gcc/BUILD.gn
 --- a/build/config/gcc/BUILD.gn
 +++ b/build/config/gcc/BUILD.gn

@@ -5,14 +5,14 @@
 %global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 695a42c503934471f9651039669b6e1746ab9197642bc278f0c052c25bf316ca
-%global license_audit_sha256 df76850a94652dfb651265bfef9322ee26634a54a538bb00165c3b7344843081
-%global archive_graph_sha256 322617d6be730713c4d729cdac8516fd5f46014385927c9b4dbedfa53d354522
+%global closure_sha256 e86c05dd2e2d8a83aae389f03aaf80c67da5da6138ed35b2dea71fdc088bdf79
+%global license_audit_sha256 23ed7ac9b10d3ccc6a3ac278bda80caf6e47ebcb0be2b6030dd688da4dc8791c
+%global archive_graph_sha256 acd2f53e0302309300e6368ae95c7ff75b2b62dec4b10d1b15951413ed447f7a
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 5aa9ec197e67a9144efc2dd61e0a3f0fb00ca74392e6cf1a73763ba09908f5ca
+%global dynamic_linking_sha256 f851204f991b41327deae800b3b82023424676bbedc40b3f61fea47a9074b304
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 5d82b1878d518b6ca328f3cf57667ef10c91dbdec929b31f730df335a3c17e99
-%global system_rust_patch_sha256 3b7fd4b8b962d1003b284b503390140c696d7c5e91579774455628cba11d5976
+%global static_license_sha256 d36fc8c461cbe73e6b09ac0df53ea4355b734c832adcef175cc7a06b170596a1
+%global system_rust_patch_sha256 3cd3f7631fdd6e60b2d1a523944b7020064c08035149bf20780d3d0a4e4fc83f
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
@@ -20,7 +20,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.10%{?dist}
+Release:        0.11%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -385,6 +385,10 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.11
+- Guard Chromium's Rust DWARF flag when using Fedora stable Rust.
+- Preserve line-table debug information on x86_64 and aarch64.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.10
 - Allow native configured-SCM proof builds on x86_64 and aarch64.
 - Keep architecture-specific graph and license evidence fail-closed.
