@@ -36,9 +36,16 @@ to a non-npm version.
 
 ## Source Build Boundary
 
-The patched root lock contains 669 integrity-pinned registry tarballs. After
-target filtering, 614 entries across 562 names remain active for Fedora
-Linux/x86_64;
+The patched root lock contains 669 integrity-pinned registry tarballs. The
+retained `nodejs-playwright-1.62.0-alpha-1783623505000-lock-closure.json`
+receipt has SHA-256
+`db12ef26e9b7ca91621418148f5b3f62c8992bed948b17167468089e53565fab` and
+selects 611 records across 561 unique npm names for each Fedora glibc
+target, x64 and arm64. The targets share 607 records and differ by the exact
+DuckDB, esbuild, Rolldown, and Lightning CSS architecture bindings. The prior
+614-record count incorrectly retained three musl-only packages.
+
+This is a broad root-lock source inventory, not an authoritative role split.
 Fedora 43 and 44 provide no exact locked npm versions. Playwright exposes no
 package-only build target. Patch1 removes the test-only stable runner's
 unconditional `npm ci` from the normal release-module build. The separately
@@ -70,6 +77,12 @@ text or component notice. `json-escape-simd 3.0.2` also contains no MIT text or
 attribution, and its source states that the implementation is borrowed from
 Apache-2.0 `sonic-rs 0.5.5`; an MIT-only generated notice would therefore be
 incomplete.
+
+The lock receipt records source URLs, npm integrity values, declared license
+fields, platform exclusions, workspaces, and the separate stable-runner lock.
+It does not claim that archives, license texts, native/WASM sources, generated
+outputs, binary inclusion, or the final production/build/test split are
+verified.
 
 Upstream's generated Core dashboard originally consumed ten exact
 `@browser-logos/*` inputs whose marks are outside the source repository's MIT

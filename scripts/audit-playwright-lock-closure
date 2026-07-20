@@ -1,0 +1,345 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "optparse"
+require_relative "lib/agentlab"
+
+module PlaywrightLockAudit
+  module_function
+
+  def deep_sort(value)
+    case value
+    when Hash
+      value.keys.sort.to_h { |key| [key, deep_sort(value.fetch(key))] }
+    when Array
+      value.map { |entry| deep_sort(entry) }
+    else
+      value
+    end
+  end
+
+  def allowed_selector?(selector, target)
+    values = Array(selector)
+    return true if values.empty?
+
+    excluded = values.filter_map { |value| value.delete_prefix("!") if value.start_with?("!") }
+    return false if excluded.include?(target)
+
+    included = values.reject { |value| value.start_with?("!") }
+    included.empty? || included.include?(target)
+  end
+
+  def package_name(package_path)
+    parts = package_path.split("/")
+    index = parts.rindex("node_modules")
+    raise Agentlab::Error, "invalid npm package path #{package_path.inspect}" unless index
+
+    first = parts[index + 1]
+    raise Agentlab::Error, "missing npm package name in #{package_path.inspect}" unless first
+
+    return first unless first.start_with?("@")
+
+    second = parts[index + 2]
+    raise Agentlab::Error, "incomplete scoped npm package path #{package_path.inspect}" unless second
+
+    "#{first}/#{second}"
+  end
+
+  def platform_allowed?(package_path, entry, target)
+    return [false, "os"] unless allowed_selector?(entry["os"], target.fetch("os"))
+    return [false, "cpu"] unless allowed_selector?(entry["cpu"], target.fetch("cpu"))
+    return [false, "libc"] unless allowed_selector?(entry["libc"], target.fetch("libc"))
+
+    identity = [package_path, package_name(package_path), entry["resolved"]].join("/")
+    if target.fetch("libc") == "glibc" && identity.match?(/(?:\A|[-_\/])musl(?:\z|[-_\/])/)
+      return [false, "libc"]
+    end
+    if target.fetch("libc") == "musl" && identity.match?(/(?:\A|[-_\/])gnu(?:\z|[-_\/])/)
+      return [false, "libc"]
+    end
+
+    [true, nil]
+  end
+
+  def classify_packages(lock)
+    registry = []
+    workspaces = []
+    workspace_links = []
+    unknown = []
+
+    lock.fetch("packages").each do |path, entry|
+      next if path.empty?
+
+      resolved = entry["resolved"].to_s
+      if resolved.start_with?("https://registry.npmjs.org/")
+        registry << [path, entry]
+      elsif path.start_with?("packages/") && resolved.empty?
+        workspaces << [path, entry]
+      elsif path.start_with?("node_modules/") && resolved.start_with?("packages/")
+        workspace_links << [path, entry]
+      else
+        unknown << [path, resolved]
+      end
+    end
+
+    unless unknown.empty?
+      raise Agentlab::Error, "unclassified package-lock records: #{unknown.first(10).inspect}"
+    end
+
+    [registry.sort_by(&:first), workspaces.sort_by(&:first), workspace_links.sort_by(&:first)]
+  end
+
+  def registry_record(path, entry, targets)
+    integrity = entry["integrity"].to_s
+    raise Agentlab::Error, "missing sha512 integrity for #{path}" unless integrity.start_with?("sha512-")
+
+    selected_targets = []
+    excluded_targets = {}
+    targets.each do |target_name, target|
+      allowed, reason = platform_allowed?(path, entry, target)
+      if allowed
+        selected_targets << target_name
+      else
+        excluded_targets[target_name] = reason
+      end
+    end
+
+    {
+      "package_path" => path,
+      "npm_name" => package_name(path),
+      "version" => entry.fetch("version"),
+      "source_url" => entry.fetch("resolved"),
+      "integrity" => integrity,
+      "declared_license" => entry["license"],
+      "dev" => entry["dev"] == true,
+      "optional" => entry["optional"] == true,
+      "selectors" => entry.slice("os", "cpu", "libc"),
+      "selected_targets" => selected_targets,
+      "excluded_targets" => excluded_targets
+    }
+  end
+
+  def workspace_record(source_dir, path, entry)
+    manifest_path = File.join(source_dir, path, "package.json")
+    raise Agentlab::Error, "missing workspace manifest #{path}/package.json" unless File.file?(manifest_path)
+
+    manifest = JSON.parse(File.read(manifest_path))
+    unless manifest.fetch("version") == entry.fetch("version")
+      raise Agentlab::Error, "workspace version mismatch for #{path}"
+    end
+
+    {
+      "path" => path,
+      "name" => manifest.fetch("name"),
+      "version" => manifest.fetch("version"),
+      "manifest_sha256" => Digest::SHA256.file(manifest_path).hexdigest
+    }
+  end
+
+  def workspace_link_record(path, entry)
+    {
+      "path" => path,
+      "name" => package_name(path),
+      "workspace" => entry.fetch("resolved"),
+      "link" => entry["link"] == true
+    }
+  end
+
+  def selected_summary(records, target_name)
+    selected = records.select { |record| record.fetch("selected_targets").include?(target_name) }
+    {
+      "registry_records" => selected.length,
+      "unique_npm_names" => selected.map { |record| record.fetch("npm_name") }.uniq.length,
+      "unique_name_version_identities" => selected.map { |record| [record.fetch("npm_name"), record.fetch("version")] }.uniq.length,
+      "records_with_declared_license" => selected.count { |record| !record["declared_license"].to_s.empty? },
+      "platform_excluded_records" => records.length - selected.length
+    }
+  end
+
+  def build_receipt(source_dir, package, dependencies)
+    version = package.upstream.fetch("current_version").to_s
+    audit = dependencies.fetch("lock_closure_audit")
+    targets = audit.fetch("targets")
+
+    patched_files = audit.fetch("patched_files")
+    patched_files.each do |relative_path, expected_sha256|
+      path = File.join(source_dir, relative_path)
+      raise Agentlab::Error, "missing patched source file #{relative_path}" unless File.file?(path)
+
+      actual_sha256 = Digest::SHA256.file(path).hexdigest
+      unless actual_sha256 == expected_sha256
+        raise Agentlab::Error, "patched source SHA-256 mismatch for #{relative_path}: #{actual_sha256}"
+      end
+    end
+
+    root_manifest = JSON.parse(File.read(File.join(source_dir, "package.json")))
+    unless root_manifest.fetch("name") == audit.fetch("source_workspace_name") &&
+           root_manifest.fetch("version") == audit.fetch("source_workspace_version")
+      raise Agentlab::Error, "Playwright source workspace identity does not match the audit configuration"
+    end
+
+    lock_path = File.join(source_dir, "package-lock.json")
+    lock = JSON.parse(File.read(lock_path))
+    raise Agentlab::Error, "unsupported package-lock version" unless lock.fetch("lockfileVersion") == 3
+
+    registry, workspaces, workspace_links = classify_packages(lock)
+    records = registry.map { |path, entry| registry_record(path, entry, targets) }
+    target_summaries = targets.keys.sort.to_h { |target_name| [target_name, selected_summary(records, target_name)] }
+    target_paths = targets.keys.to_h do |target_name|
+      [target_name, records.filter_map do |record|
+        record.fetch("package_path") if record.fetch("selected_targets").include?(target_name)
+      end]
+    end
+    common_paths = target_paths.values.reduce { |common, paths| common & paths }.sort
+    target_specific = target_paths.sort.to_h do |target_name, paths|
+      [target_name, (paths - common_paths).sort]
+    end
+    expected = audit.fetch("expected")
+    observed_root = {
+      "root_lock_package_records" => lock.fetch("packages").length,
+      "root_lock_registry_records" => records.length,
+      "root_lock_workspace_records" => workspaces.length,
+      "root_lock_workspace_link_records" => workspace_links.length,
+      "common_selected_registry_records" => common_paths.length
+    }
+    observed_root.each do |key, value|
+      raise Agentlab::Error, "Playwright lock #{key} changed: #{value}" unless value == expected.fetch(key)
+    end
+    target_summaries.each do |target_name, summary|
+      {
+        "target_registry_records" => summary.fetch("registry_records"),
+        "target_unique_npm_names" => summary.fetch("unique_npm_names"),
+        "target_unique_name_version_identities" => summary.fetch("unique_name_version_identities"),
+        "target_platform_excluded_records" => summary.fetch("platform_excluded_records")
+      }.each do |key, value|
+        raise Agentlab::Error, "Playwright #{target_name} #{key} changed: #{value}" unless value == expected.fetch(key)
+      end
+    end
+    unless target_specific == audit.fetch("expected_target_specific_registry_paths").sort.to_h
+      raise Agentlab::Error, "Playwright architecture-specific lock records changed"
+    end
+
+    runner_lock_path = File.join(source_dir, audit.dig("stable_test_runner", "lockfile"))
+    runner_lock = JSON.parse(File.read(runner_lock_path))
+    runner_registry, runner_workspaces, runner_links = classify_packages(runner_lock)
+    unless runner_workspaces.empty? && runner_links.empty?
+      raise Agentlab::Error, "stable test runner lock unexpectedly contains workspace records"
+    end
+    runner_records = runner_registry.map { |path, entry| registry_record(path, entry, targets) }
+    unless runner_lock.fetch("packages").length == expected.fetch("stable_runner_package_records") &&
+           runner_records.length == expected.fetch("stable_runner_registry_records")
+      raise Agentlab::Error, "stable test runner lock counts changed"
+    end
+    targets.each_key do |target_name|
+      selected = runner_records.count { |record| record.fetch("selected_targets").include?(target_name) }
+      unless selected == expected.fetch("stable_runner_target_registry_records")
+        raise Agentlab::Error, "stable test runner #{target_name} selection changed: #{selected}"
+      end
+    end
+
+    dashboard_manifest = JSON.parse(File.read(File.join(source_dir, "packages/dashboard/package.json")))
+    build_script = File.read(File.join(source_dir, "utils/build/build.js"))
+    browser_logo_records = records.select { |record| record.fetch("npm_name").start_with?("@browser-logos/") }
+
+    receipt = {
+      "schema" => audit.fetch("schema"),
+      "package" => package.name,
+      "release" => version,
+      "source_commit" => package.upstream.fetch("source_commit"),
+      "source_archive_sha256" => package.data.dig("source_policy", "source_archive_sha256"),
+      "audit_config_sha256" => Digest::SHA256.hexdigest(JSON.generate(deep_sort(audit))),
+      "patched_files" => patched_files.sort.to_h,
+      "root_lock" => {
+        "path" => "package-lock.json",
+        "sha256" => Digest::SHA256.file(lock_path).hexdigest,
+        "lockfile_version" => lock.fetch("lockfileVersion"),
+        "package_records" => lock.fetch("packages").length,
+        "non_root_package_records" => lock.fetch("packages").length - 1,
+        "registry_records" => records.length,
+        "workspace_records" => workspaces.length,
+        "workspace_link_records" => workspace_links.length
+      },
+      "targets" => targets.sort.to_h,
+      "target_summaries" => target_summaries,
+      "common_selected_registry_records" => common_paths.length,
+      "target_specific_registry_paths" => target_specific,
+      "workspaces" => workspaces.map { |path, entry| workspace_record(source_dir, path, entry) },
+      "workspace_links" => workspace_links.map { |path, entry| workspace_link_record(path, entry) },
+      "registry_packages" => records,
+      "stable_test_runner" => {
+        "manifest" => audit.dig("stable_test_runner", "manifest"),
+        "manifest_sha256" => Digest::SHA256.file(File.join(source_dir, audit.dig("stable_test_runner", "manifest"))).hexdigest,
+        "lockfile" => audit.dig("stable_test_runner", "lockfile"),
+        "lockfile_sha256" => Digest::SHA256.file(runner_lock_path).hexdigest,
+        "package_records" => runner_lock.fetch("packages").length,
+        "registry_records" => runner_records.length,
+        "target_summaries" => targets.keys.sort.to_h { |target_name| [target_name, selected_summary(runner_records, target_name)] },
+        "registry_packages" => runner_records
+      },
+      "validation" => {
+        "patched_source_files_verified" => true,
+        "browser_logo_lock_entries_absent" => browser_logo_records.empty?,
+        "dashboard_browser_logo_dependencies_absent" => !dashboard_manifest.key?("dependencies"),
+        "normal_build_stable_runner_install_absent" => !build_script.include?("stable-test-runner"),
+        "registry_integrity_values_present" => records.all? { |record| record.fetch("integrity").start_with?("sha512-") },
+        "selected_declared_license_values_present" => target_summaries.values.all? do |summary|
+          summary.fetch("records_with_declared_license") == summary.fetch("registry_records")
+        end,
+        "no_dependency_resolution_performed" => true,
+        "source_archives_verified" => false,
+        "license_texts_verified" => false,
+        "native_sources_verified" => false,
+        "generated_outputs_verified" => false,
+        "binary_inclusion_verified" => false,
+        "authoritative_production_build_test_split_verified" => false
+      }
+    }
+
+    JSON.pretty_generate(receipt) + "\n"
+  rescue JSON::ParserError => e
+    raise Agentlab::Error, "invalid Playwright JSON input: #{e.message}"
+  end
+
+  def run_cli(argv = ARGV)
+    package = Agentlab.package_named("nodejs-playwright")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    source_dir = nil
+    check = false
+    output = File.join(package.directory, dependencies.dig("lock_closure_receipt", "path"))
+
+    OptionParser.new do |parser|
+      parser.banner = "Usage: scripts/audit-playwright-lock-closure --source-dir PATH [--output PATH] [--check]"
+      parser.on("--source-dir PATH", "Patched Playwright source tree") { |path| source_dir = path }
+      parser.on("--output PATH", "Receipt path") { |path| output = path }
+      parser.on("--check", "Verify that the existing receipt is current") { check = true }
+    end.parse!(argv)
+
+    raise Agentlab::Error, "--source-dir is required" unless source_dir
+    raise Agentlab::Error, "lock_closure_receipt.path is required" unless output
+
+    content = build_receipt(File.realpath(source_dir), package, dependencies)
+    if check
+      raise Agentlab::Error, "missing Playwright lock receipt #{output}" unless File.file?(output)
+      raise Agentlab::Error, "Playwright lock receipt is stale: #{output}" unless File.binread(output) == content
+
+      actual_sha256 = Digest::SHA256.file(output).hexdigest
+      expected_sha256 = dependencies.dig("lock_closure_receipt", "sha256")
+      unless actual_sha256 == expected_sha256
+        raise Agentlab::Error, "Playwright lock receipt SHA-256 does not match dependencies.yml"
+      end
+      unless package.data.dig("source_policy", "lock_closure_receipt") == File.basename(output) &&
+             package.data.dig("source_policy", "lock_closure_receipt_sha256") == actual_sha256
+        raise Agentlab::Error, "Playwright lock receipt metadata does not match package.yml"
+      end
+
+      puts "Verified Playwright lock closure receipt #{output}."
+    else
+      Agentlab.atomic_write(output, content)
+      puts "Wrote Playwright lock closure receipt #{output}."
+    end
+  end
+end
+
+PlaywrightLockAudit.run_cli if $PROGRAM_NAME == __FILE__

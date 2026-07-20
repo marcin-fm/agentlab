@@ -22,8 +22,15 @@ build_mapping:
   monorepo_source_builds_once: true
   package_only_build_target: false
   root_lock_registry_tarballs: 669
-  root_lock_fedora_linux_x86_64_registry_entries: 614
-  root_lock_fedora_linux_x86_64_package_names: 562
+  root_lock_fedora_linux_glibc_registry_entries_per_arch: 611
+  root_lock_fedora_linux_glibc_package_names_per_arch: 561
+  root_lock_fedora_linux_glibc_name_version_identities_per_arch: 584
+  root_lock_fedora_linux_glibc_common_registry_entries: 607
+  audited_architectures: x64 and arm64
+  lock_closure_receipt: nodejs-playwright-1.62.0-alpha-1783623505000-lock-closure.json
+  lock_closure_receipt_sha256: db12ef26e9b7ca91621418148f5b3f62c8992bed948b17167468089e53565fab
+  lock_closure_selection_verified: true
+  lock_closure_authoritative_role_split: false
   stable_test_runner_linux_packages: 3
   stable_test_runner_upstream_normal_build_install: true
   stable_test_runner_upstream_skip_flag: false
@@ -55,6 +62,9 @@ validation:
   downstream_patches_apply_with_zero_fuzz: true
   normal_build_stable_runner_reference_absent_after_patch: true
   stable_runner_lock_preserved_after_patch: true
+  lock_closure_receipt_current: true
+  linux_glibc_x64_lock_selection: true
+  linux_glibc_arm64_lock_selection: true
   public_module_load_tests: false
   upstream_tests: false
   fedora_43_offline_build: false

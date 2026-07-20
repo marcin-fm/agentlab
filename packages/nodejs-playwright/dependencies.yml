@@ -26,8 +26,11 @@ build_closure:
   source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
   source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
   root_lock_registry_tarballs: 669
-  fedora_linux_x86_64_registry_entries: 614
-  fedora_linux_x86_64_package_names: 562
+  fedora_linux_glibc_registry_entries_per_arch: 611
+  fedora_linux_glibc_package_names_per_arch: 561
+  fedora_linux_glibc_name_version_identities_per_arch: 584
+  fedora_linux_glibc_common_registry_entries: 607
+  audited_architectures: x64 and arm64
   fedora_43_44_exact_locked_providers: 0
   stable_test_runner_linux_packages: 3
   stable_test_runner_upstream_normal_build_install: true
@@ -47,6 +50,56 @@ build_closure:
   upstream_browser_logo_packages: 10
   patched_browser_logo_packages: 0
   browser_logo_review_complete: true
+lock_closure_audit:
+  schema: playwright-lock-closure-audit/v1
+  source_workspace_name: playwright-internal
+  source_workspace_version: 1.62.0-next
+  patched_files:
+    package-lock.json: 3ea43fe548f5f48e54d673d36ef6c494ac0f13a57a1f9510d38b56d9cc144b1c
+    package.json: e418adb1dc34b7ecb21d894743178ce343115f2ef59cad4fd1c3424c71c07b8a
+    packages/dashboard/package.json: 869cd7aefcb2ed9f28d1c0928ff3f6e6d28ab1a98531837d73ce2180a8426de2
+    tests/playwright-test/stable-test-runner/package.json: 5dbf2f49b4ee8c0e22fc18e649d2621451a8c573b081ec2a4afc9bc24ce9f258
+    tests/playwright-test/stable-test-runner/package-lock.json: e3acdce803c64f8e64a9839170efc2caf65ce1e6d274fc5649824040d232d452
+    utils/build/build.js: 7a5206309662f48fe1495366f3f7a03f7ee78d3ed1dd0dc1063538fe17f09c9c
+  targets:
+    fedora-linux-arm64-glibc:
+      os: linux
+      cpu: arm64
+      libc: glibc
+    fedora-linux-x64-glibc:
+      os: linux
+      cpu: x64
+      libc: glibc
+  expected:
+    root_lock_package_records: 710
+    root_lock_registry_records: 669
+    root_lock_workspace_records: 20
+    root_lock_workspace_link_records: 20
+    target_registry_records: 611
+    target_unique_npm_names: 561
+    target_unique_name_version_identities: 584
+    target_platform_excluded_records: 58
+    common_selected_registry_records: 607
+    stable_runner_package_records: 5
+    stable_runner_registry_records: 4
+    stable_runner_target_registry_records: 3
+  expected_target_specific_registry_paths:
+    fedora-linux-arm64-glibc:
+      - node_modules/@duckdb/node-bindings-linux-arm64
+      - node_modules/@esbuild/linux-arm64
+      - node_modules/@rolldown/binding-linux-arm64-gnu
+      - node_modules/lightningcss-linux-arm64-gnu
+    fedora-linux-x64-glibc:
+      - node_modules/@duckdb/node-bindings-linux-x64
+      - node_modules/@esbuild/linux-x64
+      - node_modules/@rolldown/binding-linux-x64-gnu
+      - node_modules/lightningcss-linux-x64-gnu
+  stable_test_runner:
+    manifest: tests/playwright-test/stable-test-runner/package.json
+    lockfile: tests/playwright-test/stable-test-runner/package-lock.json
+lock_closure_receipt:
+  path: nodejs-playwright-1.62.0-alpha-1783623505000-lock-closure.json
+  sha256: db12ef26e9b7ca91621418148f5b3f62c8992bed948b17167468089e53565fab
 license_inventory:
   published_bundle_sidecars: 5
   unique_inlined_package_versions: 175
@@ -94,6 +147,7 @@ browser_logo_audit:
   status: resolved
 closure_audit:
   audited_release: 1.62.0-alpha-1783623505000
+  broad_lock_selection_verified: true
   production_build_sources_verified: false
   test_sources_verified: false
   licenses_verified: false
@@ -103,7 +157,7 @@ closure_audit:
   upstream_contact_recorded: false
   offline_verified: false
 gates:
-  - Materialize the exact production, build, and test closures from original immutable source archives without package-manager installation or lifecycle execution in RPM phases.
+  - Refine the retained broad lock selection into exact production, build, and test closures from original immutable source archives without package-manager installation or lifecycle execution in RPM phases.
   - Source-build exact esbuild, Rolldown, Lightning CSS, and every functional native or WASM input.
   - Reproduce the complete public playwright and playwright-core module trees from the pinned source commit.
   - Complete aggregate legal accounting for the missing MIT and borrowed Apache-2.0 material.
