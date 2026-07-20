@@ -53,12 +53,18 @@ bounded three-package Linux runner closure remains an input for a future
 `%check` and must be materialized independently without package-manager
 execution.
 
-Exact esbuild `0.28.1`, Rolldown `1.1.3`, and Lightning CSS `1.32.0` are
-source-buildable but unavailable as exact Fedora providers. Rolldown retains
-80 unresolved Fedora 43 edges and 81 Fedora 44 edges; Lightning CSS retains 20
-on both releases. RPM phases may not run npm or another package manager, so the
-reviewed production, build, and test sources must be materialized beforehand as
-immutable closure inputs.
+Exact source-built esbuild `0.28.1-0.2` is available from configured-SCM build
+`10751965` across Fedora 43, Fedora 44, and Rawhide on both supported
+architectures, and this draft now requires its `nodejs-esbuild` provider.
+Rolldown `1.1.3` and Lightning CSS `1.32.0` remain unavailable. Rolldown's
+public binding uses 239 registry plus 45 workspace crates and still leaves
+approximately 75, 75, and 76 unresolved edges after current Agentlab providers
+on Fedora 43, Fedora 44, and Rawhide. It therefore requires one reviewed
+application-style vendored Cargo closure rather than dozens of compatibility
+packages. Lightning CSS retains its separate bounded compatibility chain. RPM
+phases may not run npm or another package manager, so all reviewed production,
+build, and test sources must be materialized beforehand as immutable closure
+inputs.
 
 ## License Boundary
 

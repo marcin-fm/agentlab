@@ -16,7 +16,7 @@
 
 Name:           nodejs-playwright
 Version:        1.62.0~alpha.1783623505000
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        High-level browser automation API for Node.js
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT
@@ -34,6 +34,7 @@ Patch1:         playwright-skip-stable-test-runner-install.patch
 BuildArch:      noarch
 ExclusiveArch:  %{nodejs_arches} noarch
 BuildRequires:  nodejs-devel
+BuildRequires:  nodejs-esbuild = 0.28.1
 Requires:       nodejs >= 20
 Requires:       nodejs-playwright-core = %{version}-%{release}
 
@@ -103,6 +104,9 @@ echo 'nodejs-playwright is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 1.62.0~alpha.1783623505000-0.5
+- Require the source-built esbuild provider and record the Rolldown boundary.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 1.62.0~alpha.1783623505000-0.4
 - Add a reproducible Fedora x64 and arm64 lock-closure audit.
 

@@ -3,7 +3,7 @@ status: blocked
 blockers:
   - The patched Playwright root lock has 669 integrity-pinned registry tarballs; 611 across 561 unique names are selected on each Fedora glibc architecture, and Fedora 43/44 provide no exact locked npm versions.
   - The normal monorepo build has no package-only target. Patch1 removes the test-only stable-runner install, but its exact closure remains unmaterialized for a future independent check phase.
-  - Exact source-built esbuild 0.28.1, Rolldown 1.1.3, and Lightning CSS 1.32.0 remain unavailable as Fedora providers; the latter two retain substantial unresolved Rust provider closures, and neither x86_64 nor aarch64 native output is build-proven.
+  - Exact Rolldown 1.1.3 and Lightning CSS 1.32.0 remain unavailable as Fedora providers; both retain unresolved legal-source gates, and neither x86_64 nor aarch64 native output is build-proven.
   - Required legal material remains unavailable for base-encode and parcel_sourcemap MIT code and for json-escape-simd's MIT declaration plus its borrowed Apache-2.0 sonic-rs implementation.
   - The exact production, build, and test closure has not been materialized or immutably hosted for offline COPR SCM builds.
 source_policy:
@@ -16,6 +16,8 @@ source_policy:
   source_archive_sha256: 446cdbeb45255cc6e26fdf2ae604cd04fe77f4402b60fc0bd4b6edd302bcff46
   lock_closure_receipt: nodejs-playwright-1.62.0-alpha-1783623505000-lock-closure.json
   lock_closure_receipt_sha256: db12ef26e9b7ca91621418148f5b3f62c8992bed948b17167468089e53565fab
+  esbuild_provider: Exact source-built nodejs-esbuild 0.28.1-0.2 is published by configured-SCM build 10751965 across Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64.
+  rolldown_provider_boundary: Rolldown 1.1.3 requires an application-style vendored Cargo closure and source-built glibc N-API addon; implementation is blocked on base-encode and json-escape-simd legal provenance.
   build_model: One monorepo source build emits separate public playwright and playwright-core module RPMs.
   stable_test_runner: Patch1 removes its package-manager install from the normal build; retain the exact audited closure for a future independently materialized check phase.
   browser_downloads: forbidden
