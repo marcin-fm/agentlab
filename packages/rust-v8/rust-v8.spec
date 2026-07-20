@@ -5,14 +5,14 @@
 %global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 183e349327b4b486b59e67a143c3d6707d384b5a4f215d49a9aab961486762ce
-%global license_audit_sha256 91a3c92f4e2f97221f9881a8362d3c7988ed8b943ac579230e08e0d24317ffff
-%global archive_graph_sha256 a9022821c222b006d123c5b868f491a9945310b04e0689d424307143e49f2c44
+%global closure_sha256 d9ce28653b83a856faedaa85a4296541c87a867b66c1f93eed9259577877ec09
+%global license_audit_sha256 0c939825a9f752806d85174bcfa7ffcf22eca512d3e1f11774f8bdbd538b1ba8
+%global archive_graph_sha256 4c4e5d961842ae27fdbe2a45b667686550bbb995a7d1b00201dc0adeff191025
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 21b88a39b964c737fd4fd04981bd6fa45b45b05047f495ffa94d929d3c378e73
+%global dynamic_linking_sha256 24deedef229e5889bd320b0a66f10a912667e5dc6590978a9311043b6d9f4dbc
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 47afb139fa00ca43c3569b059878e9632f80a1858211e2048a5080bd9d307dec
-%global system_rust_patch_sha256 f2a15b771f78bb5145619e93461e40a18345a132edfca202364f0b5d22666874
+%global static_license_sha256 39aec746661669083938523df52bbf08403ed0e7f9694077812035921ec60c3e
+%global system_rust_patch_sha256 36d5b76fd4010b15a9134fcc9474eab32bd1de3599e31d28052133b4bb01eb1e
 %global gcc_patch_sha256 6277a9deab29c02a1ce0b5d29e940eed40835c8a17ef45311a0c34205818d5f2
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
@@ -20,7 +20,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.12%{?dist}
+Release:        0.13%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -385,6 +385,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.13
+- Express native aarch64 tool selection with valid GN syntax.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.12
 - Use GCC's supported minimal debug mode instead of a Clang-only flag.
 - Select native GCC tools when building directly on aarch64.

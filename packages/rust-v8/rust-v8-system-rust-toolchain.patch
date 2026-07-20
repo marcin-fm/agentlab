@@ -273,12 +273,15 @@ diff --git a/build/rust/std/BUILD.gn b/build/rust/std/BUILD.gn
 diff --git a/build/toolchain/linux/BUILD.gn b/build/toolchain/linux/BUILD.gn
 --- a/build/toolchain/linux/BUILD.gn
 +++ b/build/toolchain/linux/BUILD.gn
-@@ -31,7 +31,7 @@ clang_toolchain("clang_arm64") {
+@@ -31,7 +31,10 @@ clang_toolchain("clang_arm64") {
  }
  
  gcc_toolchain("arm64") {
 -  toolprefix = "aarch64-linux-gnu-"
-+  toolprefix = host_cpu == "arm64" ? "" : "aarch64-linux-gnu-"
++  toolprefix = "aarch64-linux-gnu-"
++  if (host_cpu == "arm64") {
++    toolprefix = ""
++  }
  
    cc = "${toolprefix}gcc"
    cxx = "${toolprefix}g++"
