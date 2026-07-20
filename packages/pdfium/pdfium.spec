@@ -1,10 +1,12 @@
 # Disabled by package.yml pending release-boundary and private ABI/runtime
-# approval. Source0 is generated from the official Chromium lite archive by
-# the configured SCM source builder and verified by its exact tree in %%prep.
-%global source_sha256 b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875
-%global source_receipt_sha256 2931893f5a9e615797de3bf4b498ef34aa7e538329095aea2309a017f98bd0bc
-%global source_policy_sha256 892d6a6fde9abe97c2ee06e07be5b02ba014265deebba2a7d4cfe8929aaf5302
-%global source_preparer_sha256 686fd65fe5ef65cc46d43a97d628f7fd884d67486d027f8de71ac8d64a88b512
+# approval. Source0 is generated and attested by GitHub Actions from the
+# official Chromium lite archive, then verified by bytes and exact tree here.
+%global source_tag pdfium-sources-%{version}-pdfium-efbbd0fc9582
+%global source_sha256 c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
+%global source_size 70932985
+%global source_receipt_sha256 3cb1431401f8beb33c138d5918a349376cc34d094c2360e46c3efe4ae4ef3573
+%global source_policy_sha256 9ff235c6e1046ee586def0a3bcba89ef19ed7097053d1c451d7350bc4f7df5d7
+%global source_preparer_sha256 d0ffbd3024ce88bdf902d4e47ef30c8a856952f10c6f9b54b17b11559116cb02
 %global agg_license_sha256 7c9a090bc2f7a49601bfb39e5504850feb7edc5ac2eba980610f6148a5538b43
 %global third_party_notices_sha256 caa7153703e3bf5e968b6f22a1c8b94d6732a0bd9f10bb6a5b3a9da5ff97f34e
 # Chromium already adds .gdb_index sections when linking with LLD.
@@ -29,12 +31,12 @@
 
 Name:           pdfium
 Version:        146.0.7678.0
-Release:        0.0.5%{?dist}
+Release:        0.0.6%{?dist}
 Summary:        PDF rendering library used by Chromium
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
 URL:            https://pdfium.googlesource.com/pdfium/
-Source0:        pdfium-%{version}-source.tar.gz
+Source0:        https://github.com/marcin-fm/agentlab/releases/download/%{source_tag}/pdfium-%{version}-source.tar.gz
 Source1:        pdfium-%{version}-source-receipt.json
 Source2:        source-closure.yml
 Source3:        prepare-pdfium-srpm-sources
@@ -98,6 +100,8 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 Public FPDF headers and pkg-config metadata for PDFium.
 
 %prep
+test "$(stat -c %%s %{SOURCE0})" = "%{source_size}"
+echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{source_receipt_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{source_policy_sha256}  %{SOURCE2}" | sha256sum -c -
 echo "%{source_preparer_sha256}  %{SOURCE3}" | sha256sum -c -
@@ -233,6 +237,10 @@ EOF
 %{_libdir}/pkgconfig/pdfium.pc
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.6
+- Consume the deterministic PDFium source closure from an immutable, attested GitHub release.
+- Verify both Source0 transport identity and its exact selected source tree without build-time networking.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 146.0.7678.0-0.0.5
 - Generate one checked Source0 from Chromium's official lite archive at SCM SRPM time.
 - Remove bundled buildtools binaries and unused test-font sources.

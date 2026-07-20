@@ -1,0 +1,12 @@
+schema: agentlab-source-release-request/v1
+attempt: 1
+operation: stage
+package: pdfium
+version: 146.0.7678.0
+chromium_commit: deeb2f3a6598ee15f0f71708aec735580a9e68b4
+pdfium_commit: efbbd0fc95825e049ad790911356e0b689418899
+upstream_archive_sha256: b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875
+archive_sha256: c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
+archive_size_bytes: 70932985
+tree_sha256: edcbeca5eb923a7127416246377ea0ac927a7a54f6cb388fb2c4411b9ae3af60
+tag: pdfium-sources-146.0.7678.0-pdfium-efbbd0fc9582

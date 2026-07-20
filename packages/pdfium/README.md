@@ -6,14 +6,17 @@ a matching standalone release tag, so the RPM version identifies the published
 Chromium release while the exact subordinate PDFium commit is recorded
 separately as provenance.
 
-The SCM source builder downloads Chromium's official `146.0.7678.0` lite
-archive, verifies its published SHA-256, and generates one compact Source0 from
-the exact PDFium, Chromium build/buildtools, Abseil, fast_float, and ICU trees.
-It removes Chromium-provided GN and clang-format binaries, omits unbuilt test
-font sources, and verifies the generated archive by its exact safe tree rather
-than compressor-specific bytes. No custom release asset is required. The RPM
-build must not invoke `gclient`, CIPD, GCS downloads, remote execution, or
-Chromium-provided binary toolchains.
+GitHub Actions downloads Chromium's official `146.0.7678.0` lite archive,
+verifies its published SHA-256, and generates one compact Source0 from the exact
+PDFium, Chromium build/buildtools, Abseil, fast_float, and ICU trees. It removes
+Chromium-provided GN and clang-format binaries, omits unbuilt test-font sources,
+and verifies both the generated archive bytes and its exact safe tree. A staged
+workflow attests every asset and byte-verifies a draft release; a separate
+publish request rechecks the draft target, checksums, sizes, and attestations
+before requiring GitHub release immutability. The RPM build consumes that
+immutable Source0 without generation or network access and must not invoke
+`gclient`, CIPD, GCS downloads, remote execution, or Chromium-provided binary
+toolchains.
 
 The draft builds versioned `libpdfium.so.146` plus private, collision-free
 Abseil and ICU component libraries on native `x86_64` and `aarch64` targets.
@@ -36,8 +39,8 @@ Fedora 43 and 44 builds and extracted-payload validation. The private component
 names, versioned SONAMEs, and embedded ICU-data ownership form a Fedora-specific
 package, ABI, and runtime boundary that still requires explicit approval. The
 package remains blocked for that review, approval of the subordinate source
-boundary pinned by the Chromium release, and one clean Mock rebuild of the new
-official-archive source path. Current Mock attempts stopped before
+boundary pinned by the Chromium release, and one clean Mock rebuild of the
+GitHub-hosted official-archive subset. Current Mock attempts stopped before
 initialization because another build held the shared Fedora 44 root.
 The aarch64 proof used a separate transient COPR project and does not enable
 this package in `marcin/agentlab`.

@@ -1,0 +1,336 @@
+name: Release PDFium source asset
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/source-release/pdfium.yml"
+
+permissions:
+  contents: write
+  attestations: write
+  artifact-metadata: write
+  id-token: write
+
+concurrency:
+  group: pdfium-source-release
+  cancel-in-progress: false
+
+jobs:
+  source-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Read checked source metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d -o "$USER" -g "$USER" /srv/tmp
+          ruby -ryaml -rjson -rdigest -e '
+            package = YAML.safe_load_file("packages/pdfium/package.yml")
+            closure = YAML.safe_load_file("packages/pdfium/source-closure.yml")
+            receipt = JSON.parse(File.read("packages/pdfium/pdfium-146.0.7678.0-source-receipt.json"))
+            request = YAML.safe_load_file(".github/source-release/pdfium.yml")
+            version = package.fetch("upstream").fetch("current_version").to_s
+            policy = package.fetch("source_policy")
+            source = package.fetch("source_closure")
+            chromium = closure.fetch("chromium")
+            pdfium = closure.fetch("pdfium")
+            prepared = closure.fetch("source_preparation")
+            attempt = Integer(request.fetch("attempt"))
+            operation = request.fetch("operation")
+            abort "source-release attempt must be positive" unless attempt.positive?
+            abort "unsupported source-release operation" unless %w[stage publish].include?(operation)
+            expected_request = {
+              "schema" => "agentlab-source-release-request/v1",
+              "attempt" => attempt,
+              "operation" => operation,
+              "package" => "pdfium",
+              "version" => version,
+              "chromium_commit" => chromium.fetch("commit"),
+              "pdfium_commit" => pdfium.fetch("commit"),
+              "upstream_archive_sha256" => chromium.fetch("archive").fetch("sha256"),
+              "archive_sha256" => source.fetch("output_sha256"),
+              "archive_size_bytes" => source.fetch("output_size_bytes"),
+              "tree_sha256" => source.fetch("output_tree_sha256"),
+              "tag" => policy.fetch("release_tag")
+            }
+            generator_commit = request["generator_commit"]
+            if operation == "publish"
+              abort "invalid source-release generator commit" unless generator_commit.to_s.match?(/\A[0-9a-f]{40}\z/)
+              expected_request["generator_commit"] = generator_commit
+            end
+            abort "PDFium source-release request does not match package metadata" unless request == expected_request
+            abort "PDFium receipt archive identity mismatch" unless receipt.dig("output", "sha256") == source.fetch("output_sha256") && receipt.dig("output", "size_bytes") == source.fetch("output_size_bytes")
+            abort "PDFium receipt tree identity mismatch" unless receipt.dig("output", "tree_sha256") == source.fetch("output_tree_sha256")
+            abort "PDFium receipt release metadata mismatch" unless receipt.dig("release", "tag") == policy.fetch("release_tag") && receipt.dig("release", "archive_url") == policy.fetch("archive_url")
+            abort "PDFium source policy metadata mismatch" unless prepared.fetch("output_sha256") == source.fetch("output_sha256") && prepared.fetch("archive_url") == policy.fetch("archive_url")
+            values = {
+              "operation" => operation,
+              "generator_commit" => generator_commit,
+              "version" => version,
+              "tag" => policy.fetch("release_tag"),
+              "upstream_url" => chromium.fetch("archive").fetch("url"),
+              "upstream_filename" => chromium.fetch("archive").fetch("filename"),
+              "upstream_sha256" => chromium.fetch("archive").fetch("sha256"),
+              "upstream_size" => chromium.fetch("archive").fetch("size_bytes"),
+              "archive_filename" => prepared.fetch("output"),
+              "archive_sha256" => source.fetch("output_sha256"),
+              "archive_size" => source.fetch("output_size_bytes"),
+              "receipt_filename" => "pdfium-#{version}-source-receipt.json",
+              "receipt_sha256" => source.fetch("receipt_sha256"),
+              "policy_filename" => "source-closure.yml",
+              "policy_sha256" => source.fetch("policy_sha256"),
+              "generator_sha256" => source.fetch("generator_sha256")
+            }
+            values.each { |key, value| puts "#{key}=#{value}" }
+          ' >> "$GITHUB_OUTPUT"
+
+      - name: Refuse an existing release or tag
+        if: steps.metadata.outputs.operation == 'stage'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "tag already exists: $TAG" >&2
+            exit 1
+          fi
+          release_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .id")"
+          if [[ -n "$release_id" ]]; then
+            echo "release already exists for $TAG" >&2
+            exit 1
+          fi
+
+      - name: Generate and verify release assets
+        if: steps.metadata.outputs.operation == 'stage'
+        shell: bash
+        env:
+          ARCHIVE_FILENAME: ${{ steps.metadata.outputs.archive_filename }}
+          ARCHIVE_SHA256: ${{ steps.metadata.outputs.archive_sha256 }}
+          ARCHIVE_SIZE: ${{ steps.metadata.outputs.archive_size }}
+          RECEIPT_FILENAME: ${{ steps.metadata.outputs.receipt_filename }}
+          RECEIPT_SHA256: ${{ steps.metadata.outputs.receipt_sha256 }}
+          POLICY_FILENAME: ${{ steps.metadata.outputs.policy_filename }}
+          POLICY_SHA256: ${{ steps.metadata.outputs.policy_sha256 }}
+          GENERATOR_SHA256: ${{ steps.metadata.outputs.generator_sha256 }}
+        run: |
+          set -euo pipefail
+          release=/srv/tmp/pdfium-source-release
+          work=/srv/tmp/pdfium-source-work
+          archive="$release/$ARCHIVE_FILENAME"
+          receipt="$release/$RECEIPT_FILENAME"
+          rm -rf "$release" "$work"
+          mkdir -p "$release" "$work"
+          printf '%s  %s\n' "$GENERATOR_SHA256" scripts/prepare-pdfium-srpm-sources | sha256sum -c -
+          TMPDIR="$work" scripts/prepare-pdfium-srpm-sources \
+            --output "$archive" \
+            --write-receipt "$receipt"
+          TMPDIR="$work" scripts/prepare-pdfium-srpm-sources \
+            --output "$archive" \
+            --receipt "$receipt" \
+            --check
+          test "$(stat -c %s "$archive")" = "$ARCHIVE_SIZE"
+          printf '%s  %s\n' "$ARCHIVE_SHA256" "$archive" | sha256sum -c -
+          printf '%s  %s\n' "$RECEIPT_SHA256" "$receipt" | sha256sum -c -
+          cmp --silent "$receipt" "packages/pdfium/$RECEIPT_FILENAME"
+          cp "packages/pdfium/$POLICY_FILENAME" "$release/"
+          printf '%s  %s\n' "$POLICY_SHA256" "$release/$POLICY_FILENAME" | sha256sum -c -
+          {
+            curl --version | sed -n '1p'
+            tar --version | sed -n '1p'
+            xz --version | sed -n '1p'
+            gzip --version | sed -n '1p'
+            ruby --version
+          } > "$release/SOURCE_TOOLCHAIN.txt"
+          ruby -rdigest -e '
+            directory = ARGV.fetch(0)
+            entries = Dir.children(directory).sort.map do |name|
+              path = File.join(directory, name)
+              "#{Digest::SHA256.file(path).hexdigest}  #{name}"
+            end
+            File.write(File.join(directory, "SHA256SUMS"), entries.join("\n") + "\n")
+          ' "$release"
+          scripts/check-packages --package pdfium
+
+      - name: Attest generated source assets
+        if: steps.metadata.outputs.operation == 'stage'
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
+        with:
+          subject-path: /srv/tmp/pdfium-source-release/*
+
+      - name: Create and verify draft release
+        if: steps.metadata.outputs.operation == 'stage'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+        run: |
+          set -euo pipefail
+          release=/srv/tmp/pdfium-source-release
+          notes=/srv/tmp/pdfium-source-release-notes.md
+          ruby -e '
+            File.write(ARGV.fetch(0), <<~NOTES)
+              Deterministic source assets for PDFium from Chromium #{ENV.fetch("VERSION")}.
+
+              Generator commit: `#{ENV.fetch("GITHUB_SHA")}`
+              Source profile: PDFium plus the exact Chromium build, source-only buildtools, Abseil, fast_float, and ICU trees
+
+              Every uploaded file is covered by `SHA256SUMS` and a GitHub artifact attestation.
+              This release remains a draft until the separate publish request verifies it and GitHub release immutability is enabled.
+            NOTES
+          ' "$notes"
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "PDFium $VERSION source assets" \
+            --notes-file "$notes" \
+            --draft
+          gh release upload "$TAG" "$release"/* --repo "$GITHUB_REPOSITORY"
+          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .id")"
+          test -n "$release_id"
+          assets=/srv/tmp/pdfium-source-release-assets.json
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" > "$assets"
+          ruby -rjson -rdigest -e '
+            directory, response = ARGV
+            expected = Dir.children(directory).sort
+            assets = JSON.parse(File.read(response))
+            actual = assets.map { |asset| asset.fetch("name") }.sort
+            abort "release asset names do not match" unless actual == expected
+            assets.each do |asset|
+              path = File.join(directory, asset.fetch("name"))
+              abort "release asset size mismatch: #{path}" unless asset.fetch("size") == File.size(path)
+              digest = asset["digest"]
+              next unless digest
+              abort "release asset digest mismatch: #{path}" unless digest == "sha256:#{Digest::SHA256.file(path).hexdigest}"
+            end
+          ' "$release" "$assets"
+          download=/srv/tmp/pdfium-source-release-download
+          rm -rf "$download"
+          mkdir -p "$download"
+          for path in "$release"/*; do
+            name="$(basename "$path")"
+            asset_id="$(ruby -rjson -e 'assets = JSON.parse(File.read(ARGV[0])); puts assets.find { |asset| asset["name"] == ARGV[1] }.fetch("id")' "$assets" "$name")"
+            gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" > "$download/$name"
+            cmp --silent "$path" "$download/$name"
+          done
+          draft_url="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url)"
+          printf 'Verified draft release: %s\n' "$draft_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify and publish immutable release
+        if: steps.metadata.outputs.operation == 'publish'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          GENERATOR_COMMIT: ${{ steps.metadata.outputs.generator_commit }}
+          ARCHIVE_FILENAME: ${{ steps.metadata.outputs.archive_filename }}
+          ARCHIVE_SHA256: ${{ steps.metadata.outputs.archive_sha256 }}
+          ARCHIVE_SIZE: ${{ steps.metadata.outputs.archive_size }}
+          RECEIPT_FILENAME: ${{ steps.metadata.outputs.receipt_filename }}
+          RECEIPT_SHA256: ${{ steps.metadata.outputs.receipt_sha256 }}
+          POLICY_FILENAME: ${{ steps.metadata.outputs.policy_filename }}
+          POLICY_SHA256: ${{ steps.metadata.outputs.policy_sha256 }}
+          GENERATOR_SHA256: ${{ steps.metadata.outputs.generator_sha256 }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "refusing to publish a draft whose tag already exists: $TAG" >&2
+            exit 1
+          fi
+          releases=/srv/tmp/pdfium-source-releases.json
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" > "$releases"
+          release_id="$(ruby -rjson -e '
+            releases = JSON.parse(File.read(ARGV.fetch(0)))
+            matches = releases.select { |release| release["tag_name"] == ENV.fetch("TAG") }
+            abort "expected one source-release draft" unless matches.length == 1
+            release = matches.fetch(0)
+            abort "source release is not a draft" unless release["draft"] == true
+            abort "source release is already immutable" unless release["immutable"] == false
+            abort "source release target mismatch" unless release["target_commitish"] == ENV.fetch("GENERATOR_COMMIT")
+            puts release.fetch("id")
+          ' "$releases")"
+          assets=/srv/tmp/pdfium-source-release-assets.json
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" > "$assets"
+          download=/srv/tmp/pdfium-source-release-publish
+          rm -rf "$download"
+          mkdir -p "$download"
+          ruby -rjson -e '
+            expected = [
+              ENV.fetch("ARCHIVE_FILENAME"),
+              ENV.fetch("RECEIPT_FILENAME"),
+              ENV.fetch("POLICY_FILENAME"),
+              "SOURCE_TOOLCHAIN.txt",
+              "SHA256SUMS"
+            ].sort
+            assets = JSON.parse(File.read(ARGV.fetch(0)))
+            actual = assets.map { |asset| asset.fetch("name") }.sort
+            abort "draft release asset names do not match" unless actual == expected
+            assets.each do |asset|
+              abort "draft release asset is not uploaded" unless asset["state"] == "uploaded"
+              abort "draft release asset size is invalid" unless asset["size"].is_a?(Integer) && asset["size"].positive?
+              abort "draft release asset digest is invalid" unless asset["digest"].to_s.match?(/\Asha256:[0-9a-f]{64}\z/)
+            end
+          ' "$assets"
+          while IFS=$'\t' read -r asset_id name; do
+            gh api -H "Accept: application/octet-stream" "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" > "$download/$name"
+          done < <(ruby -rjson -e 'JSON.parse(File.read(ARGV.fetch(0))).sort_by { |asset| asset.fetch("name") }.each { |asset| puts [asset.fetch("id"), asset.fetch("name")].join("\t") }' "$assets")
+          ruby -rjson -rdigest -e '
+            directory, response = ARGV
+            assets = JSON.parse(File.read(response))
+            assets.each do |asset|
+              path = File.join(directory, asset.fetch("name"))
+              digest = "sha256:#{Digest::SHA256.file(path).hexdigest}"
+              abort "downloaded draft asset digest mismatch: #{path}" unless asset.fetch("digest") == digest
+              abort "downloaded draft asset size mismatch: #{path}" unless asset.fetch("size") == File.size(path)
+            end
+            checksums = File.readlines(File.join(directory, "SHA256SUMS"), chomp: true).to_h do |line|
+              match = line.match(/\A([0-9a-f]{64})  ([^\/]+)\z/) or abort "invalid SHA256SUMS line"
+              [match[2], match[1]]
+            end
+            expected = Dir.children(directory).reject { |name| name == "SHA256SUMS" }.sort
+            abort "SHA256SUMS names do not match draft assets" unless checksums.keys.sort == expected
+            checksums.each do |name, sha256|
+              abort "SHA256SUMS digest mismatch: #{name}" unless Digest::SHA256.file(File.join(directory, name)).hexdigest == sha256
+            end
+          ' "$download" "$assets"
+          test "$(stat -c %s "$download/$ARCHIVE_FILENAME")" = "$ARCHIVE_SIZE"
+          printf '%s  %s\n' "$ARCHIVE_SHA256" "$download/$ARCHIVE_FILENAME" | sha256sum -c -
+          printf '%s  %s\n' "$RECEIPT_SHA256" "$download/$RECEIPT_FILENAME" | sha256sum -c -
+          printf '%s  %s\n' "$POLICY_SHA256" "$download/$POLICY_FILENAME" | sha256sum -c -
+          printf '%s  %s\n' "$GENERATOR_SHA256" scripts/prepare-pdfium-srpm-sources | sha256sum -c -
+          cmp --silent "$download/$RECEIPT_FILENAME" "packages/pdfium/$RECEIPT_FILENAME"
+          cmp --silent "$download/$POLICY_FILENAME" "packages/pdfium/$POLICY_FILENAME"
+          mkdir -p /srv/tmp/pdfium-source-publish-check
+          TMPDIR=/srv/tmp/pdfium-source-publish-check scripts/prepare-pdfium-srpm-sources \
+            --output "$download/$ARCHIVE_FILENAME" \
+            --receipt "$download/$RECEIPT_FILENAME" \
+            --check
+          for path in "$download"/*; do
+            gh attestation verify "$path" -R "$GITHUB_REPOSITORY"
+          done
+          published=/srv/tmp/pdfium-source-release-published.json
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" \
+            -F draft=false \
+            -F make_latest=false > "$published"
+          ruby -rjson -e '
+            release = JSON.parse(File.read(ARGV.fetch(0)))
+            abort "published source release remains a draft" unless release["draft"] == false
+            abort "published source release is not immutable" unless release["immutable"] == true
+            abort "published source release tag mismatch" unless release["tag_name"] == ENV.fetch("TAG")
+            abort "published source release target mismatch" unless release["target_commitish"] == ENV.fetch("GENERATOR_COMMIT")
+            puts "Published immutable release: #{release.fetch("html_url")}"
+          ' "$published" | tee -a "$GITHUB_STEP_SUMMARY"

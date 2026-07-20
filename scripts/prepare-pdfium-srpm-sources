@@ -38,12 +38,17 @@ UPSTREAM_SIZE_BYTES = 1_474_309_344
 UPSTREAM_SHA256 = "b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875"
 OUTPUT_FILENAME = "pdfium-#{VERSION}-source.tar.gz"
 OUTPUT_ROOT = "pdfium-#{VERSION}"
+OUTPUT_SIZE_BYTES = 70_932_985
+OUTPUT_SHA256 = "c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75"
 OUTPUT_TREE_RECORDS = 15_141
 OUTPUT_TREE_SHA256 = "edcbeca5eb923a7127416246377ea0ac927a7a54f6cb388fb2c4411b9ae3af60"
 RECEIPT_FILENAME = "pdfium-#{VERSION}-source-receipt.json"
 SOURCE_POLICY_FILENAME = "source-closure.yml"
-SOURCE_POLICY_SHA256 = "892d6a6fde9abe97c2ee06e07be5b02ba014265deebba2a7d4cfe8929aaf5302"
+SOURCE_POLICY_SHA256 = "9ff235c6e1046ee586def0a3bcba89ef19ed7097053d1c451d7350bc4f7df5d7"
 SCRIPT_FILENAME = "prepare-pdfium-srpm-sources"
+RELEASE_TAG = "pdfium-sources-#{VERSION}-pdfium-efbbd0fc9582"
+RELEASE_URL = "https://github.com/marcin-fm/agentlab/releases/tag/#{RELEASE_TAG}"
+OUTPUT_URL = "https://github.com/marcin-fm/agentlab/releases/download/#{RELEASE_TAG}/#{OUTPUT_FILENAME}"
 GCLIENT_ARGS = <<~GN.freeze
   build_with_chromium = false
   checkout_android = false
@@ -349,9 +354,19 @@ def source_receipt
     "output" => {
       "filename" => OUTPUT_FILENAME,
       "archive_root" => OUTPUT_ROOT,
+      "size_bytes" => OUTPUT_SIZE_BYTES,
+      "sha256" => OUTPUT_SHA256,
       "tree_file_records" => OUTPUT_TREE_RECORDS,
       "tree_sha256" => OUTPUT_TREE_SHA256,
-      "transport_identity_required" => false
+      "transport_identity_required" => true
+    },
+    "release" => {
+      "repository" => "marcin-fm/agentlab",
+      "tag" => RELEASE_TAG,
+      "url" => RELEASE_URL,
+      "archive_url" => OUTPUT_URL,
+      "immutable_required" => true,
+      "artifact_attestation_required" => true
     },
     "generator" => {
       "path" => SCRIPT_FILENAME,
@@ -373,8 +388,8 @@ def source_receipt
       "excluded_path_set_exact" => true,
       "generated_tree_verified" => true,
       "generated_archive_reextracts_identically" => true,
-      "generated_archive_transport_identity_required" => false,
-      "remote_generated_asset_required" => false
+      "generated_archive_transport_identity_required" => true,
+      "remote_generated_asset_required" => true
     }
   }
 end
@@ -405,7 +420,7 @@ begin
     output ||= File.join(specdir, OUTPUT_FILENAME)
     receipt_path ||= File.join(specdir, RECEIPT_FILENAME)
     expected_sources = {
-      0 => OUTPUT_FILENAME,
+      0 => OUTPUT_URL,
       1 => RECEIPT_FILENAME,
       2 => SOURCE_POLICY_FILENAME,
       3 => SCRIPT_FILENAME,
@@ -425,7 +440,7 @@ begin
   temporary_root = ENV.fetch("TMPDIR", Dir.tmpdir)
   Dir.mktmpdir("agentlab-pdfium-source-", temporary_root) do |temporary|
     if check
-      raise PdfiumSources::Error, "missing generated PDFium source #{output}" unless File.file?(output)
+      verify_file!(output, sha256: OUTPUT_SHA256, size_bytes: OUTPUT_SIZE_BYTES)
       verify_output_archive!(output, File.join(temporary, "checked"))
     else
       upstream = input ? File.realpath(input) : File.join(temporary, UPSTREAM_FILENAME)
@@ -494,6 +509,7 @@ begin
         out: generated
       )
       raise PdfiumSources::Error, "PDFium source archive generation failed" unless statuses.all?(&:success?)
+      verify_file!(generated, sha256: OUTPUT_SHA256, size_bytes: OUTPUT_SIZE_BYTES)
       verify_output_archive!(generated, File.join(temporary, "verification"))
       PdfiumSources.atomic_write(output, File.binread(generated))
     end

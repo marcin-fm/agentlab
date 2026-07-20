@@ -3,27 +3,36 @@ status: blocked
 blockers:
   - The release-pinned subordinate PDFium commit policy boundary has not been approved for enablement.
   - The private component names, versioned SONAMEs, and embedded ICU-data boundary require explicit approval.
-  - The official-archive source revision needs one clean Fedora 44 x86_64 Mock rebuild; current attempts stopped before initialization because another build held the shared Mock root.
+  - The GitHub-hosted official-archive subset needs one clean Fedora 44 x86_64 Mock rebuild; current attempts stopped before initialization because another build held the shared Mock root.
 source_policy:
   version_identity: Chromium release 146.0.7678.0
   pdfium_revision: efbbd0fc95825e049ad790911356e0b689418899
   provenance: PDFium revision pinned by the published Chromium release consumed by Kreuzberg 4.10.2
-  source_archive: Fedora-style SRPM-time subset of the official Chromium lite archive
+  source_archive: GitHub Actions-generated deterministic subset of the official Chromium lite archive
   upstream_archive_sha256: b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875
   upstream_archive_size_bytes: 1474309344
-  generated_archive_transport_identity_required: false
-  remote_generated_asset_required: false
+  generated_archive_sha256: c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
+  generated_archive_size_bytes: 70932985
+  generated_archive_transport_identity_required: true
+  remote_generated_asset_required: true
+  archive_url: https://github.com/marcin-fm/agentlab/releases/download/pdfium-sources-146.0.7678.0-pdfium-efbbd0fc9582/pdfium-146.0.7678.0-source.tar.gz
+  release_tag: pdfium-sources-146.0.7678.0-pdfium-efbbd0fc9582
+  release_url: https://github.com/marcin-fm/agentlab/releases/tag/pdfium-sources-146.0.7678.0-pdfium-efbbd0fc9582
+  immutable_release_required: true
+  artifact_attestation_required: true
   network_builds: forbidden
   prebuilt_toolchains: forbidden
 source_closure:
   generated: true
-  method: copr-git-scm-make_srpm
+  method: github-actions-immutable-release
   source_count: 6
+  output_size_bytes: 70932985
+  output_sha256: c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
   output_tree_file_records: 15141
   output_tree_sha256: edcbeca5eb923a7127416246377ea0ac927a7a54f6cb388fb2c4411b9ae3af60
-  policy_sha256: 892d6a6fde9abe97c2ee06e07be5b02ba014265deebba2a7d4cfe8929aaf5302
-  receipt_sha256: 2931893f5a9e615797de3bf4b498ef34aa7e538329095aea2309a017f98bd0bc
-  generator_sha256: 686fd65fe5ef65cc46d43a97d628f7fd884d67486d027f8de71ac8d64a88b512
+  policy_sha256: 9ff235c6e1046ee586def0a3bcba89ef19ed7097053d1c451d7350bc4f7df5d7
+  receipt_sha256: 3cb1431401f8beb33c138d5918a349376cc34d094c2360e46c3efe4ae4ef3573
+  generator_sha256: d0ffbd3024ce88bdf902d4e47ef30c8a856952f10c6f9b54b17b11559116cb02
 license_audit:
   state: reviewed and verified in final Fedora 43 and 44 builds
   aggregate_expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND NAIST-2003 AND Unicode-3.0 AND LicenseRef-Fedora-Public-Domain
@@ -56,8 +65,8 @@ duplicate_check:
 upstream:
   provider: static
   current_version: 146.0.7678.0
-  source_url_template: https://commondatastorage.googleapis.com/chromium-browser-official/chromium-{version}-lite.tar.xz
-  source_sha256: b6193d9ad3bfefb4d947a1719070bcb1328a690f82d150b9812cfa885fe3b875
+  source_url_template: https://github.com/marcin-fm/agentlab/releases/download/pdfium-sources-{version}-pdfium-efbbd0fc9582/pdfium-{version}-source.tar.gz
+  source_sha256: c7dc7e87a0ab457d9088e1215cdd54da3ebd941b9d77f38b1a7e9c8606cb2b75
 copr:
   enabled: false
   subdir: packages/pdfium
