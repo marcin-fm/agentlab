@@ -1,6 +1,5 @@
 name: golang-github-evanw-esbuild
 status: enabled
-release_policy: fedora_adaptation
 validation:
   source_identity: Upstream tag v0.28.1 peels to commit bb9db84c02433fbe37b3509f53f9f3e3cc48725e; the tag archive is pinned by SHA-256.
   license_evidence: The reviewed source carries the complete MIT LICENSE.md text.
@@ -12,6 +11,7 @@ upstream:
   provider: github
   repository: evanw/esbuild
   tag: v0.28.1
+  tag_prefix: v
   commit: bb9db84c02433fbe37b3509f53f9f3e3cc48725e
   current_version: 0.28.1
   source_url_template: https://github.com/evanw/esbuild/archive/refs/tags/v{version}/esbuild-{version}.tar.gz

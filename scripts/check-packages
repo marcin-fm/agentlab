@@ -4,7 +4,6 @@
 require "json"
 require "optparse"
 require_relative "lib/agentlab"
-require_relative "lib/package_release"
 
 selected_name = nil
 OptionParser.new do |parser|
@@ -97,12 +96,10 @@ packages.each do |package|
   manifest_version = package.upstream["current_version"].to_s
   spec_version_expected = package.upstream.fetch("rpm_version", manifest_version).to_s
   manifest_sha256 = package.upstream["source_sha256"].to_s
-  release_policy = package.data["release_policy"]
-
   errors << "#{package.name}: spec Name is #{spec_name.inspect}" unless spec_name == package.name
   errors << "#{package.name}: spec Version #{spec_version.inspect} != manifest RPM version #{spec_version_expected.inspect}" unless spec_version == spec_version_expected
-  unless Agentlab::PackageRelease.valid?(spec_release, policy: release_policy)
-    errors << "#{package.name}: Release #{spec_release.inspect} must use #{Agentlab::PackageRelease.description(policy: release_policy)}"
+  unless spec_release&.match?(/\A0\.(?:0\.)?[1-9][0-9]*%\{\?dist\}\z/)
+    errors << "#{package.name}: Release #{spec_release.inspect} must use 0.x%{?dist} or legacy 0.0.x%{?dist}"
   end
 
   changelog = spec.split(/^%changelog\s*$/, 2)[1].to_s
