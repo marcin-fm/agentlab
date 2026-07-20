@@ -4,7 +4,7 @@
   "release": "149.2.0",
   "source_closure": {
     "path": "rust-v8-149.2.0-source-closure.json",
-    "sha256": "a52f0d1cffe9d5b5884ba244b460ee0502eb38e68b9af809d9b0cf25b741cfd0",
+    "sha256": "72e5e4102390daac9680300552edaae8aa14db7c40694dd7ea90cbb483a34069",
     "tree_sha256": "6c09e1a9ca0c3d1bfea49a40e0be5abcb12ca5a3c92983e667cec499f47bcc1d"
   },
   "fedora_license_evidence": {

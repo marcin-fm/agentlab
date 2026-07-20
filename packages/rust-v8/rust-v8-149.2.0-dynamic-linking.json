@@ -4,7 +4,7 @@
   "release": "149.2.0",
   "source_closure_reference": {
     "path": "rust-v8-149.2.0-source-closure.json",
-    "sha256": "a52f0d1cffe9d5b5884ba244b460ee0502eb38e68b9af809d9b0cf25b741cfd0",
+    "sha256": "72e5e4102390daac9680300552edaae8aa14db7c40694dd7ea90cbb483a34069",
     "commit": "5d0e31ea6bf67f4559faa759b91e22bc3f1cd696"
   },
   "source_files": [

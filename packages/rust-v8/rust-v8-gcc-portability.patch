@@ -10,7 +10,8 @@ required definition directly.
 diff --git a/v8/BUILD.gn b/v8/BUILD.gn
 --- a/v8/BUILD.gn
 +++ b/v8/BUILD.gn
-@@ -1621,7 +1621,3 @@
+@@ -1620,10 +1620,6 @@
+   }
    if (v8_current_cpu == "arm64") {
      defines += [ "V8_TARGET_ARCH_ARM64" ]
 -    if (current_cpu == "arm64" && v8_control_flow_integrity && is_clang) {
@@ -18,6 +19,8 @@ diff --git a/v8/BUILD.gn b/v8/BUILD.gn
 -      asmflags = [ "-mmark-bti-property" ]
 -    }
    }
+ 
+   # Mips64el simulators.
 diff --git a/v8/src/base/macros.h b/v8/src/base/macros.h
 --- a/v8/src/base/macros.h
 +++ b/v8/src/base/macros.h
