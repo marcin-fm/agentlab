@@ -15,13 +15,14 @@ TypeScript code for distribution on the web.}
 %global godocs          docs CHANGELOG.md README.md version.txt
 
 Name:           golang-github-evanw-esbuild
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Fast JavaScript bundler and minifier
 
 License:        MIT
 URL:            %{gourl}
 Source0:        %{gosource}
 
+BuildRequires:  nodejs
 BuildRequires:  nodejs-devel
 
 %description %{common_description}
@@ -95,6 +96,9 @@ EOF
 %{nodejs_sitelib}/@esbuild
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.28.1-0.2
+- Require the Node.js runtime explicitly for Fedora 43 builds
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.28.1-0.1
 - Adapt Fedora's package to exact esbuild 0.28.1 for Playwright builds
 - Verify the immutable source and test the source-built Node.js module offline
