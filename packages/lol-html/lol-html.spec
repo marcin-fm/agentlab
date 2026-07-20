@@ -6,7 +6,7 @@
 
 Name:           lol-html
 Version:        3.0.0
-Release:        0.9%{?dist}
+Release:        0.10%{?dist}
 Summary:        Streaming HTML parser and transformation C library
 
 License:        BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib
@@ -141,6 +141,9 @@ ldd -r "$library"
 %{_libdir}/pkgconfig/lol-html.pc
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 3.0.0-0.10
+- Record successful system-registry matrix validation.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 3.0.0-0.9
 - Generate root dependency requirements through the standard Cargo macro.
 

@@ -72,8 +72,13 @@ build_validation:
   artifact_rpmlint: zero errors or warnings across the five Fedora 44 source, runtime, devel, debugsource, and debuginfo artifacts
   rpm_installed: false
   mock_matrix:
+    configured_copr_build: 10749257 succeeded at release 0.9
+    fedora_43_x86_64: passed
+    fedora_43_aarch64: passed
     fedora_44_x86_64: passed
-    remaining_cells: pending configured SCM build
+    fedora_44_aarch64: passed
+    fedora_rawhide_x86_64: passed
+    fedora_rawhide_aarch64: passed
 copr:
   enabled: true
   chroots:
