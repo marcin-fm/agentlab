@@ -109,6 +109,31 @@ selected_cargo_license_audit:
   fedora_allowed_spdx_verified: false
   native_static_licenses_verified: false
   final_binary_license_complete: false
+cargo_license_text_inventory:
+  status: checked-package-local-text-inventory-incomplete
+  receipt: codex-cli-0.144.5-cargo-license-text-inventory.json
+  receipt_sha256: 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
+  counts:
+    vendor_directories: 1124
+    directories_with_package_local_license_texts: 1020
+    directories_without_package_local_license_texts: 104
+    linked_linux_directories_without_package_local_license_texts: 51
+    directories_with_top_level_license_texts: 1016
+    directories_without_top_level_license_texts: 108
+    linked_linux_directories_without_top_level_license_texts: 54
+  all_vendor_directories_accounted: true
+  legal_review_complete: false
+package_build_contract:
+  cargo_package: codex-cli
+  binary: codex
+  build_command: "%cargo_build -- --package codex-cli --bin codex"
+  bundled_provides_manifest: "%{_licensedir}/codex-cli/cargo-vendor.txt"
+  smoke_checks:
+  - codex --version
+  - codex --help
+  - codex doctor with an isolated CODEX_HOME and disabled startup update checks
+  implemented_below_fail_closed_prep_stop: true
+  compilation_started: false
 special_source_audit:
   rusty_v8:
     crate: v8 149.2.0

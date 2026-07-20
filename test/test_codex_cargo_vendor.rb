@@ -32,6 +32,25 @@ class CodexCargoVendorTest < Minitest::Test
     assert(resolver.fetch("production_build_input"))
   end
 
+  def test_checked_cargo_license_text_inventory
+    package = YAML.safe_load_file(File.join(PACKAGE, "package.yml"))
+    policy = package.fetch("source_policy")
+    receipt_path = File.join(PACKAGE, policy.fetch("cargo_license_text_inventory"))
+    receipt = JSON.parse(File.read(receipt_path))
+
+    assert_equal(policy.fetch("cargo_license_text_inventory_sha256"), Digest::SHA256.file(receipt_path).hexdigest)
+    assert_equal("agentlab-codex-cargo-license-text-inventory/v1", receipt.fetch("schema"))
+    assert_equal(1_124, receipt.dig("counts", "vendor_directories"))
+    assert_equal(1_020, receipt.dig("counts", "directories_with_package_local_license_texts"))
+    assert_equal(104, receipt.dig("counts", "directories_without_package_local_license_texts"))
+    assert_equal(51, receipt.dig("counts", "linked_linux_directories_without_package_local_license_texts"))
+    assert_equal(1_016, receipt.dig("counts", "directories_with_top_level_license_texts"))
+    assert_equal(108, receipt.dig("counts", "directories_without_top_level_license_texts"))
+    assert_equal(54, receipt.dig("counts", "linked_linux_directories_without_top_level_license_texts"))
+    assert(receipt.dig("validation", "all_vendor_directories_accounted"))
+    refute(receipt.dig("validation", "all_vendor_directories_have_package_local_license_texts"))
+  end
+
   def test_spec_and_source_builder_bind_checked_tools
     package = YAML.safe_load_file(File.join(PACKAGE, "package.yml"))
     policy = package.fetch("source_policy")
@@ -51,6 +70,10 @@ class CodexCargoVendorTest < Minitest::Test
     assert_includes(spec, "%{__cargo_to_rpm} -p %{SOURCE11} parse-vendor-manifest")
     assert_includes(spec, 'test "$(wc -l < cargo-bundled-provides.txt)" -eq 1124')
     assert_includes(spec, "cmp cargo-vendor.txt %{SOURCE11}")
+    assert_includes(spec, "%cargo_build -- --package codex-cli --bin codex")
+    assert_includes(spec, "install -Dpm0755 codex-rs/target/rpm/codex")
+    assert_includes(spec, "%license %{_licensedir}/%{name}/cargo-vendor.txt")
+    assert_includes(spec, "CODEX_HOME=\"$PWD/.codex-home\" codex-rs/target/rpm/codex doctor")
     assert_includes(makefile, "codex-cli.spec)")
     assert_includes(makefile, 'scripts/prepare-codex-cargo-srpm-sources" --spec "$(spec)"')
   end

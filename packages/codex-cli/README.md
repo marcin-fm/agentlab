@@ -110,10 +110,10 @@ resolver-only sources. Both the 1,004-package selected target and the
 
 - vendor tree: `c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe`
 - vendor manifest: `5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8`
-- Cargo configuration: `5d5df5008cf7389f8da7b690846f72eecda85b6cac6570506b3cd479dc5ffa27`
+- Cargo configuration: `921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89`
 - archive: `7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b`
 - archive size: `231,939,492` bytes
-- receipt: `fe302ea41ef17b47432921f19361eda93576b51b2ddfdde31dcde66693db4d1b`
+- receipt: `e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c`
 
 The source model is now integrated through the repository-backed COPR SCM path.
 `scripts/prepare-codex-cargo-srpm-sources` populates only the selected and
@@ -127,15 +127,17 @@ complete 128-member workspace with all features and development edges, which
 immediately requests the deliberately excluded `rules_rust` source. The spec
 instead passes the exact checked 1,124-entry manifest through
 `cargo2rpm parse-vendor-manifest`, requires 1,124 unique bundled Provides, and
-ships that manifest as `cargo-vendor.txt`.
+installs that manifest as `cargo-vendor.txt` under the RPM license directory so
+Fedora's Cargo file attributes emit the Provides automatically.
 
 Generated gzip bytes and the source builder's exact Cargo version are not part
 of the normative contract. The semantic tree SHA-256 remains
 `c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe`;
 any Cargo normalization change that alters that tree fails closed. The package
-still stops before compilation because complete `bundled(crate(...))` metadata,
-final aggregate linked-license approval, required license texts, and the
-no-crate-devel application build/install/test flow remain later gates.
+still stops before compilation because final aggregate linked-license approval,
+required license texts, and Fedora build proof remain later gates. The exact
+package-scoped build, binary install, and network-free smoke flow are retained
+below that stop so they can be reviewed before the provider gate is lifted.
 
 ## Selected Cargo License Accounting
 
@@ -164,6 +166,18 @@ come directly from exact commit objects after URL and tracked-checkout
 verification, and 119 workspace licenses come from the exact release metadata.
 The receipt SHA-256 is
 `530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8`.
+
+The resolver source now also has a package-local legal-file inventory. Of 1,124
+vendored directories, 1,020 contain at least one nonempty recursively discovered
+license, copying, unlicense, or `LICENSES/` candidate and 104 do not; 51 of those
+gaps are in the 873-package Linux-linked graph. A stricter package-root view has
+1,016 directories with a top-level candidate and 108 without one, including 54
+Linux-linked directories. Notice, copyright, credits, authors, and patents files
+are recorded separately and are not treated as full license texts. The receipt
+preserves graph roles and exact file hashes rather than treating all vendored
+source as linked. A nested candidate does not prove package-level legal closure,
+and a missing candidate does not prove that no usable upstream text exists; each
+unresolved package still needs an exact text mapping and Fedora review.
 
 This is not the final RPM license closure. Fedora-allowed SPDX review, package
 license texts, and the recursive Rusty V8/Chromium native static inventory are

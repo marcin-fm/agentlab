@@ -13,6 +13,9 @@ require "zlib"
 module CodexCargoVendor
   class Error < StandardError; end
 
+  LICENSE_BASENAME = /\A(?:licen[cs]e|copying|unlicense)(?:[._-].*)?\z/i
+  NOTICE_BASENAME = /\A(?:notice|copyright|credits|authors|patents)(?:[._-].*)?\z/i
+
   module_function
 
   def run!(environment, *command, chdir: nil)
@@ -117,6 +120,120 @@ module CodexCargoVendor
     Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).select do |path|
       File.file?(path) && !File.symlink?(path) && ![".", ".."].include?(File.basename(path))
     end.sort
+  end
+
+  def legal_files(package_root, basename_pattern, license_directories: false)
+    regular_files(package_root).filter_map do |path|
+      relative = path.delete_prefix("#{package_root}/")
+      next unless File.basename(path).match?(basename_pattern) || (license_directories && relative.split("/").include?("LICENSES"))
+      next unless File.size(path).positive?
+
+      {
+        "path" => relative,
+        "sha256" => Digest::SHA256.file(path).hexdigest,
+        "size_bytes" => File.size(path)
+      }
+    end
+  end
+
+  def cargo_license_text_receipt(vendor_root, vendor_receipt, vendor_receipt_path, license_audit, license_audit_path)
+    raise Error, "unsupported Codex license audit schema" unless license_audit.fetch("schema") == "agentlab-codex-selected-cargo-license-audit/v1"
+    unless license_audit.dig("authoritative_closure", "sha256") == vendor_receipt.dig("closure_receipt", "sha256") &&
+           license_audit.dig("resolver_supplement", "sha256") == vendor_receipt.dig("resolver_supplement", "sha256")
+      raise Error, "Codex license audit input identity mismatch"
+    end
+
+    selected = license_audit.fetch("selected_packages").reject { |package| package.fetch("workspace_path_package") }
+    resolver = license_audit.fetch("resolver_only_packages")
+    packages = selected.map do |package|
+      package.merge("source_scope" => "selected", "vendor_role" => package.fetch("role"))
+    end + resolver.map do |package|
+      package.merge("source_scope" => "resolver-only", "vendor_role" => "resolver-only")
+    end
+    records = packages.map do |package|
+      directory = "#{package.fetch('name')}-#{package.fetch('version')}"
+      package_root = File.join(vendor_root, directory)
+      raise Error, "missing vendored package directory #{directory}" unless File.directory?(package_root)
+
+      texts = legal_files(package_root, LICENSE_BASENAME, license_directories: true)
+      notices = legal_files(package_root, NOTICE_BASENAME)
+      top_level_texts = texts.select do |text|
+        path = text.fetch("path")
+        !path.include?("/") || path.split("/").first == "LICENSES"
+      end
+      {
+        "directory" => directory,
+        "name" => package.fetch("name"),
+        "version" => package.fetch("version"),
+        "origin" => package.fetch("origin"),
+        "source_scope" => package.fetch("source_scope"),
+        "role" => package.fetch("vendor_role"),
+        "linked_linux" => package.fetch("linked_linux"),
+        "fedora_all_target_linked" => package.fetch("fedora_all_target_linked"),
+        "normalized_spdx_candidate" => package.fetch("normalized_spdx_candidate"),
+        "license_texts" => texts,
+        "top_level_license_texts" => top_level_texts,
+        "notice_files" => notices
+      }
+    end.sort_by { |record| record.fetch("directory") }
+    raise Error, "Codex license inventory has duplicate package directories" unless records.map { |record| record.fetch("directory") }.uniq.length == records.length
+
+    actual_directories = Dir.children(vendor_root).select do |entry|
+      File.directory?(File.join(vendor_root, entry))
+    end.sort
+    raise Error, "Codex license inventory does not cover the vendor directory set" unless actual_directories == records.map { |record| record.fetch("directory") }
+
+    missing = records.select { |record| record.fetch("license_texts").empty? }
+    missing_top_level = records.select { |record| record.fetch("top_level_license_texts").empty? }
+    {
+      "schema" => "agentlab-codex-cargo-license-text-inventory/v1",
+      "release" => license_audit.fetch("release"),
+      "inputs" => {
+        "resolver_vendor_receipt" => {
+          "name" => File.basename(vendor_receipt_path),
+          "sha256" => Digest::SHA256.file(vendor_receipt_path).hexdigest,
+          "vendor_tree_sha256" => vendor_receipt.dig("vendor_tree", "sha256")
+        },
+        "selected_cargo_license_audit" => {
+          "name" => File.basename(license_audit_path),
+          "sha256" => Digest::SHA256.file(license_audit_path).hexdigest
+        }
+      },
+      "counts" => {
+        "vendor_directories" => records.length,
+        "selected_vendor_directories" => records.count { |record| record.fetch("source_scope") == "selected" },
+        "resolver_only_vendor_directories" => records.count { |record| record.fetch("source_scope") == "resolver-only" },
+        "directories_with_package_local_license_texts" => records.length - missing.length,
+        "directories_without_package_local_license_texts" => missing.length,
+        "license_text_files" => records.sum { |record| record.fetch("license_texts").length },
+        "directories_with_top_level_license_texts" => records.length - missing_top_level.length,
+        "directories_without_top_level_license_texts" => missing_top_level.length,
+        "notice_files" => records.sum { |record| record.fetch("notice_files").length },
+        "linked_linux_directories_without_package_local_license_texts" => missing.count { |record| record.fetch("linked_linux") },
+        "linked_linux_directories_without_top_level_license_texts" => missing_top_level.count { |record| record.fetch("linked_linux") },
+        "selected_compile_only_directories_without_package_local_license_texts" => missing.count do |record|
+          record.fetch("source_scope") == "selected" && !record.fetch("linked_linux")
+        end,
+        "resolver_only_directories_without_package_local_license_texts" => missing.count do |record|
+          record.fetch("source_scope") == "resolver-only"
+        end,
+        "fedora_all_target_directories_without_package_local_license_texts" => missing.count do |record|
+          record.fetch("fedora_all_target_linked")
+        end
+      },
+      "packages" => records,
+      "validation" => {
+        "all_vendor_directories_accounted" => true,
+        "package_local_license_text_inventory_verified" => true,
+        "cargo_manifest_license_metadata_complete" => license_audit.dig("validation", "selected_cargo_license_metadata_complete") &&
+          license_audit.dig("validation", "resolver_cargo_license_metadata_complete"),
+        "all_vendor_directories_have_package_local_license_texts" => missing.empty?,
+        "fedora_allowed_spdx_verified" => false,
+        "native_static_licenses_verified" => false,
+        "final_binary_license_complete" => false
+      },
+      "scope" => "Exact package-local license-text inventory for the resolver-complete Cargo vendor source; missing texts require upstream mapping, and Rusty V8/native static plus final Fedora legal approval remain separate"
+    }
   end
 
   def verify_cargo_checksum!(root, package_checksum)
@@ -226,7 +343,7 @@ module CodexCargoVendor
     run!(environment, *(command + ["--target", "all"]))
   end
 
-  def verify!(source_dir:, archive:, manifest:, config:, receipt_path:, closure_path:, supplement_path:, work_dir_root:)
+  def verify!(source_dir:, archive:, manifest:, config:, receipt_path:, closure_path:, supplement_path:, work_dir_root:, license_audit_path: nil, license_text_receipt_path: nil)
     receipt = JSON.parse(File.read(receipt_path))
     closure = JSON.parse(File.read(closure_path))
     supplement = JSON.parse(File.read(supplement_path))
@@ -255,7 +372,7 @@ module CodexCargoVendor
       ["#{package.fetch('name')}-#{package.fetch('version')}", package]
     end
 
-    Dir.mktmpdir("agentlab-codex-vendor-check-", work_dir_root) do |temporary|
+    license_text_receipt = Dir.mktmpdir("agentlab-codex-vendor-check-", work_dir_root) do |temporary|
       root_name = receipt.dig("vendor_tree", "root")
       extract_archive!(archive, temporary, root_name)
       vendor_root = File.join(temporary, root_name)
@@ -273,9 +390,19 @@ module CodexCargoVendor
       raise Error, "resolver-vendor manifest content mismatch" unless File.read(manifest) == cargo_vendor_manifest(packages)
       raise Error, "resolver-vendor Cargo configuration mismatch" unless File.read(config) == cargo_resolver_vendor_config(closure, root_name)
       verify_resolution!(source_dir, vendor_root, config, receipt, temporary)
+      if license_audit_path
+        license_audit = JSON.parse(File.read(license_audit_path))
+        cargo_license_text_receipt(vendor_root, receipt, receipt_path, license_audit, license_audit_path)
+      end
+    end
+
+    if license_text_receipt_path
+      expected = JSON.pretty_generate(license_text_receipt) + "\n"
+      raise Error, "Codex Cargo license-text receipt is stale: #{license_text_receipt_path}" unless File.binread(license_text_receipt_path) == expected
     end
 
     puts "Verified Codex resolver-complete Cargo source tree #{receipt.dig('vendor_tree', 'sha256')}."
+    license_text_receipt
   rescue JSON::ParserError, KeyError, Errno::ENOENT => e
     raise Error, e.message
   end

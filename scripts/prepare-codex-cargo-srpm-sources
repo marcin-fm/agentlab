@@ -124,13 +124,13 @@ module CodexCargoSourcePreparer
     end
   end
 
-  def prepare!(spec, cache_dir: nil, offline_cache: false)
+  def prepare!(spec, cache_dir: nil, offline_cache: false, refresh_license_texts: false)
     spec = File.realpath(spec)
     raise CodexCargoVendor::Error, "source preparer requires codex-cli.spec" unless File.basename(spec) == "codex-cli.spec"
 
     specdir = File.dirname(spec)
     sources = expanded_sources(spec)
-    expected_indexes = (0..12).to_a
+    expected_indexes = (0..13).to_a
     raise CodexCargoVendor::Error, "codex-cli.spec source layout mismatch" unless sources.keys.sort == expected_indexes
 
     paths = sources.transform_values { |source| File.join(specdir, source_filename(source)) }
@@ -178,7 +178,7 @@ module CodexCargoSourcePreparer
         11 => File.join(output_dir, File.basename(paths.fetch(11))),
         12 => File.join(output_dir, File.basename(paths.fetch(12)))
       }
-      CodexCargoVendor.verify!(
+      license_text_receipt = CodexCargoVendor.verify!(
         source_dir:,
         archive: generated.fetch(10),
         manifest: generated.fetch(11),
@@ -186,8 +186,19 @@ module CodexCargoSourcePreparer
         receipt_path:,
         closure_path:,
         supplement_path:,
-        work_dir_root: temporary
+        work_dir_root: temporary,
+        license_audit_path: paths.fetch(6),
+        license_text_receipt_path: refresh_license_texts ? nil : paths.fetch(13)
       )
+      if refresh_license_texts
+        Tempfile.create([".codex-cargo-license-texts-", ".json"], specdir) do |file|
+          file.write(JSON.pretty_generate(license_text_receipt) + "\n")
+          file.flush
+          file.fsync
+          File.chmod(0o644, file.path)
+          File.rename(file.path, paths.fetch(13))
+        end
+      end
       generated.each { |index, path| atomic_copy(path, paths.fetch(index)) }
     end
     puts "Prepared Codex resolver-complete Cargo SRPM sources in #{specdir}."
@@ -201,6 +212,7 @@ begin
     parser.on("--spec PATH", "Generate resolver-complete Cargo sources for codex-cli.spec") { |path| options[:spec] = path }
     parser.on("--cache-dir PATH", "Retained Cargo cache for local source-generation retries") { |path| options[:cache_dir] = path }
     parser.on("--offline-cache", "Require the retained Cargo cache without network access") { options[:offline_cache] = true }
+    parser.on("--refresh-license-texts", "Refresh the checked Cargo license-text receipt") { options[:refresh_license_texts] = true }
     parser.on("--check", "Verify existing resolver-complete Cargo source artifacts") { options[:check] = true }
     parser.on("--source-dir PATH") { |path| options[:source_dir] = path }
     parser.on("--archive PATH") { |path| options[:archive] = path }
@@ -209,11 +221,13 @@ begin
     parser.on("--receipt PATH") { |path| options[:receipt] = path }
     parser.on("--closure PATH") { |path| options[:closure] = path }
     parser.on("--supplement PATH") { |path| options[:supplement] = path }
+    parser.on("--license-audit PATH") { |path| options[:license_audit] = path }
+    parser.on("--license-texts PATH") { |path| options[:license_texts] = path }
     parser.on("--work-dir-root PATH") { |path| options[:work_dir_root] = path }
   end.parse!
 
   if options[:check]
-    required = %i[source_dir archive manifest config receipt closure supplement]
+    required = %i[source_dir archive manifest config receipt closure supplement license_audit license_texts]
     missing = required.reject { |key| options[key] }
     raise CodexCargoVendor::Error, "missing check options: #{missing.join(', ')}" unless missing.empty?
 
@@ -225,7 +239,9 @@ begin
       receipt_path: File.realpath(options.fetch(:receipt)),
       closure_path: File.realpath(options.fetch(:closure)),
       supplement_path: File.realpath(options.fetch(:supplement)),
-      work_dir_root: File.realpath(options.fetch(:work_dir_root, ENV.fetch("TMPDIR", "/srv/tmp")))
+      work_dir_root: File.realpath(options.fetch(:work_dir_root, ENV.fetch("TMPDIR", "/srv/tmp"))),
+      license_audit_path: File.realpath(options.fetch(:license_audit)),
+      license_text_receipt_path: File.realpath(options.fetch(:license_texts))
     )
   elsif options[:spec]
     if options[:offline_cache] && !options[:cache_dir]
@@ -234,7 +250,8 @@ begin
     CodexCargoSourcePreparer.prepare!(
       options.fetch(:spec),
       cache_dir: options[:cache_dir],
-      offline_cache: options.fetch(:offline_cache, false)
+      offline_cache: options.fetch(:offline_cache, false),
+      refresh_license_texts: options.fetch(:refresh_license_texts, false)
     )
   else
     raise CodexCargoVendor::Error, "--spec or --check is required"

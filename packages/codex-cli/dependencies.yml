@@ -131,6 +131,13 @@ selected_cargo_license_evidence:
   native_static_licenses_verified: false
   final_binary_license_complete: false
   limitation: The generated expressions cover Cargo manifest metadata only. Rusty V8 and Chromium native static sources, required texts, system-library decisions, and final Fedora License approval remain separate gates.
+  package_local_text_inventory: codex-cli-0.144.5-cargo-license-text-inventory.json
+  vendor_directories_with_package_local_license_texts: 1020
+  vendor_directories_without_package_local_license_texts: 104
+  linked_linux_directories_without_package_local_license_texts: 51
+  vendor_directories_with_top_level_license_texts: 1016
+  vendor_directories_without_top_level_license_texts: 108
+  linked_linux_directories_without_top_level_license_texts: 54
 lock_normalization:
   status: verified-prep-transform
   source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e

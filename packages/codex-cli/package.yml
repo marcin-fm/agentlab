@@ -46,9 +46,9 @@ source_policy:
   cargo_audit_script: audit-codex-cargo-closure
   cargo_audit_script_sha256: 87a0a8f6cc63fce3242387232c7df2dd38d39cf6905fb43073cc1099389ffeb2
   cargo_source_preparer: prepare-codex-cargo-srpm-sources
-  cargo_source_preparer_sha256: ef05768e31d52be01a03852d277ca0db24eeb75d7502f370da5f6a3f5517fe57
+  cargo_source_preparer_sha256: 629a6bf9b2c6e78a74939832a9df55eaefee2acf20a03dd0332c8ca62cf15536
   cargo_vendor_verifier: codex_cargo_vendor.rb
-  cargo_vendor_verifier_sha256: 592117f96061018db833418eebcf89a9a4a16f8a4e8c5e02d4e7d9daaa97d0fc
+  cargo_vendor_verifier_sha256: f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
   selected_cargo_license_audit: codex-cli-0.144.5-selected-cargo-license-audit.json
   selected_cargo_license_audit_sha256: 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
   selected_cargo_linked_linux_packages: 873
@@ -56,6 +56,14 @@ source_policy:
   fedora_all_target_linked_packages: 1019
   selected_cargo_license_metadata_complete: true
   selected_source_license_metadata_verified: true
+  cargo_license_text_inventory: codex-cli-0.144.5-cargo-license-text-inventory.json
+  cargo_license_text_inventory_sha256: 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
+  cargo_vendor_directories_with_package_local_license_texts: 1020
+  cargo_vendor_directories_without_package_local_license_texts: 104
+  cargo_linked_linux_directories_without_package_local_license_texts: 51
+  cargo_vendor_directories_with_top_level_license_texts: 1016
+  cargo_vendor_directories_without_top_level_license_texts: 108
+  cargo_linked_linux_directories_without_top_level_license_texts: 54
   final_binary_license_complete: false
   lock_normalization: verified-prep-transform
   lock_normalization_records: 132
@@ -78,6 +86,7 @@ cargo_license_audit:
   linux_linked_unique_expressions: 35
   cargo_manifest_metadata_complete: true
   selected_source_license_metadata_verified: true
+  package_local_license_text_inventory_verified: true
   license_texts_verified: false
   fedora_allowed_spdx_verified: false
   rusty_v8_native_static_license_complete: false
