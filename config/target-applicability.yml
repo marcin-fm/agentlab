@@ -33,6 +33,9 @@ selected_consumers:
   kreuzberg:
     releases: ["43", "44", rawhide]
     reason: Released dependency closure selected for the blocked Kreuzberg application.
+  nodejs-playwright:
+    releases: ["43", "44", rawhide]
+    reason: Released source-build dependency closure selected for the blocked reusable Playwright module.
   python-headroom-ai:
     releases: ["43", "44", rawhide]
     reason: Released dependency closure selected for the blocked non-ML Headroom surface.
@@ -161,6 +164,10 @@ dependency_groups:
       - rust-weezl0.2
       - rust-whatlang0.18
       - rust-wide1
+  nodejs-playwright:
+    reason: Source-built native build prerequisite selected by the blocked Playwright module.
+    packages:
+      - golang-github-evanw-esbuild
   python-headroom-ai:
     reason: Rust compatibility dependency selected by the non-ML Headroom surface.
     packages:

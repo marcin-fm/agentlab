@@ -1,0 +1,22 @@
+name: golang-github-evanw-esbuild
+status: enabled
+release_policy: fedora_adaptation
+validation:
+  source_identity: Upstream tag v0.28.1 peels to commit bb9db84c02433fbe37b3509f53f9f3e3cc48725e; the tag archive is pinned by SHA-256.
+  license_evidence: The reviewed source carries the complete MIT LICENSE.md text.
+  fedora_adaptation: Fedora's current package already source-builds the Go executable and generates the public Node.js module; this adaptation preserves that model at exact version 0.28.1.
+  duplicate_audit: Fedora 43 provides 0.24.2, while Fedora 44 and current Rawhide provide 0.27.2; no exact 0.28.1 provider was found in Fedora or matching RPM Fusion repositories as checked on 2026-07-20.
+  native_payload: The Node platform package contains only metadata and a link to the RPM-built executable; no upstream prebuilt binary is shipped.
+  local_build: Fedora 44 x86_64 Mock built the package with the Agentlab repository and networking disabled during the build; Go tests, the offline Node transform, RPM digests, and extracted-artifact execution passed.
+upstream:
+  provider: github
+  repository: evanw/esbuild
+  tag: v0.28.1
+  commit: bb9db84c02433fbe37b3509f53f9f3e3cc48725e
+  current_version: 0.28.1
+  source_url_template: https://github.com/evanw/esbuild/archive/refs/tags/v{version}/esbuild-{version}.tar.gz
+  source_sha256: 65c756fa87d43178ac4a5242454c2bd0fde325f8ecf77997f8fa4b88f94d5cd2
+copr:
+  enabled: true
+  subdir: packages/golang-github-evanw-esbuild
+  spec: golang-github-evanw-esbuild.spec
