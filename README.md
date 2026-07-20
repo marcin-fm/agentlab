@@ -48,11 +48,9 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | OpenCode | 1.18.3 | blocked | Requires a source-built Bun and an audited npm source closure |
 | OpenChamber | 1.16.1 | blocked | Web CLI draft requires Bun, an audited Node/native closure, and the OpenCode provider |
 | Bun | 1.3.14 | blocked | First isolated source build works; immutable RPM inputs, self-rebuild, relink, and final audits remain |
-| RTK | 0.43.0 | enabled | Current F43/F44 builds passed 2,287 tests, full linked-license/provider receipts, system-SQLite smokes, and rpmlint |
+| RTK | 0.43.0 | enabled | Release 0.6 uses Fedora dirs 6, passes all six COPR targets, 2,245 Fedora 44 tests, system-SQLite and directory-path smokes, and artifact review |
 | codex-cli | 0.144.5 | blocked | Cargo source hosting, the rust-v8 provider, final licenses, and offline builds remain |
 | rust-v8 | 149.2.0 | blocked | Exact recursive identities and stable-Rust patches are recorded; immutable submodule sources, licenses, and offline builds remain |
-| rust-dirs5 | 5.0.1 | enabled | Fedora 44-only compatibility crate for RTK; clean mock build passed |
-| rust-dirs-sys0.4 | 0.4.1 | enabled | Fedora 44-only compatibility crate for RTK; clean mock build passed |
 | rubygem-ferrum | 0.17.2 | enabled | Pure-Ruby package; Fedora 43/44 clean builds and Chromium CDP smoke passed |
 | ast-grep | 0.44.1 | enabled | Clean F43/F44 mock builds, tests, CLI smoke, and aggregate linked-license audit passed |
 | mermaid-cli | 11.16.0 | blocked | F43/F44 builds pass; immutable generated-source hosting and upstream bundling record remain |

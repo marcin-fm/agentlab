@@ -60,11 +60,6 @@ dependency_groups:
       - python-oslex
       - python-overrides
       - python-sensai-utils
-  rtk:
-    reason: Rust compatibility dependencies selected by RTK.
-    packages:
-      - rust-dirs5
-      - rust-dirs-sys0.4
   ast-grep:
     reason: Rust compatibility dependencies selected by ast-grep.
     packages:
@@ -189,22 +184,6 @@ overrides:
         source: fedora
         provider: rust-cfb-devel 0.7.3-7.fc43
         capability: crate(cfb) = 0.7.3
-        checked_on: "2026-07-19"
-  rust-dirs5:
-    releases: ["44", rawhide]
-    omitted:
-      "43":
-        source: fedora
-        provider: rust-dirs-devel 5.0.1-6.fc43
-        capability: crate(dirs) = 5.0.1
-        checked_on: "2026-07-19"
-  rust-dirs-sys0.4:
-    releases: ["44", rawhide]
-    omitted:
-      "43":
-        source: fedora
-        provider: rust-dirs-sys-devel 0.4.1-6.fc43
-        capability: crate(dirs-sys) = 0.4.1
         checked_on: "2026-07-19"
   rust-memoffset0.7:
     releases: [rawhide]

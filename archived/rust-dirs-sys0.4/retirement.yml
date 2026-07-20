@@ -1,0 +1,13 @@
+---
+name: rust-dirs-sys0.4
+retired_on: '2026-07-20'
+reason: RTK 0.43.0-0.6 migrated to Fedora's dirs 6 and dirs-sys 0.5 providers; COPR
+  build 10749341 passed all six configured targets.
+copr_project: marcin/agentlab
+configured_chroots_at_retirement:
+- fedora-43-x86_64
+- fedora-43-aarch64
+- fedora-44-x86_64
+- fedora-44-aarch64
+- fedora-rawhide-x86_64
+- fedora-rawhide-aarch64
