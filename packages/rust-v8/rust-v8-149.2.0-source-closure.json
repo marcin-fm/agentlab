@@ -526,7 +526,7 @@
     },
     {
       "name": "rust-v8-gcc-portability.patch",
-      "sha256": "d27b7a1c5dddc6aef8e44ca47f59b7f4f155ad2674ceace9d80d472e7356cb31",
+      "sha256": "f0a7b475cbf82e3905e2d63329647e9e52a19c11a47e0160df6ea3b194c0c049",
       "zero_fuzz_dry_run": true,
       "upstream_status": "not-submitted"
     },

@@ -2,11 +2,23 @@ From: Marcin FM <marcin@lgic.pl>
 Subject: [PATCH] Fix V8 GCC preprocessing, flags, and include completeness
 
 GCC does not accept Clang's `__has_warning` predicate in a compound `#if`, the
-Linux GCC assembly path receives a Clang-only BTI marker, and one Wasm source
-relies on a transitive include for managed object definitions. Keep Clang warning
-handling unchanged while making the Fedora GCC path portable and include the
-required definition directly.
+V8 and ICU ARM64 assembly paths receive a Clang-only BTI marker, and one Wasm
+source relies on a transitive include for managed object definitions. Keep Clang
+warning handling unchanged while making the Fedora GCC path portable and include
+the required definition directly.
 ---
+diff --git a/third_party/icu/BUILD.gn b/third_party/icu/BUILD.gn
+--- a/third_party/icu/BUILD.gn
++++ b/third_party/icu/BUILD.gn
+@@ -555,7 +555,7 @@
+       sources = [ data_assembly ]
+       deps = [ ":make_data_assembly" ]
+       asmflags = []
+-      if (current_cpu == "arm64") {
++      if (current_cpu == "arm64" && is_clang) {
+         import("//build/config/arm.gni")
+         if (arm_control_flow_integrity == "standard" ||
+             arm_control_flow_integrity == "bti+pac") {
 diff --git a/v8/BUILD.gn b/v8/BUILD.gn
 --- a/v8/BUILD.gn
 +++ b/v8/BUILD.gn

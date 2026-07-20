@@ -7,7 +7,7 @@ source:
   sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
 recursive_source:
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: 72e5e4102390daac9680300552edaae8aa14db7c40694dd7ea90cbb483a34069
+  receipt_sha256: 4feb8b6adeeaee71be8f76bc464a5fb91a932f50bd85ab0b9a75c12e00b15d6b
   components: 21
   submodules: 20
   closure_kind: git-submodule-closure-with-reviewed-source-filter
@@ -52,7 +52,7 @@ prototype_build:
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: bcebccb10405ebe0c0beb0606c4082f0028b64aeb86e343023d4d2f0555f06d1
+  receipt_sha256: 8a4f932dc8fc94ee18af8887c744bcd0839ca6ea035b47696763035aa551d9e0
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
   object_input_count: 1795
@@ -64,7 +64,7 @@ archive_graph:
   final_consumer_link_closure_verified: false
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: 780e551d0d420c2f8249d774dd61ecafd352bdfd976ed4a445f7c5fe8ea8fb87
+  receipt_sha256: a5bb716e01b4c20c5b99c844f53051582089adc323ec7621482819d90f908a5a
   exact_upstream_static_contract_verified: true
   v8_component_mode_distinguished: true
   existing_consumer_dynamic_linking_verified: false
@@ -102,7 +102,7 @@ builds:
     status: not-run-blocked
 licenses:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: a177553c756a2195b3f2faf8b23bf32cfa7ae853214abde1bad19e93c3a4e203
+  receipt_sha256: 314eb0f34636f0f1a713d886856c752b8dad8f8032f109b7022d1c66288a4083
   fedora_evidence_receipt: rust-v8-149.2.0-fedora-license-evidence.json
   fedora_evidence_receipt_sha256: b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
   fedora_release: "44"
@@ -128,7 +128,7 @@ licenses:
   fedora_exact_version_license_metadata_recorded: true
   linked_archive_selection_verified: false
   static_receipt: rust-v8-149.2.0-static-license.json
-  static_receipt_sha256: a4b1c33b4073fe3f97980517295a3fda05ec91396c8b01bd56ed16f8331a26db
+  static_receipt_sha256: 0f2b2d6980b379914a08bf0d162c1e185248499a7d95c30e6825c1b82cceeea8
   selected_archive_objects: 1795
   required_license_texts: 24
   required_texts_verified: true

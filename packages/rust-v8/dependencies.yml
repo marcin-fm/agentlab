@@ -5,7 +5,7 @@ upstream_v8: 14.9.207.2
 source_closure:
   schema: rust-v8-source-closure/v4
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: 72e5e4102390daac9680300552edaae8aa14db7c40694dd7ea90cbb483a34069
+  receipt_sha256: 4feb8b6adeeaee71be8f76bc464a5fb91a932f50bd85ab0b9a75c12e00b15d6b
   root_commit: 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
   recursive_components: 21
   recursive_submodules: 20
@@ -28,7 +28,7 @@ source_closure:
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: bcebccb10405ebe0c0beb0606c4082f0028b64aeb86e343023d4d2f0555f06d1
+  receipt_sha256: 8a4f932dc8fc94ee18af8887c744bcd0839ca6ea035b47696763035aa551d9e0
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
   object_input_count: 1795
@@ -40,7 +40,7 @@ archive_graph:
   final_consumer_link_closure_verified: false
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: 780e551d0d420c2f8249d774dd61ecafd352bdfd976ed4a445f7c5fe8ea8fb87
+  receipt_sha256: a5bb716e01b4c20c5b99c844f53051582089adc323ec7621482819d90f908a5a
   v8_component_build_available: true
   upstream_supported: false
   existing_rust_consumers_supported: false
@@ -96,8 +96,8 @@ patches:
   upstream_status: not-submitted
   zero_fuzz_dry_run: passed
 - file: rust-v8-gcc-portability.patch
-  sha256: d27b7a1c5dddc6aef8e44ca47f59b7f4f155ad2674ceace9d80d472e7356cb31
-  purpose: Preserve Clang warning handling while making V8 preprocessing valid under GCC and add one required direct include.
+  sha256: f0a7b475cbf82e3905e2d63329647e9e52a19c11a47e0160df6ea3b194c0c049
+  purpose: Preserve Clang warning handling while making V8 preprocessing and ARM64 assembly flags valid under GCC, and add one required direct include.
   upstream_status: not-submitted
   zero_fuzz_dry_run: passed
 - file: rust-v8-disable-unused-siphash.patch
@@ -135,7 +135,7 @@ consumer_integration:
   consumer_license_requirement: Include the complete Rusty V8 native/static license expression and applicable texts in the final binary package.
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: a177553c756a2195b3f2faf8b23bf32cfa7ae853214abde1bad19e93c3a4e203
+  receipt_sha256: 314eb0f34636f0f1a713d886856c752b8dad8f8032f109b7022d1c66288a4083
   rusty_v8_root_license: MIT
   downstream_allocator_shim_license: BSD-3-Clause
   known_draft_expression: MIT AND BSD-3-Clause
@@ -174,7 +174,7 @@ license_audit:
   final_static_archive_license_complete: false
 static_license:
   receipt: rust-v8-149.2.0-static-license.json
-  receipt_sha256: a4b1c33b4073fe3f97980517295a3fda05ec91396c8b01bd56ed16f8331a26db
+  receipt_sha256: 0f2b2d6980b379914a08bf0d162c1e185248499a7d95c30e6825c1b82cceeea8
   expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
   selected_archive_objects: 1795
   required_license_texts: 24

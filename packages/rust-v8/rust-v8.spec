@@ -5,22 +5,22 @@
 %global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 72e5e4102390daac9680300552edaae8aa14db7c40694dd7ea90cbb483a34069
-%global license_audit_sha256 a177553c756a2195b3f2faf8b23bf32cfa7ae853214abde1bad19e93c3a4e203
-%global archive_graph_sha256 bcebccb10405ebe0c0beb0606c4082f0028b64aeb86e343023d4d2f0555f06d1
+%global closure_sha256 4feb8b6adeeaee71be8f76bc464a5fb91a932f50bd85ab0b9a75c12e00b15d6b
+%global license_audit_sha256 314eb0f34636f0f1a713d886856c752b8dad8f8032f109b7022d1c66288a4083
+%global archive_graph_sha256 8a4f932dc8fc94ee18af8887c744bcd0839ca6ea035b47696763035aa551d9e0
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 780e551d0d420c2f8249d774dd61ecafd352bdfd976ed4a445f7c5fe8ea8fb87
+%global dynamic_linking_sha256 a5bb716e01b4c20c5b99c844f53051582089adc323ec7621482819d90f908a5a
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 a4b1c33b4073fe3f97980517295a3fda05ec91396c8b01bd56ed16f8331a26db
+%global static_license_sha256 0f2b2d6980b379914a08bf0d162c1e185248499a7d95c30e6825c1b82cceeea8
 %global system_rust_patch_sha256 36d5b76fd4010b15a9134fcc9474eab32bd1de3599e31d28052133b4bb01eb1e
-%global gcc_patch_sha256 d27b7a1c5dddc6aef8e44ca47f59b7f4f155ad2674ceace9d80d472e7356cb31
+%global gcc_patch_sha256 f0a7b475cbf82e3905e2d63329647e9e52a19c11a47e0160df6ea3b194c0c049
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
 %global source_preparer_sha256 cf49573ca92537748b029bb1cbf89dd1dc871126c72de8b3ff6cb09325cb027c
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.16%{?dist}
+Release:        0.17%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -61,7 +61,7 @@ Source30:       README.md
 # Guard Chromium nightly-only Rust behavior and use Fedora's stable toolchain.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
-# Make V8's warning preprocessing GCC-compatible and add one required include.
+# Make V8 and ICU's ARM64 assembly paths GCC-compatible and add one required include.
 # Fedora-specific; not submitted while the GCC build boundary is reviewed.
 Patch1:         %{name}-gcc-portability.patch
 # Keep the already-disabled SipHash implementation out of the selected graph.
@@ -386,6 +386,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.17
+- Keep ICU's Clang-only ARM64 assembly marker out of the Fedora GCC build.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.16
 - Repair the ARM64 portability patch so it applies to the exact V8 source.
 

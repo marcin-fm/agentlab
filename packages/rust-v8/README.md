@@ -68,7 +68,7 @@ consumers use it.
 The package retains only `rust-v8-static`. A dynamic package can be reconsidered
 if upstream defines a shared target and build-script mode with a maintained
 loader and ABI contract. The receipt SHA-256 is
-`780e551d0d420c2f8249d774dd61ecafd352bdfd976ed4a445f7c5fe8ea8fb87`.
+`a5bb716e01b4c20c5b99c844f53051582089adc323ec7621482819d90f908a5a`.
 
 ## Source Evidence
 
@@ -93,7 +93,7 @@ recursive Git tree except for those three reviewed exclusions, at SHA-256
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
 archive hash, component-tree hash, source-filter provenance, and RPM source
 number. Its SHA-256 is
-`72e5e4102390daac9680300552edaae8aa14db7c40694dd7ea90cbb483a34069`.
+`4feb8b6adeeaee71be8f76bc464a5fb91a932f50bd85ab0b9a75c12e00b15d6b`.
 `rust-v8-149.2.0-source-filter.json` binds the exact upstream and filtered trees,
 the three exclusions, and the checked generator script. Its SHA-256 is
 `a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa`.
@@ -112,9 +112,9 @@ supports Fedora's libclang layout, and adds the stable allocator shims needed by
 the Temporal Rust graph.
 
 `rust-v8-gcc-portability.patch` keeps Clang warning behavior while making two
-preprocessor conditions valid under GCC, omits a Clang-only ARM64 assembly
-marker from the Fedora Linux GCC build, and adds one direct include required by
-the Wasm build.
+preprocessor conditions valid under GCC, omits Clang-only ARM64 assembly markers
+from V8 and ICU in the Fedora Linux GCC build, and adds one direct include
+required by the Wasm build.
 
 `rust-v8-disable-unused-siphash.patch` moves the SipHash header and implementation
 behind V8's existing `v8_use_siphash` feature. Agentlab keeps that feature false,
@@ -139,7 +139,7 @@ Every identifier is allowed by the installed Fedora license data. The receipt
 also records that the 31 implicit Rust rlibs and system libraries are not
 embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
-`a4b1c33b4073fe3f97980517295a3fda05ec91396c8b01bd56ed16f8331a26db`.
+`0f2b2d6980b379914a08bf0d162c1e185248499a7d95c30e6825c1b82cceeea8`.
 
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
@@ -171,7 +171,7 @@ identity, but do not establish that a crate is linked into `librusty_v8.a` or
 complete the final aggregate expression. Its SHA-256 is
 `b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
 The regenerated license-audit receipt binds that evidence at SHA-256
-`a177553c756a2195b3f2faf8b23bf32cfa7ae853214abde1bad19e93c3a4e203`.
+`314eb0f34636f0f1a713d886856c752b8dad8f8032f109b7022d1c66288a4083`.
 
 ## Prototype Result
 
@@ -189,7 +189,7 @@ The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
 classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
 records its separate `temporal_capi` dependency. No googletest input appears in
 the selected graph. The witness SHA-256 is
-`bcebccb10405ebe0c0beb0606c4082f0028b64aeb86e343023d4d2f0555f06d1`.
+`8a4f932dc8fc94ee18af8887c744bcd0839ca6ea035b47696763035aa551d9e0`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer
