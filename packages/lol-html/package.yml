@@ -2,10 +2,10 @@ name: lol-html
 status: enabled
 blockers: []
 validation:
-  enablement_release: Release 0.7 enables configured SCM publication across Bun's six-cell target matrix.
+  enablement_release: Release 0.9 replaces the reviewed vendor closure with Fedora system crate packages.
   source_identity: The immutable upstream v3.0.0 archive matches commit 02f139c4437b2da666a50d32e11d9158cbe0a393 and the pinned source SHA-256.
   test_graph: The packaged shared library passes all eight upstream C API suites without adding the Rust test-only dependency graph.
-  license_closure: The 29-entry linked closure has a checked aggregate SPDX expression, 44 crate-to-text mappings, and 28 deduplicated installed license texts; selectors' source-embedded MPL-2.0 notices match Fedora precedent.
+  license_closure: The Fedora-resolved 29-entry linked closure has the reviewed aggregate SPDX expression and standard LICENSE.dependencies inventory; provider RPM license corpora are not copied.
   consumer_boundary: Bun's final dynamic-link and HTMLRewriter proof remains consumer work, not a package-local publication hold.
 upstream:
   provider: github
@@ -20,13 +20,11 @@ source_closure:
   cargo_lock_packages: 45
   registry_crates: 43
   git_sources: 0
-  vendor_archive: lol-html-3.0.0-cargo-vendor.tar.gz
-  vendor_archive_bytes: 4110371
-  vendor_archive_sha256: 55da2f37159c90797e8ddeb81535c31067a1b1f884f0de2779dd17467279639f
-  vendor_receipt: lol-html-3.0.0-cargo-vendor.json
-  vendor_receipt_sha256: 2f34f8e89868cef2eb84377bbdf3f83ee438cb0b6ed280ec0c677432320779fa
-  source_preparer: scripts/prepare-lol-html-srpm-sources
-  source_preparer_sha256: 7c61b27f8affd806a69e3bf62f6eda3f9e4ae17978339e6b493ff2292ebbc919
+  build_mode: fedora_system_registry
+  compatibility_providers:
+    - rust-cssparser0.36
+    - rust-selectors0.37
+  dynamic_buildrequires: Root production dependencies and C API dependencies are generated separately because cargo2rpm does not recurse through the local path dependency.
 c_api:
   crate_version: 1.4.0
   rust_version: 1.89
@@ -46,13 +44,9 @@ patches:
 license_audit:
   aggregate_expression: BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib
   linked_license_entries: 29
-  license_dependencies_sha256: cd8b5eec2634147c47f82a6b3a5eeb95893f18ab84ddcad983189346f9a0329a
-  source_file_mappings: 44
-  unique_payload_files: 28
-  license_payload_manifest_sha256: 4c92aaab2bc59e6d1634ef5f3f4351ed7403999dc22ef2e9914aeb4d3537b429
-  selectors_mpl_notice_files: 16
-  vendor_manifest_entries: 41
-  vendor_manifest_sha256: 7888d3e9abab58ad0a218f12896337a9288e98fed840f36a6842c03ecba00d65
+  license_dependencies_sha256: 4e32b2460074c0364c17f7f2e4eeb12a52f81bd581d4b7e04f111cd22826f541
+  provider_license_corpora_copied: false
+  bundled_crate_provides: false
   fedora_spdx_review_complete: true
 duplicate_check:
   checked: "2026-07-19"
@@ -64,27 +58,22 @@ consumer_contract:
   runtime_soname: liblolhtml.so.1
   source_abi: lol_html_memory_settings_t includes graceful_bail_out_on_memory_limit_exceeded
 build_validation:
-  fedora_44_x86_64_cargo_c_layout_probe: passed
+  fedora_44_x86_64_system_registry_mock: passed at 3.0.0-0.9.fc44
   soname_probe: passed
   pkgconfig_probe: passed
   c_api_symbol_probe: passed
   upstream_c_suites: 8 passed against the staged shared library
-  local_rpm_build: passed at 3.0.0-0.7.fc44
-  srpm_bytes: 4590890
-  srpm_sha256: 1f6c7039be9a87befa089583cd1fe905325b672db6e269d79fed90cd1f826d28
-  runtime_rpm_bytes: 460475
-  runtime_rpm_sha256: 0e126cb22ee87737681b3106fd72f834081f8fbbba680cad04c4c6e733188a79
-  devel_rpm_bytes: 16338
-  devel_rpm_sha256: 2a25fc761cc82188d266c3fdefde353aaf9321aa7ec749ca74a46085a2af3819
-  artifact_rpmlint: zero errors across 30 matrix artifacts; one expected generated Source1 URL warning per chroot
+  srpm_bytes: 581876
+  srpm_sha256: 2a93c00c8dccb4fa390ef4a13190c79e267419e7c2720490f1deac45e3c1c76d
+  runtime_rpm_bytes: 440392
+  runtime_rpm_sha256: e606e65eee112a0d64ca764f332daabd7ffd8a3cee00fad488f3415fee48a464
+  devel_rpm_bytes: 16644
+  devel_rpm_sha256: 4ef96f9825a06d7c80500bdc93a40ea556c74ce5e57767a9df17280af837db59
+  artifact_rpmlint: zero errors or warnings across the five Fedora 44 source, runtime, devel, debugsource, and debuginfo artifacts
   rpm_installed: false
   mock_matrix:
-    fedora_43_x86_64: passed
-    fedora_43_aarch64: passed under software emulation
     fedora_44_x86_64: passed
-    fedora_44_aarch64: passed under software emulation
-    fedora_rawhide_x86_64: passed
-    fedora_rawhide_aarch64: passed under software emulation
+    remaining_cells: pending configured SCM build
 copr:
   enabled: true
   chroots:

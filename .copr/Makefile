@@ -33,13 +33,6 @@ srpm:
 			install -pm0755 "$(repo_root)/scripts/audit-bun-source-licenses" "$$(dirname "$(spec)")/audit-bun-source-licenses"; \
 			ruby "$(repo_root)/scripts/prepare-bun-srpm-sources" --spec "$(spec)"; \
 			;; \
-		lol-html.spec) \
-			ruby-mri -rjson -roptparse -ruri -rtempfile -rtmpdir -ropen3 -rdigest -rfileutils -e '' >/dev/null 2>&1 || dnf -y install ruby ruby-default-gems rubygem-json; \
-			command -v cargo >/dev/null 2>&1 || dnf -y install cargo; \
-			install -d -m0755 /srv/tmp; \
-			install -pm0755 "$(repo_root)/scripts/prepare-lol-html-srpm-sources" "$$(dirname "$(spec)")/prepare-lol-html-srpm-sources"; \
-			ruby-mri "$(repo_root)/scripts/prepare-lol-html-srpm-sources" --spec "$(spec)"; \
-			;; \
 	esac
 	rpmbuild -bs \
 		--define "_sourcedir $$(dirname "$(spec)")" \
