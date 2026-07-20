@@ -65,12 +65,12 @@ source_policy:
   cargo_vendor_directories_without_top_level_license_texts: 108
   cargo_linked_linux_directories_without_top_level_license_texts: 54
   cargo_supplemental_license_sources: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-  cargo_supplemental_license_sources_sha256: 60f4d43cc0403d71410248a26bf96891ee4aa80a3186b97ad042e3056bd6ebda
+  cargo_supplemental_license_sources_sha256: 0f29ff2b70afd9df464bb35ba7e16925186707f663b2d47b260ee7a49538299c
   cargo_supplemental_license_archive: codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz
   cargo_supplemental_license_preparer: prepare-codex-cargo-license-sources
-  cargo_supplemental_license_preparer_sha256: 49c1a2eb784e00b536a64f7f06be0a6c7bf0274fa048cac0c253be8b07070136
-  cargo_supplemental_license_mappings: 41
-  cargo_supplemental_license_unresolved: 9
+  cargo_supplemental_license_preparer_sha256: 122a121f2e3e1b29daa9041270041feebf5e4025ba3266ca6c043655c539b46e
+  cargo_supplemental_license_mappings: 44
+  cargo_supplemental_license_unresolved: 6
   final_binary_license_complete: false
   lock_normalization: verified-prep-transform
   lock_normalization_records: 132

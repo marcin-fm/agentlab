@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-codex-cargo-supplemental-license-sources/v2",
+  "schema": "agentlab-codex-cargo-supplemental-license-sources/v3",
   "release": {
     "name": "codex-cli",
     "version": "0.144.5",
@@ -435,6 +435,119 @@
         "Apache-2.0"
       ],
       "install": false
+    },
+    {
+      "id": "gazebo-display-container-manifest",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookincubator/gazebo/13efb6d415c4729178dfccc36fa9c87491f0813d/display_container/Cargo.toml",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "9eb42b9aa1fa21f8d29340d5a1f299ee4a4490db25f116e9452abe7717afad39",
+      "expected_extracted_size_bytes": 392,
+      "spdx_ids": [],
+      "install": false
+    },
+    {
+      "id": "gazebo-display-container-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookincubator/gazebo/13efb6d415c4729178dfccc36fa9c87491f0813d/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "expected_extracted_size_bytes": 1088,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": false
+    },
+    {
+      "id": "gazebo-display-container-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookincubator/gazebo/13efb6d415c4729178dfccc36fa9c87491f0813d/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "expected_extracted_size_bytes": 11324,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": false
+    },
+    {
+      "id": "buck2-strong-hash-manifest",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/7ef58762149c23402d89f13af2cb293481ef950e/gazebo/strong_hash/Cargo.toml",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "8e4b2ca9d3e354abbedbef94e22e19d8358bf497979bb6ec4c4bde0e1b3b5a23",
+      "expected_extracted_size_bytes": 413,
+      "spdx_ids": [],
+      "install": false
+    },
+    {
+      "id": "buck2-strong-hash-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/7ef58762149c23402d89f13af2cb293481ef950e/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "expected_extracted_size_bytes": 1088,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": false
+    },
+    {
+      "id": "buck2-strong-hash-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/7ef58762149c23402d89f13af2cb293481ef950e/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "expected_extracted_size_bytes": 11324,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": false
+    },
+    {
+      "id": "rust-shed-sorted-vector-map-manifest",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/rust-shed/756ae7daba100d194aa0260131937b7d96672549/shed/sorted_vector_map/Cargo.toml",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "0da5cfbb775c83164b4296b49d20e98b92e83a8904103be3a2990c3f18d47ed6",
+      "expected_extracted_size_bytes": 702,
+      "spdx_ids": [],
+      "install": false
+    },
+    {
+      "id": "rust-shed-sorted-vector-map-mit",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/rust-shed/756ae7daba100d194aa0260131937b7d96672549/LICENSE-MIT",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+      "expected_extracted_size_bytes": 1086,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": true,
+      "install_filename": "rust-shed-sorted-vector-map-MIT.txt"
+    },
+    {
+      "id": "rust-shed-sorted-vector-map-apache",
+      "kind": "raw",
+      "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/rust-shed/756ae7daba100d194aa0260131937b7d96672549/LICENSE-APACHE",
+      "expected_transport_sha256": null,
+      "member_path": null,
+      "expected_extracted_sha256": "bb28c48e3e078166e91cfc2b6db7ffebb8a0973b9e23b3df060561292d8d69ec",
+      "expected_extracted_size_bytes": 10140,
+      "spdx_ids": [
+        "Apache-2.0"
+      ],
+      "install": true,
+      "install_filename": "rust-shed-sorted-vector-map-Apache-2.0.txt"
     }
   ],
   "mappings": [
@@ -1690,6 +1803,132 @@
         "spdx-mit",
         "spdx-apache"
       ]
+    },
+    {
+      "directory": "display_container-0.9.0",
+      "crate_checksum": "0a110a75c96bedec8e65823dea00a1d710288b7a369d95fd8a0f5127639466fa",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/facebookincubator/gazebo",
+      "source_commit": "13efb6d415c4729178dfccc36fa9c87491f0813d",
+      "package_path": "display_container",
+      "source_ids": [
+        "gazebo-display-container-mit",
+        "gazebo-display-container-apache"
+      ],
+      "install_source_ids": [
+        "buck2-lock-free-mit",
+        "apache-2.0-50e675"
+      ],
+      "provenance_mode": "release-history",
+      "release_manifest_source_id": "gazebo-display-container-manifest",
+      "manifest_relation": {
+        "kind": "exact-byte-equality",
+        "upstream_sha256": "9eb42b9aa1fa21f8d29340d5a1f299ee4a4490db25f116e9452abe7717afad39",
+        "upstream_size_bytes": 392,
+        "vendor_sha256": "9eb42b9aa1fa21f8d29340d5a1f299ee4a4490db25f116e9452abe7717afad39",
+        "vendor_size_bytes": 392,
+        "explanation": null
+      },
+      "license_evidence": [
+        {
+          "source_id": "gazebo-display-container-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/facebookincubator/gazebo/13efb6d415c4729178dfccc36fa9c87491f0813d/LICENSE-MIT",
+          "expected_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+          "expected_size_bytes": 1088
+        },
+        {
+          "source_id": "gazebo-display-container-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/facebookincubator/gazebo/13efb6d415c4729178dfccc36fa9c87491f0813d/LICENSE-APACHE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ]
+    },
+    {
+      "directory": "strong_hash-0.1.0",
+      "crate_checksum": "0831334aea34390b6b6ec7af0a27f9ee6324ad3a69463e6b240d83d6b7bce9c9",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/facebook/buck2",
+      "source_commit": "7ef58762149c23402d89f13af2cb293481ef950e",
+      "package_path": "gazebo/strong_hash",
+      "source_ids": [
+        "buck2-strong-hash-mit",
+        "buck2-strong-hash-apache"
+      ],
+      "install_source_ids": [
+        "buck2-lock-free-mit",
+        "apache-2.0-50e675"
+      ],
+      "provenance_mode": "release-history",
+      "release_manifest_source_id": "buck2-strong-hash-manifest",
+      "manifest_relation": {
+        "kind": "exact-byte-equality",
+        "upstream_sha256": "8e4b2ca9d3e354abbedbef94e22e19d8358bf497979bb6ec4c4bde0e1b3b5a23",
+        "upstream_size_bytes": 413,
+        "vendor_sha256": "8e4b2ca9d3e354abbedbef94e22e19d8358bf497979bb6ec4c4bde0e1b3b5a23",
+        "vendor_size_bytes": 413,
+        "explanation": null
+      },
+      "license_evidence": [
+        {
+          "source_id": "buck2-strong-hash-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/7ef58762149c23402d89f13af2cb293481ef950e/LICENSE-MIT",
+          "expected_sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+          "expected_size_bytes": 1088
+        },
+        {
+          "source_id": "buck2-strong-hash-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/facebook/buck2/7ef58762149c23402d89f13af2cb293481ef950e/LICENSE-APACHE",
+          "expected_sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+          "expected_size_bytes": 11324
+        }
+      ]
+    },
+    {
+      "directory": "sorted_vector_map-0.2.1",
+      "crate_checksum": "94bf565ee1681b4473aa5a9d71d807347c28021bd1d8947cb626b02f42a0141f",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/facebookexperimental/rust-shed",
+      "source_commit": "756ae7daba100d194aa0260131937b7d96672549",
+      "package_path": "shed/sorted_vector_map",
+      "source_ids": [
+        "rust-shed-sorted-vector-map-mit",
+        "rust-shed-sorted-vector-map-apache"
+      ],
+      "install_source_ids": [
+        "rust-shed-sorted-vector-map-mit",
+        "rust-shed-sorted-vector-map-apache"
+      ],
+      "provenance_mode": "release-history",
+      "release_manifest_source_id": "rust-shed-sorted-vector-map-manifest",
+      "manifest_relation": {
+        "kind": "exact-byte-equality",
+        "upstream_sha256": "0da5cfbb775c83164b4296b49d20e98b92e83a8904103be3a2990c3f18d47ed6",
+        "upstream_size_bytes": 702,
+        "vendor_sha256": "0da5cfbb775c83164b4296b49d20e98b92e83a8904103be3a2990c3f18d47ed6",
+        "vendor_size_bytes": 702,
+        "explanation": null
+      },
+      "license_evidence": [
+        {
+          "source_id": "rust-shed-sorted-vector-map-mit",
+          "repository_path": "LICENSE-MIT",
+          "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/rust-shed/756ae7daba100d194aa0260131937b7d96672549/LICENSE-MIT",
+          "expected_sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+          "expected_size_bytes": 1086
+        },
+        {
+          "source_id": "rust-shed-sorted-vector-map-apache",
+          "repository_path": "LICENSE-APACHE",
+          "immutable_url": "https://raw.githubusercontent.com/facebookexperimental/rust-shed/756ae7daba100d194aa0260131937b7d96672549/LICENSE-APACHE",
+          "expected_sha256": "bb28c48e3e078166e91cfc2b6db7ffebb8a0973b9e23b3df060561292d8d69ec",
+          "expected_size_bytes": 10140
+        }
+      ]
     }
   ],
   "icu_mapping": {
@@ -1721,12 +1960,6 @@
       "reason": "Published crate omits usable license text; canonical standard text requires legal approval."
     },
     {
-      "directory": "display_container-0.9.0",
-      "crate_checksum": "0a110a75c96bedec8e65823dea00a1d710288b7a369d95fd8a0f5127639466fa",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
-    },
-    {
       "directory": "eventsource-stream-0.2.3",
       "crate_checksum": "74fef4569247a5f429d9156b9d0a2599914385dd189c539334c625d8099d90ab",
       "declared_expression": "MIT OR Apache-2.0",
@@ -1745,22 +1978,10 @@
       "reason": "Published crate omits usable license text; newer 0.2.5 archive also omits usable text."
     },
     {
-      "directory": "sorted_vector_map-0.2.1",
-      "crate_checksum": "94bf565ee1681b4473aa5a9d71d807347c28021bd1d8947cb626b02f42a0141f",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
-    },
-    {
       "directory": "sse-stream-0.2.1",
       "crate_checksum": "eb4dc4d33c68ec1f27d386b5610a351922656e1fdf5c05bbaad930cd1519479a",
       "declared_expression": "MIT OR Apache-2.0",
       "reason": "Published crate omits usable license text; newer 0.2.4 archive also omits usable text."
-    },
-    {
-      "directory": "strong_hash-0.1.0",
-      "crate_checksum": "0831334aea34390b6b6ec7af0a27f9ee6324ad3a69463e6b240d83d6b7bce9c9",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
     }
   ],
   "policy_holds": [
@@ -1792,7 +2013,7 @@
   "archive": {
     "filename": "codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz",
     "root": "codex-cli-0.144.5-supplemental-license-sources",
-    "installable_texts": 22,
+    "installable_texts": 24,
     "transport_identity_required": false
   }
 }

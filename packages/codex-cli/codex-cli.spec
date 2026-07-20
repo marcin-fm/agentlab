@@ -15,13 +15,13 @@
 %global source_preparer_sha256 d134aa208cf7264e99dbab683b762faf3fee009b25290d6c6b97b55c35702c09
 %global vendor_verifier_sha256 f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
 %global license_text_receipt_sha256 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
-%global supplemental_license_receipt_sha256 60f4d43cc0403d71410248a26bf96891ee4aa80a3186b97ad042e3056bd6ebda
-%global supplemental_license_preparer_sha256 49c1a2eb784e00b536a64f7f06be0a6c7bf0274fa048cac0c253be8b07070136
+%global supplemental_license_receipt_sha256 0f29ff2b70afd9df464bb35ba7e16925186707f663b2d47b260ee7a49538299c
+%global supplemental_license_preparer_sha256 122a121f2e3e1b29daa9041270041feebf5e4025ba3266ca6c043655c539b46e
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.11%{?dist}
+Release:        0.12%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -171,6 +171,10 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.12
+- Resolve three additional Cargo license-text records from exact release history.
+- Retain six crates pending upstream requests and keep final license approval blocked.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.11
 - Add checked cargo-vcs, release-history, and canonical-standard provenance.
 - Resolve eight supplemental Cargo license-text records while retaining nine holds.

@@ -88,10 +88,10 @@ class CodexCargoVendorTest < Minitest::Test
     receipt = JSON.parse(File.read(path))
 
     assert_equal(policy.fetch("cargo_supplemental_license_sources_sha256"), Digest::SHA256.file(path).hexdigest)
-    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v2", receipt.fetch("schema"))
-    assert_equal(41, receipt.fetch("mappings").length)
-    assert_equal(9, receipt.fetch("unresolved").length)
-    assert_equal(22, receipt.dig("archive", "installable_texts"))
+    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v3", receipt.fetch("schema"))
+    assert_equal(44, receipt.fetch("mappings").length)
+    assert_equal(6, receipt.fetch("unresolved").length)
+    assert_equal(24, receipt.dig("archive", "installable_texts"))
     assert_equal("resolved-icu-data-comparison", receipt.dig("icu_mapping", "status"))
     assert_equal("1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612", receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }.fetch("expected_extracted_sha256"))
     refute(receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }.fetch("install"))
@@ -100,6 +100,15 @@ class CodexCargoVendorTest < Minitest::Test
     assert_equal("48ae5c61c93c808e0831b27104d3bc7262f06bd4", lock_free.fetch("source_commit"))
     assert_equal("exact-byte-equality", lock_free.dig("manifest_relation", "kind"))
     assert_equal(lock_free.dig("manifest_relation", "upstream_sha256"), lock_free.dig("manifest_relation", "vendor_sha256"))
+    display = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "display_container-0.9.0" }
+    assert_equal("13efb6d415c4729178dfccc36fa9c87491f0813d", display.fetch("source_commit"))
+    assert_equal(%w[buck2-lock-free-mit apache-2.0-50e675], display.fetch("install_source_ids"))
+    strong = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "strong_hash-0.1.0" }
+    assert_equal("7ef58762149c23402d89f13af2cb293481ef950e", strong.fetch("source_commit"))
+    assert_equal(%w[buck2-lock-free-mit apache-2.0-50e675], strong.fetch("install_source_ids"))
+    sorted = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "sorted_vector_map-0.2.1" }
+    assert_equal("756ae7daba100d194aa0260131937b7d96672549", sorted.fetch("source_commit"))
+    assert_equal(%w[rust-shed-sorted-vector-map-mit rust-shed-sorted-vector-map-apache], sorted.fetch("install_source_ids"))
     assert(receipt.fetch("policy_holds").one? { |hold| hold.fetch("directory") == "notify-8.2.0" })
   end
 
@@ -107,7 +116,7 @@ class CodexCargoVendorTest < Minitest::Test
     receipt = JSON.parse(File.read(File.join(PACKAGE, "codex-cli-0.144.5-cargo-supplemental-license-sources.json")))
     icu_sources = receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" }
     assert_equal([nil], icu_sources.map { |source| source.fetch("expected_transport_sha256") }.uniq)
-    assert_equal(9, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
+    assert_equal(6, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
     refute(receipt.fetch("unresolved").any? { |item| item.fetch("crate_checksum") == "" })
     hold = receipt.fetch("policy_holds").fetch(0)
     assert_equal("CC0-1.0", hold.fetch("declared_expression"))
@@ -124,10 +133,10 @@ class CodexCargoVendorTest < Minitest::Test
       "missing-1" => { "checksum" => "good", "normalized_spdx_candidate" => "MIT" },
       "notify-8.2.0" => { "checksum" => "notify", "normalized_spdx_candidate" => "CC0-1.0" }
     }
-    unresolved = Array.new(9) { { "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" } }
+    unresolved = Array.new(6) { { "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" } }
     unresolved[0] = unresolved[0].merge("crate_checksum" => "bad")
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved, inventory, audit) }
-    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(8), inventory, audit) }
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(5), inventory, audit) }
     hold = { "crate_checksum" => "notify", "declared_expression" => "MIT", "license_text_sha256" => "text", "license_text_size_bytes" => 7 }
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_notify_hold!(hold, inventory, audit) }
     Dir.mktmpdir do |dir|
@@ -137,7 +146,7 @@ class CodexCargoVendorTest < Minitest::Test
     end
   end
 
-  def test_v2_provenance_rejection_helpers
+  def test_v3_provenance_rejection_helpers
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_mode!("made-up") }
     relation = {
       "kind" => "exact-byte-equality",

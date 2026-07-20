@@ -140,10 +140,10 @@ selected_cargo_license_evidence:
   linked_linux_directories_without_top_level_license_texts: 54
   supplemental_license_sources:
     receipt: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-    receipt_sha256: 60f4d43cc0403d71410248a26bf96891ee4aa80a3186b97ad042e3056bd6ebda
-    verified_mappings: 41
-    unresolved: 9
-    installable_texts: 22
+    receipt_sha256: 0f29ff2b70afd9df464bb35ba7e16925186707f663b2d47b260ee7a49538299c
+    verified_mappings: 44
+    unresolved: 6
+    installable_texts: 24
     icu_payload_comparison: resolved
     notify_cc0_policy_hold: required
 lock_normalization:
