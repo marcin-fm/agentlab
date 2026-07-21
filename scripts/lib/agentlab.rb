@@ -709,6 +709,7 @@ module Agentlab
     actual_gn_args = spec[/cat > out\/fedora\/args\.gn <<'GN'\n(.*?)\nGN$/m, 1]
     errors << "rust-v8: spec GN arguments do not match the retained graph" unless actual_gn_args == expected_gn_args
     errors << "rust-v8: spec does not require the Fedora Clang compiler" unless spec.lines.map(&:strip).include?("BuildRequires:  clang >= 19")
+    errors << "rust-v8: spec does not require the Fedora Clang runtime" unless spec.lines.map(&:strip).include?("BuildRequires:  compiler-rt")
     unless spec.lines.map(&:strip).include?('clang_version="$(clang -dumpversion)"') &&
            spec.lines.map(&:strip).include?('clang_version="${clang_version%%%%.*}"') &&
            spec.lines.map(&:strip).include?('printf \'clang_version = "%s"\\n\' "$clang_version" >> out/fedora/args.gn')

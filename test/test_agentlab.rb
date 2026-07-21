@@ -1604,6 +1604,7 @@ class AgentlabTest < Minitest::Test
 
     assert_empty(Agentlab.validate_rust_v8_evidence(package, dependencies, spec))
     assert_includes(spec, "%ifarch aarch64\nis_clang = true\n%else\nis_clang = false\n%endif")
+    assert_includes(spec, "BuildRequires:  compiler-rt")
     assert_includes(spec, 'clang_version="$(clang -dumpversion)"')
     assert_includes(spec, 'clang_version="${clang_version%%%%.*}"')
     assert_equal(1, license.fetch("unmaterialized_deps_declarations").length)

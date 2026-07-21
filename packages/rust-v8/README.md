@@ -119,7 +119,9 @@ Clang-only ARM64 marker remains unchanged.
 The production matrix keeps the proven Fedora GCC path on `x86_64` and uses
 Fedora's system Clang on `aarch64`, matching Chromium's compiler model for V8's
 SVE and NEON implementation. The GN `clang_version` value is derived from the
-buildroot compiler rather than hardcoded to one Fedora release.
+buildroot compiler rather than hardcoded to one Fedora release. Fedora's
+`compiler-rt` package supplies the architecture-specific Clang builtins archive
+that Chromium links into the V8 static graph.
 
 `rust-v8-disable-unused-siphash.patch` moves the SipHash header and implementation
 behind V8's existing `v8_use_siphash` feature. Agentlab keeps that feature false,

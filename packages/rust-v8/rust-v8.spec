@@ -20,7 +20,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.18%{?dist}
+Release:        0.19%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -73,6 +73,7 @@ ExclusiveArch:  x86_64 aarch64
 BuildRequires:  bindgen-cli >= 0.72
 BuildRequires:  binutils
 BuildRequires:  clang >= 19
+BuildRequires:  compiler-rt
 BuildRequires:  gcc-c++
 BuildRequires:  gn
 BuildRequires:  libatomic
@@ -392,6 +393,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.19
+- Install Clang's static compiler runtime for the aarch64 V8 link graph.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.18
 - Use Fedora Clang for V8's upstream-oriented aarch64 compiler path.
 - Derive the Chromium Clang resource version from the buildroot compiler.
