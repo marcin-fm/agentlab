@@ -148,7 +148,7 @@ module CodexSupplementalLicenses
   def populate_mapping_evidence!(receipt)
     sources = receipt.fetch("sources").to_h { |source| [source.fetch("id"), source] }
     receipt.fetch("mappings").each do |mapping|
-      next if mapping.fetch("provenance_mode") == "canonical-standard"
+      next unless %w[cargo-vcs release-history].include?(mapping.fetch("provenance_mode"))
 
       mapping["license_evidence"] = mapping.fetch("source_ids").map do |id|
         source = sources.fetch(id)

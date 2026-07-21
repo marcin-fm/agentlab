@@ -140,6 +140,17 @@ class CodexCargoVendorTest < Minitest::Test
     end
   end
 
+  def test_supplemental_evidence_population_skips_later_release_archives
+    receipt = {
+      "sources" => [{ "id" => "later-license", "immutable_url" => "https://static.crates.io/crates/example/example-1.0.0.crate" }],
+      "mappings" => [{ "provenance_mode" => "later-upstream-release", "source_ids" => ["later-license"] }]
+    }
+
+    CodexSupplementalLicenses.populate_mapping_evidence!(receipt)
+
+    refute(receipt.fetch("mappings").first.key?("license_evidence"))
+  end
+
   def test_supplemental_contract_rejects_stale_transport_and_bad_spec_order
     receipt = JSON.parse(File.read(File.join(PACKAGE, "codex-cli-0.144.5-cargo-supplemental-license-sources.json")))
     icu = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }

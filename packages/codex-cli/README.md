@@ -287,7 +287,11 @@ and 1,124 bundled Provides before compilation. Release `0.17` reached offline
 Cargo compilation and exposed the missing system OpenSSL development metadata;
 release `0.18` adds `pkgconfig(openssl)`. The local retry was stopped at maintainer
 request because the full build is too expensive for the local machine, so the
-production proof continues through configured-SCM COPR. No RPM was installed.
+production proof continues through configured-SCM COPR. Build `10756814` then
+stopped during fresh SRPM generation because later-release `bech32` archive
+evidence was incorrectly passed through GitHub raw VCS reconstruction; release
+`0.19` limits that reconstruction to VCS and release-history mappings. No RPM was
+installed.
 
 ## References
 
