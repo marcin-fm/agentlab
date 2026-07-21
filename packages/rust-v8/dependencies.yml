@@ -67,6 +67,7 @@ toolchain:
   cxx_aarch64: clang >= 19
   compiler_runtime: compiler-rt
   linker: lld
+  archiver: llvm
   libclang: clang-libs >= 19
   python: python3
   custom_libcxx: false

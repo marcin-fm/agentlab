@@ -123,7 +123,9 @@ Fedora's system Clang on `aarch64`, matching Chromium's compiler model for V8's
 SVE and NEON implementation. The GN `clang_version` value is derived from the
 buildroot compiler rather than hardcoded to one Fedora release. Fedora's
 `compiler-rt` package supplies the architecture-specific Clang builtins archive
-that Chromium links into the V8 static graph. Flags introduced for Chromium's
+that Chromium links into the V8 static graph. Fedora's `llvm` package supplies
+the `/usr/bin/llvm-ar` archiver selected by that Clang toolchain. Flags
+introduced for Chromium's
 newer bundled Clang are retained only when `clang_base_path` selects that default
 toolchain and are omitted when the package selects `/usr`.
 

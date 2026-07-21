@@ -21,7 +21,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.22%{?dist}
+Release:        0.23%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -82,6 +82,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  gn
 BuildRequires:  libatomic
 BuildRequires:  lld
+BuildRequires:  llvm
 BuildRequires:  ninja-build
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(gmodule-2.0)
@@ -399,6 +400,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.23
+- Install the LLVM archiver required by Chromium's Clang toolchain.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.22
 - Include the standard definition of CHAR_BIT in V8's ARM64 memcopy path.
 

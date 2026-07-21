@@ -94,13 +94,13 @@ builds:
   fedora_44_x86_64:
     status: passed-copr-build-10755554
   fedora_43_aarch64:
-    status: failed-copr-build-10756339-v8-memcopy-char-bit
+    status: failed-copr-build-10756535-missing-llvm-ar
   fedora_44_aarch64:
-    status: failed-copr-build-10756339-v8-memcopy-char-bit
+    status: failed-copr-build-10756535-missing-llvm-ar
   rawhide_x86_64:
     status: passed-copr-build-10755554
   rawhide_aarch64:
-    status: failed-copr-build-10756339-v8-memcopy-char-bit
+    status: failed-copr-build-10756535-missing-llvm-ar
 licenses:
   receipt: rust-v8-149.2.0-license-audit.json
   receipt_sha256: e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017
