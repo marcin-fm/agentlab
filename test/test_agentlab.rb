@@ -1607,6 +1607,8 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "BuildRequires:  compiler-rt")
     assert_includes(spec, 'clang_version="$(clang -dumpversion)"')
     assert_includes(spec, 'clang_version="${clang_version%%%%.*}"')
+    system_patch = File.read(File.join(package.directory, "rust-v8-system-rust-toolchain.patch"))
+    assert_includes(system_patch, '_dir = "aarch64-redhat-linux-gnu"')
     assert_equal(1, license.fetch("unmaterialized_deps_declarations").length)
     googletest = license.fetch("unmaterialized_deps_declarations").fetch(0)
     assert_equal("v8/third_party/googletest/src", googletest.fetch("source_path"))

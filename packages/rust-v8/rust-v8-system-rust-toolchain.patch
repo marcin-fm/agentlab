@@ -4,10 +4,10 @@ Subject: [PATCH] Support Chromium Rust targets with Fedora stable Rust
 Chromium's default Rust integration assumes its pinned nightly-capable binary
 toolchain. Rusty V8 needs the Temporal Rust graph, but Fedora builds must use the
 distribution stable toolchain. Guard nightly-only flags and bundled-toolchain
-inputs, use Fedora's libclang layout, and provide the allocator shims needed
-when the final static archive is linked by the C++ toolchain. The new allocator
-shim is original downstream code by Marcin FM under BSD-3-Clause to match the
-Chromium build source that it extends.
+inputs, use Fedora's libclang and ARM64 compiler-runtime layouts, and provide the
+allocator shims needed when the final static archive is linked by the C++
+toolchain. The new allocator shim is original downstream code by Marcin FM under
+BSD-3-Clause to match the Chromium build source that it extends.
 ---
 diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
 --- a/build/config/compiler/BUILD.gn
@@ -69,6 +69,21 @@ diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
      }
  
      if (use_dwarf5) {
+diff --git a/build/config/clang/BUILD.gn b/build/config/clang/BUILD.gn
+--- a/build/config/clang/BUILD.gn
++++ b/build/config/clang/BUILD.gn
+@@ -234,6 +234,11 @@
+         assert(false)  # Unhandled target platform
+       }
+ 
++      if (!use_chromium_rust_toolchain && is_linux &&
++          current_cpu == "arm64") {
++        _dir = "aarch64-redhat-linux-gnu"
++      }
++
+       _clang_lib_dir = "$clang_base_path/lib/clang/$clang_version/lib"
+       _lib_file = "${_prefix}clang_rt.${_libname}${_suffix}.${_ext}"
+       libs = [ "$_clang_lib_dir/$_dir/$_lib_file" ]
 diff --git a/build/config/gcc/BUILD.gn b/build/config/gcc/BUILD.gn
 --- a/build/config/gcc/BUILD.gn
 +++ b/build/config/gcc/BUILD.gn

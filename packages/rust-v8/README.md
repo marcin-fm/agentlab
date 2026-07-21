@@ -68,7 +68,7 @@ consumers use it.
 The package retains only `rust-v8-static`. A dynamic package can be reconsidered
 if upstream defines a shared target and build-script mode with a maintained
 loader and ABI contract. The receipt SHA-256 is
-`48c4d31106d4def55aecd8f33ad50711ae7f8e2f427e7f17c97136a9006acb3f`.
+`3db36cf81e3ca5b2791c9383c08a977809f5c9644b6a2edb31792ce037fb52e4`.
 
 ## Source Evidence
 
@@ -93,7 +93,7 @@ recursive Git tree except for those three reviewed exclusions, at SHA-256
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
 archive hash, component-tree hash, source-filter provenance, and RPM source
 number. Its SHA-256 is
-`c1e6a0b0ea067acd1e7ae2ac513a2aa4b709da5129cb9db7ee99c1fc7648ad57`.
+`bce95a4bf52e86b58794269a681408a3b6dc11620f59aa5baed43f1ece5f89e7`.
 `rust-v8-149.2.0-source-filter.json` binds the exact upstream and filtered trees,
 the three exclusions, and the checked generator script. Its SHA-256 is
 `a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa`.
@@ -108,8 +108,8 @@ separately and are not silently promoted into RPM sources.
 
 `rust-v8-system-rust-toolchain.patch` guards Chromium's nightly-only Rust flags,
 including its minimal-symbol DWARF selection, and bundled-toolchain inputs,
-supports Fedora's libclang layout, and adds the stable allocator shims needed by
-the Temporal Rust graph.
+supports Fedora's libclang and aarch64 compiler-runtime layouts, and adds the
+stable allocator shims needed by the Temporal Rust graph.
 
 `rust-v8-gcc-portability.patch` keeps Clang warning behavior while making two
 preprocessor conditions valid under GCC, guards ICU's Clang-only ARM64 assembly
@@ -146,7 +146,7 @@ Every identifier is allowed by the installed Fedora license data. The receipt
 also records that the 31 implicit Rust rlibs and system libraries are not
 embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
-`4d3f5b655bafbc04ea5895d68995b2ffd7ca0e48980ad3f97029177391683ffa`.
+`4b253a7c838ac03d6265d1cfb2bd248ae85ced81138b26ad2973e2a6825982e3`.
 
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
@@ -178,7 +178,7 @@ identity, but do not establish that a crate is linked into `librusty_v8.a` or
 complete the final aggregate expression. Its SHA-256 is
 `b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
 The regenerated license-audit receipt binds that evidence at SHA-256
-`479ea7d359134dae24e53e7f67ae1bd16e5206689207759a0264997197b11052`.
+`3fbf478fd7f30348fcb6ddcc6c379f62eac46c5c893d997896ab62187dabe855`.
 
 ## Prototype Result
 
@@ -196,7 +196,7 @@ The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
 classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
 records its separate `temporal_capi` dependency. No googletest input appears in
 the selected graph. The witness SHA-256 is
-`81821b175ac5831fc92ac7683c99c4be4c2f479eb9b37da505ffe951425b239a`.
+`b9e893396ee83fdc86edc0464ad8b25b11eca14cfcc4aeab943d21522ba18dc9`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer

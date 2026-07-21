@@ -5,14 +5,14 @@
 %global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 c1e6a0b0ea067acd1e7ae2ac513a2aa4b709da5129cb9db7ee99c1fc7648ad57
-%global license_audit_sha256 479ea7d359134dae24e53e7f67ae1bd16e5206689207759a0264997197b11052
-%global archive_graph_sha256 81821b175ac5831fc92ac7683c99c4be4c2f479eb9b37da505ffe951425b239a
+%global closure_sha256 bce95a4bf52e86b58794269a681408a3b6dc11620f59aa5baed43f1ece5f89e7
+%global license_audit_sha256 3fbf478fd7f30348fcb6ddcc6c379f62eac46c5c893d997896ab62187dabe855
+%global archive_graph_sha256 b9e893396ee83fdc86edc0464ad8b25b11eca14cfcc4aeab943d21522ba18dc9
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 48c4d31106d4def55aecd8f33ad50711ae7f8e2f427e7f17c97136a9006acb3f
+%global dynamic_linking_sha256 3db36cf81e3ca5b2791c9383c08a977809f5c9644b6a2edb31792ce037fb52e4
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 4d3f5b655bafbc04ea5895d68995b2ffd7ca0e48980ad3f97029177391683ffa
-%global system_rust_patch_sha256 36d5b76fd4010b15a9134fcc9474eab32bd1de3599e31d28052133b4bb01eb1e
+%global static_license_sha256 4b253a7c838ac03d6265d1cfb2bd248ae85ced81138b26ad2973e2a6825982e3
+%global system_rust_patch_sha256 304ed4179e4fae74d7feecde93f6faaf93077f517dd431c6f72f2b6e058b3326
 %global gcc_patch_sha256 ff66712a0f90eb64ec7f25ef8b0b2e168541238ca7e9e30b7d830540b8f39ede
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
@@ -20,7 +20,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.19%{?dist}
+Release:        0.20%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -393,6 +393,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.20
+- Use Fedora's aarch64 vendor triple for the system Clang runtime archive.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.19
 - Install Clang's static compiler runtime for the aarch64 V8 link graph.
 
