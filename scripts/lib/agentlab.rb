@@ -1504,6 +1504,15 @@ module Agentlab
       actual = File.file?(patch_path) && Digest::SHA256.file(patch_path).hexdigest
       errors << "rust-v8: patch SHA-256 does not match #{patch.fetch('file')}" unless actual == patch["sha256"]
     end
+    system_patch_path = File.join(package.directory, "rust-v8-system-rust-toolchain.patch")
+    if File.file?(system_patch_path)
+      system_patch = File.read(system_patch_path)
+      unless system_patch.scan("clang_base_path == default_clang_base_path").length == 3 &&
+             system_patch.include?('import("//build/config/clang/clang.gni")') &&
+             system_patch.include?('_dir = "aarch64-redhat-linux-gnu"')
+        errors << "rust-v8: system-toolchain patch does not guard bundled-Clang-only flags"
+      end
+    end
     unless package.data.dig("source_policy", "archive_transport_identity_required") == false &&
            dependencies.dig("source_closure", "archive_transport_identity_required") == false &&
            source.dig("validation", "archive_transport_identity_required") == false

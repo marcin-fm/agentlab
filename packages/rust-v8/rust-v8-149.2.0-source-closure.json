@@ -520,7 +520,7 @@
   "patches": [
     {
       "name": "rust-v8-system-rust-toolchain.patch",
-      "sha256": "304ed4179e4fae74d7feecde93f6faaf93077f517dd431c6f72f2b6e058b3326",
+      "sha256": "2018aefc8f25ed1372cc964196f987625c34820fafb2ba40085c624e1d37dae7",
       "zero_fuzz_dry_run": true,
       "upstream_status": "not-submitted"
     },

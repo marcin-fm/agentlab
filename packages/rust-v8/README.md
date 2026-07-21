@@ -68,7 +68,7 @@ consumers use it.
 The package retains only `rust-v8-static`. A dynamic package can be reconsidered
 if upstream defines a shared target and build-script mode with a maintained
 loader and ABI contract. The receipt SHA-256 is
-`3db36cf81e3ca5b2791c9383c08a977809f5c9644b6a2edb31792ce037fb52e4`.
+`df9388bf33dbe75a4270183790d4fcff73d12cef8fe48caf55911de16b42dd19`.
 
 ## Source Evidence
 
@@ -93,7 +93,7 @@ recursive Git tree except for those three reviewed exclusions, at SHA-256
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
 archive hash, component-tree hash, source-filter provenance, and RPM source
 number. Its SHA-256 is
-`bce95a4bf52e86b58794269a681408a3b6dc11620f59aa5baed43f1ece5f89e7`.
+`3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83`.
 `rust-v8-149.2.0-source-filter.json` binds the exact upstream and filtered trees,
 the three exclusions, and the checked generator script. Its SHA-256 is
 `a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa`.
@@ -107,9 +107,11 @@ separately and are not silently promoted into RPM sources.
 ## Fedora Toolchain Patches
 
 `rust-v8-system-rust-toolchain.patch` guards Chromium's nightly-only Rust flags,
-including its minimal-symbol DWARF selection, and bundled-toolchain inputs,
-supports Fedora's libclang and aarch64 compiler-runtime layouts, and adds the
-stable allocator shims needed by the Temporal Rust graph.
+including its minimal-symbol DWARF selection, and bundled-toolchain inputs. It
+also keeps newer bundled-Clang-only diagnostic, lifetime-DSE, and UBSan feature
+flags out of Fedora's system-Clang graph, supports Fedora's libclang and aarch64
+compiler-runtime layouts, and adds the stable allocator shims needed by the
+Temporal Rust graph.
 
 `rust-v8-gcc-portability.patch` keeps Clang warning behavior while making two
 preprocessor conditions valid under GCC, guards ICU's Clang-only ARM64 assembly
@@ -121,7 +123,9 @@ Fedora's system Clang on `aarch64`, matching Chromium's compiler model for V8's
 SVE and NEON implementation. The GN `clang_version` value is derived from the
 buildroot compiler rather than hardcoded to one Fedora release. Fedora's
 `compiler-rt` package supplies the architecture-specific Clang builtins archive
-that Chromium links into the V8 static graph.
+that Chromium links into the V8 static graph. Flags introduced for Chromium's
+newer bundled Clang are retained only when `clang_base_path` selects that default
+toolchain and are omitted when the package selects `/usr`.
 
 `rust-v8-disable-unused-siphash.patch` moves the SipHash header and implementation
 behind V8's existing `v8_use_siphash` feature. Agentlab keeps that feature false,
@@ -146,7 +150,7 @@ Every identifier is allowed by the installed Fedora license data. The receipt
 also records that the 31 implicit Rust rlibs and system libraries are not
 embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
-`4b253a7c838ac03d6265d1cfb2bd248ae85ced81138b26ad2973e2a6825982e3`.
+`40037661beb2a8b7b042b91c7fd7cf287ad1686ee1d26ab030f17ec95bb07db0`.
 
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
@@ -178,7 +182,7 @@ identity, but do not establish that a crate is linked into `librusty_v8.a` or
 complete the final aggregate expression. Its SHA-256 is
 `b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
 The regenerated license-audit receipt binds that evidence at SHA-256
-`3fbf478fd7f30348fcb6ddcc6c379f62eac46c5c893d997896ab62187dabe855`.
+`656487b728648f53a0295bb16f34a366f6b1b5c6f3388286151e13fe85f02e5d`.
 
 ## Prototype Result
 
@@ -196,7 +200,7 @@ The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
 classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
 records its separate `temporal_capi` dependency. No googletest input appears in
 the selected graph. The witness SHA-256 is
-`b9e893396ee83fdc86edc0464ad8b25b11eca14cfcc4aeab943d21522ba18dc9`.
+`88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer
@@ -204,7 +208,7 @@ link closure.
 
 ## Remaining Gates
 
-1. Run source-bound, network-isolated Fedora 43, Fedora 44, and Rawhide x86_64 builds and installed consumer smokes, regenerating the selected-license receipt from each graph.
+1. Regenerate production selected-license evidence from the successful Fedora 43, Fedora 44, and Rawhide x86_64 graphs and run installed consumer smokes.
 2. Prove aarch64 or retain an explicitly reviewed architecture restriction.
 3. Complete the final consumer license closure for the 31 separately linked Rust rlibs.
 4. Submit or otherwise resolve the three downstream system-toolchain, portability, and source-selection patches.

@@ -4,11 +4,11 @@
   "release": "149.2.0",
   "source_closure_reference": {
     "path": "rust-v8-149.2.0-source-closure.json",
-    "sha256": "bce95a4bf52e86b58794269a681408a3b6dc11620f59aa5baed43f1ece5f89e7"
+    "sha256": "3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83"
   },
   "archive_graph_reference": {
     "path": "rust-v8-149.2.0-archive-graph.json",
-    "sha256": "b9e893396ee83fdc86edc0464ad8b25b11eca14cfcc4aeab943d21522ba18dc9",
+    "sha256": "88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25",
     "scope": "fedora-44-x86_64-prototype"
   },
   "source_filter_reference": {
@@ -415,7 +415,7 @@
       "embedded_in_static_archive": false,
       "patch": {
         "path": "rust-v8-system-rust-toolchain.patch",
-        "sha256": "304ed4179e4fae74d7feecde93f6faaf93077f517dd431c6f72f2b6e058b3326"
+        "sha256": "2018aefc8f25ed1372cc964196f987625c34820fafb2ba40085c624e1d37dae7"
       },
       "license_text": {
         "path": "rust-v8-stable-system-allocator-license.txt",

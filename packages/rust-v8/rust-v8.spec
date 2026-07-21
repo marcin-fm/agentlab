@@ -5,14 +5,14 @@
 %global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 bce95a4bf52e86b58794269a681408a3b6dc11620f59aa5baed43f1ece5f89e7
-%global license_audit_sha256 3fbf478fd7f30348fcb6ddcc6c379f62eac46c5c893d997896ab62187dabe855
-%global archive_graph_sha256 b9e893396ee83fdc86edc0464ad8b25b11eca14cfcc4aeab943d21522ba18dc9
+%global closure_sha256 3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83
+%global license_audit_sha256 656487b728648f53a0295bb16f34a366f6b1b5c6f3388286151e13fe85f02e5d
+%global archive_graph_sha256 88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 3db36cf81e3ca5b2791c9383c08a977809f5c9644b6a2edb31792ce037fb52e4
+%global dynamic_linking_sha256 df9388bf33dbe75a4270183790d4fcff73d12cef8fe48caf55911de16b42dd19
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 4b253a7c838ac03d6265d1cfb2bd248ae85ced81138b26ad2973e2a6825982e3
-%global system_rust_patch_sha256 304ed4179e4fae74d7feecde93f6faaf93077f517dd431c6f72f2b6e058b3326
+%global static_license_sha256 40037661beb2a8b7b042b91c7fd7cf287ad1686ee1d26ab030f17ec95bb07db0
+%global system_rust_patch_sha256 2018aefc8f25ed1372cc964196f987625c34820fafb2ba40085c624e1d37dae7
 %global gcc_patch_sha256 ff66712a0f90eb64ec7f25ef8b0b2e168541238ca7e9e30b7d830540b8f39ede
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
@@ -20,7 +20,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.20%{?dist}
+Release:        0.21%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -58,7 +58,7 @@ Source27:       %{name}-%{version}-static-license.json
 Source28:       %{name}-stable-system-allocator-license.txt
 Source29:       prepare-rust-v8-srpm-sources
 Source30:       README.md
-# Guard Chromium nightly-only Rust behavior and use Fedora's stable toolchain.
+# Guard bundled-toolchain-only behavior and use Fedora's system toolchains.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
 # Keep Clang-only warning and ICU behavior portable on Fedora GCC.
@@ -103,8 +103,8 @@ tree matches Git except for those reviewed exclusions and accepts the three
 Fedora patches. A full Chromium dependency-client checkout is not claimed. A
 retained Fedora 44 prototype witness matches 1,795 selected objects to 1,795
 archive members and has a complete selected static-license expression and text
-map. Production source-bound builds, final consumer Rust libraries, and
-architecture proof remain separate blocked gates.
+map. The complete x86_64 matrix builds from these sources; final consumer Rust
+libraries and aarch64 proof remain separate blocked gates.
 
 %package static
 Summary:        Exact-version Rusty V8 static archive
@@ -393,6 +393,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.21
+- Keep bundled-Chromium Clang flags out of Fedora's system-Clang build.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.20
 - Use Fedora's aarch64 vendor triple for the system Clang runtime archive.
 

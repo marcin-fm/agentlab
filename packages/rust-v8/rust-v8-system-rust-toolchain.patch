@@ -4,14 +4,43 @@ Subject: [PATCH] Support Chromium Rust targets with Fedora stable Rust
 Chromium's default Rust integration assumes its pinned nightly-capable binary
 toolchain. Rusty V8 needs the Temporal Rust graph, but Fedora builds must use the
 distribution stable toolchain. Guard nightly-only flags and bundled-toolchain
-inputs, use Fedora's libclang and ARM64 compiler-runtime layouts, and provide the
+inputs, keep flags for newer bundled Clang out of Fedora's system-Clang build,
+use Fedora's libclang and ARM64 compiler-runtime layouts, and provide the
 allocator shims needed when the final static archive is linked by the C++
-toolchain. The new allocator shim is original downstream code by Marcin FM under
-BSD-3-Clause to match the Chromium build source that it extends.
+toolchain. The new allocator shim is original downstream code by Marcin FM
+under BSD-3-Clause to match the Chromium build source that it extends.
 ---
 diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
 --- a/build/config/compiler/BUILD.gn
 +++ b/build/config/compiler/BUILD.gn
+@@ -600,11 +600,13 @@ config("compiler") {
+   if (is_clang) {
+     # Flags for diagnostics.
+     cflags += [ "-fcolor-diagnostics" ]
+-    if (!is_win) {
+-      cflags += [ "-fdiagnostics-show-inlining-chain" ]
+-    } else {
+-      # Combine after https://github.com/llvm/llvm-project/pull/192241
+-      cflags += [ "/clang:-fdiagnostics-show-inlining-chain" ]
++    if (clang_base_path == default_clang_base_path) {
++      if (!is_win) {
++        cflags += [ "-fdiagnostics-show-inlining-chain" ]
++      } else {
++        # Combine after https://github.com/llvm/llvm-project/pull/192241
++        cflags += [ "/clang:-fdiagnostics-show-inlining-chain" ]
++      }
+     }
+     if (diagnostics_print_source_range_info && !is_win) {
+       cflags += [ "-fdiagnostics-print-source-range-info" ]
+@@ -639,7 +641,7 @@ config("compiler") {
+     # The performance improvement does not seem worth the risk. See
+     # https://crbug.com/484082200 for background and https://crrev.com/c/7593035
+     # for discussion.
+-    if (!is_wasm) {
++    if (!is_wasm && clang_base_path == default_clang_base_path) {
+       cflags += [ "-fno-lifetime-dse" ]
+     }
+ 
 @@ -990,21 +990,23 @@ config("compiler") {
      "-Cdefault-linker-libraries",
    ]
@@ -124,6 +153,36 @@ diff --git a/build/config/rust.gni b/build/config/rust.gni
 +    rustc_wrapper_inputs += [ "//third_party/rust-toolchain/bin/rustc" ]
 +  }
  }
+diff --git a/build/config/sanitizers/sanitizers.gni b/build/config/sanitizers/sanitizers.gni
+--- a/build/config/sanitizers/sanitizers.gni
++++ b/build/config/sanitizers/sanitizers.gni
+@@ -3,6 +3,7 @@
+ # found in the LICENSE file.
+ 
+ import("//build/config/cast.gni")
++import("//build/config/clang/clang.gni")
+ import("//build/config/chrome_build.gni")
+ import("//build/config/chromeos/args.gni")
+ import("//build/config/chromeos/ui_mode.gni")
+@@ -534,14 +535,15 @@ template("ubsan_hardening") {
+       cflags = [
+         "-fsanitize=${invoker.sanitizer}",
+         "-fsanitize-trap=${invoker.sanitizer}",
+-
++      ]
++      if (clang_base_path == default_clang_base_path) {
+         # Prevents `__has_feature(undefined_behavior_sanitizer)`
+         # from evaluating true. Configs defined here are intended to
+         # be usable even in release builds, i.e. as widely as possible.
+         # It's important not to have full-on UBSan workarounds activate
+         # just because we built support for a specific sanitizer.
+-        "-fsanitize-ignore-for-ubsan-feature=${invoker.sanitizer}",
+-      ]
++        cflags += [ "-fsanitize-ignore-for-ubsan-feature=${invoker.sanitizer}" ]
++      }
+       if (defined(invoker.cflags)) {
+         cflags += invoker.cflags
+       }
 diff --git a/build/rust/allocator/BUILD.gn b/build/rust/allocator/BUILD.gn
 --- a/build/rust/allocator/BUILD.gn
 +++ b/build/rust/allocator/BUILD.gn
