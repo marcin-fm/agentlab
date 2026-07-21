@@ -51,14 +51,20 @@ prototype_build:
   build_network_isolation: not-enforced
   isolated_buildroot: false
 archive_graph:
-  schema: rust-v8-archive-graph-witness/v1
+  schema: rust-v8-archive-graph-witness/v2
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: 36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777
-  scope: fedora-44-x86_64-prototype
+  receipt_sha256: 3889e6a3aad1f46864941772da2ab64a4aef5072656c2ee512d85b7a422064c2
+  scope: fedora-44-x86_64-prototype-with-x86_64-and-aarch64-graph-expectations
   target: //:rusty_v8
   object_input_count: 1795
   member_count: 1795
   implicit_rust_rlib_count: 31
+  architecture_object_input_counts:
+    x86_64: 1795
+    aarch64: 1803
+  architecture_member_counts:
+    x86_64: 1795
+    aarch64: 1803
   implicit_rust_rlibs_embedded_in_archive: false
   prototype_selected_archive_graph_captured: true
   selected_build_dependency_closure_verified: false
@@ -94,13 +100,13 @@ builds:
   fedora_44_x86_64:
     status: passed-copr-build-10755554
   fedora_43_aarch64:
-    status: failed-copr-build-10756535-missing-llvm-ar
+    status: pending-copr-build-10756590
   fedora_44_aarch64:
-    status: failed-copr-build-10756535-missing-llvm-ar
+    status: failed-copr-build-10756590-x86_64-archive-graph-expectation
   rawhide_x86_64:
     status: passed-copr-build-10755554
   rawhide_aarch64:
-    status: failed-copr-build-10756535-missing-llvm-ar
+    status: failed-copr-build-10756590-x86_64-archive-graph-expectation
 licenses:
   receipt: rust-v8-149.2.0-license-audit.json
   receipt_sha256: e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017
@@ -129,7 +135,7 @@ licenses:
   fedora_exact_version_license_metadata_recorded: true
   linked_archive_selection_verified: false
   static_receipt: rust-v8-149.2.0-static-license.json
-  static_receipt_sha256: f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6
+  static_receipt_sha256: 34900dc976f3345fc5be32af29b4f805099855a641ee46b7a4e6fc4265d830d0
   selected_archive_objects: 1795
   required_license_texts: 24
   required_texts_verified: true

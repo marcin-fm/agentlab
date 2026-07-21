@@ -157,7 +157,7 @@ Every identifier is allowed by the installed Fedora license data. The receipt
 also records that the 31 implicit Rust rlibs and system libraries are not
 embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
-`f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6`.
+`34900dc976f3345fc5be32af29b4f805099855a641ee46b7a4e6fc4265d830d0`.
 
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
@@ -200,14 +200,15 @@ SipHash exclusion, a 160,314,390-byte `librusty_v8.a` with SHA-256
 `ea107f29106ef88a313b03bc6ff714fc4e1c1a5db822df646c8d5f0a82bca334`.
 An offline Cargo consumer linked the archive and printed `Fedora Rusty V8`.
 
-`rust-v8-149.2.0-archive-graph.json` now preserves a canonical retained witness for
-that retained prototype. The `//:rusty_v8` Ninja query contains 1,795 selected
-object inputs, and the archive contains the same 1,795 member-basename multiset.
-The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
-classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
-records its separate `temporal_capi` dependency. No googletest input appears in
-the selected graph. The witness SHA-256 is
-`36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777`.
+`rust-v8-149.2.0-archive-graph.json` preserves that canonical retained prototype
+and exact production graph expectations for both supported architectures. The
+`//:rusty_v8` Ninja query contains 1,795 selected x86_64 objects and 1,803
+selected aarch64 objects; each expectation binds its object-path digest and
+archive member-basename multiset. Both graphs have the same 31 implicit Rust
+`.rlib` dependencies, classified as not embedded in `librusty_v8.a`, and exclude
+Googletest and HalfSipHash inputs. The exact Cargo `v8` fingerprint records its
+separate `temporal_capi` dependency. The witness SHA-256 is
+`3889e6a3aad1f46864941772da2ab64a4aef5072656c2ee512d85b7a422064c2`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer
@@ -216,7 +217,7 @@ link closure.
 ## Remaining Gates
 
 1. Regenerate production selected-license evidence from the successful Fedora 43, Fedora 44, and Rawhide x86_64 graphs and run installed consumer smokes.
-2. Prove aarch64 or retain an explicitly reviewed architecture restriction.
+2. Pass the architecture-specific archive check across the complete aarch64 matrix and run installed consumer smokes.
 3. Complete the final consumer license closure for the 31 separately linked Rust rlibs.
 4. Submit or otherwise resolve the four downstream system-toolchain, portability, source-selection, and header patches.
 

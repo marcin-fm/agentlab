@@ -4,8 +4,8 @@ status: blocked
 blockers:
 - The stable Fedora Rust, system-Clang, and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream. The separate V8 `<climits>` repair is reported as Chromium issue 512749476 but has no upstream fix commit yet.
 - Exact-source review confirms that Rusty V8 exposes only a complete static GN target and its Cargo build script always links `static=rusty_v8`. V8 component DSOs are a distinct internal boundary; upstream defines no `librusty_v8.so`, SONAME, exported/versioned bridge ABI, or existing-consumer dynamic mode. Agentlab does not add a cross-package shared provider without that upstream contract; this is a package-design decision, not a Fedora prohibition on application-private DSOs.
-- The retained Fedora 44 x86_64 1,795-object archive has a complete Fedora-allowed SPDX expression and an exact 24-file license-text map. All 21 dynamically generated commit archives are verified by safe layout and exact component trees rather than compressor-specific bytes; the three unused CC0 SipHash files are removed from the V8 tree and the existing `v8_use_siphash=false` graph is enforced by a narrow patch. The 31 implicit Rust rlibs and system libraries are not embedded and remain final-consumer obligations. Production source-bound builds, other architectures, and any graph change must regenerate this evidence.
-- Configured-SCM builds with package build networking disabled prove Fedora 43, Fedora 44, and Rawhide on x86_64. The aarch64 path reaches static archive creation after the `<climits>` repair; the explicit Fedora `llvm` archiver dependency remains unverified.
+- The retained Fedora 44 x86_64 1,795-object archive has a complete Fedora-allowed SPDX expression and an exact 24-file license-text map. All 21 dynamically generated commit archives are verified by safe layout and exact component trees rather than compressor-specific bytes; the three unused CC0 SipHash files are removed from the V8 tree and the existing `v8_use_siphash=false` graph is enforced by a narrow patch. Exact production graph expectations contain 1,795 x86_64 objects and 1,803 aarch64 objects with the same 31 nonembedded Rust rlibs. The aarch64 graph still requires architecture-specific license selection and final-consumer closure.
+- Configured-SCM builds with package build networking disabled prove Fedora 43, Fedora 44, and Rawhide on x86_64. Build 10756590 proves Fedora 44 and Rawhide aarch64 can install the LLVM archiver and complete all 2,285 build steps, but release 0.23 then fails because `%check` still expects the x86_64 object graph; the complete corrected aarch64 matrix remains unverified.
 source_policy:
   rpm_build_network: forbidden
   upstream_prebuilt_static_archives: forbidden
@@ -69,13 +69,19 @@ prototype:
   build_network_isolation: not-enforced
   isolated_buildroot: false
 archive_graph:
-  schema: rust-v8-archive-graph-witness/v1
+  schema: rust-v8-archive-graph-witness/v2
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: 36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777
-  scope: fedora-44-x86_64-prototype
+  receipt_sha256: 3889e6a3aad1f46864941772da2ab64a4aef5072656c2ee512d85b7a422064c2
+  scope: fedora-44-x86_64-prototype-with-x86_64-and-aarch64-graph-expectations
   target: //:rusty_v8
   object_input_count: 1795
   member_count: 1795
+  architecture_object_input_counts:
+    x86_64: 1795
+    aarch64: 1803
+  architecture_member_counts:
+    x86_64: 1795
+    aarch64: 1803
   implicit_rust_rlib_count: 31
   implicit_rust_rlibs_embedded_in_archive: false
   prototype_selected_archive_graph_captured: true
@@ -138,7 +144,7 @@ license_audit:
   final_static_archive_license_complete: false
 static_license:
   receipt: rust-v8-149.2.0-static-license.json
-  receipt_sha256: f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6
+  receipt_sha256: 34900dc976f3345fc5be32af29b4f805099855a641ee46b7a4e6fc4265d830d0
   expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
   selected_archive_objects: 1795
   required_license_texts: 24

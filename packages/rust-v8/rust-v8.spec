@@ -7,11 +7,11 @@
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
 %global closure_sha256 1f9d8b7b3235c6a098aad5ea091d56e9b13c3160f699d3850a8003484fe89f12
 %global license_audit_sha256 e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017
-%global archive_graph_sha256 36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777
+%global archive_graph_sha256 3889e6a3aad1f46864941772da2ab64a4aef5072656c2ee512d85b7a422064c2
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
 %global dynamic_linking_sha256 d0538f93a00ca6a3498e142cad5d17172fcfee1735245c57f248feb7a85d4097
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6
+%global static_license_sha256 34900dc976f3345fc5be32af29b4f805099855a641ee46b7a4e6fc4265d830d0
 %global system_rust_patch_sha256 2018aefc8f25ed1372cc964196f987625c34820fafb2ba40085c624e1d37dae7
 %global gcc_patch_sha256 ff66712a0f90eb64ec7f25ef8b0b2e168541238ca7e9e30b7d830540b8f39ede
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
@@ -21,7 +21,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.23%{?dist}
+Release:        0.24%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -108,8 +108,9 @@ tree matches Git except for those reviewed exclusions and accepts the four
 Fedora patches. A full Chromium dependency-client checkout is not claimed. A
 retained Fedora 44 prototype witness matches 1,795 selected objects to 1,795
 archive members and has a complete selected static-license expression and text
-map. The complete x86_64 matrix builds from these sources; final consumer Rust
-libraries and aarch64 proof remain separate blocked gates.
+map. Exact production checks retain that x86_64 graph and the 1,803-object
+aarch64 graph independently. Final consumer Rust libraries, complete aarch64
+matrix proof, and aarch64 license selection remain separate blocked gates.
 
 %package static
 Summary:        Exact-version Rusty V8 static archive
@@ -231,7 +232,7 @@ assert static_license["validation"]["required_license_texts_verified"] is True
 assert static_license["validation"]["fedora_allowed_spdx_verified"] is True
 assert static_license["validation"]["prototype_static_archive_license_complete"] is True
 assert static_license["validation"]["production_static_archive_license_complete"] is False
-assert archive_graph["schema"] == "rust-v8-archive-graph-witness/v1"
+assert archive_graph["schema"] == "rust-v8-archive-graph-witness/v2"
 assert archive_graph["source_closure_reference"]["sha256"] == "%{closure_sha256}"
 assert archive_graph["source_closure_reference"]["provenance_verified"] is False
 assert archive_graph["gn"]["target"] == "//:rusty_v8"
@@ -240,7 +241,13 @@ assert archive_graph["archive"]["member_contents_match_object_contents_verified"
 assert archive_graph["archive"]["implicit_rust_rlibs_embedded_in_archive"] is False
 assert archive_graph["archive"]["object_input_count"] == 1795
 assert archive_graph["archive"]["selected_googletest_inputs"] == []
+assert archive_graph["archive"]["selected_halfsiphash_inputs"] == []
+assert archive_graph["architecture_expectations"]["x86_64"]["object_input_count"] == 1795
+assert archive_graph["architecture_expectations"]["aarch64"]["object_input_count"] == 1803
+assert archive_graph["architecture_expectations"]["x86_64"]["implicit_rust_rlib_count"] == 31
+assert archive_graph["architecture_expectations"]["aarch64"]["implicit_rust_rlib_count"] == 31
 assert archive_graph["validation"]["prototype_selected_archive_graph_captured"] is True
+assert archive_graph["validation"]["architecture_graph_expectations_captured"] is True
 assert archive_graph["validation"]["selected_build_dependency_closure_verified"] is False
 assert archive_graph["validation"]["network_isolated_build_verified"] is False
 assert archive_graph["validation"]["final_consumer_link_closure_verified"] is False
@@ -326,7 +333,7 @@ gn gen out/fedora
 
 %check
 %if %{with check}
-python3 - "%{SOURCE23}" <<'PY'
+python3 - "%{SOURCE23}" "%{_arch}" <<'PY'
 import hashlib
 import json
 import os
@@ -334,6 +341,7 @@ import subprocess
 import sys
 
 receipt = json.load(open(sys.argv[1], encoding="utf-8"))
+expected = receipt["architecture_expectations"][sys.argv[2]]
 archive = "out/fedora/obj/librusty_v8.a"
 assert os.path.isfile(archive)
 query = subprocess.check_output(
@@ -357,12 +365,16 @@ members = subprocess.check_output(["ar", "t", archive], text=True).splitlines()
 def lines_sha256(values):
     return hashlib.sha256(("\n".join(sorted(values)) + "\n").encode()).hexdigest()
 
-assert len(objects) == receipt["archive"]["object_input_count"]
-assert len(rlibs) == receipt["archive"]["implicit_rust_rlib_count"]
-assert lines_sha256(objects) == receipt["archive"]["object_input_paths_sha256"]
-assert lines_sha256(rlibs) == receipt["archive"]["implicit_rust_rlib_paths_sha256"]
-assert lines_sha256(members) == receipt["archive"]["member_names_sha256"]
+assert len(objects) == expected["object_input_count"]
+assert len(rlibs) == expected["implicit_rust_rlib_count"]
+assert len(members) == expected["member_count"]
+assert len(set(members)) == expected["unique_member_names"]
+assert lines_sha256(objects) == expected["object_input_paths_sha256"]
+assert lines_sha256(rlibs) == expected["implicit_rust_rlib_paths_sha256"]
+assert lines_sha256(members) == expected["member_names_sha256"]
 assert sorted(members) == sorted(os.path.basename(path) for path in objects)
+assert expected["selected_googletest_inputs"] == []
+assert expected["selected_halfsiphash_inputs"] == []
 assert not any("googletest" in path or "/gtest/" in path or "/gmock/" in path for path in inputs)
 assert not any("halfsiphash" in path for path in inputs)
 PY
@@ -400,6 +412,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.24
+- Verify the exact architecture-specific Rusty V8 archive graphs.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.23
 - Install the LLVM archiver required by Chromium's Clang toolchain.
 

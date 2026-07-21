@@ -1649,12 +1649,24 @@ class AgentlabTest < Minitest::Test
     assert_equal("(Apache-2.0 WITH LLVM-exception) AND NCSA", clang_format.fetch("normalized_expression"))
     assert_equal("verified", clang_format.fetch("semantic_review_status"))
     assert_equal(2, license.fetch("scoped_parent_license_evidence").length)
+    assert_equal("rust-v8-archive-graph-witness/v2", archive_graph.fetch("schema"))
     assert_equal(1_795, archive_graph.dig("archive", "object_input_count"))
     assert_equal(1_795, archive_graph.dig("archive", "member_count"))
     assert_equal(31, archive_graph.dig("archive", "implicit_rust_rlib_count"))
     refute(archive_graph.dig("archive", "implicit_rust_rlibs_embedded_in_archive"))
     refute(archive_graph.dig("archive", "member_contents_match_object_contents_verified"))
     assert_empty(archive_graph.dig("archive", "selected_googletest_inputs"))
+    assert_empty(archive_graph.dig("archive", "selected_halfsiphash_inputs"))
+    assert_equal(1_795, archive_graph.dig("architecture_expectations", "x86_64", "object_input_count"))
+    assert_equal(1_803, archive_graph.dig("architecture_expectations", "aarch64", "object_input_count"))
+    assert_equal(
+      "c12202362607f81a15708a247a6251f14c5f56710ac41b836b6ee096a0529a00",
+      archive_graph.dig("architecture_expectations", "aarch64", "object_input_paths_sha256")
+    )
+    assert_equal(
+      "9c0f827a2e8dca6956452227bd316f3a6ad4cca957d82b55bad4a3acc174a471",
+      archive_graph.dig("architecture_expectations", "aarch64", "member_names_sha256")
+    )
     refute(archive_graph.dig("validation", "selected_build_dependency_closure_verified"))
     assert_equal(3, source_filter.fetch("excluded_paths").length)
     assert_equal("rust-v8-source-filter/v3", source_filter.fetch("schema"))
@@ -1965,12 +1977,14 @@ class AgentlabTest < Minitest::Test
     dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
     data = Marshal.load(Marshal.dump(source_package.data))
     data.fetch("archive_graph")["scope"] = "production"
+    data.fetch("archive_graph").fetch("architecture_object_input_counts")["aarch64"] = 1_795
     data.fetch("archive_graph")["implicit_rust_rlibs_embedded_in_archive"] = true
     package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
 
     errors = Agentlab.validate_rust_v8_evidence(package, dependencies, File.read(source_package.spec_path))
 
     assert_includes(errors, "rust-v8: archive-graph metadata scope does not match")
+    assert_includes(errors, "rust-v8: archive-graph metadata architecture object counts do not match")
     assert_includes(errors, "rust-v8: archive-graph metadata overclaims embedded Rust rlibs")
   end
 
@@ -1981,7 +1995,7 @@ class AgentlabTest < Minitest::Test
                .sub("ExclusiveArch:  x86_64 aarch64", "ExclusiveArch:  x86_64")
                .sub("gn gen out/fedora", "# gn gen out/fedora")
                .sub("%{__ninja} -C out/fedora -j%{_smp_build_ncpus} obj/librusty_v8.a", "# missing Ninja build")
-               .sub('assert lines_sha256(objects) == receipt["archive"]["object_input_paths_sha256"]', "# missing graph digest check")
+               .sub('assert lines_sha256(objects) == expected["object_input_paths_sha256"]', "# missing graph digest check")
                .sub("assert sorted(members) == sorted(os.path.basename(path) for path in objects)", "assert members")
 
     errors = Agentlab.validate_rust_v8_evidence(package, dependencies, spec)

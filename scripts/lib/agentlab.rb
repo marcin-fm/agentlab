@@ -728,10 +728,12 @@ module Agentlab
       errors << "rust-v8: spec does not build the exact Rusty V8 target"
     end
     errors << "rust-v8: spec retains a pre-build stop" if spec.lines.map(&:strip).include?("exit 1")
-    unless spec.include?('["ninja", "-C", "out/fedora", "-t", "query", "obj/librusty_v8.a"]') &&
-           spec.include?('lines_sha256(objects) == receipt["archive"]["object_input_paths_sha256"]') &&
-           spec.include?('lines_sha256(rlibs) == receipt["archive"]["implicit_rust_rlib_paths_sha256"]') &&
-           spec.include?('lines_sha256(members) == receipt["archive"]["member_names_sha256"]') &&
+    unless spec.include?('python3 - "%{SOURCE23}" "%{_arch}"') &&
+           spec.include?('["ninja", "-C", "out/fedora", "-t", "query", "obj/librusty_v8.a"]') &&
+           spec.include?('expected = receipt["architecture_expectations"][sys.argv[2]]') &&
+           spec.include?('lines_sha256(objects) == expected["object_input_paths_sha256"]') &&
+           spec.include?('lines_sha256(rlibs) == expected["implicit_rust_rlib_paths_sha256"]') &&
+           spec.include?('lines_sha256(members) == expected["member_names_sha256"]') &&
            spec.include?('sorted(members) == sorted(os.path.basename(path) for path in objects)')
       errors << "rust-v8: spec does not verify the production archive graph"
     end
@@ -769,7 +771,7 @@ module Agentlab
     errors << "rust-v8: source-filter validation does not reject CC0 executable source" unless source_filter.dig("validation", "cc0_executable_source_present") == false
 
     archive_graph = JSON.parse(File.read(archive_graph_path))
-    errors << "rust-v8: archive-graph schema is invalid" unless archive_graph["schema"] == "rust-v8-archive-graph-witness/v1"
+    errors << "rust-v8: archive-graph schema is invalid" unless archive_graph["schema"] == "rust-v8-archive-graph-witness/v2"
     errors << "rust-v8: archive-graph release does not match" unless archive_graph["release"].to_s == version
     source_reference = archive_graph.fetch("source_closure_reference", {})
     unless source_reference["path"] == source_name && source_reference["sha256"] == source_sha256
@@ -838,7 +840,7 @@ module Agentlab
       errors << "rust-v8: spec does not verify installed license text identities"
     end
     expected_witness = {
-      "scope" => "fedora-44-x86_64-prototype",
+      "scope" => "fedora-44-x86_64-prototype-with-x86_64-and-aarch64-graph-expectations",
       "production" => false,
       "network_isolated" => false,
       "isolated_buildroot" => false,
@@ -931,6 +933,69 @@ module Agentlab
       errors << "rust-v8: archive-graph witness incorrectly claims embedded Rust rlibs"
     end
     errors << "rust-v8: selected archive graph unexpectedly includes googletest" unless graph_archive["selected_googletest_inputs"] == []
+    errors << "rust-v8: selected archive graph unexpectedly includes HalfSipHash" unless graph_archive["selected_halfsiphash_inputs"] == []
+
+    expected_architecture_prefix_counts = {
+      "x86_64" => expected_prefix_counts,
+      "aarch64" => {
+        "rusty_v8" => 2,
+        "src/deno_inspector" => 8,
+        "third_party/abseil-cpp" => 137,
+        "third_party/highway" => 7,
+        "third_party/icu" => 456,
+        "third_party/simdutf" => 1,
+        "v8/cppgc_base" => 48,
+        "v8/libm" => 3,
+        "v8/src" => 37,
+        "v8/third_party" => 9,
+        "v8/torque_generated_definitions" => 246,
+        "v8/v8_base_without_compiler" => 594,
+        "v8/v8_bigint" => 9,
+        "v8/v8_compiler" => 182,
+        "v8/v8_heap_base" => 7,
+        "v8/v8_libbase" => 41,
+        "v8/v8_libplatform" => 13,
+        "v8/v8_snapshot" => 3
+      }
+    }
+    expected_architecture_graphs = {
+      "x86_64" => {
+        "gn_target_cpu" => "x64",
+        "is_clang" => false,
+        "object_input_count" => 1_795,
+        "object_input_paths_sha256" => "e513350fe3ef60dae9d6d88aee96e9e630c155337f8be3f9bf8edc161d7b3ba2",
+        "object_input_prefix_counts" => expected_architecture_prefix_counts.fetch("x86_64"),
+        "member_count" => 1_795,
+        "unique_member_names" => 1_776,
+        "member_names_sha256" => "8582cf86663b5e522a136821b7ec5069e8dce6a92f61f3e6829cf0cf805cf443",
+        "implicit_rust_rlib_count" => 31,
+        "implicit_rust_rlib_paths_sha256" => "1ffa1fc702d3720704cd4a772952b7283938f1cd83e5edd0e0a662e07978d4a0",
+        "selected_googletest_inputs" => [],
+        "selected_halfsiphash_inputs" => []
+      },
+      "aarch64" => {
+        "gn_target_cpu" => "arm64",
+        "is_clang" => true,
+        "object_input_count" => 1_803,
+        "object_input_paths_sha256" => "c12202362607f81a15708a247a6251f14c5f56710ac41b836b6ee096a0529a00",
+        "object_input_prefix_counts" => expected_architecture_prefix_counts.fetch("aarch64"),
+        "member_count" => 1_803,
+        "unique_member_names" => 1_784,
+        "member_names_sha256" => "9c0f827a2e8dca6956452227bd316f3a6ad4cca957d82b55bad4a3acc174a471",
+        "implicit_rust_rlib_count" => 31,
+        "implicit_rust_rlib_paths_sha256" => "1ffa1fc702d3720704cd4a772952b7283938f1cd83e5edd0e0a662e07978d4a0",
+        "selected_googletest_inputs" => [],
+        "selected_halfsiphash_inputs" => []
+      }
+    }
+    unless archive_graph["architecture_expectations"] == expected_architecture_graphs
+      errors << "rust-v8: architecture-specific archive graph expectations do not match"
+    end
+    expected_architecture_graphs.each do |architecture, expectation|
+      unless expectation.fetch("object_input_prefix_counts").values.sum == expectation.fetch("object_input_count")
+        errors << "rust-v8: #{architecture} archive graph prefix count total does not match"
+      end
+    end
 
     graph_consumer = archive_graph.fetch("consumer_witness", {})
     expected_consumer_files = {
@@ -963,6 +1028,7 @@ module Agentlab
     end
     %w[
       prototype_selected_archive_graph_captured
+      architecture_graph_expectations_captured
       archive_member_basenames_match_selected_object_basenames
       implicit_rust_rlib_dependencies_classified
       selected_graph_excludes_googletest
@@ -1551,6 +1617,8 @@ module Agentlab
     errors << "rust-v8: dependency metadata overclaims selected-build dependency closure" unless dependencies.dig("source_closure", "selected_build_dependency_closure_verified") == false
     package_archive_graph = package.data.fetch("archive_graph", {})
     dependency_archive_graph = dependencies.fetch("archive_graph", {})
+    expected_architecture_object_counts = expected_architecture_graphs.transform_values { |record| record.fetch("object_input_count") }
+    expected_architecture_member_counts = expected_architecture_graphs.transform_values { |record| record.fetch("member_count") }
     [package_archive_graph, dependency_archive_graph].each do |metadata|
       errors << "rust-v8: archive-graph metadata schema does not match" unless metadata["schema"] == archive_graph["schema"]
       errors << "rust-v8: archive-graph metadata receipt does not match" unless metadata["receipt"] == archive_graph_name
@@ -1559,6 +1627,12 @@ module Agentlab
       errors << "rust-v8: archive-graph metadata target does not match" unless metadata["target"] == archive_graph.dig("gn", "target")
       errors << "rust-v8: archive-graph metadata object count does not match" unless metadata["object_input_count"] == graph_archive["object_input_count"]
       errors << "rust-v8: archive-graph metadata member count does not match" unless metadata["member_count"] == graph_archive["member_count"]
+      unless metadata["architecture_object_input_counts"] == expected_architecture_object_counts
+        errors << "rust-v8: archive-graph metadata architecture object counts do not match"
+      end
+      unless metadata["architecture_member_counts"] == expected_architecture_member_counts
+        errors << "rust-v8: archive-graph metadata architecture member counts do not match"
+      end
       errors << "rust-v8: archive-graph metadata Rust rlib count does not match" unless metadata["implicit_rust_rlib_count"] == graph_archive["implicit_rust_rlib_count"]
       unless metadata["implicit_rust_rlibs_embedded_in_archive"] == false
         errors << "rust-v8: archive-graph metadata overclaims embedded Rust rlibs"
@@ -1595,6 +1669,12 @@ module Agentlab
       errors << "rust-v8: reproducibility archive-graph scope does not match" unless reproducibility.dig("archive_graph", "scope") == archive_graph.dig("witness", "scope")
       errors << "rust-v8: reproducibility archive-graph target does not match" unless reproducibility.dig("archive_graph", "target") == archive_graph.dig("gn", "target")
       errors << "rust-v8: reproducibility archive-graph object count does not match" unless reproducibility.dig("archive_graph", "object_input_count") == graph_archive["object_input_count"]
+      unless reproducibility.dig("archive_graph", "architecture_object_input_counts") == expected_architecture_object_counts
+        errors << "rust-v8: reproducibility architecture object counts do not match"
+      end
+      unless reproducibility.dig("archive_graph", "architecture_member_counts") == expected_architecture_member_counts
+        errors << "rust-v8: reproducibility architecture member counts do not match"
+      end
       unless reproducibility.dig("archive_graph", "implicit_rust_rlibs_embedded_in_archive") == false
         errors << "rust-v8: reproducibility metadata overclaims embedded Rust rlibs"
       end

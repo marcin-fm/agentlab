@@ -8,7 +8,7 @@
   },
   "archive_graph_reference": {
     "path": "rust-v8-149.2.0-archive-graph.json",
-    "sha256": "36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777",
+    "sha256": "3889e6a3aad1f46864941772da2ab64a4aef5072656c2ee512d85b7a422064c2",
     "scope": "fedora-44-x86_64-prototype"
   },
   "source_filter_reference": {
