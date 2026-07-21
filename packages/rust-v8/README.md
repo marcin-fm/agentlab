@@ -68,7 +68,7 @@ consumers use it.
 The package retains only `rust-v8-static`. A dynamic package can be reconsidered
 if upstream defines a shared target and build-script mode with a maintained
 loader and ABI contract. The receipt SHA-256 is
-`df9388bf33dbe75a4270183790d4fcff73d12cef8fe48caf55911de16b42dd19`.
+`d0538f93a00ca6a3498e142cad5d17172fcfee1735245c57f248feb7a85d4097`.
 
 ## Source Evidence
 
@@ -93,7 +93,7 @@ recursive Git tree except for those three reviewed exclusions, at SHA-256
 `rust-v8-149.2.0-source-closure.json` records every URL, filename, byte count,
 archive hash, component-tree hash, source-filter provenance, and RPM source
 number. Its SHA-256 is
-`3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83`.
+`1f9d8b7b3235c6a098aad5ea091d56e9b13c3160f699d3850a8003484fe89f12`.
 `rust-v8-149.2.0-source-filter.json` binds the exact upstream and filtered trees,
 the three exclusions, and the checked generator script. Its SHA-256 is
 `a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa`.
@@ -131,11 +131,16 @@ toolchain and are omitted when the package selects `/usr`.
 behind V8's existing `v8_use_siphash` feature. Agentlab keeps that feature false,
 so omitting the three CC0 source files changes no selected runtime behavior.
 
-All three patches pass zero-fuzz dry-runs against a fresh exact-tag recursive tree.
+`rust-v8-v8-memcopy-climits.patch` includes `<climits>` in V8's ARM64 memcopy
+header instead of relying on a transitive libc++ include for `CHAR_BIT`. Chromium
+issue `512749476` records the same source defect; no upstream fix commit exists
+yet.
+
+All four patches pass zero-fuzz dry-runs against a fresh exact-tag recursive tree.
 The spec now reconstructs that tree from the checked RPM sources and applies the
-patches before reaching its deliberate remaining-gates stop. None of the three
-patches has been submitted upstream. The new allocator shim is original
-downstream BSD-3-Clause code by Marcin FM.
+patches before reaching its deliberate remaining-gates stop. The memcopy defect
+is reported upstream; the other three patches have not been submitted. The new
+allocator shim is original downstream BSD-3-Clause code by Marcin FM.
 
 The retained Fedora 44 x86_64 static archive expression is:
 
@@ -150,7 +155,7 @@ Every identifier is allowed by the installed Fedora license data. The receipt
 also records that the 31 implicit Rust rlibs and system libraries are not
 embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
-`40037661beb2a8b7b042b91c7fd7cf287ad1686ee1d26ab030f17ec95bb07db0`.
+`f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6`.
 
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
@@ -182,7 +187,7 @@ identity, but do not establish that a crate is linked into `librusty_v8.a` or
 complete the final aggregate expression. Its SHA-256 is
 `b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3`.
 The regenerated license-audit receipt binds that evidence at SHA-256
-`656487b728648f53a0295bb16f34a366f6b1b5c6f3388286151e13fe85f02e5d`.
+`e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017`.
 
 ## Prototype Result
 
@@ -200,7 +205,7 @@ The graph also has 31 implicit Rust `.rlib` dependencies which are explicitly
 classified as not embedded in `librusty_v8.a`; the exact Cargo `v8` fingerprint
 records its separate `temporal_capi` dependency. No googletest input appears in
 the selected graph. The witness SHA-256 is
-`88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25`.
+`36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777`.
 Transient artifact roots are normalized, but this is not a reproducible-build
 claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer
@@ -211,10 +216,10 @@ link closure.
 1. Regenerate production selected-license evidence from the successful Fedora 43, Fedora 44, and Rawhide x86_64 graphs and run installed consumer smokes.
 2. Prove aarch64 or retain an explicitly reviewed architecture restriction.
 3. Complete the final consumer license closure for the 31 separately linked Rust rlibs.
-4. Submit or otherwise resolve the three downstream system-toolchain, portability, and source-selection patches.
+4. Submit or otherwise resolve the four downstream system-toolchain, portability, source-selection, and header patches.
 
 The spec verifies every source through the checked receipt, reconstructs the
-reviewed filtered tree, applies all three patches, runs the exact retained
+reviewed filtered tree, applies all four patches, runs the exact retained
 GN/Ninja graph, and checks the selected object/member structure. This local
 production-build path does not close final consumer licensing, architecture, or
 upstream-patch gates. The package remains disabled in COPR.

@@ -535,6 +535,13 @@
       "sha256": "899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca",
       "zero_fuzz_dry_run": true,
       "upstream_status": "not-submitted"
+    },
+    {
+      "name": "rust-v8-v8-memcopy-climits.patch",
+      "sha256": "e04e47197acfb44cbfa297f9f44236c4a0edf5485f3b83b13a5b12d4c08776e2",
+      "zero_fuzz_dry_run": true,
+      "upstream_status": "reported",
+      "upstream_url": "https://issues.chromium.org/issues/512749476"
     }
   ],
   "consumer_contract": {

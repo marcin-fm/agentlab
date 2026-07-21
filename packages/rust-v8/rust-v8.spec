@@ -5,22 +5,23 @@
 %global debug_package %{nil}
 %global source_commit 5d0e31ea6bf67f4559faa759b91e22bc3f1cd696
 %global source_sha256 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
-%global closure_sha256 3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83
-%global license_audit_sha256 656487b728648f53a0295bb16f34a366f6b1b5c6f3388286151e13fe85f02e5d
-%global archive_graph_sha256 88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25
+%global closure_sha256 1f9d8b7b3235c6a098aad5ea091d56e9b13c3160f699d3850a8003484fe89f12
+%global license_audit_sha256 e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017
+%global archive_graph_sha256 36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777
 %global fedora_license_evidence_sha256 b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
-%global dynamic_linking_sha256 df9388bf33dbe75a4270183790d4fcff73d12cef8fe48caf55911de16b42dd19
+%global dynamic_linking_sha256 d0538f93a00ca6a3498e142cad5d17172fcfee1735245c57f248feb7a85d4097
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
-%global static_license_sha256 40037661beb2a8b7b042b91c7fd7cf287ad1686ee1d26ab030f17ec95bb07db0
+%global static_license_sha256 f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6
 %global system_rust_patch_sha256 2018aefc8f25ed1372cc964196f987625c34820fafb2ba40085c624e1d37dae7
 %global gcc_patch_sha256 ff66712a0f90eb64ec7f25ef8b0b2e168541238ca7e9e30b7d830540b8f39ede
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
+%global memcopy_patch_sha256 e04e47197acfb44cbfa297f9f44236c4a0edf5485f3b83b13a5b12d4c08776e2
 %global allocator_license_sha256 813df42f500205608c3668a069496e1a6d86a949204db89aff3c6332ad775558
 %global source_preparer_sha256 cf49573ca92537748b029bb1cbf89dd1dc871126c72de8b3ff6cb09325cb027c
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.21%{?dist}
+Release:        0.22%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -67,6 +68,9 @@ Patch1:         %{name}-gcc-portability.patch
 # Keep the already-disabled SipHash implementation out of the selected graph.
 # Fedora-specific; not submitted while V8 carries the sources unconditionally.
 Patch2:         %{name}-disable-unused-siphash.patch
+# Include the standard header that defines CHAR_BIT in V8's ARM64 memcopy path.
+# Upstream: https://issues.chromium.org/issues/512749476
+Patch3:         %{name}-v8-memcopy-climits.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -99,7 +103,7 @@ This draft is intentionally blocked. The root and 19 nested Git component
 archives are commit-addressed RPM inputs. The exact V8 input is filtered at SRPM
 time to remove three unused CC0 SipHash files. Every archive is accepted by its
 exact tree rather than compressor-specific bytes. The resulting 21-component
-tree matches Git except for those reviewed exclusions and accepts the three
+tree matches Git except for those reviewed exclusions and accepts the four
 Fedora patches. A full Chromium dependency-client checkout is not claimed. A
 retained Fedora 44 prototype witness matches 1,795 selected objects to 1,795
 archive members and has a complete selected static-license expression and text
@@ -127,6 +131,7 @@ echo "%{source_preparer_sha256}  %{SOURCE29}" | sha256sum -c -
 echo "%{system_rust_patch_sha256}  %{PATCH0}" | sha256sum -c -
 echo "%{gcc_patch_sha256}  %{PATCH1}" | sha256sum -c -
 echo "%{siphash_patch_sha256}  %{PATCH2}" | sha256sum -c -
+echo "%{memcopy_patch_sha256}  %{PATCH3}" | sha256sum -c -
 TMPDIR="%{_tmppath}" ruby "%{SOURCE29}" \
   --output "%{SOURCE20}" --receipt "%{SOURCE26}" --check \
   --closure "%{SOURCE21}" \
@@ -284,6 +289,7 @@ extract_wrapped v8 %{SOURCE20}
 patch --batch --fuzz=0 -p1 < %{PATCH0}
 patch --batch --fuzz=0 -p1 < %{PATCH1}
 patch --batch --fuzz=0 -p1 < %{PATCH2}
+patch --batch --fuzz=0 -p1 < %{PATCH3}
 
 %build
 mkdir -p out/fedora
@@ -393,6 +399,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.22
+- Include the standard definition of CHAR_BIT in V8's ARM64 memcopy path.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.21
 - Keep bundled-Chromium Clang flags out of Fedora's system-Clang build.
 

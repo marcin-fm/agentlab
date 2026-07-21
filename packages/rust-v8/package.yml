@@ -2,10 +2,10 @@
 name: rust-v8
 status: blocked
 blockers:
-- The stable Fedora Rust, system-Clang, and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream.
+- The stable Fedora Rust, system-Clang, and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream. The separate V8 `<climits>` repair is reported as Chromium issue 512749476 but has no upstream fix commit yet.
 - Exact-source review confirms that Rusty V8 exposes only a complete static GN target and its Cargo build script always links `static=rusty_v8`. V8 component DSOs are a distinct internal boundary; upstream defines no `librusty_v8.so`, SONAME, exported/versioned bridge ABI, or existing-consumer dynamic mode. Agentlab does not add a cross-package shared provider without that upstream contract; this is a package-design decision, not a Fedora prohibition on application-private DSOs.
 - The retained Fedora 44 x86_64 1,795-object archive has a complete Fedora-allowed SPDX expression and an exact 24-file license-text map. All 21 dynamically generated commit archives are verified by safe layout and exact component trees rather than compressor-specific bytes; the three unused CC0 SipHash files are removed from the V8 tree and the existing `v8_use_siphash=false` graph is enforced by a narrow patch. The 31 implicit Rust rlibs and system libraries are not embedded and remain final-consumer obligations. Production source-bound builds, other architectures, and any graph change must regenerate this evidence.
-- Configured-SCM builds with package build networking disabled prove Fedora 43, Fedora 44, and Rawhide on x86_64. The aarch64 path now reaches native system-Clang compilation but remains unverified.
+- Configured-SCM builds with package build networking disabled prove Fedora 43, Fedora 44, and Rawhide on x86_64. The aarch64 path now reaches V8 native compilation but stops at the upstream missing-`<climits>` defect and remains unverified.
 source_policy:
   rpm_build_network: forbidden
   upstream_prebuilt_static_archives: forbidden
@@ -18,7 +18,7 @@ source_policy:
   full_deps_checkout_verified: false
   selected_build_dependency_closure_verified: false
   source_closure_receipt: rust-v8-149.2.0-source-closure.json
-  source_closure_receipt_sha256: 3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83
+  source_closure_receipt_sha256: 1f9d8b7b3235c6a098aad5ea091d56e9b13c3160f699d3850a8003484fe89f12
   recursive_components: 21
   direct_public_rpm_sources: 20
   generated_filtered_rpm_sources: 1
@@ -45,7 +45,7 @@ consumer_contract:
   static_link_license_propagation: required in every consumer
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: df9388bf33dbe75a4270183790d4fcff73d12cef8fe48caf55911de16b42dd19
+  receipt_sha256: d0538f93a00ca6a3498e142cad5d17172fcfee1735245c57f248feb7a85d4097
   v8_component_build_available: true
   upstream_supported: false
   existing_rust_consumers_supported: false
@@ -71,7 +71,7 @@ prototype:
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: 88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25
+  receipt_sha256: 36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
   object_input_count: 1795
@@ -97,9 +97,15 @@ patches:
     sha256: 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
     zero_fuzz_dry_run: passed
     upstream_status: not-submitted
+  v8_memcopy_climits:
+    file: rust-v8-v8-memcopy-climits.patch
+    sha256: e04e47197acfb44cbfa297f9f44236c4a0edf5485f3b83b13a5b12d4c08776e2
+    zero_fuzz_dry_run: passed
+    upstream_status: reported
+    upstream_url: https://issues.chromium.org/issues/512749476
 license_audit:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 656487b728648f53a0295bb16f34a366f6b1b5c6f3388286151e13fe85f02e5d
+  receipt_sha256: e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017
   candidate_license_files: 414
   readme_chromium_records: 231
   vendored_rust_entries: 268
@@ -132,7 +138,7 @@ license_audit:
   final_static_archive_license_complete: false
 static_license:
   receipt: rust-v8-149.2.0-static-license.json
-  receipt_sha256: 40037661beb2a8b7b042b91c7fd7cf287ad1686ee1d26ab030f17ec95bb07db0
+  receipt_sha256: f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6
   expression: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BSD-Protection AND LicenseRef-Fedora-Public-Domain AND LicenseRef-Fedora-UltraPermissive AND MIT AND NAIST-2003 AND Python-2.0.1 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR BSL-1.0)
   selected_archive_objects: 1795
   required_license_texts: 24

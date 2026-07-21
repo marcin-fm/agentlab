@@ -4,11 +4,11 @@
   "release": "149.2.0",
   "source_closure_reference": {
     "path": "rust-v8-149.2.0-source-closure.json",
-    "sha256": "3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83"
+    "sha256": "1f9d8b7b3235c6a098aad5ea091d56e9b13c3160f699d3850a8003484fe89f12"
   },
   "archive_graph_reference": {
     "path": "rust-v8-149.2.0-archive-graph.json",
-    "sha256": "88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25",
+    "sha256": "36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777",
     "scope": "fedora-44-x86_64-prototype"
   },
   "source_filter_reference": {

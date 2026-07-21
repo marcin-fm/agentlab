@@ -7,7 +7,7 @@ source:
   sha256: 8f63ff709b52b7a2de0453e37ba8f661c21d0a398e4ecf5298b273ab8018747a
 recursive_source:
   receipt: rust-v8-149.2.0-source-closure.json
-  receipt_sha256: 3deb436df47e42f15503903c53f11c638810434ab9fa4ea219f7d07187f16e83
+  receipt_sha256: 1f9d8b7b3235c6a098aad5ea091d56e9b13c3160f699d3850a8003484fe89f12
   components: 21
   submodules: 20
   closure_kind: git-submodule-closure-with-reviewed-source-filter
@@ -30,6 +30,7 @@ patch_validation:
   system_rust_toolchain_patch: passed
   gcc_portability_patch: passed
   disable_unused_siphash_patch: passed
+  v8_memcopy_climits_patch: passed
   applied_after_recursive_reconstruction: true
 prototype_build:
   environment: fedora-44-x86_64
@@ -52,7 +53,7 @@ prototype_build:
 archive_graph:
   schema: rust-v8-archive-graph-witness/v1
   receipt: rust-v8-149.2.0-archive-graph.json
-  receipt_sha256: 88b5ac72f7372985ad4c54f8e810d6a43b0961c2f5b7af7dddd818913cff9d25
+  receipt_sha256: 36bfd19c5e89342e83928418d04fd028419b159400ba066cb0f49017950b4777
   scope: fedora-44-x86_64-prototype
   target: //:rusty_v8
   object_input_count: 1795
@@ -64,7 +65,7 @@ archive_graph:
   final_consumer_link_closure_verified: false
 dynamic_linking:
   receipt: rust-v8-149.2.0-dynamic-linking.json
-  receipt_sha256: df9388bf33dbe75a4270183790d4fcff73d12cef8fe48caf55911de16b42dd19
+  receipt_sha256: d0538f93a00ca6a3498e142cad5d17172fcfee1735245c57f248feb7a85d4097
   exact_upstream_static_contract_verified: true
   v8_component_mode_distinguished: true
   existing_consumer_dynamic_linking_verified: false
@@ -93,16 +94,16 @@ builds:
   fedora_44_x86_64:
     status: passed-copr-build-10755554
   fedora_43_aarch64:
-    status: failed-copr-build-10755894-system-clang-flags
+    status: failed-copr-build-10756339-v8-memcopy-char-bit
   fedora_44_aarch64:
-    status: failed-copr-build-10755894-system-clang-flags
+    status: failed-copr-build-10756339-v8-memcopy-char-bit
   rawhide_x86_64:
     status: passed-copr-build-10755554
   rawhide_aarch64:
-    status: failed-copr-build-10755894-system-clang-flags
+    status: failed-copr-build-10756339-v8-memcopy-char-bit
 licenses:
   receipt: rust-v8-149.2.0-license-audit.json
-  receipt_sha256: 656487b728648f53a0295bb16f34a366f6b1b5c6f3388286151e13fe85f02e5d
+  receipt_sha256: e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017
   fedora_evidence_receipt: rust-v8-149.2.0-fedora-license-evidence.json
   fedora_evidence_receipt_sha256: b63ee251799012a6492526d85dab76a64bb93d813b4526c64a0a1266fd22acc3
   fedora_release: "44"
@@ -128,7 +129,7 @@ licenses:
   fedora_exact_version_license_metadata_recorded: true
   linked_archive_selection_verified: false
   static_receipt: rust-v8-149.2.0-static-license.json
-  static_receipt_sha256: 40037661beb2a8b7b042b91c7fd7cf287ad1686ee1d26ab030f17ec95bb07db0
+  static_receipt_sha256: f4a6b91ac467704c4c15b71addf447c61475c41806e895ed26d23c7821f33dd6
   selected_archive_objects: 1795
   required_license_texts: 24
   required_texts_verified: true

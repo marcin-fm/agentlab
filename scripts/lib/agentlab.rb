@@ -679,7 +679,8 @@ module Agentlab
     patch_lines = [
       "patch --batch --fuzz=0 -p1 < %{PATCH0}",
       "patch --batch --fuzz=0 -p1 < %{PATCH1}",
-      "patch --batch --fuzz=0 -p1 < %{PATCH2}"
+      "patch --batch --fuzz=0 -p1 < %{PATCH2}",
+      "patch --batch --fuzz=0 -p1 < %{PATCH3}"
     ]
     patch_lines.each do |line|
       errors << "rust-v8: spec does not apply #{line.split.last}" unless spec.lines.map(&:strip).include?(line)
@@ -1499,6 +1500,19 @@ module Agentlab
     end
 
     patch_metadata = Array(dependencies["patches"])
+    expected_source_patches = patch_metadata.map do |patch|
+      record = {
+        "name" => patch.fetch("file"),
+        "sha256" => patch.fetch("sha256"),
+        "zero_fuzz_dry_run" => patch["zero_fuzz_dry_run"] == "passed",
+        "upstream_status" => patch.fetch("upstream_status")
+      }
+      record["upstream_url"] = patch["upstream_url"] if patch["upstream_url"]
+      record
+    end
+    unless source["patches"] == expected_source_patches
+      errors << "rust-v8: source and dependency patch metadata do not match"
+    end
     patch_metadata.each do |patch|
       patch_path = File.join(package.directory, patch.fetch("file"))
       actual = File.file?(patch_path) && Digest::SHA256.file(patch_path).hexdigest
@@ -1511,6 +1525,14 @@ module Agentlab
              system_patch.include?('import("//build/config/clang/clang.gni")') &&
              system_patch.include?('_dir = "aarch64-redhat-linux-gnu"')
         errors << "rust-v8: system-toolchain patch does not guard bundled-Clang-only flags"
+      end
+    end
+    memcopy_patch_path = File.join(package.directory, "rust-v8-v8-memcopy-climits.patch")
+    if File.file?(memcopy_patch_path)
+      memcopy_patch = File.read(memcopy_patch_path)
+      unless memcopy_patch.include?("+#include <climits>") &&
+             memcopy_patch.include?("https://issues.chromium.org/issues/512749476")
+        errors << "rust-v8: V8 memcopy patch does not retain the upstream-tracked header fix"
       end
     end
     unless package.data.dig("source_policy", "archive_transport_identity_required") == false &&
