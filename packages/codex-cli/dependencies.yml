@@ -140,12 +140,12 @@ selected_cargo_license_evidence:
   linked_linux_directories_without_top_level_license_texts: 54
   supplemental_license_sources:
     receipt: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-    receipt_sha256: 0f29ff2b70afd9df464bb35ba7e16925186707f663b2d47b260ee7a49538299c
+    receipt_sha256: 08767c1b12f0b70f651dc229a7feaf4c702619514400719ab7c4294e9335935c
     verified_mappings: 44
     unresolved: 6
     installable_texts: 24
     icu_payload_comparison: resolved
-    notify_cc0_policy_hold: required
+    notify_cc0_fedora_precedent: rust-notify-8.2.0-2.fc44
 lock_normalization:
   status: verified-prep-transform
   source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e

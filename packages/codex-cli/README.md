@@ -179,12 +179,14 @@ source as linked. A nested candidate does not prove package-level legal closure,
 and a missing candidate does not prove that no usable upstream text exists; each
 unresolved package still needs an exact text mapping and Fedora review.
 
-The checked v3 supplemental-source receipt resolves 44 Linux-linked crates and
+The checked v4 supplemental-source receipt resolves 44 Linux-linked crates and
 supplies 24 deduplicated installable texts. It distinguishes Cargo VCS evidence,
 release-history manifest evidence, and a checked SPDX canonical-standard source
 for `fxhash`; release manifests and ICU data remain comparison-only. Six crates
-still require an upstream request before canonical fallback,
-and the `notify` CC0 allowed-content review remains an explicit hold.
+still require an upstream request before canonical fallback. The exact selected
+`notify 8.2.0` crate and `LICENSE-CC0` bytes match Fedora 44's
+`rust-notify-8.2.0-2.fc44`, so its CC0 classification and payload treatment are
+resolved through that distribution precedent.
 
 This is not the final RPM license closure. Fedora-allowed SPDX review, package
 license texts, and the recursive Rusty V8/Chromium native static inventory are

@@ -15,13 +15,13 @@
 %global source_preparer_sha256 d134aa208cf7264e99dbab683b762faf3fee009b25290d6c6b97b55c35702c09
 %global vendor_verifier_sha256 f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
 %global license_text_receipt_sha256 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
-%global supplemental_license_receipt_sha256 0f29ff2b70afd9df464bb35ba7e16925186707f663b2d47b260ee7a49538299c
-%global supplemental_license_preparer_sha256 122a121f2e3e1b29daa9041270041feebf5e4025ba3266ca6c043655c539b46e
+%global supplemental_license_receipt_sha256 08767c1b12f0b70f651dc229a7feaf4c702619514400719ab7c4294e9335935c
+%global supplemental_license_preparer_sha256 d263b7fa942debf88d5ea444364750da3536a6cab4aeee73e51c7ff8beb2a6fa
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.12%{?dist}
+Release:        0.13%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -171,6 +171,10 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.13
+- Reuse Fedora's exact rust-notify 8.2.0 CC0 license and payload precedent.
+- Remove the redundant notify policy hold while retaining final aggregate review.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.12
 - Resolve three additional Cargo license-text records from exact release history.
 - Retain six crates pending upstream requests and keep final license approval blocked.

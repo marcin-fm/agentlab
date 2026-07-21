@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-codex-cargo-supplemental-license-sources/v3",
+  "schema": "agentlab-codex-cargo-supplemental-license-sources/v4",
   "release": {
     "name": "codex-cli",
     "version": "0.144.5",
@@ -1984,17 +1984,7 @@
       "reason": "Published crate omits usable license text; newer 0.2.4 archive also omits usable text."
     }
   ],
-  "policy_holds": [
-    {
-      "directory": "notify-8.2.0",
-      "crate_checksum": "4d3d07927151ff8575b7087f245456e549fea62edf0ec4e565a5ee50c8402bc3",
-      "declared_expression": "CC0-1.0",
-      "license_text_path": "LICENSE-CC0",
-      "license_text_sha256": "e0456cbab4f7b5e7203e678faff37eadbdfef02e822db3b7a52a1dd9d3dc514a",
-      "license_text_size_bytes": 7007,
-      "hold": "Fedora allowed-content review required before final aggregate approval."
-    }
-  ],
+  "policy_holds": [],
   "inputs": {
     "resolver_vendor_receipt": {
       "path": "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json",
@@ -2015,5 +2005,29 @@
     "root": "codex-cli-0.144.5-supplemental-license-sources",
     "installable_texts": 24,
     "transport_identity_required": false
-  }
+  },
+  "fedora_precedents": [
+    {
+      "directory": "notify-8.2.0",
+      "status": "resolved-fedora-exact-version",
+      "source_package": "rust-notify",
+      "source_nvr": "rust-notify-8.2.0-2.fc44",
+      "dist_git_repository": "https://src.fedoraproject.org/rpms/rust-notify",
+      "dist_git_branch": "f44",
+      "dist_git_commit": "9b7fed1ba6a7994064e7a188b13e167ed82464c7",
+      "source_archive_sha512": "5b68f2437a2798aac5c240a10aac642708ef9ceefd58f448e7d37facd148768080cd3712e352e1736f910b660609753b47d8e00d4c6d0936cc5009c4d32084e9",
+      "spec_license": "CC0-1.0",
+      "license_text_path": "LICENSE-CC0",
+      "license_text_sha256": "e0456cbab4f7b5e7203e678faff37eadbdfef02e822db3b7a52a1dd9d3dc514a",
+      "license_text_size_bytes": 7007,
+      "compatibility_precedent": {
+        "source_package": "rust-notify6",
+        "source_nvr": "rust-notify6-6.1.1-5.fc44",
+        "dist_git_commit": "796b8d100729d793ada18ed6abbb55b39f6169e3",
+        "source_archive_sha512": "58a44759d96c3ec7c431a37d92e1c1a0f112d75fac9651e9fead7a3a1de46074d79a251320b0522891711879da4ab42dd008c5a28a994039890f8d434d215e69",
+        "spec_license": "CC0-1.0",
+        "license_text_path": "LICENSE-CC0"
+      }
+    }
+  ]
 }

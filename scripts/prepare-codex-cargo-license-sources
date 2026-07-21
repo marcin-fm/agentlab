@@ -20,6 +20,28 @@ module CodexSupplementalLicenses
   ICU_PAYLOAD_BYTES = 10_822_192
   MAPPING_MODES = %w[cargo-vcs release-history canonical-standard].freeze
   RELEASE_RELATIONS = %w[exact-byte-equality cargo-workspace-normalized].freeze
+  FEDORA_NOTIFY_PRECEDENT = {
+    "directory" => "notify-8.2.0",
+    "status" => "resolved-fedora-exact-version",
+    "source_package" => "rust-notify",
+    "source_nvr" => "rust-notify-8.2.0-2.fc44",
+    "dist_git_repository" => "https://src.fedoraproject.org/rpms/rust-notify",
+    "dist_git_branch" => "f44",
+    "dist_git_commit" => "9b7fed1ba6a7994064e7a188b13e167ed82464c7",
+    "source_archive_sha512" => "5b68f2437a2798aac5c240a10aac642708ef9ceefd58f448e7d37facd148768080cd3712e352e1736f910b660609753b47d8e00d4c6d0936cc5009c4d32084e9",
+    "spec_license" => "CC0-1.0",
+    "license_text_path" => "LICENSE-CC0",
+    "license_text_sha256" => "e0456cbab4f7b5e7203e678faff37eadbdfef02e822db3b7a52a1dd9d3dc514a",
+    "license_text_size_bytes" => 7007,
+    "compatibility_precedent" => {
+      "source_package" => "rust-notify6",
+      "source_nvr" => "rust-notify6-6.1.1-5.fc44",
+      "dist_git_commit" => "796b8d100729d793ada18ed6abbb55b39f6169e3",
+      "source_archive_sha512" => "58a44759d96c3ec7c431a37d92e1c1a0f112d75fac9651e9fead7a3a1de46074d79a251320b0522891711879da4ab42dd008c5a28a994039890f8d434d215e69",
+      "spec_license" => "CC0-1.0",
+      "license_text_path" => "LICENSE-CC0"
+    }
+  }.freeze
 
   def sha256(path) = Digest::SHA256.file(path).hexdigest
 
@@ -284,11 +306,11 @@ module CodexSupplementalLicenses
     end
   end
 
-  def validate_notify_hold!(hold, inventory_by_dir, audit_by_dir)
+  def validate_notify_precedent!(precedent, inventory_by_dir, audit_by_dir)
     notify_inventory = inventory_by_dir.fetch("notify-8.2.0")
     notify_audit = audit_by_dir.fetch("notify-8.2.0")
     text = notify_inventory.fetch("license_texts").find { |item| item.fetch("path") == "LICENSE-CC0" }
-    raise CodexCargoVendor::Error, "notify CC0 policy hold mismatch" unless hold && hold.fetch("crate_checksum") == notify_audit.fetch("checksum") && hold.fetch("declared_expression") == notify_audit.fetch("normalized_spdx_candidate") && text && hold.fetch("license_text_sha256") == text.fetch("sha256") && hold.fetch("license_text_size_bytes") == text.fetch("size_bytes")
+    raise CodexCargoVendor::Error, "notify Fedora precedent mismatch" unless precedent == FEDORA_NOTIFY_PRECEDENT && notify_audit.fetch("checksum") == "4d3d07927151ff8575b7087f245456e549fea62edf0ec4e565a5ee50c8402bc3" && notify_audit.fetch("normalized_spdx_candidate") == "CC0-1.0" && text && precedent.fetch("license_text_sha256") == text.fetch("sha256") && precedent.fetch("license_text_size_bytes") == text.fetch("size_bytes")
   end
 
   def verify_mappings!(receipt, vendor_root, inventory, audit, cache: nil, offline: true)
@@ -344,8 +366,9 @@ module CodexSupplementalLicenses
     missing = inventory.fetch("packages").select { |item| item.fetch("linked_linux") && item.fetch("license_texts").empty? }.map { |item| item.fetch("directory") }.sort
     expected_missing = (mappings.map { |item| item.fetch("directory") } + unresolved.map { |item| item.fetch("directory") } + [icu.fetch("directory")]).sort
     raise CodexCargoVendor::Error, "missing-text directory set drift" unless missing.length == 51 && missing == expected_missing && expected_missing.uniq.length == expected_missing.length
-    hold = receipt.fetch("policy_holds").find { |item| item.fetch("directory") == "notify-8.2.0" }
-    validate_notify_hold!(hold, inventory_by_dir, audit_by_dir)
+    raise CodexCargoVendor::Error, "resolved notify precedent retained as policy hold" unless receipt.fetch("policy_holds").empty?
+    precedent = receipt.fetch("fedora_precedents").find { |item| item.fetch("directory") == "notify-8.2.0" }
+    validate_notify_precedent!(precedent, inventory_by_dir, audit_by_dir)
     used = (mappings.flat_map { |item| item.fetch("install_source_ids") } + icu.fetch("source_ids")) - ["icu-data-payload"]
     installable = sources.select { |id, source| source.fetch("install", true) && id != "icu-data-payload" }.keys
     raise CodexCargoVendor::Error, "unused installable supplemental source" unless installable.sort == used.uniq.sort
@@ -353,8 +376,8 @@ module CodexSupplementalLicenses
 
   def receipt_from_plan(plan, package)
     receipt = Marshal.load(Marshal.dump(plan))
-    upgrade_v3!(receipt, package)
-    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v3"
+    upgrade_v4!(receipt, package)
+    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v4"
     receipt["inputs"] = {
       "resolver_vendor_receipt" => { "path" => "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")), "vendor_tree_sha256" => plan.dig("release", "resolver_vendor_tree_sha256") },
       "license_text_inventory" => { "path" => "codex-cli-0.144.5-cargo-license-text-inventory.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")) },
@@ -531,6 +554,15 @@ module CodexSupplementalLicenses
     resolved = %w[display_container-0.9.0 sorted_vector_map-0.2.1 strong_hash-0.1.0]
     receipt["unresolved"].reject! { |item| resolved.include?(item.fetch("directory")) }
     populate_mapping_evidence!(receipt)
+    receipt
+  end
+
+  def upgrade_v4!(receipt, package)
+    return receipt if receipt["schema"] == "agentlab-codex-cargo-supplemental-license-sources/v4"
+
+    upgrade_v3!(receipt, package)
+    receipt["policy_holds"] = []
+    receipt["fedora_precedents"] = [FEDORA_NOTIFY_PRECEDENT]
     receipt
   end
 

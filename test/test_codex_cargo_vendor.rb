@@ -88,7 +88,7 @@ class CodexCargoVendorTest < Minitest::Test
     receipt = JSON.parse(File.read(path))
 
     assert_equal(policy.fetch("cargo_supplemental_license_sources_sha256"), Digest::SHA256.file(path).hexdigest)
-    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v3", receipt.fetch("schema"))
+    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v4", receipt.fetch("schema"))
     assert_equal(44, receipt.fetch("mappings").length)
     assert_equal(6, receipt.fetch("unresolved").length)
     assert_equal(24, receipt.dig("archive", "installable_texts"))
@@ -109,7 +109,8 @@ class CodexCargoVendorTest < Minitest::Test
     sorted = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "sorted_vector_map-0.2.1" }
     assert_equal("756ae7daba100d194aa0260131937b7d96672549", sorted.fetch("source_commit"))
     assert_equal(%w[rust-shed-sorted-vector-map-mit rust-shed-sorted-vector-map-apache], sorted.fetch("install_source_ids"))
-    assert(receipt.fetch("policy_holds").one? { |hold| hold.fetch("directory") == "notify-8.2.0" })
+    assert_empty(receipt.fetch("policy_holds"))
+    assert_equal(CodexSupplementalLicenses::FEDORA_NOTIFY_PRECEDENT, receipt.fetch("fedora_precedents").fetch(0))
   end
 
   def test_supplemental_contract_rejects_stale_transport_and_bad_spec_order
@@ -118,8 +119,8 @@ class CodexCargoVendorTest < Minitest::Test
     assert_equal([nil], icu_sources.map { |source| source.fetch("expected_transport_sha256") }.uniq)
     assert_equal(6, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
     refute(receipt.fetch("unresolved").any? { |item| item.fetch("crate_checksum") == "" })
-    hold = receipt.fetch("policy_holds").fetch(0)
-    assert_equal("CC0-1.0", hold.fetch("declared_expression"))
+    assert_empty(receipt.fetch("policy_holds"))
+    assert_equal("rust-notify-8.2.0-2.fc44", receipt.dig("fedora_precedents", 0, "source_nvr"))
     spec = File.read(File.join(PACKAGE, "codex-cli.spec"))
     assert_operator(spec.index("ruby .agentlab-codex-source-tools/prepare-codex-cargo-license-sources"), :<, spec.index("tar --extract --gzip --file %{SOURCE15}"))
   end
@@ -137,8 +138,8 @@ class CodexCargoVendorTest < Minitest::Test
     unresolved[0] = unresolved[0].merge("crate_checksum" => "bad")
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved, inventory, audit) }
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(5), inventory, audit) }
-    hold = { "crate_checksum" => "notify", "declared_expression" => "MIT", "license_text_sha256" => "text", "license_text_size_bytes" => 7 }
-    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_notify_hold!(hold, inventory, audit) }
+    precedent = Marshal.load(Marshal.dump(CodexSupplementalLicenses::FEDORA_NOTIFY_PRECEDENT))
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_notify_precedent!(precedent, inventory, audit) }
     Dir.mktmpdir do |dir|
       path = File.join(dir, "transport")
       File.binwrite(path, "not-the-expected-transport")
@@ -146,7 +147,7 @@ class CodexCargoVendorTest < Minitest::Test
     end
   end
 
-  def test_v3_provenance_rejection_helpers
+  def test_v4_provenance_rejection_helpers
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_mode!("made-up") }
     relation = {
       "kind" => "exact-byte-equality",
