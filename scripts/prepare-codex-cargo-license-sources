@@ -245,7 +245,7 @@ module CodexSupplementalLicenses
     raise CodexCargoVendor::Error, "canonical mapping needs an HTTPS GitHub issue" unless match && "#{match[:owner]}/#{match[:repo]}".downcase == repository
     raise CodexCargoVendor::Error, "canonical upstream request status mismatch" unless request.fetch("status") == "open"
     raise CodexCargoVendor::Error, "canonical upstream request scope missing" unless request.fetch("scope").is_a?(String) && !request.fetch("scope").empty?
-    raise CodexCargoVendor::Error, "canonical policy basis mismatch" unless mapping.fetch("policy_basis") == "/srv/wikis/agentlab/policies.md:54"
+    raise CodexCargoVendor::Error, "canonical policy basis mismatch" unless mapping.fetch("policy_basis") == "/srv/wikis/agentlab/policies.md:55"
     authority = mapping.fetch("canonical_authority")
     raise CodexCargoVendor::Error, "canonical mapping authority mismatch" unless authority == { "repository" => "https://github.com/spdx/license-list-data", "tag" => "v3.28.0", "commit" => "c4a7237ec8f4654e867546f9f409749300f1bf4c" }
     source_ids = mapping.fetch("source_ids")
@@ -314,12 +314,7 @@ module CodexSupplementalLicenses
   end
 
   def validate_unresolved!(unresolved, inventory_by_dir, audit_by_dir)
-    raise CodexCargoVendor::Error, "supplemental unresolved count drift" unless unresolved.length == 5
-    unresolved.each do |item|
-      inventory_item = inventory_by_dir.fetch(item.fetch("directory"))
-      audit_item = audit_by_dir.fetch(item.fetch("directory"))
-      raise CodexCargoVendor::Error, "unresolved record mismatch: #{item.fetch('directory')}" unless inventory_item.fetch("linked_linux") && inventory_item.fetch("license_texts").empty? && audit_item.fetch("checksum") == item.fetch("crate_checksum") && audit_item.fetch("normalized_spdx_candidate") == item.fetch("declared_expression")
-    end
+    raise CodexCargoVendor::Error, "supplemental unresolved records remain" unless unresolved.empty?
   end
 
   def validate_notify_precedent!(precedent, inventory_by_dir, audit_by_dir)
@@ -351,7 +346,7 @@ module CodexSupplementalLicenses
       raise CodexCargoVendor::Error, "non-immutable supplemental source URL: #{source.fetch('id')}" unless valid
     end
     mappings = receipt.fetch("mappings")
-    raise CodexCargoVendor::Error, "supplemental mapping count drift" unless mappings.length == 45
+    raise CodexCargoVendor::Error, "supplemental mapping count drift" unless mappings.length == 50
     mappings.each do |mapping|
       directory = mapping.fetch("directory")
       item = inventory_by_dir.fetch(directory)
@@ -400,8 +395,8 @@ module CodexSupplementalLicenses
 
   def receipt_from_plan(plan, package)
     receipt = Marshal.load(Marshal.dump(plan))
-    upgrade_v5!(receipt, package)
-    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v5"
+    upgrade_v6!(receipt, package)
+    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v6"
     receipt["inputs"] = {
       "resolver_vendor_receipt" => { "path" => "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")), "vendor_tree_sha256" => plan.dig("release", "resolver_vendor_tree_sha256") },
       "license_text_inventory" => { "path" => "codex-cli-0.144.5-cargo-license-text-inventory.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")) },
@@ -612,6 +607,41 @@ module CodexSupplementalLicenses
       "upstream_fix" => { "commit" => "ded35fe58b33eb9459c7ddd9f833acaccaf02829", "pull_request" => "https://github.com/rust-bitcoin/rust-bech32/pull/88", "merge_commit" => "8f6d5d944e1b505082ff98d1c2e07b65af5c7d3b" }
     }
     receipt.fetch("unresolved").reject! { |item| item.fetch("directory") == "bech32-0.9.1" }
+    receipt.fetch("archive")["installable_texts"] = 25
+    receipt
+  end
+
+  def upgrade_v6!(receipt, package)
+    return receipt if receipt["schema"] == "agentlab-codex-cargo-supplemental-license-sources/v6"
+
+    upgrade_v5!(receipt, package)
+    policy_basis = "/srv/wikis/agentlab/policies.md:55"
+    authority = {
+      "repository" => "https://github.com/spdx/license-list-data",
+      "tag" => "v3.28.0",
+      "commit" => "c4a7237ec8f4654e867546f9f409749300f1bf4c"
+    }
+    receipt.fetch("mappings").select { |mapping| mapping.fetch("provenance_mode") == "canonical-standard" }.each do |mapping|
+      mapping["policy_basis"] = policy_basis
+    end
+    requests = [
+      ["debugserver-types-0.5.0", "2bf6834a70ed14e8e4e41882df27190bea150f1f6ecf461f1033f8739cd8af4a", "MIT", "https://github.com/Marwes/debugserver-types", ["spdx-mit"], "https://github.com/Marwes/debugserver-types/issues/5", "Request that the published crate ship its declared MIT license text."],
+      ["eventsource-stream-0.2.3", "74fef4569247a5f429d9156b9d0a2599914385dd189c539334c625d8099d90ab", "MIT OR Apache-2.0", "https://github.com/jpopesculian/eventsource-stream", %w[spdx-mit spdx-apache], "https://github.com/jpopesculian/eventsource-stream/issues/14", "Request that the published crate ship its declared MIT and Apache-2.0 license texts."],
+      ["io_tee-0.1.1", "4b3f7cef34251886990511df1c61443aa928499d598a9473929ab5a90a527304", "MIT OR Apache-2.0", "https://github.com/TheOnlyMrCat/io_tee", %w[spdx-mit spdx-apache], "https://github.com/TheOnlyMrCat/io_tee/issues/1", "Request that the published crate ship its declared MIT and Apache-2.0 license texts."],
+      ["linux-keyutils-0.2.4", "761e49ec5fd8a5a463f9b84e877c373d888935b71c6be78f3767fe2ae6bed18e", "Apache-2.0 OR MIT", "https://github.com/landhb/linux-keyutils", %w[spdx-apache spdx-mit], "https://github.com/landhb/linux-keyutils/issues/21", "Request that the published crate ship its declared Apache-2.0 and MIT license texts."],
+      ["sse-stream-0.2.1", "eb4dc4d33c68ec1f27d386b5610a351922656e1fdf5c05bbaad930cd1519479a", "MIT OR Apache-2.0", "https://github.com/4t145/sse-stream", %w[spdx-mit spdx-apache], "https://github.com/4t145/sse-stream/issues/14", "Request that the published crate ship its declared MIT and Apache-2.0 license texts."]
+    ]
+    requests.each do |directory, checksum, expression, repository, source_ids, issue, scope|
+      receipt.fetch("mappings") << {
+        "directory" => directory, "crate_checksum" => checksum, "declared_expression" => expression,
+        "source_repository" => repository, "source_ids" => source_ids, "install_source_ids" => source_ids,
+        "provenance_mode" => "canonical-standard",
+        "upstream_request" => { "url" => issue, "status" => "open", "scope" => scope },
+        "policy_basis" => policy_basis, "canonical_authority" => authority
+      }
+    end
+    resolved = requests.map(&:first)
+    receipt.fetch("unresolved").reject! { |item| resolved.include?(item.fetch("directory")) }
     receipt.fetch("archive")["installable_texts"] = 25
     receipt
   end

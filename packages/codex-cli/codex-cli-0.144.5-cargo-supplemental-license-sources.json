@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-codex-cargo-supplemental-license-sources/v5",
+  "schema": "agentlab-codex-cargo-supplemental-license-sources/v6",
   "release": {
     "name": "codex-cli",
     "version": "0.144.5",
@@ -1807,7 +1807,7 @@
         "status": "open",
         "scope": "Request that the published fxhash crate ship its declared Apache-2.0 and MIT license texts."
       },
-      "policy_basis": "/srv/wikis/agentlab/policies.md:54",
+      "policy_basis": "/srv/wikis/agentlab/policies.md:55",
       "canonical_authority": {
         "repository": "https://github.com/spdx/license-list-data",
         "tag": "v3.28.0",
@@ -1970,6 +1970,134 @@
         "pull_request": "https://github.com/rust-bitcoin/rust-bech32/pull/88",
         "merge_commit": "8f6d5d944e1b505082ff98d1c2e07b65af5c7d3b"
       }
+    },
+    {
+      "directory": "debugserver-types-0.5.0",
+      "crate_checksum": "2bf6834a70ed14e8e4e41882df27190bea150f1f6ecf461f1033f8739cd8af4a",
+      "declared_expression": "MIT",
+      "source_repository": "https://github.com/Marwes/debugserver-types",
+      "source_ids": [
+        "spdx-mit"
+      ],
+      "install_source_ids": [
+        "spdx-mit"
+      ],
+      "provenance_mode": "canonical-standard",
+      "upstream_request": {
+        "url": "https://github.com/Marwes/debugserver-types/issues/5",
+        "status": "open",
+        "scope": "Request that the published crate ship its declared MIT license text."
+      },
+      "policy_basis": "/srv/wikis/agentlab/policies.md:55",
+      "canonical_authority": {
+        "repository": "https://github.com/spdx/license-list-data",
+        "tag": "v3.28.0",
+        "commit": "c4a7237ec8f4654e867546f9f409749300f1bf4c"
+      }
+    },
+    {
+      "directory": "eventsource-stream-0.2.3",
+      "crate_checksum": "74fef4569247a5f429d9156b9d0a2599914385dd189c539334c625d8099d90ab",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/jpopesculian/eventsource-stream",
+      "source_ids": [
+        "spdx-mit",
+        "spdx-apache"
+      ],
+      "install_source_ids": [
+        "spdx-mit",
+        "spdx-apache"
+      ],
+      "provenance_mode": "canonical-standard",
+      "upstream_request": {
+        "url": "https://github.com/jpopesculian/eventsource-stream/issues/14",
+        "status": "open",
+        "scope": "Request that the published crate ship its declared MIT and Apache-2.0 license texts."
+      },
+      "policy_basis": "/srv/wikis/agentlab/policies.md:55",
+      "canonical_authority": {
+        "repository": "https://github.com/spdx/license-list-data",
+        "tag": "v3.28.0",
+        "commit": "c4a7237ec8f4654e867546f9f409749300f1bf4c"
+      }
+    },
+    {
+      "directory": "io_tee-0.1.1",
+      "crate_checksum": "4b3f7cef34251886990511df1c61443aa928499d598a9473929ab5a90a527304",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/TheOnlyMrCat/io_tee",
+      "source_ids": [
+        "spdx-mit",
+        "spdx-apache"
+      ],
+      "install_source_ids": [
+        "spdx-mit",
+        "spdx-apache"
+      ],
+      "provenance_mode": "canonical-standard",
+      "upstream_request": {
+        "url": "https://github.com/TheOnlyMrCat/io_tee/issues/1",
+        "status": "open",
+        "scope": "Request that the published crate ship its declared MIT and Apache-2.0 license texts."
+      },
+      "policy_basis": "/srv/wikis/agentlab/policies.md:55",
+      "canonical_authority": {
+        "repository": "https://github.com/spdx/license-list-data",
+        "tag": "v3.28.0",
+        "commit": "c4a7237ec8f4654e867546f9f409749300f1bf4c"
+      }
+    },
+    {
+      "directory": "linux-keyutils-0.2.4",
+      "crate_checksum": "761e49ec5fd8a5a463f9b84e877c373d888935b71c6be78f3767fe2ae6bed18e",
+      "declared_expression": "Apache-2.0 OR MIT",
+      "source_repository": "https://github.com/landhb/linux-keyutils",
+      "source_ids": [
+        "spdx-apache",
+        "spdx-mit"
+      ],
+      "install_source_ids": [
+        "spdx-apache",
+        "spdx-mit"
+      ],
+      "provenance_mode": "canonical-standard",
+      "upstream_request": {
+        "url": "https://github.com/landhb/linux-keyutils/issues/21",
+        "status": "open",
+        "scope": "Request that the published crate ship its declared Apache-2.0 and MIT license texts."
+      },
+      "policy_basis": "/srv/wikis/agentlab/policies.md:55",
+      "canonical_authority": {
+        "repository": "https://github.com/spdx/license-list-data",
+        "tag": "v3.28.0",
+        "commit": "c4a7237ec8f4654e867546f9f409749300f1bf4c"
+      }
+    },
+    {
+      "directory": "sse-stream-0.2.1",
+      "crate_checksum": "eb4dc4d33c68ec1f27d386b5610a351922656e1fdf5c05bbaad930cd1519479a",
+      "declared_expression": "MIT OR Apache-2.0",
+      "source_repository": "https://github.com/4t145/sse-stream",
+      "source_ids": [
+        "spdx-mit",
+        "spdx-apache"
+      ],
+      "install_source_ids": [
+        "spdx-mit",
+        "spdx-apache"
+      ],
+      "provenance_mode": "canonical-standard",
+      "upstream_request": {
+        "url": "https://github.com/4t145/sse-stream/issues/14",
+        "status": "open",
+        "scope": "Request that the published crate ship its declared MIT and Apache-2.0 license texts."
+      },
+      "policy_basis": "/srv/wikis/agentlab/policies.md:55",
+      "canonical_authority": {
+        "repository": "https://github.com/spdx/license-list-data",
+        "tag": "v3.28.0",
+        "commit": "c4a7237ec8f4654e867546f9f409749300f1bf4c"
+      }
     }
   ],
   "icu_mapping": {
@@ -1987,38 +2115,7 @@
     ],
     "reason": "The crate payload is byte-identical to Chromium ICU common/icudtl.dat at the pinned commit. The matching ICU license text is installed; the binary payload remains comparison-only because it is already present in the vendored crate source."
   },
-  "unresolved": [
-    {
-      "directory": "debugserver-types-0.5.0",
-      "crate_checksum": "2bf6834a70ed14e8e4e41882df27190bea150f1f6ecf461f1033f8739cd8af4a",
-      "declared_expression": "MIT",
-      "reason": "Published crate omits usable license text; canonical standard text requires legal approval."
-    },
-    {
-      "directory": "eventsource-stream-0.2.3",
-      "crate_checksum": "74fef4569247a5f429d9156b9d0a2599914385dd189c539334c625d8099d90ab",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
-    },
-    {
-      "directory": "io_tee-0.1.1",
-      "crate_checksum": "4b3f7cef34251886990511df1c61443aa928499d598a9473929ab5a90a527304",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; canonical standard texts require legal approval."
-    },
-    {
-      "directory": "linux-keyutils-0.2.4",
-      "crate_checksum": "761e49ec5fd8a5a463f9b84e877c373d888935b71c6be78f3767fe2ae6bed18e",
-      "declared_expression": "Apache-2.0 OR MIT",
-      "reason": "Published crate omits usable license text; newer 0.2.5 archive also omits usable text."
-    },
-    {
-      "directory": "sse-stream-0.2.1",
-      "crate_checksum": "eb4dc4d33c68ec1f27d386b5610a351922656e1fdf5c05bbaad930cd1519479a",
-      "declared_expression": "MIT OR Apache-2.0",
-      "reason": "Published crate omits usable license text; newer 0.2.4 archive also omits usable text."
-    }
-  ],
+  "unresolved": [],
   "policy_holds": [],
   "inputs": {
     "resolver_vendor_receipt": {

@@ -15,13 +15,13 @@
 %global source_preparer_sha256 d134aa208cf7264e99dbab683b762faf3fee009b25290d6c6b97b55c35702c09
 %global vendor_verifier_sha256 f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
 %global license_text_receipt_sha256 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
-%global supplemental_license_receipt_sha256 f08588abb5771180cb1309f13833ea0d77c3ea75b8b6994c2c09b3f5bbceefe6
-%global supplemental_license_preparer_sha256 5d308a98e982b250746276ef724749e32e134f09546767624e7328e54cf78af3
+%global supplemental_license_receipt_sha256 5a1b9c86775957b71db121c17ae906679fed7e89ca26e1a9a9e0dcca0ad833b3
+%global supplemental_license_preparer_sha256 e1d264b682b2c705fad2835e74e423c41f603a1d0f107e04f65d02ae7dde56d1
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.14%{?dist}
+Release:        0.15%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -75,10 +75,10 @@ with local developer tools.
 This source-build draft is intentionally blocked. Its repository-backed source
 builder materializes the selected Cargo closure and resolver-only supplement as
 a semantically verified offline source, but the selected-aware Cargo audit's
-873 Linux-linked packages do not yet have complete license-text approval. The
-package must not produce an RPM until the Rusty V8 final static-license and
-consumer closure, final aggregate license evidence, the build/install/test
-flow, and offline Fedora builds are proven.
+873 Linux-linked packages now have complete checked license-text mappings. The
+package must not produce an RPM until final Fedora SPDX and aggregate license
+approval, the Rusty V8 static consumer closure, the build/install/test flow,
+and offline Fedora builds are proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -171,6 +171,10 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.15
+- Use the five filed upstream requests with pinned canonical MIT and Apache-2.0 texts.
+- Complete the linked Cargo license-text mapping while retaining final SPDX and native-static review.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.14
 - Bind bech32 0.9.1's MIT text to the checked later 0.11.0 release and merged upstream fix.
 - Retain five crates pending upstream license-text requests and final aggregate review.

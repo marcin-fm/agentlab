@@ -2,8 +2,8 @@
 name: codex-cli
 status: blocked
 blockers:
-- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement now materialize through the repository-backed SCM source builder as a semantically verified 1,124-directory Cargo source. The remaining Cargo gate is complete license-text and Fedora SPDX approval, not source hosting.
-- Rusty V8 149.2.0-0.14 completed source-bound Fedora 43, Fedora 44, and Rawhide x86_64 COPR cells in build 10752577, satisfying this package's exact provider requirement. The provider remains blocked by failed aarch64 cells while the 0.15 correction is active, final static-license and consumer closure, and unsubmitted downstream patches.
+- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement now materialize through the repository-backed SCM source builder as a semantically verified 1,124-directory Cargo source. All 51 linked package-local text gaps now have checked mappings; final Fedora SPDX and aggregate-license approval remain open.
+- Rusty V8 149.2.0-0.14 completed source-bound Fedora 43, Fedora 44, and Rawhide x86_64 COPR cells in build 10752577, satisfying this package's exact provider requirement. The provider is separately completing aarch64 support; Codex still needs its exact static consumer and license integration proof.
 - Offline Fedora 43, Fedora 44, and Rawhide builds, tests, final linked-license approval, and payload validation have not been completed.
 source_policy:
   npm_wrapper: forbidden platform-binary selector
@@ -65,12 +65,12 @@ source_policy:
   cargo_vendor_directories_without_top_level_license_texts: 108
   cargo_linked_linux_directories_without_top_level_license_texts: 54
   cargo_supplemental_license_sources: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-  cargo_supplemental_license_sources_sha256: f08588abb5771180cb1309f13833ea0d77c3ea75b8b6994c2c09b3f5bbceefe6
+  cargo_supplemental_license_sources_sha256: 5a1b9c86775957b71db121c17ae906679fed7e89ca26e1a9a9e0dcca0ad833b3
   cargo_supplemental_license_archive: codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz
   cargo_supplemental_license_preparer: prepare-codex-cargo-license-sources
-  cargo_supplemental_license_preparer_sha256: 5d308a98e982b250746276ef724749e32e134f09546767624e7328e54cf78af3
-  cargo_supplemental_license_mappings: 45
-  cargo_supplemental_license_unresolved: 5
+  cargo_supplemental_license_preparer_sha256: e1d264b682b2c705fad2835e74e423c41f603a1d0f107e04f65d02ae7dde56d1
+  cargo_supplemental_license_mappings: 50
+  cargo_supplemental_license_unresolved: 0
   notify_cc0_fedora_precedent: rust-notify-8.2.0-2.fc44
   final_binary_license_complete: false
   lock_normalization: verified-prep-transform
@@ -84,7 +84,7 @@ source_policy:
   rusty_v8_package_status: x86_64-provider-cells-succeeded-matrix-and-license-closure-blocked
   rusty_v8_exact_feature_contract: verified-offline
 cargo_license_audit:
-  status: cargo-metadata-complete-native-static-incomplete
+  status: cargo-texts-complete-native-static-incomplete
   authoritative_selected_packages: 1004
   linked_linux_packages: 873
   selected_compile_only_packages: 131
@@ -95,7 +95,7 @@ cargo_license_audit:
   cargo_manifest_metadata_complete: true
   selected_source_license_metadata_verified: true
   package_local_license_text_inventory_verified: true
-  license_texts_verified: false
+  license_texts_verified: true
   fedora_allowed_spdx_verified: false
   rusty_v8_native_static_license_complete: false
   final_rpm_license_approved: false

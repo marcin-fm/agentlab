@@ -88,9 +88,9 @@ class CodexCargoVendorTest < Minitest::Test
     receipt = JSON.parse(File.read(path))
 
     assert_equal(policy.fetch("cargo_supplemental_license_sources_sha256"), Digest::SHA256.file(path).hexdigest)
-    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v5", receipt.fetch("schema"))
-    assert_equal(45, receipt.fetch("mappings").length)
-    assert_equal(5, receipt.fetch("unresolved").length)
+    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v6", receipt.fetch("schema"))
+    assert_equal(50, receipt.fetch("mappings").length)
+    assert_empty(receipt.fetch("unresolved"))
     assert_equal(25, receipt.dig("archive", "installable_texts"))
     assert_equal("resolved-icu-data-comparison", receipt.dig("icu_mapping", "status"))
     assert_equal("1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612", receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }.fetch("expected_extracted_sha256"))
@@ -114,14 +114,27 @@ class CodexCargoVendorTest < Minitest::Test
     bech32 = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "bech32-0.9.1" }
     assert_equal("later-upstream-release", bech32.fetch("provenance_mode"))
     assert_equal("d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d", bech32.dig("later_upstream_release", "archive_sha256"))
+    canonical = {
+      "debugserver-types-0.5.0" => ["https://github.com/Marwes/debugserver-types/issues/5", %w[spdx-mit]],
+      "eventsource-stream-0.2.3" => ["https://github.com/jpopesculian/eventsource-stream/issues/14", %w[spdx-mit spdx-apache]],
+      "io_tee-0.1.1" => ["https://github.com/TheOnlyMrCat/io_tee/issues/1", %w[spdx-mit spdx-apache]],
+      "linux-keyutils-0.2.4" => ["https://github.com/landhb/linux-keyutils/issues/21", %w[spdx-apache spdx-mit]],
+      "sse-stream-0.2.1" => ["https://github.com/4t145/sse-stream/issues/14", %w[spdx-mit spdx-apache]]
+    }
+    canonical.each do |directory, (issue, source_ids)|
+      mapping = receipt.fetch("mappings").find { |item| item.fetch("directory") == directory }
+      assert_equal("canonical-standard", mapping.fetch("provenance_mode"))
+      assert_equal(issue, mapping.dig("upstream_request", "url"))
+      assert_equal(source_ids, mapping.fetch("source_ids"))
+      assert_equal("/srv/wikis/agentlab/policies.md:55", mapping.fetch("policy_basis"))
+    end
   end
 
   def test_supplemental_contract_rejects_stale_transport_and_bad_spec_order
     receipt = JSON.parse(File.read(File.join(PACKAGE, "codex-cli-0.144.5-cargo-supplemental-license-sources.json")))
     icu = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }
     assert_nil(icu.fetch("expected_transport_sha256"))
-    assert_equal(5, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
-    refute(receipt.fetch("unresolved").any? { |item| item.fetch("crate_checksum") == "" })
+    assert_empty(receipt.fetch("unresolved"))
     assert_empty(receipt.fetch("policy_holds"))
     assert_equal("rust-notify-8.2.0-2.fc44", receipt.dig("fedora_precedents", 0, "source_nvr"))
     spec = File.read(File.join(PACKAGE, "codex-cli.spec"))
@@ -137,10 +150,9 @@ class CodexCargoVendorTest < Minitest::Test
       "missing-1" => { "checksum" => "good", "normalized_spdx_candidate" => "MIT" },
       "notify-8.2.0" => { "checksum" => "notify", "normalized_spdx_candidate" => "CC0-1.0" }
     }
-    unresolved = Array.new(5) { { "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" } }
-    unresolved[0] = unresolved[0].merge("crate_checksum" => "bad")
+    assert_nil(CodexSupplementalLicenses.validate_unresolved!([], inventory, audit))
+    unresolved = [{ "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" }]
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved, inventory, audit) }
-    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(4), inventory, audit) }
     precedent = Marshal.load(Marshal.dump(CodexSupplementalLicenses::FEDORA_NOTIFY_PRECEDENT))
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_notify_precedent!(precedent, inventory, audit) }
     Dir.mktmpdir do |dir|
@@ -164,7 +176,7 @@ class CodexCargoVendorTest < Minitest::Test
       "source_repository" => "https://github.com/cbreeden/fxhash", "provenance_mode" => "canonical-standard",
       "source_ids" => ["mit", "apache"], "install_source_ids" => ["mit", "apache"],
       "upstream_request" => { "url" => "https://github.com/other/fxhash/issues/9", "status" => "open", "scope" => "Ship the declared texts." },
-      "policy_basis" => "/srv/wikis/agentlab/policies.md:54",
+      "policy_basis" => "/srv/wikis/agentlab/policies.md:55",
       "canonical_authority" => { "repository" => "https://github.com/spdx/license-list-data", "tag" => "v3.28.0", "commit" => "c4a7237ec8f4654e867546f9f409749300f1bf4c" }
     }
     sources = {
@@ -181,7 +193,7 @@ class CodexCargoVendorTest < Minitest::Test
     canonical["canonical_authority"]["tag"] = "v3.28.0"
     canonical["policy_basis"] = "wrong"
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
-    canonical["policy_basis"] = "/srv/wikis/agentlab/policies.md:54"
+    canonical["policy_basis"] = "/srv/wikis/agentlab/policies.md:55"
     canonical["source_commit"] = "0" * 40
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_mapping_structure!(canonical, sources) }
     canonical.delete("source_commit")

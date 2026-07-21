@@ -176,24 +176,28 @@ Linux-linked directories. Notice, copyright, credits, authors, and patents files
 are recorded separately and are not treated as full license texts. The receipt
 preserves graph roles and exact file hashes rather than treating all vendored
 source as linked. A nested candidate does not prove package-level legal closure,
-and a missing candidate does not prove that no usable upstream text exists; each
-unresolved package still needs an exact text mapping and Fedora review.
+and a missing candidate does not prove that no usable upstream text exists. The
+supplemental receipt now maps every linked directory without package-local text;
+final Fedora SPDX and aggregate review remain separate.
 
-The checked v5 supplemental-source receipt resolves 45 Linux-linked crates and
+The checked v6 supplemental-source receipt resolves 50 Linux-linked crates and
 supplies 25 deduplicated installable texts. It distinguishes Cargo VCS evidence,
 release-history manifest evidence, a checked SPDX canonical-standard source for
 `fxhash`, and the later upstream `bech32 0.11.0` crate text bound to merged PR
-88. Release manifests and ICU data remain comparison-only. Five crates still
-require an upstream request before canonical fallback. The exact selected
+88. The five remaining published-crate omissions use the same pinned canonical
+MIT and Apache-2.0 sources after their upstream requests were filed. Release
+manifests and ICU data remain comparison-only. No linked Cargo text mapping is
+unresolved. The exact selected
 `notify 8.2.0` crate and `LICENSE-CC0` bytes match Fedora 44's
 `rust-notify-8.2.0-2.fc44`, so its CC0 classification and payload treatment are
 resolved through that distribution precedent.
 
-This is not the final RPM license closure. Fedora-allowed SPDX review, package
-license texts, and the recursive Rusty V8/Chromium native static inventory are
-still incomplete. The audit therefore leaves final binary license completeness
-and production `License:` approval false; the spec retains only the upstream
-project `Apache-2.0` tag while `%prep` aborts.
+This is not the final RPM license closure. Fedora-allowed SPDX and aggregate
+review plus exact Rusty V8/Chromium static-consumer differences remain open,
+using Fedora Node.js and Chromium as accepted precedent for overlapping source
+and license treatment. The audit therefore leaves final binary license
+completeness and production `License:` approval false; the spec retains only the
+upstream project `Apache-2.0` tag while `%prep` aborts.
 
 ## V8 Source Gate
 
