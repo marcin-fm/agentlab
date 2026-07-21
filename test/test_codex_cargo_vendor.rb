@@ -72,7 +72,7 @@ class CodexCargoVendorTest < Minitest::Test
     assert_includes(spec, "%{__cargo_to_rpm} -p %{SOURCE11} parse-vendor-manifest")
     assert_includes(spec, 'test "$(wc -l < cargo-bundled-provides.txt)" -eq 1124')
     assert_includes(spec, "cmp cargo-vendor.txt %{SOURCE11}")
-    assert_includes(spec, "%cargo_build -- --package codex-cli --bin codex")
+    assert_includes(spec, "%cargo_build -- -vv --package codex-cli --bin codex")
     assert_includes(spec, "install -Dpm0755 codex-rs/target/rpm/codex")
     assert_includes(spec, "%license %{_licensedir}/%{name}/cargo-vendor.txt")
     assert_includes(spec, "CODEX_HOME=\"$PWD/.codex-home\" codex-rs/target/rpm/codex doctor")
@@ -127,6 +127,16 @@ class CodexCargoVendorTest < Minitest::Test
       assert_equal(issue, mapping.dig("upstream_request", "url"))
       assert_equal(source_ids, mapping.fetch("source_ids"))
       assert_equal("/srv/wikis/agentlab/policies.md:55", mapping.fetch("policy_basis"))
+    end
+  end
+
+  def test_supplemental_temporary_root_honors_buildroot_tmpdir
+    Dir.mktmpdir do |directory|
+      previous = ENV["TMPDIR"]
+      ENV["TMPDIR"] = directory
+      assert_equal(directory, CodexSupplementalLicenses.temporary_root)
+    ensure
+      ENV["TMPDIR"] = previous
     end
   end
 

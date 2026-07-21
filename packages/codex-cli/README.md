@@ -197,7 +197,7 @@ review plus exact Rusty V8/Chromium static-consumer differences remain open,
 using Fedora Node.js and Chromium as accepted precedent for overlapping source
 and license treatment. The audit therefore leaves final binary license
 completeness and production `License:` approval false; the spec retains only the
-upstream project `Apache-2.0` tag while `%prep` aborts.
+upstream project `Apache-2.0` tag while the build remains proof-only.
 
 ## V8 Source Gate
 
@@ -231,9 +231,10 @@ That prototype has since become the separate blocked `packages/rust-v8`
 provider. Release `149.2.0-0.14` completed source-bound COPR builds on Fedora
 43, Fedora 44, and Rawhide `x86_64` in build `10752577`, satisfying Codex's
 exact `rusty-v8-static(abi) = 149.2.0` provider requirement for this package's
-target. All three `aarch64` cells failed on V8's Clang-only
-`-mmark-bti-property`; the provider remains matrix-blocked while the `0.15`
-correction is active. The provider installs
+target. Ongoing `aarch64` platform corrections are separate from this
+`x86_64`-only package. Fedora Node.js and Chromium are accepted precedent for
+overlapping source, toolchain, SPDX, and payload treatment; only exact selected
+graph and consumer differences remain Codex gates. The provider installs
 `/usr/lib64/rust-v8/149.2.0/librusty_v8.a`; Codex keeps the published crate
 binding and selects the archive through `RUSTY_V8_ARCHIVE`.
 
@@ -270,24 +271,23 @@ upstream issue or pull request has been submitted.
 
 ## Remaining Gates
 
-1. Review the separate resolver-only source model and selected-aware Cargo
-   license evidence without obscuring the exact Linux build closure.
-2. Publish immutable, checksummed RPM inputs for the accepted registry, Git, and
-   resolver-only sources, then integrate Fedora vendoring metadata.
-3. Upstream or review the V8 system-toolchain changes, materialize every
-   recursive source and license input immutably, and reproduce the build without
-   networking in Fedora 43, Fedora 44, and Rawhide buildroots.
-4. Complete license-text and native static-link review, then run clean offline
-   Fedora 43, Fedora 44, and Rawhide builds, tests, lint, and extracted-payload validation.
+1. Complete configured-SCM Fedora 43, Fedora 44, and Rawhide `x86_64` builds
+   through COPR; do not resume the resource-heavy local full build.
+2. Capture the final Codex linker inputs, selected Rusty V8 archive members, and
+   separate Rust libraries, then generate the exact aggregate `License:` and a
+   deduplicated native-static `%license` payload.
+3. Run the smoke checks, artifact lint, and extracted-payload validation without
+   installing the generated RPMs.
 
-## Intentional Failure
+## Build Proof State
 
-`codex-cli.spec` verifies the immutable release archive, closure, selected and
-resolver source evidence, and selected-aware Cargo license audit, extracts the
-source, verifies the original lock and exact mutation count, performs the
-anchored normalization, verifies the normalized lock, and then exits during
-`%prep`. It must remain fail-closed until the gates above are satisfied. No
-generated RPM was installed and COPR was not mutated during this probe.
+`codex-cli.spec` verifies the immutable release archive, complete resolver source,
+all 50 supplemental mappings, 25 deduplicated texts, patches, lock normalization,
+and 1,124 bundled Provides before compilation. Release `0.17` reached offline
+Cargo compilation and exposed the missing system OpenSSL development metadata;
+release `0.18` adds `pkgconfig(openssl)`. The local retry was stopped at maintainer
+request because the full build is too expensive for the local machine, so the
+production proof continues through configured-SCM COPR. No RPM was installed.
 
 ## References
 

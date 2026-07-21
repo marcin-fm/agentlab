@@ -45,6 +45,14 @@ module CodexSupplementalLicenses
 
   def sha256(path) = Digest::SHA256.file(path).hexdigest
 
+  def temporary_root
+    configured = ENV["TMPDIR"]
+    return configured if configured && Dir.exist?(configured)
+    return "/srv/tmp" if Dir.exist?("/srv/tmp")
+
+    Dir.tmpdir
+  end
+
   def source_filename(value)
     url, fragment = value.split("#", 2)
     return fragment.delete_prefix("/") if fragment&.start_with?("/")
@@ -648,7 +656,7 @@ module CodexSupplementalLicenses
 
   def generate!(receipt, cache:, output:, vendor_archive:, package:, offline:)
     _resolver, inventory, audit = checked_inputs!(receipt, package)
-    Dir.mktmpdir("agentlab-codex-license-sources-", "/srv/tmp") do |temporary|
+    Dir.mktmpdir("agentlab-codex-license-sources-", temporary_root) do |temporary|
       vendor_root = extract_vendor!(vendor_archive, temporary, receipt)
       verify_mappings!(receipt, vendor_root, inventory, audit)
       icu = receipt.fetch("icu_mapping")
@@ -707,7 +715,7 @@ module CodexSupplementalLicenses
 
   def check!(receipt, archive:, vendor_archive:, package:)
     _resolver, inventory, audit = checked_inputs!(receipt, package)
-    Dir.mktmpdir("agentlab-codex-license-check-", "/srv/tmp") do |temporary|
+    Dir.mktmpdir("agentlab-codex-license-check-", temporary_root) do |temporary|
       vendor_root = extract_vendor!(vendor_archive, temporary, receipt)
       verify_mappings!(receipt, vendor_root, inventory, audit)
       payload = File.binread(File.join(vendor_root, receipt.dig("icu_mapping", "directory"), "src", "icudtl.dat"))
@@ -758,7 +766,7 @@ begin
   if options[:check]
     CodexSupplementalLicenses.check!(receipt, archive:, vendor_archive:, package:)
   else
-    cache = File.expand_path(options.fetch(:cache, "/srv/tmp/agentlab-codex-supplemental-license-validation/cache"))
+    cache = File.expand_path(options.fetch(:cache, File.join(CodexSupplementalLicenses.temporary_root, "agentlab-codex-supplemental-license-validation", "cache")))
     CodexSupplementalLicenses.generate!(receipt, cache:, output: archive, vendor_archive:, package:, offline: options.fetch(:offline, false))
     rendered = JSON.pretty_generate(receipt) + "\n"
     if options[:refresh]

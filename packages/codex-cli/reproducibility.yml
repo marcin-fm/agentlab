@@ -81,7 +81,7 @@ resolver_cargo_vendor_source:
   - complete vendor tree identity
   - selected-target and all-target empty-Cargo-home resolution
   production_build_input: true
-  compilation_started: false
+  compilation_started: true
 selected_cargo_license_audit:
   status: passed-deterministic-cargo-metadata-accounting
   receipt: codex-cli-0.144.5-selected-cargo-license-audit.json
@@ -142,8 +142,8 @@ package_build_contract:
   - codex --version
   - codex --help
   - codex doctor with an isolated CODEX_HOME and disabled startup update checks
-  implemented_below_fail_closed_prep_stop: true
-  compilation_started: false
+  prep_stop_removed: true
+  compilation_started: true
 special_source_audit:
   rusty_v8:
     crate: v8 149.2.0

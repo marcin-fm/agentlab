@@ -4,7 +4,7 @@ status: blocked
 blockers:
 - The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement now materialize through the repository-backed SCM source builder as a semantically verified 1,124-directory Cargo source. All 51 linked package-local text gaps now have checked mappings; final Fedora SPDX and aggregate-license approval remain open.
 - Rusty V8 149.2.0-0.14 completed source-bound Fedora 43, Fedora 44, and Rawhide x86_64 COPR cells in build 10752577, satisfying this package's exact provider requirement. The provider is separately completing aarch64 support; Codex still needs its exact static consumer and license integration proof.
-- Offline Fedora 43, Fedora 44, and Rawhide builds, tests, final linked-license approval, and payload validation have not been completed.
+- Configured-SCM Fedora 43, Fedora 44, and Rawhide x86_64 builds, final linked-license approval, and payload validation remain pending. The local release 0.18 Mock retry was stopped at maintainer request because the full build is too expensive for the local machine.
 source_policy:
   npm_wrapper: forbidden platform-binary selector
   rpm_build_network: forbidden
@@ -68,7 +68,7 @@ source_policy:
   cargo_supplemental_license_sources_sha256: 5a1b9c86775957b71db121c17ae906679fed7e89ca26e1a9a9e0dcca0ad833b3
   cargo_supplemental_license_archive: codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz
   cargo_supplemental_license_preparer: prepare-codex-cargo-license-sources
-  cargo_supplemental_license_preparer_sha256: e1d264b682b2c705fad2835e74e423c41f603a1d0f107e04f65d02ae7dde56d1
+  cargo_supplemental_license_preparer_sha256: d77a79af11c67c00f2cf4173df11f235e63f7a50b5e3eeecf17ddd4335be14c7
   cargo_supplemental_license_mappings: 50
   cargo_supplemental_license_unresolved: 0
   notify_cc0_fedora_precedent: rust-notify-8.2.0-2.fc44
@@ -81,7 +81,7 @@ source_policy:
   rusty_v8_archive_bytes: 160316016
   rusty_v8_archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
   rusty_v8_upstream_submission: not-submitted
-  rusty_v8_package_status: x86_64-provider-cells-succeeded-matrix-and-license-closure-blocked
+  rusty_v8_package_status: x86_64-provider-capability-proven-platform-work-separate
   rusty_v8_exact_feature_contract: verified-offline
 cargo_license_audit:
   status: cargo-texts-complete-native-static-incomplete

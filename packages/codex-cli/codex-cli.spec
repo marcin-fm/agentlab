@@ -1,5 +1,5 @@
-# Disabled by package.yml. This spec deliberately aborts before compilation
-# until the selected Linux source closure and Fedora integration are proven.
+# Disabled by package.yml. This spec remains proof-only until the production
+# build and final static-consumer license closure are proven.
 %bcond check 1
 %global codex_distribution_channel fedora
 
@@ -16,12 +16,12 @@
 %global vendor_verifier_sha256 f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
 %global license_text_receipt_sha256 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
 %global supplemental_license_receipt_sha256 5a1b9c86775957b71db121c17ae906679fed7e89ca26e1a9a9e0dcca0ad833b3
-%global supplemental_license_preparer_sha256 e1d264b682b2c705fad2835e74e423c41f603a1d0f107e04f65d02ae7dde56d1
+%global supplemental_license_preparer_sha256 d77a79af11c67c00f2cf4173df11f235e63f7a50b5e3eeecf17ddd4335be14c7
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.15%{?dist}
+Release:        0.18%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -62,6 +62,7 @@ Patch2:         %{name}-fedora-standalone-updater.patch
 ExclusiveArch:  x86_64
 
 BuildRequires:  cargo-rpm-macros >= 24
+BuildRequires:  pkgconfig(openssl)
 BuildRequires:  rust >= 1.95
 BuildRequires:  ruby
 BuildRequires:  ruby-default-gems
@@ -133,15 +134,12 @@ test "$(wc -l < cargo-bundled-provides.txt)" -eq 1124
 install -pm0644 %{SOURCE11} cargo-vendor.txt
 cmp cargo-vendor.txt %{SOURCE11}
 popd >/dev/null
-echo 'codex-cli is blocked: see package.yml and dependencies.yml' >&2
-exit 1
-
 %build
 export CODEX_DISTRIBUTION_CHANNEL=%{codex_distribution_channel}
 export RUSTY_V8_ARCHIVE=%{_libdir}/rust-v8/149.2.0/librusty_v8.a
 export GN_ARGS='use_custom_libcxx=false'
 pushd codex-rs >/dev/null
-%cargo_build -- --package codex-cli --bin codex
+%cargo_build -- -vv --package codex-cli --bin codex
 popd >/dev/null
 
 %install
@@ -171,6 +169,18 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.18
+- Add the system OpenSSL development metadata required by openssl-sys.
+- Keep the offline source graph and Rusty V8 provider contract unchanged.
+
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.17
+- Use a buildroot-compatible temporary directory for supplemental license checks.
+- Retry the first offline x86_64 production build without changing its source graph.
+
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.16
+- Start the first offline x86_64 production build against the Rusty V8 provider.
+- Retain verbose Cargo linker evidence for the final static-consumer closure.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.15
 - Use the five filed upstream requests with pinned canonical MIT and Apache-2.0 texts.
 - Complete the linked Cargo license-text mapping while retaining final SPDX and native-static review.

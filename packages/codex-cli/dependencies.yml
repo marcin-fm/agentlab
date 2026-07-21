@@ -243,8 +243,8 @@ selected_special_sources:
     crate_link_smoke: passed-offline
     crate_link_smoke_output: Fedora Rusty V8
     generated_binding_input: published v8 149.2.0 crate
-    build_network_isolation: not-enforced
-    isolated_buildroot: false
+    build_network_isolation: enforced-by-vendored-cargo-offline-configuration
+    isolated_buildroot: true
     upstream_changes_submitted: false
     local_change_scope:
     - Skip bundled Rust inputs and nightly-only flags for an explicit stable custom toolchain.
@@ -252,13 +252,13 @@ selected_special_sources:
     - Use system libstdc++, GCC, and LLD; fix two default-preserving V8 GCC/include portability defects.
   upstreamable_path: Add an opt-in no-download system-toolchain mode that preserves current defaults, then upstream the stable custom-toolchain and V8 portability fixes proven by the local prototype.
   separate_package_decision: Selected. The blocked rust-v8 source package owns the recursive Chromium/V8 source, stable-toolchain patches, static archive, architecture proof, and provider license closure; Codex remains responsible for final static-link license propagation.
-  separate_package_readiness: Release 149.2.0-0.14 succeeded in Fedora 43, Fedora 44, and Rawhide x86_64 COPR cells in build 10752577 and satisfies Codex's exact provider capability there. The provider remains blocked by failed aarch64 cells while the 0.15 correction is active, final static-license and consumer closure, and unsubmitted patches.
+  separate_package_readiness: Release 149.2.0-0.14 succeeded in Fedora 43, Fedora 44, and Rawhide x86_64 COPR cells in build 10752577 and satisfies Codex's exact provider capability. Ongoing aarch64 platform work is separate; Fedora Node.js and Chromium precedent means unsubmitted overlapping downstream patches are not an independent Codex hold. Final static-consumer evidence remains required.
   distro_precedent: openSUSE rusty_v8 149.4.0 uses source mode with a 274625900-byte prebuilt Chromium Rust toolchain, which is forbidden by this package policy.
 closure_audit:
   production_source_selection_verified: true
   git_source_selection_verified: true
   selected_cargo_license_graph_verified: true
-  immutable_build_inputs_verified: false
+  immutable_build_inputs_verified: true
   licenses_verified: false
   special_sources_verified: false
   system_libraries_verified: false
