@@ -290,8 +290,10 @@ request because the full build is too expensive for the local machine, so the
 production proof continues through configured-SCM COPR. Build `10756814` then
 stopped during fresh SRPM generation because later-release `bech32` archive
 evidence was incorrectly passed through GitHub raw VCS reconstruction; release
-`0.19` limits that reconstruction to VCS and release-history mappings. No RPM was
-installed.
+`0.19` limits that reconstruction to VCS and release-history mappings. Build
+`10756823` then showed that the tracked later-release source had lost its
+immutable crates.io transport hash; release `0.20` restores and verifies the
+reviewed bech32 archive SHA-256. No RPM was installed.
 
 ## References
 

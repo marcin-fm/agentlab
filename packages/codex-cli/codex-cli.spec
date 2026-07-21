@@ -15,13 +15,13 @@
 %global source_preparer_sha256 d134aa208cf7264e99dbab683b762faf3fee009b25290d6c6b97b55c35702c09
 %global vendor_verifier_sha256 f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
 %global license_text_receipt_sha256 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
-%global supplemental_license_receipt_sha256 5a1b9c86775957b71db121c17ae906679fed7e89ca26e1a9a9e0dcca0ad833b3
-%global supplemental_license_preparer_sha256 2055f0ca8eb3bd77069574dd6e9d5ecc049c4a5ffd97dcd745c60f32f9c116bd
+%global supplemental_license_receipt_sha256 83ef3d9ff001a4cd4e659fbe4aca20beb9f5eece53c3d198a4f7f6407fb309cb
+%global supplemental_license_preparer_sha256 90e7d74a314a9fa00e57a1ebf980b5c3f57d06d50940db11fb637f39357b270d
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.19%{?dist}
+Release:        0.20%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -169,6 +169,10 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.20
+- Retain the immutable bech32 0.11.0 crate transport checksum.
+- Verify later-release license evidence during fresh SCM source generation.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.19
 - Keep later-release archive evidence out of GitHub raw VCS reconstruction.
 - Restore fresh configured-SCM supplemental source generation.

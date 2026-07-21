@@ -114,6 +114,8 @@ class CodexCargoVendorTest < Minitest::Test
     bech32 = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "bech32-0.9.1" }
     assert_equal("later-upstream-release", bech32.fetch("provenance_mode"))
     assert_equal("d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d", bech32.dig("later_upstream_release", "archive_sha256"))
+    bech32_source = receipt.fetch("sources").find { |source| source.fetch("id") == "bech32-0.11.0-mit" }
+    assert_equal("d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d", bech32_source.fetch("expected_transport_sha256"))
     canonical = {
       "debugserver-types-0.5.0" => ["https://github.com/Marwes/debugserver-types/issues/5", %w[spdx-mit]],
       "eventsource-stream-0.2.3" => ["https://github.com/jpopesculian/eventsource-stream/issues/14", %w[spdx-mit spdx-apache]],

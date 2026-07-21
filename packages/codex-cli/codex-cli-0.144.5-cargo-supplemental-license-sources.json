@@ -553,7 +553,7 @@
       "id": "bech32-0.11.0-mit",
       "kind": "archive_member",
       "immutable_url": "https://static.crates.io/crates/bech32/bech32-0.11.0.crate",
-      "expected_transport_sha256": null,
+      "expected_transport_sha256": "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d",
       "member_path": "bech32-0.11.0/LICENSE-MIT",
       "expected_extracted_sha256": "9877c7b48cde1462f4e8688263aa96f3f1bd9717250718d3d2d9ebb031414fb9",
       "expected_extracted_size_bytes": 1055,

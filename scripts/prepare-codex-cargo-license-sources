@@ -416,6 +416,7 @@ module CodexSupplementalLicenses
     payload["install"] = false
     payload.delete("install_filename")
     receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" && source.fetch("id") != "bech32-0.11.0-mit" }.each { |source| source["expected_transport_sha256"] = nil }
+    receipt.fetch("sources").find { |source| source.fetch("id") == "bech32-0.11.0-mit" }["expected_transport_sha256"] = "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d"
     receipt.fetch("icu_mapping")["status"] = "resolved-icu-data-comparison"
     receipt.fetch("icu_mapping")["reason"] = "The crate payload is byte-identical to Chromium ICU common/icudtl.dat at the pinned commit. The matching ICU license text is installed; the binary payload remains comparison-only because it is already present in the vendored crate source."
     receipt
