@@ -65,12 +65,12 @@ source_policy:
   cargo_vendor_directories_without_top_level_license_texts: 108
   cargo_linked_linux_directories_without_top_level_license_texts: 54
   cargo_supplemental_license_sources: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-  cargo_supplemental_license_sources_sha256: 08767c1b12f0b70f651dc229a7feaf4c702619514400719ab7c4294e9335935c
+  cargo_supplemental_license_sources_sha256: f08588abb5771180cb1309f13833ea0d77c3ea75b8b6994c2c09b3f5bbceefe6
   cargo_supplemental_license_archive: codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz
   cargo_supplemental_license_preparer: prepare-codex-cargo-license-sources
-  cargo_supplemental_license_preparer_sha256: d263b7fa942debf88d5ea444364750da3536a6cab4aeee73e51c7ff8beb2a6fa
-  cargo_supplemental_license_mappings: 44
-  cargo_supplemental_license_unresolved: 6
+  cargo_supplemental_license_preparer_sha256: 5d308a98e982b250746276ef724749e32e134f09546767624e7328e54cf78af3
+  cargo_supplemental_license_mappings: 45
+  cargo_supplemental_license_unresolved: 5
   notify_cc0_fedora_precedent: rust-notify-8.2.0-2.fc44
   final_binary_license_complete: false
   lock_normalization: verified-prep-transform

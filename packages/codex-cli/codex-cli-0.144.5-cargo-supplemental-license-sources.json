@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-codex-cargo-supplemental-license-sources/v4",
+  "schema": "agentlab-codex-cargo-supplemental-license-sources/v5",
   "release": {
     "name": "codex-cli",
     "version": "0.144.5",
@@ -548,6 +548,20 @@
       ],
       "install": true,
       "install_filename": "rust-shed-sorted-vector-map-Apache-2.0.txt"
+    },
+    {
+      "id": "bech32-0.11.0-mit",
+      "kind": "archive_member",
+      "immutable_url": "https://static.crates.io/crates/bech32/bech32-0.11.0.crate",
+      "expected_transport_sha256": null,
+      "member_path": "bech32-0.11.0/LICENSE-MIT",
+      "expected_extracted_sha256": "9877c7b48cde1462f4e8688263aa96f3f1bd9717250718d3d2d9ebb031414fb9",
+      "expected_extracted_size_bytes": 1055,
+      "spdx_ids": [
+        "MIT"
+      ],
+      "install": true,
+      "install_filename": "bech32-0.11.0-MIT.txt"
     }
   ],
   "mappings": [
@@ -1929,6 +1943,33 @@
           "expected_size_bytes": 10140
         }
       ]
+    },
+    {
+      "directory": "bech32-0.9.1",
+      "crate_checksum": "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445",
+      "declared_expression": "MIT",
+      "source_repository": "https://github.com/rust-bitcoin/rust-bech32",
+      "source_ids": [
+        "bech32-0.11.0-mit"
+      ],
+      "install_source_ids": [
+        "bech32-0.11.0-mit"
+      ],
+      "provenance_mode": "later-upstream-release",
+      "later_upstream_release": {
+        "version": "0.11.0",
+        "tag_commit": "c2aac494b9932802b99ed648aac34be0822d63e1",
+        "archive_sha256": "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d",
+        "archive_size_bytes": 67018,
+        "license_member": "bech32-0.11.0/LICENSE-MIT",
+        "license_sha256": "9877c7b48cde1462f4e8688263aa96f3f1bd9717250718d3d2d9ebb031414fb9",
+        "license_size_bytes": 1055
+      },
+      "upstream_fix": {
+        "commit": "ded35fe58b33eb9459c7ddd9f833acaccaf02829",
+        "pull_request": "https://github.com/rust-bitcoin/rust-bech32/pull/88",
+        "merge_commit": "8f6d5d944e1b505082ff98d1c2e07b65af5c7d3b"
+      }
     }
   ],
   "icu_mapping": {
@@ -1947,12 +1988,6 @@
     "reason": "The crate payload is byte-identical to Chromium ICU common/icudtl.dat at the pinned commit. The matching ICU license text is installed; the binary payload remains comparison-only because it is already present in the vendored crate source."
   },
   "unresolved": [
-    {
-      "directory": "bech32-0.9.1",
-      "crate_checksum": "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445",
-      "declared_expression": "MIT",
-      "reason": "Published crate omits usable license text; newer 0.12.0 archive includes LICENSE-MIT but is not this selected dependency."
-    },
     {
       "directory": "debugserver-types-0.5.0",
       "crate_checksum": "2bf6834a70ed14e8e4e41882df27190bea150f1f6ecf461f1033f8739cd8af4a",
@@ -2003,7 +2038,7 @@
   "archive": {
     "filename": "codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz",
     "root": "codex-cli-0.144.5-supplemental-license-sources",
-    "installable_texts": 24,
+    "installable_texts": 25,
     "transport_identity_required": false
   },
   "fedora_precedents": [

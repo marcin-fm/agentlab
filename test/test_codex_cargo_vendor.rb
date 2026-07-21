@@ -88,10 +88,10 @@ class CodexCargoVendorTest < Minitest::Test
     receipt = JSON.parse(File.read(path))
 
     assert_equal(policy.fetch("cargo_supplemental_license_sources_sha256"), Digest::SHA256.file(path).hexdigest)
-    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v4", receipt.fetch("schema"))
-    assert_equal(44, receipt.fetch("mappings").length)
-    assert_equal(6, receipt.fetch("unresolved").length)
-    assert_equal(24, receipt.dig("archive", "installable_texts"))
+    assert_equal("agentlab-codex-cargo-supplemental-license-sources/v5", receipt.fetch("schema"))
+    assert_equal(45, receipt.fetch("mappings").length)
+    assert_equal(5, receipt.fetch("unresolved").length)
+    assert_equal(25, receipt.dig("archive", "installable_texts"))
     assert_equal("resolved-icu-data-comparison", receipt.dig("icu_mapping", "status"))
     assert_equal("1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612", receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }.fetch("expected_extracted_sha256"))
     refute(receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }.fetch("install"))
@@ -111,13 +111,16 @@ class CodexCargoVendorTest < Minitest::Test
     assert_equal(%w[rust-shed-sorted-vector-map-mit rust-shed-sorted-vector-map-apache], sorted.fetch("install_source_ids"))
     assert_empty(receipt.fetch("policy_holds"))
     assert_equal(CodexSupplementalLicenses::FEDORA_NOTIFY_PRECEDENT, receipt.fetch("fedora_precedents").fetch(0))
+    bech32 = receipt.fetch("mappings").find { |mapping| mapping.fetch("directory") == "bech32-0.9.1" }
+    assert_equal("later-upstream-release", bech32.fetch("provenance_mode"))
+    assert_equal("d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d", bech32.dig("later_upstream_release", "archive_sha256"))
   end
 
   def test_supplemental_contract_rejects_stale_transport_and_bad_spec_order
     receipt = JSON.parse(File.read(File.join(PACKAGE, "codex-cli-0.144.5-cargo-supplemental-license-sources.json")))
-    icu_sources = receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" }
-    assert_equal([nil], icu_sources.map { |source| source.fetch("expected_transport_sha256") }.uniq)
-    assert_equal(6, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
+    icu = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }
+    assert_nil(icu.fetch("expected_transport_sha256"))
+    assert_equal(5, receipt.fetch("unresolved").map { |item| item.fetch("directory") }.uniq.length)
     refute(receipt.fetch("unresolved").any? { |item| item.fetch("crate_checksum") == "" })
     assert_empty(receipt.fetch("policy_holds"))
     assert_equal("rust-notify-8.2.0-2.fc44", receipt.dig("fedora_precedents", 0, "source_nvr"))
@@ -134,10 +137,10 @@ class CodexCargoVendorTest < Minitest::Test
       "missing-1" => { "checksum" => "good", "normalized_spdx_candidate" => "MIT" },
       "notify-8.2.0" => { "checksum" => "notify", "normalized_spdx_candidate" => "CC0-1.0" }
     }
-    unresolved = Array.new(6) { { "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" } }
+    unresolved = Array.new(5) { { "directory" => "missing-1", "crate_checksum" => "good", "declared_expression" => "MIT" } }
     unresolved[0] = unresolved[0].merge("crate_checksum" => "bad")
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved, inventory, audit) }
-    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(5), inventory, audit) }
+    assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_unresolved!(unresolved.take(4), inventory, audit) }
     precedent = Marshal.load(Marshal.dump(CodexSupplementalLicenses::FEDORA_NOTIFY_PRECEDENT))
     assert_raises(CodexCargoVendor::Error) { CodexSupplementalLicenses.validate_notify_precedent!(precedent, inventory, audit) }
     Dir.mktmpdir do |dir|

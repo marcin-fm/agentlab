@@ -125,10 +125,10 @@ cargo_license_text_inventory:
   legal_review_complete: false
 supplemental_cargo_license_sources:
   receipt: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-  receipt_sha256: 08767c1b12f0b70f651dc229a7feaf4c702619514400719ab7c4294e9335935c
-  mappings: 44
-  unresolved: 6
-  archive_installable_texts: 24
+  receipt_sha256: f08588abb5771180cb1309f13833ea0d77c3ea75b8b6994c2c09b3f5bbceefe6
+  mappings: 45
+  unresolved: 5
+  archive_installable_texts: 25
   archive_transport_identity_required: false
   icu_payload_sha256: 1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612
   icu_payload_bytes: 10822192

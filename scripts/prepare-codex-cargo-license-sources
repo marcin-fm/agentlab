@@ -18,7 +18,7 @@ module CodexSupplementalLicenses
 
   ICU_PAYLOAD_SHA256 = "1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612"
   ICU_PAYLOAD_BYTES = 10_822_192
-  MAPPING_MODES = %w[cargo-vcs release-history canonical-standard].freeze
+  MAPPING_MODES = %w[cargo-vcs release-history canonical-standard later-upstream-release].freeze
   RELEASE_RELATIONS = %w[exact-byte-equality cargo-workspace-normalized].freeze
   FEDORA_NOTIFY_PRECEDENT = {
     "directory" => "notify-8.2.0",
@@ -222,6 +222,19 @@ module CodexSupplementalLicenses
     mapping.fetch("source_ids").each { |id| source_bytes!(sources.fetch(id), cache, offline:) }
   end
 
+  def verify_later_upstream_release!(mapping, sources, cache:, offline:)
+    release = mapping.fetch("later_upstream_release")
+    require_fields!(release, %w[version tag_commit archive_sha256 archive_size_bytes license_member license_sha256 license_size_bytes], "later upstream release")
+    raise CodexCargoVendor::Error, "later upstream release version mismatch" unless release.fetch("version") == "0.11.0" && release.fetch("tag_commit") == "c2aac494b9932802b99ed648aac34be0822d63e1"
+    raise CodexCargoVendor::Error, "later upstream archive identity mismatch" unless release.fetch("archive_sha256") == "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d" && release.fetch("archive_size_bytes") == 67_018
+    raise CodexCargoVendor::Error, "later upstream license identity mismatch" unless release.fetch("license_member") == "bech32-0.11.0/LICENSE-MIT" && release.fetch("license_sha256") == "9877c7b48cde1462f4e8688263aa96f3f1bd9717250718d3d2d9ebb031414fb9" && release.fetch("license_size_bytes") == 1055
+    fix = mapping.fetch("upstream_fix")
+    raise CodexCargoVendor::Error, "later upstream fix mismatch" unless fix == { "commit" => "ded35fe58b33eb9459c7ddd9f833acaccaf02829", "pull_request" => "https://github.com/rust-bitcoin/rust-bech32/pull/88", "merge_commit" => "8f6d5d944e1b505082ff98d1c2e07b65af5c7d3b" }
+    source = sources.fetch(mapping.fetch("source_ids").fetch(0))
+    raise CodexCargoVendor::Error, "later upstream source mismatch" unless source.fetch("kind") == "archive_member" && source.fetch("immutable_url") == "https://static.crates.io/crates/bech32/bech32-0.11.0.crate" && source.fetch("expected_transport_sha256") == release.fetch("archive_sha256") && source.fetch("expected_extracted_sha256") == release.fetch("license_sha256") && source.fetch("expected_extracted_size_bytes") == release.fetch("license_size_bytes") && source.fetch("member_path") == release.fetch("license_member")
+    source_bytes!(source, cache, offline:)
+  end
+
   def validate_canonical_mapping!(mapping, sources)
     forbidden = %w[source_commit package_path release_manifest_source_id manifest_relation license_evidence]
     raise CodexCargoVendor::Error, "canonical mapping has false VCS fields" if forbidden.any? { |field| mapping.key?(field) }
@@ -275,6 +288,9 @@ module CodexSupplementalLicenses
       raise CodexCargoVendor::Error, "release-history mapping has canonical fields" if %w[upstream_request policy_basis canonical_authority].any? { |field| mapping.key?(field) }
     when "canonical-standard"
       validate_canonical_mapping!(mapping, sources)
+    when "later-upstream-release"
+      require_fields!(mapping, %w[later_upstream_release upstream_fix], "later upstream release mapping")
+      raise CodexCargoVendor::Error, "later upstream release mapping has false VCS fields" if %w[source_commit package_path release_manifest_source_id manifest_relation license_evidence upstream_request policy_basis canonical_authority].any? { |field| mapping.key?(field) }
     end
   end
 
@@ -298,7 +314,7 @@ module CodexSupplementalLicenses
   end
 
   def validate_unresolved!(unresolved, inventory_by_dir, audit_by_dir)
-    raise CodexCargoVendor::Error, "supplemental unresolved count drift" unless unresolved.length == 6
+    raise CodexCargoVendor::Error, "supplemental unresolved count drift" unless unresolved.length == 5
     unresolved.each do |item|
       inventory_item = inventory_by_dir.fetch(item.fetch("directory"))
       audit_item = audit_by_dir.fetch(item.fetch("directory"))
@@ -325,11 +341,17 @@ module CodexSupplementalLicenses
     sources = receipt.fetch("sources").to_h { |source| [source.fetch("id"), source] }
     sources.each_value do |source|
       immutable = source.fetch("immutable_url")
-      valid = source.fetch("kind") == "raw" ? immutable.match?(%r{\Ahttps://raw\.githubusercontent\.com/[^/]+/[^/]+/[0-9a-f]{40}/.+\z}) : immutable.match?(%r{\Ahttps://chromium\.googlesource\.com/.+/\+archive/[0-9a-f]{40}\.tar\.gz\z})
+      valid = if source.fetch("kind") == "raw"
+                immutable.match?(%r{\Ahttps://raw\.githubusercontent\.com/[^/]+/[^/]+/[0-9a-f]{40}/.+\z})
+              elsif source.fetch("id") == "bech32-0.11.0-mit"
+                immutable == "https://static.crates.io/crates/bech32/bech32-0.11.0.crate"
+              else
+                immutable.match?(%r{\Ahttps://chromium\.googlesource\.com/.+/\+archive/[0-9a-f]{40}\.tar\.gz\z})
+              end
       raise CodexCargoVendor::Error, "non-immutable supplemental source URL: #{source.fetch('id')}" unless valid
     end
     mappings = receipt.fetch("mappings")
-    raise CodexCargoVendor::Error, "supplemental mapping count drift" unless mappings.length == 44
+    raise CodexCargoVendor::Error, "supplemental mapping count drift" unless mappings.length == 45
     mappings.each do |mapping|
       directory = mapping.fetch("directory")
       item = inventory_by_dir.fetch(directory)
@@ -354,6 +376,8 @@ module CodexSupplementalLicenses
         verify_release_history!(mapping, vendor_root, sources, cache:, offline:) if cache
       when "canonical-standard"
         verify_canonical_standard!(mapping, sources, cache:, offline:) if cache
+      when "later-upstream-release"
+        verify_later_upstream_release!(mapping, sources, cache:, offline:) if cache
       end
     end
     unresolved = receipt.fetch("unresolved")
@@ -376,8 +400,8 @@ module CodexSupplementalLicenses
 
   def receipt_from_plan(plan, package)
     receipt = Marshal.load(Marshal.dump(plan))
-    upgrade_v4!(receipt, package)
-    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v4"
+    upgrade_v5!(receipt, package)
+    receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v5"
     receipt["inputs"] = {
       "resolver_vendor_receipt" => { "path" => "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")), "vendor_tree_sha256" => plan.dig("release", "resolver_vendor_tree_sha256") },
       "license_text_inventory" => { "path" => "codex-cli-0.144.5-cargo-license-text-inventory.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")) },
@@ -388,7 +412,7 @@ module CodexSupplementalLicenses
     payload["expected_extracted_size_bytes"] = ICU_PAYLOAD_BYTES
     payload["install"] = false
     payload.delete("install_filename")
-    receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" }.each { |source| source["expected_transport_sha256"] = nil }
+    receipt.fetch("sources").select { |source| source.fetch("kind") == "archive_member" && source.fetch("id") != "bech32-0.11.0-mit" }.each { |source| source["expected_transport_sha256"] = nil }
     receipt.fetch("icu_mapping")["status"] = "resolved-icu-data-comparison"
     receipt.fetch("icu_mapping")["reason"] = "The crate payload is byte-identical to Chromium ICU common/icudtl.dat at the pinned commit. The matching ICU license text is installed; the binary payload remains comparison-only because it is already present in the vendored crate source."
     receipt
@@ -563,6 +587,32 @@ module CodexSupplementalLicenses
     upgrade_v3!(receipt, package)
     receipt["policy_holds"] = []
     receipt["fedora_precedents"] = [FEDORA_NOTIFY_PRECEDENT]
+    receipt
+  end
+
+  def upgrade_v5!(receipt, package)
+    return receipt if receipt["schema"] == "agentlab-codex-cargo-supplemental-license-sources/v5"
+
+    upgrade_v4!(receipt, package)
+    receipt.fetch("sources") << {
+      "id" => "bech32-0.11.0-mit", "kind" => "archive_member",
+      "immutable_url" => "https://static.crates.io/crates/bech32/bech32-0.11.0.crate",
+      "expected_transport_sha256" => "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d",
+      "member_path" => "bech32-0.11.0/LICENSE-MIT",
+      "expected_extracted_sha256" => "9877c7b48cde1462f4e8688263aa96f3f1bd9717250718d3d2d9ebb031414fb9",
+      "expected_extracted_size_bytes" => 1055, "spdx_ids" => ["MIT"], "install" => true,
+      "install_filename" => "bech32-0.11.0-MIT.txt"
+    }
+    receipt.fetch("mappings") << {
+      "directory" => "bech32-0.9.1", "crate_checksum" => "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445",
+      "declared_expression" => "MIT", "source_repository" => "https://github.com/rust-bitcoin/rust-bech32",
+      "source_ids" => ["bech32-0.11.0-mit"], "install_source_ids" => ["bech32-0.11.0-mit"],
+      "provenance_mode" => "later-upstream-release",
+      "later_upstream_release" => { "version" => "0.11.0", "tag_commit" => "c2aac494b9932802b99ed648aac34be0822d63e1", "archive_sha256" => "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d", "archive_size_bytes" => 67_018, "license_member" => "bech32-0.11.0/LICENSE-MIT", "license_sha256" => "9877c7b48cde1462f4e8688263aa96f3f1bd9717250718d3d2d9ebb031414fb9", "license_size_bytes" => 1055 },
+      "upstream_fix" => { "commit" => "ded35fe58b33eb9459c7ddd9f833acaccaf02829", "pull_request" => "https://github.com/rust-bitcoin/rust-bech32/pull/88", "merge_commit" => "8f6d5d944e1b505082ff98d1c2e07b65af5c7d3b" }
+    }
+    receipt.fetch("unresolved").reject! { |item| item.fetch("directory") == "bech32-0.9.1" }
+    receipt.fetch("archive")["installable_texts"] = 25
     receipt
   end
 
