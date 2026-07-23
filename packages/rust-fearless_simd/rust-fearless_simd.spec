@@ -3,11 +3,11 @@
 %global debug_package %{nil}
 
 %global crate fearless_simd
-%global source_sha256 011821dd96916694f4133efae9198c02636d185af2ecb51d73ef90cc95429fa2
+%global source_sha256 b97b65636e5b9ef369943878ac74335ba1c55c1cb6adbf1e2c293c624248d693
 
 Name:           rust-fearless_simd
 Version:        0.4.1
-Release:        1.1%{?dist}
+Release:        1.2%{?dist}
 Summary:        Unified interface for portable SIMD vector types
 
 License:        MIT OR Apache-2.0
@@ -165,6 +165,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-1.2
+- Correct the immutable crates.io archive checksum.
+
 * Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-1.1
 - Add the Fedora 44 package for the Fedora 43 Hayro dependency.
 
