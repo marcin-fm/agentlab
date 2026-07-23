@@ -13,8 +13,10 @@ source_inputs:
     url: https://registry.npmjs.org/undici-types/-/undici-types-8.3.0.tgz
     sha256: 07a721cb2cd0dd798c24757de34d14e8b640ff8fddef85d662e00b392562a1f2
   node_native_loader:
-    path: kreuzberg-node-loader.js
-    role: Fedora integration source pending maintainer acceptance and upstream-status resolution
+    url: https://raw.githubusercontent.com/kreuzberg-dev/kreuzberg-lts/228f6842ea56de911b0035c55fc878e18863ec14/crates/kreuzberg-node/index.js
+    commit: 228f6842ea56de911b0035c55fc878e18863ec14
+    sha256: 69ade1c16be8b5860bfd65726606ba8ad03869c104038ce1496f5c511529db41
+    role: exact upstream-generated NAPI-RS loader for the adjacent local addon
   calamine_date_fixture:
     path: kreuzberg-date-xlsx-fixture
     role: deterministic local XLSX smoke fixture generator
@@ -30,11 +32,13 @@ system_dependencies:
   tesseract:
     state: available
   pdfium:
-    state: locally_built
+    state: available
     required_capability: pkgconfig(pdfium) >= 5.0
     incompatible_fedora_package: deepin-pdfium
     reason: deepin-pdfium exports libdeepin-pdfium and a wrapper API, not libpdfium and the FPDF API.
     validated_release: 146.0.7678.0
+    copr_build: 10751847
+    copr_matrix: fedora_43_fedora_44_rawhide_x86_64_aarch64_succeeded
     x86_64_rpm_sha256: b5c7dc1e180c385e6929d8597eab1275e3bf607cb2e6735e7da8f31717158772
     source_path: /srv/tmp/agentlab-kreuzberg/repos/f44
 node_runtime_dependencies:
@@ -63,10 +67,12 @@ build_adjustments:
   tesseract: Disable the default source-download feature and link dynamically to Fedora Tesseract and Leptonica.
   feature_scope: Preserve documented Node extraction, OCR, PaddleOCR, layout, embeddings, and tree-sitter functionality while omitting API, MCP, OpenTelemetry, and Liter LLM server-only surfaces.
   target_scope: Remove wasm32-only dependency blocks from the selected native Linux crates before Fedora Cargo dependency generation.
-  node_native_loader: Install the Fedora-built N-API addon beside the downstream Fedora loader and generated TypeScript outputs.
+  node_native_loader: Install the Fedora-built N-API addon beside the exact upstream-generated loader and generated TypeScript outputs.
   cli: Install the source-built Rust CLI as /usr/bin/kreuzberg and patch the npm CLI proxy to execute it directly.
 closure_audit:
   audited_release: 4.10.2
+  production_build_sources_verified: true
+  test_sources_verified: true
   cargo_sources_verified: true
   node_sources_verified: true
   system_pdfium_verified: true
@@ -74,6 +80,9 @@ closure_audit:
   licenses_verified: true
   native_sources_verified: true
   generated_sources_verified: true
+  bundled_provides_verified: true
+  upstream_contact_recorded: true
+  upstream_contact: https://github.com/kreuzberg-dev/kreuzberg-lts/commit/228f6842ea56de911b0035c55fc878e18863ec14
   offline_verified: true
   retained_0_0_5_fedora_43_application: build_10739044_succeeded_x86_64_and_aarch64
   retained_0_0_5_fedora_44_application: build_10739040_succeeded_x86_64_and_aarch64
@@ -82,19 +91,17 @@ closure_audit:
   aarch64_application: native_checks_and_node_napi_smokes_succeeded_on_f43_and_f44
   inspected_payloads: representative_x86_64_and_aarch64_cli_node_pairs_have_expected_architecture_and_no_rpath_or_runpath
   license_accounting: aggregate_spdx_and_exact_build_generated_394_row_inventories
-  package_rpmlint: complete_evidence_not_retained
+  package_rpmlint: pending_current_0_0_8_artifacts
   forensic_license_collector: removed
   application_patch_stack: 20_single_concern_patches_zero_fuzz_equivalent
   imported_dependency_records: 63
   imported_dependency_patch_members_verified: 40
   imported_dependency_matrix: dependency-finalization.yml
   parser_subset_verified: true
-  parser_archive_records: 295
-  parser_excluded_records: 11
+  parser_archive_records: 293
+  parser_excluded_records: 13
+  parser_provider_build: 10768304
   parser_language_count_documented_upstream: 248
   receipt: reproducibility.yml
 gates:
-  - Host the generated PDFium, Rust closure, parser subset, and fixture sources immutably for SCM/COPR.
-  - Approve the Chromium-pinned PDFium release boundary.
-  - Complete final ABI/runtime review for system ONNX Runtime and PDFium plus hf-hub model-download and calamine date behavior.
-  - Publish or otherwise resolve the outstanding third-party license texts and retain complete package-level rpmlint evidence.
+  - Complete the current 0.0.8 six-cell build and retain binary payload and package-level rpmlint evidence.

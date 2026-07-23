@@ -15,8 +15,9 @@ source_inputs:
     sha256: 07a721cb2cd0dd798c24757de34d14e8b640ff8fddef85d662e00b392562a1f2
     observed_path: /srv/tmp/agentlab-kreuzberg/current-application-srpms/sources-0.0.7/undici-types-8.3.0.tgz
   source3:
-    path: kreuzberg-node-loader.js
-    sha256: b8b4e7b641ab608d033c1c7088860b48a1c1eb9bfb7f4e50267b38546207145b
+    url: https://raw.githubusercontent.com/kreuzberg-dev/kreuzberg-lts/228f6842ea56de911b0035c55fc878e18863ec14/crates/kreuzberg-node/index.js
+    commit: 228f6842ea56de911b0035c55fc878e18863ec14
+    sha256: 69ade1c16be8b5860bfd65726606ba8ad03869c104038ce1496f5c511529db41
   source4:
     path: kreuzberg-date-xlsx-fixture
     sha256: d292860dc659622c1915bc27c90175da25683aedfcddc6359a413b8d9fc9ddd8
@@ -53,7 +54,13 @@ srpms:
     independent_rebuild_path: /srv/tmp/agentlab-kreuzberg/repro-check-0.0.5/f44/kreuzberg-4.10.2-0.0.5.fc44.src.rpm
     independent_rebuild_sha256: 5d0c917dbe39119f6db8eabf638f98a4e94dba096f20a84c1f519d166bf1bec0
     distributable: false
-current_spec_sha256: c98bc8df69d431fb890c442bb4aece55d70d0647200a94a657d8177339b8d761
+current_spec_sha256: 3286afa4492a68803f846f8e4ac1ed0260c0051ec5312da676061defd88f566b
+local_0_0_8_srpm:
+  path: /srv/tmp/agentlab-kreuzberg-srpm-proof/kreuzberg-4.10.2-0.0.8.fc44.src.rpm
+  sha256: 907dc5333fa5a01bff15c222f33523de6bc810e9b3d8e0bebfc01ba23f371c0b
+  expected_source_members: 25
+  rpmlint: 0_errors_0_warnings
+  distributable: false
 final_patches:
   kreuzberg-system-pdfium.patch: 7684d6b56ec021df8f8abf1598db4b2a5b6978375266732937c373f51c5c8253
   kreuzberg-ort-dynamic.patch: 34088e228751de9273a19f734c0554604374779759d7a04e5be670bdf440f91c

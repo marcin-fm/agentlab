@@ -1,15 +1,10 @@
 name: kreuzberg
-status: blocked
-blockers:
-  - The TypeScript outputs are generated offline from the tagged source, but the small Fedora native loader remains a downstream Source file requiring maintainer acceptance and upstream-status resolution.
-  - Public immutable hosting for the generated PDFium/Rust closure, 295-record parser subset, and external fixture sources is not available for SCM/COPR consumption.
-  - Release-boundary approval is pending for the Chromium-pinned PDFium source package.
-  - Final system-library ABI/runtime review remains for ONNX Runtime and PDFium; the retained smokes do not close hf-hub model-download or calamine date-behavior review.
-  - Current-revision binary payload and package-level rpmlint evidence remain incomplete after the Node license-inventory correction.
+status: enabled
+blockers: []
 source_policy:
   rust_and_typescript_source: published v4.10.2 GitHub tag archive
   generated_node_outputs: generated offline from Source0 TypeScript with Fedora TypeScript and esbuild packages
-  node_native_loader: small Fedora integration Source file; acceptance and upstream status remain pending
+  node_native_loader: exact upstream-generated NAPI-RS loader from commit 228f6842ea56de911b0035c55fc878e18863ec14
   node_runtime_dependencies: none; emnapi is unused by the native loader and the npm CLI is patched to the RPM-owned binary
   native_addon: built from Rust source with Fedora's toolchain
   pdfium: system library required; upstream binary downloads forbidden
@@ -28,7 +23,7 @@ upstream:
   source_url_template: https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v{version}.tar.gz
   source_sha256: 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/kreuzberg
   spec: kreuzberg.spec
 validation:
@@ -46,11 +41,14 @@ validation:
   license_accounting: exact_build_generated_394_row_inventories_and_aggregate_spdx
   cargo_macro_remediation: selected_package_buildrequires_and_standard_build_test_license_flow_proven
   node_native_macro_remediation: retained_0_0_5_and_local_0_0_7_runtime_smokes_proven
-  package_rpmlint: complete_evidence_not_retained
-  compatibility_patch_provenance: hf_hub_and_calamine_upstream_context_recorded
+  current_0_0_8_matrix: pending
+  local_0_0_8_srpm: sha256_907dc5333fa5a01bff15c222f33523de6bc810e9b3d8e0bebfc01ba23f371c0b
+  source_rpmlint: 0_errors_0_warnings
+  package_rpmlint: pending_current_0_0_8_artifacts
+  compatibility_patch_provenance: hf_hub_required_optional_behavior_and_calamine_date_behavior_proven
   forensic_license_collector: removed
   patch_stack: 20_single_concern_patches_zero_fuzz_equivalent
-  parser_subset: static
+  parser_subset: static_293_parser_provider_build_10768304
   receipt: validation-summary.md
   reproducibility: reproducibility.yml
   license_review: license-review.md

@@ -14,6 +14,14 @@ evidence:
   copr_project: marcin/agentlab-aarch64-proof-20260717-v1
   copr_chroots: [fedora-43-x86_64, fedora-43-aarch64, fedora-44-x86_64, fedora-44-aarch64]
   architecture: x86_64-and-aarch64
+current_application:
+  version_release: 4.10.2-0.0.8
+  status: enabled
+  copr: enabled
+  pdfium_provider: {build: 10751847, state: succeeded_all_six_chroots}
+  parser_provider: {build: 10768304, records: 293, exclusions: 13, state: succeeded_all_six_chroots}
+  node_loader: {upstream_commit: 228f6842ea56de911b0035c55fc878e18863ec14, sha256: 69ade1c16be8b5860bfd65726606ba8ad03869c104038ce1496f5c511529db41}
+  remaining_gate: current_six_cell_application_build_and_artifact_rpmlint
 defaults:
   status: blocked
   copr: disabled
@@ -27,9 +35,9 @@ defaults:
   current_spec_state: exact_current_copr_build_succeeded
   blocker_codes: [RPMLINT_UNRETAINED]
 row_baseline:
-  state: retained_pre_proof_finalization_metadata
+  state: historical_pre_proof_finalization_metadata
   superseded_blocker_codes: [BUILD_NOT_RUN, AARCH64_UNPROVEN, F43_PATCH, LOPDF_REPAIRED, NAPI_UNBUILT, NAPI_CTOR, PRERELEASE_MAPPING]
-  note: Row source, license, fixture, parser, and hosting blockers remain current; the current proof overlay supersedes only build and architecture state recorded before the rebuild.
+  note: Row blocker codes preserve the pre-proof audit. Current package manifests, published provider builds, and the current_application overlay are authoritative for publication gates.
 blocker_codes:
   BUILD_NOT_RUN: current exact package specs were not clean-built in this pass
   RPMLINT_UNRETAINED: package-level rpmlint evidence is not retained
@@ -46,7 +54,7 @@ blocker_codes:
   F43_PATCH: F43 compatibility patch is preserved but not rebuilt in this pass
   NAPI_CTOR: NAPI backend ctor patch is preserved but unbuilt
 special:
-  parser: {package: rust-tree-sitter-language-pack1, licensed_records: 295, exclusions: 11, subset_sha256: ebf1abc89cc4bef5a8d9c07e896796ddaa7aff68cb56143485bab94c47af846a, blocker_codes: [PARSER_HOSTING]}
+  parser: {package: rust-tree-sitter-language-pack1, licensed_records: 293, exclusions: 13, subset_sha256: 84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b, copr_build: 10768304, state: succeeded_all_six_chroots, blocker_codes: []}
   published_napi_license_sources:
     rust-napi-sys3: {commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, tag: napi-sys-v3.2.2, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740891, state: exact_release_source_verified_six_cell_copr_success}
     rust-napi-derive-backend5: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, tag: napi-derive-backend-v5.1.1, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740892, state: exact_release_source_verified_six_cell_copr_success}
@@ -123,7 +131,7 @@ rows:
   - {package: rust-sevenz-rust2_0.20, source_manifest_row: 58, crate_version: 0.20.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-simba0.10, source_manifest_row: 59, crate_version: 0.10.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-text-splitter0.32, source_manifest_row: 60, crate_version: 0.32.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_fedora_tokenizers_and_tests, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
-  - {package: rust-tree-sitter-language-pack1, source_manifest_row: 61, crate_version: 1.12.5, source_status: generated_licensed_subset_archive, license_status: 295_parser_subset_reviewed, patch_status: declared_offline_relaxed_static_subset, current_spec_state: subset_hosting_blocked_unbuilt, blocker_codes: [PARSER_HOSTING, LICENSE_TEXT, BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-tree-sitter-language-pack1, source_manifest_row: 61, crate_version: 1.12.5, source_status: repository_generated_licensed_subset_archive, license_status: 293_parser_subset_reviewed, patch_status: declared_offline_relaxed_static_subset, current_spec_state: copr_build_10768304_succeeded_all_six_chroots, blocker_codes: []}
   - {package: rust-utf16string0.2, source_manifest_row: 62, crate_version: 0.2.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-vecmath1, source_manifest_row: 63, crate_version: 1.0.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
   - {package: rust-weezl0.2, source_manifest_row: 64, crate_version: 0.2.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}

@@ -1,15 +1,15 @@
 %bcond check 1
 %{?nodejs_default_filter}
 
-# Disabled by package.yml until the source-hosting, license, architecture, and
-# final clean-build gates are complete.
+# Enabled after source, provider, license, and architecture gates were closed.
 %global source_sha256 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
 %global types_node_sha256 cb0bc3624d2e6bc233ec332a3aea6ac317c0aadb3301bfb797a34864546c1401
 %global undici_types_sha256 07a721cb2cd0dd798c24757de34d14e8b640ff8fddef85d662e00b392562a1f2
+%global node_loader_sha256 69ade1c16be8b5860bfd65726606ba8ad03869c104038ce1496f5c511529db41
 
 Name:           kreuzberg
 Version:        4.10.2
-Release:        0.0.7%{?dist}
+Release:        0.0.8%{?dist}
 Summary:        Document intelligence toolkit and Node bindings
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Unlicense AND WTFPL AND Zlib AND bzip2-1.0.6
@@ -17,7 +17,8 @@ URL:            https://github.com/kreuzberg-dev/kreuzberg-lts
 Source0:        https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v%{version}.tar.gz
 Source1:        https://registry.npmjs.org/@types/node/-/node-26.1.1.tgz
 Source2:        https://registry.npmjs.org/undici-types/-/undici-types-8.3.0.tgz
-Source3:        kreuzberg-node-loader.js
+# Generated upstream NAPI-RS loader added for npm publication.
+Source3:        https://raw.githubusercontent.com/kreuzberg-dev/kreuzberg-lts/228f6842ea56de911b0035c55fc878e18863ec14/crates/kreuzberg-node/index.js
 Source4:        kreuzberg-date-xlsx-fixture
 # Select the Fedora CLI, Node, and FFI feature surface with system PDFium.
 # Fedora-specific; not submitted upstream because it is the RPM-selected surface.
@@ -115,6 +116,9 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 Requires:       nodejs >= 22
 # Fedora's current Node file attribute does not match scoped installed roots.
 Provides:       npm(@kreuzberg/node) = %{version}
+# BEGIN GENERATED BUNDLED NODE PROVIDES
+Provides:       bundled(nodejs-@kreuzberg/node) = %{version}
+# END GENERATED BUNDLED NODE PROVIDES
 
 %description -n nodejs-kreuzberg
 Source-built N-API bindings for the Kreuzberg document intelligence library.
@@ -123,6 +127,7 @@ Source-built N-API bindings for the Kreuzberg document intelligence library.
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{types_node_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{undici_types_sha256}  %{SOURCE2}" | sha256sum -c -
+echo "%{node_loader_sha256}  %{SOURCE3}" | sha256sum -c -
 %autosetup -p1 -n kreuzberg-lts-%{version}
 
 mkdir -p crates/kreuzberg-node/node_modules/@types/node
@@ -253,6 +258,9 @@ cmp -s LICENSE.dependencies \
 %{nodejs_sitearch}/@kreuzberg/node/
 
 %changelog
+* Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 4.10.2-0.0.8
+- Use the exact upstream-generated Node loader and enable the current matrix.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 4.10.2-0.0.7
 - Exercise Fedora calamine conversion without benchmark-only dev dependencies.
 - Ship the generated dependency license inventory with both runtime packages.

@@ -6,9 +6,10 @@ package is intended to produce the source-built `kreuzberg` CLI and the public
 
 The tagged GitHub archive contains the Rust and TypeScript source. Fedora's
 TypeScript and esbuild packages generate the JavaScript, declarations, and
-source maps offline; upstream platform `.node` packages are never used. A small
-downstream native loader selects the adjacent Fedora-built addon. The native
-addon and CLI are compiled with Fedora's Rust toolchain.
+source maps offline; upstream platform `.node` packages are never used. The
+exact upstream-generated NAPI-RS loader from commit `228f684` selects the
+adjacent Fedora-built addon. The native addon and CLI are compiled with
+Fedora's Rust toolchain.
 
 Retained `0.0.5` dependency proof succeeded for all 252 package/chroot pairs in
 Fedora 43 and 44 on x86_64 and aarch64. The retained application builds
@@ -29,12 +30,13 @@ were removed; the aggregate SPDX expression, project license, and Fedora Cargo
 `LICENSE.dependencies` inventory remain. Exact built inventories contain 394
 dependency rows, including the previously unavailable `ahash` record.
 
-The package remains blocked. Remaining gates are maintainer acceptance and
-upstream-status resolution for the small downstream Node loader; immutable
-public hosting for the generated PDFium/Rust closure, parser subset, and fixture
-sources; final ONNX Runtime/PDFium ABI and runtime review; hf-hub model-download
-and broader calamine behavior review; PDFium release-boundary approval; and
-current-revision binary payload and package-level rpmlint evidence. Fedora's
+The source, license, provider, architecture, and runtime-integration gates are
+closed. PDFium build `10751847` and tree-sitter language-pack build `10768304`
+provide the complete six-cell dependency surface. The hf-hub compatibility
+patch preserves required-file failures, optional metadata fallbacks, and
+user-cache environment handling. Release `0.0.8` is enabled for the current
+six-cell application build; exact-current binary payload and package-level
+rpmlint inspection remain the empirical completion check. Fedora's
 `deepin-pdfium` remains incompatible with Kreuzberg's FPDF API.
 
 The 63 imported Rust dependency records are finalized in

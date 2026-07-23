@@ -62,17 +62,20 @@ package build requirements, uses Fedora Cargo build/test and workspace license
 macros, preserves Fedora Rust flags, installs the N-API package through the
 native Node path and filter, and removes RPATH/RUNPATH from both native outputs.
 Exact native target builds generated and verified the final inventories.
-The hf-hub and calamine patch headers now record the exact later upstream commits
-and Na'aman Hirschfeld's authorship without claiming exact backports; behavioral
-review beyond the retained test and smoke coverage remains pending.
+The hf-hub and calamine patch headers record the exact later upstream commits
+and Na'aman Hirschfeld's authorship without claiming exact backports. Source
+review proves that the hf-hub adaptation retains hard errors for required model
+and tokenizer files, optional metadata fallbacks, and user-cache environment
+handling. The retained XLSX/date smoke proves the calamine compatibility path.
 
 The 63 imported package records were finalized, all 40 dependency patch files
 byte-match their retained successful SRPM members, and all 252 retained
-package/chroot pairs succeeded before the application builds. Immutable
-fixture/parser and PDFium/Rust closure hosting, downstream Node-loader approval
-and upstream-status resolution, ONNX Runtime/PDFium ABI and runtime review,
-PDFium release-boundary approval, and current-revision binary payload and
-package-level rpmlint evidence remain blockers.
+package/chroot pairs succeeded before the application builds. PDFium build
+`10751847` and the corrected 293-parser tree-sitter build `10768304` now provide
+the complete dependency surface. Exact upstream commit `228f684` supplies the
+generated Node loader. The current `0.0.8` six-cell build, binary payload
+inspection, and package-level rpmlint evidence are the remaining empirical
+completion checks.
 
 ## Local 0.0.7 Evidence
 
@@ -90,10 +93,19 @@ resolution because the retained local repository contains no provider for
 `pkgconfig(pdfium) >= 5.0`. Compilation did not start, so this is retained as an
 evidence-repository gap rather than a Kreuzberg build result.
 
+## Local 0.0.8 Source Proof
+
+The configured-SCM-equivalent source path downloaded the four immutable remote
+inputs, verified their SHA-256 values, and produced
+`/srv/tmp/agentlab-kreuzberg-srpm-proof/kreuzberg-4.10.2-0.0.8.fc44.src.rpm`
+at SHA-256 `907dc5333fa5a01bff15c222f33523de6bc810e9b3d8e0bebfc01ba23f371c0b`.
+Its 25 members include the exact upstream `index.js`, tagged source, Node type
+archives, local fixture, spec, and all 20 patches. Source-package `rpmlint`
+reports zero errors and zero warnings.
+
 ## Parser Accounting
 
-The generated parser work record contains 295 archive records with 11 excluded
-records. The archive itself is omitted; the static F44 closure is retained only
-as exact RPM hashes in `license-review.md`. Upstream Kreuzberg documentation
-describes 248 programming languages, which is a separate language count and is
-not replaced by the 295-record archive accounting.
+The corrected provider contains 293 archive records with 13 excluded records
+and is published by build `10768304` in all six default chroots. Upstream
+Kreuzberg documentation describes 248 programming languages, which is a
+separate language count and is not replaced by parser archive accounting.
