@@ -397,6 +397,7 @@ class AgentlabTest < Minitest::Test
 
     assert_includes(makefile, "mermaid-cli.spec)")
     assert_includes(makefile, "nodejs22-npm")
+    assert_includes(makefile, "ruby-bundled-gems")
     assert_includes(makefile, "/srv/tmp/agentlab-mermaid-cli-srpm.XXXXXX")
     assert_includes(makefile, '--source "$$specdir/$$version.tar.gz"')
     assert_includes(makefile, "node-closure.tar.zst closure.json bundled-licenses.txt native.json third-party-notices.txt closure-receipt.json")

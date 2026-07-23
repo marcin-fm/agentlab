@@ -49,7 +49,7 @@ srpm:
 		mermaid-cli.spec) \
 			set -eu; \
 			specdir="$$(dirname "$(spec)")"; \
-			dnf -y install ruby ruby-default-gems rubygem-json nodejs22-npm tar unzip zstd; \
+			dnf -y install ruby ruby-default-gems ruby-bundled-gems rubygem-json nodejs22-npm tar unzip zstd; \
 			install -d -m0755 /srv/tmp; \
 			version="$$(rpmspec -q --qf '%{VERSION}' "$(spec)")"; \
 			tempdir="$$(mktemp -d /srv/tmp/agentlab-mermaid-cli-srpm.XXXXXX)"; \
