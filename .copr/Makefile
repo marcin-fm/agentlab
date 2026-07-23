@@ -61,7 +61,29 @@ srpm:
 			for suffix in node-closure.tar.zst closure.json bundled-licenses.txt native.json third-party-notices.txt closure-receipt.json; do \
 				filename="mermaid-cli-$$version-$$suffix"; \
 				install -pm0644 "$$tempdir/output/$$filename" "$$specdir/$$filename"; \
-			done; \
+				done; \
+			;; \
+		rust-tree-sitter-language-pack1.spec) \
+			set -eu; \
+			specdir="$$(dirname "$(spec)")"; \
+			dnf -y install python3 tar zstd; \
+			install -d -m0755 /srv/tmp; \
+			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
+			tempdir="$$(mktemp -d /srv/tmp/agentlab-tree-sitter-language-pack-srpm.XXXXXX)"; \
+			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
+			install -d -m0755 "$$tempdir/source" "$$tempdir/evidence" "$$tempdir/output"; \
+			install -pm0644 "$$specdir/sources/parser-source-license-evidence-$$version.tar.zst" \
+				"$$specdir/parser-source-license-evidence-$$version.tar.zst"; \
+			tar --zstd -xf "$$specdir/parser-sources-$$version.tar.zst" -C "$$tempdir/source"; \
+			tar --zstd -xf "$$specdir/parser-source-license-evidence-$$version.tar.zst" -C "$$tempdir/evidence"; \
+			python3 "$(repo_root)/packages/rust-tree-sitter-language-pack1/prepare_subset.py" \
+				--source-root "$$tempdir/source" \
+				--evidence-root "$$tempdir/evidence/parser-source-license-evidence" \
+				--output-dir "$$tempdir/output" \
+				--archive "$$tempdir/parser-sources-$$version-licensed-subset.tar.zst" \
+				--verify-tracked-contract; \
+			install -pm0644 "$$tempdir/parser-sources-$$version-licensed-subset.tar.zst" \
+				"$$specdir/parser-sources-$$version-licensed-subset.tar.zst"; \
 			;; \
 		rust-v8.spec) \
 			ruby-mri -rjson -roptparse -rpathname -rrubygems/package -rtempfile -rtmpdir -rzlib -e '' >/dev/null 2>&1 || dnf -y install ruby ruby-default-gems rubygem-json; \

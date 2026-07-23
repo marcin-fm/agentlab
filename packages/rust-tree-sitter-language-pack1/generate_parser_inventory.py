@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 
-LICENSE_NAMES = ("LICENSE", "COPYING", "NOTICE")
+LICENSE_NAMES = ("LICENSE", "LICENCE", "COPYING", "NOTICE")
 SPDX_PATTERN = re.compile(r"SPDX-License-Identifier:\s*([^\s*]+)", re.IGNORECASE)
 
 
@@ -85,6 +85,7 @@ def detect_licenses(content):
         ("gnu general public license", "GPL"),
         ("unlicense", "Unlicense"),
         ("creative commons zero", "CC0-1.0"),
+        ("do what the fuck you want to public license", "WTFPL"),
     )
     return sorted({spdx for marker, spdx in signatures if marker in lowered}), "text-signature"
 

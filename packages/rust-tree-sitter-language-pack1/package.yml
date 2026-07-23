@@ -1,8 +1,6 @@
 name: rust-tree-sitter-language-pack1
-status: blocked
-blockers:
-  - The 295-parser source subset archive is not committed and requires immutable public hosting.
-  - Final repository validation and immutable public source hosting remain outstanding.
+status: enabled
+blockers: []
 upstream:
   provider: crates_io
   crate: tree-sitter-language-pack
@@ -10,8 +8,11 @@ upstream:
   current_version: 1.12.5
   source_sha256: f860e7a7df78207ed80a1f8a4cab7fd5e366ed9bfd5fa74f2d1ed3022905a058
   source_url_template: https://static.crates.io/crates/tree-sitter-language-pack/tree-sitter-language-pack-{version}.crate
-  subset_archive_sha256: ebf1abc89cc4bef5a8d9c07e896796ddaa7aff68cb56143485bab94c47af846a
+  parser_source_url_template: https://github.com/xberg-io/tree-sitter-language-pack/releases/download/v{version}/parser-sources-{version}.tar.zst
+  parser_source_sha256: a4bc35714f8f5e0749beacfe00f7271f1af47339bf56712f670c23f2463ae6dc
+  license_evidence_sha256: ad560fc6ebbe2a7b5e24ad07caebc4ccc044d4d9bef0333bfd47efe45be2daa7
+  subset_archive_sha256: 84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/rust-tree-sitter-language-pack1
   spec: rust-tree-sitter-language-pack1.spec

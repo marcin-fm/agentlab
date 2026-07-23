@@ -4,16 +4,22 @@
 
 %global crate tree-sitter-language-pack
 %global source_sha256 f860e7a7df78207ed80a1f8a4cab7fd5e366ed9bfd5fa74f2d1ed3022905a058
+%global parser_source_sha256 a4bc35714f8f5e0749beacfe00f7271f1af47339bf56712f670c23f2463ae6dc
+%global license_evidence_sha256 ad560fc6ebbe2a7b5e24ad07caebc4ccc044d4d9bef0333bfd47efe45be2daa7
+%global subset_sha256 84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b
 
 Name:           rust-tree-sitter-language-pack1
 Version:        1.12.5
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Core library for a source-built, licensed tree-sitter parser subset
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CC0-1.0 AND ISC AND MIT AND Unlicense AND WTFPL
 URL:            https://crates.io/crates/tree-sitter-language-pack
-Source:         %{crates_source}
+Source:         https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Reconstructed and hash-verified by the configured-SCM make_srpm method.
 Source1:        parser-sources-1.12.5-licensed-subset.tar.zst
+Source2:        https://github.com/xberg-io/tree-sitter-language-pack/releases/download/v%{version}/parser-sources-%{version}.tar.zst
+Source3:        parser-source-license-evidence-%{version}.tar.zst
 # Remove benchmark-only and WASM-only dependencies from generated metadata.
 # Fedora-specific; not submitted upstream because it selects the packaged native build graph.
 Patch:          tree-sitter-language-pack-fix-metadata-auto.diff
@@ -123,6 +129,9 @@ use the "test-internals" feature of the "%{crate}" crate.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
+echo "%{subset_sha256}  %{SOURCE1}" | sha256sum -c -
+echo "%{parser_source_sha256}  %{SOURCE2}" | sha256sum -c -
+echo "%{license_evidence_sha256}  %{SOURCE3}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -p1 -a 1
 %cargo_prep
 
@@ -167,6 +176,10 @@ TSLP_LINK_MODE=static TSLP_OFFLINE=1 \
 %endif
 
 %changelog
+* Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 1.12.5-0.2
+- Generate the exact-commit licensed parser subset during configured-SCM
+  source creation and omit the unlicensed VB and historical-text-only PGN parsers.
+
 * Thu Jul 16 2026 Marcin FM <marcin@lgic.pl> - 1.12.5-0.1
 - Build the audited source-only licensed parser subset offline without
   duplicating payload bytes while preserving every parser and license path.

@@ -406,6 +406,39 @@ class AgentlabTest < Minitest::Test
     assert_includes(generator, "does not match audited SHA-256")
   end
 
+  def test_copr_makefile_materializes_the_tree_sitter_parser_subset
+    makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
+    generator_path = File.expand_path(
+      "../packages/rust-tree-sitter-language-pack1/prepare_subset.py",
+      __dir__
+    )
+    inventory = JSON.parse(File.read(File.expand_path(
+      "../packages/rust-tree-sitter-language-pack1/licensed-parser-subset-inventory.json",
+      __dir__
+    )))
+    generator = File.read(generator_path)
+    evidence_generator = File.read(File.expand_path(
+      "../packages/rust-tree-sitter-language-pack1/generate_parser_inventory.py",
+      __dir__
+    ))
+
+    assert_includes(makefile, "rust-tree-sitter-language-pack1.spec)")
+    assert_includes(makefile, "parser-source-license-evidence-$$version.tar.zst")
+    assert_includes(makefile, "--verify-tracked-contract")
+    assert_includes(makefile, "packages/rust-tree-sitter-language-pack1/prepare_subset.py")
+    assert_includes(generator, '"vb": "upstream issue 7 confirms')
+    assert_includes(generator, '"pgn": "BSD-2-Clause text is absent')
+    assert_includes(generator, "generated subset manifest differs from tracked SHA256SUMS")
+    assert_includes(evidence_generator, '("LICENSE", "LICENCE", "COPYING", "NOTICE")')
+    assert_includes(evidence_generator, '"do what the fuck you want to public license"')
+    assert_equal(293, inventory.fetch("included_count"))
+    assert_equal(13, inventory.fetch("excluded_count"))
+    assert_equal(
+      "84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b",
+      inventory.fetch("closure_archive_sha256")
+    )
+  end
+
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions
     response = JSON.dump(
       "versions" => [

@@ -2,7 +2,12 @@
   "blockers": {
     "ambiguous_license_records": [],
     "policy": "Only exact pinned commits are queried. A parser is unresolved only when that commit cannot be fetched or has no primary license/notice file at its grammar source root.",
-    "prebuilt_object_files": [],
+    "prebuilt_object_files": [
+      "parsers/bitbake/src/parser.o",
+      "parsers/bitbake/src/scanner.o",
+      "parsers/clarity/src/parser.o",
+      "parsers/vhs/src/parser.o"
+    ],
     "unresolved_repositories": [
       "CodeAnt-AI/tree-sitter-vb-dotnet",
       "Decodetalkers/tree-sitter-groovy",
@@ -11,14 +16,11 @@
       "addcninblue/tree-sitter-cooklang",
       "ajdelcimmuto/tree-sitter-brightscript",
       "connorlay/tree-sitter-eex",
-      "gbprod/tree-sitter-gitcommit",
-      "gbprod/tree-sitter-twig",
       "glapa-grossklag/tree-sitter-elsa",
       "jakestanger/tree-sitter-corn",
       "rolandwalker/tree-sitter-pgn",
       "tree-sitter-grammars/tree-sitter-move",
-      "uyha/tree-sitter-eds",
-      "winston0410/tree-sitter-hjson"
+      "uyha/tree-sitter-eds"
     ]
   },
   "conservative_licensed_subset": {
@@ -214,7 +216,7 @@
       "pascal": "included",
       "pem": "included",
       "perl": "included",
-      "pgn": "included",
+      "pgn": "excluded",
       "php": "included",
       "phpdoc": "included",
       "pkl": "included",
@@ -308,7 +310,7 @@
       "ungrammar": "included",
       "uxntal": "included",
       "v": "included",
-      "vb": "included",
+      "vb": "excluded",
       "verilog": "included",
       "vhdl": "included",
       "vhs": "included",
@@ -333,10 +335,10 @@
     },
     "closure": {
       "archive": "parser-sources-1.12.5-licensed-subset.tar.zst",
-      "archive_sha256": "ebf1abc89cc4bef5a8d9c07e896796ddaa7aff68cb56143485bab94c47af846a",
-      "manifest_sha256": "f9d44f6c7f7f128da45c512c83d9aade30a2cd65b8fdd7dc877250159fadc0f2"
+      "archive_sha256": "84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b",
+      "manifest_sha256": "f0cc17db7f4349f06beb4043ee655a8141bae31c7368cc88c5a75f5d77965e69"
     },
-    "excluded_count": 11,
+    "excluded_count": 13,
     "excluded_parsers": [
       {
         "language": "brightscript",
@@ -399,13 +401,25 @@
         "revision": "b8ca25518749be10562455fd081a3dab30b93b8b"
       },
       {
+        "language": "pgn",
+        "reason": "BSD-2-Clause text is absent at the pin; omit instead of carrying historical supplemental text",
+        "repository": "https://github.com/rolandwalker/tree-sitter-pgn",
+        "revision": "be9cd4d91f96cb2d9e89df8a302f2fb363564f50"
+      },
+      {
         "language": "tmux",
         "reason": "MIT declarations only: published release points to a different commit",
         "repository": "https://github.com/Freed-Wu/tree-sitter-tmux",
         "revision": "75d1b995b0c23400ac8e49db757a2e0386f9fa8f"
+      },
+      {
+        "language": "vb",
+        "reason": "upstream issue 7 confirms the pinned code is unlicensed despite MIT package metadata",
+        "repository": "https://github.com/CodeAnt-AI/tree-sitter-vb-dotnet",
+        "revision": "cfca210ce8fdcb5245bd9cd5c47ce0a21a8488d5"
       }
     ],
-    "included_count": 295
+    "included_count": 293
   },
   "parsers": [
     {
@@ -1025,9 +1039,13 @@
       "license_status": "primary-license-evidence-collected",
       "parser_directory": "parsers/bitbake",
       "parser_source_paths": [
-        "parsers/bitbake/src/parser.c"
+        "parsers/bitbake/src/parser.c",
+        "parsers/bitbake/src/parser.o"
       ],
-      "prebuilt_object_files": [],
+      "prebuilt_object_files": [
+        "parsers/bitbake/src/parser.o",
+        "parsers/bitbake/src/scanner.o"
+      ],
       "repository": "https://github.com/tree-sitter-grammars/tree-sitter-bitbake",
       "repository_fetch_error": null,
       "repository_tree_path_file": "parser-source-license-evidence/tree-sitter-grammars/tree-sitter-bitbake/a5d04fdb5a69a02b8fa8eb5525a60dfb5309b73b/tree-paths.txt",
@@ -1572,9 +1590,12 @@
       "license_status": "primary-license-evidence-collected",
       "parser_directory": "parsers/clarity",
       "parser_source_paths": [
-        "parsers/clarity/src/parser.c"
+        "parsers/clarity/src/parser.c",
+        "parsers/clarity/src/parser.o"
       ],
-      "prebuilt_object_files": [],
+      "prebuilt_object_files": [
+        "parsers/clarity/src/parser.o"
+      ],
       "repository": "https://github.com/xlittlerag/tree-sitter-clarity",
       "repository_fetch_error": null,
       "repository_tree_path_file": "parser-source-license-evidence/xlittlerag/tree-sitter-clarity/1436da3946359fcd7ac2d81917aaa78ef1e01755/tree-paths.txt",
@@ -3509,12 +3530,25 @@
     },
     {
       "branch": null,
-      "detected_spdx": [],
+      "detected_spdx": [
+        "WTFPL"
+      ],
       "language": "gitcommit",
       "license_cache_claim": "WTFPL",
-      "license_files": [],
-      "license_selection": "none",
-      "license_status": "no-primary-license-file-at-pinned-commit",
+      "license_files": [
+        {
+          "detected_spdx": [
+            "WTFPL"
+          ],
+          "detection_method": "text-signature",
+          "evidence_path": "parser-source-license-evidence/gbprod/tree-sitter-gitcommit/49715a9e6f19ce3d33b875aacdd6ad8ddaee0ffe/license-files/LICENCE",
+          "path": "LICENCE",
+          "sha256": "1b6af8a5f636127b540870c6dbba9cb81e044712494f498de9883b583508f9e7",
+          "size": 381
+        }
+      ],
+      "license_selection": "source-root",
+      "license_status": "primary-license-evidence-collected",
       "parser_directory": "parsers/gitcommit",
       "parser_source_paths": [
         "parsers/gitcommit/src/parser.c"
@@ -4275,12 +4309,25 @@
     },
     {
       "branch": null,
-      "detected_spdx": [],
+      "detected_spdx": [
+        "MIT"
+      ],
       "language": "hjson",
       "license_cache_claim": "MIT",
-      "license_files": [],
-      "license_selection": "none",
-      "license_status": "no-primary-license-file-at-pinned-commit",
+      "license_files": [
+        {
+          "detected_spdx": [
+            "MIT"
+          ],
+          "detection_method": "text-signature",
+          "evidence_path": "parser-source-license-evidence/winston0410/tree-sitter-hjson/02fa3b79b3ff9a296066da6277adfc3f26cbc9e0/license-files/LICENCE",
+          "path": "LICENCE",
+          "sha256": "29ccc511926dd408f260c2656d21ac845f1288ec906a5705b38330d02fd0ffbd",
+          "size": 1125
+        }
+      ],
+      "license_selection": "source-root",
+      "license_status": "primary-license-evidence-collected",
       "parser_directory": "parsers/hjson",
       "parser_source_paths": [
         "parsers/hjson/src/parser.c"
@@ -9398,12 +9445,25 @@
     },
     {
       "branch": null,
-      "detected_spdx": [],
+      "detected_spdx": [
+        "WTFPL"
+      ],
       "language": "twig",
       "license_cache_claim": "WTFPL",
-      "license_files": [],
-      "license_selection": "none",
-      "license_status": "no-primary-license-file-at-pinned-commit",
+      "license_files": [
+        {
+          "detected_spdx": [
+            "WTFPL"
+          ],
+          "detection_method": "text-signature",
+          "evidence_path": "parser-source-license-evidence/gbprod/tree-sitter-twig/0afd9a6d808944e65a7be393e31868b85345735f/license-files/LICENCE",
+          "path": "LICENCE",
+          "sha256": "e8564c5d435c19033c5ce44cd57c3027c66ab59dee2f4d8dccc9c172a198979a",
+          "size": 380
+        }
+      ],
+      "license_selection": "source-root",
+      "license_status": "primary-license-evidence-collected",
       "parser_directory": "parsers/twig",
       "parser_source_paths": [
         "parsers/twig/src/parser.c"
@@ -9789,9 +9849,12 @@
       "license_status": "primary-license-evidence-collected",
       "parser_directory": "parsers/vhs",
       "parser_source_paths": [
-        "parsers/vhs/src/parser.c"
+        "parsers/vhs/src/parser.c",
+        "parsers/vhs/src/parser.o"
       ],
-      "prebuilt_object_files": [],
+      "prebuilt_object_files": [
+        "parsers/vhs/src/parser.o"
+      ],
       "repository": "https://github.com/charmbracelet/tree-sitter-vhs",
       "repository_fetch_error": null,
       "repository_tree_path_file": "parser-source-license-evidence/charmbracelet/tree-sitter-vhs/0c6fae9d2cfc5b217bfd1fe84a7678f5917116db/tree-paths.txt",
@@ -10417,17 +10480,17 @@
     "archive_without_prebuilt_objects_sha256": "97fa45a88ba7230ee5509c75eb3e8febec06f1db79c237034a6deba50636eb94",
     "fetch_method": "git protocol v2, exact pinned commit, blob-filtered tree followed by exact license blobs",
     "manifest": "parser-source-license-evidence/MANIFEST.sha256",
-    "manifest_entry_count": 586,
-    "manifest_sha256": "3c9620ca622ec6662dd686f704089b7705f3fbeab51a7e3cf5f1485a6f0ac785",
+    "manifest_entry_count": 589,
+    "manifest_sha256": "b27bf70afdb6abf7c622f973c4dc553489399e502ada0b7494e5662f4b570fe0",
     "path": "parser-source-license-evidence",
     "repository_count": 296
   },
   "summary": {
     "ambiguous_license_record_count": 0,
     "language_count": 306,
-    "prebuilt_object_file_count": 0,
-    "primary_license_evidence_count": 291,
+    "prebuilt_object_file_count": 4,
+    "primary_license_evidence_count": 294,
     "unique_repository_count": 296,
-    "unresolved_repository_count": 15
+    "unresolved_repository_count": 12
   }
 }

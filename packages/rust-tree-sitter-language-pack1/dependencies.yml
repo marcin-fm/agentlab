@@ -1,0 +1,14 @@
+target_release: 1.12.5
+source_closure_files:
+  parser_subset: parser-sources-1.12.5-licensed-subset.tar.zst
+  parser_license_evidence: sources/parser-source-license-evidence-1.12.5.tar.zst
+source_closure_sha256:
+  parser_subset: 84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b
+  parser_license_evidence: ad560fc6ebbe2a7b5e24ad07caebc4ccc044d4d9bef0333bfd47efe45be2daa7
+source_delivery:
+  method: copr-git-scm-make_srpm
+  implementation: packages/rust-tree-sitter-language-pack1/prepare_subset.py
+  source_builder_network: required-for-immutable-upstream-parser-bundle
+  target_build_network: forbidden
+  expected_hashes_enforced: true
+  external_generated_asset_required: false
