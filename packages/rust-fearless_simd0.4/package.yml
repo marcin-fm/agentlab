@@ -1,0 +1,30 @@
+name: rust-fearless_simd0.4
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 0.1 provides the current Linebender fearless_simd 0.4 branch required by Hayro only on Fedora 43.
+  source_identity: The immutable current crate is authored by the Linebender project and matches SHA-256 b97b65636e5b9ef369943878ac74335ba1c55c1cb6adbf1e2c293c624248d693.
+  identity_collision: Fedora's historical rust-fearless_simd 0.4.1 package contains a different crate source with the same name and version; it is not reused for Hayro.
+upstream:
+  provider: crates_io
+  crate: fearless_simd
+  version_requirement: '>= 0.4.0, < 0.5.0'
+  current_version: 0.4.1
+  source_url_template: https://static.crates.io/crates/fearless_simd/fearless_simd-{version}.crate
+  source_sha256: b97b65636e5b9ef369943878ac74335ba1c55c1cb6adbf1e2c293c624248d693
+duplicate_check:
+  checked: "2026-07-23"
+  fedora_43: absent
+  fedora_44: Hayro is distribution-provided; the historical fearless_simd package has a different source identity.
+  fedora_rawhide: Hayro is distribution-provided; the historical fearless_simd package has a different source identity.
+  rpm_fusion: no matching provider found
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+  omitted_target_families:
+    fedora_44: Fedora 44 provides the selected Hayro consumer directly.
+    rawhide: Fedora Rawhide provides the selected Hayro consumer directly.
+  subdir: packages/rust-fearless_simd0.4
+  spec: rust-fearless_simd0.4.spec
