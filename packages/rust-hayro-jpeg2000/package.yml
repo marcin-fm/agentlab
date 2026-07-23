@@ -1,0 +1,34 @@
+name: rust-hayro-jpeg2000
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 1.1 adapts Fedora's 0.3.5-1 package only for Fedora 43, where Kreuzberg requires hayro-jpeg2000 0.3 and the distribution has no provider.
+  source_identity: The immutable static crates.io archive matches the pinned SHA-256 and contains the Apache-2.0, MIT, and CC0-1.0 license texts.
+  fedora_provenance: Spec and metadata patch are adapted from Fedora commit 34ef88922dc4d3218fe3c9caebcb33282ccfaf5a.
+  patch_scope: The Fedora patch records the CC0 assets in crate metadata and removes only the unused indicatif development dependency.
+upstream:
+  provider: crates_io
+  crate: hayro-jpeg2000
+  version_requirement: '>= 0.3.0, < 0.4.0'
+  current_version: 0.3.5
+  source_url_template: https://static.crates.io/crates/hayro-jpeg2000/hayro-jpeg2000-{version}.crate
+  source_sha256: c75ab947623ef4ccaa7acf0579edf7cbb5a73838e3839a7be73335e522f433a1
+duplicate_check:
+  checked: "2026-07-23"
+  fedora_43: absent
+  fedora_44: rust-hayro-jpeg2000-devel 0.3.5-1.fc44
+  fedora_rawhide: compatible rust-hayro-jpeg2000 0.3 branch
+  rpm_fusion: no matching provider found
+fedora_adaptation:
+  base_release: "1"
+  commit: 34ef88922dc4d3218fe3c9caebcb33282ccfaf5a
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+  omitted_target_families:
+    fedora_44: Fedora 44 provides a compatible hayro-jpeg2000 0.3 crate for Kreuzberg.
+    rawhide: Fedora Rawhide provides a compatible hayro-jpeg2000 0.3 crate for Kreuzberg.
+  subdir: packages/rust-hayro-jpeg2000
+  spec: rust-hayro-jpeg2000.spec

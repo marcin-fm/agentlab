@@ -1,0 +1,33 @@
+name: rust-lzma-rust2_0.16
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 2.1 adapts Fedora's 0.16.5-2 package only for Rawhide, where sevenz-rust2 0.20 requires lzma-rust2 below 0.17.
+  source_identity: The immutable static crates.io archive matches the pinned SHA-256 and contains the declared Apache-2.0 license text.
+  fedora_provenance: Spec and metadata patch are adapted from Fedora commit 3309ae290a9d488a729276d467b1b20f89093572.
+  test_scope: Checks remain disabled because the published crate omits tests/data, which includes precompiled inputs without reviewed provenance or licensing.
+upstream:
+  provider: crates_io
+  crate: lzma-rust2
+  version_requirement: '>= 0.16.0, < 0.17.0'
+  current_version: 0.16.5
+  source_url_template: https://static.crates.io/crates/lzma-rust2/lzma-rust2-{version}.crate
+  source_sha256: ca93e534d1142d1d0dcca6d25fe302508a5dfb40b302802904577725ea0b695b
+duplicate_check:
+  checked: "2026-07-23"
+  fedora_43: rust-lzma-rust2-devel 0.16.5-2.fc43
+  fedora_44: rust-lzma-rust2-devel 0.16.5-2.fc44
+  fedora_rawhide: incompatible rust-lzma-rust2 0.17 branch only
+  rpm_fusion: no matching 0.16 compatibility provider found
+fedora_adaptation:
+  base_release: "2"
+  commit: 3309ae290a9d488a729276d467b1b20f89093572
+copr:
+  enabled: true
+  chroots:
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  omitted_target_families:
+    stable: Fedora 43 and Fedora 44 provide lzma-rust2 0.16.5 for the selected sevenz-rust2 0.20 consumer.
+  subdir: packages/rust-lzma-rust2_0.16
+  spec: rust-lzma-rust2_0.16.spec

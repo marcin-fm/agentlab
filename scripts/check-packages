@@ -47,6 +47,12 @@ packages.each do |package|
     end
   end
 
+  target_families = {
+    "stable" => Agentlab::STABLE_COPR_CHROOTS,
+    "fedora_43" => Agentlab::COPR_ARCHITECTURES.map { |architecture| "fedora-43-#{architecture}" },
+    "fedora_44" => Agentlab::COPR_ARCHITECTURES.map { |architecture| "fedora-44-#{architecture}" },
+    "rawhide" => Agentlab::RAWHIDE_COPR_CHROOTS
+  }
   omitted_target_families = package.data.dig("copr", "omitted_target_families")
   omitted_families = []
   if omitted_target_families
@@ -54,29 +60,28 @@ packages.each do |package|
       errors << "#{package.name}: copr.omitted_target_families must be a nonempty mapping"
     else
       omitted_families = omitted_target_families.keys
-      unknown_families = omitted_families - %w[stable rawhide]
+      unknown_families = omitted_families - target_families.keys
       errors << "#{package.name}: copr.omitted_target_families contains unknown families: #{unknown_families.join(', ')}" if unknown_families.any?
       omitted_target_families.each do |family, reason|
         unless reason.is_a?(String) && !reason.strip.empty?
           errors << "#{package.name}: copr.omitted_target_families.#{family} must explain the omission"
         end
       end
-      errors << "#{package.name}: copr.omitted_target_families cannot omit every target family" if (omitted_families & %w[stable rawhide]).length == 2
+      omitted_chroots = omitted_families.flat_map { |family| target_families.fetch(family, []) }
+      duplicate_omissions = omitted_chroots.tally.select { |_chroot, count| count > 1 }.keys
+      errors << "#{package.name}: copr.omitted_target_families contains overlapping families" if duplicate_omissions.any?
+      errors << "#{package.name}: copr.omitted_target_families cannot omit every target" if (Agentlab::DEFAULT_COPR_CHROOTS - omitted_chroots).empty?
     end
 
     selected_chroots = package.chroots(project_chroots)
-    if omitted_families.include?("stable") && (selected_chroots & Agentlab::STABLE_COPR_CHROOTS).any?
-      errors << "#{package.name}: copr.chroots selects stable targets that copr.omitted_target_families omits"
-    end
-    if omitted_families.include?("rawhide") && (selected_chroots & Agentlab::RAWHIDE_COPR_CHROOTS).any?
-      errors << "#{package.name}: copr.chroots selects Rawhide targets that copr.omitted_target_families omits"
-    end
+    omitted_chroots = omitted_families.flat_map { |family| target_families.fetch(family, []) }
+    selected_omissions = selected_chroots & omitted_chroots
+    errors << "#{package.name}: copr.chroots selects targets that copr.omitted_target_families omits: #{selected_omissions.join(', ')}" if selected_omissions.any?
   end
 
   if package.enabled?
     matrix_chroots = package.chroots(project_chroots).dup
-    matrix_chroots.concat(Agentlab::STABLE_COPR_CHROOTS) if omitted_families.include?("stable")
-    matrix_chroots.concat(Agentlab::RAWHIDE_COPR_CHROOTS) if omitted_families.include?("rawhide")
+    matrix_chroots.concat(omitted_families.flat_map { |family| target_families.fetch(family, []) })
     Agentlab.copr_chroot_matrix_errors(
       matrix_chroots.uniq,
       require_all_stable_releases: false
@@ -98,8 +103,13 @@ packages.each do |package|
   manifest_sha256 = package.upstream["source_sha256"].to_s
   errors << "#{package.name}: spec Name is #{spec_name.inspect}" unless spec_name == package.name
   errors << "#{package.name}: spec Version #{spec_version.inspect} != manifest RPM version #{spec_version_expected.inspect}" unless spec_version == spec_version_expected
-  unless spec_release&.match?(/\A0\.(?:0\.)?[1-9][0-9]*%\{\?dist\}\z/)
-    errors << "#{package.name}: Release #{spec_release.inspect} must use 0.x%{?dist} or legacy 0.0.x%{?dist}"
+  normal_release = spec_release&.match?(/\A0\.(?:0\.)?[1-9][0-9]*%\{\?dist\}\z/)
+  fedora_base_release = package.data.dig("fedora_adaptation", "base_release").to_s
+  adapted_release = !fedora_base_release.empty? && spec_release&.match?(
+    /\A#{Regexp.escape(fedora_base_release)}\.[1-9][0-9]*%\{\?dist\}\z/
+  )
+  unless normal_release || adapted_release
+    errors << "#{package.name}: Release #{spec_release.inspect} must use 0.x%{?dist}, legacy 0.0.x%{?dist}, or a declared Fedora base release plus Agentlab revision"
   end
 
   changelog = spec.split(/^%changelog\s*$/, 2)[1].to_s
