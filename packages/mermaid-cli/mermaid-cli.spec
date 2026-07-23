@@ -1,5 +1,5 @@
-# Disabled by package.yml until the generated npm source closure is audited,
-# immutably hosted, and proven in both configured Fedora buildroots.
+# Source1-Source6 are reconstructed and hash-verified by configured-SCM
+# make_srpm before target RPM builds begin.
 %global source_sha256 c95d8b32a604e8393d9cfea9ee54060752b1cf4ff291be80a0b749e96a42c0c2
 %global closure_sha256 4a181bf1d043a892bff09f81a7aafcc6345bd93b46b1a9761b152b66f7a3eabe
 %global manifest_sha256 65c2ae8e1099d2530f73b54d985e7e7b086eb87f7f9dd68e8675772951d2e9ee
@@ -23,7 +23,7 @@
 
 Name:           mermaid-cli
 Version:        11.16.0
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Command-line tool for rendering Mermaid diagrams
 
 License:        MIT AND Apache-2.0 AND ISC AND BSD-3-Clause AND 0BSD AND CC-BY-4.0 AND OFL-1.1 AND EPL-2.0 AND (MPL-2.0 OR Apache-2.0) AND Zlib AND Unlicense
@@ -581,6 +581,9 @@ install -Dpm0644 README.md %{buildroot}%{_docdir}/%{name}/README.md
 %{nodejs_sitelib}/@mermaid-js/mermaid-cli/
 
 %changelog
+* Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 11.16.0-0.4
+- Generate the audited closure during configured-SCM SRPM creation.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 11.16.0-0.3
 - Record browser generated-source hardship and upstream bundling contact.
 

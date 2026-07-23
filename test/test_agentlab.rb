@@ -388,6 +388,21 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "scripts/prepare-bun-srpm-sources")
     assert_includes(makefile, "scripts/audit-bun-source-licenses")
     assert_includes(makefile, "dnf -y install ruby ruby-bundled-gems")
+    assert_includes(makefile, "scripts/build-mermaid-cli-closure")
+  end
+
+  def test_copr_makefile_materializes_the_audited_mermaid_closure
+    makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
+    generator = File.read(File.expand_path("../scripts/build-mermaid-cli-closure", __dir__))
+
+    assert_includes(makefile, "mermaid-cli.spec)")
+    assert_includes(makefile, "nodejs22-npm")
+    assert_includes(makefile, "/srv/tmp/agentlab-mermaid-cli-srpm.XXXXXX")
+    assert_includes(makefile, '--source "$$specdir/$$version.tar.gz"')
+    assert_includes(makefile, "node-closure.tar.zst closure.json bundled-licenses.txt native.json third-party-notices.txt closure-receipt.json")
+    assert_includes(generator, 'dependencies.dig("lockfile", "generator_npm_version")')
+    assert_includes(generator, 'dependencies.fetch("source_closure_sha256")')
+    assert_includes(generator, "does not match audited SHA-256")
   end
 
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions

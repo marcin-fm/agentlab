@@ -293,12 +293,24 @@ npm_stdout, npm_stderr, npm_status = Agentlab.capture(["npm", "--version"], chdi
 raise Agentlab::Error, "cannot determine npm version: #{npm_stderr}" unless npm_status.success?
 
 npm_version = npm_stdout.strip
+expected_npm_version = dependencies.dig("lockfile", "generator_npm_version").to_s
+unless npm_version == expected_npm_version
+  raise Agentlab::Error, "npm version #{npm_version} does not match audited generator #{expected_npm_version}"
+end
 run!(environment, ["npm", "install", "--package-lock-only", "--omit=dev", "--ignore-scripts"], chdir: source_root)
 run!(environment, ["npm", "ci", "--omit=dev", "--ignore-scripts"], chdir: source_root)
 
 runtime_lock_path = File.join(source_root, "package-lock.json")
 runtime_lock_bytes = File.binread(runtime_lock_path)
 runtime_lock = JSON.parse(runtime_lock_bytes)
+published_lock_sha256 = Digest::SHA256.hexdigest(original_lock_bytes)
+runtime_lock_sha256 = Digest::SHA256.hexdigest(runtime_lock_bytes)
+unless published_lock_sha256 == dependencies.dig("lockfile", "published_sha256")
+  raise Agentlab::Error, "published lock SHA-256 does not match audited metadata"
+end
+unless runtime_lock_sha256 == dependencies.dig("lockfile", "runtime_sha256")
+  raise Agentlab::Error, "runtime lock SHA-256 does not match audited metadata"
+end
 original_packages = original_lock.fetch("packages")
 runtime_lock.fetch("packages").each do |path, entry|
   next if path.empty?
@@ -404,8 +416,8 @@ manifest = {
   "lockfile" => {
     "declared_package_manager" => declared_package_manager,
     "generator_npm_version" => npm_version,
-    "published_sha256" => Digest::SHA256.hexdigest(original_lock_bytes),
-    "runtime_sha256" => Digest::SHA256.hexdigest(runtime_lock_bytes)
+    "published_sha256" => published_lock_sha256,
+    "runtime_sha256" => runtime_lock_sha256
   },
   "source_archives" => source_archives.transform_values { |entry| entry.reject { |key, _| key == "bytes" } },
   "preferred_sources" => dependencies.fetch("preferred_sources", []),
@@ -540,8 +552,8 @@ receipt = {
   "source_archive_count" => source_archives.length,
   "declared_package_manager" => declared_package_manager,
   "generator_npm_version" => npm_version,
-  "published_lock_sha256" => Digest::SHA256.hexdigest(original_lock_bytes),
-  "runtime_lock_sha256" => Digest::SHA256.hexdigest(runtime_lock_bytes),
+  "published_lock_sha256" => published_lock_sha256,
+  "runtime_lock_sha256" => runtime_lock_sha256,
   "archive_sha256" => Digest::SHA256.file(archive_path).hexdigest,
   "manifest_sha256" => Digest::SHA256.file(manifest_path).hexdigest,
   "license_inventory_sha256" => Digest::SHA256.file(license_path).hexdigest,
@@ -559,7 +571,31 @@ receipt = {
 receipt_path = File.join(output_dir, "mermaid-cli-#{version}-closure-receipt.json")
 File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
 
+generated_files = {
+  "production_archive" => archive_path,
+  "closure_manifest" => manifest_path,
+  "bundled_licenses" => license_path,
+  "native_manifest" => native_path,
+  "third_party_notices" => notice_path,
+  "closure_receipt" => receipt_path
+}
+expected_files = dependencies.fetch("source_closure_files")
+expected_hashes = dependencies.fetch("source_closure_sha256")
+generated_files.each do |key, path|
+  expected_name = expected_files.fetch(key)
+  unless File.basename(path) == expected_name
+    raise Agentlab::Error, "#{key} filename #{File.basename(path)} does not match audited filename #{expected_name}"
+  end
+
+  expected_sha256 = expected_hashes.fetch(key)
+  actual_sha256 = Digest::SHA256.file(path).hexdigest
+  unless actual_sha256 == expected_sha256
+    raise Agentlab::Error, "#{expected_name} SHA-256 #{actual_sha256} does not match audited SHA-256 #{expected_sha256}"
+  end
+end
+
 puts "Built Mermaid CLI closure with #{manifest_entries.length} package paths."
+puts "Verified all six generated files against the audited source contract."
 puts "Archive: #{archive_path}"
 puts "Manifest: #{manifest_path}"
 puts "Notices: #{notice_path}"

@@ -1,7 +1,6 @@
 name: mermaid-cli
-status: blocked
-blockers:
-  - Generated Source1-Source6 artifacts, including the 145 MB production closure, have not been immutably hosted for COPR SCM builds.
+status: enabled
+blockers: []
 source_policy:
   runtime_tree: private Node application closure
   generated_html: copied from the equivalent release source index.html
@@ -13,6 +12,10 @@ source_policy:
   browser_generated_assets: The selected readable ESM bundles retain source-path markers and are injected only into Chromium. Remaining minified release output is browser-only, exact corresponding source is retained, and rebuilding the full Mermaid, ELK, ZenUML, KaTeX, and Font Awesome frontend toolchains in this application package is impractical.
   locally_executed_javascript: The mmdc Node entry point and its direct Node-side dependencies are not minified.
   font_awesome_fonts: official 7.2.0 release data matched byte-for-byte to the three active runtime WOFF2 files
+  generated_source_delivery: repository-backed COPR configured-SCM make_srpm generation from immutable audited inputs
+  srpm_generation_network: allowed only while materializing sources in the COPR source builder
+  target_build_network: forbidden
+  generated_output_hashes_enforced: true
 closure_validation:
   release: 11.16.0
   package_paths: 327
@@ -51,6 +54,6 @@ upstream:
   source_url_template: https://github.com/mermaid-js/mermaid-cli/archive/refs/tags/{version}.tar.gz
   source_sha256: c95d8b32a604e8393d9cfea9ee54060752b1cf4ff291be80a0b749e96a42c0c2
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/mermaid-cli
   spec: mermaid-cli.spec

@@ -46,6 +46,23 @@ srpm:
 			ruby "$(repo_root)/scripts/prepare-codex-cargo-srpm-sources" --spec "$(spec)"; \
 			ruby "$(repo_root)/scripts/prepare-codex-cargo-license-sources" --spec "$(spec)"; \
 			;; \
+		mermaid-cli.spec) \
+			set -eu; \
+			specdir="$$(dirname "$(spec)")"; \
+			dnf -y install ruby ruby-default-gems rubygem-json nodejs22-npm tar unzip zstd; \
+			install -d -m0755 /srv/tmp; \
+			version="$$(rpmspec -q --qf '%{VERSION}' "$(spec)")"; \
+			tempdir="$$(mktemp -d /srv/tmp/agentlab-mermaid-cli-srpm.XXXXXX)"; \
+			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
+			ruby "$(repo_root)/scripts/build-mermaid-cli-closure" \
+				--source "$$specdir/$$version.tar.gz" \
+				--workdir "$$tempdir/work" \
+				--output-dir "$$tempdir/output"; \
+			for suffix in node-closure.tar.zst closure.json bundled-licenses.txt native.json third-party-notices.txt closure-receipt.json; do \
+				filename="mermaid-cli-$$version-$$suffix"; \
+				install -pm0644 "$$tempdir/output/$$filename" "$$specdir/$$filename"; \
+			done; \
+			;; \
 		rust-v8.spec) \
 			ruby-mri -rjson -roptparse -rpathname -rrubygems/package -rtempfile -rtmpdir -rzlib -e '' >/dev/null 2>&1 || dnf -y install ruby ruby-default-gems rubygem-json; \
 			install -d -m0755 /srv/tmp; \

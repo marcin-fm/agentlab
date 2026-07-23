@@ -149,17 +149,43 @@ packages.each do |package|
 
     if dependencies.key?("source_closure_files")
       source_files = dependencies.fetch("source_closure_files")
+      source_hashes = dependencies.fetch("source_closure_sha256", {})
+      source_delivery = dependencies.fetch("source_delivery", {})
+      generated_during_srpm = source_delivery["method"] == "copr-git-scm-make_srpm"
+      if generated_during_srpm
+        implementation = source_delivery["implementation"]
+        implementation_path = implementation.is_a?(String) && File.join(Agentlab::ROOT, implementation)
+        errors << "#{package.name}: generated source implementation is missing" unless implementation_path && File.file?(implementation_path)
+        errors << "#{package.name}: generated source hashes are not enforced" unless source_delivery["expected_hashes_enforced"] == true
+        errors << "#{package.name}: target builds must keep networking forbidden" unless source_delivery["target_build_network"] == "forbidden"
+        errors << "#{package.name}: generated source delivery still requires an external asset" unless source_delivery["external_generated_asset_required"] == false
+
+        makefile_path = File.join(Agentlab::ROOT, ".copr", "Makefile")
+        makefile = File.file?(makefile_path) ? File.read(makefile_path) : ""
+        errors << "#{package.name}: COPR Makefile does not select the package spec" unless makefile.include?("#{package.name}.spec)")
+        errors << "#{package.name}: COPR Makefile does not invoke #{implementation}" unless implementation && makefile.include?(implementation)
+      end
       closure_filename = source_files["closure_manifest"]
       closure_path = closure_filename.is_a?(String) && File.join(package.directory, closure_filename)
-      source_files.each_value do |filename|
+      source_files.each do |key, filename|
         unless filename.is_a?(String)
           errors << "#{package.name}: closure source filename must be a string"
           next
         end
+        expected_sha256 = source_hashes[key]
+        valid_sha256 = expected_sha256.is_a?(String) && expected_sha256.match?(/\A[0-9a-f]{64}\z/)
+        if generated_during_srpm && !valid_sha256
+          errors << "#{package.name}: closure source #{filename} is missing a valid SHA-256"
+        end
         next unless package.enabled?
 
         path = File.join(package.directory, filename)
-        errors << "#{package.name}: enabled package is missing closure source #{filename}" unless File.file?(path)
+        if File.file?(path) && valid_sha256
+          actual_sha256 = Digest::SHA256.file(path).hexdigest
+          errors << "#{package.name}: closure source #{filename} SHA-256 does not match" unless actual_sha256 == expected_sha256
+        elsif !generated_during_srpm
+          errors << "#{package.name}: enabled package is missing closure source #{filename}"
+        end
       end
 
       if closure_path && File.file?(closure_path)
@@ -171,7 +197,7 @@ packages.each do |package|
         rescue JSON::ParserError, Agentlab::Error, KeyError => e
           errors << "#{package.name}: invalid closure manifest #{closure_filename}: #{e.message}"
         end
-      elsif package.enabled?
+      elsif package.enabled? && !generated_during_srpm
         errors << "#{package.name}: closure manifest is not configured or missing"
       end
 

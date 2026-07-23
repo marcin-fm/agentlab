@@ -149,6 +149,13 @@ source_closure_sha256:
   native_manifest: eb99b57bf8df386041a02b1eb0fa0726e0f9cd19fb860f505e3e956cd36d1468
   third_party_notices: 41be30cd3c63b27d747d64fc642b524060befc9d43faab922274f8bd4f2e8bbf
   closure_receipt: 0e94937cfd9739a947c8cbba9599fe555e78782ca96384dca134b7bc21dca5d2
+source_delivery:
+  method: copr-git-scm-make_srpm
+  implementation: scripts/build-mermaid-cli-closure
+  source_builder_network: required for immutable npm and corresponding-source inputs
+  target_build_network: forbidden
+  expected_hashes_enforced: true
+  external_generated_asset_required: false
 lockfile:
   declared_package_manager: npm@10.8.1
   generator_npm_version: 10.9.7
@@ -189,5 +196,5 @@ gates:
   - Reject browser downloads, native addons, shared libraries, executables, and opaque WASM payloads.
   - Verify every registry SHA-512 integrity value and record a SHA-256 for each source tarball.
   - Retain the audited bundled licenses, notices, corresponding sources, and official Font Awesome release data.
-  - Publish the deterministic closure archive at an immutable checksummed URL usable by COPR.
+  - Reconstruct Source1-Source6 during configured-SCM SRPM generation and reject any output that differs from the audited checksums.
   - Retain the public upstream distribution-packaging contact and exact bundled dependency metadata.

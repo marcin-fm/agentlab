@@ -42,6 +42,8 @@ builds exercised the staged installed `mmdc` command against Fedora
 regular, and brand icons. Final artifacts have zero `rpmlint` errors. No
 produced RPM was installed on the host.
 
-The package remains blocked and COPR-disabled only until all generated
-`Source1`-`Source6` artifacts, including the 145 MB closure, are hosted at
-immutable checksummed URLs.
+Configured-SCM builds reconstruct `Source1`-`Source6` during `make_srpm` from
+the immutable audited inputs. The source builder uses Fedora's npm 10.9.7,
+executes no lifecycle scripts, and rejects any runtime lock or generated file
+whose digest differs from the retained contract. Target RPM builds remain
+offline and consume only the generated SRPM sources.
