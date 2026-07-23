@@ -439,6 +439,16 @@ class AgentlabTest < Minitest::Test
     )
   end
 
+  def test_copr_makefile_exposes_agentlab_dependencies_to_kreuzberg_source_builds
+    makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
+
+    assert_includes(makefile, "kreuzberg.spec)")
+    assert_includes(makefile, ". /etc/os-release")
+    assert_includes(makefile, "fedora-$$fedora_release-$$arch/")
+    assert_includes(makefile, "/etc/yum.repos.d/agentlab-copr.repo")
+    assert_includes(makefile, "skip_if_unavailable=0")
+  end
+
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions
     response = JSON.dump(
       "versions" => [

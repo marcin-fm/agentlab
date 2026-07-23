@@ -63,6 +63,25 @@ srpm:
 				install -pm0644 "$$tempdir/output/$$filename" "$$specdir/$$filename"; \
 				done; \
 			;; \
+		kreuzberg.spec) \
+			set -eu; \
+			. /etc/os-release; \
+			case "$$VERSION_ID" in \
+				rawhide) fedora_release=rawhide ;; \
+				*) fedora_release="$$VERSION_ID" ;; \
+			esac; \
+			arch="$$(uname -m)"; \
+			install -d -m0755 /etc/yum.repos.d; \
+			printf '%s\n' \
+				'[agentlab-copr]' \
+				'name=Agentlab COPR source-builder dependencies' \
+				"baseurl=https://download.copr.fedorainfracloud.org/results/marcin/agentlab/fedora-$$fedora_release-$$arch/" \
+				'enabled=1' \
+				'gpgcheck=0' \
+				'repo_gpgcheck=0' \
+				'skip_if_unavailable=0' \
+				> /etc/yum.repos.d/agentlab-copr.repo; \
+			;; \
 		rust-tree-sitter-language-pack1.spec) \
 			set -eu; \
 			specdir="$$(dirname "$(spec)")"; \
