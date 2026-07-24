@@ -41,16 +41,22 @@ build_runtime:
     - rust-tiktoken-rs0.11 = 0.11.0
 validation:
   current_draft:
-    release: 0.32.0-0.9
-    status: pending configured-SCM six-cell build and artifact proof
+    release: 0.32.0-0.10
+    status: local validation passed; configured-SCM six-cell rebuild pending
     static_validation: exact-archive zero-fuzz patch application, selected manifest closure, system ast-grep substitution, scoped Cargo metadata and license probing, RPM spec parsing, YAML parsing, and repository tests passed
+    local_srpm_sha256: 9b371be9f5172a0caed93bce621b6ade958765019d31030a5c0f511870a2d389
+    local_srpm_rpmlint: zero errors, zero warnings, four filtered
     source_license_probe: 240 target-all package/version records for headroom-core and headroom-py; fastembed and aws-config are absent
     license_breakdown_records: 207
-    candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
+    candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
     buildroot_license_gate: target builds must regenerate LICENSE.dependencies from the provider-selected closure
     system_sqlite_gate: target checks must prove the Rust CCR test binary links Fedora libsqlite3 and the installed Python SQLite backend opens a database
     installed_smoke_gate: target checks must verify PyInit__core and import the buildroot package in safe-path mode before running the installed CLI help path
-    local_fedora_44_x86_64: passed complete Mock build, 936 Cargo tests and doctests, system SQLite, installed import and CLI smokes
+    prior_local_fedora_44_x86_64: release 0.9 passed complete Mock build, 936 Cargo tests and doctests, system SQLite, installed import and CLI smokes
+    prior_configured_scm_build: 10770364
+    prior_configured_scm_matrix: 0.32.0-0.9 passed Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+    prior_remote_runtime_rpm_sha256: 0b166b3534235b803daac0a94023962f3b7dd3317b1a120508a8fdeee4ccf1b6
+    prior_license_finding: regex-syntax 0.8.11 requires unavoidable Unicode-DFS-2016; corrected rebuild pending
   prior_release_0_1:
     fedora_43:
       mock: passed

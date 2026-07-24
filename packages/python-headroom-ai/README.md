@@ -25,29 +25,39 @@ CLI, stdio and streamable-HTTP MCP transports, proxy/update/file-read paths, and
 unconditional tokenizer `hf-hub` capability are documented runtime behavior;
 RPM build phases remain offline. The native `ml` feature remains disabled.
 
-Release `0.9` is enabled for the exact configured target proof. Release `0.8`
-proved that maturin's offline metadata pass still resolved unselected
-FastEmbed, so `0.9` narrows the manifest to the selected closure. It also omits
-only the unavailable Criterion dependency used by three benchmark targets;
-actual Cargo tests and installed Python smokes remain enabled. Dynamic Python
-metadata uses the system ast-grep dependency rather than a binary wheel. Its checks fail
-unless the Rust CCR test binary links Fedora's system SQLite, the installed
-Python SQLite backend opens a database, the extension has no RPATH/RUNPATH,
-the package imports successfully, and the installed CLI help path runs. Fedora's
-FastAPI package is required explicitly because upstream CLI registration imports
-the proxy request-scope module even when only the `mcp` extra is selected.
-A scoped source probe found 240 target-all package/version records and 207
-license-breakdown entries, producing the selected aggregate expression
-`Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC
-AND MIT AND MPL-2.0 AND Unicode-3.0`. Target builds regenerate the dependency
-inventory through standard Cargo license accounting.
+Release `0.9` succeeded in the complete configured Fedora 43, Fedora 44, and
+Rawhide matrix on both architectures. Release `0.8` proved that maturin's
+offline metadata pass still resolved unselected FastEmbed, so `0.9` narrows the
+manifest to the selected closure. It also omits only the unavailable Criterion
+dependency used by three benchmark targets; actual Cargo tests and installed
+Python smokes remain enabled. Dynamic Python metadata uses the system ast-grep
+dependency rather than a binary wheel. Its checks fail unless the Rust CCR test
+binary links Fedora's system SQLite, the installed Python SQLite backend opens
+a database, the extension has no RPATH/RUNPATH, the package imports
+successfully, and the installed CLI help path runs. Fedora's FastAPI package is
+required explicitly because upstream CLI registration imports the proxy
+request-scope module even when only the `mcp` extra is selected.
 
-The final Fedora 44 x86_64 Mock proof passes the complete build, 936 Cargo
-tests and doctests, system-SQLite and installed Python smokes, and artifact
-checks. Runtime RPM `rpmlint` has no errors and only the missing-manpage warning.
+The generated dependency inventory from build `10770364` exposed an aggregate
+license omission: `regex-syntax 0.8.11` requires
+`(MIT OR Apache-2.0) AND Unicode-DFS-2016`. Release `0.10` makes only that
+metadata correction. The selected aggregate expression is
+`Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC
+AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016`. Target builds
+regenerate the dependency inventory through standard Cargo license accounting.
+
+The release `0.9` Fedora 44 x86_64 Mock proof passes the complete build, 936
+Cargo tests and doctests, system-SQLite and installed Python smokes, and
+artifact checks. Its configured-SCM build passed all six cells; the runtime RPM
+`rpmlint` has no errors and only the missing-manpage warning. The local `0.10`
+source RPM is SHA-256
+`9b371be9f5172a0caed93bce621b6ade958765019d31030a5c0f511870a2d389` and
+passes source-member, aggregate-license, and `rpmlint` checks. Release `0.10`
+still requires the same six-cell rebuild and non-installing runtime artifact
+proof for the corrected metadata.
 
 Historical Fedora 43 and Fedora 44 `0.31.0-0.1` receipts remain evidence only;
-they do not validate `0.32.0-0.9`. Released non-ML Headroom still requires
+they do not validate `0.32.0-0.10`. Released non-ML Headroom still requires
 `tiktoken-rs 0.11`, its `fancy-regex 0.17` edge, and `unidiff 0.4`, so those
 three compatibility records remain selected for the package. No produced RPM
 was installed.

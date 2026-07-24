@@ -4,12 +4,12 @@
 
 Name:           python-headroom-ai
 Version:        0.32.0
-Release:        0.9%{?dist}
+Release:        0.10%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
 # The configured target build regenerates LICENSE.dependencies from this graph.
-License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
+License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
 URL:            https://github.com/headroomlabs-ai/headroom
 Source0:        https://github.com/headroomlabs-ai/headroom/archive/%{upstream_commit}/headroom-%{upstream_commit}.tar.gz
 # Packaging-only feature selection: upstream headroom-core defaults to ML and
@@ -126,6 +126,9 @@ PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindi
 %{_bindir}/headroom
 
 %changelog
+* Fri Jul 24 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.10
+- Correct the linked Rust license expression for Unicode-DFS-2016.
+
 * Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.9
 - Select the system ast-grep CLI and remove unselected optional native metadata.
 

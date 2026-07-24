@@ -7,10 +7,10 @@ release:
   upstream_tag: v0.32.0
   upstream_commit: 4381388d56f49af3ae9b1dece7489a12fa64a1a1
 current_draft:
-  release: 0.32.0-0.9
-  validation: pending configured-SCM six-cell build and artifact proof
-  spec_sha256: 95c0dc8c03019d59ff9968143bc3f0a9503c73ae61dc83d151bf405765ee92b6
-  selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
+  release: 0.32.0-0.10
+  validation: local validation passed; configured-SCM six-cell rebuild pending
+  spec_sha256: 0211caa057418c5fda2dd9601372d72aeb06cbf83abd695f980f25881bcc922d
+  selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
   license_gate: target builds must regenerate LICENSE.dependencies from the selected closure
 selected_surface:
   python: upstream base project plus mcp extra
@@ -43,24 +43,27 @@ current_static_validation:
   license_workspace: headroom-core and headroom-py only
   source_license_probe: 240 unique target-all package/version records; fastembed and aws-config are absent
   license_breakdown_records: 207
-  buildroot_license_probe: pending configured target builds
+  buildroot_license_probe: 0.32.0-0.9 inventory exposed unavoidable Unicode-DFS-2016; corrected 0.32.0-0.10 rebuild pending
   license_macro_redirection: canonical braced cargo_license expansion writes ../../LICENSE.dependencies
   system_sqlite_probe: target checks require the Rust CCR test binary to link Fedora libsqlite3 and the installed Python backend to open a database
   extension_dynamic_probe: target checks reject RPATH or RUNPATH; unused Rust CCR code may be dead-stripped from the extension
   installed_smoke: target checks verify PyInit__core, import the buildroot package in safe-path mode, and run headroom --help
   spec_parse: passed
-  local_srpm_sha256: f43fccdd0eaab00c5b30beda25ef5b4bac2fcf5337242748d80f926e45a9b35c
+  local_srpm_sha256: 9b371be9f5172a0caed93bce621b6ade958765019d31030a5c0f511870a2d389
   rpmlint: zero errors, zero warnings, four filtered
-  local_mock_fedora_44_x86_64: passed
-  local_runtime_rpm_sha256: cf4b945776325b0798ed6da14bcc514a8fdca7608ff7a07082366e4276186390
-  local_debuginfo_rpm_sha256: 366ba34cec0d6d0856e97ff333ecb545f6399e5dc04266a4583967203d246432
-  local_binary_rpmlint: zero errors and one missing-manpage warning
-  local_cargo_tests: 936 passed plus doctests; 3 ignored
+  prior_local_mock_fedora_44_x86_64: release 0.9 passed
+  prior_local_runtime_rpm_sha256: cf4b945776325b0798ed6da14bcc514a8fdca7608ff7a07082366e4276186390
+  prior_local_debuginfo_rpm_sha256: 366ba34cec0d6d0856e97ff333ecb545f6399e5dc04266a4583967203d246432
+  prior_local_binary_rpmlint: zero errors and one missing-manpage warning
+  prior_local_cargo_tests: release 0.9 passed 936 plus doctests; 3 ignored
   yaml_parse: passed
   scoped_package_validator: passed
-  full_package_validator: 130 packages passed
+  full_package_validator: 131 packages passed
   repository_tests: 97 runs, 1024 assertions, zero failures with the known unrelated Bun WebKit collision-order test excluded
   diff_check: passed
+  prior_configured_scm_build: 10770364
+  prior_configured_scm_matrix: 0.32.0-0.9 passed Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+  prior_remote_runtime_rpm_sha256: 0b166b3534235b803daac0a94023962f3b7dd3317b1a120508a8fdeee4ccf1b6
 validation:
   applies_to: 0.31.0-0.1 historical package only; no current build evidence
   source_hash_verified: true
