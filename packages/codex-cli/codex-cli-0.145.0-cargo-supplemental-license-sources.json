@@ -2,11 +2,11 @@
   "schema": "agentlab-codex-cargo-supplemental-license-sources/v6",
   "release": {
     "name": "codex-cli",
-    "version": "0.144.5",
-    "source_tag": "rust-v0.144.5",
-    "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
-    "resolver_vendor_tree_sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c",
-    "license_text_inventory_sha256": "7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd"
+    "version": "0.145.0",
+    "source_tag": "rust-v0.145.0",
+    "source_commit": "25af12f7e61572b0bc18ddb1008be543b91519b0",
+    "resolver_vendor_tree_sha256": "c6a29cc835a50bc78e2a5a0fa736c6fdd1ba31073aaa38d6d67fd229f8b7e56e",
+    "license_text_inventory_sha256": "f58d8da5903e4c96e91a2a8a079bf8d36b2efd7f699ad65c0ac00dea8d20dfc0"
   },
   "sources": [
     {
@@ -2119,22 +2119,22 @@
   "policy_holds": [],
   "inputs": {
     "resolver_vendor_receipt": {
-      "path": "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json",
-      "sha256": "9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355",
-      "vendor_tree_sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c"
+      "path": "codex-cli-0.145.0-resolver-cargo-vendor-receipt.json",
+      "sha256": "e6e900400a5d2719abba1b5421d6affbc87d4df8b34ce5218b9c7c26578f3ca6",
+      "vendor_tree_sha256": "c6a29cc835a50bc78e2a5a0fa736c6fdd1ba31073aaa38d6d67fd229f8b7e56e"
     },
     "license_text_inventory": {
-      "path": "codex-cli-0.144.5-cargo-license-text-inventory.json",
-      "sha256": "7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd"
+      "path": "codex-cli-0.145.0-cargo-license-text-inventory.json",
+      "sha256": "f58d8da5903e4c96e91a2a8a079bf8d36b2efd7f699ad65c0ac00dea8d20dfc0"
     },
     "selected_cargo_license_audit": {
-      "path": "codex-cli-0.144.5-selected-cargo-license-audit.json",
-      "sha256": "b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426"
+      "path": "codex-cli-0.145.0-selected-cargo-license-audit.json",
+      "sha256": "640406844bf04f09600ca8a9c38a835a4adea0881ee7139d3aaed3031f1a6b49"
     }
   },
   "archive": {
-    "filename": "codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz",
-    "root": "codex-cli-0.144.5-supplemental-license-sources",
+    "filename": "codex-cli-0.145.0-cargo-supplemental-license-sources.tar.gz",
+    "root": "codex-cli-0.145.0-supplemental-license-sources",
     "installable_texts": 25,
     "transport_identity_required": false
   },

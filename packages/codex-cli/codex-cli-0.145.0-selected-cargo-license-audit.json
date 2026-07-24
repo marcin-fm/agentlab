@@ -1,22 +1,22 @@
 {
   "schema": "agentlab-codex-selected-cargo-license-audit/v1",
   "release": {
-    "version": "0.144.5",
-    "source_tag": "rust-v0.144.5",
-    "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
-    "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
-    "source_cargo_lock_sha256": "175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e",
-    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
+    "version": "0.145.0",
+    "source_tag": "rust-v0.145.0",
+    "source_commit": "25af12f7e61572b0bc18ddb1008be543b91519b0",
+    "source_sha256": "42f627a7b32db41582c73a8eafd9ec4b35d6c3ff81bd3d4455cfd6224d79d329",
+    "source_cargo_lock_sha256": "e0843448b5767ff36a2a3b15212feb480cd4eaafe8a0c0ca08547e3c7da03a05",
+    "normalized_cargo_lock_sha256": "dd14629278c371a87a3d546a7ac6b049cc681188ea67baaf02bdbe7f7773c58d"
   },
   "authoritative_closure": {
-    "name": "codex-cli-0.144.5-selected-cargo-closure.json",
-    "sha256": "b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3",
-    "packages": 1004,
+    "name": "codex-cli-0.145.0-selected-cargo-closure.json",
+    "sha256": "e7ac18c1afb5b3f6609a27c9c94e57d05bfde481ad639e3217f162ceeeae9ffd",
+    "packages": 1012,
     "target_triple": "x86_64-unknown-linux-gnu"
   },
   "resolver_supplement": {
-    "name": "codex-cli-0.144.5-cargo-resolver-supplement.json",
-    "sha256": "51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876",
+    "name": "codex-cli-0.145.0-cargo-resolver-supplement.json",
+    "sha256": "d9380367c84401707ca4cf78f546f36a8a72f910de70d6c7528beea2278854a7",
     "packages": 239
   },
   "selection": {
@@ -117,14 +117,14 @@
     "legacy_license_normalization": "Replace each slash-separated Cargo alternative with SPDX OR, matching Fedora cargo2rpm license output normalization."
   },
   "counts": {
-    "selected_packages": 1004,
-    "selected_linked_linux_packages": 873,
+    "selected_packages": 1012,
+    "selected_linked_linux_packages": 881,
     "selected_compile_only_packages": 131,
     "selected_build_role_packages": 20,
     "selected_normal_path_compile_only_packages": 111,
     "resolver_only_packages": 239,
-    "fedora_all_target_linked_packages": 1019,
-    "fedora_all_target_linked_selected_packages": 874,
+    "fedora_all_target_linked_packages": 1027,
+    "fedora_all_target_linked_selected_packages": 882,
     "fedora_all_target_linked_resolver_only_packages": 145,
     "selected_legacy_slash_expressions": 62,
     "resolver_legacy_slash_expressions": 18,
@@ -569,10 +569,10 @@
     },
     {
       "name": "anyhow",
-      "version": "1.0.102",
+      "version": "1.0.103",
       "origin": "registry",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c",
+      "checksum": "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3",
       "role": "runtime",
       "workspace_path_package": false,
       "cargo_manifest_license": {
@@ -2548,8 +2548,25 @@
       "fedora_all_target_linked": true
     },
     {
+      "name": "codex-agent-extension",
+      "version": "0.145.0",
+      "origin": "path",
+      "role": "runtime",
+      "manifest_path": "codex-rs/ext/agent/Cargo.toml",
+      "workspace_path_package": true,
+      "cargo_manifest_license": {
+        "expression": "Apache-2.0"
+      },
+      "cargo_tree_license": "Apache-2.0",
+      "license_provenance": "exact release workspace metadata with inherited workspace package license",
+      "normalized_spdx_candidate": "Apache-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
       "name": "codex-agent-graph-store",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/agent-graph-store/Cargo.toml",
@@ -2566,7 +2583,7 @@
     },
     {
       "name": "codex-agent-identity",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/agent-identity/Cargo.toml",
@@ -2583,7 +2600,7 @@
     },
     {
       "name": "codex-analytics",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/analytics/Cargo.toml",
@@ -2600,7 +2617,7 @@
     },
     {
       "name": "codex-ansi-escape",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ansi-escape/Cargo.toml",
@@ -2617,7 +2634,7 @@
     },
     {
       "name": "codex-api",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/codex-api/Cargo.toml",
@@ -2634,7 +2651,7 @@
     },
     {
       "name": "codex-app-server",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/app-server/Cargo.toml",
@@ -2651,7 +2668,7 @@
     },
     {
       "name": "codex-app-server-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/app-server-client/Cargo.toml",
@@ -2668,7 +2685,7 @@
     },
     {
       "name": "codex-app-server-daemon",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/app-server-daemon/Cargo.toml",
@@ -2685,7 +2702,7 @@
     },
     {
       "name": "codex-app-server-protocol",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/app-server-protocol/Cargo.toml",
@@ -2702,7 +2719,7 @@
     },
     {
       "name": "codex-app-server-test-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/app-server-test-client/Cargo.toml",
@@ -2719,7 +2736,7 @@
     },
     {
       "name": "codex-app-server-transport",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/app-server-transport/Cargo.toml",
@@ -2736,7 +2753,7 @@
     },
     {
       "name": "codex-apply-patch",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/apply-patch/Cargo.toml",
@@ -2753,7 +2770,7 @@
     },
     {
       "name": "codex-arg0",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/arg0/Cargo.toml",
@@ -2770,7 +2787,7 @@
     },
     {
       "name": "codex-async-utils",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/async-utils/Cargo.toml",
@@ -2787,7 +2804,7 @@
     },
     {
       "name": "codex-aws-auth",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/aws-auth/Cargo.toml",
@@ -2804,7 +2821,7 @@
     },
     {
       "name": "codex-backend-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/backend-client/Cargo.toml",
@@ -2821,7 +2838,7 @@
     },
     {
       "name": "codex-backend-openapi-models",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/codex-backend-openapi-models/Cargo.toml",
@@ -2838,7 +2855,7 @@
     },
     {
       "name": "codex-chatgpt",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/chatgpt/Cargo.toml",
@@ -2855,7 +2872,7 @@
     },
     {
       "name": "codex-cli",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/cli/Cargo.toml",
@@ -2872,7 +2889,7 @@
     },
     {
       "name": "codex-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/codex-client/Cargo.toml",
@@ -2889,7 +2906,7 @@
     },
     {
       "name": "codex-cloud-config",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/cloud-config/Cargo.toml",
@@ -2906,7 +2923,7 @@
     },
     {
       "name": "codex-cloud-tasks",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/cloud-tasks/Cargo.toml",
@@ -2923,7 +2940,7 @@
     },
     {
       "name": "codex-cloud-tasks-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/cloud-tasks-client/Cargo.toml",
@@ -2940,7 +2957,7 @@
     },
     {
       "name": "codex-cloud-tasks-mock-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/cloud-tasks-mock-client/Cargo.toml",
@@ -2957,7 +2974,7 @@
     },
     {
       "name": "codex-code-mode",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/code-mode/Cargo.toml",
@@ -2974,7 +2991,7 @@
     },
     {
       "name": "codex-code-mode-protocol",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/code-mode-protocol/Cargo.toml",
@@ -2991,7 +3008,7 @@
     },
     {
       "name": "codex-collaboration-mode-templates",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/collaboration-mode-templates/Cargo.toml",
@@ -3008,7 +3025,7 @@
     },
     {
       "name": "codex-config",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/config/Cargo.toml",
@@ -3025,7 +3042,7 @@
     },
     {
       "name": "codex-connectors",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/connectors/Cargo.toml",
@@ -3042,7 +3059,7 @@
     },
     {
       "name": "codex-connectors-extension",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/connectors/Cargo.toml",
@@ -3059,7 +3076,7 @@
     },
     {
       "name": "codex-context-fragments",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/context-fragments/Cargo.toml",
@@ -3076,7 +3093,7 @@
     },
     {
       "name": "codex-core",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/core/Cargo.toml",
@@ -3093,7 +3110,7 @@
     },
     {
       "name": "codex-core-plugins",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/core-plugins/Cargo.toml",
@@ -3110,7 +3127,7 @@
     },
     {
       "name": "codex-core-skills",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/core-skills/Cargo.toml",
@@ -3127,7 +3144,7 @@
     },
     {
       "name": "codex-exec",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/exec/Cargo.toml",
@@ -3144,7 +3161,7 @@
     },
     {
       "name": "codex-exec-server",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/exec-server/Cargo.toml",
@@ -3161,7 +3178,7 @@
     },
     {
       "name": "codex-exec-server-protocol",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/exec-server-protocol/Cargo.toml",
@@ -3178,7 +3195,7 @@
     },
     {
       "name": "codex-execpolicy",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/execpolicy/Cargo.toml",
@@ -3195,7 +3212,7 @@
     },
     {
       "name": "codex-experimental-api-macros",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/codex-experimental-api-macros/Cargo.toml",
@@ -3212,7 +3229,7 @@
     },
     {
       "name": "codex-extension-api",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/extension-api/Cargo.toml",
@@ -3229,7 +3246,7 @@
     },
     {
       "name": "codex-extension-items",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/items/Cargo.toml",
@@ -3246,7 +3263,7 @@
     },
     {
       "name": "codex-external-agent-migration",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/external-agent-migration/Cargo.toml",
@@ -3262,25 +3279,8 @@
       "fedora_all_target_linked": true
     },
     {
-      "name": "codex-external-agent-sessions",
-      "version": "0.144.5",
-      "origin": "path",
-      "role": "runtime",
-      "manifest_path": "codex-rs/external-agent-sessions/Cargo.toml",
-      "workspace_path_package": true,
-      "cargo_manifest_license": {
-        "expression": "Apache-2.0"
-      },
-      "cargo_tree_license": "Apache-2.0",
-      "license_provenance": "exact release workspace metadata with inherited workspace package license",
-      "normalized_spdx_candidate": "Apache-2.0",
-      "legacy_slash_normalized": false,
-      "linked_linux": true,
-      "fedora_all_target_linked": true
-    },
-    {
       "name": "codex-features",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/features/Cargo.toml",
@@ -3297,7 +3297,7 @@
     },
     {
       "name": "codex-feedback",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/feedback/Cargo.toml",
@@ -3314,7 +3314,7 @@
     },
     {
       "name": "codex-file-search",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/file-search/Cargo.toml",
@@ -3331,7 +3331,7 @@
     },
     {
       "name": "codex-file-system",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/file-system/Cargo.toml",
@@ -3348,7 +3348,7 @@
     },
     {
       "name": "codex-file-watcher",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/file-watcher/Cargo.toml",
@@ -3365,7 +3365,7 @@
     },
     {
       "name": "codex-git-utils",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/git-utils/Cargo.toml",
@@ -3382,7 +3382,7 @@
     },
     {
       "name": "codex-goal-extension",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/goal/Cargo.toml",
@@ -3399,7 +3399,7 @@
     },
     {
       "name": "codex-guardian",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/guardian/Cargo.toml",
@@ -3416,7 +3416,7 @@
     },
     {
       "name": "codex-home",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/codex-home/Cargo.toml",
@@ -3433,7 +3433,7 @@
     },
     {
       "name": "codex-hooks",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/hooks/Cargo.toml",
@@ -3450,7 +3450,7 @@
     },
     {
       "name": "codex-http-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/http-client/Cargo.toml",
@@ -3467,7 +3467,7 @@
     },
     {
       "name": "codex-image-generation-extension",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/image-generation/Cargo.toml",
@@ -3484,7 +3484,7 @@
     },
     {
       "name": "codex-install-context",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/install-context/Cargo.toml",
@@ -3501,7 +3501,7 @@
     },
     {
       "name": "codex-keyring-store",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/keyring-store/Cargo.toml",
@@ -3518,7 +3518,7 @@
     },
     {
       "name": "codex-linux-sandbox",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/linux-sandbox/Cargo.toml",
@@ -3535,7 +3535,7 @@
     },
     {
       "name": "codex-lmstudio",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/lmstudio/Cargo.toml",
@@ -3552,7 +3552,7 @@
     },
     {
       "name": "codex-login",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/login/Cargo.toml",
@@ -3569,7 +3569,7 @@
     },
     {
       "name": "codex-mcp",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/codex-mcp/Cargo.toml",
@@ -3586,7 +3586,7 @@
     },
     {
       "name": "codex-mcp-extension",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/mcp/Cargo.toml",
@@ -3603,7 +3603,7 @@
     },
     {
       "name": "codex-mcp-server",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/mcp-server/Cargo.toml",
@@ -3620,7 +3620,7 @@
     },
     {
       "name": "codex-memories-extension",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/memories/Cargo.toml",
@@ -3637,7 +3637,7 @@
     },
     {
       "name": "codex-memories-read",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/memories/read/Cargo.toml",
@@ -3654,7 +3654,7 @@
     },
     {
       "name": "codex-memories-write",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/memories/write/Cargo.toml",
@@ -3671,7 +3671,7 @@
     },
     {
       "name": "codex-message-history",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/message-history/Cargo.toml",
@@ -3688,7 +3688,7 @@
     },
     {
       "name": "codex-model-provider",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/model-provider/Cargo.toml",
@@ -3705,7 +3705,7 @@
     },
     {
       "name": "codex-model-provider-info",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/model-provider-info/Cargo.toml",
@@ -3722,7 +3722,7 @@
     },
     {
       "name": "codex-models-manager",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/models-manager/Cargo.toml",
@@ -3739,7 +3739,7 @@
     },
     {
       "name": "codex-network-proxy",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/network-proxy/Cargo.toml",
@@ -3756,7 +3756,7 @@
     },
     {
       "name": "codex-ollama",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ollama/Cargo.toml",
@@ -3773,7 +3773,7 @@
     },
     {
       "name": "codex-otel",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/otel/Cargo.toml",
@@ -3790,7 +3790,7 @@
     },
     {
       "name": "codex-plugin",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/plugin/Cargo.toml",
@@ -3807,7 +3807,7 @@
     },
     {
       "name": "codex-process-hardening",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/process-hardening/Cargo.toml",
@@ -3824,7 +3824,7 @@
     },
     {
       "name": "codex-prompts",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/prompts/Cargo.toml",
@@ -3841,7 +3841,7 @@
     },
     {
       "name": "codex-protocol",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/protocol/Cargo.toml",
@@ -3858,7 +3858,7 @@
     },
     {
       "name": "codex-response-debug-context",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/response-debug-context/Cargo.toml",
@@ -3875,7 +3875,7 @@
     },
     {
       "name": "codex-responses-api-proxy",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/responses-api-proxy/Cargo.toml",
@@ -3892,7 +3892,7 @@
     },
     {
       "name": "codex-rmcp-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/rmcp-client/Cargo.toml",
@@ -3909,7 +3909,7 @@
     },
     {
       "name": "codex-rollout",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/rollout/Cargo.toml",
@@ -3926,7 +3926,7 @@
     },
     {
       "name": "codex-rollout-trace",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/rollout-trace/Cargo.toml",
@@ -3943,7 +3943,7 @@
     },
     {
       "name": "codex-sandboxing",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/sandboxing/Cargo.toml",
@@ -3960,7 +3960,7 @@
     },
     {
       "name": "codex-secrets",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/secrets/Cargo.toml",
@@ -3977,7 +3977,7 @@
     },
     {
       "name": "codex-shell-command",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/shell-command/Cargo.toml",
@@ -3994,7 +3994,7 @@
     },
     {
       "name": "codex-shell-escalation",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/shell-escalation/Cargo.toml",
@@ -4011,7 +4011,7 @@
     },
     {
       "name": "codex-skills",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/skills/Cargo.toml",
@@ -4028,7 +4028,7 @@
     },
     {
       "name": "codex-skills-extension",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/skills/Cargo.toml",
@@ -4045,7 +4045,7 @@
     },
     {
       "name": "codex-state",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/state/Cargo.toml",
@@ -4062,7 +4062,7 @@
     },
     {
       "name": "codex-stdio-to-uds",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/stdio-to-uds/Cargo.toml",
@@ -4079,7 +4079,7 @@
     },
     {
       "name": "codex-terminal-detection",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/terminal-detection/Cargo.toml",
@@ -4096,7 +4096,7 @@
     },
     {
       "name": "codex-thread-store",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/thread-store/Cargo.toml",
@@ -4113,7 +4113,7 @@
     },
     {
       "name": "codex-tools",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/tools/Cargo.toml",
@@ -4130,7 +4130,7 @@
     },
     {
       "name": "codex-tui",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/tui/Cargo.toml",
@@ -4147,7 +4147,7 @@
     },
     {
       "name": "codex-uds",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/uds/Cargo.toml",
@@ -4164,7 +4164,7 @@
     },
     {
       "name": "codex-utils-absolute-path",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/absolute-path/Cargo.toml",
@@ -4181,7 +4181,7 @@
     },
     {
       "name": "codex-utils-approval-presets",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/approval-presets/Cargo.toml",
@@ -4198,7 +4198,7 @@
     },
     {
       "name": "codex-utils-cache",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/cache/Cargo.toml",
@@ -4215,7 +4215,7 @@
     },
     {
       "name": "codex-utils-cli",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/cli/Cargo.toml",
@@ -4232,7 +4232,7 @@
     },
     {
       "name": "codex-utils-elapsed",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/elapsed/Cargo.toml",
@@ -4249,7 +4249,7 @@
     },
     {
       "name": "codex-utils-fuzzy-match",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/fuzzy-match/Cargo.toml",
@@ -4266,7 +4266,7 @@
     },
     {
       "name": "codex-utils-home-dir",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/home-dir/Cargo.toml",
@@ -4283,7 +4283,7 @@
     },
     {
       "name": "codex-utils-image",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/image/Cargo.toml",
@@ -4300,7 +4300,7 @@
     },
     {
       "name": "codex-utils-json-to-toml",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/json-to-toml/Cargo.toml",
@@ -4317,7 +4317,7 @@
     },
     {
       "name": "codex-utils-oss",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/oss/Cargo.toml",
@@ -4334,7 +4334,7 @@
     },
     {
       "name": "codex-utils-output-truncation",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/output-truncation/Cargo.toml",
@@ -4351,7 +4351,7 @@
     },
     {
       "name": "codex-utils-path",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/path-utils/Cargo.toml",
@@ -4368,7 +4368,7 @@
     },
     {
       "name": "codex-utils-path-uri",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/path-uri/Cargo.toml",
@@ -4385,7 +4385,7 @@
     },
     {
       "name": "codex-utils-plugins",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/plugins/Cargo.toml",
@@ -4402,7 +4402,7 @@
     },
     {
       "name": "codex-utils-pty",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/pty/Cargo.toml",
@@ -4419,7 +4419,7 @@
     },
     {
       "name": "codex-utils-rustls-provider",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/rustls-provider/Cargo.toml",
@@ -4436,7 +4436,7 @@
     },
     {
       "name": "codex-utils-sandbox-summary",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/sandbox-summary/Cargo.toml",
@@ -4453,7 +4453,7 @@
     },
     {
       "name": "codex-utils-sleep-inhibitor",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/sleep-inhibitor/Cargo.toml",
@@ -4470,7 +4470,7 @@
     },
     {
       "name": "codex-utils-stream-parser",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/stream-parser/Cargo.toml",
@@ -4487,7 +4487,7 @@
     },
     {
       "name": "codex-utils-string",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/string/Cargo.toml",
@@ -4504,7 +4504,7 @@
     },
     {
       "name": "codex-utils-template",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/utils/template/Cargo.toml",
@@ -4521,7 +4521,7 @@
     },
     {
       "name": "codex-web-search-extension",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/ext/web-search/Cargo.toml",
@@ -4538,7 +4538,7 @@
     },
     {
       "name": "codex-websocket-client",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/websocket-client/Cargo.toml",
@@ -4555,7 +4555,7 @@
     },
     {
       "name": "codex-windows-sandbox",
-      "version": "0.144.5",
+      "version": "0.145.0",
       "origin": "path",
       "role": "runtime",
       "manifest_path": "codex-rs/windows-sandbox-rs/Cargo.toml",
@@ -6550,6 +6550,24 @@
       "fedora_all_target_linked": true
     },
     {
+      "name": "extended",
+      "version": "0.1.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "af9673d8203fcb076b19dfd17e38b3d4ae9f44959416ea532ce72415a6020365",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MIT"
+      },
+      "cargo_tree_license": "MIT",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MIT",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
       "name": "eyre",
       "version": "0.6.12",
       "origin": "registry",
@@ -7319,24 +7337,6 @@
       "cargo_tree_license": "Apache-2.0",
       "license_provenance": "checksum-verified registry archive Cargo.toml",
       "normalized_spdx_candidate": "Apache-2.0",
-      "legacy_slash_normalized": false,
-      "linked_linux": true,
-      "fedora_all_target_linked": true
-    },
-    {
-      "name": "getopts",
-      "version": "0.2.24",
-      "origin": "registry",
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "cfe4fbac503b8d1f88e6676011885f34b7174f46e59956bba534ba83abded4df",
-      "role": "runtime",
-      "workspace_path_package": false,
-      "cargo_manifest_license": {
-        "expression": "MIT OR Apache-2.0"
-      },
-      "cargo_tree_license": "MIT OR Apache-2.0",
-      "license_provenance": "checksum-verified registry archive Cargo.toml",
-      "normalized_spdx_candidate": "MIT OR Apache-2.0",
       "legacy_slash_normalized": false,
       "linked_linux": true,
       "fedora_all_target_linked": true
@@ -12218,24 +12218,6 @@
       "fedora_all_target_linked": true
     },
     {
-      "name": "pulldown-cmark-escape",
-      "version": "0.10.1",
-      "origin": "registry",
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "bd348ff538bc9caeda7ee8cad2d1d48236a1f443c1fa3913c6a02fe0043b1dd3",
-      "role": "runtime",
-      "workspace_path_package": false,
-      "cargo_manifest_license": {
-        "expression": "MIT"
-      },
-      "cargo_tree_license": "MIT",
-      "license_provenance": "checksum-verified registry archive Cargo.toml",
-      "normalized_spdx_candidate": "MIT",
-      "legacy_slash_normalized": false,
-      "linked_linux": true,
-      "fedora_all_target_linked": true
-    },
-    {
       "name": "pxfm",
       "version": "0.1.27",
       "origin": "registry",
@@ -15164,6 +15146,168 @@
       "cargo_tree_license": "Apache-2.0",
       "license_provenance": "checksum-verified registry archive Cargo.toml",
       "normalized_spdx_candidate": "Apache-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1758d6c853020a7244de03cc3e0185eaea3f58715122422dd3cc7452e6d4c16a",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-bundle-mp3",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "350f1f2f2e19ad4dd315db94304d1eb361b29af070681f94e51b8fdaad769546",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-common",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "8257891ffa7f05e02b58f4761e2abf7e5278c8744fd59e981559e050f86eef55",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-core",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "95ec293b5f288383b72a7bffcade6b2860b642cf66f28b3bd5967349a49938b1",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-format-isomp4",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "2d179a01305b3505940135a9f0180d6ef4b487912748fe97554756f120fbd05e",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-format-mkv",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "fb17713e134f5ad316c2690fa3104590ccc85842cdbcf82c3cd1a845cb08aa74",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-format-ogg",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "b05a67e02b1e4fca1a261ba4fe06910a9357489ad8c36aafdd2960e9c6559433",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-format-riff",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "17424452a777666d3eaf09a5c651029b15b6a333812fcc5b5474f2a3f0cff3f0",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
+      "legacy_slash_normalized": false,
+      "linked_linux": true,
+      "fedora_all_target_linked": true
+    },
+    {
+      "name": "symphonia-metadata",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "a31acf5cd623398a6208e2225d18f4b20f761c55098a796a5247ad516a4a8681",
+      "role": "runtime",
+      "workspace_path_package": false,
+      "cargo_manifest_license": {
+        "expression": "MPL-2.0"
+      },
+      "cargo_tree_license": "MPL-2.0",
+      "license_provenance": "checksum-verified registry archive Cargo.toml",
+      "normalized_spdx_candidate": "MPL-2.0",
       "legacy_slash_normalized": false,
       "linked_linux": true,
       "fedora_all_target_linked": true

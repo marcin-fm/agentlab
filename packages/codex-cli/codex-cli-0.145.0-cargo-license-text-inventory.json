@@ -1,32 +1,32 @@
 {
   "schema": "agentlab-codex-cargo-license-text-inventory/v1",
   "release": {
-    "version": "0.144.5",
-    "source_tag": "rust-v0.144.5",
-    "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
-    "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
-    "source_cargo_lock_sha256": "175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e",
-    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
+    "version": "0.145.0",
+    "source_tag": "rust-v0.145.0",
+    "source_commit": "25af12f7e61572b0bc18ddb1008be543b91519b0",
+    "source_sha256": "42f627a7b32db41582c73a8eafd9ec4b35d6c3ff81bd3d4455cfd6224d79d329",
+    "source_cargo_lock_sha256": "e0843448b5767ff36a2a3b15212feb480cd4eaafe8a0c0ca08547e3c7da03a05",
+    "normalized_cargo_lock_sha256": "dd14629278c371a87a3d546a7ac6b049cc681188ea67baaf02bdbe7f7773c58d"
   },
   "inputs": {
     "resolver_vendor_receipt": {
-      "name": "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json",
-      "sha256": "9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355",
-      "vendor_tree_sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c"
+      "name": "codex-cli-0.145.0-resolver-cargo-vendor-receipt.json",
+      "sha256": "e6e900400a5d2719abba1b5421d6affbc87d4df8b34ce5218b9c7c26578f3ca6",
+      "vendor_tree_sha256": "c6a29cc835a50bc78e2a5a0fa736c6fdd1ba31073aaa38d6d67fd229f8b7e56e"
     },
     "selected_cargo_license_audit": {
-      "name": "codex-cli-0.144.5-selected-cargo-license-audit.json",
-      "sha256": "b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426"
+      "name": "codex-cli-0.145.0-selected-cargo-license-audit.json",
+      "sha256": "640406844bf04f09600ca8a9c38a835a4adea0881ee7139d3aaed3031f1a6b49"
     }
   },
   "counts": {
-    "vendor_directories": 1124,
-    "selected_vendor_directories": 885,
+    "vendor_directories": 1132,
+    "selected_vendor_directories": 893,
     "resolver_only_vendor_directories": 239,
-    "directories_with_package_local_license_texts": 1020,
+    "directories_with_package_local_license_texts": 1028,
     "directories_without_package_local_license_texts": 104,
-    "license_text_files": 1806,
-    "directories_with_top_level_license_texts": 1016,
+    "license_text_files": 1813,
+    "directories_with_top_level_license_texts": 1024,
     "directories_without_top_level_license_texts": 108,
     "notice_files": 48,
     "linked_linux_directories_without_package_local_license_texts": 51,
@@ -987,9 +987,9 @@
       "notice_files": []
     },
     {
-      "directory": "anyhow-1.0.102",
+      "directory": "anyhow-1.0.103",
       "name": "anyhow",
-      "version": "1.0.102",
+      "version": "1.0.103",
       "origin": "registry",
       "source_scope": "selected",
       "role": "runtime",
@@ -9022,6 +9022,32 @@
       "notice_files": []
     },
     {
+      "directory": "extended-0.1.0",
+      "name": "extended",
+      "version": "0.1.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MIT",
+      "license_texts": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "25a0874d15e7c834a47c3adc80901edb2219759254992023ef1010c3065413d5",
+          "size_bytes": 1052
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "25a0874d15e7c834a47c3adc80901edb2219759254992023ef1010c3065413d5",
+          "size_bytes": 1052
+        }
+      ],
+      "notice_files": []
+    },
+    {
       "directory": "eyre-0.6.12",
       "name": "eyre",
       "version": "0.6.12",
@@ -10574,42 +10600,6 @@
           "path": "LICENSE",
           "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
           "size_bytes": 10847
-        }
-      ],
-      "notice_files": []
-    },
-    {
-      "directory": "getopts-0.2.24",
-      "name": "getopts",
-      "version": "0.2.24",
-      "origin": "registry",
-      "source_scope": "selected",
-      "role": "runtime",
-      "linked_linux": true,
-      "fedora_all_target_linked": true,
-      "normalized_spdx_candidate": "MIT OR Apache-2.0",
-      "license_texts": [
-        {
-          "path": "LICENSE-APACHE",
-          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
-          "size_bytes": 10847
-        },
-        {
-          "path": "LICENSE-MIT",
-          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
-          "size_bytes": 1071
-        }
-      ],
-      "top_level_license_texts": [
-        {
-          "path": "LICENSE-APACHE",
-          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
-          "size_bytes": 10847
-        },
-        {
-          "path": "LICENSE-MIT",
-          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
-          "size_bytes": 1071
         }
       ],
       "notice_files": []
@@ -21697,32 +21687,6 @@
       "notice_files": []
     },
     {
-      "directory": "pulldown-cmark-escape-0.10.1",
-      "name": "pulldown-cmark-escape",
-      "version": "0.10.1",
-      "origin": "registry",
-      "source_scope": "selected",
-      "role": "runtime",
-      "linked_linux": true,
-      "fedora_all_target_linked": true,
-      "normalized_spdx_candidate": "MIT",
-      "license_texts": [
-        {
-          "path": "LICENSE",
-          "sha256": "c4f10f55904bdb9f27d3fbf94c354926d6cfe8b982276e556238c258941b243b",
-          "size_bytes": 1089
-        }
-      ],
-      "top_level_license_texts": [
-        {
-          "path": "LICENSE",
-          "sha256": "c4f10f55904bdb9f27d3fbf94c354926d6cfe8b982276e556238c258941b243b",
-          "size_bytes": 1089
-        }
-      ],
-      "notice_files": []
-    },
-    {
       "directory": "pxfm-0.1.27",
       "name": "pxfm",
       "version": "0.1.27",
@@ -27499,6 +27463,240 @@
           "path": "LICENSE",
           "sha256": "02872c3ff23e11da5a9b3289df11b581be36b4956bfb7cfdc3d8043f92d64794",
           "size_bytes": 10440
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-0.6.0",
+      "name": "symphonia",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-bundle-mp3-0.6.0",
+      "name": "symphonia-bundle-mp3",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-common-0.6.0",
+      "name": "symphonia-common",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-core-0.6.0",
+      "name": "symphonia-core",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-format-isomp4-0.6.0",
+      "name": "symphonia-format-isomp4",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-format-mkv-0.6.0",
+      "name": "symphonia-format-mkv",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-format-ogg-0.6.0",
+      "name": "symphonia-format-ogg",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-format-riff-0.6.0",
+      "name": "symphonia-format-riff",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "notice_files": []
+    },
+    {
+      "directory": "symphonia-metadata-0.6.0",
+      "name": "symphonia-metadata",
+      "version": "0.6.0",
+      "origin": "registry",
+      "source_scope": "selected",
+      "role": "runtime",
+      "linked_linux": true,
+      "fedora_all_target_linked": true,
+      "normalized_spdx_candidate": "MPL-2.0",
+      "license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
+        }
+      ],
+      "top_level_license_texts": [
+        {
+          "path": "LICENSE",
+          "sha256": "c76f740d1521b9bed9ca7a04ad526c310493c62621b1341d623b431736533b30",
+          "size_bytes": 16725
         }
       ],
       "notice_files": []

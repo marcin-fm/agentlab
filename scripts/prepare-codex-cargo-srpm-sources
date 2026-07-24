@@ -79,7 +79,13 @@ module CodexCargoSourcePreparer
       "cargo", "tree", "--manifest-path", manifest, "--locked", "--package", "codex-cli",
       "-Z", "avoid-dev-deps", "--edges", "normal,build"
     ]
-    environment = { "CARGO_HOME" => cargo_home, "RUSTC_BOOTSTRAP" => "1" }
+    environment = {
+      "CARGO_HOME" => cargo_home,
+      "RUSTC_BOOTSTRAP" => "1",
+      "CARGO_NET_RETRY" => "5",
+      "CARGO_HTTP_TIMEOUT" => "600",
+      "CARGO_HTTP_LOW_SPEED_LIMIT" => "1"
+    }
     command << "--offline" if offline
     CodexCargoVendor.run!(environment, *(command + ["--target", closure.dig("selection", "target_triple")]))
     CodexCargoVendor.run!(environment, *(command + ["--target", "all"]))

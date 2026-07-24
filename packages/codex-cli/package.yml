@@ -2,9 +2,9 @@
 name: codex-cli
 status: blocked
 blockers:
-- The authoritative 1,004-package Linux closure plus a separate 239-crate resolver-only supplement now materialize through the repository-backed SCM source builder as a semantically verified 1,124-directory Cargo source. All 51 linked package-local text gaps now have checked mappings; final Fedora SPDX and aggregate-license approval remain open.
+- The authoritative 1,012-package Linux closure plus a separate 239-crate resolver-only supplement materialize through the repository-backed SCM source builder as a semantically verified 1,132-directory Cargo source. All 51 linked package-local text gaps retain checked mappings; final Fedora SPDX and aggregate-license approval remain open.
 - Rusty V8 149.2.0-0.24 completed source-bound Fedora 43, Fedora 44, and Rawhide builds on x86_64 and aarch64 in build 10757049, satisfying this package's exact provider and architecture requirements. Codex still needs its exact static consumer and license integration proof.
-- Build 10756860 imported exact release 0.20 and reached real compilation in all three x86_64 targets. Fedora 43 and Fedora 44 timed out after five hours; Rawhide rejected OpenSSL 4.0.1 through openssl-sys 0.9.111. Release 0.21 selects released openssl 0.10.78 and openssl-sys 0.9.114 with upstream OpenSSL 4 support; configured-SCM builds, final linked-license approval, and payload validation remain pending.
+- Build 10756860 imported `0.144.5-0.20` and reached real compilation in all three x86_64 targets. Release `0.144.5-0.21` selects released OpenSSL 4 support and is running in proof build 10770698. The `0.145.0-0.1` source, resolver, and license closures are regenerated locally; configured-SCM builds, final linked-license approval, and payload validation remain pending.
 source_policy:
   npm_wrapper: forbidden platform-binary selector
   rpm_build_network: forbidden
@@ -14,29 +14,29 @@ source_policy:
   rusty_v8_provider: rusty-v8-static(abi) = 149.2.0
   rusty_v8_archive: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
   rusty_v8_link_override: GN_ARGS=use_custom_libcxx=false
-  selected_closure_receipt: codex-cli-0.144.5-selected-cargo-closure.json
-  selected_closure_sha256: b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3
-  selected_vendor_receipt: codex-cli-0.144.5-selected-cargo-vendor-receipt.json
-  selected_vendor_receipt_sha256: 047d9e62f570c6887696a579bf40617c70c800ae8d810328d9e15bed401c0b0e
-  selected_vendor_tree_sha256: 7ddf7b80397d2b177532cf6ac8fae193544a148eb387a6ee5a9cd1ba8c072e1c
-  selected_vendor_manifest_sha256: 0caa78c29e67e1cc8757e64f992fc690d60f174ea855e3295aff1a3189fdf5eb
-  selected_vendor_config_sha256: 7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2
-  selected_vendor_archive_sha256: 4aee6efe0f209f38942a6ef6e56e8c3d766a6f62906b9ac20b9cee4966553d61
+  selected_closure_receipt: codex-cli-0.145.0-selected-cargo-closure.json
+  selected_closure_sha256: e7ac18c1afb5b3f6609a27c9c94e57d05bfde481ad639e3217f162ceeeae9ffd
+  selected_vendor_receipt: codex-cli-0.145.0-selected-cargo-vendor-receipt.json
+  selected_vendor_receipt_sha256: 4179e0ba5eb5135a59ca6e061bccca2b0245baa15fdb6cfd182506f7454bb884
+  selected_vendor_tree_sha256: 05e77737363da47b89c45fd6576e69de80169ab36bc2b799945b5608133c3838
+  selected_vendor_manifest_sha256: fd050ebd18d4d928ac25e78078aa56aab2eafd26ed9347d1557a65c187314594
+  selected_vendor_config_sha256: 4f124aa305c1ead06fd3097c508ffa9552fc5f110029f8f866cf644188737e05
+  selected_vendor_archive_sha256: 3684222c535773e481e27c182425361a399e80163ec43c9c88d96feabde0583b
   selected_vendor_reproducible: true
   selected_vendor_standalone_resolvable: false
-  resolver_supplement: codex-cli-0.144.5-cargo-resolver-supplement.json
-  resolver_supplement_sha256: 51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876
+  resolver_supplement: codex-cli-0.145.0-cargo-resolver-supplement.json
+  resolver_supplement_sha256: d9380367c84401707ca4cf78f546f36a8a72f910de70d6c7528beea2278854a7
   resolver_only_packages: 239
   resolver_active_all_target_packages: 157
   resolver_inactive_optional_packages: 82
-  resolver_vendor_receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
-  resolver_vendor_receipt_sha256: 9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355
-  resolver_vendor_directories: 1124
-  resolver_vendor_tree_sha256: 5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c
-  resolver_vendor_manifest_sha256: 4ef2a6daa61a24f800e9737fdae8570f05623055b77c58f862b2d3c12b7e93b4
-  resolver_vendor_config_sha256: 921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89
-  resolver_vendor_observed_archive_sha256: e0912374c17464e436d9daac6d71f08cbf66d1cfa1eaa07a0122d41b36f2b72b
-  resolver_vendor_observed_archive_bytes: 231939687
+  resolver_vendor_receipt: codex-cli-0.145.0-resolver-cargo-vendor-receipt.json
+  resolver_vendor_receipt_sha256: e6e900400a5d2719abba1b5421d6affbc87d4df8b34ce5218b9c7c26578f3ca6
+  resolver_vendor_directories: 1132
+  resolver_vendor_tree_sha256: c6a29cc835a50bc78e2a5a0fa736c6fdd1ba31073aaa38d6d67fd229f8b7e56e
+  resolver_vendor_manifest_sha256: 9cc57ea8c80b623a0ee9b11cf6660ad2847528d67bc8bca77c2092ff33127889
+  resolver_vendor_config_sha256: 14ca0bfb074d67665418b363bccb01e49c76d561c595ed93f8c32683e97d6256
+  resolver_vendor_observed_archive_sha256: 68d3fd44e4337b945719f44fef9782dbc873eb7b6b2a9f30f76fefb28e99de2c
+  resolver_vendor_observed_archive_bytes: 232386958
   resolver_vendor_archive_transport_identity_required: false
   resolver_vendor_reproducible: true
   resolver_vendor_standalone_resolvable: true
@@ -46,38 +46,38 @@ source_policy:
   cargo_audit_script: audit-codex-cargo-closure
   cargo_audit_script_sha256: 23787eaca470511c874a8a4479cc4bbe4b7f18a1ac91dbd671b5cd309cdaaefe
   cargo_source_preparer: prepare-codex-cargo-srpm-sources
-  cargo_source_preparer_sha256: 946dd1864478fcba5af2a695997b73385f36650d5eff4fdbcd6f5b4eaa176324
+  cargo_source_preparer_sha256: b1c1cbe75f8c2e13c6f6a54126d50087d37a78bad7d959362c453ad8d0af51d5
   cargo_vendor_verifier: codex_cargo_vendor.rb
   cargo_vendor_verifier_sha256: 147b9f9ba99a477905a632b6d6b3dbd5baaf32a071acd8dc3b4cec5b6bb3b8e0
-  selected_cargo_license_audit: codex-cli-0.144.5-selected-cargo-license-audit.json
-  selected_cargo_license_audit_sha256: b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426
-  selected_cargo_linked_linux_packages: 873
+  selected_cargo_license_audit: codex-cli-0.145.0-selected-cargo-license-audit.json
+  selected_cargo_license_audit_sha256: 640406844bf04f09600ca8a9c38a835a4adea0881ee7139d3aaed3031f1a6b49
+  selected_cargo_linked_linux_packages: 881
   selected_cargo_compile_only_packages: 131
-  fedora_all_target_linked_packages: 1019
+  fedora_all_target_linked_packages: 1027
   selected_cargo_license_metadata_complete: true
   selected_source_license_metadata_verified: true
-  cargo_license_text_inventory: codex-cli-0.144.5-cargo-license-text-inventory.json
-  cargo_license_text_inventory_sha256: 7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd
-  cargo_vendor_directories_with_package_local_license_texts: 1020
+  cargo_license_text_inventory: codex-cli-0.145.0-cargo-license-text-inventory.json
+  cargo_license_text_inventory_sha256: f58d8da5903e4c96e91a2a8a079bf8d36b2efd7f699ad65c0ac00dea8d20dfc0
+  cargo_vendor_directories_with_package_local_license_texts: 1028
   cargo_vendor_directories_without_package_local_license_texts: 104
   cargo_linked_linux_directories_without_package_local_license_texts: 51
-  cargo_vendor_directories_with_top_level_license_texts: 1016
+  cargo_vendor_directories_with_top_level_license_texts: 1024
   cargo_vendor_directories_without_top_level_license_texts: 108
   cargo_linked_linux_directories_without_top_level_license_texts: 54
-  cargo_supplemental_license_sources: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-  cargo_supplemental_license_sources_sha256: 770df1349e90ec39eff515443f9a8556d86e105038b631346fabf484c3b1e0af
-  cargo_supplemental_license_archive: codex-cli-0.144.5-cargo-supplemental-license-sources.tar.gz
+  cargo_supplemental_license_sources: codex-cli-0.145.0-cargo-supplemental-license-sources.json
+  cargo_supplemental_license_sources_sha256: cfab2d0e3771be08f50e470203be88a96b49c11739ccd7e0ca7f1a8a12d61bd1
+  cargo_supplemental_license_archive: codex-cli-0.145.0-cargo-supplemental-license-sources.tar.gz
   cargo_supplemental_license_preparer: prepare-codex-cargo-license-sources
-  cargo_supplemental_license_preparer_sha256: 90e7d74a314a9fa00e57a1ebf980b5c3f57d06d50940db11fb637f39357b270d
+  cargo_supplemental_license_preparer_sha256: 40d522d6fb529bd7ddf393758a2dd894f08afca1bf345fceb49b26b970ea81ba
   cargo_supplemental_license_mappings: 50
   cargo_supplemental_license_unresolved: 0
   notify_cc0_fedora_precedent: rust-notify-8.2.0-2.fc44
   final_binary_license_complete: false
   lock_normalization: verified-prep-transform
-  lock_normalization_records: 132
-  source_lock_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
-  patched_lock_sha256: cedc827a0f1a411000c9042e639cf230d72fbb0c36a824aa61ea0640f9587636
-  normalized_lock_sha256: 8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33
+  lock_normalization_records: 130
+  source_lock_sha256: e0843448b5767ff36a2a3b15212feb480cd4eaafe8a0c0ca08547e3c7da03a05
+  patched_lock_sha256: b511faeef8f990dfc40248801f308920b846a257314873c3ff71e9c7330cac52
+  normalized_lock_sha256: dd14629278c371a87a3d546a7ac6b049cc681188ea67baaf02bdbe7f7773c58d
   rusty_v8_prototype: local-source-build-and-runtime-smoke-passed
   rusty_v8_archive_bytes: 160316016
   rusty_v8_archive_sha256: 07a7c6458d88253cd89b59a4c9b325e28cae72dda112f1bd7c5b932484d48719
@@ -86,11 +86,11 @@ source_policy:
   rusty_v8_exact_feature_contract: verified-offline
 cargo_license_audit:
   status: cargo-texts-complete-native-static-incomplete
-  authoritative_selected_packages: 1004
-  linked_linux_packages: 873
+  authoritative_selected_packages: 1012
+  linked_linux_packages: 881
   selected_compile_only_packages: 131
   resolver_only_packages: 239
-  fedora_all_target_linked_packages: 1019
+  fedora_all_target_linked_packages: 1027
   legacy_slash_expressions_normalized: 80
   linux_linked_unique_expressions: 35
   cargo_manifest_metadata_complete: true
@@ -100,6 +100,23 @@ cargo_license_audit:
   fedora_allowed_spdx_verified: false
   rusty_v8_native_static_license_complete: false
   final_rpm_license_approved: false
+local_source_proof:
+  release: 0.145.0-0.1
+  selected_packages: 1012
+  selected_vendor_directories: 893
+  resolver_only_packages: 239
+  resolver_vendor_directories: 1132
+  linked_linux_packages: 881
+  supplemental_mappings: 50
+  supplemental_unresolved: 0
+  source_rpm_sha256: 060cf305de7c741728a928a881fd3e679c400cb73d11b95787f4bd52e17ea72c
+  source_rpm_size_bytes: 241199902
+  source_rpm_members: 22
+  source_rpm_rpmlint: zero errors and two generated-local-source warnings
+  repository_spec_identical: true
+  openssl_lock_patch_identical: true
+  selected_closure_identical: true
+  rpm_installed: false
 update_policy:
   status: implemented-downstream-pending-build-integration
   build_marker: CODEX_DISTRIBUTION_CHANNEL=fedora
@@ -115,11 +132,11 @@ upstream:
   provider: github
   repository: openai/codex
   tag_prefix: rust-v
-  current_version: 0.144.5
+  current_version: 0.145.0
   source_url_template: https://codeload.github.com/openai/codex/tar.gz/{source_commit}
-  source_sha256: b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9
-  source_tag: rust-v0.144.5
-  source_commit: 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
+  source_sha256: 42f627a7b32db41582c73a8eafd9ec4b35d6c3ff81bd3d4455cfd6224d79d329
+  source_tag: rust-v0.145.0
+  source_commit: 25af12f7e61572b0bc18ddb1008be543b91519b0
   license: Apache-2.0
 duplicate_check:
   checked: "2026-07-17"

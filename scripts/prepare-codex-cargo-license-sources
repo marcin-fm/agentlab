@@ -305,17 +305,25 @@ module CodexSupplementalLicenses
   def extract_vendor!(archive, temporary, receipt)
     root = receipt.dig("inputs", "resolver_vendor_receipt", "vendor_tree_sha256")
     raise CodexCargoVendor::Error, "missing resolver vendor identity" unless root
-    vendor_name = "codex-cli-0.144.5-resolver-cargo-vendor"
+    version = receipt.dig("release", "version").to_s
+    raise CodexCargoVendor::Error, "missing supplemental release version" if version.empty?
+
+    vendor_name = "codex-cli-#{version}-resolver-cargo-vendor"
     CodexCargoVendor.extract_archive!(archive, temporary, vendor_name)
     File.join(temporary, vendor_name)
   end
 
   def checked_inputs!(receipt, package)
-    resolver = JSON.parse(File.read(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")))
-    inventory_path = File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")
-    audit_path = File.join(package, "codex-cli-0.144.5-selected-cargo-license-audit.json")
-    raise CodexCargoVendor::Error, "supplemental receipt release mismatch" unless receipt.dig("release", "name") == "codex-cli" && receipt.dig("release", "version") == "0.144.5"
-    raise CodexCargoVendor::Error, "supplemental receipt resolver identity mismatch" unless receipt.dig("inputs", "resolver_vendor_receipt", "sha256") == sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")) && receipt.dig("inputs", "resolver_vendor_receipt", "vendor_tree_sha256") == resolver.dig("vendor_tree", "sha256")
+    release = receipt.fetch("release")
+    version = release.fetch("version")
+    raise CodexCargoVendor::Error, "supplemental receipt release mismatch" unless release.fetch("name") == "codex-cli"
+
+    prefix = "codex-cli-#{version}"
+    resolver_path = File.join(package, "#{prefix}-resolver-cargo-vendor-receipt.json")
+    inventory_path = File.join(package, "#{prefix}-cargo-license-text-inventory.json")
+    audit_path = File.join(package, "#{prefix}-selected-cargo-license-audit.json")
+    resolver = JSON.parse(File.read(resolver_path))
+    raise CodexCargoVendor::Error, "supplemental receipt resolver identity mismatch" unless receipt.dig("inputs", "resolver_vendor_receipt", "sha256") == sha256(resolver_path) && receipt.dig("inputs", "resolver_vendor_receipt", "vendor_tree_sha256") == resolver.dig("vendor_tree", "sha256")
     raise CodexCargoVendor::Error, "supplemental receipt inventory identity mismatch" unless receipt.dig("inputs", "license_text_inventory", "sha256") == sha256(inventory_path)
     raise CodexCargoVendor::Error, "supplemental receipt audit identity mismatch" unless receipt.dig("inputs", "selected_cargo_license_audit", "sha256") == sha256(audit_path)
     [resolver, JSON.parse(File.read(inventory_path)), JSON.parse(File.read(audit_path))]
@@ -401,14 +409,29 @@ module CodexSupplementalLicenses
     raise CodexCargoVendor::Error, "unused installable supplemental source" unless installable.sort == used.uniq.sort
   end
 
-  def receipt_from_plan(plan, package)
+  def receipt_from_plan(plan, package, version)
     receipt = Marshal.load(Marshal.dump(plan))
     upgrade_v6!(receipt, package)
+    prefix = "codex-cli-#{version}"
+    resolver_path = File.join(package, "#{prefix}-resolver-cargo-vendor-receipt.json")
+    inventory_path = File.join(package, "#{prefix}-cargo-license-text-inventory.json")
+    audit_path = File.join(package, "#{prefix}-selected-cargo-license-audit.json")
+    resolver = JSON.parse(File.read(resolver_path))
+    audit = JSON.parse(File.read(audit_path))
+    release = audit.fetch("release")
     receipt["schema"] = "agentlab-codex-cargo-supplemental-license-sources/v6"
+    receipt["release"] = {
+      "name" => "codex-cli",
+      "version" => release.fetch("version"),
+      "source_tag" => release.fetch("source_tag"),
+      "source_commit" => release.fetch("source_commit"),
+      "resolver_vendor_tree_sha256" => resolver.dig("vendor_tree", "sha256"),
+      "license_text_inventory_sha256" => sha256(inventory_path)
+    }
     receipt["inputs"] = {
-      "resolver_vendor_receipt" => { "path" => "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json")), "vendor_tree_sha256" => plan.dig("release", "resolver_vendor_tree_sha256") },
-      "license_text_inventory" => { "path" => "codex-cli-0.144.5-cargo-license-text-inventory.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-cargo-license-text-inventory.json")) },
-      "selected_cargo_license_audit" => { "path" => "codex-cli-0.144.5-selected-cargo-license-audit.json", "sha256" => sha256(File.join(package, "codex-cli-0.144.5-selected-cargo-license-audit.json")) }
+      "resolver_vendor_receipt" => { "path" => File.basename(resolver_path), "sha256" => sha256(resolver_path), "vendor_tree_sha256" => resolver.dig("vendor_tree", "sha256") },
+      "license_text_inventory" => { "path" => File.basename(inventory_path), "sha256" => sha256(inventory_path) },
+      "selected_cargo_license_audit" => { "path" => File.basename(audit_path), "sha256" => sha256(audit_path) }
     }
     payload = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }
     payload["expected_extracted_sha256"] = ICU_PAYLOAD_SHA256
@@ -425,7 +448,10 @@ module CodexSupplementalLicenses
   def upgrade_v2!(receipt, package)
     return normalize_v2!(receipt) if receipt["schema"] == "agentlab-codex-cargo-supplemental-license-sources/v2"
 
-    audit = JSON.parse(File.read(File.join(package, "codex-cli-0.144.5-selected-cargo-license-audit.json")))
+    version = receipt.dig("release", "version").to_s
+    raise CodexCargoVendor::Error, "missing supplemental release version" if version.empty?
+
+    audit = JSON.parse(File.read(File.join(package, "codex-cli-#{version}-selected-cargo-license-audit.json")))
     expressions = audit.fetch("selected_packages").reject { |item| item.fetch("workspace_path_package") }.to_h { |item| ["#{item.fetch('name')}-#{item.fetch('version')}", item.fetch("normalized_spdx_candidate")] }
     receipt.fetch("mappings").each do |mapping|
       mapping["provenance_mode"] = "cargo-vcs"
@@ -741,6 +767,13 @@ module CodexSupplementalLicenses
     end.parse!
     options
   end
+
+  def receipt_version(path)
+    match = File.basename(path).match(/\Acodex-cli-(.+)-cargo-supplemental-license-sources\.json\z/)
+    raise CodexCargoVendor::Error, "cannot derive supplemental release version from #{path}" unless match
+
+    match[1]
+  end
 end
 
 if $PROGRAM_NAME == __FILE__
@@ -760,7 +793,11 @@ begin
     package = File.dirname(receipt_path)
   end
   receipt = if options[:refresh]
-              CodexSupplementalLicenses.receipt_from_plan(JSON.parse(File.read(options.fetch(:plan))), package)
+              CodexSupplementalLicenses.receipt_from_plan(
+                JSON.parse(File.read(options.fetch(:plan))),
+                package,
+                CodexSupplementalLicenses.receipt_version(receipt_path)
+              )
             else
               JSON.parse(File.read(receipt_path))
             end

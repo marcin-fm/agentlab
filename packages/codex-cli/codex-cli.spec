@@ -3,26 +3,26 @@
 %bcond check 1
 %global codex_distribution_channel fedora
 
-%global source_sha256 b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9
-%global closure_sha256 b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3
-%global vendor_receipt_sha256 047d9e62f570c6887696a579bf40617c70c800ae8d810328d9e15bed401c0b0e
-%global resolver_supplement_sha256 51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876
-%global resolver_vendor_receipt_sha256 9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355
-%global license_audit_sha256 b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426
-%global source_lock_sha256 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
-%global patched_lock_sha256 cedc827a0f1a411000c9042e639cf230d72fbb0c36a824aa61ea0640f9587636
-%global normalized_lock_sha256 8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33
+%global source_sha256 42f627a7b32db41582c73a8eafd9ec4b35d6c3ff81bd3d4455cfd6224d79d329
+%global closure_sha256 e7ac18c1afb5b3f6609a27c9c94e57d05bfde481ad639e3217f162ceeeae9ffd
+%global vendor_receipt_sha256 4179e0ba5eb5135a59ca6e061bccca2b0245baa15fdb6cfd182506f7454bb884
+%global resolver_supplement_sha256 d9380367c84401707ca4cf78f546f36a8a72f910de70d6c7528beea2278854a7
+%global resolver_vendor_receipt_sha256 e6e900400a5d2719abba1b5421d6affbc87d4df8b34ce5218b9c7c26578f3ca6
+%global license_audit_sha256 640406844bf04f09600ca8a9c38a835a4adea0881ee7139d3aaed3031f1a6b49
+%global source_lock_sha256 e0843448b5767ff36a2a3b15212feb480cd4eaafe8a0c0ca08547e3c7da03a05
+%global patched_lock_sha256 b511faeef8f990dfc40248801f308920b846a257314873c3ff71e9c7330cac52
+%global normalized_lock_sha256 dd14629278c371a87a3d546a7ac6b049cc681188ea67baaf02bdbe7f7773c58d
 %global cargo_audit_sha256 23787eaca470511c874a8a4479cc4bbe4b7f18a1ac91dbd671b5cd309cdaaefe
-%global source_preparer_sha256 946dd1864478fcba5af2a695997b73385f36650d5eff4fdbcd6f5b4eaa176324
+%global source_preparer_sha256 b1c1cbe75f8c2e13c6f6a54126d50087d37a78bad7d959362c453ad8d0af51d5
 %global vendor_verifier_sha256 147b9f9ba99a477905a632b6d6b3dbd5baaf32a071acd8dc3b4cec5b6bb3b8e0
-%global license_text_receipt_sha256 7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd
-%global supplemental_license_receipt_sha256 770df1349e90ec39eff515443f9a8556d86e105038b631346fabf484c3b1e0af
-%global supplemental_license_preparer_sha256 90e7d74a314a9fa00e57a1ebf980b5c3f57d06d50940db11fb637f39357b270d
-%global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
+%global license_text_receipt_sha256 f58d8da5903e4c96e91a2a8a079bf8d36b2efd7f699ad65c0ac00dea8d20dfc0
+%global supplemental_license_receipt_sha256 cfab2d0e3771be08f50e470203be88a96b49c11739ccd7e0ca7f1a8a12d61bd1
+%global supplemental_license_preparer_sha256 40d522d6fb529bd7ddf393758a2dd894f08afca1bf345fceb49b26b970ea81ba
+%global commit 25af12f7e61572b0bc18ddb1008be543b91519b0
 
 Name:           codex-cli
-Version:        0.144.5
-Release:        0.21%{?dist}
+Version:        0.145.0
+Release:        0.1%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -81,11 +81,11 @@ with local developer tools.
 
 This source-build draft is intentionally blocked. Its repository-backed source
 builder materializes the selected Cargo closure and resolver-only supplement as
-a semantically verified offline source, but the selected-aware Cargo audit's
-873 Linux-linked packages now have complete checked license-text mappings. The
-package must not produce an RPM until final Fedora SPDX and aggregate license
-approval, the Rusty V8 static consumer closure, the build/install/test flow,
-and offline Fedora builds are proven.
+a semantically verified offline source. The selected-aware Cargo audit's 881
+Linux-linked packages retain complete checked license-text mappings. The package
+must not produce an RPM until final Fedora SPDX and aggregate license approval,
+the Rusty V8 static consumer closure, the build/install/test flow, and offline
+Fedora builds are proven.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -99,8 +99,8 @@ echo "%{source_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
 %autopatch -p1
 echo "%{patched_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
 test "$(grep -Fxc 'check_for_update_on_startup = false' %{SOURCE5})" -eq 1
-test "$(grep -cx 'version = "0\.0\.0"' codex-rs/Cargo.lock)" -eq 132
-sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
+test "$(grep -cx 'version = "0\.0\.0"' codex-rs/Cargo.lock)" -eq 130
+sed -i 's/^version = "0\.0\.0"$/version = "0.145.0"/' codex-rs/Cargo.lock
 echo "%{normalized_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
 echo "%{cargo_audit_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{source_preparer_sha256}  %{SOURCE8}" | sha256sum -c -
@@ -137,7 +137,7 @@ pushd codex-rs >/dev/null
 %cargo_prep -N
 cat %{SOURCE12} >> .cargo/config.toml
 %{__cargo_to_rpm} -p %{SOURCE11} parse-vendor-manifest > cargo-bundled-provides.txt
-test "$(wc -l < cargo-bundled-provides.txt)" -eq 1124
+test "$(wc -l < cargo-bundled-provides.txt)" -eq 1132
 install -pm0644 %{SOURCE11} cargo-vendor.txt
 cmp cargo-vendor.txt %{SOURCE11}
 popd >/dev/null
@@ -176,6 +176,10 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Fri Jul 24 2026 Marcin FM <marcin@lgic.pl> - 0.145.0-0.1
+- Update to the released Codex CLI 0.145.0 source and regenerate its Cargo closure.
+- Retain the released OpenSSL 4 support and Rusty V8 provider contracts.
+
 * Fri Jul 24 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.21
 - Select released rust-openssl support for Fedora Rawhide OpenSSL 4.
 - Keep the resolver-complete offline source and Rusty V8 contracts unchanged.

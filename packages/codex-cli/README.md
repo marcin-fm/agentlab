@@ -1,10 +1,10 @@
 # Codex CLI Packaging Status
 
-Codex CLI `0.144.5` is a blocked Fedora source-package draft. The selected
-published release is tag `rust-v0.144.5` at commit
-`87db9bc18ba5bc82c1cb4e4381b44f693ee35623`. Its immutable commit archive has
+Codex CLI `0.145.0` is a blocked Fedora source-package draft. The selected
+published release is tag `rust-v0.145.0` at commit
+`25af12f7e61572b0bc18ddb1008be543b91519b0`. Its immutable commit archive has
 SHA-256
-`b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9`.
+`42f627a7b32db41582c73a8eafd9ec4b35d6c3ff81bd3d4455cfd6224d79d329`.
 
 Fedora and RPM Fusion 43/44 provide neither an exact Codex CLI package nor a
 `/usr/bin/codex` provider. The globally installed `@openai/codex` npm package
@@ -13,7 +13,7 @@ building the Rust application from source.
 
 ## Source-Only Probe
 
-The Fedora 44 probe verified and extracted the release archive, ran
+The historical Fedora 44 `0.144.5` probe verified and extracted the release archive, ran
 `%cargo_prep`, and generated a dynamic BuildRequires RPM without compiling
 Codex. The result is
 `codex-cli-0.144.5-0.1.fc44.buildreqs.nosrc.rpm`, SHA-256
@@ -30,12 +30,12 @@ the separate WebRTC Git source.
 `scripts/audit-codex-cargo-closure` now records the package-scoped Cargo graph
 for `codex-cli`, target `x86_64-unknown-linux-gnu`, with normal and build edges
 and no development edges. The deterministic receipt is
-`codex-cli-0.144.5-selected-cargo-closure.json`, SHA-256
-`b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3`.
+`codex-cli-0.145.0-selected-cargo-closure.json`, SHA-256
+`e7ac18c1afb5b3f6609a27c9c94e57d05bfde481ad639e3217f162ceeeae9ffd`.
 An offline byte-for-byte `--check` passed with Cargo 1.96.1.
 
-The graph contains 1,004 packages: 984 on normal paths, 20 build-only, 119
-workspace/path packages, 879 registry packages, and six packages from five Git
+The graph contains 1,012 packages: 992 on normal paths, 20 build-only, 119
+workspace/path packages, 887 registry packages, and six packages from five Git
 repositories. The selected Git repositories are the pinned crossterm, ratatui,
 tokio-tungstenite, tungstenite, and nucleo forks. `rules_rust` is development
 only, and rust-sdks/libwebrtc belongs to the non-selected realtime WebRTC
@@ -48,16 +48,16 @@ and its vendored Bubblewrap sources are not selected by the CLI graph, so
 Bubblewrap is not a blocker for this RPM.
 
 The released `Cargo.lock` is not accepted by Cargo 1.96.1 under `--locked`.
-Exactly 132 source-less local package records carry version `0.0.0`; changing
-only those versions to the released workspace version `0.144.5` makes the lock
+Exactly 130 source-less local package records carry version `0.0.0`; changing
+only those versions to the released workspace version `0.145.0` makes the lock
 current without changing dependencies, sources, checksums, or package
 membership. The source lock SHA-256 is
-`175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e`; the
+`e0843448b5767ff36a2a3b15212feb480cd4eaafe8a0c0ca08547e3c7da03a05`; the
 controlled normalized lock SHA-256 is
-`2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9`.
+`dd14629278c371a87a3d546a7ac6b049cc681188ea67baaf02bdbe7f7773c58d`.
 
 The spec performs that release-specific normalization directly in `%prep`. It
-first verifies the complete original lock hash, requires exactly 132 matching
+first verifies the complete original lock hash, requires exactly 130 matching
 version lines, applies one anchored `sed` substitution, and verifies the
 complete normalized lock hash. This is smaller and at least as constrained as
 the generated 398-line patch it replaced. Upstream main intentionally retains
@@ -66,19 +66,19 @@ release-stamping defect.
 
 ## Selected Source Materialization
 
-The audit script now materializes the exact 885 selected external Cargo sources:
-879 checked registry archives and six Cargo-normalized packages from five
+The audit script now materializes the exact 893 selected external Cargo sources:
+887 checked registry archives and six Cargo-normalized packages from five
 verified Git repositories. It generates Cargo checksums, a sorted vendor
 manifest, a prospective source-replacement configuration, a deterministic tree
 receipt, and a normalized archive without copying transient dependency trees.
 
 Two independent output roots produced byte-identical receipts and these hashes:
 
-- vendor tree: `7ddf7b80397d2b177532cf6ac8fae193544a148eb387a6ee5a9cd1ba8c072e1c`
-- vendor manifest: `0caa78c29e67e1cc8757e64f992fc690d60f174ea855e3295aff1a3189fdf5eb`
-- Cargo configuration: `7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2`
-- archive: `4aee6efe0f209f38942a6ef6e56e8c3d766a6f62906b9ac20b9cee4966553d61`
-- receipt: `047d9e62f570c6887696a579bf40617c70c800ae8d810328d9e15bed401c0b0e`
+- vendor tree: `05e77737363da47b89c45fd6576e69de80169ab36bc2b799945b5608133c3838`
+- vendor manifest: `fd050ebd18d4d928ac25e78078aa56aab2eafd26ed9347d1557a65c187314594`
+- Cargo configuration: `4f124aa305c1ead06fd3097c508ffa9552fc5f110029f8f866cf644188737e05`
+- archive: `3684222c535773e481e27c182425361a399e80163ec43c9c88d96feabde0583b`
+- receipt: `4179e0ba5eb5135a59ca6e061bccca2b0245baa15fdb6cfd182506f7454bb884`
 
 This remains selected-source evidence, not a complete Cargo directory source.
 Cargo resolves non-development metadata outside the checked Linux graph; the
@@ -89,7 +89,7 @@ the separate resolver supplement below.
 ## Resolver-Only Source Supplement
 
 The audit now computes the directory-resolution fixed point without development
-dependencies. It starts from the authoritative 1,004 identities, uses Cargo's
+dependencies. It starts from the authoritative 1,012 identities, uses Cargo's
 workspace dependency kinds for path packages, follows every external package's
 locked normal/build dependencies regardless of target predicate or optional
 activation, and uses `RUSTC_BOOTSTRAP=1 cargo -Z avoid-dev-deps` to match Fedora
@@ -98,22 +98,22 @@ resolver-only Git or path package, and no `rules_rust` or `rust-sdks` source.
 
 The 239 sources split into 157 packages active in Cargo's all-target graph and
 82 inactive optional metadata packages, including `quinn`. Each record in
-`codex-cli-0.144.5-cargo-resolver-supplement.json` retains the immutable lockfile
+`codex-cli-0.145.0-cargo-resolver-supplement.json` retains the immutable lockfile
 source, checksum, normalized manifest license metadata, immediate lock
 reference, and deterministic dependency path. The receipt SHA-256 is
-`51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876`.
+`d9380367c84401707ca4cf78f546f36a8a72f910de70d6c7528beea2278854a7`.
 
 Two independent combined materializations produced byte-identical receipts and
-1,124 vendor directories: 885 authoritative selected sources and 239
-resolver-only sources. Both the 1,004-package selected target and the
-1,161-package active all-target graph resolved offline from an empty Cargo home.
+1,132 vendor directories: 893 authoritative selected sources and 239
+resolver-only sources. Both the 1,012-package selected target and the
+1,169-package active all-target graph resolved offline from an empty Cargo home.
 
-- vendor tree: `5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c`
-- vendor manifest: `4ef2a6daa61a24f800e9737fdae8570f05623055b77c58f862b2d3c12b7e93b4`
-- Cargo configuration: `921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89`
-- archive: `e0912374c17464e436d9daac6d71f08cbf66d1cfa1eaa07a0122d41b36f2b72b`
-- archive size: `231,939,492` bytes
-- receipt: `9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355`
+- vendor tree: `c6a29cc835a50bc78e2a5a0fa736c6fdd1ba31073aaa38d6d67fd229f8b7e56e`
+- vendor manifest: `9cc57ea8c80b623a0ee9b11cf6660ad2847528d67bc8bca77c2092ff33127889`
+- Cargo configuration: `14ca0bfb074d67665418b363bccb01e49c76d561c595ed93f8c32683e97d6256`
+- observed archive: `68d3fd44e4337b945719f44fef9782dbc873eb7b6b2a9f30f76fefb28e99de2c`
+- observed archive size: `232,386,958` bytes
+- receipt: `e6e900400a5d2719abba1b5421d6affbc87d4df8b34ce5218b9c7c26578f3ca6`
 
 The source model is now integrated through the repository-backed COPR SCM path.
 `scripts/prepare-codex-cargo-srpm-sources` populates only the selected and
@@ -123,16 +123,16 @@ rechecks the safe single-root archive, exact directory set, every Cargo
 checksum, the complete vendor-tree identity, and selected/all-target offline
 resolution before running `%cargo_prep -N`. Fedora's `%cargo_vendor_manifest`
 cannot represent this package-scoped source plan because Cargo2RPM expands the
-complete 128-member workspace with all features and development edges, which
+complete 124-member workspace with all features and development edges, which
 immediately requests the deliberately excluded `rules_rust` source. The spec
-instead passes the exact checked 1,124-entry manifest through
-`cargo2rpm parse-vendor-manifest`, requires 1,124 unique bundled Provides, and
+instead passes the exact checked 1,132-entry manifest through
+`cargo2rpm parse-vendor-manifest`, requires 1,132 unique bundled Provides, and
 installs that manifest as `cargo-vendor.txt` under the RPM license directory so
 Fedora's Cargo file attributes emit the Provides automatically.
 
 Generated gzip bytes and the source builder's exact Cargo version are not part
 of the normative contract. The semantic tree SHA-256 remains
-`5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c`;
+`c6a29cc835a50bc78e2a5a0fa736c6fdd1ba31073aaa38d6d67fd229f8b7e56e`;
 any Cargo normalization change that alters that tree fails closed. The package
 still stops before compilation because final aggregate linked-license approval,
 required license texts, and Fedora build proof remain later gates. The exact
@@ -149,14 +149,14 @@ linked-license count because proc-macro dependencies and their subgraphs remain
 compile-time inputs even when reached through normal edges.
 
 For `x86_64-unknown-linux-gnu`, excluding build, development, and proc-macro
-edges leaves 873 Cargo packages in the linked graph. The remaining 131 selected
+edges leaves 881 Cargo packages in the linked graph. The remaining 131 selected
 packages are compile-time only: 20 have the existing build role and 111 are in
 the normal-path proc-macro subgraph. Fedora's `--target=all` license witness
-contains 1,019 packages: 874 selected identities and 145 resolver-only
+contains 1,027 packages: 882 selected identities and 145 resolver-only
 identities. Resolver-only records remain separate from the authoritative Linux
 source and linked-license closure.
 
-The audit records Cargo manifest license metadata for all 1,004 selected and
+The audit records Cargo manifest license metadata for all 1,012 selected and
 239 resolver-only packages. It normalizes 62 selected and 18 resolver-only
 legacy slash-separated alternatives to SPDX `OR`, matching cargo2rpm, and
 records 35 unique Linux-linked and 39 unique all-target expression candidates.
@@ -165,13 +165,13 @@ Every selected license is compared with source metadata before it is accepted:
 come directly from exact commit objects after URL and tracked-checkout
 verification, and 119 workspace licenses come from the exact release metadata.
 The receipt SHA-256 is
-`b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426`.
+`640406844bf04f09600ca8a9c38a835a4adea0881ee7139d3aaed3031f1a6b49`.
 
-The resolver source now also has a package-local legal-file inventory. Of 1,124
-vendored directories, 1,020 contain at least one nonempty recursively discovered
+The resolver source now also has a package-local legal-file inventory. Of 1,132
+vendored directories, 1,028 contain at least one nonempty recursively discovered
 license, copying, unlicense, or `LICENSES/` candidate and 104 do not; 51 of those
-gaps are in the 873-package Linux-linked graph. A stricter package-root view has
-1,016 directories with a top-level candidate and 108 without one, including 54
+gaps are in the 881-package Linux-linked graph. A stricter package-root view has
+1,024 directories with a top-level candidate and 108 without one, including 54
 Linux-linked directories. Notice, copyright, credits, authors, and patents files
 are recorded separately and are not treated as full license texts. The receipt
 preserves graph roles and exact file hashes rather than treating all vendored
@@ -283,7 +283,7 @@ upstream issue or pull request has been submitted.
 
 `codex-cli.spec` verifies the immutable release archive, complete resolver source,
 all 50 supplemental mappings, 25 deduplicated texts, patches, lock normalization,
-and 1,124 bundled Provides before compilation. Release `0.17` reached offline
+and 1,132 bundled Provides before compilation. Release `0.17` reached offline
 Cargo compilation and exposed the missing system OpenSSL development metadata;
 release `0.18` adds `pkgconfig(openssl)`. The local retry was stopped at maintainer
 request because the full build is too expensive for the local machine, so the
@@ -313,8 +313,21 @@ two expected warnings for repository-generated local sources. Its spec,
 OpenSSL lock patch, and selected closure are byte-identical to the repository.
 No RPM was installed and no local full compilation was started.
 
+The current `0.145.0-0.1` source regeneration uses the exact new release archive,
+retains the released OpenSSL 4 update and Rusty V8 `149.2.0` provider, and
+reproduces 893 selected plus 1,132 resolver-complete vendor directories in two
+independent runs. The 51 linked package-local text gaps are unchanged, so the
+same 50 checked mappings plus ICU comparison produce 25 installable supplemental
+texts. Configured-SCM-equivalent source generation produces the 22-member source
+RPM `codex-cli-0.145.0-0.1.fc44.src.rpm` at SHA-256
+`060cf305de7c741728a928a881fd3e679c400cb73d11b95787f4bd52e17ea72c`.
+Its spec, OpenSSL lock patch, selected closure, and source-generator helpers are
+byte-identical to the repository. `rpmlint` reports zero errors and only the two
+expected generated-local-source warnings. The configured-SCM proof build and
+final linked binary/license inspection remain pending; no RPM was installed.
+
 ## References
 
-- https://github.com/openai/codex/releases/tag/rust-v0.144.5
-- https://github.com/openai/codex/tree/87db9bc18ba5bc82c1cb4e4381b44f693ee35623
+- https://github.com/openai/codex/releases/tag/rust-v0.145.0
+- https://github.com/openai/codex/tree/25af12f7e61572b0bc18ddb1008be543b91519b0
 - https://github.com/denoland/rusty_v8/issues/1839

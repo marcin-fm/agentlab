@@ -49,7 +49,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | OpenChamber | 1.16.1 | blocked | Web CLI draft requires Bun, an audited Node/native closure, and the OpenCode provider |
 | Bun | 1.3.14 | blocked | First isolated source build works; immutable RPM inputs, self-rebuild, relink, and final audits remain |
 | RTK | 0.43.0 | enabled | Release 0.6 uses Fedora dirs 6, passes all six COPR targets, 2,245 Fedora 44 tests, system-SQLite and directory-path smokes, and artifact review |
-| codex-cli | 0.144.5 | blocked | Cargo source hosting, the rust-v8 provider, final licenses, and offline builds remain |
+| codex-cli | 0.145.0 | blocked | Final static-consumer licensing and configured offline proof builds remain |
 | rust-v8 | 149.2.0 | blocked | Exact recursive identities and stable-Rust patches are recorded; immutable submodule sources, licenses, and offline builds remain |
 | rubygem-ferrum | 0.17.2 | enabled | Pure-Ruby package; Fedora 43/44 clean builds and Chromium CDP smoke passed |
 | ast-grep | 0.44.1 | enabled | Clean F43/F44 mock builds, tests, CLI smoke, and aggregate linked-license audit passed |

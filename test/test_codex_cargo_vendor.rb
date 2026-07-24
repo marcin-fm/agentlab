@@ -22,7 +22,7 @@ class CodexCargoVendorTest < Minitest::Test
     assert_equal(policy.fetch("resolver_vendor_receipt_sha256"), Digest::SHA256.file(receipt_path).hexdigest)
     assert_equal(policy.fetch("resolver_vendor_receipt_sha256"), resolver.fetch("receipt_sha256"))
     assert_equal("agentlab-codex-resolver-cargo-vendor/v2", receipt.fetch("schema"))
-    assert_equal(1_124, receipt.dig("counts", "vendor_directories"))
+    assert_equal(1_132, receipt.dig("counts", "vendor_directories"))
     assert_equal(policy.fetch("resolver_vendor_tree_sha256"), receipt.dig("vendor_tree", "sha256"))
     assert_equal(policy.fetch("resolver_vendor_manifest_sha256"), receipt.dig("vendor_manifest", "sha256"))
     assert_equal(policy.fetch("resolver_vendor_config_sha256"), receipt.dig("cargo_config", "sha256"))
@@ -42,11 +42,11 @@ class CodexCargoVendorTest < Minitest::Test
 
     assert_equal(policy.fetch("cargo_license_text_inventory_sha256"), Digest::SHA256.file(receipt_path).hexdigest)
     assert_equal("agentlab-codex-cargo-license-text-inventory/v1", receipt.fetch("schema"))
-    assert_equal(1_124, receipt.dig("counts", "vendor_directories"))
-    assert_equal(1_020, receipt.dig("counts", "directories_with_package_local_license_texts"))
+    assert_equal(1_132, receipt.dig("counts", "vendor_directories"))
+    assert_equal(1_028, receipt.dig("counts", "directories_with_package_local_license_texts"))
     assert_equal(104, receipt.dig("counts", "directories_without_package_local_license_texts"))
     assert_equal(51, receipt.dig("counts", "linked_linux_directories_without_package_local_license_texts"))
-    assert_equal(1_016, receipt.dig("counts", "directories_with_top_level_license_texts"))
+    assert_equal(1_024, receipt.dig("counts", "directories_with_top_level_license_texts"))
     assert_equal(108, receipt.dig("counts", "directories_without_top_level_license_texts"))
     assert_equal(54, receipt.dig("counts", "linked_linux_directories_without_top_level_license_texts"))
     assert(receipt.dig("validation", "all_vendor_directories_accounted"))
@@ -70,7 +70,7 @@ class CodexCargoVendorTest < Minitest::Test
     end
     assert_includes(spec, "%cargo_prep -N")
     assert_includes(spec, "%{__cargo_to_rpm} -p %{SOURCE11} parse-vendor-manifest")
-    assert_includes(spec, 'test "$(wc -l < cargo-bundled-provides.txt)" -eq 1124')
+    assert_includes(spec, 'test "$(wc -l < cargo-bundled-provides.txt)" -eq 1132')
     assert_includes(spec, "cmp cargo-vendor.txt %{SOURCE11}")
     assert_includes(spec, "%cargo_build -- -vv --package codex-cli --bin codex")
     assert_includes(spec, "install -Dpm0755 codex-rs/target/rpm/codex")
@@ -205,7 +205,8 @@ class CodexCargoVendorTest < Minitest::Test
   end
 
   def test_supplemental_contract_rejects_stale_transport_and_bad_spec_order
-    receipt = JSON.parse(File.read(File.join(PACKAGE, "codex-cli-0.144.5-cargo-supplemental-license-sources.json")))
+    package = YAML.safe_load_file(File.join(PACKAGE, "package.yml"))
+    receipt = JSON.parse(File.read(File.join(PACKAGE, package.dig("source_policy", "cargo_supplemental_license_sources"))))
     icu = receipt.fetch("sources").find { |source| source.fetch("id") == "icu-data-payload" }
     assert_nil(icu.fetch("expected_transport_sha256"))
     assert_empty(receipt.fetch("unresolved"))

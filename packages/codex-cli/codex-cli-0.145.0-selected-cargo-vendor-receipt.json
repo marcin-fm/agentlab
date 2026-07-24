@@ -1,11 +1,11 @@
 {
   "schema": "agentlab-codex-selected-cargo-vendor/v1",
   "release": {
-    "version": "0.144.5",
-    "source_tag": "rust-v0.144.5",
-    "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
-    "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
-    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
+    "version": "0.145.0",
+    "source_tag": "rust-v0.145.0",
+    "source_commit": "25af12f7e61572b0bc18ddb1008be543b91519b0",
+    "source_sha256": "42f627a7b32db41582c73a8eafd9ec4b35d6c3ff81bd3d4455cfd6224d79d329",
+    "normalized_cargo_lock_sha256": "dd14629278c371a87a3d546a7ac6b049cc681188ea67baaf02bdbe7f7773c58d"
   },
   "selection": {
     "root_package": "codex-cli",
@@ -20,12 +20,12 @@
     ]
   },
   "closure_receipt": {
-    "name": "codex-cli-0.144.5-selected-cargo-closure.json",
-    "sha256": "b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3"
+    "name": "codex-cli-0.145.0-selected-cargo-closure.json",
+    "sha256": "e7ac18c1afb5b3f6609a27c9c94e57d05bfde481ad639e3217f162ceeeae9ffd"
   },
   "counts": {
-    "vendor_directories": 885,
-    "registry_packages": 879,
+    "vendor_directories": 893,
+    "registry_packages": 887,
     "git_packages": 6,
     "git_repositories": 5
   },
@@ -43,26 +43,26 @@
     "required_action": "Keep the package build fail-closed pending a reviewed resolver-complete source model."
   },
   "vendor_tree": {
-    "sha256": "7ddf7b80397d2b177532cf6ac8fae193544a148eb387a6ee5a9cd1ba8c072e1c",
-    "files": 52469,
-    "directories": 8564,
-    "file_bytes": 837165910,
-    "root": "codex-cli-0.144.5-selected-cargo-vendor"
+    "sha256": "05e77737363da47b89c45fd6576e69de80169ab36bc2b799945b5608133c3838",
+    "files": 52679,
+    "directories": 8607,
+    "file_bytes": 839256289,
+    "root": "codex-cli-0.145.0-selected-cargo-vendor"
   },
   "vendor_manifest": {
-    "name": "codex-cli-0.144.5-selected-cargo-vendor.txt",
-    "entries": 885,
-    "sha256": "0caa78c29e67e1cc8757e64f992fc690d60f174ea855e3295aff1a3189fdf5eb"
+    "name": "codex-cli-0.145.0-selected-cargo-vendor.txt",
+    "entries": 893,
+    "sha256": "fd050ebd18d4d928ac25e78078aa56aab2eafd26ed9347d1557a65c187314594"
   },
   "cargo_config": {
-    "name": "codex-cli-0.144.5-selected-cargo-vendor.config.toml",
+    "name": "codex-cli-0.145.0-selected-cargo-vendor.config.toml",
     "purpose": "prospective source replacement for selected evidence; not a standalone-resolvable Cargo source",
-    "sha256": "7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2"
+    "sha256": "4f124aa305c1ead06fd3097c508ffa9552fc5f110029f8f866cf644188737e05"
   },
   "archive": {
-    "name": "codex-cli-0.144.5-selected-cargo-vendor.tar.gz",
-    "size_bytes": 153677492,
-    "sha256": "4aee6efe0f209f38942a6ef6e56e8c3d766a6f62906b9ac20b9cee4966553d61"
+    "name": "codex-cli-0.145.0-selected-cargo-vendor.tar.gz",
+    "size_bytes": 154147461,
+    "sha256": "3684222c535773e481e27c182425361a399e80163ec43c9c88d96feabde0583b"
   },
   "scope": "deterministic evidence for the exact selected Linux Cargo source closure; not a standalone offline Cargo directory source, build proof, license closure, or publication artifact"
 }

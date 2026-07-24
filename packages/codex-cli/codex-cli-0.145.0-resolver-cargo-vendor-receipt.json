@@ -1,11 +1,11 @@
 {
   "schema": "agentlab-codex-resolver-cargo-vendor/v2",
   "release": {
-    "version": "0.144.5",
-    "source_tag": "rust-v0.144.5",
-    "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
-    "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
-    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
+    "version": "0.145.0",
+    "source_tag": "rust-v0.145.0",
+    "source_commit": "25af12f7e61572b0bc18ddb1008be543b91519b0",
+    "source_sha256": "42f627a7b32db41582c73a8eafd9ec4b35d6c3ff81bd3d4455cfd6224d79d329",
+    "normalized_cargo_lock_sha256": "dd14629278c371a87a3d546a7ac6b049cc681188ea67baaf02bdbe7f7773c58d"
   },
   "selection": {
     "root_package": "codex-cli",
@@ -20,18 +20,18 @@
     ]
   },
   "closure_receipt": {
-    "name": "codex-cli-0.144.5-selected-cargo-closure.json",
-    "sha256": "b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3"
+    "name": "codex-cli-0.145.0-selected-cargo-closure.json",
+    "sha256": "e7ac18c1afb5b3f6609a27c9c94e57d05bfde481ad639e3217f162ceeeae9ffd"
   },
   "resolver_supplement": {
-    "name": "codex-cli-0.144.5-cargo-resolver-supplement.json",
-    "sha256": "51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876"
+    "name": "codex-cli-0.145.0-cargo-resolver-supplement.json",
+    "sha256": "d9380367c84401707ca4cf78f546f36a8a72f910de70d6c7528beea2278854a7"
   },
   "counts": {
-    "vendor_directories": 1124,
-    "selected_vendor_directories": 885,
+    "vendor_directories": 1132,
+    "selected_vendor_directories": 893,
     "resolver_only_vendor_directories": 239,
-    "registry_packages": 1118,
+    "registry_packages": 1126,
     "git_packages": 6,
     "git_repositories": 5
   },
@@ -48,7 +48,7 @@
     "proof": {
       "selected_target": {
         "verified": true,
-        "packages": 1004,
+        "packages": 1012,
         "command": [
           "cargo",
           "tree",
@@ -67,14 +67,14 @@
           "normal,build",
           "--offline",
           "--config",
-          "codex-cli-0.144.5-resolver-cargo-vendor.config.toml",
+          "codex-cli-0.145.0-resolver-cargo-vendor.config.toml",
           "--target",
           "x86_64-unknown-linux-gnu"
         ]
       },
       "all_targets": {
         "verified": true,
-        "packages": 1161,
+        "packages": 1169,
         "command": [
           "cargo",
           "tree",
@@ -93,7 +93,7 @@
           "normal,build",
           "--offline",
           "--config",
-          "codex-cli-0.144.5-resolver-cargo-vendor.config.toml",
+          "codex-cli-0.145.0-resolver-cargo-vendor.config.toml",
           "--target",
           "all"
         ]
@@ -106,25 +106,25 @@
     "resolver_only_sources_linked_on_authoritative_target": false
   },
   "vendor_tree": {
-    "sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c",
-    "files": 70991,
-    "directories": 12466,
-    "file_bytes": 1507440307,
-    "root": "codex-cli-0.144.5-resolver-cargo-vendor"
+    "sha256": "c6a29cc835a50bc78e2a5a0fa736c6fdd1ba31073aaa38d6d67fd229f8b7e56e",
+    "files": 71201,
+    "directories": 12509,
+    "file_bytes": 1509530686,
+    "root": "codex-cli-0.145.0-resolver-cargo-vendor"
   },
   "vendor_manifest": {
-    "name": "codex-cli-0.144.5-resolver-cargo-vendor.txt",
-    "entries": 1124,
-    "sha256": "4ef2a6daa61a24f800e9737fdae8570f05623055b77c58f862b2d3c12b7e93b4"
+    "name": "codex-cli-0.145.0-resolver-cargo-vendor.txt",
+    "entries": 1132,
+    "sha256": "9cc57ea8c80b623a0ee9b11cf6660ad2847528d67bc8bca77c2092ff33127889"
   },
   "cargo_config": {
-    "name": "codex-cli-0.144.5-resolver-cargo-vendor.config.toml",
+    "name": "codex-cli-0.145.0-resolver-cargo-vendor.config.toml",
     "purpose": "offline source replacement for the authoritative Linux closure plus the separate resolver-only supplement",
-    "sha256": "921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89"
+    "sha256": "14ca0bfb074d67665418b363bccb01e49c76d561c595ed93f8c32683e97d6256"
   },
   "archive": {
-    "name": "codex-cli-0.144.5-resolver-cargo-vendor.tar.gz",
-    "root": "codex-cli-0.144.5-resolver-cargo-vendor",
+    "name": "codex-cli-0.145.0-resolver-cargo-vendor.tar.gz",
+    "root": "codex-cli-0.145.0-resolver-cargo-vendor",
     "transport_identity_required": false,
     "tree_identity_required": true
   },
