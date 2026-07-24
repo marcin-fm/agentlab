@@ -1,10 +1,10 @@
 %bcond check 1
 %global crate ast-grep
-%global source_sha256 a5a1eea64346853f5c911982f332f3e1fb670f18483d805d33686086dcce510f
+%global source_sha256 996e9d879f095d3ccef55754d3a32d61e1ae03cfaecdcff5e247bfa5b649b27a
 
 Name:           ast-grep
-Version:        0.44.1
-Release:        0.2%{?dist}
+Version:        0.45.0
+Release:        0.1%{?dist}
 Summary:        Structural code search, linting, and rewriting tool
 
 License:        MIT AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT-0 AND Unicode-DFS-2016 AND LicenseRef-Fedora-Public-Domain
@@ -77,6 +77,9 @@ install -d %{buildroot}%{fish_completions_dir}
 %{fish_completions_dir}/ast-grep.fish
 
 %changelog
+* Fri Jul 24 2026 Marcin FM <marcin@lgic.pl> - 0.45.0-0.1
+- Update to ast-grep 0.45.0 and its selected compatibility crate branches.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 0.44.1-0.2
 - Record the reduced compatibility graph and complete Cargo patch metadata.
 

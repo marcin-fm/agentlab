@@ -1,0 +1,24 @@
+name: rust-termimad0.35
+status: enabled
+blockers: []
+duplicate_check:
+  checked: "2026-07-24"
+  fedora_43_44_rawhide: absent
+  rpm_fusion_43_44_rawhide: absent
+build_validation:
+  local_fedora_44_x86_64: passed
+  tests_passed: 31
+  rpmlint_errors: 0
+  rpmlint_warnings: 0
+  configured_matrix: pending
+upstream:
+  provider: crates_io
+  crate: termimad
+  version_requirement: = 0.35.1
+  current_version: 0.35.1
+  source_url_template: https://static.crates.io/crates/termimad/termimad-{version}.crate
+  source_sha256: d53d4b1294b87e81925b7ae7f8f4d000376e3a5b3349d978429665428a793fcb
+copr:
+  enabled: true
+  subdir: packages/rust-termimad0.35
+  spec: rust-termimad0.35.spec

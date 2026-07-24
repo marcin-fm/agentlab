@@ -1,0 +1,24 @@
+name: rust-bit-set0.11
+status: enabled
+blockers: []
+duplicate_check:
+  checked: "2026-07-24"
+  fedora_43_44_rawhide: compatible branch absent; Fedora provides 0.8 and 0.5
+  rpm_fusion_43_44_rawhide: absent
+build_validation:
+  local_fedora_44_x86_64: passed
+  tests_passed: 47
+  rpmlint_errors: 0
+  rpmlint_warnings: 0
+  configured_matrix: pending
+upstream:
+  provider: crates_io
+  crate: bit-set
+  version_requirement: = 0.11.1
+  current_version: 0.11.1
+  source_url_template: https://static.crates.io/crates/bit-set/bit-set-{version}.crate
+  source_sha256: 56d87354e4229f54a44f7bf2435906a4656dba36026ab6eaca629a2c436a691c
+copr:
+  enabled: true
+  subdir: packages/rust-bit-set0.11
+  spec: rust-bit-set0.11.spec
