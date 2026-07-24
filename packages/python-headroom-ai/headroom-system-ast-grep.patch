@@ -1,0 +1,10 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -57,7 +57,6 @@ dependencies = [
+     "click>=8.3.3",               # CLI framework; PYSEC-2026-2132 fix (command injection in click.edit())
+     "rich>=13.0.0",               # Rich terminal output
+     "opentelemetry-api>=1.24.0",  # Safe no-op OTEL API for instrumentation
+-    "ast-grep-cli>=0.30.0",       # AST-aware code slicing (CodeCompressor); binary wheel
+     "pyyaml>=6.0",                # omp wrap: parse/merge omp's models.yml registry
+     "tomli>=2.0.0; python_version < '3.11'",  # tomllib backport for helper scripts
+     "tomlkit>=0.13.0,<1.0",       # Loss-minimizing Codex config recovery

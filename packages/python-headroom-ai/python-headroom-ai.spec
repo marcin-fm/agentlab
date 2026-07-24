@@ -4,7 +4,7 @@
 
 Name:           python-headroom-ai
 Version:        0.32.0
-Release:        0.8%{?dist}
+Release:        0.9%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
@@ -12,9 +12,10 @@ Summary:        Context compression toolkit and MCP server
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
 URL:            https://github.com/headroomlabs-ai/headroom
 Source0:        https://github.com/headroomlabs-ai/headroom/archive/%{upstream_commit}/headroom-%{upstream_commit}.tar.gz
-# Packaging-only feature propagation: upstream headroom-core defaults to ML,
-# but headroom-py cannot disable that dependency default. Not submitted yet;
-# retain only while upstream lacks a forwarding feature or default opt-out.
+# Packaging-only feature selection: upstream headroom-core defaults to ML and
+# Cargo metadata resolves even unselected optional dependencies. Propagate the
+# non-ML choice and remove only unselected ML/Redis dependency declarations.
+# Not submitted; retain while upstream lacks a metadata-clean non-ML surface.
 Patch0:         headroom-disable-default-ml.patch
 # Fedora compatibility adaptation: use the available rusqlite 0.31 branch and
 # system SQLite instead of the upstream bundled 0.32 branch. Not submitted;
@@ -29,12 +30,17 @@ Patch2:         headroom-python-workspace.patch
 # tempfile, all Cargo tests, and the installed Python smokes. Fedora-specific;
 # not submitted because this removes development-only benchmark coverage.
 Patch3:         headroom-drop-benchmark-dev-dependency.patch
+# Fedora ships the required ast-grep CLI from source. Remove only the upstream
+# PyPI binary-wheel dependency and require the system executable instead.
+# Fedora-specific; not submitted because upstream supports pip environments.
+Patch4:         headroom-system-ast-grep.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  gcc
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python3-devel
+BuildRequires:  python3dist(fastapi) >= 0.100
 BuildRequires:  rust >= 1.80
 
 %description
@@ -44,11 +50,13 @@ path without redefining Headroom's upstream command surface.
 
 %package -n python3-headroom-ai
 Summary:        %{summary}
+Requires:       python3dist(fastapi) >= 0.100
 Requires:       python3dist(mcp) >= 1
 Requires:       python3dist(httpx) >= 0.24
 Requires:       python3dist(starlette) >= 0.27
 Requires:       python3dist(uvicorn) >= 0.23
 Requires:       python3dist(uvicorn) < 1
+Requires:       ast-grep >= 0.30.0
 
 %description -n python3-headroom-ai
 Headroom compresses AI-agent context and exposes command-line and Model Context
@@ -76,7 +84,7 @@ export MATURIN_PEP517_ARGS="--no-default-features --features extension-module"
 %pyproject_wheel
 pushd crates/headroom-py >/dev/null
 %cargo_license_summary -n -f extension-module
-%cargo_license -n -f extension-module > ../../LICENSE.dependencies
+%{cargo_license -n -f extension-module} > ../../LICENSE.dependencies
 popd >/dev/null
 test -s LICENSE.dependencies
 
@@ -90,15 +98,26 @@ pushd crates/headroom-core >/dev/null
 %cargo_test -n
 popd >/dev/null
 export PYTHONPATH=%{buildroot}%{python3_sitearch}
+sqlite_test=$(find target/rpm/deps -maxdepth 1 -type f -name 'ccr_backends-*' -perm -0100 -print -quit)
+test -n "$sqlite_test"
+ldd "$sqlite_test" | grep -Eq '/(usr/)?lib64/libsqlite3\.so'
 extension=$(find %{buildroot}%{python3_sitearch}/headroom -name '_core*.so' -print -quit)
 test -n "$extension"
-ldd "$extension" | grep -Eq '/(usr/)?lib64/libsqlite3\.so'
 ! readelf -d "$extension" | grep -Eq 'RPATH|RUNPATH'
-%{python3} - <<'PY'
+nm -D --defined-only "$extension" | grep -Eq ' PyInit__core$'
+PYTHONSAFEPATH=1 %{python3} -P - <<'PY'
+import tempfile
+from pathlib import Path
+
 import headroom
 import headroom._core
+from headroom.cache.backends.sqlite import SQLiteBackend
+
+with tempfile.TemporaryDirectory() as directory:
+    backend = SQLiteBackend(Path(directory) / "ccr.db")
+    assert backend.count() == 0
 PY
-PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindir}/headroom --help >/dev/null
+PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindir}/headroom --help >/dev/null
 %endif
 
 %files -n python3-headroom-ai -f %{pyproject_files}
@@ -107,6 +126,9 @@ PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindir}/headroom --hel
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.9
+- Select the system ast-grep CLI and remove unselected optional native metadata.
+
 * Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.8
 - Remove the unavailable benchmark-only Criterion dependency.
 

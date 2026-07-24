@@ -7,9 +7,9 @@ release:
   upstream_tag: v0.32.0
   upstream_commit: 4381388d56f49af3ae9b1dece7489a12fa64a1a1
 current_draft:
-  release: 0.32.0-0.8
+  release: 0.32.0-0.9
   validation: pending configured-SCM six-cell build and artifact proof
-  spec_sha256: a08429911e0a71094f4b696e4307e2f604deff20d59ba71c0d954e8563ae749f
+  spec_sha256: 95c0dc8c03019d59ff9968143bc3f0a9503c73ae61dc83d151bf405765ee92b6
   selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
   license_gate: target builds must regenerate LICENSE.dependencies from the selected closure
 selected_surface:
@@ -17,8 +17,8 @@ selected_surface:
   native_features:
     - extension-module
   disabled_native_defaults:
-    - ml, including fastembed, Magika, and ORT
-    - Redis remains unselected
+    - ml, including fastembed, Magika, and ORT, removed from selected Cargo metadata
+    - Redis removed from selected Cargo metadata
   license_workspace:
     - crates/headroom-core
     - crates/headroom-py
@@ -27,25 +27,35 @@ selected_surface:
     - stdio and streamable HTTP MCP transports are available
     - proxy fallback, update checks, file-read opt-in, and hf-hub capability remain available
     - these are documented upstream runtime behaviors, not build-time network access
+    - FastAPI is required because upstream CLI registration imports proxy request-scope types
 patches:
-  headroom-disable-default-ml.patch: 0f17b01a7a1c7845d50e7fdb235a161bc65317b8a7f44bc9617c7f3dd99872ca
-  headroom-system-rusqlite.patch: 4d940b3261fee935d9fa5376f9553ba7ce10e485b194ff557528c3f2e7918739
+  headroom-disable-default-ml.patch: 5b694b45929dff377da1266695524b47e2957e6d57e4725b50c537109f5e4abd
+  headroom-system-rusqlite.patch: f1c57c7646aa916420407640bba5c128dc661a5078121e8b8196b48b944fe459
   headroom-python-workspace.patch: 3db624347342b5a4313c2f5e536598bcc3e5a92bb39e7c683ce4be500b961078
   headroom-drop-benchmark-dev-dependency.patch: 16c6d041618191bf65def6b3516bcf986c91759a22bb48aadb626a6fcb378137
+  headroom-system-ast-grep.patch: 6b354018d010d392fa4705e9973cd7552e1fc0e088d9438571e9dd8901d25673
 current_static_validation:
   exact_archive_patch_apply: passed with zero fuzz
-  cargo_metadata: headroom-py dependency uses_default_features is false
+  cargo_metadata: headroom-py dependency uses_default_features is false and unselected optional ML and Redis dependencies are absent
+  ast_grep_provider: source-built Agentlab ast-grep replaces the upstream PyPI binary wheel
   cargo_resolution: rusqlite 0.31.0 and libsqlite3-sys 0.28.0 selected
   sqlite_source_review: v0.31.0 to v0.32.0 changes only the backend TTL documentation, not its rusqlite API use
   license_workspace: headroom-core and headroom-py only
   source_license_probe: 240 unique target-all package/version records; fastembed and aws-config are absent
   license_breakdown_records: 207
   buildroot_license_probe: pending configured target builds
-  system_sqlite_probe: target checks require Fedora libsqlite3 and no RPATH or RUNPATH
-  installed_smoke: target checks import the package and run headroom --help
+  license_macro_redirection: canonical braced cargo_license expansion writes ../../LICENSE.dependencies
+  system_sqlite_probe: target checks require the Rust CCR test binary to link Fedora libsqlite3 and the installed Python backend to open a database
+  extension_dynamic_probe: target checks reject RPATH or RUNPATH; unused Rust CCR code may be dead-stripped from the extension
+  installed_smoke: target checks verify PyInit__core, import the buildroot package in safe-path mode, and run headroom --help
   spec_parse: passed
-  local_srpm_sha256: 990a383ca606cf81960655d506ef8622822c678a0c3024e3b868f42529a9b2d2
+  local_srpm_sha256: f43fccdd0eaab00c5b30beda25ef5b4bac2fcf5337242748d80f926e45a9b35c
   rpmlint: zero errors, zero warnings, four filtered
+  local_mock_fedora_44_x86_64: passed
+  local_runtime_rpm_sha256: cf4b945776325b0798ed6da14bcc514a8fdca7608ff7a07082366e4276186390
+  local_debuginfo_rpm_sha256: 366ba34cec0d6d0856e97ff333ecb545f6399e5dc04266a4583967203d246432
+  local_binary_rpmlint: zero errors and one missing-manpage warning
+  local_cargo_tests: 936 passed plus doctests; 3 ignored
   yaml_parse: passed
   scoped_package_validator: passed
   full_package_validator: 130 packages passed
