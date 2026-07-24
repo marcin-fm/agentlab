@@ -15,18 +15,23 @@ Cargo workspace to `headroom-core` and `headroom-py`, because Fedora cargo2rpm
 HTTP workspace members. The old custom feature graph, CLI pruning, proxy
 suppression, tokenizer download changes, and companion test patches are removed.
 
-The package remains blocked and COPR-disabled. Upstream still has no bounded
-MCP-only feature: the installed Python project exposes its full CLI and network
-transports, retains broad base dependencies, and keeps `hf-hub` unconditional.
-The rusqlite adaptation needs clean buildroot proof. A scoped source probe found
-240 target-all package/version records and 207 license-breakdown entries, then
-produced the candidate aggregate expression `Apache-2.0 AND BSD-2-Clause AND
-BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND
-Unicode-3.0`. Fedora 43/44 buildroots must regenerate the dependency inventory
-and confirm that expression before publication.
+The package selects upstream's full released base project plus its `mcp` extra
+without restoring the former downstream MCP-only product fork. The installed
+CLI, stdio and streamable-HTTP MCP transports, proxy/update/file-read paths, and
+unconditional tokenizer `hf-hub` capability are documented runtime behavior;
+RPM build phases remain offline. The native `ml` feature remains disabled.
+
+Release `0.7` is enabled for the exact configured target proof. Its checks fail
+unless the extension links Fedora's system SQLite without RPATH/RUNPATH, imports
+successfully from the installed buildroot, and runs the installed CLI help path.
+A scoped source probe found 240 target-all package/version records and 207
+license-breakdown entries, producing the selected aggregate expression
+`Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC
+AND MIT AND MPL-2.0 AND Unicode-3.0`. Target builds regenerate the dependency
+inventory through standard Cargo license accounting.
 
 Historical Fedora 43 and Fedora 44 `0.31.0-0.1` receipts remain evidence only;
-they do not validate `0.32.0-0.5`. Released non-ML Headroom still requires
+they do not validate `0.32.0-0.7`. Released non-ML Headroom still requires
 `tiktoken-rs 0.11`, its `fancy-regex 0.17` edge, and `unidiff 0.4`, so those
-three compatibility records remain selected for the blocked parent. No
-produced RPM was installed and COPR was not mutated.
+three compatibility records remain selected for the package. No
+produced RPM was installed.

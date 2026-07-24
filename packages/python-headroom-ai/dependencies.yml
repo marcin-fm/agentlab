@@ -39,13 +39,15 @@ build_runtime:
     - rust-tiktoken-rs0.11 = 0.11.0
 validation:
   current_draft:
-    release: 0.32.0-0.5
-    status: not built; blocked license-scope rework
+    release: 0.32.0-0.7
+    status: pending configured-SCM six-cell build and artifact proof
     static_validation: exact-archive zero-fuzz patch application, scoped Cargo metadata and license probing, RPM spec parsing, YAML parsing, and repository tests passed
     source_license_probe: 240 target-all package/version records for headroom-core and headroom-py; fastembed and aws-config are absent
     license_breakdown_records: 207
     candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
-    unresolved_resolution: Fedora 43/44 buildroots must regenerate the provider-selected dependency inventory and confirm the aggregate expression
+    buildroot_license_gate: target builds must regenerate LICENSE.dependencies from the provider-selected closure
+    system_sqlite_gate: target checks must prove the extension links Fedora libsqlite3 without RPATH or RUNPATH
+    installed_smoke_gate: target checks must import the Python package and run the installed CLI help path
   prior_release_0_1:
     fedora_43:
       mock: passed

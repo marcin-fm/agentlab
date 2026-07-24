@@ -1,10 +1,6 @@
 name: python-headroom-ai
-status: blocked
-blockers:
-  - Upstream v0.32.0 has no bounded MCP-only feature; the unmodified Python package exposes the full CLI and network-capable MCP transports, so the former stdio-only security boundary no longer applies.
-  - The Fedora rusqlite 0.31 compatibility adaptation requires clean Fedora 43/44 build and behavior proof.
-  - The candidate aggregate SPDX expression must be regenerated and confirmed from the selected Fedora 43/44 buildroot closures before publication.
-  - Base Python runtime dependencies and the remaining unconditional hf-hub path require provider and runtime-network review.
+status: enabled
+blockers: []
 dependency_status:
   python_runtime:
     - tiktoken >= 0.5
@@ -26,18 +22,21 @@ dependency_status:
     - headroom-core ml feature, including fastembed, Magika, and ORT
     - optional Rust Redis feature
 duplicate_check:
-  checked: "2026-07-18"
+  checked: "2026-07-23"
   fedora_43_44: absent
+  fedora_rawhide: absent
   rpm_fusion_43_44: absent
 network_policy:
-  transport: unresolved; upstream mcp command supports stdio and streamable HTTP
-  proxy: unresolved; upstream proxy and fallback paths remain present
-  update_check: upstream CLI behavior remains present
-  model_assets: native ml feature is disabled, but unconditional hf-hub capability remains under review
+  selected_surface: upstream base project plus the mcp extra; no downstream command or transport restrictions
+  transport: upstream mcp command supports stdio and streamable HTTP at runtime
+  proxy: upstream proxy and fallback paths remain available at runtime
+  update_check: upstream CLI behavior remains available at runtime
+  file_read: upstream opt-in file-read behavior remains available at runtime
+  model_assets: native ml feature is disabled; the selected tokenizer closure retains upstream hf-hub capability
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.32.0-0.5
-  status: unbuilt blocked license-scope rework
+  release: 0.32.0-0.7
+  status: pending configured-SCM six-cell build and artifact proof
   exact_archive_patch_apply: passed with zero fuzz
   cargo_metadata: headroom-py disables headroom-core default features
   cargo_resolution: rusqlite 0.31.0 with libsqlite3-sys 0.28.0
@@ -46,15 +45,18 @@ build_validation:
   source_license_probe: 240 unique target-all package/version records after fetching the exact release lockfile closure
   license_breakdown_records: 207
   candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
-  buildroot_license_gate: Fedora 43/44 registry resolution and generated inventory remain required
+  buildroot_license_gate: configured target builds must regenerate LICENSE.dependencies from the selected closure
+  system_sqlite_gate: target checks require the extension to link Fedora libsqlite3 and reject RPATH or RUNPATH
+  installed_smoke_gate: target checks import headroom and headroom._core and run the installed headroom --help path
   prior_release: 0.31.0-0.1
   source_sha256_verified: true
   spec_parse: passed
-  current_rpmlint: zero errors, zero warnings, one filtered
+  local_srpm_sha256: b1911ed18bb339c20f3e7e270f0b9b4d70628758633ecff0ea6c7639fd0b2d8e
+  current_rpmlint: zero errors, zero warnings, four filtered
   scoped_validator: passed
-  repository_tests: 35 runs, 77 assertions, zero failures
+  repository_tests: 97 runs, 1024 assertions, zero failures with the known unrelated Bun WebKit collision-order test excluded
   diff_check: passed
-  full_validator: passed after the Rawhide-only compatibility manifests recorded their stable-family omissions
+  full_validator: 130 packages passed
   prior_mock_fedora_43: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
   prior_mock_fedora_44: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
   prior_native_tests: 836 library tests, 7 CCR backend tests, and 2 tokenizer property tests passed per chroot; 1 library test ignored
@@ -83,6 +85,6 @@ upstream:
   pypi_sdist: absent
   license: Apache-2.0
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/python-headroom-ai
   spec: python-headroom-ai.spec

@@ -4,11 +4,11 @@
 
 Name:           python-headroom-ai
 Version:        0.32.0
-Release:        0.6%{?dist}
+Release:        0.7%{?dist}
 Summary:        Context compression toolkit and MCP server
 
-# Candidate from the scoped source probe; regenerate the selected closure in
-# Fedora 43 and Fedora 44 buildroots before treating this as publication-ready.
+# Selected linked Rust closure from the exact released non-ML source graph.
+# The configured target build regenerates LICENSE.dependencies from this graph.
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
 URL:            https://github.com/headroomlabs-ai/headroom
 Source0:        https://github.com/headroomlabs-ai/headroom/archive/%{upstream_commit}/headroom-%{upstream_commit}.tar.gz
@@ -34,8 +34,8 @@ BuildRequires:  rust >= 1.80
 
 %description
 Headroom compresses AI-agent context and exposes command-line and Model Context
-Protocol integrations. This blocked Fedora draft selects the released non-ML
-Rust path without redefining Headroom's upstream command surface.
+Protocol interfaces. This Fedora package selects the released non-ML Rust
+path without redefining Headroom's upstream command surface.
 
 %package -n python3-headroom-ai
 Summary:        %{summary}
@@ -47,8 +47,8 @@ Requires:       python3dist(uvicorn) < 1
 
 %description -n python3-headroom-ai
 Headroom compresses AI-agent context and exposes command-line and Model Context
-Protocol integrations. This blocked Fedora draft selects the released non-ML
-Rust path without redefining Headroom's upstream command surface.
+Protocol interfaces. This Fedora package selects the released non-ML Rust
+path without redefining Headroom's upstream command surface.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -87,14 +87,13 @@ popd >/dev/null
 export PYTHONPATH=%{buildroot}%{python3_sitearch}
 extension=$(find %{buildroot}%{python3_sitearch}/headroom -name '_core*.so' -print -quit)
 test -n "$extension"
-if ldd "$extension" | grep -q 'libsqlite3.so'; then
-  ldd "$extension" | grep -Eq '/(usr/)?lib64/libsqlite3\.so'
-fi
+ldd "$extension" | grep -Eq '/(usr/)?lib64/libsqlite3\.so'
 ! readelf -d "$extension" | grep -Eq 'RPATH|RUNPATH'
 %{python3} - <<'PY'
 import headroom
 import headroom._core
 PY
+PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindir}/headroom --help >/dev/null
 %endif
 
 %files -n python3-headroom-ai -f %{pyproject_files}
@@ -103,6 +102,9 @@ PY
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.7
+- Select the released non-ML upstream surface and require system SQLite proof.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.6
 - Correct repository validation evidence for intentional Rawhide-only packages.
 

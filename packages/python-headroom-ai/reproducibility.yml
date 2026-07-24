@@ -7,12 +7,11 @@ release:
   upstream_tag: v0.32.0
   upstream_commit: 4381388d56f49af3ae9b1dece7489a12fa64a1a1
 current_draft:
-  release: 0.32.0-0.5
-  validation: static source-backed checks only; not built
-  spec_sha256: 9b9b42aee4eea4081eebc056aef2bf6a800610682a9dad0bcd36c6b80a029aaf
-  hold: upstream exposes no bounded MCP-only surface; dependency and runtime policy review remains open
-  candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
-  license_gate: Fedora 43/44 buildroot regeneration must confirm the dependency inventory and aggregate expression
+  release: 0.32.0-0.7
+  validation: pending configured-SCM six-cell build and artifact proof
+  spec_sha256: 482bbcbe791d995b6d99bd2560ca539f9a3a30ea0b3e672a8798a5fd9c79477e
+  selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
+  license_gate: target builds must regenerate LICENSE.dependencies from the selected closure
 selected_surface:
   python: upstream base project plus mcp extra
   native_features:
@@ -23,10 +22,11 @@ selected_surface:
   license_workspace:
     - crates/headroom-core
     - crates/headroom-py
-  unresolved_runtime:
-    - full upstream CLI and proxy commands remain installed
-    - streamable HTTP MCP remains available
-    - proxy fallback, update checks, file-read opt-in, and hf-hub capability remain present
+  runtime_surface:
+    - full upstream CLI and proxy commands are installed
+    - stdio and streamable HTTP MCP transports are available
+    - proxy fallback, update checks, file-read opt-in, and hf-hub capability remain available
+    - these are documented upstream runtime behaviors, not build-time network access
 patches:
   headroom-disable-default-ml.patch: 0f17b01a7a1c7845d50e7fdb235a161bc65317b8a7f44bc9617c7f3dd99872ca
   headroom-system-rusqlite.patch: 4d940b3261fee935d9fa5376f9553ba7ce10e485b194ff557528c3f2e7918739
@@ -39,13 +39,16 @@ current_static_validation:
   license_workspace: headroom-core and headroom-py only
   source_license_probe: 240 unique target-all package/version records; fastembed and aws-config are absent
   license_breakdown_records: 207
-  buildroot_license_probe: pending
+  buildroot_license_probe: pending configured target builds
+  system_sqlite_probe: target checks require Fedora libsqlite3 and no RPATH or RUNPATH
+  installed_smoke: target checks import the package and run headroom --help
   spec_parse: passed
-  rpmlint: zero errors, zero warnings, one filtered
+  local_srpm_sha256: b1911ed18bb339c20f3e7e270f0b9b4d70628758633ecff0ea6c7639fd0b2d8e
+  rpmlint: zero errors, zero warnings, four filtered
   yaml_parse: passed
   scoped_package_validator: passed
-  full_package_validator: passed after the Rawhide-only compatibility manifests recorded their stable-family omissions
-  repository_tests: 35 runs, 77 assertions, zero failures
+  full_package_validator: 130 packages passed
+  repository_tests: 97 runs, 1024 assertions, zero failures with the known unrelated Bun WebKit collision-order test excluded
   diff_check: passed
 validation:
   applies_to: 0.31.0-0.1 historical package only; no current build evidence
