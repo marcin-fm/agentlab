@@ -317,7 +317,7 @@ module Agentlab
     raise Error, "COPR identity mismatch: expected #{expected_owner.inspect}, got #{actual_owner.inspect}"
   end
 
-  def copr_package_build(owner:, project:, package_name:, chroots:)
+  def copr_package_build(owner:, project:, package_name:, chroots:, timeout: nil)
     config_path = ENV["COPR_CONFIG"].to_s
     raise Error, "COPR_CONFIG is not set; activate the project identity before COPR mutation" if config_path.empty?
 
@@ -330,14 +330,16 @@ module Agentlab
     request["Accept"] = "application/json"
     request["Content-Type"] = "application/json"
     request["User-Agent"] = "agentlab-packaging"
-    request.body = JSON.generate(
+    payload = {
       "ownername" => owner,
       "projectname" => project,
       "package_name" => package_name,
       "chroots" => chroots,
       "background" => false,
       "enable_net" => false
-    )
+    }
+    payload["timeout"] = timeout if timeout
+    request.body = JSON.generate(payload)
     response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
 
     unless response.is_a?(Net::HTTPSuccess)

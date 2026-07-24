@@ -346,7 +346,7 @@ class AgentlabTest < Minitest::Test
     end
   end
 
-  def test_copr_package_build_omits_cli_progress_callback
+  def test_copr_package_build_supports_timeout_and_omits_cli_progress_callback
     Dir.mktmpdir do |directory|
       config_path = File.join(directory, "copr")
       File.write(config_path, <<~CONFIG)
@@ -379,7 +379,8 @@ class AgentlabTest < Minitest::Test
         owner: "marcin",
         project: "agentlab",
         package_name: "python-headroom-ai",
-        chroots: %w[fedora-44-x86_64 fedora-44-aarch64]
+        chroots: %w[fedora-44-x86_64 fedora-44-aarch64],
+        timeout: 28_800
       )
 
       assert_equal(1234, result.fetch("id"))
@@ -393,7 +394,8 @@ class AgentlabTest < Minitest::Test
           "package_name" => "python-headroom-ai",
           "chroots" => %w[fedora-44-x86_64 fedora-44-aarch64],
           "background" => false,
-          "enable_net" => false
+          "enable_net" => false,
+          "timeout" => 28_800
         },
         JSON.parse(captured_request.body)
       )
@@ -415,6 +417,38 @@ class AgentlabTest < Minitest::Test
     assert(status.success?, stderr)
     assert_includes(stdout, "Dry run: no files changed and no builds submitted.")
     refute_includes(stderr, "unsupported release provider")
+  end
+
+  def test_blocked_proof_build_dry_run_requires_explicit_flag
+    script = File.expand_path("../scripts/update-and-build", __dir__)
+    stdout, stderr, status = Open3.capture3(
+      script,
+      "--build-current",
+      "--proof-build",
+      "--timeout", "28800",
+      "--chroot", "fedora-43-x86_64",
+      "--chroot", "fedora-44-x86_64",
+      "--chroot", "fedora-rawhide-x86_64",
+      "--package", "codex-cli"
+    )
+
+    assert(status.success?, stderr)
+    assert_includes(stdout, "Dry run: no files changed and no builds submitted.")
+    refute_includes(stdout, "No enabled packages selected.")
+  end
+
+  def test_current_build_rejects_unknown_chroot
+    script = File.expand_path("../scripts/update-and-build", __dir__)
+    _stdout, stderr, status = Open3.capture3(
+      script,
+      "--build-current",
+      "--proof-build",
+      "--chroot", "fedora-99-x86_64",
+      "--package", "codex-cli"
+    )
+
+    refute(status.success?)
+    assert_includes(stderr, "unknown configured chroot(s): fedora-99-x86_64")
   end
 
   def test_reads_only_the_copr_cli_config_section

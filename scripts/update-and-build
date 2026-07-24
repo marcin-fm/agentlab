@@ -9,24 +9,39 @@ require_relative "lib/agentlab"
 begin
 apply = false
 build_current = false
+build_timeout = nil
 include_blocked = false
+proof_build = false
+selected_chroots = []
 selected_name = nil
 config_path = Agentlab::DEFAULT_CONFIG
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: scripts/update-and-build [--apply] [--include-blocked] [--package NAME]"
+  parser.banner = "Usage: scripts/update-and-build [--apply] [--build-current] [--proof-build] [--timeout SECONDS] [--chroot NAME] [--include-blocked] [--package NAME]"
   parser.on("--apply", "Write updates and build changed enabled packages") { apply = true }
   parser.on("--build-current", "Build one already-pushed SCM package definition") { build_current = true }
+  parser.on("--proof-build", "Allow --build-current for one blocked package without enabling it") { proof_build = true }
+  parser.on("--timeout SECONDS", Integer, "Override the COPR build timeout") { |seconds| build_timeout = seconds }
+  parser.on("--chroot NAME", "Override a current build target; may be repeated") { |chroot| selected_chroots << chroot }
   parser.on("--include-blocked", "Check and update blocked drafts, but never build them") { include_blocked = true }
   parser.on("--package NAME", "Process only one package") { |name| selected_name = name }
   parser.on("--config PATH", "Use another COPR config file") { |path| config_path = path }
 end.parse!
 
 raise Agentlab::Error, "--build-current requires --package NAME" if build_current && selected_name.nil?
+raise Agentlab::Error, "--proof-build requires --build-current" if proof_build && !build_current
+raise Agentlab::Error, "--timeout requires --build-current" if build_timeout && !build_current
+raise Agentlab::Error, "--chroot requires --build-current" if selected_chroots.any? && !build_current
+raise Agentlab::Error, "--timeout must be a positive number of seconds" if build_timeout && !build_timeout.positive?
 
 config = Agentlab.config(config_path)
+selected_chroots.uniq!
+unknown_chroots = selected_chroots - config.fetch("chroots")
+unless unknown_chroots.empty?
+  raise Agentlab::Error, "unknown configured chroot(s): #{unknown_chroots.join(', ')}"
+end
 packages = selected_name ? [Agentlab.package_named(selected_name)] : Agentlab.packages
-packages.select! { |package| package.enabled? || include_blocked }
+packages.select! { |package| package.enabled? || include_blocked || proof_build }
 
 if packages.empty?
   puts "No enabled packages selected. Use --include-blocked to check blocked drafts."
@@ -76,7 +91,7 @@ if build_current && updates.any?
 end
 
 builds = if build_current
-           packages.select(&:enabled?)
+           proof_build ? packages : packages.select(&:enabled?)
          elsif agentlab_project
            []
          else
@@ -99,7 +114,7 @@ Agentlab.run!([RbConfig.ruby, File.join(Agentlab::ROOT, "scripts", "check-packag
 
 if builds.any?
   builds.each do |package|
-    chroots = package.chroots(config.fetch("chroots"))
+    chroots = selected_chroots.empty? ? package.chroots(config.fetch("chroots")) : selected_chroots
     chroot_args = chroots.flat_map { |chroot| ["--chroot", chroot] }
     if agentlab_project
       package_path = package.directory.delete_prefix("#{Agentlab::ROOT}/")
@@ -125,16 +140,21 @@ if builds.any?
         raise Agentlab::Error, "local HEAD does not match pushed origin/#{branch}"
       end
 
-      puts "$ COPR package build #{project}/#{package.name} in #{chroots.join(', ')}"
+      timeout_label = build_timeout ? " with timeout #{build_timeout}s" : ""
+      puts "$ COPR package build #{project}/#{package.name} in #{chroots.join(', ')}#{timeout_label}"
       result = Agentlab.copr_package_build(
         owner: config.fetch("owner"),
         project: config.fetch("project"),
         package_name: package.name,
-        chroots: chroots
+        chroots: chroots,
+        timeout: build_timeout
       )
       puts "Submitted COPR build #{result.fetch('id')}."
     else
-      Agentlab.run!(Agentlab.copr_command("build", project, "--nowait", *chroot_args, package.spec_path))
+      command = Agentlab.copr_command("build", project, "--nowait", *chroot_args)
+      command.concat(["--timeout", build_timeout.to_s]) if build_timeout
+      command << package.spec_path
+      Agentlab.run!(command)
     end
   end
 end
