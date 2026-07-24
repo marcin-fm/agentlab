@@ -1,0 +1,35 @@
+name: python-click
+status: enabled
+blockers: []
+validation:
+  enablement_release: Release 1.1 adapts Fedora's 8.3.3-1 package only for Fedora 43, where Headroom requires click 8.3.3 and the distribution provides only 8.1.7.
+  source_identity: The immutable GitHub archive matches the pinned SHA-256 and contains the BSD-3-Clause license text.
+  fedora_provenance: The spec is adapted from Fedora commit e7bf4b0df3e26b09d5f9f25ec263a0058cf155c4.
+  selected_surface: The noarch Python distribution and its published non-stress pytest suite are retained unchanged.
+  fedora_43_mock: The exact 8.3.3-1.1 source package builds successfully with the Agentlab repository and all published non-stress tests enabled.
+  rpmlint: The Fedora 43 source and noarch binary RPMs have zero errors and zero warnings.
+upstream:
+  provider: github_release
+  project: pallets/click
+  current_version: 8.3.3
+  source_url_template: https://github.com/pallets/click/archive/{version}/click-{version}.tar.gz
+  source_sha256: d3757817029a666ecd2191b0f571b140177cb62f6588248fc6e97610f3356152
+duplicate_check:
+  checked: "2026-07-24"
+  fedora_43: python3-click 8.1.7-12.fc43 is below Headroom's released minimum
+  fedora_44: python3-click 8.3.3-1.fc44
+  fedora_rawhide: python3-click 8.3.3-3.fc45
+  rpm_fusion: no separate provider required
+fedora_adaptation:
+  base_release: "1"
+  commit: e7bf4b0df3e26b09d5f9f25ec263a0058cf155c4
+copr:
+  enabled: true
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+  omitted_target_families:
+    fedora_44: Fedora 44 provides Click 8.3.3, satisfying Headroom directly.
+    rawhide: Fedora Rawhide provides Click 8.3.3, satisfying Headroom directly.
+  subdir: packages/python-click
+  spec: python-click.spec
