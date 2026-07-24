@@ -39,7 +39,7 @@ build_runtime:
     - rust-tiktoken-rs0.11 = 0.11.0
 validation:
   current_draft:
-    release: 0.32.0-0.7
+    release: 0.32.0-0.8
     status: pending configured-SCM six-cell build and artifact proof
     static_validation: exact-archive zero-fuzz patch application, scoped Cargo metadata and license probing, RPM spec parsing, YAML parsing, and repository tests passed
     source_license_probe: 240 target-all package/version records for headroom-core and headroom-py; fastembed and aws-config are absent

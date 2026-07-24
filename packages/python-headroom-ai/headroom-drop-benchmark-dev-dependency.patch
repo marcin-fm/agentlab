@@ -1,0 +1,12 @@
+diff --git a/crates/headroom-core/Cargo.toml b/crates/headroom-core/Cargo.toml
+index da17e88..e893d8f 100644
+--- a/crates/headroom-core/Cargo.toml
++++ b/crates/headroom-core/Cargo.toml
+@@ -175,7 +175,6 @@ redis = ["dep:redis"]
+ 
+ [dev-dependencies]
+ proptest = "1"
+-criterion = { version = "0.5", features = ["html_reports"] }
+ tempfile = "3"
+ 
+ [[bench]]

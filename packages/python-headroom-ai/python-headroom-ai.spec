@@ -4,7 +4,7 @@
 
 Name:           python-headroom-ai
 Version:        0.32.0
-Release:        0.7%{?dist}
+Release:        0.8%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
@@ -24,6 +24,11 @@ Patch1:         headroom-system-rusqlite.patch
 # selector is broken. Narrow the packaging workspace to the built extension and
 # core library. This is Fedora-tooling-specific and is not an upstream change.
 Patch2:         headroom-python-workspace.patch
+# Fedora 43/44/Rawhide do not package Criterion 0.5. It is referenced only by
+# upstream benchmark targets, which RPM builds do not run. Keep proptest,
+# tempfile, all Cargo tests, and the installed Python smokes. Fedora-specific;
+# not submitted because this removes development-only benchmark coverage.
+Patch3:         headroom-drop-benchmark-dev-dependency.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  gcc
@@ -102,6 +107,9 @@ PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindir}/headroom --hel
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.8
+- Remove the unavailable benchmark-only Criterion dependency.
+
 * Thu Jul 23 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.7
 - Select the released non-ML upstream surface and require system SQLite proof.
 

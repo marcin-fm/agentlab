@@ -7,9 +7,9 @@ release:
   upstream_tag: v0.32.0
   upstream_commit: 4381388d56f49af3ae9b1dece7489a12fa64a1a1
 current_draft:
-  release: 0.32.0-0.7
+  release: 0.32.0-0.8
   validation: pending configured-SCM six-cell build and artifact proof
-  spec_sha256: 482bbcbe791d995b6d99bd2560ca539f9a3a30ea0b3e672a8798a5fd9c79477e
+  spec_sha256: a08429911e0a71094f4b696e4307e2f604deff20d59ba71c0d954e8563ae749f
   selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0
   license_gate: target builds must regenerate LICENSE.dependencies from the selected closure
 selected_surface:
@@ -31,6 +31,7 @@ patches:
   headroom-disable-default-ml.patch: 0f17b01a7a1c7845d50e7fdb235a161bc65317b8a7f44bc9617c7f3dd99872ca
   headroom-system-rusqlite.patch: 4d940b3261fee935d9fa5376f9553ba7ce10e485b194ff557528c3f2e7918739
   headroom-python-workspace.patch: 3db624347342b5a4313c2f5e536598bcc3e5a92bb39e7c683ce4be500b961078
+  headroom-drop-benchmark-dev-dependency.patch: 16c6d041618191bf65def6b3516bcf986c91759a22bb48aadb626a6fcb378137
 current_static_validation:
   exact_archive_patch_apply: passed with zero fuzz
   cargo_metadata: headroom-py dependency uses_default_features is false
@@ -43,7 +44,7 @@ current_static_validation:
   system_sqlite_probe: target checks require Fedora libsqlite3 and no RPATH or RUNPATH
   installed_smoke: target checks import the package and run headroom --help
   spec_parse: passed
-  local_srpm_sha256: b1911ed18bb339c20f3e7e270f0b9b4d70628758633ecff0ea6c7639fd0b2d8e
+  local_srpm_sha256: 990a383ca606cf81960655d506ef8622822c678a0c3024e3b868f42529a9b2d2
   rpmlint: zero errors, zero warnings, four filtered
   yaml_parse: passed
   scoped_package_validator: passed

@@ -35,7 +35,7 @@ network_policy:
   model_assets: native ml feature is disabled; the selected tokenizer closure retains upstream hf-hub capability
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.32.0-0.7
+  release: 0.32.0-0.8
   status: pending configured-SCM six-cell build and artifact proof
   exact_archive_patch_apply: passed with zero fuzz
   cargo_metadata: headroom-py disables headroom-core default features
