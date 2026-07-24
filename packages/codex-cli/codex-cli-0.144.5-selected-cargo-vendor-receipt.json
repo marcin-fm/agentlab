@@ -5,7 +5,7 @@
     "source_tag": "rust-v0.144.5",
     "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
     "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
-    "normalized_cargo_lock_sha256": "2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9"
+    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
   },
   "selection": {
     "root_package": "codex-cli",
@@ -21,7 +21,7 @@
   },
   "closure_receipt": {
     "name": "codex-cli-0.144.5-selected-cargo-closure.json",
-    "sha256": "a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c"
+    "sha256": "b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3"
   },
   "counts": {
     "vendor_directories": 885,
@@ -43,16 +43,16 @@
     "required_action": "Keep the package build fail-closed pending a reviewed resolver-complete source model."
   },
   "vendor_tree": {
-    "sha256": "f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a",
-    "files": 52468,
+    "sha256": "7ddf7b80397d2b177532cf6ac8fae193544a148eb387a6ee5a9cd1ba8c072e1c",
+    "files": 52469,
     "directories": 8564,
-    "file_bytes": 837193754,
+    "file_bytes": 837165910,
     "root": "codex-cli-0.144.5-selected-cargo-vendor"
   },
   "vendor_manifest": {
     "name": "codex-cli-0.144.5-selected-cargo-vendor.txt",
     "entries": 885,
-    "sha256": "5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c"
+    "sha256": "0caa78c29e67e1cc8757e64f992fc690d60f174ea855e3295aff1a3189fdf5eb"
   },
   "cargo_config": {
     "name": "codex-cli-0.144.5-selected-cargo-vendor.config.toml",
@@ -61,8 +61,8 @@
   },
   "archive": {
     "name": "codex-cli-0.144.5-selected-cargo-vendor.tar.gz",
-    "size_bytes": 153678984,
-    "sha256": "06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9"
+    "size_bytes": 153677492,
+    "sha256": "4aee6efe0f209f38942a6ef6e56e8c3d766a6f62906b9ac20b9cee4966553d61"
   },
   "scope": "deterministic evidence for the exact selected Linux Cargo source closure; not a standalone offline Cargo directory source, build proof, license closure, or publication artifact"
 }

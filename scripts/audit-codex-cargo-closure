@@ -12,6 +12,7 @@ require "set"
 require "tmpdir"
 require "zlib"
 require_relative "lib/agentlab"
+require_relative "lib/codex_cargo_vendor"
 
 def normalize_git_url(value)
   value
@@ -1398,8 +1399,13 @@ raise Agentlab::Error, "missing Codex workspace manifest: #{source_manifest}" un
 raise Agentlab::Error, "missing Codex lockfile: #{source_lock_path}" unless File.file?(source_lock_path)
 
 source_lock = File.read(source_lock_path)
-normalized_lock, normalized_local_packages = normalize_workspace_lock(source_lock, version)
+lock_updates = dependencies.fetch("lock_normalization").fetch("updates").map do |update|
+  update.slice("name", "from_version", "to_version", "source", "from_checksum", "to_checksum")
+end
+patched_lock = CodexCargoVendor.apply_lock_updates(source_lock, lock_updates)
+normalized_lock, normalized_local_packages = normalize_workspace_lock(patched_lock, version)
 source_lock_sha256 = Digest::SHA256.hexdigest(source_lock)
+patched_lock_sha256 = Digest::SHA256.hexdigest(patched_lock)
 normalized_lock_sha256 = Digest::SHA256.hexdigest(normalized_lock)
 environment = {}
 environment["CARGO_HOME"] = cargo_home if cargo_home
@@ -1420,7 +1426,9 @@ if verify_sources || materialize_vendor || materialize_resolver_vendor
   resolver_supplement = JSON.parse(File.read(resolver_output)) if needs_resolver_supplement
   release = receipt.fetch("release")
   raise Agentlab::Error, "receipt source Cargo.lock hash mismatch" unless release.fetch("source_cargo_lock_sha256") == source_lock_sha256
+  raise Agentlab::Error, "receipt patched Cargo.lock hash mismatch" unless release.fetch("patched_cargo_lock_sha256") == patched_lock_sha256
   raise Agentlab::Error, "receipt normalized Cargo.lock hash mismatch" unless release.fetch("normalized_cargo_lock_sha256") == normalized_lock_sha256
+  raise Agentlab::Error, "receipt Cargo.lock updates mismatch" unless release.fetch("lock_updates") == lock_updates
   if resolver_supplement && resolver_supplement.dig("authoritative_closure", "sha256") != Digest::SHA256.file(output).hexdigest
     raise Agentlab::Error, "resolver supplement authoritative closure hash mismatch"
   end
@@ -1661,7 +1669,9 @@ Dir.mktmpdir("agentlab-codex-closure-", work_dir_root) do |temporary_directory|
       "source_commit" => package.upstream.fetch("source_commit"),
       "source_sha256" => package.upstream.fetch("source_sha256"),
       "source_cargo_lock_sha256" => source_lock_sha256,
+      "patched_cargo_lock_sha256" => patched_lock_sha256,
       "normalized_cargo_lock_sha256" => normalized_lock_sha256,
+      "lock_updates" => lock_updates,
       "lock_normalization" => {
         "required" => !normalized_local_packages.empty?,
         "from_version" => "0.0.0",

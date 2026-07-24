@@ -76,9 +76,60 @@ class CodexCargoVendorTest < Minitest::Test
     assert_includes(spec, "install -Dpm0755 codex-rs/target/rpm/codex")
     assert_includes(spec, "%license %{_licensedir}/%{name}/cargo-vendor.txt")
     assert_includes(spec, "CODEX_HOME=\"$PWD/.codex-home\" codex-rs/target/rpm/codex doctor")
+    assert_includes(spec, "Patch3:         %{name}-openssl-4.patch")
+    source_lock_check = spec.index('echo "%{source_lock_sha256}  codex-rs/Cargo.lock"')
+    patch_application = spec.index("%autopatch -p1")
+    patched_lock_check = spec.index('echo "%{patched_lock_sha256}  codex-rs/Cargo.lock"')
+    lock_normalization = spec.index("sed -i 's/^version")
+    assert_operator(source_lock_check, :<, patch_application)
+    assert_operator(patch_application, :<, patched_lock_check)
+    assert_operator(patched_lock_check, :<, lock_normalization)
     assert_includes(makefile, "codex-cli.spec)")
     assert_includes(makefile, 'scripts/prepare-codex-cargo-srpm-sources" --spec "$(spec)"')
     assert_includes(makefile, 'scripts/prepare-codex-cargo-license-sources" --spec "$(spec)"')
+  end
+
+  def test_lock_updates_are_fail_closed
+    lock = <<~LOCK
+      [[package]]
+      name = "openssl"
+      version = "0.10.75"
+      source = "registry+https://github.com/rust-lang/crates.io-index"
+      checksum = "old"
+
+      [[package]]
+      name = "openssl-sys"
+      version = "0.9.111"
+      source = "registry+https://github.com/rust-lang/crates.io-index"
+      checksum = "sys-old"
+    LOCK
+    update = {
+      "name" => "openssl",
+      "from_version" => "0.10.75",
+      "to_version" => "0.10.78",
+      "source" => "registry+https://github.com/rust-lang/crates.io-index",
+      "from_checksum" => "old",
+      "to_checksum" => "new"
+    }
+    sys_update = update.merge(
+      "name" => "openssl-sys",
+      "from_version" => "0.9.111",
+      "to_version" => "0.9.114",
+      "from_checksum" => "sys-old",
+      "to_checksum" => "sys-new"
+    )
+
+    updated = CodexCargoVendor.apply_lock_updates(lock, [update, sys_update])
+    assert_includes(updated, 'version = "0.10.78"')
+    assert_includes(updated, 'checksum = "new"')
+    assert_includes(updated, 'version = "0.9.114"')
+    assert_includes(updated, 'checksum = "sys-new"')
+    assert_raises(CodexCargoVendor::Error) do
+      CodexCargoVendor.apply_lock_updates(lock, [update.merge("from_checksum" => "wrong")])
+    end
+    assert_raises(CodexCargoVendor::Error) do
+      CodexCargoVendor.apply_lock_updates("#{lock}\n#{lock}", [update])
+    end
   end
 
   def test_checked_supplemental_license_sources

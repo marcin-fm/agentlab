@@ -31,7 +31,7 @@ the separate WebRTC Git source.
 for `codex-cli`, target `x86_64-unknown-linux-gnu`, with normal and build edges
 and no development edges. The deterministic receipt is
 `codex-cli-0.144.5-selected-cargo-closure.json`, SHA-256
-`a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c`.
+`b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3`.
 An offline byte-for-byte `--check` passed with Cargo 1.96.1.
 
 The graph contains 1,004 packages: 984 on normal paths, 20 build-only, 119
@@ -74,11 +74,11 @@ receipt, and a normalized archive without copying transient dependency trees.
 
 Two independent output roots produced byte-identical receipts and these hashes:
 
-- vendor tree: `f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a`
-- vendor manifest: `5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c`
+- vendor tree: `7ddf7b80397d2b177532cf6ac8fae193544a148eb387a6ee5a9cd1ba8c072e1c`
+- vendor manifest: `0caa78c29e67e1cc8757e64f992fc690d60f174ea855e3295aff1a3189fdf5eb`
 - Cargo configuration: `7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2`
-- archive: `06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9`
-- receipt: `57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef`
+- archive: `4aee6efe0f209f38942a6ef6e56e8c3d766a6f62906b9ac20b9cee4966553d61`
+- receipt: `047d9e62f570c6887696a579bf40617c70c800ae8d810328d9e15bed401c0b0e`
 
 This remains selected-source evidence, not a complete Cargo directory source.
 Cargo resolves non-development metadata outside the checked Linux graph; the
@@ -101,19 +101,19 @@ The 239 sources split into 157 packages active in Cargo's all-target graph and
 `codex-cli-0.144.5-cargo-resolver-supplement.json` retains the immutable lockfile
 source, checksum, normalized manifest license metadata, immediate lock
 reference, and deterministic dependency path. The receipt SHA-256 is
-`a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff`.
+`51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876`.
 
 Two independent combined materializations produced byte-identical receipts and
 1,124 vendor directories: 885 authoritative selected sources and 239
 resolver-only sources. Both the 1,004-package selected target and the
 1,161-package active all-target graph resolved offline from an empty Cargo home.
 
-- vendor tree: `c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe`
-- vendor manifest: `5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8`
+- vendor tree: `5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c`
+- vendor manifest: `4ef2a6daa61a24f800e9737fdae8570f05623055b77c58f862b2d3c12b7e93b4`
 - Cargo configuration: `921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89`
-- archive: `7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b`
+- archive: `e0912374c17464e436d9daac6d71f08cbf66d1cfa1eaa07a0122d41b36f2b72b`
 - archive size: `231,939,492` bytes
-- receipt: `e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c`
+- receipt: `9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355`
 
 The source model is now integrated through the repository-backed COPR SCM path.
 `scripts/prepare-codex-cargo-srpm-sources` populates only the selected and
@@ -132,7 +132,7 @@ Fedora's Cargo file attributes emit the Provides automatically.
 
 Generated gzip bytes and the source builder's exact Cargo version are not part
 of the normative contract. The semantic tree SHA-256 remains
-`c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe`;
+`5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c`;
 any Cargo normalization change that alters that tree fails closed. The package
 still stops before compilation because final aggregate linked-license approval,
 required license texts, and Fedora build proof remain later gates. The exact
@@ -165,7 +165,7 @@ Every selected license is compared with source metadata before it is accepted:
 come directly from exact commit objects after URL and tracked-checkout
 verification, and 119 workspace licenses come from the exact release metadata.
 The receipt SHA-256 is
-`530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8`.
+`b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426`.
 
 The resolver source now also has a package-local legal-file inventory. Of 1,124
 vendored directories, 1,020 contain at least one nonempty recursively discovered
@@ -228,11 +228,10 @@ An offline path consumer linked that archive with the published 149.2.0 binding
 file and executed JavaScript, printing `Fedora Rusty V8`.
 
 That prototype has since become the separate blocked `packages/rust-v8`
-provider. Release `149.2.0-0.14` completed source-bound COPR builds on Fedora
-43, Fedora 44, and Rawhide `x86_64` in build `10752577`, satisfying Codex's
-exact `rusty-v8-static(abi) = 149.2.0` provider requirement for this package's
-target. Ongoing `aarch64` platform corrections are separate from this
-`x86_64`-only package. Fedora Node.js and Chromium are accepted precedent for
+provider. Release `149.2.0-0.24` completed source-bound COPR builds on Fedora
+43, Fedora 44, and Rawhide for both `x86_64` and `aarch64` in build `10757049`,
+satisfying Codex's exact `rusty-v8-static(abi) = 149.2.0` provider and
+architecture requirements. Fedora Node.js and Chromium are accepted precedent for
 overlapping source, toolchain, SPDX, and payload treatment; only exact selected
 graph and consumer differences remain Codex gates. The provider installs
 `/usr/lib64/rust-v8/149.2.0/librusty_v8.a`; Codex keeps the published crate
@@ -272,7 +271,8 @@ upstream issue or pull request has been submitted.
 ## Remaining Gates
 
 1. Complete configured-SCM Fedora 43, Fedora 44, and Rawhide `x86_64` builds
-   through COPR; do not resume the resource-heavy local full build.
+   through COPR with the released OpenSSL 4-compatible lock update and a build
+   timeout above five hours; do not resume the resource-heavy local full build.
 2. Capture the final Codex linker inputs, selected Rusty V8 archive members, and
    separate Rust libraries, then generate the exact aggregate `License:` and a
    deduplicated native-static `%license` payload.
@@ -294,6 +294,24 @@ evidence was incorrectly passed through GitHub raw VCS reconstruction; release
 `10756823` then showed that the tracked later-release source had lost its
 immutable crates.io transport hash; release `0.20` restores and verifies the
 reviewed bech32 archive SHA-256. No RPM was installed.
+
+Build `10756860` imported the exact `0.20` SRPM and reached real compilation in
+all three x86_64 targets. Fedora 43 and Fedora 44 were still compiling when COPR
+terminated them at five hours. Rawhide failed earlier because its OpenSSL 4.0.1
+is rejected by `openssl-sys 0.9.111`. Release `0.21` updates only `openssl`
+`0.10.75` to `0.10.78` and `openssl-sys` `0.9.111` to `0.9.114`, the first
+released pair containing upstream PR `sfackler/rust-openssl#2591`. The source
+builder and `%prep` now fail closed across the original, dependency-updated, and
+workspace-normalized Cargo.lock identities.
+
+The local `0.21` source proof reproduces all 885 selected and 1,124
+resolver-complete vendor directories offline with unchanged graph and license
+counts. Source RPM `codex-cli-0.144.5-0.21.fc44.src.rpm` is SHA-256
+`3ba0ed91063e1a46a38bcf4c73ae107a9aa37ca9eab1edda72aa04dfebc64a90`,
+contains all 22 expected members, and has zero `rpmlint` errors with only the
+two expected warnings for repository-generated local sources. Its spec,
+OpenSSL lock patch, and selected closure are byte-identical to the repository.
+No RPM was installed and no local full compilation was started.
 
 ## References
 

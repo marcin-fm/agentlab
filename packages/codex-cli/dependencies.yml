@@ -20,7 +20,7 @@ dynamic_buildrequires_probe:
 selected_graph:
   status: verified
   receipt: codex-cli-0.144.5-selected-cargo-closure.json
-  receipt_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
+  receipt_sha256: b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3
   generator: scripts/audit-codex-cargo-closure
   cargo: cargo 1.96.1 (Fedora 1.96.1-1.fc44)
   method: Package-scoped cargo tree for codex-cli with the Linux target and normal/build edges, followed by a normal-only role pass.
@@ -45,18 +45,18 @@ selected_graph:
 selected_vendor_evidence:
   status: reproducible-selected-source-evidence
   receipt: codex-cli-0.144.5-selected-cargo-vendor-receipt.json
-  receipt_sha256: 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
+  receipt_sha256: 047d9e62f570c6887696a579bf40617c70c800ae8d810328d9e15bed401c0b0e
   independent_runs: 2
   byte_identical_receipts: true
   vendor_directories: 885
   registry_packages: 879
   git_packages: 6
   git_repositories: 5
-  tree_sha256: f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a
-  manifest_sha256: 5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c
+  tree_sha256: 7ddf7b80397d2b177532cf6ac8fae193544a148eb387a6ee5a9cd1ba8c072e1c
+  manifest_sha256: 0caa78c29e67e1cc8757e64f992fc690d60f174ea855e3295aff1a3189fdf5eb
   config_sha256: 7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2
-  archive_sha256: 06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9
-  archive_bytes: 153678984
+  archive_sha256: 4aee6efe0f209f38942a6ef6e56e8c3d766a6f62906b9ac20b9cee4966553d61
+  archive_bytes: 153677492
   standalone_offline_directory_source_verified: false
   production_build_input: false
   immutable_hosting: false
@@ -64,7 +64,7 @@ selected_vendor_evidence:
 resolver_supplement_evidence:
   status: reproducible-nondevelopment-resolver-supplement
   receipt: codex-cli-0.144.5-cargo-resolver-supplement.json
-  receipt_sha256: a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff
+  receipt_sha256: 51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876
   directory_resolution_packages: 1243
   authoritative_packages: 1004
   resolver_only_packages: 239
@@ -84,7 +84,7 @@ resolver_supplement_evidence:
 resolver_vendor_evidence:
   status: repository-backed-resolver-complete-directory-source
   receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
-  receipt_sha256: e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c
+  receipt_sha256: 9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355
   independent_runs: 2
   byte_identical_receipts: true
   vendor_directories: 1124
@@ -93,11 +93,11 @@ resolver_vendor_evidence:
   registry_packages: 1118
   git_packages: 6
   git_repositories: 5
-  tree_sha256: c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe
-  manifest_sha256: 5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8
+  tree_sha256: 5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c
+  manifest_sha256: 4ef2a6daa61a24f800e9737fdae8570f05623055b77c58f862b2d3c12b7e93b4
   config_sha256: 921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89
-  observed_archive_sha256: 7f9b7661dd4a6021e57e1e3e827bf785db0186e79bfcea2581b97b0d1a4c5d9b
-  observed_archive_bytes: 231939492
+  observed_archive_sha256: e0912374c17464e436d9daac6d71f08cbf66d1cfa1eaa07a0122d41b36f2b72b
+  observed_archive_bytes: 231939687
   archive_transport_identity_required: false
   selected_target_offline_packages: 1004
   all_target_offline_packages: 1161
@@ -109,7 +109,7 @@ resolver_vendor_evidence:
 selected_cargo_license_evidence:
   status: deterministic-cargo-manifest-license-accounting
   receipt: codex-cli-0.144.5-selected-cargo-license-audit.json
-  receipt_sha256: 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
+  receipt_sha256: b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426
   authoritative_selected_packages: 1004
   linked_linux_packages: 873
   selected_compile_only_packages: 131
@@ -140,25 +140,47 @@ selected_cargo_license_evidence:
   linked_linux_directories_without_top_level_license_texts: 54
   supplemental_license_sources:
     receipt: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-    receipt_sha256: 83ef3d9ff001a4cd4e659fbe4aca20beb9f5eece53c3d198a4f7f6407fb309cb
+    receipt_sha256: 770df1349e90ec39eff515443f9a8556d86e105038b631346fabf484c3b1e0af
     verified_mappings: 50
     unresolved: 0
     installable_texts: 25
     icu_payload_comparison: resolved
     notify_cc0_fedora_precedent: rust-notify-8.2.0-2.fc44
 lock_normalization:
-  status: verified-prep-transform
+  status: verified-released-dependency-update-and-prep-transform
   source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
-  normalized_sha256: 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
+  patched_sha256: cedc827a0f1a411000c9042e639cf230d72fbb0c36a824aa61ea0640f9587636
+  normalized_sha256: 8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33
+  updates:
+  - name: openssl
+    from_version: 0.10.75
+    to_version: 0.10.78
+    source: registry+https://github.com/rust-lang/crates.io-index
+    from_checksum: 08838db121398ad17ab8531ce9de97b244589089e290a384c900cb9ff7434328
+    to_checksum: f38c4372413cdaaf3cc79dd92d29d7d9f5ab09b51b10dded508fb90bb70b9222
+    upstream_release_tag: openssl-v0.10.78
+    upstream_release_commit: a6debf535674c9a073f455158743e6ba094cf1b4
+    upstream_fix_commit: 1fc51efa3f63e38a3139e201edf3395e5a10f8ba
+    upstream_pull_request: https://github.com/sfackler/rust-openssl/pull/2591
+  - name: openssl-sys
+    from_version: 0.9.111
+    to_version: 0.9.114
+    source: registry+https://github.com/rust-lang/crates.io-index
+    from_checksum: 82cab2d520aa75e3c58898289429321eb788c3106963d0dc886ec7a5f4adc321
+    to_checksum: 13ce1245cd07fcc4cfdb438f7507b0c7e4f3849a69fd84d52374c66d83741bb6
+    upstream_release_tag: openssl-sys-v0.9.114
+    upstream_release_commit: a6debf535674c9a073f455158743e6ba094cf1b4
+    upstream_fix_commit: 1fc51efa3f63e38a3139e201edf3395e5a10f8ba
+    upstream_pull_request: https://github.com/sfackler/rust-openssl/pull/2591
   local_package_records: 132
   from_version: 0.0.0
   to_version: 0.144.5
-  dependency_records_changed: false
-  method: Hash-guarded exact-count sed transformation in %prep.
+  dependency_records_changed: true
+  method: Hash-guarded exact lock update to released rust-openssl packages, followed by the exact-count workspace-version transformation in %prep.
   command: sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
-  verification: source-hash-exact-count-and-normalized-hash
-  upstream_status: Release-specific packaging fix; upstream main retains workspace version 0.0.0 and has no corresponding lock repair.
-  reason: Cargo 1.96.1 rejects the released lockfile under --locked until only source-less local package versions are aligned with the release workspace version.
+  verification: source-hash-update-records-patched-hash-exact-count-and-normalized-hash
+  upstream_status: OpenSSL 4 support is released upstream; workspace-version normalization remains a release-specific packaging fix because upstream main retains workspace version 0.0.0.
+  reason: Fedora Rawhide provides OpenSSL 4.0.1, which openssl-sys 0.9.111 rejects. Cargo 1.96.1 also rejects the released lockfile under --locked until only source-less local package versions are aligned with the release workspace version.
 workspace_lock_git_sources:
 - repository: https://github.com/nornagon/crossterm
   commit: 87db8bfa6dc99427fd3b071681b07fc31c6ce995
@@ -252,7 +274,7 @@ selected_special_sources:
     - Use system libstdc++, GCC, and LLD; fix two default-preserving V8 GCC/include portability defects.
   upstreamable_path: Add an opt-in no-download system-toolchain mode that preserves current defaults, then upstream the stable custom-toolchain and V8 portability fixes proven by the local prototype.
   separate_package_decision: Selected. The blocked rust-v8 source package owns the recursive Chromium/V8 source, stable-toolchain patches, static archive, architecture proof, and provider license closure; Codex remains responsible for final static-link license propagation.
-  separate_package_readiness: Release 149.2.0-0.14 succeeded in Fedora 43, Fedora 44, and Rawhide x86_64 COPR cells in build 10752577 and satisfies Codex's exact provider capability. Ongoing aarch64 platform work is separate; Fedora Node.js and Chromium precedent means unsubmitted overlapping downstream patches are not an independent Codex hold. Final static-consumer evidence remains required.
+  separate_package_readiness: Release 149.2.0-0.24 succeeded in Fedora 43, Fedora 44, and Rawhide on both x86_64 and aarch64 in build 10757049 and satisfies Codex's exact provider and architecture requirements. Fedora Node.js and Chromium precedent means unsubmitted overlapping downstream patches are not an independent Codex hold. Final static-consumer evidence remains required.
   distro_precedent: openSUSE rusty_v8 149.4.0 uses source mode with a 274625900-byte prebuilt Chromium Rust toolchain, which is forbidden by this package policy.
 closure_audit:
   production_source_selection_verified: true

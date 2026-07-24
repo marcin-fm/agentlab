@@ -6,7 +6,26 @@
     "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
     "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
     "source_cargo_lock_sha256": "175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e",
-    "normalized_cargo_lock_sha256": "2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9",
+    "patched_cargo_lock_sha256": "cedc827a0f1a411000c9042e639cf230d72fbb0c36a824aa61ea0640f9587636",
+    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33",
+    "lock_updates": [
+      {
+        "name": "openssl",
+        "from_version": "0.10.75",
+        "to_version": "0.10.78",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "from_checksum": "08838db121398ad17ab8531ce9de97b244589089e290a384c900cb9ff7434328",
+        "to_checksum": "f38c4372413cdaaf3cc79dd92d29d7d9f5ab09b51b10dded508fb90bb70b9222"
+      },
+      {
+        "name": "openssl-sys",
+        "from_version": "0.9.111",
+        "to_version": "0.9.114",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "from_checksum": "82cab2d520aa75e3c58898289429321eb788c3106963d0dc886ec7a5f4adc321",
+        "to_checksum": "13ce1245cd07fcc4cfdb438f7507b0c7e4f3849a69fd84d52374c66d83741bb6"
+      }
+    ],
     "lock_normalization": {
       "required": true,
       "from_version": "0.0.0",
@@ -12459,10 +12478,10 @@
     },
     {
       "name": "openssl",
-      "version": "0.10.75",
+      "version": "0.10.78",
       "origin": "registry",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "08838db121398ad17ab8531ce9de97b244589089e290a384c900cb9ff7434328",
+      "checksum": "f38c4372413cdaaf3cc79dd92d29d7d9f5ab09b51b10dded508fb90bb70b9222",
       "role": "runtime",
       "features": [
         "default"
@@ -12542,10 +12561,10 @@
     },
     {
       "name": "openssl-sys",
-      "version": "0.9.111",
+      "version": "0.9.114",
       "origin": "registry",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "82cab2d520aa75e3c58898289429321eb788c3106963d0dc886ec7a5f4adc321",
+      "checksum": "13ce1245cd07fcc4cfdb438f7507b0c7e4f3849a69fd84d52374c66d83741bb6",
       "role": "runtime",
       "features": [],
       "dependency_path": [

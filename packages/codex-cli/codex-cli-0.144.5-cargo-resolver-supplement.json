@@ -6,11 +6,11 @@
     "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
     "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
     "source_cargo_lock_sha256": "175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e",
-    "normalized_cargo_lock_sha256": "2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9"
+    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
   },
   "authoritative_closure": {
     "name": "codex-cli-0.144.5-selected-cargo-closure.json",
-    "sha256": "a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c",
+    "sha256": "b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3",
     "packages": 1004,
     "target_triple": "x86_64-unknown-linux-gnu"
   },
@@ -6047,7 +6047,7 @@
         },
         {
           "name": "openssl-sys",
-          "version": "0.9.111",
+          "version": "0.9.114",
           "source": "registry+https://github.com/rust-lang/crates.io-index"
         },
         {
@@ -6059,7 +6059,7 @@
       "inclusion": {
         "required_by": {
           "name": "openssl-sys",
-          "version": "0.9.111",
+          "version": "0.9.114",
           "source": "registry+https://github.com/rust-lang/crates.io-index"
         },
         "lock_reference": "openssl-src"

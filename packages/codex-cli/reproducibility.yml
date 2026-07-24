@@ -16,7 +16,7 @@ source_probe:
   reason: The generator expanded the full workspace and retained non-Linux target dependencies.
 selected_cargo_closure:
   receipt: codex-cli-0.144.5-selected-cargo-closure.json
-  receipt_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
+  receipt_sha256: b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3
   generator: scripts/audit-codex-cargo-closure
   cargo: cargo 1.96.1 (Fedora 1.96.1-1.fc44)
   target: x86_64-unknown-linux-gnu
@@ -38,28 +38,33 @@ selected_cargo_closure:
     excluded_git_repositories: 2
   cargo_lock:
     source_sha256: 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
-    normalized_sha256: 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
+    patched_sha256: cedc827a0f1a411000c9042e639cf230d72fbb0c36a824aa61ea0640f9587636
+    normalized_sha256: 8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33
     normalization_required: true
     normalized_local_package_records: 132
-    dependency_records_changed: false
-    normalization_method: prep-sed
+    dependency_records_changed: true
+    dependency_updates:
+    - openssl 0.10.75 to 0.10.78
+    - openssl-sys 0.9.111 to 0.9.114
+    upstream_fix: https://github.com/sfackler/rust-openssl/pull/2591
+    normalization_method: checked-lock-patch-then-prep-sed
     command: sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
     verification: source-hash-exact-count-and-normalized-hash
     normalized_lock_matches_receipt_input: true
 selected_cargo_vendor_evidence:
   status: passed-twice-byte-identical
   receipt: codex-cli-0.144.5-selected-cargo-vendor-receipt.json
-  receipt_sha256: 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
+  receipt_sha256: 047d9e62f570c6887696a579bf40617c70c800ae8d810328d9e15bed401c0b0e
   counts:
     vendor_directories: 885
     registry_packages: 879
     git_packages: 6
     git_repositories: 5
-  vendor_tree_sha256: f330af77ea7a1ca2eab30b88bf67680730c1f7943b8f6495136625cb226aeb8a
-  vendor_manifest_sha256: 5c8008b21c127176beac9a7bc86dc70743335b65c98ce98cd8150e280e6f022c
+  vendor_tree_sha256: 7ddf7b80397d2b177532cf6ac8fae193544a148eb387a6ee5a9cd1ba8c072e1c
+  vendor_manifest_sha256: 0caa78c29e67e1cc8757e64f992fc690d60f174ea855e3295aff1a3189fdf5eb
   cargo_config_sha256: 7a0d321c6a8b7b18c5d5e8f008c13e486ffa598a5985b58f9cbafdf6b9b12bf2
-  archive_sha256: 06060af22d4cf5d66342cc482ff75c5b056f2c6488636bd3cb478d510326e5d9
-  archive_bytes: 153678984
+  archive_sha256: 4aee6efe0f209f38942a6ef6e56e8c3d766a6f62906b9ac20b9cee4966553d61
+  archive_bytes: 153677492
   standalone_offline_directory_source_verified: false
   resolver_blocker: Inactive-target dependency metadata in selected manifests requires sources outside the exact Linux build closure; adding those sources broadens source and license accounting.
   immutable_hosting: false
@@ -67,10 +72,10 @@ selected_cargo_vendor_evidence:
 resolver_cargo_vendor_source:
   status: repository-backed-semantic-source-contract
   receipt: codex-cli-0.144.5-resolver-cargo-vendor-receipt.json
-  receipt_sha256: e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c
+  receipt_sha256: 9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355
   vendor_directories: 1124
-  vendor_tree_sha256: c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe
-  vendor_manifest_sha256: 5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8
+  vendor_tree_sha256: 5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c
+  vendor_manifest_sha256: 4ef2a6daa61a24f800e9737fdae8570f05623055b77c58f862b2d3c12b7e93b4
   cargo_config_sha256: 921057f81bbc67d9db85e4cfbb6f1395ba2f214519c7c291557216e46ef51a89
   generated_archive_transport_identity_required: false
   source_builder: scripts/prepare-codex-cargo-srpm-sources
@@ -85,9 +90,9 @@ resolver_cargo_vendor_source:
 selected_cargo_license_audit:
   status: passed-deterministic-cargo-metadata-accounting
   receipt: codex-cli-0.144.5-selected-cargo-license-audit.json
-  receipt_sha256: 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
-  authoritative_closure_sha256: a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
-  resolver_supplement_sha256: a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff
+  receipt_sha256: b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426
+  authoritative_closure_sha256: b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3
+  resolver_supplement_sha256: 51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876
   counts:
     selected_packages: 1004
     linked_linux_packages: 873
@@ -112,7 +117,7 @@ selected_cargo_license_audit:
 cargo_license_text_inventory:
   status: checked-package-local-text-inventory-incomplete
   receipt: codex-cli-0.144.5-cargo-license-text-inventory.json
-  receipt_sha256: 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
+  receipt_sha256: 7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd
   counts:
     vendor_directories: 1124
     directories_with_package_local_license_texts: 1020
@@ -125,7 +130,7 @@ cargo_license_text_inventory:
   legal_review_complete: false
 supplemental_cargo_license_sources:
   receipt: codex-cli-0.144.5-cargo-supplemental-license-sources.json
-  receipt_sha256: 83ef3d9ff001a4cd4e659fbe4aca20beb9f5eece53c3d198a4f7f6407fb309cb
+  receipt_sha256: 770df1349e90ec39eff515443f9a8556d86e105038b631346fabf484c3b1e0af
   mappings: 50
   unresolved: 0
   archive_installable_texts: 25
@@ -133,6 +138,19 @@ supplemental_cargo_license_sources:
   icu_payload_sha256: 1cf67874b5a87a8363a86fb3f81e3cbbed54d389062dab8fb52308d5cf8c8612
   icu_payload_bytes: 10822192
   notify_cc0_allowed_content_review: resolved-fedora-exact-version
+srpm_proof:
+  nvr: codex-cli-0.144.5-0.21.fc44
+  sha256: 3ba0ed91063e1a46a38bcf4c73ae107a9aa37ca9eab1edda72aa04dfebc64a90
+  size_bytes: 240333043
+  source_members: 22
+  repository_spec_identical: true
+  openssl_lock_patch_identical: true
+  selected_closure_identical: true
+  rpmlint_errors: 0
+  rpmlint_warnings: 2
+  warning_scope: Generated local Source10 and Source15 URLs only.
+  binary_build_started: false
+  rpm_installed: false
 package_build_contract:
   cargo_package: codex-cli
   binary: codex
@@ -170,19 +188,20 @@ special_source_audit:
       build_network_isolation: not-enforced
       isolated_buildroot: false
       upstream_changes_submitted: false
-    separate_rust_v8_package: x86_64-provider-cells-succeeded-matrix-and-license-closure-blocked
+    separate_rust_v8_package: six-cell-provider-succeeded-consumer-license-closure-blocked
     provider: rusty-v8-static(abi) = 149.2.0
     provider_archive: /usr/lib64/rust-v8/149.2.0/librusty_v8.a
     provider_link_environment: GN_ARGS=use_custom_libcxx=false
-    provider_build: 10752577
-    provider_release: 149.2.0-0.14
-    provider_x86_64_cells:
+    provider_build: 10757049
+    provider_release: 149.2.0-0.24
+    provider_cells:
     - fedora-43-x86_64
     - fedora-44-x86_64
     - fedora-rawhide-x86_64
-    provider_x86_64_status: succeeded
-    provider_aarch64_status: failed-clang-only-mmark-bti-property
-    provider_active_correction_release: 149.2.0-0.15
+    - fedora-43-aarch64
+    - fedora-44-aarch64
+    - fedora-rawhide-aarch64
+    provider_status: succeeded
     selected_crate_features:
     - default
     - use_custom_libcxx
@@ -191,11 +210,17 @@ special_source_audit:
     chromium_rust_toolchain_source_build: replaced-by-system-fedora-rust-in-local-prototype
 builds:
   fedora_43_x86_64:
-    status: not-run-blocked
+    status: previous-release-timed-out-after-five-hours
+    build: 10756860
   fedora_44_x86_64:
-    status: not-run-blocked
+    status: previous-release-timed-out-after-five-hours
+    build: 10756860
   rawhide_x86_64:
-    status: not-run-blocked
+    status: previous-release-failed-openssl-4-version-check
+    build: 10756860
+  current_release:
+    version: 0.144.5-0.21
+    status: configured-scm-proof-pending
 installation:
   generated_rpms_installed: false
 copr:

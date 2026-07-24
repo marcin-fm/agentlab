@@ -5,7 +5,7 @@
     "source_tag": "rust-v0.144.5",
     "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
     "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
-    "normalized_cargo_lock_sha256": "2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9"
+    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
   },
   "selection": {
     "root_package": "codex-cli",
@@ -21,11 +21,11 @@
   },
   "closure_receipt": {
     "name": "codex-cli-0.144.5-selected-cargo-closure.json",
-    "sha256": "a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c"
+    "sha256": "b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3"
   },
   "resolver_supplement": {
     "name": "codex-cli-0.144.5-cargo-resolver-supplement.json",
-    "sha256": "a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff"
+    "sha256": "51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876"
   },
   "counts": {
     "vendor_directories": 1124,
@@ -106,16 +106,16 @@
     "resolver_only_sources_linked_on_authoritative_target": false
   },
   "vendor_tree": {
-    "sha256": "c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe",
-    "files": 70990,
+    "sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c",
+    "files": 70991,
     "directories": 12466,
-    "file_bytes": 1507468151,
+    "file_bytes": 1507440307,
     "root": "codex-cli-0.144.5-resolver-cargo-vendor"
   },
   "vendor_manifest": {
     "name": "codex-cli-0.144.5-resolver-cargo-vendor.txt",
     "entries": 1124,
-    "sha256": "5e2b14b7cdf832907408ad83cbd8838c6220dbd7c7a91c9bb11e4bf208013ac8"
+    "sha256": "4ef2a6daa61a24f800e9737fdae8570f05623055b77c58f862b2d3c12b7e93b4"
   },
   "cargo_config": {
     "name": "codex-cli-0.144.5-resolver-cargo-vendor.config.toml",

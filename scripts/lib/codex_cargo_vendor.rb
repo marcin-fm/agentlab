@@ -29,6 +29,27 @@ module CodexCargoVendor
     raise Error, "command failed: #{command.join(' ')}#{detail.empty? ? '' : ":\n#{detail}"}"
   end
 
+  def apply_lock_updates(content, updates)
+    updates.reduce(content) do |lock, update|
+      matches = 0
+      updated = lock.split(/(?=^\[\[package\]\]$)/).map do |block|
+        next block unless block.start_with?("[[package]]\n")
+        next block unless block[/^name = "([^"]+)"$/, 1] == update.fetch("name")
+        next block unless block[/^version = "([^"]+)"$/, 1] == update.fetch("from_version")
+        next block unless block[/^source = "([^"]+)"$/, 1] == update.fetch("source")
+        next block unless block[/^checksum = "([^"]+)"$/, 1] == update.fetch("from_checksum")
+
+        matches += 1
+        block
+          .sub(/^version = "[^"]+"$/, "version = \"#{update.fetch('to_version')}\"")
+          .sub(/^checksum = "[^"]+"$/, "checksum = \"#{update.fetch('to_checksum')}\"")
+      end.join
+      raise Error, "expected one Cargo.lock record for #{update.fetch('name')} #{update.fetch('from_version')}, found #{matches}" unless matches == 1
+
+      updated
+    end
+  end
+
   def safe_archive_path(path)
     pathname = Pathname(path)
     clean = pathname.cleanpath.to_s

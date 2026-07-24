@@ -6,17 +6,17 @@
     "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
     "source_sha256": "b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9",
     "source_cargo_lock_sha256": "175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e",
-    "normalized_cargo_lock_sha256": "2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9"
+    "normalized_cargo_lock_sha256": "8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33"
   },
   "inputs": {
     "resolver_vendor_receipt": {
       "name": "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json",
-      "sha256": "e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c",
-      "vendor_tree_sha256": "c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe"
+      "sha256": "9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355",
+      "vendor_tree_sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c"
     },
     "selected_cargo_license_audit": {
       "name": "codex-cli-0.144.5-selected-cargo-license-audit.json",
-      "sha256": "530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8"
+      "sha256": "b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426"
     }
   },
   "counts": {
@@ -19596,9 +19596,9 @@
       "notice_files": []
     },
     {
-      "directory": "openssl-0.10.75",
+      "directory": "openssl-0.10.78",
       "name": "openssl",
-      "version": "0.10.75",
+      "version": "0.10.78",
       "origin": "registry",
       "source_scope": "selected",
       "role": "runtime",
@@ -19792,9 +19792,9 @@
       ]
     },
     {
-      "directory": "openssl-sys-0.9.111",
+      "directory": "openssl-sys-0.9.114",
       "name": "openssl-sys",
-      "version": "0.9.111",
+      "version": "0.9.114",
       "origin": "registry",
       "source_scope": "selected",
       "role": "runtime",

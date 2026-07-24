@@ -5,8 +5,8 @@
     "version": "0.144.5",
     "source_tag": "rust-v0.144.5",
     "source_commit": "87db9bc18ba5bc82c1cb4e4381b44f693ee35623",
-    "resolver_vendor_tree_sha256": "c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe",
-    "license_text_inventory_sha256": "6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9"
+    "resolver_vendor_tree_sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c",
+    "license_text_inventory_sha256": "7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd"
   },
   "sources": [
     {
@@ -2120,16 +2120,16 @@
   "inputs": {
     "resolver_vendor_receipt": {
       "path": "codex-cli-0.144.5-resolver-cargo-vendor-receipt.json",
-      "sha256": "e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c",
-      "vendor_tree_sha256": "c50f41d4d6e582ef86f51cffcff086985975711f9e1c2b08d08778d05a472ebe"
+      "sha256": "9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355",
+      "vendor_tree_sha256": "5712aa3f9d33f5d514e78f36a31313b537c568b293a0181f79c7ae217e21b80c"
     },
     "license_text_inventory": {
       "path": "codex-cli-0.144.5-cargo-license-text-inventory.json",
-      "sha256": "6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9"
+      "sha256": "7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd"
     },
     "selected_cargo_license_audit": {
       "path": "codex-cli-0.144.5-selected-cargo-license-audit.json",
-      "sha256": "530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8"
+      "sha256": "b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426"
     }
   },
   "archive": {

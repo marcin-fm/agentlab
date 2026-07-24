@@ -56,13 +56,17 @@ module CodexCargoSourcePreparer
     unless Digest::SHA256.hexdigest(lock) == release.fetch("source_cargo_lock_sha256")
       raise CodexCargoVendor::Error, "Codex source Cargo.lock identity mismatch"
     end
+    patched = CodexCargoVendor.apply_lock_updates(lock, release.fetch("lock_updates"))
+    unless Digest::SHA256.hexdigest(patched) == release.fetch("patched_cargo_lock_sha256")
+      raise CodexCargoVendor::Error, "Codex patched Cargo.lock identity mismatch"
+    end
     from = normalization.fetch("from_version")
     to = normalization.fetch("to_version")
     pattern = /^version = #{Regexp.escape(from.dump)}$/
-    unless lock.scan(pattern).length == normalization.fetch("local_package_count")
+    unless patched.scan(pattern).length == normalization.fetch("local_package_count")
       raise CodexCargoVendor::Error, "Codex Cargo.lock normalization count mismatch"
     end
-    normalized = lock.gsub(pattern, "version = #{to.dump}")
+    normalized = patched.gsub(pattern, "version = #{to.dump}")
     unless Digest::SHA256.hexdigest(normalized) == release.fetch("normalized_cargo_lock_sha256")
       raise CodexCargoVendor::Error, "Codex normalized Cargo.lock identity mismatch"
     end

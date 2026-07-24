@@ -4,24 +4,25 @@
 %global codex_distribution_channel fedora
 
 %global source_sha256 b3472ef0b53e9b6191e19f51f491f818749671b9cb1b8dbe51466dc2702abcd9
-%global closure_sha256 a2f284d34455370a6bf846c5308369a188f86cab4c25e684e490eba62bb2834c
-%global vendor_receipt_sha256 57857f050b55d9b596995e3de3842894a77d16d53b4a2ca23f9ceb83b5c2b5ef
-%global resolver_supplement_sha256 a9a5612e905e4bf1f1b4fd2214291cddc24af688b031a64809749651358e40ff
-%global resolver_vendor_receipt_sha256 e86a3d355f8ab81ce1fe81a21bdefa1a826181275f3b3596751533b37b6ae76c
-%global license_audit_sha256 530c134e176348436bb05e102b433d7ede1fcf59767964038e12fdaf5b2d27b8
+%global closure_sha256 b5be10ceca68a9185c5ae9b9369415bac2040dfd059059636757b759773708c3
+%global vendor_receipt_sha256 047d9e62f570c6887696a579bf40617c70c800ae8d810328d9e15bed401c0b0e
+%global resolver_supplement_sha256 51eab69c077b119435029d2e225d9839ff332b0e471d5270282e418b815e1876
+%global resolver_vendor_receipt_sha256 9d20d17d7e649f822413033e417e4fb6060598cb86bd76649ce1e2a137480355
+%global license_audit_sha256 b13315e6e6442605b05b921c2832b1a990869c56f4381abd9b91b121f69b2426
 %global source_lock_sha256 175793a40a3147db1fee08fd9db0acc59312c344b3513dd7ee316f5446d8119e
-%global normalized_lock_sha256 2a5c38ba7ec277dba77477db379950530ca32dad01f34ad4bc6e3bac5636b9d9
-%global cargo_audit_sha256 87a0a8f6cc63fce3242387232c7df2dd38d39cf6905fb43073cc1099389ffeb2
-%global source_preparer_sha256 d134aa208cf7264e99dbab683b762faf3fee009b25290d6c6b97b55c35702c09
-%global vendor_verifier_sha256 f87cd57d3f35c3dd4d425cf2cb8823574387778fabb70b53d6f5d86fbb5617c6
-%global license_text_receipt_sha256 6a3c2a9cd2a4036039ebdfeb3c3233357b99a30bb4e5f79980c32c28be7f1cb9
-%global supplemental_license_receipt_sha256 83ef3d9ff001a4cd4e659fbe4aca20beb9f5eece53c3d198a4f7f6407fb309cb
+%global patched_lock_sha256 cedc827a0f1a411000c9042e639cf230d72fbb0c36a824aa61ea0640f9587636
+%global normalized_lock_sha256 8c2217fa79ef815a5ee5b25e54573928dbf73a9953397b76d404e38cc820ff33
+%global cargo_audit_sha256 23787eaca470511c874a8a4479cc4bbe4b7f18a1ac91dbd671b5cd309cdaaefe
+%global source_preparer_sha256 946dd1864478fcba5af2a695997b73385f36650d5eff4fdbcd6f5b4eaa176324
+%global vendor_verifier_sha256 147b9f9ba99a477905a632b6d6b3dbd5baaf32a071acd8dc3b4cec5b6bb3b8e0
+%global license_text_receipt_sha256 7f5fc635a0d9a1b901c5684f0d49e6a100b2fafb2408497d58a868570cce45fd
+%global supplemental_license_receipt_sha256 770df1349e90ec39eff515443f9a8556d86e105038b631346fabf484c3b1e0af
 %global supplemental_license_preparer_sha256 90e7d74a314a9fa00e57a1ebf980b5c3f57d06d50940db11fb637f39357b270d
 %global commit 87db9bc18ba5bc82c1cb4e4381b44f693ee35623
 
 Name:           codex-cli
 Version:        0.144.5
-Release:        0.20%{?dist}
+Release:        0.21%{?dist}
 Summary:        OpenAI coding agent command-line interface
 
 # This is the upstream project license. The aggregate statically linked Cargo
@@ -58,6 +59,11 @@ Patch1:         %{name}-fedora-update-policy.patch
 # installer and hourly downloader.
 # Upstream status: not submitted; Fedora-specific integration.
 Patch2:         %{name}-fedora-standalone-updater.patch
+# Fedora packaging: select the first released rust-openssl pair with OpenSSL 4
+# support while preserving the released Codex dependency graph.
+# Upstream status: released in openssl 0.10.78 and openssl-sys 0.9.114 via
+# https://github.com/sfackler/rust-openssl/pull/2591
+Patch3:         %{name}-openssl-4.patch
 
 ExclusiveArch:  x86_64
 
@@ -89,9 +95,10 @@ echo "%{resolver_supplement_sha256}  %{SOURCE3}" | sha256sum -c -
 echo "%{resolver_vendor_receipt_sha256}  %{SOURCE4}" | sha256sum -c -
 echo "%{license_audit_sha256}  %{SOURCE6}" | sha256sum -c -
 %autosetup -n codex-%{commit} -N
-%autopatch -p1
-test "$(grep -Fxc 'check_for_update_on_startup = false' %{SOURCE5})" -eq 1
 echo "%{source_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
+%autopatch -p1
+echo "%{patched_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
+test "$(grep -Fxc 'check_for_update_on_startup = false' %{SOURCE5})" -eq 1
 test "$(grep -cx 'version = "0\.0\.0"' codex-rs/Cargo.lock)" -eq 132
 sed -i 's/^version = "0\.0\.0"$/version = "0.144.5"/' codex-rs/Cargo.lock
 echo "%{normalized_lock_sha256}  codex-rs/Cargo.lock" | sha256sum -c -
@@ -169,6 +176,10 @@ CODEX_HOME="$PWD/.codex-home" codex-rs/target/rpm/codex doctor
 %config(noreplace) %{_sysconfdir}/codex/config.toml
 
 %changelog
+* Fri Jul 24 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.21
+- Select released rust-openssl support for Fedora Rawhide OpenSSL 4.
+- Keep the resolver-complete offline source and Rusty V8 contracts unchanged.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 0.144.5-0.20
 - Retain the immutable bech32 0.11.0 crate transport checksum.
 - Verify later-release license evidence during fresh SCM source generation.
