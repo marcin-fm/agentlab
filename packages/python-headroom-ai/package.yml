@@ -36,37 +36,43 @@ network_policy:
   model_assets: native ml feature is disabled; the selected tokenizer closure retains upstream hf-hub capability
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.32.0-0.10
-  status: local validation passed; configured-SCM six-cell rebuild pending
-  exact_archive_patch_apply: passed with zero fuzz
+  release: 0.32.1-0.1
+  status: local source, SRPM, package, and repository validation passed; configured-SCM six-cell build pending
+  exact_sdist_patch_apply: four patches passed with zero fuzz
   cargo_metadata: headroom-py disables headroom-core default features and the selected manifest omits unselected ML and Redis dependency declarations
+  upstream_workspace: the published sdist already limits the root workspace to headroom-core and headroom-py
   ast_grep_provider: upstream PyPI binary-wheel dependency is replaced by Agentlab ast-grep 0.44.1 or newer
   cargo_resolution: rusqlite 0.31.0 with libsqlite3-sys 0.28.0
   sqlite_source_review: v0.31.0 to v0.32.0 changes only the backend TTL documentation, not its rusqlite API use
   license_workspace: headroom-core and headroom-py only; unrelated proxy, simulator, parity, ML, AWS, and HTTP members are excluded
-  source_license_probe: 240 unique target-all package/version records after fetching the exact release lockfile closure
-  license_breakdown_records: 207
+  cargo_resolution_records: 296 packages resolved; 272 packages in the target-all normal dependency closure
+  source_license_probe: 206 unique package/version records across 371 cargo2rpm-equivalent tree entries
+  license_breakdown_records: 206
   candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
-  buildroot_license_gate: configured target builds must regenerate LICENSE.dependencies from the selected closure
+  unicode_license_probe: regex-syntax 0.8.11 bundles generated Unicode tables and explicitly includes src/unicode_tables/LICENSE-UNICODE even though Cargo metadata reports only MIT OR Apache-2.0
+  buildroot_license_gate: configured target builds must regenerate LICENSE.dependencies from the selected closure; the aggregate retains Unicode-DFS-2016 because Cargo metadata under-reports regex-syntax
   license_macro_redirection: canonical braced cargo_license expansion writes the root LICENSE.dependencies payload
   system_sqlite_gate: target checks require the Rust CCR test binary to link Fedora libsqlite3 and the installed Python backend to open a database
   extension_dynamic_gate: target checks reject RPATH or RUNPATH on the extension; unused Rust CCR code may be dead-stripped from that binary
   installed_smoke_gate: target checks verify PyInit__core, import headroom and headroom._core in safe-path mode, and run installed headroom --help
-  prior_release: 0.31.0-0.1
+  prior_release: 0.32.0-0.10
   source_sha256_verified: true
   spec_parse: passed
-  local_srpm_sha256: 9b371be9f5172a0caed93bce621b6ade958765019d31030a5c0f511870a2d389
+  local_srpm_sha256: 2d608c7ac37dec579ad6340dec474622082d7893cb8e0ce5dadb9d3635549dc8
+  local_srpm_members: 6
   current_rpmlint: zero errors, zero warnings, four filtered
   prior_local_mock_fedora_44_x86_64: release 0.9 passed
   prior_local_runtime_rpm_sha256: cf4b945776325b0798ed6da14bcc514a8fdca7608ff7a07082366e4276186390
   prior_local_binary_rpmlint: zero errors and one missing-manpage warning
   prior_local_cargo_tests: release 0.9 passed 936 plus doctests; 3 ignored
-  prior_configured_scm_build: 10770364
-  prior_configured_scm_matrix: 0.32.0-0.9 passed Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
-  prior_remote_runtime_rpm_sha256: 0b166b3534235b803daac0a94023962f3b7dd3317b1a120508a8fdeee4ccf1b6
-  prior_license_finding: regex-syntax 0.8.11 requires unavoidable Unicode-DFS-2016; corrected rebuild pending
+  prior_configured_scm_build: 10770459
+  prior_configured_scm_matrix: 0.32.0-0.10 passed Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+  prior_remote_runtime_rpm_sha256: db2c6905c6179f4b3f799f27e251714a7e9fd0d1ced18bfa52ed63612f128b66
+  prior_remote_license_dependencies_sha256: b76c43d8881c07cfca9dfca078d6eb3599d45241c40f46f7e23c56cae97e7770
+  prior_remote_signature: header and payload verified against project key D1AD166605A554F8CAF258B3F400B61D1BC90983
+  yaml_parse: passed
   scoped_validator: passed
-  repository_tests: 97 runs, 1024 assertions, zero failures with the known unrelated Bun WebKit collision-order test excluded
+  repository_tests: 100 runs, 1027 assertions, zero failures with the known unrelated Bun WebKit collision-order test excluded
   diff_check: passed
   full_validator: 131 packages passed
   prior_mock_fedora_43: clean build and packaged stdio MCP smoke passed for 0.31.0-0.1
@@ -87,14 +93,14 @@ prior_artifacts:
     srpm_sha256: 24526af2ef804d82ab85bdcb8b85f5cc603dd463a1fb13ded0ec381110404a1f
     rpm_sha256: 1edb31fc85691bf492fea052c0a4cf8ed3618366066770bca748cccf05b761eb
 upstream:
-  provider: github_release_commit_archive
-  repository: headroomlabs-ai/headroom
-  tag_prefix: v
-  current_version: 0.32.0
-  tag_commit: 4381388d56f49af3ae9b1dece7489a12fa64a1a1
-  source_url: https://github.com/headroomlabs-ai/headroom/archive/4381388d56f49af3ae9b1dece7489a12fa64a1a1.tar.gz
-  source_sha256: 6bb138a038d9a74c3a9b51bcc593d996054cf9eca95fc39df9e0e80c3944ddce
-  pypi_sdist: absent
+  provider: pypi
+  project: headroom-ai
+  current_version: 0.32.1
+  source_url: https://files.pythonhosted.org/packages/a1/b3/af494f2320111fa62f89724840f912ec8f4382a7768942bb9205a557b11f/headroom_ai-0.32.1.tar.gz
+  source_sha256: 329dda3328f0fb45ec7128353f7fc9108f08e9676c9dc1873b4841c5c00c94bd
+  source_size: 2277688
+  source_uploaded: "2026-07-19T04:39:30.588166Z"
+  repository: chopratejas/headroom
   license: Apache-2.0
 copr:
   enabled: true

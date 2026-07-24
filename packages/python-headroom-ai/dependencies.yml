@@ -1,4 +1,4 @@
-target_release: 0.32.0
+target_release: 0.32.1
 production_runtime:
   python:
     - tiktoken >= 0.5.0
@@ -31,7 +31,7 @@ excluded_runtime:
 build_runtime:
   backend: maturin >= 1.5, < 2.0
   native_extension: crates/headroom-py with no default features and PyO3 feature extension-module
-  license_workspace: root Cargo workspace narrowed to headroom-core and headroom-py for Fedora cargo2rpm accounting
+  license_workspace: the published root Cargo workspace contains headroom-core and headroom-py only
   system_libraries:
     - pkgconfig(sqlite3)
   local_packages:
@@ -41,22 +41,25 @@ build_runtime:
     - rust-tiktoken-rs0.11 = 0.11.0
 validation:
   current_draft:
-    release: 0.32.0-0.10
-    status: local validation passed; configured-SCM six-cell rebuild pending
-    static_validation: exact-archive zero-fuzz patch application, selected manifest closure, system ast-grep substitution, scoped Cargo metadata and license probing, RPM spec parsing, YAML parsing, and repository tests passed
-    local_srpm_sha256: 9b371be9f5172a0caed93bce621b6ade958765019d31030a5c0f511870a2d389
+    release: 0.32.1-0.1
+    status: local source, SRPM, package, and repository validation passed; configured-SCM six-cell build pending
+    static_validation: exact-sdist four-patch zero-fuzz application, selected manifest closure, system ast-grep substitution, scoped Cargo metadata and license probing, RPM spec parsing, YAML parsing, and repository tests passed
+    repository_tests: 100 runs, 1027 assertions, zero failures with the known unrelated Bun WebKit collision-order test excluded
+    local_srpm_sha256: 2d608c7ac37dec579ad6340dec474622082d7893cb8e0ce5dadb9d3635549dc8
     local_srpm_rpmlint: zero errors, zero warnings, four filtered
-    source_license_probe: 240 target-all package/version records for headroom-core and headroom-py; fastembed and aws-config are absent
-    license_breakdown_records: 207
+    cargo_resolution: 296 resolved packages; 272 packages in the target-all normal dependency closure
+    source_license_probe: 206 unique package/version records across 371 cargo2rpm-equivalent tree entries; fastembed and aws-config are absent
+    license_breakdown_records: 206
     candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
-    buildroot_license_gate: target builds must regenerate LICENSE.dependencies from the provider-selected closure
+    unicode_license_probe: regex-syntax 0.8.11 includes generated Unicode tables and LICENSE-UNICODE while declaring only MIT OR Apache-2.0 in Cargo metadata
+    buildroot_license_gate: target builds must regenerate LICENSE.dependencies from the provider-selected closure; the aggregate retains Unicode-DFS-2016
     system_sqlite_gate: target checks must prove the Rust CCR test binary links Fedora libsqlite3 and the installed Python SQLite backend opens a database
     installed_smoke_gate: target checks must verify PyInit__core and import the buildroot package in safe-path mode before running the installed CLI help path
     prior_local_fedora_44_x86_64: release 0.9 passed complete Mock build, 936 Cargo tests and doctests, system SQLite, installed import and CLI smokes
-    prior_configured_scm_build: 10770364
-    prior_configured_scm_matrix: 0.32.0-0.9 passed Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
-    prior_remote_runtime_rpm_sha256: 0b166b3534235b803daac0a94023962f3b7dd3317b1a120508a8fdeee4ccf1b6
-    prior_license_finding: regex-syntax 0.8.11 requires unavoidable Unicode-DFS-2016; corrected rebuild pending
+    prior_configured_scm_build: 10770459
+    prior_configured_scm_matrix: 0.32.0-0.10 passed Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+    prior_remote_runtime_rpm_sha256: db2c6905c6179f4b3f799f27e251714a7e9fd0d1ced18bfa52ed63612f128b66
+    prior_remote_license_dependencies_sha256: b76c43d8881c07cfca9dfca078d6eb3599d45241c40f46f7e23c56cae97e7770
   prior_release_0_1:
     fedora_43:
       mock: passed

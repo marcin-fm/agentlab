@@ -1,17 +1,16 @@
-%global upstream_commit 4381388d56f49af3ae9b1dece7489a12fa64a1a1
-%global source_sha256 6bb138a038d9a74c3a9b51bcc593d996054cf9eca95fc39df9e0e80c3944ddce
+%global source_sha256 329dda3328f0fb45ec7128353f7fc9108f08e9676c9dc1873b4841c5c00c94bd
 %bcond check 1
 
 Name:           python-headroom-ai
-Version:        0.32.0
-Release:        0.10%{?dist}
+Version:        0.32.1
+Release:        0.1%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
 # The configured target build regenerates LICENSE.dependencies from this graph.
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
-URL:            https://github.com/headroomlabs-ai/headroom
-Source0:        https://github.com/headroomlabs-ai/headroom/archive/%{upstream_commit}/headroom-%{upstream_commit}.tar.gz
+URL:            https://github.com/chopratejas/headroom
+Source0:        https://files.pythonhosted.org/packages/a1/b3/af494f2320111fa62f89724840f912ec8f4382a7768942bb9205a557b11f/headroom_ai-%{version}.tar.gz
 # Packaging-only feature selection: upstream headroom-core defaults to ML and
 # Cargo metadata resolves even unselected optional dependencies. Propagate the
 # non-ML choice and remove only unselected ML/Redis dependency declarations.
@@ -21,19 +20,15 @@ Patch0:         headroom-disable-default-ml.patch
 # system SQLite instead of the upstream bundled 0.32 branch. Not submitted;
 # behavior and exact dependency closure still require clean buildroot proof.
 Patch1:         headroom-system-rusqlite.patch
-# Fedora cargo2rpm 0.3.3 inventories every workspace member and its package
-# selector is broken. Narrow the packaging workspace to the built extension and
-# core library. This is Fedora-tooling-specific and is not an upstream change.
-Patch2:         headroom-python-workspace.patch
 # Fedora 43/44/Rawhide do not package Criterion 0.5. It is referenced only by
 # upstream benchmark targets, which RPM builds do not run. Keep proptest,
 # tempfile, all Cargo tests, and the installed Python smokes. Fedora-specific;
 # not submitted because this removes development-only benchmark coverage.
-Patch3:         headroom-drop-benchmark-dev-dependency.patch
+Patch2:         headroom-drop-benchmark-dev-dependency.patch
 # Fedora ships the required ast-grep CLI from source. Remove only the upstream
 # PyPI binary-wheel dependency and require the system executable instead.
 # Fedora-specific; not submitted because upstream supports pip environments.
-Patch4:         headroom-system-ast-grep.patch
+Patch3:         headroom-system-ast-grep.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  gcc
@@ -65,7 +60,7 @@ path without redefining Headroom's upstream command surface.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
-%autosetup -n headroom-%{upstream_commit} -p1
+%autosetup -n headroom_ai-%{version} -p1
 %cargo_prep
 
 %generate_buildrequires
@@ -126,6 +121,9 @@ PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindi
 %{_bindir}/headroom
 
 %changelog
+* Fri Jul 24 2026 Marcin FM <marcin@lgic.pl> - 0.32.1-0.1
+- Update to the complete published PyPI sdist and use the upstream-narrowed workspace.
+
 * Fri Jul 24 2026 Marcin FM <marcin@lgic.pl> - 0.32.0-0.10
 - Correct the linked Rust license expression for Unicode-DFS-2016.
 
