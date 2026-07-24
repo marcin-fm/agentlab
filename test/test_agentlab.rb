@@ -346,6 +346,77 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_copr_package_build_omits_cli_progress_callback
+    Dir.mktmpdir do |directory|
+      config_path = File.join(directory, "copr")
+      File.write(config_path, <<~CONFIG)
+        [copr-cli]
+        login = api-login
+        token = api-token
+        copr_url = https://copr.example.test/
+      CONFIG
+      File.chmod(0o600, config_path)
+
+      previous_config = ENV["COPR_CONFIG"]
+      original_start = Net::HTTP.method(:start)
+      captured_request = nil
+      response = Object.new
+      response.define_singleton_method(:body) { JSON.generate("id" => 1234, "state" => "pending") }
+      response.define_singleton_method(:is_a?) do |type|
+        type == Net::HTTPSuccess || Object.instance_method(:is_a?).bind_call(self, type)
+      end
+      http = Object.new
+      http.define_singleton_method(:request) do |request|
+        captured_request = request
+        response
+      end
+      Net::HTTP.singleton_class.send(:define_method, :start) do |*_arguments, **_keywords, &block|
+        block.call(http)
+      end
+      ENV["COPR_CONFIG"] = config_path
+
+      result = Agentlab.copr_package_build(
+        owner: "marcin",
+        project: "agentlab",
+        package_name: "python-headroom-ai",
+        chroots: %w[fedora-44-x86_64 fedora-44-aarch64]
+      )
+
+      assert_equal(1234, result.fetch("id"))
+      assert_equal("/api_3/package/build", captured_request.path)
+      assert_match(/\ABasic /, captured_request["Authorization"])
+      assert_equal("application/json", captured_request["Content-Type"])
+      assert_equal(
+        {
+          "ownername" => "marcin",
+          "projectname" => "agentlab",
+          "package_name" => "python-headroom-ai",
+          "chroots" => %w[fedora-44-x86_64 fedora-44-aarch64],
+          "background" => false,
+          "enable_net" => false
+        },
+        JSON.parse(captured_request.body)
+      )
+      refute_includes(captured_request.body, "progress_callback")
+    ensure
+      Net::HTTP.singleton_class.send(:define_method, :start, original_start)
+      ENV["COPR_CONFIG"] = previous_config
+    end
+  end
+
+  def test_build_current_dry_run_skips_release_discovery
+    script = File.expand_path("../scripts/update-and-build", __dir__)
+    stdout, stderr, status = Open3.capture3(
+      script,
+      "--build-current",
+      "--package", "python-headroom-ai"
+    )
+
+    assert(status.success?, stderr)
+    assert_includes(stdout, "Dry run: no files changed and no builds submitted.")
+    refute_includes(stderr, "unsupported release provider")
+  end
+
   def test_reads_only_the_copr_cli_config_section
     Dir.mktmpdir do |directory|
       config_path = File.join(directory, "copr")

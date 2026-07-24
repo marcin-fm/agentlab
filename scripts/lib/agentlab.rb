@@ -317,6 +317,50 @@ module Agentlab
     raise Error, "COPR identity mismatch: expected #{expected_owner.inspect}, got #{actual_owner.inspect}"
   end
 
+  def copr_package_build(owner:, project:, package_name:, chroots:)
+    config_path = ENV["COPR_CONFIG"].to_s
+    raise Error, "COPR_CONFIG is not set; activate the project identity before COPR mutation" if config_path.empty?
+
+    values = copr_config_values(config_path)
+    uri = URI("#{values.fetch('copr_url').sub(%r{/+\z}, '')}/api_3/package/build")
+    raise Error, "refusing non-HTTPS COPR URL #{uri}" unless uri.is_a?(URI::HTTPS)
+
+    request = Net::HTTP::Post.new(uri)
+    request.basic_auth(values.fetch("login"), values.fetch("token"))
+    request["Accept"] = "application/json"
+    request["Content-Type"] = "application/json"
+    request["User-Agent"] = "agentlab-packaging"
+    request.body = JSON.generate(
+      "ownername" => owner,
+      "projectname" => project,
+      "package_name" => package_name,
+      "chroots" => chroots,
+      "background" => false,
+      "enable_net" => false
+    )
+    response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(request) }
+
+    unless response.is_a?(Net::HTTPSuccess)
+      detail = response.body.to_s[0, 300]
+      begin
+        detail = JSON.parse(response.body).fetch("error", detail)
+      rescue JSON::ParserError
+        # Preserve the bounded response body when COPR does not return JSON.
+      end
+      raise Error, "COPR package build failed: #{detail}"
+    end
+
+    result = JSON.parse(response.body)
+    raise Error, "COPR package build failed: #{result.fetch('error')}" if result.key?("error")
+    raise Error, "COPR package build response did not identify a build" if result["id"].to_s.empty?
+
+    result
+  rescue JSON::ParserError, KeyError => e
+    raise Error, "invalid COPR package build response: #{e.message}"
+  rescue URI::InvalidURIError => e
+    raise Error, "invalid COPR URL: #{e.message}"
+  end
+
   def run!(argv, dry_run: false, chdir: ROOT)
     puts "$ #{command_string(argv)}"
     return if dry_run

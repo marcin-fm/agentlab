@@ -33,24 +33,28 @@ if packages.empty?
   exit 0
 end
 
-updates = packages.filter_map do |package|
-  provider = package.upstream.fetch("provider")
-  version = Agentlab.latest_upstream_version(package)
-  current = package.upstream.fetch("current_version")
+updates = if build_current
+            []
+          else
+            packages.filter_map do |package|
+              provider = package.upstream.fetch("provider")
+              version = Agentlab.latest_upstream_version(package)
+              current = package.upstream.fetch("current_version")
 
-  if Gem::Version.new(version) <= Gem::Version.new(current)
-    label = provider == "static" ? "static release metadata" : "latest stable #{version}"
-    puts "#{package.name}: current #{current}, #{label}"
-    next
-  end
+              if Gem::Version.new(version) <= Gem::Version.new(current)
+                label = provider == "static" ? "static release metadata" : "latest stable #{version}"
+                puts "#{package.name}: current #{current}, #{label}"
+                next
+              end
 
-  url = Agentlab.source_url(package, version)
-  source = Agentlab.download(url)
-  sha256 = Digest::SHA256.hexdigest(source)
-  puts "#{package.name}: #{current} -> #{version}"
-  puts "  source: #{url}"
-  puts "  sha256: #{sha256}"
-  { package: package, version: version, sha256: sha256 }
+              url = Agentlab.source_url(package, version)
+              source = Agentlab.download(url)
+              sha256 = Digest::SHA256.hexdigest(source)
+              puts "#{package.name}: #{current} -> #{version}"
+              puts "  source: #{url}"
+              puts "  sha256: #{sha256}"
+              { package: package, version: version, sha256: sha256 }
+            end
 end
 
 if updates.empty? && !build_current
@@ -95,7 +99,8 @@ Agentlab.run!([RbConfig.ruby, File.join(Agentlab::ROOT, "scripts", "check-packag
 
 if builds.any?
   builds.each do |package|
-    chroot_args = package.chroots(config.fetch("chroots")).flat_map { |chroot| ["--chroot", chroot] }
+    chroots = package.chroots(config.fetch("chroots"))
+    chroot_args = chroots.flat_map { |chroot| ["--chroot", chroot] }
     if agentlab_project
       package_path = package.directory.delete_prefix("#{Agentlab::ROOT}/")
       status_stdout, status_stderr, status = Agentlab.capture(
@@ -120,9 +125,14 @@ if builds.any?
         raise Agentlab::Error, "local HEAD does not match pushed origin/#{branch}"
       end
 
-      Agentlab.run!(
-        Agentlab.copr_command("build-package", project, "--nowait", *chroot_args, "--name", package.name)
+      puts "$ COPR package build #{project}/#{package.name} in #{chroots.join(', ')}"
+      result = Agentlab.copr_package_build(
+        owner: config.fetch("owner"),
+        project: config.fetch("project"),
+        package_name: package.name,
+        chroots: chroots
       )
+      puts "Submitted COPR build #{result.fetch('id')}."
     else
       Agentlab.run!(Agentlab.copr_command("build", project, "--nowait", *chroot_args, package.spec_path))
     end
