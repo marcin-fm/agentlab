@@ -1925,7 +1925,8 @@ module Agentlab
 
     errors = []
     receipt = JSON.parse(File.read(receipt_path))
-    errors << "bun: unsupported npm-install proof receipt schema" unless receipt["schema"] == "bun-npm-offline-install-proof/v1"
+    current_source_driver = receipt["schema"] == "bun-npm-offline-install-proof/v2"
+    errors << "bun: unsupported npm-install proof receipt schema" unless %w[bun-npm-offline-install-proof/v1 bun-npm-offline-install-proof/v2].include?(receipt["schema"])
     errors << "bun: npm-install proof package mismatch" unless receipt["package"] == "bun"
     errors << "bun: npm-install proof release mismatch" unless receipt["release"].to_s == version
     errors << "bun: npm-install proof target mismatch" unless receipt["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
@@ -1944,6 +1945,7 @@ module Agentlab
     install = receipt["install"] || {}
     install_controls = %w[network_namespace frozen_lockfile ignore_scripts serialized]
     errors << "bun: npm-install proof install controls are incomplete" unless install_controls.all? { |key| install[key] == true }
+    errors << "bun: current npm-install proof driver kind mismatch" if current_source_driver && install["driver_kind"] != "source_built"
     expected_roots = [[".", "bun"], ["packages/bun-error", "bun-error"], ["src/node-fallbacks", "fallbacks"]]
     install_roots = Array(install["install_roots"])
     errors << "bun: npm-install proof root set mismatch" unless install_roots.map { |root| root.is_a?(Hash) ? [root["path"], root["package_name"]] : nil } == expected_roots
@@ -1967,8 +1969,53 @@ module Agentlab
     errors << "bun: npm-install proof overclaims complete Bun materialization" unless validation["complete_bun_offline_materialization_verified"] == false
     errors << "bun: npm-install proof incorrectly claims dependency resolution" unless validation["dependency_resolution_performed"] == false
     errors << "bun: npm-install proof incorrectly claims a full Bun build" unless validation["full_bun_build_performed"] == false
+    if current_source_driver
+      errors << "bun: current npm-install proof validation is incomplete" unless %w[source_built_driver_verified driver_receipt_bound driver_version_verified bootstrap_seed_not_used_for_install].all? { |key| validation[key] == true }
+      driver = receipt["driver"]
+      proof_kind = driver.is_a?(Hash) && driver["proof_kind"]
+      stage_name = proof_kind == "self_rebuild" ? "self_rebuild" : "seed_build"
+      stages = package.data.dig("build_plan", "stages")
+      build_stage = stages.is_a?(Hash) && stages[stage_name]
+      valid_kind = %w[first_build self_rebuild].include?(proof_kind)
+      valid_stage = build_stage.is_a?(Hash) && build_stage["state"] == "verified" && build_stage["historical_only"] != true
+      errors << "bun: current npm-install proof driver stage mismatch" unless valid_kind && valid_stage &&
+        driver["kind"] == "source_built" && driver["receipt"] == build_stage["proof_receipt"] &&
+        driver["receipt_sha256"] == build_stage["proof_receipt_sha256"] && driver["version"] == version
+
+      driver_receipt_name = driver.is_a?(Hash) && driver["receipt"]
+      driver_receipt_path = driver_receipt_name.is_a?(String) && File.join(package.directory, driver_receipt_name)
+      if driver_receipt_path && File.file?(driver_receipt_path)
+        driver_receipt_sha256 = Digest::SHA256.file(driver_receipt_path).hexdigest
+        errors << "bun: current npm-install driver receipt SHA-256 mismatch" unless driver["receipt_sha256"] == driver_receipt_sha256
+        driver_receipt = JSON.parse(File.read(driver_receipt_path))
+        expected_schema = proof_kind == "self_rebuild" ? "bun-self-rebuild-proof/v2" : "bun-first-source-build-proof/v2"
+        errors << "bun: current npm-install driver receipt schema mismatch" unless driver_receipt["schema"] == expected_schema
+        errors << "bun: current npm-install driver receipt identity mismatch" unless driver_receipt["package"] == "bun" && driver_receipt["release"] == version && driver_receipt["profile"] == "release-local"
+        errors << "bun: current npm-install driver source closure mismatch" unless driver_receipt.dig("source_closure", "path") == dependency_stage["proof_receipt"] && driver_receipt.dig("source_closure", "sha256") == dependency_stage["proof_receipt_sha256"]
+        output = driver_receipt.dig("build", "bun")
+        errors << "bun: current npm-install driver binary mismatch" unless output.is_a?(Hash) && driver["size_bytes"] == output["size_bytes"] && driver["sha256"] == output["sha256"]
+        output_path = output.is_a?(Hash) && output["path"]
+        proof_root = driver["proof_root"]
+        driver_path = driver["path"]
+        valid_paths = output_path.is_a?(String) && !Pathname.new(output_path).absolute? && !Pathname.new(output_path).each_filename.include?("..") &&
+                      proof_root.is_a?(String) && Pathname.new(proof_root).absolute? && proof_root.start_with?("/srv/tmp/") && Pathname.new(proof_root).cleanpath.to_s == proof_root &&
+                      driver_path.is_a?(String) && Pathname.new(driver_path).absolute? && Pathname.new(driver_path).cleanpath.to_s == driver_path &&
+                      driver_path.start_with?("#{proof_root}/") && driver_path.end_with?("/#{output_path}")
+        errors << "bun: current npm-install driver paths are invalid" unless valid_paths
+      else
+        errors << "bun: current npm-install driver receipt is missing: #{driver_receipt_name.inspect}"
+      end
+
+      seed = package.data.dig("build_plan", "source_inputs", "bootstrap_seed")
+      forbidden_seed = receipt["forbidden_bootstrap_seed"]
+      valid_forbidden_seed = seed.is_a?(Hash) && forbidden_seed.is_a?(Hash) &&
+                             forbidden_seed["binary_sha256"] == seed["binary_sha256"] &&
+                             forbidden_seed["size_bytes"] == seed["binary_size_bytes"] &&
+                             forbidden_seed["payload_allowed"] == false && forbidden_seed["runtime_dependency_allowed"] == false
+      errors << "bun: current npm-install forbidden seed mismatch" unless valid_forbidden_seed
+    end
     errors
-  rescue JSON::ParserError => e
+  rescue JSON::ParserError, TypeError => e
     ["bun: invalid npm-install proof receipt: #{e.message}"]
   end
 

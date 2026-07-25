@@ -1543,6 +1543,116 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_validates_bun_source_built_npm_offline_install_receipt
+    source_package = Agentlab.package_named("bun")
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(source_package.data))
+      version = source_package.upstream.fetch("current_version")
+      dependency_stage = data.dig("build_plan", "stages", "dependency_closure")
+      seed_stage = data.dig("build_plan", "stages", "seed_build")
+      source_inputs = data.dig("build_plan", "source_inputs")
+      closure_name = dependency_stage.fetch("proof_receipt")
+      FileUtils.cp(File.join(source_package.directory, closure_name), File.join(directory, closure_name))
+
+      historical_name = dependency_stage.dig("historical_lolhtml_graph", "npm_install_proof_receipt")
+      receipt = JSON.parse(File.read(File.join(source_package.directory, historical_name)))
+      receipt["schema"] = "bun-npm-offline-install-proof/v2"
+      receipt.fetch("source_closure").merge!(
+        "path" => closure_name,
+        "sha256" => dependency_stage.fetch("proof_receipt_sha256"),
+        "bun_source_archive_sha256" => source_package.upstream.fetch("source_sha256")
+      )
+      receipt.fetch("install")["driver_kind"] = "source_built"
+      receipt.fetch("validation").merge!(
+        "source_built_driver_verified" => true,
+        "driver_receipt_bound" => true,
+        "driver_version_verified" => true,
+        "bootstrap_seed_not_used_for_install" => true
+      )
+
+      driver_receipt_name = "current-first-source-build-proof.json"
+      driver_output = {
+        "path" => "build/release-local/bun",
+        "size_bytes" => 100,
+        "sha256" => "a" * 64
+      }
+      driver_receipt = {
+        "schema" => "bun-first-source-build-proof/v2",
+        "package" => "bun",
+        "release" => version,
+        "profile" => "release-local",
+        "source_closure" => {
+          "path" => closure_name,
+          "sha256" => dependency_stage.fetch("proof_receipt_sha256")
+        },
+        "bootstrap_seed" => {
+          "binary_sha256" => source_inputs.dig("bootstrap_seed", "binary_sha256"),
+          "size_bytes" => source_inputs.dig("bootstrap_seed", "binary_size_bytes")
+        },
+        "build" => { "bun" => driver_output, "version" => version },
+        "validation" => { "source_build_verified" => true }
+      }
+      driver_receipt_path = File.join(directory, driver_receipt_name)
+      File.write(driver_receipt_path, JSON.dump(driver_receipt))
+      driver_receipt_sha256 = Digest::SHA256.file(driver_receipt_path).hexdigest
+      seed_stage.merge!(
+        "state" => "verified",
+        "historical_only" => false,
+        "proof_receipt" => driver_receipt_name,
+        "proof_receipt_sha256" => driver_receipt_sha256
+      )
+      receipt["driver"] = {
+        "kind" => "source_built",
+        "proof_kind" => "first_build",
+        "receipt" => driver_receipt_name,
+        "receipt_sha256" => driver_receipt_sha256,
+        "proof_root" => "/srv/tmp/agentlab-bun-first-source-build-proof",
+        "path" => "/srv/tmp/agentlab-bun-first-source-build-proof/#{driver_output.fetch('path')}",
+        "size_bytes" => driver_output.fetch("size_bytes"),
+        "sha256" => driver_output.fetch("sha256"),
+        "version" => version
+      }
+      receipt["forbidden_bootstrap_seed"] = {
+        "binary_sha256" => source_inputs.dig("bootstrap_seed", "binary_sha256"),
+        "size_bytes" => source_inputs.dig("bootstrap_seed", "binary_size_bytes"),
+        "payload_allowed" => false,
+        "runtime_dependency_allowed" => false
+      }
+
+      proof_name = "source-built-npm-install-proof.json"
+      proof_path = File.join(directory, proof_name)
+      write_receipt = lambda do
+        File.write(proof_path, JSON.dump(receipt))
+        dependency_stage["npm_install_proof_receipt"] = proof_name
+        dependency_stage["npm_install_proof_receipt_sha256"] = Digest::SHA256.file(proof_path).hexdigest
+      end
+      dependency_stage.merge!(
+        "npm_cache_entries" => receipt.dig("cache", "materialized_entries"),
+        "npm_cache_tree_sha256" => receipt.dig("cache", "tree", "sha256"),
+        "npm_cache_materialization_verified" => true,
+        "npm_offline_install_verified" => true,
+        "npm_frozen_lockfile_verified" => true,
+        "npm_ignore_scripts_verified" => true,
+        "npm_network_namespace_verified" => true
+      )
+      write_receipt.call
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      assert_empty(Agentlab.validate_bun_npm_offline_install(package, dependency_stage, version))
+
+      receipt.fetch("validation")["driver_receipt_bound"] = false
+      write_receipt.call
+      errors = Agentlab.validate_bun_npm_offline_install(package, dependency_stage, version)
+      assert_includes(errors, "bun: current npm-install proof validation is incomplete")
+
+      receipt.fetch("validation")["driver_receipt_bound"] = true
+      receipt.fetch("forbidden_bootstrap_seed")["binary_sha256"] = "0" * 64
+      write_receipt.call
+      errors = Agentlab.validate_bun_npm_offline_install(package, dependency_stage, version)
+      assert_includes(errors, "bun: current npm-install forbidden seed mismatch")
+    end
+  end
+
   def test_validates_bun_system_lolhtml_split
     source_package = Agentlab.package_named("bun")
     plan = source_package.data.fetch("build_plan")
