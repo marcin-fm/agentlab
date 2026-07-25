@@ -320,7 +320,7 @@ class AgentlabTest < Minitest::Test
       review.fetch("components").first.dig("audit", "executable_payloads")["paths_sha256"] = "0" * 64
       temporary_review = File.join(directory, "native-review.yml")
       File.write(temporary_review, YAML.dump(review))
-      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof].each do |key|
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof].each do |key|
         FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
       end
       FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)

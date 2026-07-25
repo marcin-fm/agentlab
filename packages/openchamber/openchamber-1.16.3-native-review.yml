@@ -14,6 +14,9 @@ receipts:
   better_sqlite3_proof:
     path: openchamber-1.16.3-better-sqlite3-proof.json
     sha256: 3ceb20e4fb4fd8dbcf3afa77f0add02e3bcf336663672b237ae570c73d1e4c97
+  node_pty_proof:
+    path: openchamber-1.16.3-node-pty-proof.json
+    sha256: c80c61d55ca62e1644fa822ef0447ce00fd9dc65e6c4fdda95974744f97cb257
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -35,7 +38,7 @@ status:
   retained_prebuilt_payloads: 0
   source_mappings_verified: 6
   source_mappings_unresolved: 8
-  reproducible_builds_completed: 1
+  reproducible_builds_completed: 2
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
@@ -142,8 +145,9 @@ components:
       executable_payloads: { count: 2, paths_sha256: 2e09dc82d9a0ede3187b02134c9715cf77a2da7ce7a19ccddf1d6c8445e227d7 }
       native_source_paths: { count: 8, paths_sha256: 381c12c4e0fddf64b3d206426e5e82c8c87b57b74ff55c807b0ddcc966fdb501 }
       lifecycle_scripts_sha256: 5e42f95e0fd6b29f6e5adfb2bf25f5c3326cf23ea5ca7ef24ae84ff5bf8f9061
-    mapping: { kind: same_archive_rebuild, source_package: node-pty@1.2.0-beta.12 }
-    decision: { action: rebuild_same_archive, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+    mapping: { kind: same_archive_rebuild, source_package: node-pty@1.2.0-beta.12, build_dependency: node-addon-api@7.1.1, node_abi: "137" }
+    proof: { path: openchamber-1.16.3-node-pty-proof.json }
+    decision: { action: rebuild_same_archive, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: true }
   - package: "sherpa-onnx-linux-x64@1.13.3"
     audit:
       native_payloads: { count: 4, paths_sha256: 7873091b5fbe3d7180800e85c75819651838b2e778d48feaf615d4dc2d0c1009 }

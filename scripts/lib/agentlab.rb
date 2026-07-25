@@ -869,7 +869,8 @@ module Agentlab
       errors << "openchamber: native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
       reproducible = component.dig("decision", "reproducible_build_verified")
       errors << "openchamber: native review reproducibility state is missing for #{identity}" unless [true, false].include?(reproducible)
-      errors << "openchamber: native review overclaims a reproducible build for #{identity}" if reproducible == true && identity != "better-sqlite3@12.10.0"
+      proven_rebuilds = %w[better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
+      errors << "openchamber: native review overclaims a reproducible build for #{identity}" if reproducible == true && !proven_rebuilds.include?(identity)
     end
 
     expected_groups = {
@@ -913,6 +914,23 @@ module Agentlab
       errors << "openchamber: better-sqlite3 review state mismatch" unless better.dig("decision", "reproducible_build_verified") == true
     else
       errors << "openchamber: better-sqlite3 proof is unavailable"
+    end
+
+    node_pty = components.find { |component| component["package"] == "node-pty@1.2.0-beta.12" }
+    node_pty_filename = dependencies.dig("source_closure_files", "node_pty_proof")
+    node_pty_path = node_pty_filename.is_a?(String) && File.join(package.directory, node_pty_filename)
+    if node_pty_path && File.file?(node_pty_path)
+      node_pty_sha256 = Digest::SHA256.file(node_pty_path).hexdigest
+      node_pty_proof = JSON.parse(File.read(node_pty_path))
+      errors << "openchamber: node-pty proof path mismatch" unless node_pty&.dig("proof", "path") == node_pty_filename && review.dig("receipts", "node_pty_proof", "path") == node_pty_filename
+      errors << "openchamber: node-pty proof SHA-256 mismatch" unless review.dig("receipts", "node_pty_proof", "sha256") == node_pty_sha256
+      errors << "openchamber: node-pty proof identity mismatch" unless node_pty_proof["schema"] == "openchamber-node-pty-proof/v1" && node_pty_proof["package"] == "node-pty@1.2.0-beta.12" && node_pty_proof.dig("source", "archive_sha256") == "45a012e37699bb70c9050cbf2e06e71b0b842de4cda58e938e3de973f6d5a36a"
+      errors << "openchamber: node-pty build dependency mismatch" unless node_pty_proof.dig("build_dependency", "package") == "node-addon-api@7.1.1" && node_pty_proof.dig("build_dependency", "archive_sha256") == "b10455d15a977c0cd17a1cb0eb679e03d939f8ef8d4302eb33e1f78dacc71f82"
+      errors << "openchamber: node-pty build contract mismatch" unless node_pty_proof.dig("build", "node_module_abi") == "137" && node_pty_proof.dig("build", "lifecycle_scripts_executed") == false && node_pty_proof.dig("build", "prebuild_selection_executed") == false && node_pty_proof.dig("build", "source_patch_required") == false && node_pty_proof.dig("build", "first_sha256") == node_pty_proof.dig("build", "second_sha256") && node_pty_proof.dig("build", "rpath_or_runpath") == false
+      errors << "openchamber: node-pty runtime proof is incomplete" unless node_pty_proof.fetch("runtime_smoke").values.all?(true) && node_pty_proof.dig("validation", "published_prebuilds_excluded") == true && node_pty_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: node-pty review state mismatch" unless node_pty.dig("decision", "reproducible_build_verified") == true
+    else
+      errors << "openchamber: node-pty proof is unavailable"
     end
 
     expected_scope = {

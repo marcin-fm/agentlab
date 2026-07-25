@@ -126,3 +126,8 @@ source mappings remain unresolved. `better-sqlite3 12.10.0` now rebuilds twice
 byte-identically for Node 24 ABI 137 against Fedora SQLite 3.51.2, with no
 prebuild download or bundled SQLite linkage; every other native/WASM rebuild
 and final OpenChamber inclusion claim remains false.
+
+`node-pty 1.2.0-beta.12` also rebuilds twice byte-identically for Node 24 ABI
+137 from the selected source and `node-addon-api 7.1.1`. Linux spawn, resize,
+exit-code, and open-PTY smokes pass without lifecycle scripts or published
+prebuilds; final OpenChamber inclusion remains unverified.

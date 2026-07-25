@@ -1,0 +1,48 @@
+{
+  "schema": "openchamber-node-pty-proof/v1",
+  "release": "1.16.3",
+  "package": "node-pty@1.2.0-beta.12",
+  "source": {
+    "integrity": "sha512-uExTCG/4VmSJa4+TjxFwPXv8BfacmfFEBL6JpxCMDghcwqzvD0yTcGmZ1fKOK6HY33tp0CelLblqTECJizc+Yw==",
+    "archive_sha256": "45a012e37699bb70c9050cbf2e06e71b0b842de4cda58e938e3de973f6d5a36a",
+    "upstream_tag": "v1.2.0-beta.12",
+    "upstream_tag_commit": "fc30d875fed963259e10e40e1c70b20251a0e786",
+    "binding_gyp_sha256": "60087f9bc86f372a5ad49d15d7854140c29fac959aaa1fb2c8ffd0dc021595dd",
+    "pty_source_sha256": "19210adfdaba3cd09809b56bb3281b14e74a8e5efc1f35d467d3c423c30856db"
+  },
+  "build_dependency": {
+    "package": "node-addon-api@7.1.1",
+    "archive_sha256": "b10455d15a977c0cd17a1cb0eb679e03d939f8ef8d4302eb33e1f78dacc71f82"
+  },
+  "build": {
+    "network_isolated": true,
+    "lifecycle_scripts_executed": false,
+    "prebuild_selection_executed": false,
+    "postinstall_executed": false,
+    "source_patch_required": false,
+    "node_version": "24.13.1",
+    "node_module_abi": "137",
+    "linux_target": "pty.node",
+    "spawn_helper_required": false,
+    "output_size": 72872,
+    "first_sha256": "427da0892d8b8ff0b1ca83af20191cff5bc46511b5c31e13a670c212ac01f510",
+    "second_sha256": "427da0892d8b8ff0b1ca83af20191cff5bc46511b5c31e13a670c212ac01f510",
+    "needed": ["libstdc++.so.6", "libm.so.6", "libgcc_s.so.1", "libc.so.6"],
+    "rpath_or_runpath": false
+  },
+  "runtime_smoke": {
+    "spawn": true,
+    "resize": true,
+    "exit_code": true,
+    "open_pty": true
+  },
+  "validation": {
+    "source_identity_verified": true,
+    "published_prebuilds_excluded": true,
+    "two_builds_byte_identical": true,
+    "node_abi_bound": true,
+    "runtime_smoke_verified": true,
+    "rpm_build_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}
