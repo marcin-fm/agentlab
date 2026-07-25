@@ -25,8 +25,15 @@ packages.each do |package|
     errors << "#{package.name}: status must be enabled or blocked"
   end
 
-  if package.status == "blocked" && package.data.dig("copr", "enabled") == true
-    errors << "#{package.name}: blocked package cannot enable COPR"
+  if package.status == "blocked"
+    blockers = package.data["blockers"]
+    unless blockers.is_a?(Array) && blockers.any? && blockers.all? { |blocker| blocker.is_a?(String) && !blocker.strip.empty? }
+      errors << "#{package.name}: blocked package must list at least one blocker"
+    end
+
+    unless package.data.dig("copr", "enabled") == false
+      errors << "#{package.name}: blocked package must explicitly disable COPR"
+    end
   end
 
   if package.status == "enabled" && package.data.dig("copr", "enabled") != true
