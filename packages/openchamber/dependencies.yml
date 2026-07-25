@@ -201,6 +201,21 @@ source_acquisition_findings:
   licenses_verified: false
   native_sources_verified: false
   generated_sources_verified: false
+native_review_receipt:
+  schema: openchamber-native-review/v1
+  sha256: 0aa3bc74470cb8e00bab89a509b21219ae6f1c1e717e9b9d1743484036cee2bb
+  component_identities_classified: 14
+  target_excluded_sources: 3
+  platform_companions: 5
+  same_archive_rebuilds: 2
+  generated_wasm_sources: 3
+  build_support_sources: 1
+  retained_prebuilt_payloads: 0
+  source_mappings_verified: 6
+  source_mappings_unresolved: 8
+  native_sources_verified: false
+  wasm_sources_verified: false
+  reproducible_builds_verified: false
 source_materialization_receipt:
   schema: openchamber-source-materialization/v1
   sha256: 48b3a061404f3f362a333d6b3e57d04af8bba450361c2de4c6589d7079632d9c
@@ -245,6 +260,7 @@ source_closure_files:
   source_materialization: openchamber-1.16.3-source-materialization.json
   license_inventory: openchamber-1.16.3-bundled-licenses.txt
   native_manifest: openchamber-1.16.3-native.json
+  native_review: openchamber-1.16.3-native-review.yml
   selected_lock_audit: openchamber-1.16.3-selected-lock-audit.json
   source_audit: openchamber-1.16.3-source-audit.json
 runtime_provider:

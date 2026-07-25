@@ -1,0 +1,175 @@
+schema: openchamber-native-review/v1
+release: 1.16.3
+checked: "2026-07-25"
+receipts:
+  selected_lock_audit:
+    path: openchamber-1.16.3-selected-lock-audit.json
+    sha256: 649c0734f1a68aca4a832e32c8906824e1ccd8fb9fa78287236eaff83fb808cc
+  source_audit:
+    path: openchamber-1.16.3-source-audit.json
+    sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
+  source_materialization:
+    path: openchamber-1.16.3-source-materialization.json
+    sha256: 48b3a061404f3f362a333d6b3e57d04af8bba450361c2de4c6589d7079632d9c
+scope:
+  feature_surface: web_cli_pwa_and_local_server
+  target: linux-x86_64-glibc
+  component_identities: 14
+  native_source_records: 5
+  native_payload_records: 6
+  native_payloads: 24
+  wasm_source_records: 3
+  wasm_payloads: 4
+  executable_source_records: 5
+  executable_payloads: 10
+status:
+  component_identities_classified: 14
+  target_excluded_sources: 3
+  platform_companions: 5
+  same_archive_rebuilds: 2
+  generated_wasm_sources: 3
+  build_support_sources: 1
+  retained_prebuilt_payloads: 0
+  source_mappings_verified: 6
+  source_mappings_unresolved: 8
+  native_sources_verified: false
+  wasm_sources_verified: false
+  reproducible_builds_verified: false
+components:
+  - package: "@capacitor/android@8.4.1"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 3, paths_sha256: 3aa02a11afe9d86fb3b9679d555db8b7d007d8f8d55f33797ce18a3a8dcee796 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: target_excluded_mobile_source }
+    decision: { action: exclude_mobile_source, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+  - package: "@capacitor/ios@8.4.1"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 48, paths_sha256: 0dc125cc66be33c376e9feac6882a603302d51c50c0bee74e62b9e557dd63428 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: target_excluded_mobile_source }
+    decision: { action: exclude_mobile_source, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+  - package: "@capacitor/keyboard@8.0.5"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 4, paths_sha256: dc00f5d010ffb9850dbf8227854e7cc1e779eb3f21a1e7598e36f5f16f88dfd9 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: target_excluded_mobile_source }
+    decision: { action: exclude_mobile_source, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+  - package: "@esbuild/linux-x64@0.27.3"
+    audit:
+      native_payloads: { count: 1, paths_sha256: 5b7a29dc1d5312f95dae5d7ae771cdf5eba1c143407ddf5e2e61dca24d1c3185 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 1, paths_sha256: a80f186d4a0919783c362a8f416deec8ce2ceac962271ee19166746d302a0658 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping:
+      kind: platform_companion
+      source_package: esbuild@0.27.3
+      available_system_provider: golang-github-evanw-esbuild-0.28.1
+      system_provider_exact: false
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+  - package: "@rollup/rollup-linux-x64-gnu@4.59.0"
+    audit:
+      native_payloads: { count: 1, paths_sha256: 9efeb741fab9bad21e2314868bf5f76c64f22eb79d1f7f99811a92a258437960 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: platform_companion, source_package: rollup@4.59.0 }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+  - package: "@tailwindcss/oxide-linux-x64-gnu@4.2.1"
+    audit:
+      native_payloads: { count: 1, paths_sha256: 84616b52b17aabc52cb4105864c5f03052aaef4835f6d544f92b949d8974ca87 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: platform_companion, source_package: "@tailwindcss/oxide@4.2.1" }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+  - package: "better-sqlite3@12.10.0"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 1, paths_sha256: d5c47e4f5168bd0d7116d93314c647dbd688440ad121aa41bccb31fcf25de6cb }
+      native_source_paths: { count: 30, paths_sha256: 3875791c0e52cc8e2d0a662f1c8aafe4febcb2ffd0bddf992e8efd05e89e0a54 }
+      lifecycle_scripts_sha256: 13970a42f5c3037247d0f5f3c1baf5640f183e2a65d2c3f9e996f6c42a4631af
+    mapping: { kind: same_archive_rebuild, source_package: better-sqlite3@12.10.0 }
+    decision: { action: rebuild_same_archive, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+  - package: "ghostty-web@0.4.0"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 2, paths_sha256: e6a34db92641fcb4468d4c367b4dcbdade2dcba343f73f4eaf6c5ac53afef5cf }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: generated_wasm, source_package: unresolved }
+    decision: { action: require_subordinate_source, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+  - package: "lightningcss-linux-x64-gnu@1.31.1"
+    audit:
+      native_payloads: { count: 1, paths_sha256: 75c8d51ebaa2e4b711f878377a174be5e420f8b901c6e26b5df8228af28e872b }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: platform_companion, source_package: lightningcss@1.31.1 }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+  - package: "node-addon-api@7.1.1"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 9, paths_sha256: 7eaf1d4ed5acaabf9e2347d3982b121fdae90471f10354fc4dacc39e5b248165 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: build_support_source, source_package: node-addon-api@7.1.1 }
+    decision: { action: retain_build_support, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+  - package: "node-pty@1.2.0-beta.12"
+    audit:
+      native_payloads: { count: 16, paths_sha256: c7457fba9c983a0cded1f2a09c032567a955aa1006facb2aadf2eb012faa8d8b }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 2, paths_sha256: 2e09dc82d9a0ede3187b02134c9715cf77a2da7ce7a19ccddf1d6c8445e227d7 }
+      native_source_paths: { count: 8, paths_sha256: 381c12c4e0fddf64b3d206426e5e82c8c87b57b74ff55c807b0ddcc966fdb501 }
+      lifecycle_scripts_sha256: 5e42f95e0fd6b29f6e5adfb2bf25f5c3326cf23ea5ca7ef24ae84ff5bf8f9061
+    mapping: { kind: same_archive_rebuild, source_package: node-pty@1.2.0-beta.12 }
+    decision: { action: rebuild_same_archive, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+  - package: "sherpa-onnx-linux-x64@1.13.3"
+    audit:
+      native_payloads: { count: 4, paths_sha256: 7873091b5fbe3d7180800e85c75819651838b2e778d48feaf615d4dc2d0c1009 }
+      wasm_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      executable_payloads: { count: 3, paths_sha256: 3d3a608e61136aad5dd42e11bfd07523c066314469ecfcea7e6d703c17f40c27 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: platform_companion, source_package: sherpa-onnx-node@1.12.28 }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+  - package: "shiki@3.23.0"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 1, paths_sha256: d880f7dc3bc027427c42e2781a08161ce54b9026ac05ff96b2339c798a1f57dd }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: generated_wasm, source_package: unresolved }
+    decision: { action: require_subordinate_source, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+  - package: "source-map@0.8.0-beta.0"
+    audit:
+      native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      wasm_payloads: { count: 1, paths_sha256: c9a73138111ca2ce85d85135f0fb3eacec4c674319b6d8fd3b68925108484e95 }
+      executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
+      lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+    mapping: { kind: generated_wasm, source_package: unresolved }
+    decision: { action: require_subordinate_source, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+validation:
+  exact_source_audit_coverage: true
+  exact_path_set_digests_verified: true
+  lifecycle_scripts_accounted_for: true
+  platform_companion_mappings_recorded: true
+  target_exclusions_recorded: true
+  raw_source_audit_unchanged: true

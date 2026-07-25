@@ -29,8 +29,8 @@ The draft remains blocked until:
 1. Fedora-source-built Bun `1.3.14` is available.
 2. The checked immutable sources are materialized without package-manager
    resolution or lifecycle scripts during RPM phases.
-3. `better-sqlite3`, `node-pty`, `sherpa-onnx-node`, and every other
-   native or platform payload are classified and rebuilt from source.
+3. The classified native, WASM, and executable payloads are rebuilt from exact
+   corresponding source or excluded through a supported target boundary.
 4. Vite and PWA generated assets are rebuilt with corresponding-source proof.
 5. The shipped closure's licenses and `bundled(nodejs-...)` metadata are
    generated from the actual runtime payload.
@@ -108,3 +108,19 @@ install: no network, node_modules generation, dependency resolution, patch
 application, lifecycle script, native rebuild, package build, or RPM integration
 occurs. Immutable delivery of the generated bundles and the later offline build
 remain blocked.
+
+## Native Payload Review
+
+`openchamber-1.16.3-native-review.yml` classifies all 14 source identities that
+contain native payloads, WASM, executable-bit files, or native build inputs. It
+binds exact path-set digests to the immutable source audit rather than copying
+prebuilt payloads into a prospective package.
+
+The review excludes three mobile-only Capacitor source/mode findings from the
+Linux target, records `better-sqlite3` and `node-pty` as same-archive rebuild
+candidates, and retains `node-addon-api` only as build support. Five platform
+companions still need exact source builds; Agentlab's esbuild `0.28.1` provider
+does not satisfy selected `0.27.3`. Three generated WASM inputs still need exact
+subordinate source correspondence. No prebuilt payload is approved, eight
+source mappings remain unresolved, and every native/WASM reproducible-build
+claim remains false.

@@ -310,6 +310,37 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_openchamber_native_review_validator_rejects_path_digest_drift
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    review_path = File.join(package.directory, dependencies.dig("source_closure_files", "native_review"))
+    review = Agentlab.load_yaml(review_path)
+
+    Dir.mktmpdir do |directory|
+      review.fetch("components").first.dig("audit", "executable_payloads")["paths_sha256"] = "0" * 64
+      temporary_review = File.join(directory, "native-review.yml")
+      File.write(temporary_review, YAML.dump(review))
+      %w[selected_lock_audit source_audit source_materialization].each do |key|
+        FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
+      end
+      temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
+      temporary_dependencies.fetch("source_closure_files")["native_review"] = "native-review.yml"
+      temporary_dependencies.fetch("native_review_receipt")["sha256"] = Digest::SHA256.file(temporary_review).hexdigest
+      temporary_data = Marshal.load(Marshal.dump(package.data))
+      temporary_data.fetch("source_policy")["native_review"] = "native-review.yml"
+      temporary_data.fetch("source_policy")["native_review_sha256"] = Digest::SHA256.file(temporary_review).hexdigest
+      temporary_package = Struct.new(:name, :directory, :upstream, :data).new(
+        package.name,
+        directory,
+        package.upstream,
+        temporary_data
+      )
+
+      errors = Agentlab.validate_openchamber_native_review(temporary_package, temporary_dependencies)
+      assert_includes(errors, "openchamber: native review executable_payloads digest mismatch for @capacitor/android@8.4.1")
+    end
+  end
+
   def test_rejects_invalid_jsonc
     error = assert_raises(Agentlab::Error) do
       Agentlab.parse_jsonc("{ /* unfinished", source: "fixture")

@@ -810,6 +810,134 @@ module Agentlab
     ["openchamber: invalid source materialization evidence: #{e.message}"]
   end
 
+  def validate_openchamber_native_review(package, dependencies)
+    return [] unless package.name == "openchamber"
+
+    errors = []
+    metadata = dependencies.fetch("native_review_receipt")
+    filename = dependencies.dig("source_closure_files", "native_review")
+    path = filename.is_a?(String) && File.join(package.directory, filename)
+    return ["openchamber: native review is missing: #{filename.inspect}"] unless path && File.file?(path)
+
+    actual_sha256 = Digest::SHA256.file(path).hexdigest
+    errors << "openchamber: native review SHA-256 mismatch" unless metadata["sha256"] == actual_sha256
+    review = load_yaml(path)
+    errors << "openchamber: native review schema mismatch" unless review["schema"] == "openchamber-native-review/v1" && metadata["schema"] == review["schema"]
+    errors << "openchamber: native review release mismatch" unless review["release"].to_s == package.upstream.fetch("current_version").to_s
+
+    receipt_files = {
+      "selected_lock_audit" => dependencies.dig("source_closure_files", "selected_lock_audit"),
+      "source_audit" => dependencies.dig("source_closure_files", "source_audit"),
+      "source_materialization" => dependencies.dig("source_closure_files", "source_materialization")
+    }
+    receipt_files.each do |key, receipt_filename|
+      receipt_path = receipt_filename.is_a?(String) && File.join(package.directory, receipt_filename)
+      unless receipt_path && File.file?(receipt_path)
+        errors << "openchamber: native review #{key} receipt is unavailable"
+        next
+      end
+      errors << "openchamber: native review #{key} path mismatch" unless review.dig("receipts", key, "path") == receipt_filename
+      errors << "openchamber: native review #{key} SHA-256 mismatch" unless review.dig("receipts", key, "sha256") == Digest::SHA256.file(receipt_path).hexdigest
+    end
+
+    source_path = File.join(package.directory, receipt_files.fetch("source_audit"))
+    source_audit = JSON.parse(File.read(source_path))
+    fields = %w[native_payloads wasm_payloads executable_payloads native_source_paths]
+    sources = source_audit.fetch("sources").select { |source| fields.any? { |field| Array(source[field]).any? } }
+    expected = sources.to_h { |source| ["#{source.fetch('npm_name')}@#{source.fetch('version')}", source] }
+    components = Array(review["components"])
+    component_names = components.map { |component| component["package"] }
+    errors << "openchamber: native review contains duplicate components" unless component_names.uniq.length == component_names.length
+    errors << "openchamber: native review source coverage mismatch" unless component_names.sort == expected.keys.sort
+
+    allowed_actions = %w[exclude_mobile_source require_exact_source_build rebuild_same_archive require_subordinate_source retain_build_support]
+    components.each do |component|
+      identity = component["package"]
+      source = expected[identity]
+      next unless source
+
+      fields.each do |field|
+        values = Array(source[field])
+        errors << "openchamber: native review #{field} count mismatch for #{identity}" unless component.dig("audit", field, "count") == values.length
+        digest = Digest::SHA256.hexdigest(JSON.generate(values) + "\n")
+        errors << "openchamber: native review #{field} digest mismatch for #{identity}" unless component.dig("audit", field, "paths_sha256") == digest
+      end
+      lifecycle_digest = Digest::SHA256.hexdigest(JSON.generate(source.fetch("lifecycle_scripts")) + "\n")
+      errors << "openchamber: native review lifecycle digest mismatch for #{identity}" unless component.dig("audit", "lifecycle_scripts_sha256") == lifecycle_digest
+      errors << "openchamber: native review action is invalid for #{identity}" unless allowed_actions.include?(component.dig("decision", "action"))
+      errors << "openchamber: native review retains a prebuilt payload for #{identity}" unless component.dig("decision", "retain_prebuilt_payloads") == false
+      errors << "openchamber: native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
+      errors << "openchamber: native review reproducibility state is missing for #{identity}" unless component.dig("decision", "reproducible_build_verified") == false
+    end
+
+    expected_groups = {
+      "target_excluded_mobile_source" => %w[@capacitor/android@8.4.1 @capacitor/ios@8.4.1 @capacitor/keyboard@8.0.5],
+      "platform_companion" => %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1 lightningcss-linux-x64-gnu@1.31.1 sherpa-onnx-linux-x64@1.13.3],
+      "same_archive_rebuild" => %w[better-sqlite3@12.10.0 node-pty@1.2.0-beta.12],
+      "generated_wasm" => %w[ghostty-web@0.4.0 shiki@3.23.0 source-map@0.8.0-beta.0],
+      "build_support_source" => %w[node-addon-api@7.1.1]
+    }
+    expected_groups.each do |kind, identities|
+      actual = components.select { |component| component.dig("mapping", "kind") == kind }.map { |component| component["package"] }.sort
+      errors << "openchamber: native review #{kind} classification mismatch" unless actual == identities.sort
+    end
+    source_packages = {
+      "@esbuild/linux-x64@0.27.3" => "esbuild@0.27.3",
+      "@rollup/rollup-linux-x64-gnu@4.59.0" => "rollup@4.59.0",
+      "@tailwindcss/oxide-linux-x64-gnu@4.2.1" => "@tailwindcss/oxide@4.2.1",
+      "lightningcss-linux-x64-gnu@1.31.1" => "lightningcss@1.31.1",
+      "sherpa-onnx-linux-x64@1.13.3" => "sherpa-onnx-node@1.12.28"
+    }
+    source_packages.each do |identity, source_package|
+      component = components.find { |entry| entry["package"] == identity }
+      errors << "openchamber: native review source package mismatch for #{identity}" unless component&.dig("mapping", "source_package") == source_package
+      errors << "openchamber: native review platform mapping must remain unresolved for #{identity}" unless component&.dig("decision", "source_mapping_verified") == false
+    end
+    esbuild = components.find { |component| component["package"] == "@esbuild/linux-x64@0.27.3" }
+    errors << "openchamber: native review accepts a version-different esbuild provider" unless esbuild&.dig("mapping", "available_system_provider") == "golang-github-evanw-esbuild-0.28.1" && esbuild&.dig("mapping", "system_provider_exact") == false
+
+    expected_scope = {
+      "component_identities" => sources.length,
+      "native_source_records" => sources.count { |source| Array(source["native_source_paths"]).any? },
+      "native_payload_records" => sources.count { |source| Array(source["native_payloads"]).any? },
+      "native_payloads" => sources.sum { |source| Array(source["native_payloads"]).length },
+      "wasm_source_records" => sources.count { |source| Array(source["wasm_payloads"]).any? },
+      "wasm_payloads" => sources.sum { |source| Array(source["wasm_payloads"]).length },
+      "executable_source_records" => sources.count { |source| Array(source["executable_payloads"]).any? },
+      "executable_payloads" => sources.sum { |source| Array(source["executable_payloads"]).length }
+    }
+    expected_scope.each { |key, value| errors << "openchamber: native review scope #{key} mismatch" unless review.dig("scope", key) == value }
+    expected_status = {
+      "component_identities_classified" => sources.length,
+      "target_excluded_sources" => 3,
+      "platform_companions" => 5,
+      "same_archive_rebuilds" => 2,
+      "generated_wasm_sources" => 3,
+      "build_support_sources" => 1,
+      "retained_prebuilt_payloads" => 0,
+      "source_mappings_verified" => components.count { |component| component.dig("decision", "source_mapping_verified") == true },
+      "source_mappings_unresolved" => components.count { |component| component.dig("decision", "source_mapping_verified") == false }
+    }
+    expected_status.each do |key, value|
+      errors << "openchamber: native review status #{key} mismatch" unless review.dig("status", key) == value && metadata[key] == value
+    end
+    %w[native_sources_verified wasm_sources_verified reproducible_builds_verified].each do |flag|
+      errors << "openchamber: native review overclaims #{flag}" unless review.dig("status", flag) == false && metadata[flag] == false
+    end
+    %w[exact_source_audit_coverage exact_path_set_digests_verified lifecycle_scripts_accounted_for platform_companion_mappings_recorded target_exclusions_recorded raw_source_audit_unchanged].each do |flag|
+      errors << "openchamber: native review validation #{flag} is not true" unless review.dig("validation", flag) == true
+    end
+
+    source_policy = package.data.fetch("source_policy")
+    errors << "openchamber: package native review path mismatch" unless source_policy["native_review"] == filename
+    errors << "openchamber: package native review SHA-256 mismatch" unless source_policy["native_review_sha256"] == actual_sha256
+    errors << "openchamber: package native component count mismatch" unless source_policy["native_components_classified"] == sources.length
+    errors << "openchamber: package unresolved native mapping count mismatch" unless source_policy["native_source_mappings_unresolved"] == expected_status["source_mappings_unresolved"]
+    errors
+  rescue JSON::ParserError, KeyError, TypeError => e
+    ["openchamber: invalid native review evidence: #{e.message}"]
+  end
+
   def validate_rust_v8_evidence(package, dependencies, spec)
     return [] unless package.name == "rust-v8"
 
