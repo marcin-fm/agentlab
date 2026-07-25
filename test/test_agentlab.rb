@@ -1365,7 +1365,9 @@ class AgentlabTest < Minitest::Test
       relink_kit.dig("kit", "payload_summary")["archive_count"] = 3
       relink_kit.dig("kit", "payload_summary")["response_file_input_count"] = relink_audit_metadata.fetch("direct_object_count") + 3
       relink_kit.fetch("validation")["system_lolhtml_provider_verified"] = true
+      relink_kit.fetch("validation")["html_rewriter_smoke_verified"] = true
       relink_kit.fetch("link_validation").merge!(
+        "html_rewriter_smoke_verified" => true,
         "system_lolhtml_provider_verified" => true,
         "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
       )
@@ -1379,6 +1381,15 @@ class AgentlabTest < Minitest::Test
       seed_stage["relink_kit"] = relink_kit_metadata
 
       assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
+      relink_kit.fetch("validation")["html_rewriter_smoke_verified"] = false
+      File.write(relink_kit_path, JSON.dump(relink_kit))
+      relink_kit_metadata["proof_receipt_sha256"] = Digest::SHA256.file(relink_kit_path).hexdigest
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: relink-kit proof validation is incomplete")
+      relink_kit.fetch("validation")["html_rewriter_smoke_verified"] = true
+      File.write(relink_kit_path, JSON.dump(relink_kit))
+      relink_kit_metadata["proof_receipt_sha256"] = Digest::SHA256.file(relink_kit_path).hexdigest
 
       receipt.dig("inputs", "npm_proof")["mode"] = "source_built"
       File.write(receipt_path, JSON.dump(receipt))

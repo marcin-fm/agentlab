@@ -411,6 +411,14 @@ def validate_relink_kit!(kit_root, version, retained_profile, seed, provider)
     smoke = capture!("unshare", "--net", "--", output, "-e", "console.log('agentlab-bun-relink-kit')", chdir: kit_root, environment: environment).strip
     raise "unexpected relinked Bun version #{built_version.inspect}" unless built_version == version
     raise "relinked Bun smoke failed" unless smoke == "agentlab-bun-relink-kit"
+    html_rewriter_smoke_verified = false
+    if provider
+      expected = "<div><span>agentlab</span></div>"
+      script = "const response = new HTMLRewriter().on('div', { element(element) { element.setInnerContent('<span>agentlab</span>', { html: true }); } }).transform(new Response('<div>input</div>')); console.log(await response.text());"
+      actual = capture!("unshare", "--net", "--", output, "-e", script, chdir: kit_root, environment: environment).strip
+      raise "relinked Bun HTMLRewriter smoke failed" unless actual == expected
+      html_rewriter_smoke_verified = true
+    end
 
     ldd = capture!("ldd", output, chdir: kit_root, environment: environment)
     missing_libraries = shared_libraries.reject { |library| ldd.include?(library) }
@@ -452,6 +460,7 @@ def validate_relink_kit!(kit_root, version, retained_profile, seed, provider)
       "revision" => revision,
       "version" => built_version,
       "smoke_verified" => true,
+      "html_rewriter_smoke_verified" => html_rewriter_smoke_verified,
       "fedora_shared_cxx_runtime_verified" => true,
       "system_lolhtml_provider_verified" => !provider.nil?,
       "shared_runtime_libraries" => shared_libraries,
@@ -908,6 +917,7 @@ if kit_output_dir
                end
   completeness = validation &&
                  validation.fetch("smoke_verified") &&
+                 (!build_proof || validation.fetch("html_rewriter_smoke_verified")) &&
                  validation.fetch("fedora_shared_cxx_runtime_verified") &&
                  (!build_proof || validation.fetch("system_lolhtml_provider_verified")) &&
                  validation.fetch("seed_payload_absent_verified") &&
@@ -950,6 +960,7 @@ if kit_output_dir
       "retained_profile_sha256_equal" => validation&.dig("output", "retained_profile_sha256_equal") || false,
       "retained_linker_map_sha256_equal" => validation&.dig("linker_map", "retained_linker_map_sha256_equal") || false,
       "smoke_verified" => validation&.fetch("smoke_verified", false) || false,
+      "html_rewriter_smoke_verified" => validation&.fetch("html_rewriter_smoke_verified", false) || false,
       "fedora_shared_cxx_runtime_verified" => validation&.fetch("fedora_shared_cxx_runtime_verified", false) || false,
       "system_lolhtml_provider_verified" => validation&.fetch("system_lolhtml_provider_verified", false) || false,
       "seed_payload_absent_verified" => validation&.fetch("seed_payload_absent_verified", false) || false,

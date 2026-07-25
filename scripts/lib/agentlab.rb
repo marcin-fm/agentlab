@@ -3460,7 +3460,7 @@ module Agentlab
               fedora_shared_cxx_runtime_verified seed_payload_absent_verified
               seed_runtime_dependency_absent_verified
             ]
-            validation_keys << "system_lolhtml_provider_verified" unless historical_relink
+            validation_keys.concat(%w[system_lolhtml_provider_verified html_rewriter_smoke_verified]) unless historical_relink
             errors << "bun: relink-kit proof validation is incomplete" unless validation_keys.all? { |key| receipt.dig("validation", key) == true }
 
             link = receipt["link_validation"]
@@ -3476,7 +3476,7 @@ module Agentlab
               link.dig("linker_map", "retained_linker_map_sha256_equal") == true
             expected_runtime_libraries = historical_relink ? %w[libgcc_s.so.1 libstdc++.so.6] : %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
             errors << "bun: relink-kit runtime proof is incomplete" unless link.is_a?(Hash) &&
-              link["smoke_verified"] == true && link["fedora_shared_cxx_runtime_verified"] == true &&
+              link["smoke_verified"] == true && (historical_relink || link["html_rewriter_smoke_verified"] == true) && link["fedora_shared_cxx_runtime_verified"] == true &&
               link["shared_runtime_libraries"] == expected_runtime_libraries &&
               (historical_relink || link["system_lolhtml_provider_verified"] == true) &&
               link["seed_payload_absent_verified"] == true && link["seed_runtime_dependency_absent_verified"] == true

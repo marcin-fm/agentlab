@@ -149,6 +149,10 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
   end
 
   def test_materializes_a_deterministic_wrapper_free_relink_kit
+    source = File.read(SCRIPT)
+    assert_includes(source, "relinked Bun HTMLRewriter smoke failed")
+    assert_includes(source, '"html_rewriter_smoke_verified" => html_rewriter_smoke_verified')
+
     Dir.mktmpdir("agentlab-bun-relink-", "/srv/tmp") do |temporary|
       root = File.join(temporary, "proof")
       inputs = build_fixture(root)
