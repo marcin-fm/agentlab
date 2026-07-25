@@ -1961,6 +1961,115 @@ module Agentlab
     ["bun: invalid npm-install proof receipt: #{e.message}"]
   end
 
+  def validate_bun_system_lolhtml(package, lolhtml, stages, version, spec)
+    return [] unless package.name == "bun"
+    return [] unless lolhtml.is_a?(Hash) && lolhtml["relationship"] == "fedora_system_provider"
+
+    errors = []
+    expected = {
+      "relationship" => "fedora_system_provider",
+      "release_pin" => "bun-v#{version}",
+      "repository" => "cloudflare/lol-html",
+      "package" => "lol-html",
+      "version" => "3.0.0",
+      "c_api_version" => "1.4.0",
+      "commit" => "02f139c4437b2da666a50d32e11d9158cbe0a393",
+      "source_sha256" => "41ed4231fd05b1c73c0664f1f05f18b0d96a34aabf488e6cb601c3bdc7306af9",
+      "header_sha256" => "7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293",
+      "pkgconfig" => "lol-html",
+      "soname" => "liblolhtml.so.1",
+      "build_requirement" => "pkgconfig(lol-html) >= 1.4.0",
+      "provider_matrix_verified" => true,
+      "static_library_shipped" => false,
+      "glibc_system_link" => true,
+      "non_glibc_bundled_path_preserved" => true,
+      "memory_settings_abi_updated" => true,
+      "take_last_error_prototype_updated" => true,
+      "graceful_bail_out_default" => false,
+      "patch_applies_zero_fuzz" => true
+    }
+    errors << "bun: system lol-html provider metadata mismatch" unless expected.all? { |key, value| lolhtml[key] == value }
+
+    historical = lolhtml["historical_bundled_source"]
+    expected_historical = {
+      "commit" => "77127cd2b8545998756e8d64e36ee2313c4bb312",
+      "source_archive" => "lolhtml-929339b1d898e66b.tar.gz",
+      "source_sha256" => "2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379",
+      "source_identity" => "712928b3736f4aad",
+      "manifest_sha256" => "feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03",
+      "lockfile_sha256" => "02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d",
+      "source_receipt" => "bun-1.3.14-release-local-source-closure.json"
+    }
+    errors << "bun: historical lol-html source metadata mismatch" unless historical.is_a?(Hash) && expected_historical.all? { |key, value| historical[key] == value }
+
+    patch_name = lolhtml["patch"]
+    patch_path = patch_name.is_a?(String) && File.join(package.directory, patch_name)
+    patch_sha256 = lolhtml["patch_sha256"]
+    valid_patch = patch_path && File.file?(patch_path) && patch_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+                  Digest::SHA256.file(patch_path).hexdigest == patch_sha256
+    errors << "bun: system lol-html patch is missing or has wrong SHA-256" unless valid_patch
+    if valid_patch
+      patch = File.read(patch_path)
+      required_patch_fragments = [
+        'return cfg.linux && cfg.abi !== "android" && cfg.abi !== "musl";',
+        'libs.push("-llolhtml")',
+        'versions.push(["LOLHTML", "3.0.0"])',
+        'graceful_bail_out_on_memory_limit_exceeded: bool',
+        '.graceful_bail_out_on_memory_limit_exceeded = false',
+        'pub extern fn lol_html_take_last_error() HTMLString;',
+        'process.platform === "linux" && familySync() !== "musl"'
+      ]
+      errors << "bun: system lol-html patch contract is incomplete" unless required_patch_fragments.all? { |fragment| patch.include?(fragment) }
+    end
+
+    provider = package_named("lol-html")
+    valid_provider = provider.enabled? && provider.upstream["current_version"] == "3.0.0" &&
+                     provider.data.dig("c_api", "crate_version") == "1.4.0" &&
+                     provider.data.dig("c_api", "soname") == "liblolhtml.so.1" &&
+                     provider.data.dig("c_api", "static_library_shipped") == false &&
+                     provider.data.dig("build_validation", "mock_matrix", "fedora_43_x86_64") == "passed" &&
+                     provider.data.dig("build_validation", "mock_matrix", "fedora_43_aarch64") == "passed" &&
+                     provider.data.dig("build_validation", "mock_matrix", "fedora_44_x86_64") == "passed" &&
+                     provider.data.dig("build_validation", "mock_matrix", "fedora_44_aarch64") == "passed" &&
+                     provider.data.dig("build_validation", "mock_matrix", "fedora_rawhide_x86_64") == "passed" &&
+                     provider.data.dig("build_validation", "mock_matrix", "fedora_rawhide_aarch64") == "passed"
+    errors << "bun: system lol-html provider package contract mismatch" unless valid_provider
+
+    source_license_inventory = package.data.dig("build_plan", "source_inputs", "source_license_inventory")
+    valid_license_boundary = source_license_inventory.is_a?(Hash) &&
+                             source_license_inventory["historical_lolhtml_graph_retained"] == true &&
+                             source_license_inventory["system_lolhtml_provider_included"] == false &&
+                             source_license_inventory["final_linked_closure_verified"] == false &&
+                             source_license_inventory["final_license_expression_verified"] == false
+    errors << "bun: system lol-html source-license boundary mismatch" unless valid_license_boundary
+
+    required_spec_fragments = [
+      "Release:        0.0.21%{?dist}",
+      "Patch2:         bun-system-lolhtml.patch",
+      "BuildRequires:  pkgconfig(lol-html) >= 1.4.0",
+      "tar --extract --gzip --file %{SOURCE13} --strip-components=1 --directory vendor/lolhtml",
+      "tar --extract --gzip --file %{SOURCE24} --directory vendor/lolhtml/c-api",
+      "pkg-config --exact-version=1.4.0 lol-html",
+      "grep -Fq 'pub extern fn lol_html_take_last_error() HTMLString;'"
+    ]
+    errors << "bun: spec does not integrate the system lol-html split" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
+    forbidden_spec_fragments = ["%cargo_build", "%cargo_vendor_manifest", "target/release/liblolhtml.a"]
+    errors << "bun: spec still builds the historical private lol-html library" if forbidden_spec_fragments.any? { |fragment| spec.include?(fragment) }
+
+    invalidated_stages = %w[dependency_closure source_delivery lolhtml_rpm_cargo dependency_staging seed_build self_rebuild]
+    valid_invalidation = stages.is_a?(Hash) && invalidated_stages.all? do |stage_name|
+      stage = stages[stage_name]
+      stage.is_a?(Hash) && stage["state"] == "blocked" && stage["historical_only"] == true &&
+        stage["invalidated_by"].is_a?(String) && !stage["invalidated_by"].empty?
+    end
+    errors << "bun: system lol-html split did not invalidate historical build stages" unless valid_invalidation
+    errors << "bun: system lol-html split incorrectly claims a regenerated source closure" unless package.data.dig("build_plan", "system_lolhtml_source_closure_regenerated") == false
+
+    errors
+  rescue KeyError => e
+    errors << "bun: invalid system lol-html provider metadata: #{e.message}"
+  end
+
   def validate_bun_source_delivery(package, stage, dependency_stage, version, spec)
     return [] unless package.name == "bun" && stage.is_a?(Hash) && stage["state"] == "verified"
 
@@ -2777,6 +2886,7 @@ module Agentlab
 
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
     errors.concat(validate_bun_npm_offline_install(package, stages["dependency_closure"], version))
+    errors.concat(validate_bun_system_lolhtml(package, lolhtml, stages, version, spec))
     errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
     errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
     errors.concat(validate_bun_dependency_staging(package, stages["dependency_staging"], stages["source_delivery"], stages["dependency_closure"], release_local_staging, version, spec))

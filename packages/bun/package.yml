@@ -2,7 +2,8 @@ name: bun
 status: blocked
 blockers:
   - Fedora Packaging Committee approval is required before the upstream Bun seed may drive the initial source build.
-  - The complete native, Node.js, npm-cache, and lol-html source staging is verified, but the three frozen npm installs and final build graph still require a source-built Bun driver.
+  - The external lol-html 3.0.0 package and Bun system-link patch require target Mock and final HTMLRewriter runtime proof.
+  - The retained dependency closure still contains Bun's historical lol-html 2.7.2 source and must be regenerated before a new SRPM proof.
   - The complete LGPL relink kit is not generated and shipped from the final RPM build.
   - Final bundled-license accounting, aarch64 build proof, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
@@ -16,6 +17,7 @@ upstream:
 build_plan:
   target_release: 1.3.14
   source_inputs_reconciled: true
+  system_lolhtml_source_closure_regenerated: false
   architectures:
     - x86_64
   source_inputs:
@@ -81,21 +83,36 @@ build_plan:
         source_build_proof_receipt_sha256: b127f3cb711b079cfe002aeb40b36dd9e40d2e585c916b3a65365a6f79fafa14
         source_build_verified: true
     lolhtml:
-      relationship: pinned_by_bun_release
+      relationship: fedora_system_provider
       release_pin: bun-v1.3.14
       repository: cloudflare/lol-html
-      commit: 77127cd2b8545998756e8d64e36ee2313c4bb312
-      source_archive: lolhtml-929339b1d898e66b.tar.gz
-      source_sha256: 2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379
-      source_identity: 712928b3736f4aad
-      manifest_sha256: feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03
-      lockfile_sha256: 02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d
-      source_receipt: bun-1.3.14-release-local-source-closure.json
-      patch: bun-lolhtml-fedora-stable-rust.patch
-      patch_sha256: 1d530ec7a177285f0e6e819359547b9360b86e930968c4dadc196cce10425055
-      upstream_size_optimization_commit: 7e57e529bf4fe8afdbfed245d6f20d9b18f61913
-      upstream_standalone_path_removal_commit: 86d32c8bb66d503ccbcc1d2e40d25b11679eeede
-      fedora_stable_rust_path: true
+      package: lol-html
+      version: 3.0.0
+      c_api_version: 1.4.0
+      commit: 02f139c4437b2da666a50d32e11d9158cbe0a393
+      source_sha256: 41ed4231fd05b1c73c0664f1f05f18b0d96a34aabf488e6cb601c3bdc7306af9
+      header_sha256: 7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293
+      pkgconfig: lol-html
+      soname: liblolhtml.so.1
+      build_requirement: pkgconfig(lol-html) >= 1.4.0
+      provider_matrix_verified: true
+      static_library_shipped: false
+      patch: bun-system-lolhtml.patch
+      patch_sha256: 840886d2caf3dd2a25146e329a9c876d4a2d3240ba610b9b0267d85eb325bdaf
+      patch_applies_zero_fuzz: true
+      glibc_system_link: true
+      non_glibc_bundled_path_preserved: true
+      memory_settings_abi_updated: true
+      take_last_error_prototype_updated: true
+      graceful_bail_out_default: false
+      historical_bundled_source:
+        commit: 77127cd2b8545998756e8d64e36ee2313c4bb312
+        source_archive: lolhtml-929339b1d898e66b.tar.gz
+        source_sha256: 2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379
+        source_identity: 712928b3736f4aad
+        manifest_sha256: feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03
+        lockfile_sha256: 02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d
+        source_receipt: bun-1.3.14-release-local-source-closure.json
     npm_lock:
       relationship: fedora_target_correction
       release_pin: bun-v1.3.14
@@ -123,7 +140,7 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: c647fadd798fa1f07d907a01d7e1547598538d56239b34bab9f3221933491eff
+      sha256: ea8fa634cb896eb1ba5376992e4f1001042d39836071d50ec9879b7fbd905bec
       audit_script: scripts/audit-bun-source-licenses
       audit_script_sha256: 2e1520b5f892f8e37da9a08f01284f3cad1e580f0c03efcbc4409381e0f70723
       audit_script_source: audit-bun-source-licenses
@@ -139,6 +156,8 @@ build_plan:
       native_components: 19
       picohttpparser_selected_license: MIT
       webkit_candidate_license_files: 35
+      historical_lolhtml_graph_retained: true
+      system_lolhtml_provider_included: false
       final_linked_closure_verified: false
       final_license_expression_verified: false
       required_license_texts_verified: false
@@ -191,6 +210,8 @@ build_plan:
       minimized_jsc_only_source_verified: true
     dependency_closure:
       state: blocked
+      historical_only: true
+      invalidated_by: Bun release 0.0.21 system lol-html integration
       npm_sources_verified: true
       npm_github_source_verified: true
       cargo_sources_verified: true
@@ -246,7 +267,9 @@ build_plan:
       npm_install_proof_receipt: npm-offline-install-proof.json
       npm_install_proof_receipt_sha256: 61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f
     source_delivery:
-      state: verified
+      state: blocked
+      historical_only: true
+      invalidated_by: Bun release 0.0.21 system lol-html integration
       proof_receipt: srpm-source-delivery-proof.json
       proof_receipt_sha256: b1900a5768aa0016c80dd0d5cc2e04df64f08d75d7e72c5efa1f2ec18dd47fd4
       direct_source_checksums_verified: true
@@ -258,7 +281,10 @@ build_plan:
       srpm_inventory_verified: true
       source_members_byte_identical_verified: true
     lolhtml_rpm_cargo:
-      state: verified
+      state: blocked
+      historical_only: true
+      replacement_provider: lol-html 3.0.0
+      invalidated_by: Bun release 0.0.21 system lol-html integration
       proof_receipt: lolhtml-rpm-cargo-proof.json
       proof_receipt_sha256: c7d08e312c359363a40ebe0fd24b91245f2fca369a60a1dc71d86e72c29ff164
       source_staging_verified: true
@@ -272,7 +298,9 @@ build_plan:
       linked_vendor_package_count: 41
       linked_vendor_manifest_sha256: 37dc9f2bef863d9b87e3e289ea9a783b6955bd961586be34ad0c37766522d187
     dependency_staging:
-      state: verified
+      state: blocked
+      historical_only: true
+      invalidated_by: Bun release 0.0.21 system lol-html integration
       proof_receipt: release-local-source-staging-proof.json
       proof_receipt_sha256: ef626b0ed4dfd1e67c6bcc125216da2954b7c94e77fd441f17f9103596a22121
       production_spec_integration_verified: true
@@ -294,7 +322,9 @@ build_plan:
       npm_install_run: false
       final_bun_build_run: false
     seed_build:
-      state: verified
+      state: blocked
+      historical_only: true
+      invalidated_by: Bun release 0.0.21 changes the final dependency graph
       bootstrap_seed_verified: true
       seed_isolated_verified: true
       source_build_verified: true
@@ -324,6 +354,8 @@ build_plan:
         complete_lgpl_relink_materials_verified: false
       relink_kit:
         state: verified
+        historical_only: true
+        invalidated_by: Bun release 0.0.21 changes the final dependency graph
         proof_receipt: relink-kit-proof.json
         proof_receipt_sha256: ffb31b4310a12212c2c8c3a0197fbd197819f083483caba536bd66de753987f0
         archive: bun-1.3.14-relink-kit.tar.zst
@@ -337,6 +369,8 @@ build_plan:
         complete_lgpl_relink_materials_verified: true
     self_rebuild:
       state: blocked
+      historical_only: true
+      invalidated_by: Bun release 0.0.21 changes the final dependency graph
       source_built_driver_verified: true
       offline_verified: true
       seed_payload_absent_verified: true

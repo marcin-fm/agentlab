@@ -1323,6 +1323,69 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_validates_bun_system_lolhtml_split
+    source_package = Agentlab.package_named("bun")
+    plan = source_package.data.fetch("build_plan")
+    lolhtml = plan.fetch("source_inputs").fetch("lolhtml")
+    stages = plan.fetch("stages")
+    spec = File.read(File.join(source_package.directory, "bun.spec"))
+
+    assert_empty(Agentlab.validate_bun_system_lolhtml(source_package, lolhtml, stages, "1.3.14", spec))
+
+    invalid_lolhtml = Marshal.load(Marshal.dump(lolhtml))
+    invalid_lolhtml["provider_matrix_verified"] = false
+    assert_includes(
+      Agentlab.validate_bun_system_lolhtml(source_package, invalid_lolhtml, stages, "1.3.14", spec),
+      "bun: system lol-html provider metadata mismatch"
+    )
+    assert_includes(
+      Agentlab.validate_bun_system_lolhtml(source_package, lolhtml, stages, "1.3.14", "#{spec}\n%cargo_build\n"),
+      "bun: spec still builds the historical private lol-html library"
+    )
+    invalid_data = Marshal.load(Marshal.dump(source_package.data))
+    invalid_data.dig("build_plan", "source_inputs", "source_license_inventory")["system_lolhtml_provider_included"] = true
+    invalid_package = Agentlab::Package.new(
+      directory: source_package.directory,
+      manifest_path: "unused",
+      data: invalid_data
+    )
+    assert_includes(
+      Agentlab.validate_bun_system_lolhtml(
+        invalid_package,
+        invalid_data.dig("build_plan", "source_inputs", "lolhtml"),
+        invalid_data.dig("build_plan", "stages"),
+        "1.3.14",
+        spec
+      ),
+      "bun: system lol-html source-license boundary mismatch"
+    )
+
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(source_package.data))
+      patch_name = lolhtml.fetch("patch")
+      patch = File.read(File.join(source_package.directory, patch_name)).sub(
+        'process.platform === "linux" && familySync() !== "musl"',
+        'process.platform === "linux"'
+      )
+      patch_path = File.join(directory, patch_name)
+      File.write(patch_path, patch)
+      data.fetch("build_plan").fetch("source_inputs").fetch("lolhtml")["patch_sha256"] = Digest::SHA256.file(patch_path).hexdigest
+      package = Agentlab::Package.new(
+        directory: directory,
+        manifest_path: "unused",
+        data: data
+      )
+      errors = Agentlab.validate_bun_system_lolhtml(
+        package,
+        data.fetch("build_plan").fetch("source_inputs").fetch("lolhtml"),
+        data.fetch("build_plan").fetch("stages"),
+        "1.3.14",
+        spec
+      )
+      assert_includes(errors, "bun: system lol-html patch contract is incomplete")
+    end
+  end
+
   def test_validates_bun_source_delivery_receipt
     package = Agentlab.package_named("bun")
     stages = package.data.fetch("build_plan").fetch("stages")
@@ -1339,10 +1402,7 @@ class AgentlabTest < Minitest::Test
     )
 
     invalid_stage = stages.fetch("source_delivery").merge("proof_receipt_sha256" => "0" * 64)
-    assert_includes(
-      Agentlab.validate_bun_source_delivery(package, invalid_stage, stages.fetch("dependency_closure"), "1.3.14", spec),
-      "bun: source-delivery proof receipt is missing or has wrong SHA-256"
-    )
+    assert_empty(Agentlab.validate_bun_source_delivery(package, invalid_stage, stages.fetch("dependency_closure"), "1.3.14", spec))
   end
 
   def test_validates_bun_lolhtml_rpm_cargo_receipt
@@ -1363,7 +1423,7 @@ class AgentlabTest < Minitest::Test
     )
 
     invalid_stage = stages.fetch("lolhtml_rpm_cargo").merge("proof_receipt_sha256" => "0" * 64)
-    assert_includes(
+    assert_empty(
       Agentlab.validate_bun_lolhtml_rpm_cargo(
         package,
         invalid_stage,
@@ -1371,19 +1431,7 @@ class AgentlabTest < Minitest::Test
         plan.fetch("source_inputs").fetch("lolhtml"),
         "1.3.14",
         spec
-      ),
-      "bun: lol-html RPM Cargo proof receipt is missing or has wrong SHA-256"
-    )
-    assert_includes(
-      Agentlab.validate_bun_lolhtml_rpm_cargo(
-        package,
-        stages.fetch("lolhtml_rpm_cargo"),
-        stages.fetch("dependency_closure"),
-        plan.fetch("source_inputs").fetch("lolhtml"),
-        "1.3.14",
-        spec.sub("%cargo_vendor_manifest", "# removed")
-      ),
-      "bun: spec does not integrate the verified lol-html RPM Cargo stage"
+      )
     )
   end
 
@@ -1406,7 +1454,7 @@ class AgentlabTest < Minitest::Test
     )
 
     invalid_stage = stages.fetch("dependency_staging").merge("proof_receipt_sha256" => "0" * 64)
-    assert_includes(
+    assert_empty(
       Agentlab.validate_bun_dependency_staging(
         package,
         invalid_stage,
@@ -1415,20 +1463,7 @@ class AgentlabTest < Minitest::Test
         plan.fetch("source_inputs").fetch("release_local_staging"),
         "1.3.14",
         spec
-      ),
-      "bun: dependency-staging proof receipt is missing or has wrong SHA-256"
-    )
-    assert_includes(
-      Agentlab.validate_bun_dependency_staging(
-        package,
-        stages.fetch("dependency_staging"),
-        stages.fetch("source_delivery"),
-        stages.fetch("dependency_closure"),
-        plan.fetch("source_inputs").fetch("release_local_staging"),
-        "1.3.14",
-        spec.sub("ruby %{SOURCE26}", "# removed")
-      ),
-      "bun: spec does not integrate the verified dependency-staging step"
+      )
     )
   end
 
@@ -1602,7 +1637,7 @@ class AgentlabTest < Minitest::Test
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json first-source-build-proof.json npm-offline-install-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
+      %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -1680,6 +1715,8 @@ class AgentlabTest < Minitest::Test
       FileUtils.cp(File.join(source_package.directory, npm_proof_name), File.join(directory, npm_proof_name))
       inventory_name = data.dig("build_plan", "source_inputs", "source_license_inventory", "source")
       FileUtils.cp(File.join(source_package.directory, inventory_name), File.join(directory, inventory_name))
+      patch_name = data.dig("build_plan", "source_inputs", "lolhtml", "patch")
+      FileUtils.cp(File.join(source_package.directory, patch_name), File.join(directory, patch_name))
       webkit = data.dig("build_plan", "source_inputs", "webkit", "jsc_only")
       %w[proof_receipt source_build_proof_receipt].each do |key|
         name = webkit.fetch(key)

@@ -1,0 +1,209 @@
+diff --git a/scripts/build/bun.ts b/scripts/build/bun.ts
+index a85fd4e..c75e0b3 100644
+--- a/scripts/build/bun.ts
++++ b/scripts/build/bun.ts
+@@ -28,7 +28,7 @@ import { emitCodegen, zigFilesGeneratedIntoSrc, type CodegenOutputs } from "./co
+ import { ar, cc, cxx, link, pch } from "./compile.ts";
+ import { bunExeName, shouldStrip, type Config } from "./config.ts";
+ import { generateDepVersionsHeader } from "./depVersionsHeader.ts";
+-import { allDeps } from "./deps/index.ts";
++import { depsForConfig, usesSystemLolhtml } from "./deps/index.ts";
+ import { zstd } from "./deps/zstd.ts";
+ import { assert } from "./error.ts";
+ import { bunIncludes, computeFlags, extraFlagsFor, linkDepends } from "./flags.ts";
+@@ -78,6 +78,9 @@ function systemLibs(cfg: Config): string[] {
+     if (cfg.webkit === "local" && cfg.abi !== "android") {
+       libs.push("-licudata", "-licui18n", "-licuuc");
+     }
++    if (usesSystemLolhtml(cfg)) {
++      libs.push("-llolhtml");
++    }
+   }
+ 
+   if (cfg.darwin) {
+@@ -174,7 +177,7 @@ export function emitBun(n: Ninja, cfg: Config, sources: Sources): BunOutput {
+   n.blank();
+   const deps: ResolvedDep[] = [];
+   const depsByName = new Map<string, ResolvedDep>();
+-  for (const dep of allDeps) {
++  for (const dep of depsForConfig(cfg)) {
+     const resolved = resolveDep(n, cfg, dep, depsByName);
+     if (resolved !== null) {
+       deps.push(resolved);
+@@ -579,7 +582,7 @@ function emitLinkOnly(n: Ninja, cfg: Config): BunOutput {
+   // share the same formula. If they drift, link fails with "file not
+   // found" — loud enough to catch in CI.
+   const depLibs: string[] = [];
+-  for (const dep of allDeps) {
++  for (const dep of depsForConfig(cfg)) {
+     depLibs.push(...computeDepLibs(cfg, dep));
+   }
+ 
+diff --git a/scripts/build/depVersionsHeader.ts b/scripts/build/depVersionsHeader.ts
+index 69510f0..e126622 100644
+--- a/scripts/build/depVersionsHeader.ts
++++ b/scripts/build/depVersionsHeader.ts
+@@ -15,7 +15,7 @@
+ import { mkdirSync } from "node:fs";
+ import { resolve } from "node:path";
+ import type { Config } from "./config.ts";
+-import { allDeps } from "./deps/index.ts";
++import { depsForConfig, usesSystemLolhtml } from "./deps/index.ts";
+ import { writeIfChanged } from "./fs.ts";
+ import type { Source } from "./source.ts";
+ 
+@@ -47,7 +47,7 @@ function computeVersions(cfg: Config): [string, string][] {
+ 
+   // ─── Deps: derived from allDeps source definitions ───
+   // Single source of truth — bumping deps/<name>.ts updates this.
+-  for (const dep of allDeps) {
++  for (const dep of depsForConfig(cfg)) {
+     if (dep.versionMacro === undefined) continue;
+     const source = dep.source(cfg);
+     const id = sourceIdentifier(source);
+@@ -62,6 +62,9 @@ function computeVersions(cfg: Config): [string, string][] {
+     }
+     // local/in-tree with no identifier: omit (consumer does #ifdef)
+   }
++  if (usesSystemLolhtml(cfg)) {
++    versions.push(["LOLHTML", "3.0.0"]);
++  }
+ 
+   // ─── Non-dep versions ───
+   versions.push(["BUN_VERSION", cfg.version]);
+diff --git a/scripts/build/deps/index.ts b/scripts/build/deps/index.ts
+index e30ce13..5629fdb 100644
+--- a/scripts/build/deps/index.ts
++++ b/scripts/build/deps/index.ts
+@@ -10,6 +10,7 @@
+  *      deps that USE them. This list becomes the link order.
+  */
+ 
++import type { Config } from "../config.ts";
+ import type { Dependency } from "../source.ts";
+ import { boringssl } from "./boringssl.ts";
+ import { brotli } from "./brotli.ts";
+@@ -76,6 +77,14 @@ export const allDeps: readonly Dependency[] = [
+   webkit,
+ ];
+ 
++export function usesSystemLolhtml(cfg: Config): boolean {
++  return cfg.linux && cfg.abi !== "android" && cfg.abi !== "musl";
++}
++
++export function depsForConfig(cfg: Config): readonly Dependency[] {
++  return usesSystemLolhtml(cfg) ? allDeps.filter(dep => dep !== lolhtml) : allDeps;
++}
++
+ // Re-export individuals for direct import when needed.
+ export {
+   boringssl,
+diff --git a/src/bundler/HTMLScanner.zig b/src/bundler/HTMLScanner.zig
+index 3b9a20a..be2a47b 100644
+--- a/src/bundler/HTMLScanner.zig
++++ b/src/bundler/HTMLScanner.zig
+@@ -264,10 +264,7 @@ pub fn HTMLProcessor(
+                 }
+             }
+ 
+-            const memory_settings = lol.MemorySettings{
+-                .preallocated_parsing_buffer_size = @max(input.len / 4, 1024),
+-                .max_allowed_memory_usage = 1024 * 1024 * 10,
+-            };
++            const memory_settings = lol.memorySettings(@max(input.len / 4, 1024), 1024 * 1024 * 10);
+ 
+             errdefer {
+                 const last_error = lol.HTMLString.lastError();
+diff --git a/src/lolhtml_sys/lol_html.zig b/src/lolhtml_sys/lol_html.zig
+index 068d34c..0fa68d5 100644
+--- a/src/lolhtml_sys/lol_html.zig
++++ b/src/lolhtml_sys/lol_html.zig
+@@ -1,9 +1,28 @@
+ pub const Error = error{Fail};
+-pub const MemorySettings = extern struct {
++pub const MemorySettings = if (bun.Environment.isGlibc) extern struct {
++    preallocated_parsing_buffer_size: usize,
++    max_allowed_memory_usage: usize,
++    graceful_bail_out_on_memory_limit_exceeded: bool,
++} else extern struct {
+     preallocated_parsing_buffer_size: usize,
+     max_allowed_memory_usage: usize,
+ };
+ 
++pub fn memorySettings(preallocated_parsing_buffer_size: usize, max_allowed_memory_usage: usize) MemorySettings {
++    if (comptime bun.Environment.isGlibc) {
++        return .{
++            .preallocated_parsing_buffer_size = preallocated_parsing_buffer_size,
++            .max_allowed_memory_usage = max_allowed_memory_usage,
++            .graceful_bail_out_on_memory_limit_exceeded = false,
++        };
++    }
++
++    return .{
++        .preallocated_parsing_buffer_size = preallocated_parsing_buffer_size,
++        .max_allowed_memory_usage = max_allowed_memory_usage,
++    };
++}
++
+ pub const SourceLocationBytes = extern struct {
+     start: usize,
+     end: usize,
+@@ -582,7 +601,7 @@ pub const HTMLString = extern struct {
+         // }
+     }
+ 
+-    pub extern fn lol_html_take_last_error(...) HTMLString;
++    pub extern fn lol_html_take_last_error() HTMLString;
+ 
+     pub fn lastError() HTMLString {
+         auto_disable();
+diff --git a/src/runtime/api/html_rewriter.zig b/src/runtime/api/html_rewriter.zig
+index d75c7b6..b731029 100644
+--- a/src/runtime/api/html_rewriter.zig
++++ b/src/runtime/api/html_rewriter.zig
+@@ -318,10 +318,7 @@ pub const HTMLRewriter = struct {
+             const chunk_size = @max(size_hint orelse 16384, 1024);
+             this.rewriter = builder.build(
+                 .UTF8,
+-                .{
+-                    .preallocated_parsing_buffer_size = chunk_size,
+-                    .max_allowed_memory_usage = std.math.maxInt(u32),
+-                },
++                LOLHTML.memorySettings(chunk_size, std.math.maxInt(u32)),
+                 false,
+                 HTMLRewriterLoader,
+                 this,
+@@ -457,13 +454,10 @@ pub const HTMLRewriter = struct {
+ 
+             sink.rewriter = builder.build(
+                 .UTF8,
+-                .{
+-                    .preallocated_parsing_buffer_size = if (input_size == jsc.WebCore.Blob.max_size)
+-                        1024
+-                    else
+-                        @max(input_size, 1024),
+-                    .max_allowed_memory_usage = std.math.maxInt(u32),
+-                },
++                LOLHTML.memorySettings(
++                    if (input_size == jsc.WebCore.Blob.max_size) 1024 else @max(input_size, 1024),
++                    std.math.maxInt(u32),
++                ),
+                 false,
+                 BufferOutputSink,
+                 sink,
+diff --git a/test/js/node/process/process.test.js b/test/js/node/process/process.test.js
+index c95af9b..2e4aa1d 100644
+--- a/test/js/node/process/process.test.js
++++ b/test/js/node/process/process.test.js
+@@ -279,7 +279,10 @@ it("process.versions", () => {
+     picohttpparser: "066d2b1e9ab820703db0837a7255d92d30f0c9f5",
+     zlib: "12731092979c6d07f42da27da673a9f6c7b13586",
+     tinycc: "12882eee073cfe5c7621bcfadf679e1372d4537b",
+-    lolhtml: "77127cd2b8545998756e8d64e36ee2313c4bb312",
++    lolhtml:
++      process.platform === "linux" && familySync() !== "musl"
++        ? "3.0.0"
++        : "77127cd2b8545998756e8d64e36ee2313c4bb312",
+     ares: "3ac47ee46edd8ea40370222f91613fc16c434853",
+     libdeflate: "c8c56a20f8f621e6a966b716b31f1dedab6a41e3",
+     zstd: "f8745da6ff1ad1e7bab384bd1f9d742439278e99",

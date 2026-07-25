@@ -36,7 +36,7 @@
 %global lolhtml_source_identity 712928b3736f4aad
 %global release_local_closure_sha256 ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
 %global source_staging_helper_sha256 73f25a3a5e3640d749a69fa530d8fb0d2fcad93e1c8aa01460b829616a63aaaf
-%global source_license_inventory_sha256 c647fadd798fa1f07d907a01d7e1547598538d56239b34bab9f3221933491eff
+%global source_license_inventory_sha256 ea8fa634cb896eb1ba5376992e4f1001042d39836071d50ec9879b7fbd905bec
 %global source_license_audit_script_sha256 2e1520b5f892f8e37da9a08f01284f3cad1e580f0c03efcbc4409381e0f70723
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
@@ -46,7 +46,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.20%{?dist}
+Release:        0.0.21%{?dist}
 Summary:        JavaScript runtime, bundler, test runner, and package manager
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -96,9 +96,10 @@ Patch0:         zig-fedora-lib64.patch
 # Arch Linux fix for JSC typed-array conversion UB tracked in Bun issue 28607.
 # Provenance: archlinux/packaging/packages/bun commit e6f882caed2016f0aadfe1d2af821c42b74d5840.
 Patch1:         bun-webkit-typed-array-int32-conversion.patch
-# Fedora native Linux uses stable Rust for lol-html and keeps the existing panic=abort path.
-# Upstream later removed this standalone C API build in commit 86d32c8bb66d503ccbcc1d2e40d25b11679eeede.
-Patch2:         bun-lolhtml-fedora-stable-rust.patch
+# Use Fedora's lol-html 3.0.0 shared C API on glibc Linux and update Bun's
+# handwritten Zig binding for the new by-value memory-settings field.
+# Fedora-specific system-library integration; not submitted upstream.
+Patch2:         bun-system-lolhtml.patch
 # Bun 1.3.14 does not parse libc selectors from its text lockfile. Disable the
 # incompatible musl Lightning CSS prebuilt package with a supported OS value.
 Patch3:         bun-lightningcss-fedora-glibc-lock.patch
@@ -141,6 +142,7 @@ BuildRequires:  perl-JSON-PP
 BuildRequires:  perl-bignum
 BuildRequires:  perl-interpreter
 BuildRequires:  pkgconfig
+BuildRequires:  pkgconfig(lol-html) >= 1.4.0
 BuildRequires:  python3
 BuildRequires:  ruby
 BuildRequires:  ruby-bundled-gems
@@ -154,12 +156,12 @@ Bun-pinned Zig fork without an external Zig executable, verifies and patches
 the checked minimized WebKit/JSC source, builds its static libraries with LLVM 21,
 and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
 three frozen npm installs are proven separately with networking unavailable.
-The RPM draft carries the complete checked dependency-source closure and a
-provisional source-license inventory, stages
-the native dependency trees, Node.js headers, npm install cache, and vendored
-lol-html Cargo graph at Bun's production paths, and verifies the Cargo static
-library through Fedora macros. The source-built npm installs, final Bun build
-graph, and relink payload integration remain blocked.
+The RPM draft carries the previously checked dependency-source closure and a
+provisional source-license inventory. Fedora glibc builds now omit Bun's private
+lol-html archive, link the system lol-html 3.0.0 C API, and use the updated
+memory-settings ABI. The old vendored source remains staged only for historical
+license evidence until the source closure is regenerated. The source-built npm
+installs, final Bun build graph, and relink payload integration remain blocked.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -213,6 +215,8 @@ echo "%{lolhtml_manifest_sha256}  vendor/lolhtml/c-api/Cargo.toml" | sha256sum -
 echo "%{lolhtml_lockfile_sha256}  vendor/lolhtml/c-api/Cargo.lock" | sha256sum -c -
 printf '%s\n' '%{lolhtml_source_identity}' > vendor/lolhtml/.ref
 
+# Retain the old Cargo tree only so Source27 remains reproducible while the
+# system-library split is validated. The active build no longer compiles it.
 tar --extract --gzip --file %{SOURCE24} --directory vendor/lolhtml/c-api
 pushd vendor/lolhtml/c-api >/dev/null
 %cargo_prep -v cargo-vendor
@@ -240,7 +244,7 @@ ruby %{SOURCE28} \
   --closure "%{SOURCE25}" \
   --cargo-linked-count 41 \
   --cargo-linked-manifest-sha256 "%{cargo_vendor_manifest_sha256}" \
-  --rpm-release 0.0.20 \
+  --rpm-release 0.0.21 \
   --date 2026-07-19 \
   --check \
   --receipt "%{SOURCE27}"
@@ -250,21 +254,6 @@ export HOME="$PWD/.build-home"
 export XDG_CACHE_HOME="$PWD/.build-cache"
 export GIT_SHA=%{bun_commit}
 mkdir -p "$HOME" "$XDG_CACHE_HOME"
-
-# This standalone check proves the staged vendored graph with Fedora's Cargo
-# profile. Bun's final build later rebuilds the same C API with its own
-# reviewed release flags into build/release/deps/lolhtml.
-pushd vendor/lolhtml/c-api >/dev/null
-%cargo_build
-%cargo_vendor_manifest
-ruby -e 'path = ARGV.fetch(0); text = File.read(path); changed = text.sub!(/^lol_html v2\.7\.2 \([^\n]+\)$/, "lol_html v2.7.2"); abort "missing local lol_html vendor record" unless changed; File.write(path, text)' cargo-vendor.txt
-echo "%{lolhtml_lockfile_sha256}  Cargo.lock" | sha256sum -c -
-echo "%{cargo_vendor_manifest_sha256}  cargo-vendor.txt" | sha256sum -c -
-test "$(wc -l < cargo-vendor.txt)" -eq 41
-test -s target/release/liblolhtml.a
-nm -g --defined-only target/release/liblolhtml.a | grep 'lol_html_' | LC_ALL=C sort -u > lolhtml-exported-symbols.txt
-test "$(wc -l < lolhtml-exported-symbols.txt)" -eq 97
-popd >/dev/null
 
 cmake -S .build-tools/zig -B .build-tools/zig-build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
@@ -337,10 +326,18 @@ EOF
 
 .build-tools/bun-zig/zig run .build-tools/zig-proof.zig
 
-grep -Fq 'const canBuildStdImmediateAbort = cfg.darwin || cfg.freebsd;' \
-  scripts/build/deps/lolhtml.ts
-grep -Fq '"-Cpanic=abort"' scripts/build/deps/lolhtml.ts
-! grep -Fq 'cfg.linux && cfg.release' scripts/build/deps/lolhtml.ts
+pkg-config --exact-version=1.4.0 lol-html
+grep -Fq 'export function usesSystemLolhtml' scripts/build/deps/index.ts
+grep -Fq 'return cfg.linux && cfg.abi !== "android" && cfg.abi !== "musl";' \
+  scripts/build/deps/index.ts
+grep -Fq 'libs.push("-llolhtml")' scripts/build/bun.ts
+grep -Fq 'versions.push(["LOLHTML", "3.0.0"])' scripts/build/depVersionsHeader.ts
+grep -Fq 'graceful_bail_out_on_memory_limit_exceeded: bool' src/lolhtml_sys/lol_html.zig
+grep -Fq 'pub extern fn lol_html_take_last_error() HTMLString;' src/lolhtml_sys/lol_html.zig
+test "$(grep -R -F 'LOLHTML.memorySettings(' src/runtime/api/html_rewriter.zig | wc -l)" -eq 2
+grep -Fq 'lol.memorySettings(' src/bundler/HTMLScanner.zig
+grep -Fq 'process.platform === "linux" && familySync() !== "musl"' \
+  test/js/node/process/process.test.js
 
 grep -Fq 'const cwd = `--cwd=${q(cfg.cwd)}`;' scripts/build/zig.ts
 test "$(grep -Fc '${stream} ${cwd}' scripts/build/zig.ts)" = 2
@@ -382,6 +379,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.21
+- Link Fedora's shared lol-html 3.0.0 C API and update the handwritten ABI.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.20
 - Inventory the Cargo, npm, native, and WebKit source-license evidence.
 
