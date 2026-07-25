@@ -554,6 +554,22 @@ def scan_seed_contamination!(roots, seed_path, seed_sha256, seed_size, workdir)
   }
 end
 
+def verify_system_lolhtml_patch!(source_dir)
+  patched_deps = File.read(File.join(source_dir, "scripts", "build", "deps", "index.ts"))
+  patched_bun = File.read(File.join(source_dir, "scripts", "build", "bun.ts"))
+  patched_versions = File.read(File.join(source_dir, "scripts", "build", "depVersionsHeader.ts"))
+  patched_binding = File.read(File.join(source_dir, "src", "lolhtml_sys", "lol_html.zig"))
+  return if patched_deps.include?("return cfg.linux && cfg.abi !== \"android\" && cfg.abi !== \"musl\";") &&
+            patched_deps.include?("return usesSystemLolhtml(cfg) ? allDeps.filter(dep => dep !== lolhtml) : allDeps;") &&
+            patched_bun.include?('libs.push("-llolhtml");') &&
+            patched_versions.include?('versions.push(["LOLHTML", "3.0.0"]);') &&
+            patched_binding.include?("graceful_bail_out_on_memory_limit_exceeded: bool") &&
+            patched_binding.include?(".graceful_bail_out_on_memory_limit_exceeded = false") &&
+            patched_binding.include?("pub extern fn lol_html_take_last_error() HTMLString;")
+
+  raise Agentlab::Error, "Fedora system lol-html patch is not active"
+end
+
 metadata = package.data.fetch("build_plan")
 source_inputs = metadata.fetch("source_inputs")
 seed_metadata = source_inputs.fetch("bootstrap_seed")
@@ -768,19 +784,7 @@ unless resume
     run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", patch], chdir: source_dir)
   end
   verify_file!(File.join(source_dir, "bun.lock"), source_inputs.fetch("npm_lock").fetch("patched_lock_sha256"), "patched Bun root lock")
-  patched_deps = File.read(File.join(source_dir, "scripts", "build", "deps", "index.ts"))
-  patched_bun = File.read(File.join(source_dir, "scripts", "build", "bun.ts"))
-  patched_versions = File.read(File.join(source_dir, "scripts", "build", "depVersionsHeader.ts"))
-  patched_binding = File.read(File.join(source_dir, "src", "lolhtml_sys", "lol_html.zig"))
-  unless patched_deps.include?("return cfg.linux && cfg.abi !== \"android\" && cfg.abi !== \"musl\";") &&
-         patched_deps.include?("return usesSystemLolhtml(cfg) ? allDeps.filter(dep => dep !== lolhtml) : allDeps;") &&
-         patched_bun.include?('libs.push("-llolhtml");') &&
-         patched_versions.include?('versions.push(["LOLHTML", "3.0.0"]);') &&
-         patched_binding.include?("graceful_bail_out_on_memory_limit_exceeded: bool") &&
-         patched_binding.include?(".graceful_bail_out_on_memory_limit_exceeded = false") &&
-         patched_binding.include?("pub extern fn lol_html_take_last_error() HTMLString;")
-    raise Agentlab::Error, "Fedora system lol-html patch is not active"
-  end
+  verify_system_lolhtml_patch!(source_dir)
 
   prepare_webkit.call
 
@@ -883,10 +887,10 @@ end
 raise Agentlab::Error, "resume tree lacks prepared Bun source" unless File.file?(File.join(source_dir, "scripts", "build.ts"))
 {
   "package.json" => closure.dig("source_tree", "package_json_sha256"),
-  "scripts/build/deps/index.ts" => closure.dig("source_tree", "dependency_index_sha256"),
   "scripts/build/codegen.ts" => closure.dig("source_tree", "codegen_definition_sha256")
 }.each { |relative, expected| verify_file!(File.join(source_dir, relative), expected, "prepared Bun source file #{relative}") }
 verify_file!(File.join(source_dir, "bun.lock"), source_inputs.fetch("npm_lock").fetch("patched_lock_sha256"), "prepared patched Bun root lock")
+verify_system_lolhtml_patch!(source_dir)
 zig_build_source = File.join(source_dir, "scripts", "build", "zig.ts")
 unless File.read(zig_build_source).include?('const cwd = `--cwd=${q(cfg.cwd)}`;')
   raise Agentlab::Error, "fresh proof tree lacks the Bun Zig source-cwd patch" unless resume

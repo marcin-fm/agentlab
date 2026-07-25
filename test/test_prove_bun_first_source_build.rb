@@ -29,6 +29,8 @@ class ProveBunFirstSourceBuildTest < Minitest::Test
     assert_includes(source, "generated graph does not link Fedora's lol-html provider")
     assert_includes(source, '"system_lolhtml_provider_verified" => true')
     assert_includes(source, '"cargo_source_archives" => 0')
+    assert_includes(source, "def verify_system_lolhtml_patch!(source_dir)")
+    assert_equal(1, source.scan(/"scripts\/build\/deps\/index\.ts"\s*=>\s*closure\.dig/).length)
 
     refute_includes(source, "--cargo-vendor")
     refute_includes(source, "cargo_receipt_path")
