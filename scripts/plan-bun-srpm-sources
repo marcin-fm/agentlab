@@ -58,7 +58,7 @@ unless File.file?(receipt_path) && expected_receipt_sha256.to_s.match?(SHA256) &
 end
 
 receipt = JSON.parse(File.read(receipt_path))
-raise Agentlab::Error, "unsupported Bun dependency-closure schema" unless receipt["schema"] == "bun-release-local-source-closure/v2"
+raise Agentlab::Error, "unsupported Bun dependency-closure schema" unless receipt["schema"] == "bun-release-local-source-closure/v3"
 raise Agentlab::Error, "Bun dependency-closure package mismatch" unless receipt["package"] == "bun"
 raise Agentlab::Error, "Bun dependency-closure release mismatch" unless receipt["release"].to_s == version
 unless receipt.dig("source_tree", "source_sha256") == package.upstream.fetch("source_sha256")
@@ -68,18 +68,18 @@ end
 native_sources = Array(receipt["native_github_sources"])
 node_source = receipt["node_headers"]
 npm_sources = Array(receipt.dig("npm", "source_archives"))
-cargo_sources = Array(receipt.dig("cargo", "crate_sources"))
+raise Agentlab::Error, "Bun system-provider closure contains a private Cargo graph" if receipt.key?("cargo")
 expected_counts = {
   "native" => dependency_stage.fetch("selected_github_archives"),
   "node" => dependency_stage.fetch("selected_node_header_archives"),
   "npm" => dependency_stage.fetch("unique_npm_source_archives"),
-  "cargo" => dependency_stage.fetch("selected_lolhtml_cargo_crates")
+  "cargo" => dependency_stage.fetch("selected_cargo_source_archives")
 }
 actual_counts = {
   "native" => native_sources.length,
   "node" => node_source.is_a?(Hash) ? 1 : 0,
   "npm" => npm_sources.length,
-  "cargo" => cargo_sources.length
+  "cargo" => 0
 }
 raise Agentlab::Error, "Bun dependency-closure source counts do not match package metadata" unless actual_counts == expected_counts
 
@@ -106,15 +106,7 @@ npm_members = npm_sources.map do |source|
     "integrity" => source["integrity"]
   )
 end.sort_by { |record| [record.fetch("npm_name"), record["source_version"].to_s, record.fetch("archive")] }
-cargo_members = cargo_sources.map do |source|
-  source_member(source, label: "Cargo source #{source['name']} #{source['version']}", url_key: "source_url").merge(
-    "name" => source.fetch("name"),
-    "version" => source.fetch("version"),
-    "checksum" => source.fetch("checksum")
-  )
-end.sort_by { |record| [record.fetch("name"), record.fetch("version")] }
-
-[native_members, node_members, npm_members, cargo_members].each do |members|
+[native_members, node_members, npm_members].each do |members|
   archives = members.map { |record| record.fetch("archive") }
   raise Agentlab::Error, "Bun source plan contains duplicate archive filenames" unless archives.uniq.length == archives.length
 end
@@ -221,37 +213,6 @@ generated_sources << {
   "closure_receipt_sha256" => expected_receipt_sha256
 }.merge(manifest_summary(npm_members))
 
-if dependency_stage["cargo_vendor_archive_hosted"] == true
-  cargo_vendor_url = dependency_stage.fetch("cargo_vendor_archive_url")
-  closure_cargo_vendor = receipt.dig("cargo", "vendor_archive")
-  verified_cargo_vendor = receipt.dig("validation", "immutable_public_hosting_verified") == true &&
-                          closure_cargo_vendor.is_a?(Hash) &&
-                          closure_cargo_vendor["immutable_public_url"] == cargo_vendor_url &&
-                          closure_cargo_vendor["sha256"] == dependency_stage["cargo_vendor_archive_sha256"] &&
-                          closure_cargo_vendor["size_bytes"] == dependency_stage["cargo_vendor_archive_bytes"]
-  unless verified_cargo_vendor
-    raise Agentlab::Error, "hosted Cargo vendor metadata is not verified by the dependency closure"
-  end
-  direct_sources << {
-    "role" => "lolhtml-cargo-vendor",
-    "filename" => dependency_stage.fetch("cargo_vendor_archive_filename"),
-    "url" => https_url!(cargo_vendor_url, "Cargo vendor archive URL"),
-    "sha256" => dependency_stage.fetch("cargo_vendor_archive_sha256"),
-    "size_bytes" => dependency_stage.fetch("cargo_vendor_archive_bytes")
-  }
-else
-  generated_sources << {
-    "role" => "lolhtml-cargo-vendor",
-    "filename" => dependency_stage.fetch("cargo_vendor_archive_filename"),
-    "recipe" => "lolhtml-cargo-vendor/v1",
-    "vendor_manifest" => dependency_stage.fetch("cargo_vendor_manifest"),
-    "vendor_manifest_sha256" => dependency_stage.fetch("cargo_vendor_manifest_sha256"),
-    "expected_sha256" => dependency_stage.fetch("cargo_vendor_archive_sha256"),
-    "expected_size_bytes" => dependency_stage.fetch("cargo_vendor_archive_bytes"),
-    "closure_receipt_sha256" => expected_receipt_sha256
-  }.merge(manifest_summary(cargo_members))
-end
-
 plan = {
   "schema" => "bun-srpm-source-plan/v1",
   "package" => "bun",
@@ -270,7 +231,7 @@ plan = {
     "source_layout" => {
       "native_node" => "direct-upstream-source-tags",
       "npm" => "generated-original-archive-bundle",
-      "cargo" => "generated-cargo-vendor-archive",
+      "lolhtml" => "fedora-system-provider",
       "relink" => "generated-build-output-payload"
     },
     "architecture_independent_outputs_required" => true,
@@ -280,8 +241,7 @@ plan = {
   },
   "input_summary" => actual_counts.merge(
     "native_node_manifest" => manifest_summary(native_members + node_members),
-    "npm_manifest" => manifest_summary(npm_members),
-    "cargo_manifest" => manifest_summary(cargo_members)
+    "npm_manifest" => manifest_summary(npm_members)
   ),
   "direct_sources" => direct_sources.sort_by { |source| [source.fetch("role"), source.fetch("source_id", "")] },
   "generated_sources" => generated_sources.sort_by { |source| source.fetch("role") },

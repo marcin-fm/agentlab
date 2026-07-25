@@ -355,7 +355,7 @@ closure_bytes = File.binread(closure_path)
 expected_closure_sha = metadata.fetch("stages").fetch("dependency_closure").fetch("proof_receipt_sha256")
 raise Agentlab::Error, "source-closure receipt checksum mismatch" unless Digest::SHA256.hexdigest(closure_bytes) == expected_closure_sha
 closure = JSON.parse(closure_bytes)
-raise Agentlab::Error, "unsupported source-closure schema" unless closure["schema"] == "bun-release-local-source-closure/v2"
+raise Agentlab::Error, "unsupported source-closure schema" unless closure["schema"] == "bun-release-local-source-closure/v3"
 raise Agentlab::Error, "source closure is not Bun #{version}" unless closure["package"] == "bun" && closure["release"] == version
 raise Agentlab::Error, "source closure target changed" unless closure["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
 

@@ -1,55 +1,51 @@
 {
-  "schema": "bun-srpm-source-delivery/v1",
+  "schema": "bun-srpm-source-delivery/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.20",
+  "rpm_release": "0.0.22",
   "proof_platform": "fedora-44-x86_64",
-  "proof_date": "2026-07-19",
+  "proof_date": "2026-07-25",
   "source_generation": {
     "method": "copr-git-scm-make_srpm",
     "network_scope": "srpm-generation-only",
-    "direct_sources": 23,
-    "generated_sources": 2,
+    "direct_sources": 22,
+    "generated_sources": 1,
     "packaging_sources": 4,
-    "declared_sources": 29,
+    "declared_sources": 27,
     "patches": 6,
-    "canonical_closure_inputs": 299,
-    "canonical_closure_sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0",
+    "canonical_closure_inputs": 255,
+    "canonical_closure_sha256": "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080",
     "npm_archive": {
       "filename": "bun-1.3.14-npm-sources.tar.gz",
       "size_bytes": 30078643,
       "sha256": "38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f"
     },
-    "cargo_archive": {
-      "filename": "bun-1.3.14-lolhtml-cargo-vendor.tar.gz",
-      "size_bytes": 4126499,
-      "sha256": "299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57"
-    },
     "source_license_inventory": {
       "filename": "bun-1.3.14-source-license-inventory.json",
-      "size_bytes": 124370,
-      "sha256": "c647fadd798fa1f07d907a01d7e1547598538d56239b34bab9f3221933491eff"
+      "size_bytes": 122697,
+      "sha256": "274b1fd8ce15088c042e1926f143a60a66256ee1c7718ffbef19d619ebce8d34"
     },
     "source_license_audit_script": {
       "filename": "audit-bun-source-licenses",
-      "size_bytes": 16721,
-      "sha256": "2e1520b5f892f8e37da9a08f01284f3cad1e580f0c03efcbc4409381e0f70723"
-    }
+      "size_bytes": 14792,
+      "sha256": "76eb418d57c98355a313c085f7a228ece9cf85f60cf61bbfafd2bd07ca5133ca"
+    },
+    "retired_lolhtml_inputs_absent": true
   },
   "spec": {
     "filename": "bun.spec",
-    "size_bytes": 23128,
-    "sha256": "cb0421ce5ab8b8dcc7726b4c51345a61ddcad7d5b36cae72c543e2c0c2f3cb5c"
+    "size_bytes": 21491,
+    "sha256": "c54566af60ddae469162a2d5e3e9015215e12812b6b02bee1fb6e42ca6a85c21"
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.20.fc44.src.rpm",
-    "size_bytes": 322330473,
-    "sha256": "84717c855d261b87c6e64a4a8b02b97703fd7d3178933dea9b601b2e76ae9fb3",
+    "filename": "bun-1.3.14-0.0.22.fc44.src.rpm",
+    "size_bytes": 317741877,
+    "sha256": "5b5e00ea43f629c0e65d596cacc4745376b0f579e9a6a84bc12024ac43af97ba",
     "digest_check": "ok",
-    "inventory_members": 36,
-    "inventory_sha256": "9c49e7f30d787683c5140a83e75795c120d648b46202050a2cd8b19b56f2368e",
-    "member_manifest_sha256": "915a267877eb39d6fdfa6d5ada64d22ab944de92423a932ea0fc9c180d55c208",
-    "uncompressed_member_bytes": 326792834
+    "inventory_members": 34,
+    "inventory_sha256": "997c95ca829326b2d997f2202c7f9cb76b537e31867dcc7f81026667e012f0f2",
+    "member_manifest_sha256": "b517ae321d71368c544580776013aa268d821682a3320cf5325e99d4ad658f4b",
+    "uncompressed_member_bytes": 322076517
   },
   "validation": {
     "direct_source_checksums_verified": true,
@@ -58,6 +54,7 @@
     "generated_source_checksums_verified": true,
     "packaging_source_checksums_verified": true,
     "deterministic_materialization_verified": true,
+    "retired_lolhtml_inputs_absent": true,
     "srpm_built": true,
     "srpm_inventory_verified": true,
     "source_members_byte_identical": true,

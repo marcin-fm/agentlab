@@ -13,35 +13,21 @@ require_relative "agentlab"
 
 module Agentlab
   module BunSrpmSources
-    SCHEMA = "bun-srpm-source-bundles/v1"
-    CLOSURE_SCHEMA = "bun-release-local-source-closure/v2"
+    SCHEMA = "bun-srpm-source-bundles/v2"
+    CLOSURE_SCHEMA = "bun-release-local-source-closure/v3"
     SHA256 = /\A[0-9a-f]{64}\z/
-    ARCHIVE_ROLES = %w[native_node npm cargo].freeze
-    CARGO_EXTRA_FIELDS = %w[
-      archive_root
-      file_count
-      unpacked_size_bytes
-      symlink_count
-      hardlink_count
-      manifest
-      manifest_sha256
-    ].freeze
+    ARCHIVE_ROLES = %w[native_node npm].freeze
 
     module_function
 
     def materialize!(closure_path:, expected_closure_sha256:, expected_source_sha256:, expected_counts:,
-                     cache_dir:, output_dir:, receipt_path:, workdir:, cargo_manifest_path:,
-                     cargo_archive_filename:, roles: ARCHIVE_ROLES, expected_npm_archive: nil,
-                     expected_cargo_archive: nil, check: false)
+                      cache_dir:, output_dir:, receipt_path:, workdir:, roles: ARCHIVE_ROLES,
+                      expected_npm_archive: nil, check: false)
       closure_path = File.expand_path(closure_path)
       cache_dir = File.realpath(cache_dir)
       output_dir = File.expand_path(output_dir)
       receipt_path = File.expand_path(receipt_path)
       workdir = File.expand_path(workdir)
-      cargo_manifest_path = File.expand_path(cargo_manifest_path)
-      unless valid_archive_name?(cargo_archive_filename)
-        raise Agentlab::Error, "lol-html Cargo vendor archive filename is invalid"
-      end
       roles = Array(roles).map(&:to_s)
       unless roles.any? && roles.uniq.length == roles.length && (roles - ARCHIVE_ROLES).empty?
         raise Agentlab::Error, "Bun source archive roles are invalid"
@@ -74,7 +60,6 @@ module Agentlab
       version = closure.fetch("release").to_s
       native_root = "bun-#{version}-native-node-sources"
       npm_root = "bun-#{version}-npm-sources"
-      cargo_root = "cargo-vendor"
       native_filename = "#{native_root}.tar.gz"
       npm_filename = "#{npm_root}.tar.gz"
 
@@ -94,19 +79,9 @@ module Agentlab
           records: records.fetch("npm")
         )
       end
-      cargo_result = if roles.include?("cargo")
-                       stage_cargo_vendor!(
-                         cache_dir: cache_dir,
-                         destination: File.join(staging_dir, cargo_root),
-                         records: records.fetch("cargo"),
-                         checked_manifest_path: cargo_manifest_path
-                       )
-                     end
-
       archive_specs = []
       archive_specs << ["native_node", native_filename, native_root] if roles.include?("native_node")
       archive_specs << ["npm", npm_filename, npm_root] if roles.include?("npm")
-      archive_specs << ["cargo", cargo_archive_filename, cargo_root] if roles.include?("cargo")
       generated_archives = archive_specs.to_h do |role, filename, root|
         generated = File.join(generated_dir, filename)
         comparison = File.join(comparison_dir, filename)
@@ -138,22 +113,8 @@ module Agentlab
           "archive_root" => npm_root
         }.merge(summaries.fetch("npm")).merge(file_receipt(generated_archives.fetch("npm")))
       end
-      if roles.include?("cargo")
-        archives["cargo"] = {
-          "role" => "lolhtml-cargo-vendor",
-          "recipe" => "lolhtml-cargo-vendor/v1",
-          "compression" => "gzip-n",
-          "archive_root" => cargo_root,
-          "tree_sha256" => cargo_result.fetch("tree_sha256"),
-          "cargo_checksums_generated" => cargo_result.fetch("cargo_checksums_generated"),
-          "vendor_manifest" => cargo_result.fetch("vendor_manifest")
-        }.merge(summaries.fetch("cargo")).merge(file_receipt(generated_archives.fetch("cargo")))
-      end
       expected_npm_verified = verify_expected_archive!(
         archives["npm"], expected_npm_archive, "npm source"
-      )
-      expected_cargo_verified = verify_expected_archive!(
-        archives["cargo"], expected_cargo_archive, "lol-html Cargo vendor"
       )
       receipt = {
         "schema" => SCHEMA,
@@ -180,11 +141,7 @@ module Agentlab
           "cached_member_sizes_verified" => true,
           "cached_member_sha256_verified" => true,
           "safe_archive_paths_verified" => true,
-          "cargo_archive_contents_verified" => roles.include?("cargo"),
-          "cargo_checksums_generated" => roles.include?("cargo"),
-          "cargo_vendor_manifest_verified" => roles.include?("cargo"),
           "expected_npm_archive_verified" => expected_npm_verified,
-          "expected_cargo_archive_verified" => expected_cargo_verified,
           "bootstrap_seed_excluded" => true,
           "deterministic_regeneration_verified" => true,
           "immutable_public_hosting_verified" => false,
@@ -238,8 +195,7 @@ module Agentlab
       actual_counts = {
         "native" => Array(closure["native_github_sources"]).length,
         "node" => closure["node_headers"].is_a?(Hash) ? 1 : 0,
-        "npm" => Array(closure.dig("npm", "source_archives")).length,
-        "cargo" => Array(closure.dig("cargo", "crate_sources")).length
+        "npm" => Array(closure.dig("npm", "source_archives")).length
       }
       unless expected_counts == actual_counts
         raise Agentlab::Error, "Bun source-closure counts do not match package metadata"
@@ -285,26 +241,7 @@ module Agentlab
           "integrity" => source["integrity"]
         )
       end.sort_by { |record| [record.fetch("npm_name"), record["source_version"].to_s, record.fetch("archive")] }
-      cargo = Array(closure.dig("cargo", "crate_sources")).map do |source|
-        record = source_member(source, label: "Cargo source #{source['name']} #{source['version']}", url_key: "source_url").merge(
-          "name" => source.fetch("name"),
-          "version" => source.fetch("version"),
-          "checksum" => source.fetch("checksum"),
-          "archive_root" => source.fetch("archive_root"),
-          "file_count" => source.fetch("file_count"),
-          "unpacked_size_bytes" => source.fetch("unpacked_size_bytes"),
-          "symlink_count" => source.fetch("symlink_count"),
-          "hardlink_count" => source.fetch("hardlink_count"),
-          "manifest" => source.fetch("manifest"),
-          "manifest_sha256" => source.fetch("manifest_sha256")
-        )
-        unless record.fetch("checksum") == record.fetch("sha256")
-          raise Agentlab::Error, "Cargo source checksum identity mismatch: #{record.fetch('name')} #{record.fetch('version')}"
-        end
-        record
-      end.sort_by { |record| [record.fetch("name"), record.fetch("version")] }
-
-      { "native" => native, "node" => node, "npm" => npm, "cargo" => cargo }
+      { "native" => native, "node" => node, "npm" => npm }
     end
 
     def source_member(record, label:, url_key:)
@@ -340,15 +277,11 @@ module Agentlab
     end
 
     def reject_duplicate_archives!(records)
-      [records.fetch("native") + records.fetch("node"), records.fetch("npm"), records.fetch("cargo")].each do |members|
+      [records.fetch("native") + records.fetch("node"), records.fetch("npm")].each do |members|
         archives = members.map { |record| record.fetch("archive") }
         unless archives.uniq.length == archives.length
           raise Agentlab::Error, "Bun source materializer contains duplicate archive filenames"
         end
-      end
-      cargo_roots = records.fetch("cargo").map { |record| record.fetch("archive_root") }
-      unless cargo_roots.uniq.length == cargo_roots.length && cargo_roots.all? { |root| safe_relative_path(root) == root && !root.include?("/") }
-        raise Agentlab::Error, "Bun Cargo source materializer contains invalid or duplicate archive roots"
       end
     end
 
@@ -360,8 +293,7 @@ module Agentlab
     end
 
     def manifest_summary(records)
-      manifest_records = records.map { |record| record.reject { |key, _value| CARGO_EXTRA_FIELDS.include?(key) } }
-      content = JSON.generate(manifest_records) + "\n"
+      content = JSON.generate(records) + "\n"
       {
         "member_count" => records.length,
         "input_bytes" => records.sum { |record| record.fetch("size_bytes") },

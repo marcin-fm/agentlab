@@ -3,7 +3,6 @@ status: blocked
 blockers:
   - Fedora Packaging Committee approval is required before the upstream Bun seed may drive the initial source build.
   - The external lol-html 3.0.0 package and Bun system-link patch require target Mock and final HTMLRewriter runtime proof.
-  - The retained dependency closure still contains Bun's historical lol-html 2.7.2 source and must be regenerated before a new SRPM proof.
   - The complete LGPL relink kit is not generated and shipped from the final RPM build.
   - Final bundled-license accounting, aarch64 build proof, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
@@ -17,7 +16,7 @@ upstream:
 build_plan:
   target_release: 1.3.14
   source_inputs_reconciled: true
-  system_lolhtml_source_closure_regenerated: false
+  system_lolhtml_source_closure_regenerated: true
   architectures:
     - x86_64
   source_inputs:
@@ -106,13 +105,15 @@ build_plan:
       take_last_error_prototype_updated: true
       graceful_bail_out_default: false
       historical_bundled_source:
+        source_commit: ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5
         commit: 77127cd2b8545998756e8d64e36ee2313c4bb312
         source_archive: lolhtml-929339b1d898e66b.tar.gz
         source_sha256: 2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379
         source_identity: 712928b3736f4aad
         manifest_sha256: feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03
         lockfile_sha256: 02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d
-        source_receipt: bun-1.3.14-release-local-source-closure.json
+        source_receipt_path_at_commit: packages/bun/bun-1.3.14-release-local-source-closure.json
+        source_receipt_sha256: ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
     npm_lock:
       relationship: fedora_target_correction
       release_pin: bun-v1.3.14
@@ -126,9 +127,9 @@ build_plan:
       relationship: fedora_offline_source_staging
       release_pin: bun-v1.3.14
       closure_source: bun-1.3.14-release-local-source-closure.json
-      closure_sha256: ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
+      closure_sha256: f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
       helper_source: bun-stage-release-local-sources
-      helper_sha256: 73f25a3a5e3640d749a69fa530d8fb0d2fcad93e1c8aa01460b829616a63aaaf
+      helper_sha256: 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
       npm_cache_tree_sha256: 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
       npm_cache_entries: 4613
       npm_cache_files: 3855
@@ -140,24 +141,23 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: ea8fa634cb896eb1ba5376992e4f1001042d39836071d50ec9879b7fbd905bec
+      sha256: 274b1fd8ce15088c042e1926f143a60a66256ee1c7718ffbef19d619ebce8d34
       audit_script: scripts/audit-bun-source-licenses
-      audit_script_sha256: 2e1520b5f892f8e37da9a08f01284f3cad1e580f0c03efcbc4409381e0f70723
+      audit_script_sha256: 76eb418d57c98355a313c085f7a228ece9cf85f60cf61bbfafd2bd07ca5133ca
       audit_script_source: audit-bun-source-licenses
-      cargo_vendor_directories: 43
-      cargo_license_summary_sha256: a19dc12630536092faeba3eb9c2f54e8e4ff17944ffff9bce50d4086bad4607a
-      cargo_license_breakdown_sha256: 8b893831ed6cf87e129dd4e320591511df53ea69c97b38f883b919e78c5d3da9
-      cargo_linked_packages: 41
-      cargo_linked_manifest_sha256: 37dc9f2bef863d9b87e3e289ea9a783b6955bd961586be34ad0c37766522d187
       npm_cache_entries: 236
       npm_entries_with_license_text: 221
       npm_entries_without_license_text: 15
       npm_missing_license_fields: 2
-      native_components: 19
+      native_components: 18
       picohttpparser_selected_license: MIT
       webkit_candidate_license_files: 35
-      historical_lolhtml_graph_retained: true
-      system_lolhtml_provider_included: false
+      historical_lolhtml_graph_retained: false
+      system_lolhtml_provider_external: true
+      historical_lolhtml_evidence:
+        source_commit: ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5
+        source_closure_sha256: ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
+        source_license_inventory_sha256: ea8fa634cb896eb1ba5376992e4f1001042d39836071d50ec9879b7fbd905bec
       final_linked_closure_verified: false
       final_license_expression_verified: false
       required_license_texts_verified: false
@@ -209,69 +209,41 @@ build_plan:
       isolated_buildroot_proof_receipt: webkit-mock-build-proof.json
       minimized_jsc_only_source_verified: true
     dependency_closure:
-      state: blocked
-      historical_only: true
-      invalidated_by: Bun release 0.0.21 system lol-html integration
+      state: verified
+      profile: release-local-glibc-system-lolhtml
+      source_graph_verified: true
       npm_sources_verified: true
       npm_github_source_verified: true
-      cargo_sources_verified: true
-      cargo_crate_sources_verified: true
-      rust_toolchain_pin_verified: true
-      nightly_toolchain_required: false
-      nightly_toolchain_verified: false
-      rust_src_required: false
-      rust_src_verified: false
-      fedora_stable_rust_verified: true
-      cargo_vendor_materialization_verified: true
-      cargo_offline_build_verified: true
-      lolhtml_static_library_verified: true
       github_sources_verified: true
       github_sources_scope: selected_native_dependency_archives
       node_headers_verified: true
-      offline_materialization_verified: true
-      complete_bun_offline_materialization_verified: true
-      npm_cache_materialization_verified: true
-      npm_offline_install_verified: true
-      npm_frozen_lockfile_verified: true
-      npm_ignore_scripts_verified: true
-      npm_network_namespace_verified: true
       npm_lock_inventory_verified: true
-      cargo_lock_inventory_verified: true
-      selected_github_archives: 19
+      system_lolhtml_exclusion_verified: true
+      selected_github_archives: 18
       selected_node_header_archives: 1
       selected_npm_source_records: 251
       unique_npm_source_archives: 236
-      npm_cache_entries: 236
-      npm_cache_tree_sha256: 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
-      npm_root_installed_packages: 230
-      npm_bun_error_installed_packages: 1
-      npm_node_fallbacks_installed_packages: 121
-      selected_lolhtml_cargo_packages: 45
-      selected_lolhtml_cargo_crates: 43
+      selected_cargo_source_archives: 0
       npm_source_archive_filename: bun-1.3.14-npm-sources.tar.gz
       npm_source_archive_bytes: 30078643
       npm_source_archive_sha256: 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
-      cargo_vendor_manifest: lolhtml-cargo-vendor.txt
-      cargo_vendor_manifest_sha256: 7728706170a520d53a1f33e4814f0abcf07edd5ea69db5af623a8a0579edcd5b
-      cargo_vendor_archive_filename: bun-1.3.14-lolhtml-cargo-vendor.tar.gz
-      cargo_vendor_archive_bytes: 4126499
-      cargo_vendor_archive_sha256: 299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57
-      cargo_vendor_archive_hosted: false
       npm_archive_bytes: 30079735
-      cargo_crate_archive_bytes: 3972319
-      locally_acquired_archive_bytes: 142382337
       proof_receipt: bun-1.3.14-release-local-source-closure.json
-      proof_receipt_sha256: ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
-      cargo_build_proof_receipt: lolhtml-offline-build-proof.json
-      cargo_build_proof_receipt_sha256: 05785f79c560ce5953500acc7c9dea283a53b18240e59b62c84f57ab02eb5cce
-      npm_install_proof_receipt: npm-offline-install-proof.json
-      npm_install_proof_receipt_sha256: 61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f
+      proof_receipt_sha256: f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
+      historical_lolhtml_graph:
+        source_commit: ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5
+        proof_receipt_path_at_commit: packages/bun/bun-1.3.14-release-local-source-closure.json
+        proof_receipt_sha256: ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
+        selected_github_archives: 19
+        selected_node_header_archives: 1
+        cargo_build_proof_receipt: lolhtml-offline-build-proof.json
+        cargo_build_proof_receipt_sha256: 05785f79c560ce5953500acc7c9dea283a53b18240e59b62c84f57ab02eb5cce
+        npm_install_proof_receipt: npm-offline-install-proof.json
+        npm_install_proof_receipt_sha256: 61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f
     source_delivery:
-      state: blocked
-      historical_only: true
-      invalidated_by: Bun release 0.0.21 system lol-html integration
+      state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: b1900a5768aa0016c80dd0d5cc2e04df64f08d75d7e72c5efa1f2ec18dd47fd4
+      proof_receipt_sha256: cbe387bc3b8864498a1550497ad0e30943c1b4ef6b982b5467b8b77351615c0d
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -280,6 +252,11 @@ build_plan:
       srpm_built_verified: true
       srpm_inventory_verified: true
       source_members_byte_identical_verified: true
+      retired_lolhtml_inputs_absent_verified: true
+      historical_proof:
+        source_commit: ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5
+        proof_receipt: srpm-source-delivery-proof.json
+        proof_receipt_sha256: b1900a5768aa0016c80dd0d5cc2e04df64f08d75d7e72c5efa1f2ec18dd47fd4
     lolhtml_rpm_cargo:
       state: blocked
       historical_only: true
@@ -298,11 +275,9 @@ build_plan:
       linked_vendor_package_count: 41
       linked_vendor_manifest_sha256: 37dc9f2bef863d9b87e3e289ea9a783b6955bd961586be34ad0c37766522d187
     dependency_staging:
-      state: blocked
-      historical_only: true
-      invalidated_by: Bun release 0.0.21 system lol-html integration
+      state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: ef626b0ed4dfd1e67c6bcc125216da2954b7c94e77fd441f17f9103596a22121
+      proof_receipt_sha256: d54a0c0ca188772c6864f17b62d4fc208faee98c40ce06cc4f7ae5b3fe604f7f
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true
@@ -313,14 +288,18 @@ build_plan:
       npm_cache_tree_verified: true
       deterministic_staging_verified: true
       network_namespace_verified: true
-      native_source_count: 19
-      native_tarball_cache_count: 19
-      prefetch_entry_count: 20
+      native_source_count: 18
+      native_tarball_cache_count: 18
+      prefetch_entry_count: 19
       npm_cache_entries: 236
       npm_cache_tree_sha256: 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
       bootstrap_seed_used: false
       npm_install_run: false
       final_bun_build_run: false
+      historical_proof:
+        source_commit: ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5
+        proof_receipt: release-local-source-staging-proof.json
+        proof_receipt_sha256: ef626b0ed4dfd1e67c6bcc125216da2954b7c94e77fd441f17f9103596a22121
     seed_build:
       state: blocked
       historical_only: true

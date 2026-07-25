@@ -342,7 +342,7 @@ def require_workdir(path, check:)
     FileUtils.mkdir_p(expanded)
     File.write(marker, "agentlab bun release-local source acquisition\n")
   end
-  %w[archives npm cargo].each { |directory| FileUtils.mkdir_p(File.join(expanded, directory)) } unless check
+  %w[archives npm].each { |directory| FileUtils.mkdir_p(File.join(expanded, directory)) } unless check
   expanded
 end
 
@@ -562,7 +562,7 @@ def parse_selected_dependencies(source_dir)
         identity.update("\0")
         identity.update(content)
       end
-      base.merge(
+      record = base.merge(
         "selected" => true,
         "source_kind" => "github-archive",
         "repository" => repo,
@@ -572,6 +572,15 @@ def parse_selected_dependencies(source_dir)
         "upstream_source_identity" => identity.hexdigest[0, 16],
         "build_strategy" => text.include?('kind: "cargo"') ? "cargo" : "direct"
       )
+      if symbol == "lolhtml"
+        record.merge(
+          "selected" => false,
+          "reason" => "fedora-system-provider",
+          "provider" => "lol-html 3.0.0"
+        )
+      else
+        record
+      end
     end
   end
 
@@ -681,7 +690,7 @@ github_sources = dependencies.select { |record| record["selected"] && record["so
 node_source = dependencies.find { |record| record["source_kind"] == "node-headers" }
 sqlite = dependencies.find { |record| record["source_kind"] == "in-tree" }
 webkit = dependencies.find { |record| record["source_kind"] == "existing-local" }
-raise Agentlab::Error, "expected 19 selected GitHub archives, found #{github_sources.length}" unless github_sources.length == 19
+raise Agentlab::Error, "expected 18 selected GitHub archives, found #{github_sources.length}" unless github_sources.length == 18
 raise Agentlab::Error, "missing selected Node.js headers" unless node_source
 raise Agentlab::Error, "missing selected in-tree SQLite" unless sqlite
 raise Agentlab::Error, "missing selected local WebKit" unless webkit
@@ -710,7 +719,6 @@ end
 workdir = require_workdir(workdir, check: check)
 archives_dir = File.join(workdir, "archives")
 npm_archives_dir = File.join(workdir, "npm")
-cargo_archives_dir = File.join(workdir, "cargo")
 FileUtils.mkdir_p(archives_dir) unless check
 queue = Queue.new
 (github_sources + [node_source]).each { |source| queue << source }
@@ -737,11 +745,7 @@ unless errors.empty?
 end
 
 acquired = results.to_h { |record| [record.fetch("symbol"), record] }
-native_records = github_sources.map do |source|
-  record = acquired.fetch(source.fetch("symbol")).dup
-  record.delete("captured") unless source.fetch("symbol") == "lolhtml"
-  record
-end
+native_records = github_sources.map { |source| acquired.fetch(source.fetch("symbol")).reject { |key, _value| key == "captured" } }
 node_record = acquired.fetch(node_source.fetch("symbol"))
 node_version_path = node_record.fetch("captured").keys.find { |path| path.end_with?("/include/node/node_version.h") }
 raise Agentlab::Error, "Node.js headers omit include/node/node_version.h" unless node_version_path
@@ -755,10 +759,6 @@ node_record = node_record.reject { |key, _value| key == "captured" }.merge(
   "abi_verified" => true
 )
 
-lolhtml_record = acquired.fetch("lolhtml")
-cargo = cargo_receipt(lolhtml_record, source_dir)
-native_records.find { |record| record.fetch("symbol") == "lolhtml" }.delete("captured")
-
 sqlite_dir = File.join(source_dir, sqlite.fetch("path"))
 sqlite_file = File.join(sqlite_dir, "sqlite3.c")
 raise Agentlab::Error, "missing selected in-tree SQLite source #{sqlite_file}" unless File.file?(sqlite_file)
@@ -767,11 +767,9 @@ npm_roots = ["", "packages/bun-error", "src/node-fallbacks"].map do |relative|
   npm_lock_receipt(source_dir, relative)
 end
 npm_sources = deduplicate_npm_sources(npm_roots)
-cargo_sources = cargo.fetch("crate_sources")
 
 payload_queue = Queue.new
 npm_sources.each { |source| payload_queue << ["npm", source] }
-cargo_sources.each { |source| payload_queue << ["cargo", source] }
 payload_results = []
 payload_errors = []
 payload_mutex = Mutex.new
@@ -780,11 +778,7 @@ payload_workers = jobs.times.map do
   Thread.new do
     loop do
       kind, source = payload_queue.pop(true)
-      archive = if kind == "npm"
-                  acquire_npm_archive(source, npm_archives_dir, check: check)
-                else
-                  acquire_cargo_archive(source, cargo_archives_dir, check: check)
-                end
+      archive = acquire_npm_archive(source, npm_archives_dir, check: check)
       payload_mutex.synchronize { payload_results << [kind, source, archive] }
     rescue ThreadError
       break
@@ -796,25 +790,15 @@ payload_workers = jobs.times.map do
 end
 payload_workers.each(&:join)
 unless payload_errors.empty?
-  raise Agentlab::Error, "Bun npm/Cargo source acquisition failed for #{payload_errors.length} source(s):\n#{payload_errors.sort.first(30).join("\n")}"
+  raise Agentlab::Error, "Bun npm source acquisition failed for #{payload_errors.length} source(s):\n#{payload_errors.sort.first(30).join("\n")}" 
 end
 
 npm_acquired = {}
-cargo_acquired = {}
 payload_results.each do |kind, source, archive|
-  if kind == "npm"
-    npm_acquired[npm_source_identity(source)] = archive
-  else
-    cargo_acquired[[source.fetch("name"), source.fetch("version")]] = archive
-  end
+  raise Agentlab::Error, "unexpected Bun payload source kind #{kind}" unless kind == "npm"
+  npm_acquired[npm_source_identity(source)] = archive
 end
 npm_records = npm_sources.map { |source| source.merge(npm_acquired.fetch(npm_source_identity(source))) }
-cargo_records = cargo_sources.map do |source|
-  source.merge(cargo_acquired.fetch([source.fetch("name"), source.fetch("version")]))
-end
-cargo["crate_sources"] = cargo_records
-cargo["crate_archives_verified"] = true
-cargo["git_sources_verified"] = cargo.dig("lockfile", "git_sources").zero?
 
 npm_origin_counts = { "github" => 0, "registry" => 0 }.merge(
   npm_records.group_by { |record| record.fetch("origin") }.transform_values(&:length)
@@ -834,7 +818,7 @@ npm_summary = {
 }
 
 receipt = {
-  "schema" => "bun-release-local-source-closure/v2",
+  "schema" => "bun-release-local-source-closure/v3",
   "package" => package.name,
   "release" => version,
   "profile" => "release-local",
@@ -877,7 +861,6 @@ receipt = {
     "install_roots" => npm_roots,
     "source_archives" => npm_records
   },
-  "cargo" => cargo,
   "validation" => {
     "upstream_dependency_definitions_reconciled" => true,
     "selected_native_archive_paths_verified" => true,
@@ -889,22 +872,22 @@ receipt = {
     "node_headers_verified" => true,
     "npm_sources_verified" => true,
     "npm_sources_scope" => "all target-selected archives from the three frozen Bun install roots",
-    "cargo_crate_sources_verified" => true,
-    "cargo_sources_verified" => false,
+    "system_lolhtml_provider_selected" => true,
+    "private_lolhtml_source_excluded" => true,
     "offline_materialization_verified" => false,
     "immutable_public_hosting_verified" => false,
     "dependency_resolution_performed" => false,
     "build_executed" => false
   },
-  "scope" => "checksummed local acquisition of selected Linux x86_64 release-local native, Node.js header, npm, and lol-html Cargo crate archives; the pinned nightly Rust toolchain, rust-src payload, immutable hosting, and complete offline materialization remain blocked"
+  "scope" => "checksummed local acquisition of selected Linux x86_64 glibc release-local native, Node.js header, and npm archives; Fedora's external lol-html provider is excluded from the Bun source closure, while immutable hosting and complete offline materialization remain blocked"
 }
 content = JSON.pretty_generate(receipt) + "\n"
 
 if check
   raise Agentlab::Error, "missing Bun source-closure receipt #{output}" unless File.file?(output)
   raise Agentlab::Error, "Bun source-closure receipt is stale: #{output}" unless File.binread(output) == content
-  puts "Verified #{native_records.length} native GitHub archives, Node.js #{node_source.fetch('version')} headers, #{npm_records.length} npm archives, and #{cargo_records.length} Cargo crates."
+  puts "Verified #{native_records.length} native GitHub archives, Node.js #{node_source.fetch('version')} headers, and #{npm_records.length} npm archives."
 else
   Agentlab.atomic_write(output, content)
-  puts "Wrote #{native_records.length} native GitHub archives, Node.js #{node_source.fetch('version')} headers, #{npm_records.length} npm archives, and #{cargo_records.length} Cargo crates to #{output}."
+  puts "Wrote #{native_records.length} native GitHub archives, Node.js #{node_source.fetch('version')} headers, and #{npm_records.length} npm archives to #{output}."
 end

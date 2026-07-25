@@ -1869,6 +1869,7 @@ module Agentlab
 
   def validate_bun_dependency_closure(package, dependency_stage, webkit, version)
     return [] unless package.name == "bun" && dependency_stage.is_a?(Hash)
+    return [] if dependency_stage["historical_only"] == true
 
     receipt_name = dependency_stage["proof_receipt"]
     return [] unless receipt_name.is_a?(String) && !receipt_name.empty?
@@ -1882,7 +1883,7 @@ module Agentlab
     return errors unless valid_receipt
 
     receipt = JSON.parse(File.read(receipt_path))
-    errors << "bun: unsupported dependency-closure proof receipt schema" unless receipt["schema"] == "bun-release-local-source-closure/v2"
+    errors << "bun: unsupported dependency-closure proof receipt schema" unless receipt["schema"] == "bun-release-local-source-closure/v3"
     errors << "bun: dependency-closure proof package mismatch" unless receipt["package"] == "bun"
     errors << "bun: dependency-closure proof release mismatch" unless receipt["release"].to_s == version
 
@@ -1893,7 +1894,16 @@ module Agentlab
     errors << "bun: dependency-closure proof incorrectly claims immutable public hosting" unless hosting_verified == false
     errors << "bun: dependency-closure proof has hosted WebKit archive" unless webkit.is_a?(Hash) && webkit["archive_url"].nil?
     errors << "bun: dependency-closure proof hosted local-source record" unless local_webkit.is_a?(Hash) && local_webkit["immutable_public_url"].nil?
-    errors << "bun: dependency-closure Cargo vendor archive hosting state is invalid" unless dependency_stage["cargo_vendor_archive_hosted"] == false
+    errors << "bun: dependency-closure proof retains a private Cargo graph" if receipt.key?("cargo")
+    errors << "bun: dependency-closure system lol-html selection is missing" unless receipt.dig("validation", "system_lolhtml_provider_selected") == true
+    errors << "bun: dependency-closure private lol-html source is not excluded" unless receipt.dig("validation", "private_lolhtml_source_excluded") == true
+    expected_counts = {
+      "selected_github_archives" => Array(receipt["native_github_sources"]).length,
+      "selected_node_header_archives" => receipt["node_headers"].is_a?(Hash) ? 1 : 0,
+      "unique_npm_source_archives" => Array(receipt.dig("npm", "source_archives")).length,
+      "selected_cargo_source_archives" => 0
+    }
+    errors << "bun: dependency-closure source counts mismatch" unless expected_counts.all? { |key, value| dependency_stage[key] == value }
 
     errors
   rescue JSON::ParserError => e
@@ -1902,7 +1912,8 @@ module Agentlab
 
   def validate_bun_npm_offline_install(package, dependency_stage, version)
     return [] unless package.name == "bun" && dependency_stage.is_a?(Hash)
-    return [] unless dependency_stage.key?("npm_offline_install_verified") || dependency_stage.key?("unique_npm_source_archives")
+    return [] if dependency_stage["historical_only"] == true
+    return [] unless dependency_stage.key?("npm_install_proof_receipt")
 
     receipt_name = dependency_stage["npm_install_proof_receipt"]
     receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
@@ -1998,7 +2009,9 @@ module Agentlab
       "source_identity" => "712928b3736f4aad",
       "manifest_sha256" => "feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03",
       "lockfile_sha256" => "02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d",
-      "source_receipt" => "bun-1.3.14-release-local-source-closure.json"
+      "source_commit" => "ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5",
+      "source_receipt_path_at_commit" => "packages/bun/bun-1.3.14-release-local-source-closure.json",
+      "source_receipt_sha256" => "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0"
     }
     errors << "bun: historical lol-html source metadata mismatch" unless historical.is_a?(Hash) && expected_historical.all? { |key, value| historical[key] == value }
 
@@ -2037,33 +2050,37 @@ module Agentlab
 
     source_license_inventory = package.data.dig("build_plan", "source_inputs", "source_license_inventory")
     valid_license_boundary = source_license_inventory.is_a?(Hash) &&
-                             source_license_inventory["historical_lolhtml_graph_retained"] == true &&
-                             source_license_inventory["system_lolhtml_provider_included"] == false &&
+                              source_license_inventory["historical_lolhtml_graph_retained"] == false &&
+                              source_license_inventory["system_lolhtml_provider_external"] == true &&
                              source_license_inventory["final_linked_closure_verified"] == false &&
                              source_license_inventory["final_license_expression_verified"] == false
     errors << "bun: system lol-html source-license boundary mismatch" unless valid_license_boundary
 
     required_spec_fragments = [
-      "Release:        0.0.21%{?dist}",
+      "Release:        0.0.22%{?dist}",
       "Patch2:         bun-system-lolhtml.patch",
       "BuildRequires:  pkgconfig(lol-html) >= 1.4.0",
-      "tar --extract --gzip --file %{SOURCE13} --strip-components=1 --directory vendor/lolhtml",
-      "tar --extract --gzip --file %{SOURCE24} --directory vendor/lolhtml/c-api",
       "pkg-config --exact-version=1.4.0 lol-html",
       "grep -Fq 'pub extern fn lol_html_take_last_error() HTMLString;'"
     ]
     errors << "bun: spec does not integrate the system lol-html split" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
-    forbidden_spec_fragments = ["%cargo_build", "%cargo_vendor_manifest", "target/release/liblolhtml.a"]
+    forbidden_spec_fragments = ["lolhtml-929339b1d898e66b.tar.gz", "lolhtml-cargo-vendor.tar.gz", "%cargo_build", "%cargo_vendor_manifest", "target/release/liblolhtml.a"]
     errors << "bun: spec still builds the historical private lol-html library" if forbidden_spec_fragments.any? { |fragment| spec.include?(fragment) }
 
-    invalidated_stages = %w[dependency_closure source_delivery lolhtml_rpm_cargo dependency_staging seed_build self_rebuild]
-    valid_invalidation = stages.is_a?(Hash) && invalidated_stages.all? do |stage_name|
+    current_graph_valid = stages.is_a?(Hash) && stages.dig("dependency_closure", "state") == "verified" &&
+                          %w[blocked verified].include?(stages.dig("source_delivery", "state")) &&
+                          stages.dig("source_delivery", "historical_only") != true &&
+                          %w[blocked verified].include?(stages.dig("dependency_staging", "state")) &&
+                          stages.dig("dependency_staging", "historical_only") != true
+    errors << "bun: system lol-html current source stages are inconsistent" unless current_graph_valid
+    historical_stages = %w[lolhtml_rpm_cargo seed_build self_rebuild]
+    valid_invalidation = stages.is_a?(Hash) && historical_stages.all? do |stage_name|
       stage = stages[stage_name]
       stage.is_a?(Hash) && stage["state"] == "blocked" && stage["historical_only"] == true &&
         stage["invalidated_by"].is_a?(String) && !stage["invalidated_by"].empty?
     end
     errors << "bun: system lol-html split did not invalidate historical build stages" unless valid_invalidation
-    errors << "bun: system lol-html split incorrectly claims a regenerated source closure" unless package.data.dig("build_plan", "system_lolhtml_source_closure_regenerated") == false
+    errors << "bun: system lol-html source closure is not regenerated" unless package.data.dig("build_plan", "system_lolhtml_source_closure_regenerated") == true
 
     errors
   rescue KeyError => e
@@ -2083,7 +2100,7 @@ module Agentlab
     end
 
     receipt = JSON.parse(File.read(receipt_path))
-    errors << "bun: unsupported source-delivery proof schema" unless receipt["schema"] == "bun-srpm-source-delivery/v1"
+    errors << "bun: unsupported source-delivery proof schema" unless receipt["schema"] == "bun-srpm-source-delivery/v2"
     errors << "bun: source-delivery proof package mismatch" unless receipt["package"] == "bun"
     errors << "bun: source-delivery proof release mismatch" unless receipt["release"].to_s == version
     spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
@@ -2096,27 +2113,23 @@ module Agentlab
     errors << "bun: source-delivery method mismatch" unless generation["method"] == "copr-git-scm-make_srpm"
     errors << "bun: source-delivery network scope mismatch" unless generation["network_scope"] == "srpm-generation-only"
     expected_counts = {
-      "direct_sources" => 23,
-      "generated_sources" => 2,
+      "direct_sources" => 22,
+      "generated_sources" => 1,
       "packaging_sources" => 4,
-      "declared_sources" => 29,
+      "declared_sources" => 27,
       "patches" => 6
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
-    errors << "bun: source-delivery closure count mismatch" unless generation["canonical_closure_inputs"] == 299
+    errors << "bun: source-delivery closure count mismatch" unless generation["canonical_closure_inputs"] == 255
     errors << "bun: source-delivery closure SHA-256 mismatch" unless generation["canonical_closure_sha256"] == dependency_stage["proof_receipt_sha256"]
     expected_npm = {
       "filename" => dependency_stage["npm_source_archive_filename"],
       "size_bytes" => dependency_stage["npm_source_archive_bytes"],
       "sha256" => dependency_stage["npm_source_archive_sha256"]
     }
-    expected_cargo = {
-      "filename" => dependency_stage["cargo_vendor_archive_filename"],
-      "size_bytes" => dependency_stage["cargo_vendor_archive_bytes"],
-      "sha256" => dependency_stage["cargo_vendor_archive_sha256"]
-    }
     errors << "bun: source-delivery npm archive mismatch" unless generation["npm_archive"] == expected_npm
-    errors << "bun: source-delivery Cargo archive mismatch" unless generation["cargo_archive"] == expected_cargo
+    errors << "bun: source-delivery proof retains a Cargo archive" if generation.key?("cargo_archive")
+    errors << "bun: source-delivery proof retains retired lol-html inputs" unless generation["retired_lolhtml_inputs_absent"] == true
     license_inventory = package.data.dig("build_plan", "source_inputs", "source_license_inventory") || {}
     expected_license_inventory = {
       "filename" => license_inventory["source"],
@@ -2136,7 +2149,7 @@ module Agentlab
     errors << "bun: source-delivery SRPM size is invalid" unless srpm["size_bytes"].is_a?(Integer) && srpm["size_bytes"].positive?
     errors << "bun: source-delivery SRPM SHA-256 is invalid" unless srpm["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: source-delivery SRPM digest check failed" unless srpm["digest_check"] == "ok"
-    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 36
+    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 34
     %w[inventory_sha256 member_manifest_sha256].each do |key|
       errors << "bun: source-delivery #{key} is invalid" unless srpm[key].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
@@ -2148,6 +2161,7 @@ module Agentlab
       generated_source_checksums_verified
       packaging_source_checksums_verified
       deterministic_materialization_verified
+      retired_lolhtml_inputs_absent
       srpm_built
       srpm_inventory_verified
       source_members_byte_identical
@@ -2157,16 +2171,14 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source28 layout" unless source_indexes == (0..28).to_a
+    errors << "bun: spec does not declare the complete Source0-Source26 layout" unless source_indexes == (0..26).to_a
     npm_spec_filename = expected_npm["filename"].sub(version, "%{version}")
-    cargo_spec_filename = expected_cargo["filename"].sub(version, "%{version}")
-    errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source23:\s+#{Regexp.escape(npm_spec_filename)}$/)
-    errors << "bun: spec Cargo source filename mismatch" unless spec.match?(/^Source24:\s+#{Regexp.escape(cargo_spec_filename)}$/)
+    errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source22:\s+#{Regexp.escape(npm_spec_filename)}$/)
     staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
-    errors << "bun: spec closure source filename mismatch" unless spec.match?(/^Source25:\s+#{Regexp.escape(staging["closure_source"].to_s.gsub(version, "%{version}"))}$/)
-    errors << "bun: spec staging helper filename mismatch" unless spec.match?(/^Source26:\s+#{Regexp.escape(staging["helper_source"].to_s)}$/)
-    errors << "bun: spec source-license inventory filename mismatch" unless spec.match?(/^Source27:\s+#{Regexp.escape(license_inventory["source"].to_s.gsub(version, "%{version}"))}$/)
-    errors << "bun: spec source-license audit script mismatch" unless spec.match?(/^Source28:\s+#{Regexp.escape(license_inventory["audit_script_source"].to_s)}$/)
+    errors << "bun: spec closure source filename mismatch" unless spec.match?(/^Source23:\s+#{Regexp.escape(staging["closure_source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec staging helper filename mismatch" unless spec.match?(/^Source24:\s+#{Regexp.escape(staging["helper_source"].to_s)}$/)
+    errors << "bun: spec source-license inventory filename mismatch" unless spec.match?(/^Source25:\s+#{Regexp.escape(license_inventory["source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec source-license audit script mismatch" unless spec.match?(/^Source26:\s+#{Regexp.escape(license_inventory["audit_script_source"].to_s)}$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -2274,7 +2286,7 @@ module Agentlab
 
     errors = []
     receipt = JSON.parse(File.read(receipt_path))
-    errors << "bun: unsupported dependency-staging proof schema" unless receipt["schema"] == "bun-release-local-source-staging-proof/v1"
+    errors << "bun: unsupported dependency-staging proof schema" unless receipt["schema"] == "bun-release-local-source-staging-proof/v2"
     errors << "bun: dependency-staging proof package mismatch" unless receipt["package"] == "bun"
     errors << "bun: dependency-staging proof release mismatch" unless receipt["release"].to_s == version
     spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
@@ -2358,9 +2370,9 @@ module Agentlab
 
     required_spec_fragments = [
       "BuildRequires:  git-core",
-      "Source25:       bun-%{version}-release-local-source-closure.json",
-      "Source26:       bun-stage-release-local-sources",
-      "ruby %{SOURCE26}",
+      "Source23:       bun-%{version}-release-local-source-closure.json",
+      "Source24:       bun-stage-release-local-sources",
+      "ruby %{SOURCE24}",
       "--expected-npm-tree-sha256 \"%{npm_cache_tree_sha256}\"",
       "--expected-npm-entries \"%{npm_cache_entries}\"",
       "--expected-npm-file-bytes \"%{npm_cache_file_bytes}\""
@@ -2392,7 +2404,7 @@ module Agentlab
         record["size_bytes"].is_a?(Integer) && record["size_bytes"].positive? &&
         record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
-    errors << "bun: unsupported source-license inventory schema" unless receipt["schema"] == "bun-source-license-inventory/v1"
+    errors << "bun: unsupported source-license inventory schema" unless receipt["schema"] == "bun-source-license-inventory/v2"
     errors << "bun: source-license inventory package mismatch" unless receipt["package"] == "bun"
     errors << "bun: source-license inventory release mismatch" unless receipt["release"].to_s == version
     spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
@@ -2408,15 +2420,28 @@ module Agentlab
       errors << "bun: source-license audit script is missing or has wrong SHA-256"
     end
 
-    cargo = receipt["cargo"] || {}
-    errors << "bun: source-license Cargo vendor count mismatch" unless cargo["vendor_directory_count"] == inventory["cargo_vendor_directories"]
-    errors << "bun: source-license Cargo summary mismatch" unless cargo["license_summary_sha256"] == inventory["cargo_license_summary_sha256"]
-    errors << "bun: source-license Cargo breakdown mismatch" unless cargo["license_breakdown_sha256"] == inventory["cargo_license_breakdown_sha256"]
-    errors << "bun: source-license Cargo linked count mismatch" unless cargo["linked_vendor_package_count"] == inventory["cargo_linked_packages"]
-    errors << "bun: source-license Cargo linked manifest mismatch" unless cargo["linked_vendor_manifest_sha256"] == inventory["cargo_linked_manifest_sha256"]
-    errors << "bun: source-license Cargo local declaration gap mismatch" unless cargo["missing_local_declaration"] == [": lol_html_c_api v1.3.1"]
-    errors << "bun: source-license Cargo manifest record is invalid" unless valid_file_record.call(cargo["manifest"])
-    errors << "bun: source-license Cargo lockfile record is invalid" unless valid_file_record.call(cargo["lockfile"])
+    errors << "bun: source-license inventory retains a current private Cargo payload" if receipt.key?("cargo")
+    expected_history = {
+      "source_commit" => "ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5",
+      "source_closure" => {
+        "path" => "packages/bun/bun-1.3.14-release-local-source-closure.json",
+        "sha256" => "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0"
+      },
+      "source_license_inventory" => {
+        "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
+        "sha256" => "ea8fa634cb896eb1ba5376992e4f1001042d39836071d50ec9879b7fbd905bec"
+      },
+      "cargo_build_receipt" => {
+        "path" => "packages/bun/lolhtml-offline-build-proof.json",
+        "sha256" => "05785f79c560ce5953500acc7c9dea283a53b18240e59b62c84f57ab02eb5cce"
+      },
+      "cargo_rpm_receipt" => {
+        "path" => "packages/bun/lolhtml-rpm-cargo-proof.json",
+        "sha256" => "c7d08e312c359363a40ebe0fd24b91245f2fca369a60a1dc71d86e72c29ff164"
+      },
+      "active_provider" => "packages/lol-html/package.yml"
+    }
+    errors << "bun: source-license historical lol-html evidence mismatch" unless receipt.dig("historical_evidence", "private_lolhtml_cargo_graph") == expected_history
 
     npm = receipt["npm"] || {}
     errors << "bun: source-license npm cache count mismatch" unless npm["cache_entries"] == inventory["npm_cache_entries"]
@@ -2458,7 +2483,7 @@ module Agentlab
 
     true_validation = %w[
       source_closure_verified
-      cargo2rpm_inventory_verified
+      system_lolhtml_provider_external_to_bun_inventory
       npm_source_declarations_inventoried
       npm_supplied_license_texts_inventoried
       native_license_files_inventoried
@@ -2483,15 +2508,13 @@ module Agentlab
     required_spec_fragments = [
       "%global source_license_inventory_sha256 #{expected_sha256}",
       "%global source_license_audit_script_sha256 #{inventory['audit_script_sha256']}",
-      "Source27:       #{receipt_name.sub(version, "%{version}")}",
-      "Source28:       #{inventory['audit_script_source']}",
-      "echo \"%{source_license_inventory_sha256}  %{SOURCE27}\" | sha256sum -c -",
-      "echo \"%{source_license_audit_script_sha256}  %{SOURCE28}\" | sha256sum -c -",
-      "ruby %{SOURCE28}",
-      "--cargo-linked-count 41",
-      "--cargo-linked-manifest-sha256 \"%{cargo_vendor_manifest_sha256}\"",
+      "Source25:       #{receipt_name.sub(version, "%{version}")}",
+      "Source26:       #{inventory['audit_script_source']}",
+      "echo \"%{source_license_inventory_sha256}  %{SOURCE25}\" | sha256sum -c -",
+      "echo \"%{source_license_audit_script_sha256}  %{SOURCE26}\" | sha256sum -c -",
+      "ruby %{SOURCE26}",
       "--check",
-      "--receipt \"%{SOURCE27}\""
+      "--receipt \"%{SOURCE25}\""
     ]
     errors << "bun: spec does not integrate the source-license inventory" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
     errors
@@ -3246,8 +3269,14 @@ module Agentlab
           end
 
           dependency_stage = stages.fetch("dependency_closure")
-          errors << "bun: self-rebuild proof source-closure path mismatch" unless receipt.dig("source_closure", "path") == dependency_stage["proof_receipt"]
-          errors << "bun: self-rebuild proof source-closure SHA-256 mismatch" unless receipt.dig("source_closure", "sha256") == dependency_stage["proof_receipt_sha256"]
+          closure_contract = if self_stage["historical_only"] == true
+                               dependency_stage.fetch("historical_lolhtml_graph")
+                             else
+                               dependency_stage
+                             end
+          expected_closure_path = closure_contract["proof_receipt"] || File.basename(closure_contract.fetch("proof_receipt_path_at_commit"))
+          errors << "bun: self-rebuild proof source-closure path mismatch" unless receipt.dig("source_closure", "path") == expected_closure_path
+          errors << "bun: self-rebuild proof source-closure SHA-256 mismatch" unless receipt.dig("source_closure", "sha256") == closure_contract["proof_receipt_sha256"]
           errors << "bun: self-rebuild proof source commit mismatch" unless receipt.dig("source_closure", "source_commit") == package.upstream["source_commit"]
           errors << "bun: self-rebuild proof source SHA-256 mismatch" unless receipt.dig("source_closure", "source_archive_sha256") == package.upstream["source_sha256"]
           errors << "bun: self-rebuild proof seed binary mismatch" unless receipt.dig("bootstrap_seed", "binary_sha256") == seed["binary_sha256"]
@@ -3263,8 +3292,8 @@ module Agentlab
           errors << "bun: self-rebuild proof source-built driver rule set mismatch" unless receipt.dig("configure", "source_built_driver_rules") == expected_driver_rules
           errors << "bun: self-rebuild proof retained a bootstrap-seed identity" unless receipt.dig("configure", "bootstrap_seed_identity_absent") == true
           errors << "bun: self-rebuild proof install-edge count mismatch" unless receipt.dig("configure", "install_edges") == 3
-          errors << "bun: self-rebuild proof native-fetch count mismatch" unless receipt.dig("configure", "native_fetch_edges") == dependency_stage["selected_github_archives"]
-          errors << "bun: self-rebuild proof Node-header fetch count mismatch" unless receipt.dig("configure", "node_header_fetch_edges") == dependency_stage["selected_node_header_archives"]
+          errors << "bun: self-rebuild proof native-fetch count mismatch" unless receipt.dig("configure", "native_fetch_edges") == closure_contract["selected_github_archives"]
+          errors << "bun: self-rebuild proof Node-header fetch count mismatch" unless receipt.dig("configure", "node_header_fetch_edges") == closure_contract["selected_node_header_archives"]
           errors << "bun: self-rebuild proof did not use local WebKit" unless receipt.dig("configure", "local_webkit_verified") == true
           errors << "bun: self-rebuild proof retained a Zig fetch edge" unless receipt.dig("configure", "zig_fetch_absent") == true
           errors << "bun: self-rebuild proof did not verify the Zig source cwd" unless receipt.dig("configure", "zig_source_cwd_verified") == true

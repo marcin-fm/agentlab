@@ -101,18 +101,6 @@ module BunReleaseLocalStaging
     copy_verified!(archive, prefetch, record.fetch("sha256"))
 
     destination = File.join(source_root, "vendor", record.fetch("name"))
-    if record.fetch("name") == "lolhtml"
-      stamp = File.join(destination, ".ref")
-      unless File.file?(stamp) && File.read(stamp).strip == record.fetch("upstream_source_identity")
-        raise Error, "pre-staged lol-html source identity mismatch"
-      end
-      return {
-        "name" => record.fetch("name"),
-        "identity" => record.fetch("upstream_source_identity"),
-        "pre_staged" => true
-      }
-    end
-
     extract_rooted_archive!(archive, destination, record.fetch("archive_root"), chdir: source_root)
     stats = extracted_stats(destination)
     expected_stats = {
@@ -470,7 +458,7 @@ module BunReleaseLocalStaging
     npm_bundle = File.realpath(options.fetch(:npm_bundle))
     closure_bytes = File.binread(closure_path)
     closure = JSON.parse(closure_bytes)
-    unless closure.fetch("schema") == "bun-release-local-source-closure/v2" && closure.fetch("package") == "bun"
+    unless closure.fetch("schema") == "bun-release-local-source-closure/v3" && closure.fetch("package") == "bun"
       raise Error, "unsupported Bun release-local source closure"
     end
     unless closure.fetch("target") == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
@@ -486,7 +474,7 @@ module BunReleaseLocalStaging
     native = closure.fetch("native_github_sources").map do |record|
       stage_native!(record, source_root, source_dir, tarball_cache, options.fetch(:prefetch_dir))
     end
-    raise Error, "expected 19 native source records" unless native.length == 19
+    raise Error, "expected 18 native source records" unless native.length == 18
     node = stage_node_headers!(closure.fetch("node_headers"), source_root, source_dir, options.fetch(:prefetch_dir))
     npm = stage_npm!(
       closure,

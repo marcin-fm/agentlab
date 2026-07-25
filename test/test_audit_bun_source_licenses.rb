@@ -58,7 +58,8 @@ class BunSourceLicenseAuditTest < Minitest::Test
   end
 
   def test_native_license_map_matches_the_checked_component_set
-    assert_equal(19, BunSourceLicenseAudit::NATIVE_LICENSE_PATHS.length)
+    assert_equal(18, BunSourceLicenseAudit::NATIVE_LICENSE_PATHS.length)
+    refute(BunSourceLicenseAudit::NATIVE_LICENSE_PATHS.key?("lolhtml"))
     assert_equal(%w[LICENSE LICENSE.chrome], BunSourceLicenseAudit::NATIVE_LICENSE_PATHS.fetch("lsquic"))
     assert_equal(["picohttpparser.c"], BunSourceLicenseAudit::NATIVE_LICENSE_PATHS.fetch("picohttpparser"))
   end
@@ -95,5 +96,12 @@ class BunSourceLicenseAuditTest < Minitest::Test
     ].each do |key|
       assert_equal(false, receipt.dig("validation", key), key)
     end
+    refute(receipt.key?("cargo"))
+    assert_equal(18, receipt.fetch("native").length)
+    assert_equal(true, receipt.dig("validation", "system_lolhtml_provider_external_to_bun_inventory"))
+    assert_equal(
+      "ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5",
+      receipt.dig("historical_evidence", "private_lolhtml_cargo_graph", "source_commit")
+    )
   end
 end

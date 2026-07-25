@@ -18,7 +18,6 @@
 %global libjpeg_turbo_sha256 440f3a94390c78eab88f74b92944d2f6b248e592e984412e389885dfb5796bf0
 %global libspng_sha256 d656813290d70a750b69e768323ff3b3875adf8c2e8c2fdb4e57ca1467abf86a
 %global libwebp_sha256 76fb89b4454ff2161bb0cca2cf832e19b8b4001b0ef42fbcc2b4a437c945b2b6
-%global lolhtml_sha256 2c53161edf633fa99acfc4eafddbafd5d9b8199f0918a1cc9152cb6c2c9bf379
 %global lshpack_sha256 07d8bf901bb1b15543f38eabd23938519e1210eebadb52f3d651d6ef130ef973
 %global lsqpack_sha256 e9d8abe5b7c1e35b9908a9521e2acd7c1d17547babc01d73c7297e02aebbcc2d
 %global lsquic_sha256 f8cb90fb327eb91597c23163bf596c0d1882560be35b661d9ba84891cc461735
@@ -29,15 +28,10 @@
 %global zstd_sha256 4b0bd1f0cfb25e61b9103c35f27395530ff5b4c0d2513a00fd745849e85ea52c
 %global node_headers_sha256 045e9bf477cd5db0ec67f8c1a63ba7f784dedfe2c581e3d0ed09b88e9115dd07
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
-%global cargo_vendor_sha256 299c363484cca82f6c6c0469aafac1e8b3dd925706b425347f64d6047dadce57
-%global cargo_vendor_manifest_sha256 37dc9f2bef863d9b87e3e289ea9a783b6955bd961586be34ad0c37766522d187
-%global lolhtml_manifest_sha256 feebef6f9b726f63b58bfad3bbc0a8a81667fbaf4e4111dc1a4e8f79b83e9f03
-%global lolhtml_lockfile_sha256 02d28352293be00f05be457e59e60d5b9d7e84a4cdc43bd40236a12bf8d1e53d
-%global lolhtml_source_identity 712928b3736f4aad
-%global release_local_closure_sha256 ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0
-%global source_staging_helper_sha256 73f25a3a5e3640d749a69fa530d8fb0d2fcad93e1c8aa01460b829616a63aaaf
-%global source_license_inventory_sha256 ea8fa634cb896eb1ba5376992e4f1001042d39836071d50ec9879b7fbd905bec
-%global source_license_audit_script_sha256 2e1520b5f892f8e37da9a08f01284f3cad1e580f0c03efcbc4409381e0f70723
+%global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
+%global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
+%global source_license_inventory_sha256 274b1fd8ce15088c042e1926f143a60a66256ee1c7718ffbef19d619ebce8d34
+%global source_license_audit_script_sha256 76eb418d57c98355a313c085f7a228ece9cf85f60cf61bbfafd2bd07ca5133ca
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -46,8 +40,8 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.21%{?dist}
-Summary:        JavaScript runtime, bundler, test runner, and package manager
+Release:        0.0.22%{?dist}
+Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
 License:        MIT AND LGPL-2.0-only AND LGPL-2.1-only AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND Zlib AND Unicode-DFS-2016
@@ -68,28 +62,25 @@ Source9:        https://github.com/ebiggers/libdeflate/archive/c8c56a20f8f621e6a
 Source10:       https://github.com/libjpeg-turbo/libjpeg-turbo/archive/e352b02f794f701407b39af08576035ba3360d60.tar.gz#/libjpeg-turbo-297099166a01f75e.tar.gz
 Source11:       https://github.com/randy408/libspng/archive/fb768002d4288590083a476af628e51c3f1d47cd.tar.gz#/libspng-e6aca86c593b51ad.tar.gz
 Source12:       https://github.com/webmproject/libwebp/archive/b7e29b9d75bd31422b00c2a446d49d7af06c328d.tar.gz#/libwebp-2ced709f169b40bd.tar.gz
-Source13:       https://github.com/cloudflare/lol-html/archive/77127cd2b8545998756e8d64e36ee2313c4bb312.tar.gz#/lolhtml-929339b1d898e66b.tar.gz
-Source14:       https://github.com/litespeedtech/ls-hpack/archive/8905c024b6d052f083a3d11d0a169b3c2735c8a1.tar.gz#/lshpack-73e0c55d12ea4fc2.tar.gz
-Source15:       https://github.com/litespeedtech/ls-qpack/archive/1e9c5b8e59f8161c54f168a570c8bfdc59ded0c3.tar.gz#/lsqpack-ceeb8e315778b938.tar.gz
-Source16:       https://github.com/litespeedtech/lsquic/archive/3181911301b1aa4f54c1ed690901abc674ee08fb.tar.gz#/lsquic-d3ef6cf1fbedd7f9.tar.gz
-Source17:       https://github.com/oven-sh/mimalloc/archive/f15aecb94fc8096008bf87b90c53ed682026914a.tar.gz#/mimalloc-4a1c4f1f45e31b88.tar.gz
-Source18:       https://github.com/h2o/picohttpparser/archive/066d2b1e9ab820703db0837a7255d92d30f0c9f5.tar.gz#/picohttpparser-fad59b16ad4752cc.tar.gz
-Source19:       https://github.com/oven-sh/tinycc/archive/12882eee073cfe5c7621bcfadf679e1372d4537b.tar.gz#/tinycc-2f1f629056328c7b.tar.gz
-Source20:       https://github.com/zlib-ng/zlib-ng/archive/12731092979c6d07f42da27da673a9f6c7b13586.tar.gz#/zlib-655c6ecdb6fc9cd5.tar.gz
-Source21:       https://github.com/facebook/zstd/archive/f8745da6ff1ad1e7bab384bd1f9d742439278e99.tar.gz#/zstd-e010993a24072468.tar.gz
-Source22:       https://nodejs.org/dist/v24.3.0/node-v24.3.0-headers.tar.gz#/nodejs-d79d5920ee9b0fc1.tar.gz
+Source13:       https://github.com/litespeedtech/ls-hpack/archive/8905c024b6d052f083a3d11d0a169b3c2735c8a1.tar.gz#/lshpack-73e0c55d12ea4fc2.tar.gz
+Source14:       https://github.com/litespeedtech/ls-qpack/archive/1e9c5b8e59f8161c54f168a570c8bfdc59ded0c3.tar.gz#/lsqpack-ceeb8e315778b938.tar.gz
+Source15:       https://github.com/litespeedtech/lsquic/archive/3181911301b1aa4f54c1ed690901abc674ee08fb.tar.gz#/lsquic-d3ef6cf1fbedd7f9.tar.gz
+Source16:       https://github.com/oven-sh/mimalloc/archive/f15aecb94fc8096008bf87b90c53ed682026914a.tar.gz#/mimalloc-4a1c4f1f45e31b88.tar.gz
+Source17:       https://github.com/h2o/picohttpparser/archive/066d2b1e9ab820703db0837a7255d92d30f0c9f5.tar.gz#/picohttpparser-fad59b16ad4752cc.tar.gz
+Source18:       https://github.com/oven-sh/tinycc/archive/12882eee073cfe5c7621bcfadf679e1372d4537b.tar.gz#/tinycc-2f1f629056328c7b.tar.gz
+Source19:       https://github.com/zlib-ng/zlib-ng/archive/12731092979c6d07f42da27da673a9f6c7b13586.tar.gz#/zlib-655c6ecdb6fc9cd5.tar.gz
+Source20:       https://github.com/facebook/zstd/archive/f8745da6ff1ad1e7bab384bd1f9d742439278e99.tar.gz#/zstd-e010993a24072468.tar.gz
+Source21:       https://nodejs.org/dist/v24.3.0/node-v24.3.0-headers.tar.gz#/nodejs-d79d5920ee9b0fc1.tar.gz
 # Generated during repository-backed SRPM construction from the checked Bun lock closure.
-Source23:       bun-%{version}-npm-sources.tar.gz
-# Generated during repository-backed SRPM construction from the checked lol-html Cargo lock closure.
-Source24:       bun-%{version}-lolhtml-cargo-vendor.tar.gz
+Source22:       bun-%{version}-npm-sources.tar.gz
 # Checked machine-readable contract for the direct and bundled dependency sources.
-Source25:       bun-%{version}-release-local-source-closure.json
+Source23:       bun-%{version}-release-local-source-closure.json
 # Fedora packaging helper that reconstructs Bun's offline source/cache layout.
-Source26:       bun-stage-release-local-sources
+Source24:       bun-stage-release-local-sources
 # Provisional source-license inventory. Final linked-license claims remain blocked.
-Source27:       bun-%{version}-source-license-inventory.json
-# Reproduces and verifies Source27 against the actual prepared source tree.
-Source28:       audit-bun-source-licenses
+Source25:       bun-%{version}-source-license-inventory.json
+# Reproduces and verifies Source25 against the actual prepared source tree.
+Source26:       audit-bun-source-licenses
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -114,7 +105,6 @@ ExclusiveArch:  x86_64
 
 BuildRequires:  binutils
 BuildRequires:  bison
-BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  clang20
 BuildRequires:  clang20-devel
 BuildRequires:  clang20-libs
@@ -153,15 +143,15 @@ Bun is an all-in-one JavaScript runtime and development toolkit.
 
 This draft is intentionally excluded from COPR. It source-bootstraps the
 Bun-pinned Zig fork without an external Zig executable, verifies and patches
-the checked minimized WebKit/JSC source, builds its static libraries with LLVM 21,
-and carries the verified Fedora-stable Rust and glibc-only npm lock paths. The
-three frozen npm installs are proven separately with networking unavailable.
-The RPM draft carries the previously checked dependency-source closure and a
-provisional source-license inventory. Fedora glibc builds now omit Bun's private
-lol-html archive, link the system lol-html 3.0.0 C API, and use the updated
-memory-settings ABI. The old vendored source remains staged only for historical
-license evidence until the source closure is regenerated. The source-built npm
-installs, final Bun build graph, and relink payload integration remain blocked.
+the checked minimized WebKit/JSC source, and builds its static libraries with
+LLVM 21. It carries the verified Fedora-stable Rust and GNU C library package
+lock paths. The three frozen package-manager installs are proven separately
+with networking unavailable. The RPM draft carries the checked dependency
+source closure and a provisional source-license inventory. Fedora builds now
+omit Bun's private parser archive, link the separately packaged 3.0.0 C API,
+and use the updated memory-settings ABI. The checked closure and source-license
+inventory exclude the former private Rust graph. The source-built installs,
+final Bun build graph, and link-reproduction payload integration remain blocked.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -177,22 +167,20 @@ echo "%{libdeflate_sha256}  %{SOURCE9}" | sha256sum -c -
 echo "%{libjpeg_turbo_sha256}  %{SOURCE10}" | sha256sum -c -
 echo "%{libspng_sha256}  %{SOURCE11}" | sha256sum -c -
 echo "%{libwebp_sha256}  %{SOURCE12}" | sha256sum -c -
-echo "%{lolhtml_sha256}  %{SOURCE13}" | sha256sum -c -
-echo "%{lshpack_sha256}  %{SOURCE14}" | sha256sum -c -
-echo "%{lsqpack_sha256}  %{SOURCE15}" | sha256sum -c -
-echo "%{lsquic_sha256}  %{SOURCE16}" | sha256sum -c -
-echo "%{mimalloc_sha256}  %{SOURCE17}" | sha256sum -c -
-echo "%{picohttpparser_sha256}  %{SOURCE18}" | sha256sum -c -
-echo "%{tinycc_sha256}  %{SOURCE19}" | sha256sum -c -
-echo "%{zlib_sha256}  %{SOURCE20}" | sha256sum -c -
-echo "%{zstd_sha256}  %{SOURCE21}" | sha256sum -c -
-echo "%{node_headers_sha256}  %{SOURCE22}" | sha256sum -c -
-echo "%{npm_sources_sha256}  %{SOURCE23}" | sha256sum -c -
-echo "%{cargo_vendor_sha256}  %{SOURCE24}" | sha256sum -c -
-echo "%{release_local_closure_sha256}  %{SOURCE25}" | sha256sum -c -
-echo "%{source_staging_helper_sha256}  %{SOURCE26}" | sha256sum -c -
-echo "%{source_license_inventory_sha256}  %{SOURCE27}" | sha256sum -c -
-echo "%{source_license_audit_script_sha256}  %{SOURCE28}" | sha256sum -c -
+echo "%{lshpack_sha256}  %{SOURCE13}" | sha256sum -c -
+echo "%{lsqpack_sha256}  %{SOURCE14}" | sha256sum -c -
+echo "%{lsquic_sha256}  %{SOURCE15}" | sha256sum -c -
+echo "%{mimalloc_sha256}  %{SOURCE16}" | sha256sum -c -
+echo "%{picohttpparser_sha256}  %{SOURCE17}" | sha256sum -c -
+echo "%{tinycc_sha256}  %{SOURCE18}" | sha256sum -c -
+echo "%{zlib_sha256}  %{SOURCE19}" | sha256sum -c -
+echo "%{zstd_sha256}  %{SOURCE20}" | sha256sum -c -
+echo "%{node_headers_sha256}  %{SOURCE21}" | sha256sum -c -
+echo "%{npm_sources_sha256}  %{SOURCE22}" | sha256sum -c -
+echo "%{release_local_closure_sha256}  %{SOURCE23}" | sha256sum -c -
+echo "%{source_staging_helper_sha256}  %{SOURCE24}" | sha256sum -c -
+echo "%{source_license_inventory_sha256}  %{SOURCE25}" | sha256sum -c -
+echo "%{source_license_audit_script_sha256}  %{SOURCE26}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -209,25 +197,11 @@ tar -xf %{SOURCE2} -C vendor
 mv vendor/WebKit-%{webkit_commit} vendor/WebKit
 patch -d vendor/WebKit -p1 < %{PATCH1}
 
-mkdir -p vendor/lolhtml
-tar --extract --gzip --file %{SOURCE13} --strip-components=1 --directory vendor/lolhtml
-echo "%{lolhtml_manifest_sha256}  vendor/lolhtml/c-api/Cargo.toml" | sha256sum -c -
-echo "%{lolhtml_lockfile_sha256}  vendor/lolhtml/c-api/Cargo.lock" | sha256sum -c -
-printf '%s\n' '%{lolhtml_source_identity}' > vendor/lolhtml/.ref
-
-# Retain the old Cargo tree only so Source27 remains reproducible while the
-# system-library split is validated. The active build no longer compiles it.
-tar --extract --gzip --file %{SOURCE24} --directory vendor/lolhtml/c-api
-pushd vendor/lolhtml/c-api >/dev/null
-%cargo_prep -v cargo-vendor
-test "$(find cargo-vendor -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 43
-popd >/dev/null
-
 mkdir -p .build-tools
-ruby %{SOURCE26} \
+ruby %{SOURCE24} \
   --source-root "$PWD" \
-  --closure "%{SOURCE25}" \
-  --npm-bundle "%{SOURCE23}" \
+  --closure "%{SOURCE23}" \
+  --npm-bundle "%{SOURCE22}" \
   --npm-cache "$PWD/.build-tools/bun-install-cache" \
   --prefetch-dir "$PWD/.build-tools/prefetch/by-url" \
   --receipt "$PWD/.build-tools/release-local-source-staging.json" \
@@ -239,15 +213,13 @@ ruby %{SOURCE26} \
   --expected-npm-file-bytes "%{npm_cache_file_bytes}"
 test -s .build-tools/release-local-source-staging.json
 test -s .build-tools/npm-cache-manifest.jsonl
-ruby %{SOURCE28} \
+ruby %{SOURCE26} \
   --source-root "$PWD" \
-  --closure "%{SOURCE25}" \
-  --cargo-linked-count 41 \
-  --cargo-linked-manifest-sha256 "%{cargo_vendor_manifest_sha256}" \
-  --rpm-release 0.0.21 \
-  --date 2026-07-19 \
+  --closure "%{SOURCE23}" \
+  --rpm-release 0.0.22 \
+  --date 2026-07-25 \
   --check \
-  --receipt "%{SOURCE27}"
+  --receipt "%{SOURCE25}"
 
 %build
 export HOME="$PWD/.build-home"
@@ -379,6 +351,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.22
+- Regenerate the source and license closure for Fedora's system lol-html provider.
+
 * Sun Jul 19 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.21
 - Link Fedora's shared lol-html 3.0.0 C API and update the handwritten ABI.
 

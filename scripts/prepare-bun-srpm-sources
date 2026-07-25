@@ -76,7 +76,7 @@ jobs = 4
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prepare-bun-srpm-sources --spec PATH [options]"
   parser.on("--spec PATH", "Expanded Bun spec source directory") { |path| spec = path }
-  parser.on("--jobs N", Integer, "Concurrent npm/Cargo downloads (1-4)") { |value| jobs = value }
+  parser.on("--jobs N", Integer, "Concurrent npm downloads (1-4)") { |value| jobs = value }
 end.parse!
 
 raise Agentlab::Error, "--spec is required" unless spec
@@ -103,7 +103,6 @@ zig = source_inputs.fetch("zig")
 zig_filename = "bun-#{version}-zig-#{zig.fetch('commit')}.tar.gz"
 webkit = source_inputs.fetch("webkit").fetch("jsc_only")
 npm_filename = dependency_stage.fetch("npm_source_archive_filename")
-cargo_filename = dependency_stage.fetch("cargo_vendor_archive_filename")
 expected_sources = {
   0 => bun_url,
   1 => "#{zig.fetch('url')}#/#{zig_filename}",
@@ -112,13 +111,12 @@ expected_sources = {
 native_sources.each_with_index do |source, offset|
   expected_sources[offset + 3] = "#{source.fetch('url')}#/#{source.fetch('archive')}"
 end
-expected_sources[22] = "#{node_source.fetch('url')}#/#{node_source.fetch('archive')}"
-expected_sources[23] = npm_filename
-expected_sources[24] = cargo_filename
-expected_sources[25] = staging.fetch("closure_source")
-expected_sources[26] = staging.fetch("helper_source")
-expected_sources[27] = license_inventory.fetch("source")
-expected_sources[28] = license_inventory.fetch("audit_script_source")
+expected_sources[21] = "#{node_source.fetch('url')}#/#{node_source.fetch('archive')}"
+expected_sources[22] = npm_filename
+expected_sources[23] = staging.fetch("closure_source")
+expected_sources[24] = staging.fetch("helper_source")
+expected_sources[25] = license_inventory.fetch("source")
+expected_sources[26] = license_inventory.fetch("audit_script_source")
 actual_sources = expanded_sources(spec)
 unless actual_sources == expected_sources
   raise Agentlab::Error, "bun.spec Source declarations do not match the checked SRPM source layout"
@@ -132,10 +130,10 @@ direct_identities = [
 (native_sources + [node_source]).each_with_index do |source, offset|
   direct_identities << [offset + 3, source.fetch("sha256"), source.fetch("size_bytes")]
 end
-direct_identities << [25, staging.fetch("closure_sha256"), nil]
-direct_identities << [26, staging.fetch("helper_sha256"), nil]
-direct_identities << [27, license_inventory.fetch("sha256"), nil]
-direct_identities << [28, license_inventory.fetch("audit_script_sha256"), nil]
+direct_identities << [23, staging.fetch("closure_sha256"), nil]
+direct_identities << [24, staging.fetch("helper_sha256"), nil]
+direct_identities << [25, license_inventory.fetch("sha256"), nil]
+direct_identities << [26, license_inventory.fetch("audit_script_sha256"), nil]
 direct_identities.each do |index, sha256, size_bytes|
   verify_file!(
     File.join(specdir, source_filename(actual_sources.fetch(index))),
@@ -146,7 +144,7 @@ end
 
 Dir.mktmpdir("agentlab-bun-srpm-preparation-", "/srv/tmp") do |temporary|
   cache_dir = File.join(temporary, "cache")
-  FileUtils.mkdir_p(%w[archives npm cargo].map { |directory| File.join(cache_dir, directory) })
+  FileUtils.mkdir_p(%w[archives npm].map { |directory| File.join(cache_dir, directory) })
   File.write(File.join(cache_dir, ".agentlab-bun-release-local-sources"), "agentlab bun release-local source acquisition\n")
   (native_sources + [node_source]).each do |source|
     atomic_copy(File.join(specdir, source.fetch("archive")), File.join(cache_dir, "archives", source.fetch("archive")))
@@ -184,17 +182,13 @@ Dir.mktmpdir("agentlab-bun-srpm-preparation-", "/srv/tmp") do |temporary|
     "--output-dir", output_dir,
     "--receipt", receipt_path,
     "--workdir", File.join(temporary, "materializer"),
-    "--roles", "npm,cargo"
+    "--roles", "npm"
   )
 
   generated_identities = {
     npm_filename => {
       sha256: dependency_stage.fetch("npm_source_archive_sha256"),
       size_bytes: dependency_stage.fetch("npm_source_archive_bytes")
-    },
-    cargo_filename => {
-      sha256: dependency_stage.fetch("cargo_vendor_archive_sha256"),
-      size_bytes: dependency_stage.fetch("cargo_vendor_archive_bytes")
     }
   }
   generated_identities.each do |filename, identity|
@@ -204,7 +198,7 @@ Dir.mktmpdir("agentlab-bun-srpm-preparation-", "/srv/tmp") do |temporary|
   end
 end
 
-puts "Prepared and verified Bun #{version} npm and Cargo SRPM sources in #{specdir}."
+puts "Prepared and verified Bun #{version} npm SRPM sources in #{specdir}."
 rescue Agentlab::Error, JSON::ParserError, KeyError, Errno::ENOENT => e
   warn "error: #{e.message}"
   exit 1

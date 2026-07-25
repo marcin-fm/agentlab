@@ -1096,6 +1096,7 @@ class AgentlabTest < Minitest::Test
       ))
       stages = Agentlab::BUN_BUILD_STAGES.to_h { |stage| [stage, { "state" => "blocked" }] }
       stages.fetch("dependency_closure").merge!(
+        "historical_only" => true,
         "proof_receipt" => File.basename(closure_path),
         "proof_receipt_sha256" => closure_sha256,
         "cargo_vendor_archive_hosted" => false,
@@ -1195,17 +1196,27 @@ class AgentlabTest < Minitest::Test
     Dir.mktmpdir do |directory|
       receipt_path = File.join(directory, "source-closure.json")
       receipt = {
-        "schema" => "bun-release-local-source-closure/v2",
+        "schema" => "bun-release-local-source-closure/v3",
         "package" => "bun",
         "release" => "1.3.14",
+        "native_github_sources" => [{ "name" => "fixture" }],
+        "node_headers" => { "name" => "node" },
+        "npm" => { "source_archives" => [{ "name" => "npm" }] },
         "existing_local_sources" => [
           { "symbol" => "webkit", "immutable_public_url" => nil }
         ],
-        "validation" => { "immutable_public_hosting_verified" => false }
+        "validation" => {
+          "immutable_public_hosting_verified" => false,
+          "system_lolhtml_provider_selected" => true,
+          "private_lolhtml_source_excluded" => true
+        }
       }
       dependency_stage = {
         "proof_receipt" => File.basename(receipt_path),
-        "cargo_vendor_archive_hosted" => false
+        "selected_github_archives" => 1,
+        "selected_node_header_archives" => 1,
+        "unique_npm_source_archives" => 1,
+        "selected_cargo_source_archives" => 0
       }
       write_receipt = lambda do
         File.write(receipt_path, JSON.dump(receipt))
@@ -1238,7 +1249,7 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
       assert_includes(errors, "bun: unsupported dependency-closure proof receipt schema")
 
-      receipt["schema"] = "bun-release-local-source-closure/v2"
+      receipt["schema"] = "bun-release-local-source-closure/v3"
       { "package" => "other", "release" => "1.3.15" }.each do |field, value|
         original = receipt.fetch(field)
         receipt[field] = value
@@ -1255,10 +1266,12 @@ class AgentlabTest < Minitest::Test
 
       receipt.fetch("validation")["immutable_public_hosting_verified"] = false
       write_receipt.call
-      dependency_stage["cargo_vendor_archive_hosted"] = true
+      receipt["cargo"] = { "crate_sources" => [] }
+      write_receipt.call
       errors = Agentlab.validate_bun_dependency_closure(package, dependency_stage, webkit, "1.3.14")
-      assert_includes(errors, "bun: dependency-closure Cargo vendor archive hosting state is invalid")
+      assert_includes(errors, "bun: dependency-closure proof retains a private Cargo graph")
 
+      receipt.delete("cargo")
       receipt.fetch("validation")["immutable_public_hosting_verified"] = false
       receipt.fetch("existing_local_sources").first["immutable_public_url"] = "https://sources.example.invalid/WebKit.tar.gz"
       write_receipt.call
@@ -1273,9 +1286,22 @@ class AgentlabTest < Minitest::Test
     assert_empty(Agentlab.validate_bun_npm_offline_install(source_package, source_stage, "1.3.14"))
 
     Dir.mktmpdir do |directory|
-      receipt = JSON.parse(File.read(File.join(source_package.directory, source_stage.fetch("npm_install_proof_receipt"))))
+      history = source_stage.fetch("historical_lolhtml_graph")
+      receipt = JSON.parse(File.read(File.join(source_package.directory, history.fetch("npm_install_proof_receipt"))))
       receipt_path = File.join(directory, "npm-offline-install-proof.json")
       dependency_stage = Marshal.load(Marshal.dump(source_stage))
+      dependency_stage.merge!(
+        "proof_receipt" => "bun-1.3.14-release-local-source-closure.json",
+        "proof_receipt_sha256" => history.fetch("proof_receipt_sha256"),
+        "unique_npm_source_archives" => 236,
+        "npm_cache_entries" => 236,
+        "npm_cache_tree_sha256" => "50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214",
+        "npm_cache_materialization_verified" => true,
+        "npm_offline_install_verified" => true,
+        "npm_frozen_lockfile_verified" => true,
+        "npm_ignore_scripts_verified" => true,
+        "npm_network_namespace_verified" => true
+      )
       dependency_stage["npm_install_proof_receipt"] = File.basename(receipt_path)
       package = Agentlab::Package.new(
         directory: directory,
@@ -1343,7 +1369,7 @@ class AgentlabTest < Minitest::Test
       "bun: spec still builds the historical private lol-html library"
     )
     invalid_data = Marshal.load(Marshal.dump(source_package.data))
-    invalid_data.dig("build_plan", "source_inputs", "source_license_inventory")["system_lolhtml_provider_included"] = true
+    invalid_data.dig("build_plan", "source_inputs", "source_license_inventory")["system_lolhtml_provider_external"] = false
     invalid_package = Agentlab::Package.new(
       directory: source_package.directory,
       manifest_path: "unused",
@@ -1402,7 +1428,10 @@ class AgentlabTest < Minitest::Test
     )
 
     invalid_stage = stages.fetch("source_delivery").merge("proof_receipt_sha256" => "0" * 64)
-    assert_empty(Agentlab.validate_bun_source_delivery(package, invalid_stage, stages.fetch("dependency_closure"), "1.3.14", spec))
+    assert_equal(
+      ["bun: source-delivery proof receipt is missing or has wrong SHA-256"],
+      Agentlab.validate_bun_source_delivery(package, invalid_stage, stages.fetch("dependency_closure"), "1.3.14", spec)
+    )
   end
 
   def test_validates_bun_lolhtml_rpm_cargo_receipt
@@ -1454,7 +1483,8 @@ class AgentlabTest < Minitest::Test
     )
 
     invalid_stage = stages.fetch("dependency_staging").merge("proof_receipt_sha256" => "0" * 64)
-    assert_empty(
+    assert_equal(
+      ["bun: dependency-staging proof receipt is missing or has wrong SHA-256"],
       Agentlab.validate_bun_dependency_staging(
         package,
         invalid_stage,
@@ -1500,7 +1530,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("Source27:", "Removed27:")
+        spec.sub("Source25:", "Removed25:")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -1636,6 +1666,7 @@ class AgentlabTest < Minitest::Test
     Dir.mktmpdir do |directory|
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
+      data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
       %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
@@ -1701,6 +1732,7 @@ class AgentlabTest < Minitest::Test
     Dir.mktmpdir do |directory|
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
+      data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
       self_stage.delete("proof_receipt")
       self_stage.delete("zig_reproducibility_proof_receipt")
@@ -1711,8 +1743,6 @@ class AgentlabTest < Minitest::Test
       FileUtils.cp(File.join(source_package.directory, kit_receipt_name), File.join(directory, kit_receipt_name))
       closure_name = data.dig("build_plan", "stages", "dependency_closure", "proof_receipt")
       FileUtils.cp(File.join(source_package.directory, closure_name), File.join(directory, closure_name))
-      npm_proof_name = data.dig("build_plan", "stages", "dependency_closure", "npm_install_proof_receipt")
-      FileUtils.cp(File.join(source_package.directory, npm_proof_name), File.join(directory, npm_proof_name))
       inventory_name = data.dig("build_plan", "source_inputs", "source_license_inventory", "source")
       FileUtils.cp(File.join(source_package.directory, inventory_name), File.join(directory, inventory_name))
       patch_name = data.dig("build_plan", "source_inputs", "lolhtml", "patch")
