@@ -2419,6 +2419,26 @@ class AgentlabTest < Minitest::Test
       ),
       "bun: spec does not integrate the source-license inventory"
     )
+    assert_includes(
+      Agentlab.validate_bun_source_license_inventory(
+        package,
+        inventory,
+        plan.fetch("stages").fetch("dependency_closure"),
+        "1.3.14",
+        spec.sub("--rpm-release 0.0.24", "--rpm-release 0.0.23")
+      ),
+      "bun: spec does not integrate the source-license inventory"
+    )
+    assert_includes(
+      Agentlab.validate_bun_source_license_inventory(
+        package,
+        inventory,
+        plan.fetch("stages").fetch("dependency_closure"),
+        "1.3.14",
+        spec.sub("--date 2026-07-26", "--date 2026-07-25")
+      ),
+      "bun: spec does not integrate the source-license inventory"
+    )
 
     Dir.mktmpdir do |directory|
       data = Marshal.load(Marshal.dump(package.data))

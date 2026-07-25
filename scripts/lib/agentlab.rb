@@ -3245,6 +3245,8 @@ module Agentlab
       "echo \"%{source_license_inventory_sha256}  %{SOURCE25}\" | sha256sum -c -",
       "echo \"%{source_license_audit_script_sha256}  %{SOURCE26}\" | sha256sum -c -",
       "ruby %{SOURCE26}",
+      "--rpm-release #{spec_release}",
+      "--date #{receipt['audit_date']}",
       "--check",
       "--receipt \"%{SOURCE25}\""
     ]
