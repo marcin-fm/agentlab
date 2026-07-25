@@ -713,6 +713,103 @@ module Agentlab
     ["openchamber: invalid source acquisition evidence: #{e.message}"]
   end
 
+  def validate_openchamber_source_materialization(package, dependencies)
+    return [] unless package.name == "openchamber"
+
+    errors = []
+    metadata = dependencies.fetch("source_materialization_receipt")
+    filename = dependencies.dig("source_closure_files", "source_materialization")
+    path = filename.is_a?(String) && File.join(package.directory, filename)
+    return ["openchamber: source materialization receipt is missing: #{filename.inspect}"] unless path && File.file?(path)
+
+    actual_sha256 = Digest::SHA256.file(path).hexdigest
+    errors << "openchamber: source materialization receipt SHA-256 mismatch" unless metadata["sha256"] == actual_sha256
+    receipt = JSON.parse(File.read(path))
+    errors << "openchamber: source materialization schema mismatch" unless receipt["schema"] == "openchamber-source-materialization/v1" && metadata["schema"] == receipt["schema"]
+    errors << "openchamber: source materialization package mismatch" unless receipt["package"] == package.name
+    errors << "openchamber: source materialization release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
+
+    source_filename = dependencies.dig("source_closure_files", "source_audit")
+    source_path = source_filename.is_a?(String) && File.join(package.directory, source_filename)
+    return errors << "openchamber: source audit is unavailable for materialization validation" unless source_path && File.file?(source_path)
+
+    source_sha256 = Digest::SHA256.file(source_path).hexdigest
+    errors << "openchamber: source materialization source-audit SHA-256 mismatch" unless receipt.dig("source_audit", "sha256") == source_sha256 && metadata["source_audit_sha256"] == source_sha256
+    errors << "openchamber: source materialization source-audit filename mismatch" unless receipt.dig("source_audit", "filename") == source_filename
+    source_audit = JSON.parse(File.read(source_path))
+
+    records = source_audit.fetch("sources").map do |source|
+      {
+        "archive" => source.fetch("archive"),
+        "sha256" => source.fetch("sha256"),
+        "size_bytes" => source.fetch("size"),
+        "npm_name" => source.fetch("npm_name"),
+        "version" => source.fetch("version"),
+        "roles" => source.fetch("roles"),
+        "package_paths" => source.fetch("package_paths")
+      }
+    end.sort_by { |record| record.fetch("archive") }
+    grouped = {
+      "production_build" => records.select { |record| !(record.fetch("roles") & %w[runtime build]).empty? },
+      "test" => records
+    }
+    expected_filenames = {
+      "production_build" => dependencies.dig("source_closure_files", "production_build_closure"),
+      "test" => dependencies.dig("source_closure_files", "test_closure")
+    }
+    grouped.each do |role, members|
+      archive = receipt.dig("archives", role)
+      unless archive.is_a?(Hash)
+        errors << "openchamber: source materialization archive #{role} is missing"
+        next
+      end
+      expected_summary = {
+        "filename" => expected_filenames.fetch(role),
+        "member_count" => members.length,
+        "input_bytes" => members.sum { |record| record.fetch("size_bytes") },
+        "member_manifest_sha256" => Digest::SHA256.hexdigest(JSON.generate(members) + "\n")
+      }
+      expected_summary.each do |field, value|
+        errors << "openchamber: source materialization #{role} #{field} mismatch" unless archive[field] == value && metadata.dig(role, field) == value
+      end
+      expected_static = {
+        "role" => role == "production_build" ? "production-build-npm-source-bundle" : "test-capable-npm-source-bundle",
+        "recipe" => "deterministic-archive-bundle/v1",
+        "compression" => "zstd-10-single-thread",
+        "archive_root" => role == "production_build" ? "openchamber-#{receipt.fetch('release')}-nm-prod-build" : "openchamber-#{receipt.fetch('release')}-nm-dev-test"
+      }
+      expected_static.each do |field, value|
+        errors << "openchamber: source materialization #{role} #{field} mismatch" unless archive[field] == value
+      end
+      %w[size_bytes].each do |field|
+        value = archive[field]
+        errors << "openchamber: source materialization #{role} #{field} is invalid" unless value.is_a?(Integer) && value.positive? && metadata.dig(role, field) == value
+      end
+      %w[sha256].each do |field|
+        value = archive[field]
+        errors << "openchamber: source materialization #{role} #{field} is invalid" unless value.to_s.match?(/\A[0-9a-f]{64}\z/) && metadata.dig(role, field) == value
+      end
+    end
+
+    errors << "openchamber: source materialization roles mismatch" unless receipt["selected_archive_roles"] == %w[production_build test]
+    validation = receipt.fetch("validation")
+    %w[source_audit_verified cached_member_sizes_verified cached_member_sha256_verified safe_archive_paths_verified archive_roots_verified production_role_selection_verified test_superset_verified deterministic_regeneration_verified].each do |flag|
+      errors << "openchamber: source materialization validation #{flag} is not true" unless validation[flag] == true
+    end
+    %w[network_access_performed node_modules_materialized dependency_resolution_performed patches_applied lifecycle_scripts_executed package_build_performed rpm_integrated].each do |flag|
+      errors << "openchamber: source materialization overclaims #{flag}" unless validation[flag] == false && metadata.dig("validation", flag) == false
+    end
+
+    source_policy = package.data.fetch("source_policy")
+    errors << "openchamber: package source materialization receipt mismatch" unless source_policy["source_materialization_receipt"] == filename
+    errors << "openchamber: package source materialization SHA-256 mismatch" unless source_policy["source_materialization_sha256"] == actual_sha256
+    errors << "openchamber: package does not mark source bundles materialized" unless source_policy["source_bundles_materialized"] == true
+    errors << "openchamber: package overclaims source bundle delivery" unless source_policy["source_bundle_delivery_verified"] == false
+    errors
+  rescue JSON::ParserError, KeyError, TypeError => e
+    ["openchamber: invalid source materialization evidence: #{e.message}"]
+  end
+
   def validate_rust_v8_evidence(package, dependencies, spec)
     return [] unless package.name == "rust-v8"
 

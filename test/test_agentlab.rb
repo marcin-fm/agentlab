@@ -281,6 +281,35 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_openchamber_source_materialization_validator_rejects_member_count_drift
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    receipt_path = File.join(package.directory, dependencies.dig("source_closure_files", "source_materialization"))
+    receipt = JSON.parse(File.read(receipt_path))
+
+    Dir.mktmpdir do |directory|
+      receipt.dig("archives", "production_build")["member_count"] += 1
+      temporary_receipt = File.join(directory, "closure.json")
+      File.write(temporary_receipt, JSON.pretty_generate(receipt) + "\n")
+      FileUtils.cp(File.join(package.directory, dependencies.dig("source_closure_files", "source_audit")), directory)
+      temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
+      temporary_dependencies.fetch("source_closure_files")["source_materialization"] = "closure.json"
+      temporary_dependencies.fetch("source_materialization_receipt")["sha256"] = Digest::SHA256.file(temporary_receipt).hexdigest
+      temporary_data = Marshal.load(Marshal.dump(package.data))
+      temporary_data.fetch("source_policy")["source_materialization_receipt"] = "closure.json"
+      temporary_data.fetch("source_policy")["source_materialization_sha256"] = Digest::SHA256.file(temporary_receipt).hexdigest
+      temporary_package = Struct.new(:name, :directory, :upstream, :data).new(
+        package.name,
+        directory,
+        package.upstream,
+        temporary_data
+      )
+
+      errors = Agentlab.validate_openchamber_source_materialization(temporary_package, temporary_dependencies)
+      assert_includes(errors, "openchamber: source materialization production_build member_count mismatch")
+    end
+  end
+
   def test_rejects_invalid_jsonc
     error = assert_raises(Agentlab::Error) do
       Agentlab.parse_jsonc("{ /* unfinished", source: "fixture")

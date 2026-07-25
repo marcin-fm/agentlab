@@ -1,0 +1,57 @@
+{
+  "schema": "openchamber-source-materialization/v1",
+  "package": "openchamber",
+  "release": "1.16.3",
+  "source_audit": {
+    "filename": "openchamber-1.16.3-source-audit.json",
+    "sha256": "ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff",
+    "selected_lock_receipt_sha256": "649c0734f1a68aca4a832e32c8906824e1ccd8fb9fa78287236eaff83fb808cc"
+  },
+  "selected_archive_roles": [
+    "production_build",
+    "test"
+  ],
+  "archives": {
+    "production_build": {
+      "role": "production-build-npm-source-bundle",
+      "recipe": "deterministic-archive-bundle/v1",
+      "compression": "zstd-10-single-thread",
+      "filename": "openchamber-1.16.3-nm-prod-build.tar.zst",
+      "archive_root": "openchamber-1.16.3-nm-prod-build",
+      "member_count": 771,
+      "input_bytes": 72823808,
+      "member_manifest_sha256": "8dc14921d541574124e7cf50507c535489d2615fd4558032aff4d2270d5bbb03",
+      "size_bytes": 72887509,
+      "sha256": "2535235a626815e8db08b4f100d94b1b14527f6420d9fd019c3c295b9fde99f3"
+    },
+    "test": {
+      "role": "test-capable-npm-source-bundle",
+      "recipe": "deterministic-archive-bundle/v1",
+      "compression": "zstd-10-single-thread",
+      "filename": "openchamber-1.16.3-nm-dev-test.tar.zst",
+      "archive_root": "openchamber-1.16.3-nm-dev-test",
+      "member_count": 818,
+      "input_bytes": 78749950,
+      "member_manifest_sha256": "33ca7c315fbf8cd01fb048dd8aa399c7b97e5e823e49c386d9528df7b966c313",
+      "size_bytes": 78857956,
+      "sha256": "41d6d5f4c8dc6fddca20b5c9003be98a5c25f2124c266bf14e4b46ca497c3b7f"
+    }
+  },
+  "validation": {
+    "source_audit_verified": true,
+    "cached_member_sizes_verified": true,
+    "cached_member_sha256_verified": true,
+    "safe_archive_paths_verified": true,
+    "archive_roots_verified": true,
+    "production_role_selection_verified": true,
+    "test_superset_verified": true,
+    "deterministic_regeneration_verified": true,
+    "network_access_performed": false,
+    "node_modules_materialized": false,
+    "dependency_resolution_performed": false,
+    "patches_applied": false,
+    "lifecycle_scripts_executed": false,
+    "package_build_performed": false,
+    "rpm_integrated": false
+  }
+}

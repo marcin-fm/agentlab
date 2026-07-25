@@ -201,6 +201,33 @@ source_acquisition_findings:
   licenses_verified: false
   native_sources_verified: false
   generated_sources_verified: false
+source_materialization_receipt:
+  schema: openchamber-source-materialization/v1
+  sha256: 48b3a061404f3f362a333d6b3e57d04af8bba450361c2de4c6589d7079632d9c
+  source_audit_sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
+  production_build:
+    filename: openchamber-1.16.3-nm-prod-build.tar.zst
+    member_count: 771
+    input_bytes: 72823808
+    member_manifest_sha256: 8dc14921d541574124e7cf50507c535489d2615fd4558032aff4d2270d5bbb03
+    size_bytes: 72887509
+    sha256: 2535235a626815e8db08b4f100d94b1b14527f6420d9fd019c3c295b9fde99f3
+  test:
+    filename: openchamber-1.16.3-nm-dev-test.tar.zst
+    member_count: 818
+    input_bytes: 78749950
+    member_manifest_sha256: 33ca7c315fbf8cd01fb048dd8aa399c7b97e5e823e49c386d9528df7b966c313
+    size_bytes: 78857956
+    sha256: 41d6d5f4c8dc6fddca20b5c9003be98a5c25f2124c266bf14e4b46ca497c3b7f
+  validation:
+    deterministic_regeneration_verified: true
+    network_access_performed: false
+    node_modules_materialized: false
+    dependency_resolution_performed: false
+    patches_applied: false
+    lifecycle_scripts_executed: false
+    package_build_performed: false
+    rpm_integrated: false
 closure_audit:
   audited_release:
   production_build_sources_verified: true
@@ -215,6 +242,7 @@ source_closure_files:
   production_build_closure: openchamber-1.16.3-nm-prod-build.tar.zst
   test_closure: openchamber-1.16.3-nm-dev-test.tar.zst
   closure_manifest: openchamber-1.16.3-closure.json
+  source_materialization: openchamber-1.16.3-source-materialization.json
   license_inventory: openchamber-1.16.3-bundled-licenses.txt
   native_manifest: openchamber-1.16.3-native.json
   selected_lock_audit: openchamber-1.16.3-selected-lock-audit.json

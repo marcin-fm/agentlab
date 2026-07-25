@@ -90,3 +90,21 @@ payloads, five sources containing 10 non-source executable payloads, and five
 sources containing native build inputs. These are inventory facts, not legal or
 build approval: license, native-source, generated-output, final payload, and
 offline materialization gates remain false.
+
+## Deterministic Source Bundles
+
+`openchamber-1.16.3-source-materialization.json` binds the acquisition receipt to two raw-source
+bundles. The production/build archive contains 771 unique sources with runtime
+or build roles and is 72,887,509 bytes at SHA-256
+`2535235a626815e8db08b4f100d94b1b14527f6420d9fd019c3c295b9fde99f3`.
+The complete test-capable superset contains all 818 sources and is 78,857,956
+bytes at SHA-256
+`41d6d5f4c8dc6fddca20b5c9003be98a5c25f2124c266bf14e4b46ca497c3b7f`.
+
+Both archives preserve the checked registry tarballs unchanged below fixed
+roots, normalize archive metadata, and reproduce byte-for-byte when generated
+twice and during a cache-only check. This is source bundling, not a package
+install: no network, node_modules generation, dependency resolution, patch
+application, lifecycle script, native rebuild, package build, or RPM integration
+occurs. Immutable delivery of the generated bundles and the later offline build
+remain blocked.

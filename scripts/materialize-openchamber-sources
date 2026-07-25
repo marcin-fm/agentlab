@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require_relative "lib/agentlab"
+require_relative "lib/openchamber_sources"
+
+package = Agentlab.package_named("openchamber")
+dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+version = package.upstream.fetch("current_version").to_s
+source_audit = File.join(package.directory, dependencies.dig("source_closure_files", "source_audit"))
+cache_dir = "/srv/tmp/agentlab-openchamber/source-acquisition-#{version}/archives"
+base = "/srv/tmp/agentlab-openchamber/source-materialization-#{version}"
+output_dir = File.join(base, "output")
+receipt_path = File.join(package.directory, dependencies.dig("source_closure_files", "source_materialization"))
+workdir = File.join(base, "work")
+check = false
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/materialize-openchamber-sources [options]"
+  parser.on("--cache-dir PATH", "Checked acquisition archive directory") { |path| cache_dir = path }
+  parser.on("--output-dir PATH", "Generated source bundle directory") { |path| output_dir = path }
+  parser.on("--receipt PATH", "Materialization receipt path") { |path| receipt_path = path }
+  parser.on("--workdir PATH", "Scratch directory below /srv/tmp") { |path| workdir = path }
+  parser.on("--check", "Regenerate and compare existing bundles and receipt") { check = true }
+end.parse!
+
+receipt = Agentlab::OpenChamberSources.materialize!(
+  source_audit_path: source_audit,
+  expected_source_audit_sha256: dependencies.dig("source_acquisition_receipt", "sha256"),
+  cache_dir: cache_dir,
+  output_dir: output_dir,
+  receipt_path: receipt_path,
+  workdir: workdir,
+  expected_filenames: {
+    "production_build" => dependencies.dig("source_closure_files", "production_build_closure"),
+    "test" => dependencies.dig("source_closure_files", "test_closure")
+  },
+  check: check
+)
+puts "#{check ? 'Verified' : 'Wrote'} #{receipt.dig('archives', 'production_build', 'member_count')} production/build and #{receipt.dig('archives', 'test', 'member_count')} test-capable OpenChamber source archives."

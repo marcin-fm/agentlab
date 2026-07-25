@@ -3,7 +3,7 @@ name: openchamber
 status: blocked
 blockers:
 - Fedora-source-built Bun 1.3.14 is unavailable.
-- The 818 immutable source archives are acquired and inspected, but the authoritative 832-record closure has not been materialized offline without lifecycle scripts.
+- The 818 immutable sources and deterministic role bundles are proven locally, but immutable bundle delivery and offline node_modules/build reconstruction remain unverified.
 - Native and platform payloads, including better-sqlite3, node-pty, and sherpa-onnx-node, have not been rebuilt from corresponding source.
 - Vite-generated browser assets, aggregate licenses, and final bundled Node Provides have not been verified.
 - The separately packaged OpenCode CLI runtime provider remains blocked.
@@ -33,6 +33,10 @@ source_policy:
   source_acquisition_receipt: openchamber-1.16.3-source-audit.json
   source_acquisition_sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
   source_acquisition_unique_sources: 818
+  source_materialization_receipt: openchamber-1.16.3-source-materialization.json
+  source_materialization_sha256: 48b3a061404f3f362a333d6b3e57d04af8bba450361c2de4c6589d7079632d9c
+  source_bundles_materialized: true
+  source_bundle_delivery_verified: false
 upstream:
   provider: github
   repository: openchamber/openchamber
