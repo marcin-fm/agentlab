@@ -195,3 +195,13 @@ and the N-API release command. Rebuild and inclusion remain blocked because
 direct locked dependency `parcel_sourcemap 2.1.1` lacks a complete legal
 notice and license-selection record for attributed BSD-3-Clause and
 Apache-2.0/MIT-derived code; Agentlab does not synthesize that determination.
+
+`sherpa-onnx-node 1.12.28` declares platform range `^1.12.28`, which includes
+selected `sherpa-onnx-linux-x64 1.13.3`. The four published ELF payloads map
+to exact post-tag source commit `6206c9c0e96f54c9f04afe6c740e0dcafcf4d20a`,
+child of release tag `v1.13.3`; its immutable archive is SHA-256
+`b2a4d7c50afa80bb577ce2e06d171111c172a031e90cefdad13ff157a9d37213`.
+Rebuild and inclusion remain blocked because upstream consumes precompiled
+ONNX Runtime `1.24.4`, runs unlocked `npm i` for Node build dependencies, and
+publishes the addon with an absolute GitHub runner RUNPATH. None of the
+published ELF payloads is retained for the future Fedora build.

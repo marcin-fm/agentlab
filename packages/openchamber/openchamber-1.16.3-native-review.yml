@@ -38,6 +38,9 @@ receipts:
   lightningcss_proof:
     path: openchamber-1.16.3-lightningcss-proof.json
     sha256: 15883c45367d5042d6fbbf1b35805a491ec1ff8a02561684e6e753a2e9a659a1
+  sherpa_onnx_proof:
+    path: openchamber-1.16.3-sherpa-onnx-proof.json
+    sha256: e7dc6467a0b4ebafd70362972df835381779a815b05790516245ff6fe12759af
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -57,8 +60,8 @@ status:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 13
-  source_mappings_unresolved: 1
+  source_mappings_verified: 14
+  source_mappings_unresolved: 0
   reproducible_builds_completed: 6
   native_sources_verified: false
   wasm_sources_verified: false
@@ -204,8 +207,16 @@ components:
       executable_payloads: { count: 3, paths_sha256: 3d3a608e61136aad5dd42e11bfd07523c066314469ecfcea7e6d703c17f40c27 }
       native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
-    mapping: { kind: platform_companion, source_package: sherpa-onnx-node@1.12.28 }
-    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+    mapping:
+      kind: platform_companion
+      source_package: sherpa-onnx-node@1.12.28
+      platform_version: 1.13.3
+      upstream_tag: v1.13.3
+      upstream_tag_commit: 330609dab49be6ee8b30702918ca7abbbad1286a
+      published_payload_commit: 6206c9c0e96f54c9f04afe6c740e0dcafcf4d20a
+      source_archive_sha256: b2a4d7c50afa80bb577ce2e06d171111c172a031e90cefdad13ff157a9d37213
+    proof: { path: openchamber-1.16.3-sherpa-onnx-proof.json }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
   - package: "shiki@3.23.0"
     audit:
       native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }

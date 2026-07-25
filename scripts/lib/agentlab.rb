@@ -894,7 +894,7 @@ module Agentlab
     source_packages.each do |identity, source_package|
       component = components.find { |entry| entry["package"] == identity }
       errors << "openchamber: native review source package mismatch for #{identity}" unless component&.dig("mapping", "source_package") == source_package
-      expected_verified = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1 lightningcss-linux-x64-gnu@1.31.1].include?(identity)
+      expected_verified = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1 lightningcss-linux-x64-gnu@1.31.1 sherpa-onnx-linux-x64@1.13.3].include?(identity)
       errors << "openchamber: native review platform mapping verification mismatch for #{identity}" unless component&.dig("decision", "source_mapping_verified") == expected_verified
     end
     esbuild = components.find { |component| component["package"] == "@esbuild/linux-x64@0.27.3" }
@@ -966,6 +966,25 @@ module Agentlab
       errors << "openchamber: Lightning CSS review state mismatch" unless lightningcss.dig("decision", "source_mapping_verified") == true && lightningcss.dig("decision", "reproducible_build_verified") == false
     else
       errors << "openchamber: Lightning CSS proof is unavailable"
+    end
+
+    sherpa = components.find { |component| component["package"] == "sherpa-onnx-linux-x64@1.13.3" }
+    sherpa_filename = dependencies.dig("source_closure_files", "sherpa_onnx_proof")
+    sherpa_path = sherpa_filename.is_a?(String) && File.join(package.directory, sherpa_filename)
+    if sherpa_path && File.file?(sherpa_path)
+      sherpa_sha256 = Digest::SHA256.file(sherpa_path).hexdigest
+      sherpa_proof = JSON.parse(File.read(sherpa_path))
+      errors << "openchamber: sherpa-onnx proof path mismatch" unless sherpa&.dig("proof", "path") == sherpa_filename && review.dig("receipts", "sherpa_onnx_proof", "path") == sherpa_filename
+      errors << "openchamber: sherpa-onnx proof SHA-256 mismatch" unless review.dig("receipts", "sherpa_onnx_proof", "sha256") == sherpa_sha256
+      errors << "openchamber: sherpa-onnx proof identity mismatch" unless sherpa_proof["schema"] == "openchamber-sherpa-onnx-proof/v1" && sherpa_proof["package"] == "sherpa-onnx-linux-x64@1.13.3"
+      errors << "openchamber: sherpa-onnx wrapper selection mismatch" unless sherpa_proof.dig("published_packages", "wrapper", "package") == "sherpa-onnx-node@1.12.28" && sherpa_proof.dig("published_packages", "wrapper", "platform_requirement") == "^1.12.28" && sherpa_proof.dig("published_packages", "wrapper", "selected_platform_version_satisfies_requirement") == true
+      errors << "openchamber: sherpa-onnx source mismatch" unless sherpa_proof.dig("release_source", "tag_commit") == "330609dab49be6ee8b30702918ca7abbbad1286a" && sherpa_proof.dig("release_source", "published_payload_commit") == "6206c9c0e96f54c9f04afe6c740e0dcafcf4d20a" && sherpa_proof.dig("release_source", "published_payload_commit_parent") == "330609dab49be6ee8b30702918ca7abbbad1286a" && sherpa_proof.dig("release_source", "published_payload_archive_sha256") == "b2a4d7c50afa80bb577ce2e06d171111c172a031e90cefdad13ff157a9d37213"
+      errors << "openchamber: sherpa-onnx payload mismatch" unless sherpa_proof.dig("published_packages", "platform", "archive_sha256") == "6e2ab763715980c59eaac602165ce1aa00e33449e6c811fae6610e0d801a4f3c" && sherpa_proof.dig("published_packages", "platform", "payloads").map { |payload| payload["sha256"] } == %w[88468d42d3381c18a7bd3f99a01f07293ff8c9e38f71fd5bcc5fa08c101d31bf b7dae68f459d74f3fbe7584b6f93e28d669347f0116bd67e42737d50fb514f1b 562726a7c9e46a6259a5ec0e157fc218747417c08ba0eb2b3af4ad22f1c59d07 91f0c16a56578779167e02090d086c968df25bd33b254c534a694e30e5194acf]
+      errors << "openchamber: sherpa-onnx blocker mismatch" unless sherpa_proof.dig("blockers", "onnxruntime_version") == "1.24.4" && sherpa_proof.dig("blockers", "precompiled_onnxruntime_consumed") == true && sherpa_proof.dig("blockers", "node_lockfile_present") == false && sherpa_proof.dig("blockers", "node_build_dependencies_exactly_pinned") == false && sherpa_proof.dig("blockers", "absolute_runner_runpath_present") == true && sherpa_proof.dig("blockers", "source_compliant_onnxruntime_provider_verified") == false
+      errors << "openchamber: sherpa-onnx validation state mismatch" unless sherpa_proof.dig("validation", "exact_source_mapping_verified") == true && sherpa_proof.dig("validation", "reproducible_build_verified") == false && sherpa_proof.dig("validation", "published_payloads_accepted") == false && sherpa_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: sherpa-onnx review state mismatch" unless sherpa.dig("decision", "source_mapping_verified") == true && sherpa.dig("decision", "reproducible_build_verified") == false
+    else
+      errors << "openchamber: sherpa-onnx proof is unavailable"
     end
 
     source_map = components.find { |component| component["package"] == "source-map@0.8.0-beta.0" }

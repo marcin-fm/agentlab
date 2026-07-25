@@ -4,7 +4,7 @@
 
 Name:           openchamber
 Version:        1.16.3
-Release:        0.14%{?dist}
+Release:        0.15%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -42,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.15
+- Map the selected sherpa-onnx Linux payload to exact source
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.14
 - Map Lightning CSS to exact source while retaining its legal hold
 

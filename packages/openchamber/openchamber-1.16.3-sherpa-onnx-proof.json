@@ -1,0 +1,63 @@
+{
+  "schema": "openchamber-sherpa-onnx-proof/v1",
+  "release": "1.16.3",
+  "package": "sherpa-onnx-linux-x64@1.13.3",
+  "published_packages": {
+    "wrapper": {
+      "package": "sherpa-onnx-node@1.12.28",
+      "archive_sha256": "60dd744c1f2447cbb57a415fbba6594c5a374694fa8fb7e8bbf98b82f7959471",
+      "platform_requirement": "^1.12.28",
+      "selected_platform_version_satisfies_requirement": true
+    },
+    "platform": {
+      "archive_sha256": "6e2ab763715980c59eaac602165ce1aa00e33449e6c811fae6610e0d801a4f3c",
+      "payloads": [
+        { "path": "libonnxruntime.so", "size": 25008897, "sha256": "88468d42d3381c18a7bd3f99a01f07293ff8c9e38f71fd5bcc5fa08c101d31bf" },
+        { "path": "libsherpa-onnx-c-api.so", "size": 5046080, "sha256": "b7dae68f459d74f3fbe7584b6f93e28d669347f0116bd67e42737d50fb514f1b" },
+        { "path": "libsherpa-onnx-cxx-api.so", "size": 261656, "sha256": "562726a7c9e46a6259a5ec0e157fc218747417c08ba0eb2b3af4ad22f1c59d07" },
+        { "path": "sherpa-onnx.node", "size": 957496, "sha256": "91f0c16a56578779167e02090d086c968df25bd33b254c534a694e30e5194acf" }
+      ]
+    }
+  },
+  "release_source": {
+    "repository": "csukuangfj/sherpa-onnx",
+    "tag": "v1.13.3",
+    "tag_commit": "330609dab49be6ee8b30702918ca7abbbad1286a",
+    "tag_archive_sha256": "83e3671094fc191e501b557739230895c919e51a63196f8dfa30183af52b921d",
+    "published_payload_commit": "6206c9c0e96f54c9f04afe6c740e0dcafcf4d20a",
+    "published_payload_commit_parent": "330609dab49be6ee8b30702918ca7abbbad1286a",
+    "published_payload_archive_sha256": "b2a4d7c50afa80bb577ce2e06d171111c172a031e90cefdad13ff157a9d37213",
+    "embedded_version": "1.13.3",
+    "embedded_commit_prefix": "6206c9c0"
+  },
+  "build_contract": {
+    "workflow_sha256": "2cfacde34727dc2fc15e151f7253999102628b06e9417217d36df9ea3226ba3b",
+    "publish_script_sha256": "c87cec7dbe4bcfb93a602ede19948cde0052c695d88e860c35f8fedff5e2a54d",
+    "node_manifest_sha256": "1ad3200d04bd58ddb62bf09c1034a9e3e8fc4fd6b18f93a7e3cac1132dc293b6",
+    "cmake_lists_sha256": "19b65eaeba8ce4b389412645d6e013f4b46f761d0b921b4c9ca49d5d32598a12",
+    "node_version": "24",
+    "python_version": "3.8",
+    "container": "quay.io/pypa/manylinux2014_x86_64",
+    "cmake_shared_build": true,
+    "cmake_jobs": 1,
+    "node_install_command": "npm i",
+    "node_build_command": "cmake-js compile --log-level verbose",
+    "cmake_js_requirement": "^7.3.0",
+    "node_addon_api_requirement": "^8.3.0"
+  },
+  "blockers": {
+    "onnxruntime_version": "1.24.4",
+    "precompiled_onnxruntime_consumed": true,
+    "node_lockfile_present": false,
+    "node_build_dependencies_exactly_pinned": false,
+    "published_addon_runpath": "$ORIGIN:/home/runner/work/sherpa-onnx/sherpa-onnx/build/install/lib:",
+    "absolute_runner_runpath_present": true,
+    "source_compliant_onnxruntime_provider_verified": false
+  },
+  "validation": {
+    "exact_source_mapping_verified": true,
+    "reproducible_build_verified": false,
+    "published_payloads_accepted": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}
