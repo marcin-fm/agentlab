@@ -2918,6 +2918,56 @@ module Agentlab
     valid_root && valid_records && staged["critical_symbols_verified"] == true
   end
 
+  def validate_bun_current_self_npm_proof(package, dependency_stage, self_receipt, driver, version)
+    npm_input = self_receipt.dig("inputs", "npm_proof")
+    receipt_name = npm_input.is_a?(Hash) && npm_input["path"]
+    expected_sha256 = npm_input.is_a?(Hash) && npm_input["sha256"]
+    valid_name = receipt_name.is_a?(String) && File.basename(receipt_name) == receipt_name
+    receipt_path = valid_name && File.join(package.directory, receipt_name)
+    unless npm_input.is_a?(Hash) && npm_input["mode"] == "source_built" && receipt_path && File.file?(receipt_path) &&
+           expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: current self-rebuild npm proof input is missing or invalid"]
+    end
+
+    proof = JSON.parse(File.read(receipt_path))
+    driver_kind = driver.is_a?(Hash) && driver["driver_proof_kind"]
+    valid_driver = proof.dig("driver", "proof_kind") == driver_kind &&
+                   proof.dig("driver", "receipt") == driver["driver_receipt"] &&
+                   proof.dig("driver", "receipt_sha256") == driver["driver_receipt_sha256"]
+    errors = []
+    errors << "bun: current self-rebuild npm proof driver mismatch" unless valid_driver
+
+    staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
+    npm_stage = dependency_stage.merge(
+      "npm_install_proof_receipt" => receipt_name,
+      "npm_install_proof_receipt_sha256" => expected_sha256,
+      "npm_cache_entries" => dependency_stage["unique_npm_source_archives"],
+      "npm_cache_tree_sha256" => staging["npm_cache_tree_sha256"],
+      "npm_cache_materialization_verified" => true,
+      "npm_offline_install_verified" => true,
+      "npm_frozen_lockfile_verified" => true,
+      "npm_ignore_scripts_verified" => true,
+      "npm_network_namespace_verified" => true
+    )
+
+    validation_data = Marshal.load(Marshal.dump(package.data))
+    selected_stage_name = driver_kind == "self_rebuild" ? "self_rebuild" : "seed_build"
+    selected_stage = validation_data.dig("build_plan", "stages", selected_stage_name)
+    if selected_stage.is_a?(Hash)
+      selected_stage.merge!(
+        "state" => "verified",
+        "historical_only" => false,
+        "proof_receipt" => driver["driver_receipt"],
+        "proof_receipt_sha256" => driver["driver_receipt_sha256"]
+      )
+    end
+    validation_package = Package.new(directory: package.directory, manifest_path: package.manifest_path, data: validation_data)
+    errors.concat(validate_bun_npm_offline_install(validation_package, npm_stage, version))
+    errors
+  rescue JSON::ParserError, TypeError => e
+    ["bun: invalid current self-rebuild npm proof: #{e.message}"]
+  end
+
   def validate_bun_current_first_build_receipt(package, receipt, seed_stage, stages, source_inputs, version)
     errors = []
     seed = source_inputs.fetch("bootstrap_seed")
@@ -3523,6 +3573,7 @@ module Agentlab
           if historical_self_rebuild
             errors << "bun: self-rebuild proof did not verify stable lol-html Cargo" unless receipt.dig("configure", "stable_lolhtml_cargo_verified") == true
           else
+            errors.concat(validate_bun_current_self_npm_proof(package, dependency_stage, receipt, driver, version))
             provider = receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider")
             expected_provider = lolhtml.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
             errors << "bun: current self-rebuild proof did not verify system lol-html" unless receipt.dig("configure", "system_lolhtml_provider_verified") == true &&

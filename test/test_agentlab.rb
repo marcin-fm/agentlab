@@ -1386,6 +1386,141 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_validates_current_bun_self_rebuild_npm_input
+    source_package = Agentlab.package_named("bun")
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(source_package.data))
+      version = source_package.upstream.fetch("current_version").to_s
+      stages = data.dig("build_plan", "stages")
+      dependency_stage = stages.fetch("dependency_closure")
+      seed_stage = stages.fetch("seed_build")
+      seed_stage.merge!("state" => "verified", "historical_only" => false, "proof_receipt" => "driver.json")
+
+      driver_receipt = {
+        "schema" => "bun-first-source-build-proof/v2",
+        "package" => "bun",
+        "release" => version,
+        "profile" => "release-local",
+        "source_closure" => {
+          "path" => dependency_stage.fetch("proof_receipt"),
+          "sha256" => dependency_stage.fetch("proof_receipt_sha256")
+        },
+        "build" => { "bun" => { "path" => "build/release-local/bun", "size_bytes" => 100, "sha256" => "a" * 64 } }
+      }
+      driver_path = File.join(directory, seed_stage.fetch("proof_receipt"))
+      File.write(driver_path, JSON.dump(driver_receipt))
+      seed_stage["proof_receipt_sha256"] = Digest::SHA256.file(driver_path).hexdigest
+      driver = {
+        "driver_proof_kind" => "first_build",
+        "driver_receipt" => seed_stage.fetch("proof_receipt"),
+        "driver_receipt_sha256" => seed_stage.fetch("proof_receipt_sha256")
+      }
+
+      staging = data.dig("build_plan", "source_inputs", "release_local_staging")
+      seed = data.dig("build_plan", "source_inputs", "bootstrap_seed")
+      npm_receipt = {
+        "schema" => "bun-npm-offline-install-proof/v2",
+        "package" => "bun",
+        "release" => version,
+        "target" => { "os" => "linux", "cpu" => "x64", "libc" => "glibc" },
+        "source_closure" => {
+          "path" => dependency_stage.fetch("proof_receipt"),
+          "sha256" => dependency_stage.fetch("proof_receipt_sha256"),
+          "bun_source_archive_sha256" => source_package.upstream.fetch("source_sha256")
+        },
+        "driver" => {
+          "kind" => "source_built",
+          "proof_kind" => driver.fetch("driver_proof_kind"),
+          "receipt" => driver.fetch("driver_receipt"),
+          "receipt_sha256" => driver.fetch("driver_receipt_sha256"),
+          "proof_root" => "/srv/tmp/agentlab-bun-first-source-build-proof",
+          "path" => "/srv/tmp/agentlab-bun-first-source-build-proof/build/release-local/bun",
+          "version" => version,
+          "size_bytes" => 100,
+          "sha256" => "a" * 64
+        },
+        "forbidden_bootstrap_seed" => {
+          "binary_sha256" => seed.fetch("binary_sha256"),
+          "size_bytes" => seed.fetch("binary_size_bytes"),
+          "payload_allowed" => false,
+          "runtime_dependency_allowed" => false
+        },
+        "cache" => {
+          "source_archives" => dependency_stage.fetch("unique_npm_source_archives"),
+          "materialized_entries" => dependency_stage.fetch("unique_npm_source_archives"),
+          "registry_archives" => dependency_stage.fetch("unique_npm_source_archives"),
+          "github_archives" => 0,
+          "tree" => { "sha256" => staging.fetch("npm_cache_tree_sha256") }
+        },
+        "install" => {
+          "driver_kind" => "source_built",
+          "network_namespace" => true,
+          "frozen_lockfile" => true,
+          "ignore_scripts" => true,
+          "serialized" => true,
+          "install_roots" => [[".", "bun"], ["packages/bun-error", "bun-error"], ["src/node-fallbacks", "fallbacks"]].map do |path, name|
+            { "path" => path, "package_name" => name, "node_modules" => { "entries" => 1, "files" => 1, "sha256" => "b" * 64 } }
+          end
+        },
+        "validation" => {
+          "source_files_unchanged" => true,
+          "seed_absent_from_node_modules" => true,
+          "npm_cache_materialization_verified" => true,
+          "npm_offline_install_verified" => true,
+          "source_built_driver_verified" => true,
+          "driver_receipt_bound" => true,
+          "driver_version_verified" => true,
+          "bootstrap_seed_not_used_for_install" => true,
+          "complete_bun_offline_materialization_verified" => false,
+          "dependency_resolution_performed" => false,
+          "full_bun_build_performed" => false
+        }
+      }
+      npm_path = File.join(directory, "source-built-npm-install-proof.json")
+      File.write(npm_path, JSON.dump(npm_receipt))
+      self_receipt = {
+        "inputs" => {
+          "npm_proof" => {
+            "mode" => "source_built",
+            "path" => File.basename(npm_path),
+            "sha256" => Digest::SHA256.file(npm_path).hexdigest
+          }
+        }
+      }
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      assert_empty(Agentlab.validate_bun_current_self_npm_proof(package, dependency_stage, self_receipt, driver, version))
+
+      prior_receipt = driver_receipt.merge(
+        "schema" => "bun-self-rebuild-proof/v2",
+        "validation" => { "self_rebuild_performed" => true }
+      )
+      prior_path = File.join(directory, "prior-self-rebuild-proof.json")
+      File.write(prior_path, JSON.dump(prior_receipt))
+      driver.merge!(
+        "driver_proof_kind" => "self_rebuild",
+        "driver_receipt" => File.basename(prior_path),
+        "driver_receipt_sha256" => Digest::SHA256.file(prior_path).hexdigest
+      )
+      npm_receipt.fetch("driver").merge!(
+        "proof_kind" => driver.fetch("driver_proof_kind"),
+        "receipt" => driver.fetch("driver_receipt"),
+        "receipt_sha256" => driver.fetch("driver_receipt_sha256"),
+        "proof_root" => "/srv/tmp/agentlab-bun-prior-self-build",
+        "path" => "/srv/tmp/agentlab-bun-prior-self-build/build/release-local/bun"
+      )
+      File.write(npm_path, JSON.dump(npm_receipt))
+      self_receipt.dig("inputs", "npm_proof")["sha256"] = Digest::SHA256.file(npm_path).hexdigest
+      assert_empty(Agentlab.validate_bun_current_self_npm_proof(package, dependency_stage, self_receipt, driver, version))
+
+      npm_receipt.fetch("driver")["receipt_sha256"] = "0" * 64
+      File.write(npm_path, JSON.dump(npm_receipt))
+      self_receipt.dig("inputs", "npm_proof")["sha256"] = Digest::SHA256.file(npm_path).hexdigest
+      errors = Agentlab.validate_bun_current_self_npm_proof(package, dependency_stage, self_receipt, driver, version)
+      assert_includes(errors, "bun: current self-rebuild npm proof driver mismatch")
+    end
+  end
+
   def test_validates_bun_dependency_closure_local_source_state
     Dir.mktmpdir do |directory|
       receipt_path = File.join(directory, "source-closure.json")
