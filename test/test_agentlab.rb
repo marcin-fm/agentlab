@@ -1307,6 +1307,7 @@ class AgentlabTest < Minitest::Test
           "revision" => "#{version}-canary.1+#{source_package.upstream.fetch('source_commit')[0, 9]}",
           "version" => version,
           "smoke_verified" => true,
+          "html_rewriter_smoke_verified" => true,
           "stripped_output_verified" => true,
           "fedora_shared_cxx_runtime_verified" => true,
           "system_lolhtml_provider_verified" => true,
@@ -1385,6 +1386,13 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_bun_build_plan(package, spec)
       assert_includes(errors, "bun: current seed-build historical npm input mismatch")
       receipt.dig("inputs", "npm_proof")["mode"] = "historical_seed"
+
+      receipt.fetch("build")["html_rewriter_smoke_verified"] = false
+      File.write(receipt_path, JSON.dump(receipt))
+      seed_stage["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: current seed-build runtime validation is incomplete")
+      receipt.fetch("build")["html_rewriter_smoke_verified"] = true
 
       receipt.fetch("configure")["system_lolhtml_provider_verified"] = false
       File.write(receipt_path, JSON.dump(receipt))

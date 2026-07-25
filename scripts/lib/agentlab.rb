@@ -3043,7 +3043,7 @@ module Agentlab
     valid_outputs = outputs.all? { |output| output.is_a?(Hash) && output["path"].is_a?(String) && !Pathname.new(output["path"]).absolute? && !Pathname.new(output["path"]).each_filename.include?("..") && output["size_bytes"].is_a?(Integer) && output["size_bytes"].positive? && output["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) }
     errors << "bun: current seed-build output receipts are invalid" unless valid_outputs
     errors << "bun: current seed-build stripped output is not smaller than bun-profile" unless receipt.dig("build", "bun", "size_bytes").is_a?(Integer) && receipt.dig("build", "bun_profile", "size_bytes").is_a?(Integer) && receipt.dig("build", "bun", "size_bytes") < receipt.dig("build", "bun_profile", "size_bytes")
-    errors << "bun: current seed-build runtime validation is incomplete" unless receipt.dig("build", "smoke_verified") == true && receipt.dig("build", "stripped_output_verified") == true && receipt.dig("build", "fedora_shared_cxx_runtime_verified") == true && receipt.dig("build", "system_lolhtml_provider_verified") == true && receipt.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+    errors << "bun: current seed-build runtime validation is incomplete" unless receipt.dig("build", "smoke_verified") == true && receipt.dig("build", "html_rewriter_smoke_verified") == true && receipt.dig("build", "stripped_output_verified") == true && receipt.dig("build", "fedora_shared_cxx_runtime_verified") == true && receipt.dig("build", "system_lolhtml_provider_verified") == true && receipt.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
     errors << "bun: current seed-build found a seed payload" unless receipt.dig("seed_contamination", "payload_absent_verified") == true && receipt.dig("seed_contamination", "seed_hash_matches") == 0
     errors << "bun: current seed-build found a seed runtime dependency" unless receipt.dig("seed_contamination", "runtime_dependency_absent_verified") == true
     errors << "bun: current seed-build validation is incomplete" unless %w[bootstrap_seed_verified seed_isolated_verified source_build_verified].all? { |key| receipt.dig("validation", key) == true }
@@ -3594,6 +3594,7 @@ module Agentlab
           bun_size = receipt.dig("build", "bun", "size_bytes")
           errors << "bun: self-rebuild proof stripped output is not smaller than bun-profile" unless profile_size.is_a?(Integer) && bun_size.is_a?(Integer) && bun_size < profile_size
           errors << "bun: self-rebuild proof smoke failed" unless receipt.dig("build", "smoke_verified") == true
+          errors << "bun: current self-rebuild proof HTMLRewriter smoke failed" if !historical_self_rebuild && receipt.dig("build", "html_rewriter_smoke_verified") != true
           errors << "bun: self-rebuild proof did not verify stripped output" unless receipt.dig("build", "stripped_output_verified") == true
           errors << "bun: self-rebuild proof did not verify Fedora's shared C++ runtime" unless receipt.dig("build", "fedora_shared_cxx_runtime_verified") == true
           expected_shared_libraries = historical_self_rebuild ? %w[libgcc_s.so.1 libstdc++.so.6] : %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]

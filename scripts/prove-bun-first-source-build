@@ -1258,8 +1258,12 @@ revision = capture!(environment, ["unshare", "--net", "--", bun_profile, "--revi
 built_version = capture!(environment, ["unshare", "--net", "--", bun, "--version"], chdir: build_dir).strip
 smoke_text = self_rebuild ? "agentlab-bun-self-rebuild" : "agentlab-bun-first-build"
 smoke = capture!(environment, ["unshare", "--net", "--", bun, "-e", "console.log('#{smoke_text}')"], chdir: build_dir).strip
+html_rewriter_expected = "<div><span>agentlab</span></div>"
+html_rewriter_script = "const response = new HTMLRewriter().on('div', { element(element) { element.setInnerContent('<span>agentlab</span>', { html: true }); } }).transform(new Response('<div>input</div>')); console.log(await response.text());"
+html_rewriter_smoke = capture!(environment, ["unshare", "--net", "--", bun, "-e", html_rewriter_script], chdir: build_dir).strip
 raise Agentlab::Error, "unexpected source-built Bun version #{built_version.inspect}" unless built_version == version
 raise Agentlab::Error, "source-built Bun smoke failed" unless smoke == smoke_text
+raise Agentlab::Error, "source-built Bun HTMLRewriter smoke failed" unless html_rewriter_smoke == html_rewriter_expected
 
 node_identity = File.join(cache_dir, "nodejs-headers-#{closure.dig('node_headers', 'version')}", ".identity")
 raise Agentlab::Error, "Node header identity was not materialized" unless File.file?(node_identity) && File.read(node_identity).strip == closure.dig("node_headers", "version")
@@ -1294,6 +1298,7 @@ build_receipt = {
   "build_id" => elf_build_id(bun),
   "stabilization_passes" => self_rebuild ? 1 : 0,
   "smoke_verified" => true,
+  "html_rewriter_smoke_verified" => true,
   "stripped_output_verified" => true,
   "strip_verification" => {
     "bun_profile_file" => profile_file,
