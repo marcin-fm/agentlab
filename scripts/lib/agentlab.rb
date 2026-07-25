@@ -392,25 +392,62 @@ module Agentlab
   end
 
   def crates_io_latest_version(crate_name, requirement = nil)
-    version_requirement = Gem::Requirement.new(requirement || ">= 0")
+    constraints = (requirement || ">= 0").split(",").map(&:strip)
+    version_requirement = Gem::Requirement.new(*constraints)
+    prerelease_allowed = version_requirement.requirements.any? { |_operator, version| version.prerelease? }
     response = http_get(URI("https://crates.io/api/v1/crates/#{crate_name}"), json: true)
     payload = JSON.parse(response)
     versions = payload.fetch("versions").filter_map do |release|
       next if release["yanked"] == true
 
-      version = Gem::Version.new(release.fetch("num"))
-      next if version.prerelease?
+      number = release.fetch("num")
+      version = Gem::Version.new(number)
+      next if version.prerelease? && !prerelease_allowed
       next unless version_requirement.satisfied_by?(version)
 
-      version
+      [version, number]
     rescue ArgumentError
       nil
     end
     raise Error, "no stable crates.io release found for #{crate_name} matching #{version_requirement}" if versions.empty?
 
-    versions.max.to_s
+    versions.max_by(&:first).last
   rescue JSON::ParserError => e
     raise Error, "invalid crates.io response for #{crate_name}: #{e.message}"
+  end
+
+  def pypi_latest_release(project)
+    uri = URI("https://pypi.org/pypi/#{URI.encode_www_form_component(project)}/json")
+    payload = JSON.parse(http_get(uri, json: true))
+    version = payload.fetch("info").fetch("version")
+    parsed_version = Gem::Version.new(version)
+    raise Error, "latest PyPI release for #{project} is a prerelease: #{version}" if parsed_version.prerelease?
+
+    source = payload.fetch("urls").select do |file|
+      file["packagetype"] == "sdist" && file["yanked"] != true
+    end.min_by do |file|
+      filename = file.fetch("filename")
+      [filename.end_with?(".tar.gz") ? 0 : 1, filename, file.fetch("url")]
+    end
+    raise Error, "latest stable PyPI release for #{project} #{version} has no non-yanked sdist" unless source
+
+    source_url = source.fetch("url")
+    raise Error, "PyPI sdist URL must use HTTPS for #{project}" unless URI(source_url).is_a?(URI::HTTPS)
+
+    sha256 = source.fetch("digests").fetch("sha256")
+    raise Error, "invalid PyPI sdist SHA-256 for #{project} #{version}" unless sha256.match?(/\A[0-9a-f]{64}\z/)
+
+    { version: version, source_url: source_url, source_sha256: sha256 }
+  rescue JSON::ParserError, KeyError, URI::InvalidURIError => e
+    raise Error, "invalid PyPI response for #{project}: #{e.message}"
+  rescue ArgumentError => e
+    raise Error, "invalid PyPI version for #{project}: #{e.message}"
+  end
+
+  def latest_upstream_release(package)
+    return pypi_latest_release(package.upstream.fetch("project")) if package.upstream.fetch("provider") == "pypi"
+
+    { version: latest_upstream_version(package) }
   end
 
   def latest_upstream_version(package)
@@ -424,6 +461,8 @@ module Agentlab
         package.upstream.fetch("crate"),
         package.upstream["version_requirement"]
       )
+    when "pypi"
+      pypi_latest_release(package.upstream.fetch("project")).fetch(:version)
     when "static"
       package.upstream.fetch("current_version")
     else
@@ -3200,10 +3239,11 @@ module Agentlab
     errors
   end
 
-  def update_package_files(package, version:, sha256:, changelog_message:)
+  def update_package_files(package, version:, sha256:, source_url: nil, changelog_message:)
     manifest_data = Marshal.load(Marshal.dump(package.data))
     manifest_data.fetch("upstream")["current_version"] = version
     manifest_data.fetch("upstream")["source_sha256"] = sha256
+    manifest_data.fetch("upstream")["source_url"] = source_url if source_url
     invalidate_bun_build_plan!(manifest_data, version) if package.name == "bun"
 
     spec = File.read(package.spec_path)

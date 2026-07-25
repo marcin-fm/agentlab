@@ -589,9 +589,160 @@ class AgentlabTest < Minitest::Test
       response
     end
     begin
-      assert_equal("5.0.1", Agentlab.crates_io_latest_version("dirs", "~> 5.0"))
+      assert_equal("5.0.1", Agentlab.crates_io_latest_version("dirs", ">= 5.0, < 6.0"))
     ensure
       Agentlab.singleton_class.send(:define_method, :http_get, original_http_get)
+    end
+  end
+
+  def test_crates_io_version_selection_honors_explicit_prerelease_requirement
+    response = JSON.dump(
+      "versions" => [
+        { "num" => "2.0.0-rc.13", "yanked" => false },
+        { "num" => "2.0.0-rc.12", "yanked" => false }
+      ]
+    )
+    original_http_get = Agentlab.method(:http_get)
+    Agentlab.singleton_class.send(:define_method, :http_get) do |_uri, json:|
+      raise "expected JSON request" unless json
+
+      response
+    end
+    begin
+      assert_equal("2.0.0-rc.12", Agentlab.crates_io_latest_version("ort-sys", "= 2.0.0-rc.12"))
+    ensure
+      Agentlab.singleton_class.send(:define_method, :http_get, original_http_get)
+    end
+  end
+
+  def test_pypi_release_selection_uses_exact_non_yanked_source_distribution
+    response = JSON.dump(
+      "info" => { "version" => "2.0.0" },
+      "urls" => [
+        {
+          "filename" => "example-2.0.0-py3-none-any.whl",
+          "packagetype" => "bdist_wheel",
+          "yanked" => false,
+          "url" => "https://files.pythonhosted.org/example.whl",
+          "digests" => { "sha256" => "1" * 64 }
+        },
+        {
+          "filename" => "example-2.0.0.tar.gz",
+          "packagetype" => "sdist",
+          "yanked" => true,
+          "url" => "https://files.pythonhosted.org/yanked.tar.gz",
+          "digests" => { "sha256" => "2" * 64 }
+        },
+        {
+          "filename" => "example-2.0.0.zip",
+          "packagetype" => "sdist",
+          "yanked" => false,
+          "url" => "https://files.pythonhosted.org/example.zip",
+          "digests" => { "sha256" => "3" * 64 }
+        },
+        {
+          "filename" => "example-2.0.0.tar.gz",
+          "packagetype" => "sdist",
+          "yanked" => false,
+          "url" => "https://files.pythonhosted.org/example.tar.gz",
+          "digests" => { "sha256" => "4" * 64 }
+        }
+      ]
+    )
+    original_http_get = Agentlab.method(:http_get)
+    Agentlab.singleton_class.send(:define_method, :http_get) do |uri, json:|
+      raise "expected PyPI project URL" unless uri.to_s == "https://pypi.org/pypi/example/json"
+      raise "expected JSON request" unless json
+
+      response
+    end
+    begin
+      assert_equal(
+        {
+          version: "2.0.0",
+          source_url: "https://files.pythonhosted.org/example.tar.gz",
+          source_sha256: "4" * 64
+        },
+        Agentlab.pypi_latest_release("example")
+      )
+    ensure
+      Agentlab.singleton_class.send(:define_method, :http_get, original_http_get)
+    end
+  end
+
+  def test_pypi_release_selection_requires_stable_source_distribution
+    prerelease = JSON.dump("info" => { "version" => "2.0.0rc1" }, "urls" => [])
+    wheel_only = JSON.dump(
+      "info" => { "version" => "2.0.0" },
+      "urls" => [
+        {
+          "filename" => "example-2.0.0-py3-none-any.whl",
+          "packagetype" => "bdist_wheel",
+          "yanked" => false,
+          "url" => "https://files.pythonhosted.org/example.whl",
+          "digests" => { "sha256" => "5" * 64 }
+        }
+      ]
+    )
+    original_http_get = Agentlab.method(:http_get)
+    responses = [prerelease, wheel_only]
+    Agentlab.singleton_class.send(:define_method, :http_get) do |_uri, json:|
+      raise "expected JSON request" unless json
+
+      responses.shift
+    end
+    begin
+      error = assert_raises(Agentlab::Error) { Agentlab.pypi_latest_release("example") }
+      assert_equal("latest PyPI release for example is a prerelease: 2.0.0rc1", error.message)
+      error = assert_raises(Agentlab::Error) { Agentlab.pypi_latest_release("example") }
+      assert_equal("latest stable PyPI release for example 2.0.0 has no non-yanked sdist", error.message)
+    ensure
+      Agentlab.singleton_class.send(:define_method, :http_get, original_http_get)
+    end
+  end
+
+  def test_update_package_files_persists_pypi_source_url
+    Dir.mktmpdir do |directory|
+      manifest_path = File.join(directory, "package.yml")
+      spec_path = File.join(directory, "python-example.spec")
+      data = {
+        "name" => "python-example",
+        "status" => "enabled",
+        "upstream" => {
+          "provider" => "pypi",
+          "project" => "example",
+          "current_version" => "1.0.0",
+          "source_url" => "https://files.pythonhosted.org/example-1.0.0.tar.gz",
+          "source_sha256" => "1" * 64
+        },
+        "copr" => { "enabled" => true, "spec" => "python-example.spec" }
+      }
+      File.write(manifest_path, YAML.dump(data))
+      File.write(spec_path, <<~SPEC)
+        %global source_sha256 #{"1" * 64}
+        Name:           python-example
+        Version:        1.0.0
+        Release:        0.2%{?dist}
+
+        %changelog
+      SPEC
+      package = Agentlab::Package.new(directory: directory, manifest_path: manifest_path, data: data)
+
+      Agentlab.update_package_files(
+        package,
+        version: "2.0.0",
+        sha256: "2" * 64,
+        source_url: "https://files.pythonhosted.org/example-2.0.0.tar.gz",
+        changelog_message: "Update the enabled package to released version 2.0.0."
+      )
+
+      manifest = YAML.safe_load_file(manifest_path)
+      assert_equal("2.0.0", manifest.dig("upstream", "current_version"))
+      assert_equal("2" * 64, manifest.dig("upstream", "source_sha256"))
+      assert_equal(
+        "https://files.pythonhosted.org/example-2.0.0.tar.gz",
+        manifest.dig("upstream", "source_url")
+      )
     end
   end
 

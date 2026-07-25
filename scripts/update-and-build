@@ -53,7 +53,8 @@ updates = if build_current
           else
             packages.filter_map do |package|
               provider = package.upstream.fetch("provider")
-              version = Agentlab.latest_upstream_version(package)
+              release = Agentlab.latest_upstream_release(package)
+              version = release.fetch(:version)
               current = package.upstream.fetch("current_version")
 
               if Gem::Version.new(version) <= Gem::Version.new(current)
@@ -62,13 +63,18 @@ updates = if build_current
                 next
               end
 
-              url = Agentlab.source_url(package, version)
+              url = release[:source_url] || Agentlab.source_url(package, version)
               source = Agentlab.download(url)
               sha256 = Digest::SHA256.hexdigest(source)
+              expected_sha256 = release[:source_sha256]
+              if expected_sha256 && sha256 != expected_sha256
+                raise Agentlab::Error,
+                      "downloaded source SHA-256 mismatch for #{package.name}: expected #{expected_sha256}, got #{sha256}"
+              end
               puts "#{package.name}: #{current} -> #{version}"
               puts "  source: #{url}"
               puts "  sha256: #{sha256}"
-              { package: package, version: version, sha256: sha256 }
+              { package: package, version: version, source_url: release[:source_url], sha256: sha256 }
             end
 end
 
@@ -106,6 +112,7 @@ updates.each do |update|
     package,
     version: update.fetch(:version),
     sha256: update.fetch(:sha256),
+    source_url: update[:source_url],
     changelog_message: "Update the #{state} to released version #{update.fetch(:version)}."
   )
 end
