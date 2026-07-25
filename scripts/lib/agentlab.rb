@@ -869,7 +869,7 @@ module Agentlab
       errors << "openchamber: native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
       reproducible = component.dig("decision", "reproducible_build_verified")
       errors << "openchamber: native review reproducibility state is missing for #{identity}" unless [true, false].include?(reproducible)
-      proven_rebuilds = %w[@esbuild/linux-x64@0.27.3 better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
+      proven_rebuilds = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
       errors << "openchamber: native review overclaims a reproducible build for #{identity}" if reproducible == true && !proven_rebuilds.include?(identity)
     end
 
@@ -894,7 +894,7 @@ module Agentlab
     source_packages.each do |identity, source_package|
       component = components.find { |entry| entry["package"] == identity }
       errors << "openchamber: native review source package mismatch for #{identity}" unless component&.dig("mapping", "source_package") == source_package
-      expected_verified = identity == "@esbuild/linux-x64@0.27.3"
+      expected_verified = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0].include?(identity)
       errors << "openchamber: native review platform mapping verification mismatch for #{identity}" unless component&.dig("decision", "source_mapping_verified") == expected_verified
     end
     esbuild = components.find { |component| component["package"] == "@esbuild/linux-x64@0.27.3" }
@@ -913,6 +913,23 @@ module Agentlab
       errors << "openchamber: esbuild review state mismatch" unless esbuild.dig("decision", "reproducible_build_verified") == true
     else
       errors << "openchamber: esbuild proof is unavailable"
+    end
+
+    rollup = components.find { |component| component["package"] == "@rollup/rollup-linux-x64-gnu@4.59.0" }
+    rollup_filename = dependencies.dig("source_closure_files", "rollup_proof")
+    rollup_path = rollup_filename.is_a?(String) && File.join(package.directory, rollup_filename)
+    if rollup_path && File.file?(rollup_path)
+      rollup_sha256 = Digest::SHA256.file(rollup_path).hexdigest
+      rollup_proof = JSON.parse(File.read(rollup_path))
+      errors << "openchamber: rollup proof path mismatch" unless rollup&.dig("proof", "path") == rollup_filename && review.dig("receipts", "rollup_proof", "path") == rollup_filename
+      errors << "openchamber: rollup proof SHA-256 mismatch" unless review.dig("receipts", "rollup_proof", "sha256") == rollup_sha256
+      errors << "openchamber: rollup proof identity mismatch" unless rollup_proof["schema"] == "openchamber-rollup-proof/v1" && rollup_proof["package"] == "@rollup/rollup-linux-x64-gnu@4.59.0" && rollup_proof.dig("source", "upstream_tag_commit") == "ae846957f109690a866cc3e4c073613c338d3476"
+      errors << "openchamber: rollup proof source mismatch" unless rollup_proof.dig("source", "archive_sha256") == "3891df7d50bf194c7ec54e8a2d6ac3a52c493c0a640d1496ef18ae8f8e8102ca" && rollup_proof.dig("cargo_source", "lock_sha256") == "6715a94534fc3af86a1fe69d0de5b8e3fb822a0e7b11ffda76b0df2239e54074" && rollup_proof.dig("cargo_source", "vendor_tree_sha256") == "6c270602d180cc46044739ee9970ff400581411ebb6504b00041ac0134e3521b"
+      errors << "openchamber: rollup proof build contract mismatch" unless rollup_proof.dig("build", "network_isolated") == true && rollup_proof.dig("build", "jobs") == 4 && rollup_proof.dig("build", "source_date_epoch") == 1771744381 && rollup_proof.dig("build", "first_sha256") == rollup_proof.dig("build", "second_sha256") && rollup_proof.dig("build", "rpath_or_runpath") == false && rollup_proof.dig("build", "napi_register_module_v1_exported") == true
+      errors << "openchamber: rollup runtime proof is incomplete" unless rollup_proof.dig("published_companion", "retained_in_package") == false && rollup_proof.dig("cargo_source", "immutable_delivery_verified") == false && rollup_proof.dig("validation", "cargo_workspace_tests_passed") == true && rollup_proof.dig("validation", "direct_napi_smoke_verified") == true && rollup_proof.dig("validation", "npm_wrapper_bundle_verified") == true && rollup_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: rollup review state mismatch" unless rollup.dig("decision", "reproducible_build_verified") == true
+    else
+      errors << "openchamber: rollup proof is unavailable"
     end
 
     better = components.find { |component| component["package"] == "better-sqlite3@12.10.0" }

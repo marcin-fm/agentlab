@@ -118,12 +118,12 @@ prebuilt payloads into a prospective package.
 
 The review excludes three mobile-only Capacitor source/mode findings from the
 Linux target, records `better-sqlite3` and `node-pty` as same-archive rebuild
-candidates, and retains `node-addon-api` only as build support. Four platform
+candidates, and retains `node-addon-api` only as build support. Three platform
 companions still need exact source builds. Selected esbuild `0.27.3` now builds
 twice byte-identically from exact tag source because Agentlab's `0.28.1` provider
 cannot satisfy the wrapper's exact binary version contract. Three generated WASM
 inputs still need exact subordinate source correspondence. No prebuilt payload is
-approved, and seven source mappings remain unresolved. `better-sqlite3 12.10.0`
+approved, and six source mappings remain unresolved. `better-sqlite3 12.10.0`
 now rebuilds twice
 byte-identically for Node 24 ABI 137 against Fedora SQLite 3.51.2, with no
 prebuild download or bundled SQLite linkage; every other native/WASM rebuild
@@ -141,3 +141,13 @@ produce the same executable at SHA-256
 the upstream Go suite passes, and the selected npm wrapper reports `0.27.3` and
 performs a TypeScript transform with that executable. Final offline bundle
 inclusion remains unverified.
+
+`@rollup/rollup-linux-x64-gnu 4.59.0` is rebuilt from exact upstream tag
+`v4.59.0` and its checksum-locked 207-crate Cargo source closure. The immutable
+tag archive matches all 13,216 tracked source entries. Two four-job,
+network-isolated builds with `SOURCE_DATE_EPOCH` fixed to the release commit
+produce the same N-API addon at SHA-256
+`03346461e32aa501d7fc09f6d618f5b604d0979dab64fc78ce7eb9727f80b8d0`;
+direct parse/hash calls and the exact Rollup `4.59.0` wrapper bundling API pass
+under Node 24. Immutable Cargo-vendor delivery and final bundle inclusion remain
+unverified.

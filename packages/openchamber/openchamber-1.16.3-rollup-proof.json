@@ -1,0 +1,76 @@
+{
+  "schema": "openchamber-rollup-proof/v1",
+  "release": "1.16.3",
+  "package": "@rollup/rollup-linux-x64-gnu@4.59.0",
+  "wrapper": {
+    "package": "rollup@4.59.0",
+    "integrity": "sha512-2oMpl67a3zCH9H79LeMcbDhXW/UmWG/y2zuqnF2jQq5uq9TbM9TVyXvA4+t+ne2IIkBdrLpAaRQAvo7YI/Yyeg==",
+    "archive_sha256": "219f4b5e57aa37029a6070c3f07746fb6feeb3459ba6ddc95e59248e79d94d56"
+  },
+  "published_companion": {
+    "integrity": "sha512-3AHmtQq/ppNuUspKAlvA8HtLybkDflkMuLK4DPo77DfthRb71V84/c4MlWJXixZz4uruIH4uaa07IqoAkG64fg==",
+    "archive_sha256": "2a6add04a93cbe59f6af6d687fee455babbc113c780579d3e64573196b36967c",
+    "binary_sha256": "c3aedeb1740b7363287f97013b4e03e3485bf0a74c442e90862e8cf53c9144f5",
+    "retained_in_package": false
+  },
+  "source": {
+    "upstream_tag": "v4.59.0",
+    "upstream_tag_commit": "ae846957f109690a866cc3e4c073613c338d3476",
+    "commit_timestamp": 1771744381,
+    "archive_url": "https://github.com/rollup/rollup/archive/refs/tags/v4.59.0/rollup-4.59.0.tar.gz",
+    "archive_sha256": "3891df7d50bf194c7ec54e8a2d6ac3a52c493c0a640d1496ef18ae8f8e8102ca",
+    "tracked_entries": 13216,
+    "tracked_tree_sha256": "b787ddf036c22888d6e9054c4b44e5c6b718fdb89a50d7b6f532ae062b57db89"
+  },
+  "cargo_source": {
+    "lock_sha256": "6715a94534fc3af86a1fe69d0de5b8e3fb822a0e7b11ffda76b0df2239e54074",
+    "locked_packages": 211,
+    "registry_packages": 207,
+    "git_packages": 0,
+    "vendor_directories": 207,
+    "vendor_entries": 7119,
+    "vendor_bytes": 159950172,
+    "vendor_tree_sha256": "6c270602d180cc46044739ee9970ff400581411ebb6504b00041ac0134e3521b",
+    "immutable_delivery_verified": false
+  },
+  "build": {
+    "network_isolated": true,
+    "jobs": 4,
+    "source_date_epoch": 1771744381,
+    "rustc": "rustc 1.96.1 (31fca3adb 2026-06-26) (Fedora 1.96.1-1.fc44)",
+    "cargo": "cargo 1.96.1 (356927216 2026-06-26) (Fedora 1.96.1-1.fc44)",
+    "gcc": "gcc 16.1.1 20260515 (Red Hat 16.1.1-2)",
+    "command": "cargo --config cargo-vendor-config.toml build --locked --offline --release -p bindings_napi -j4",
+    "output_size": 1998016,
+    "first_sha256": "03346461e32aa501d7fc09f6d618f5b604d0979dab64fc78ce7eb9727f80b8d0",
+    "second_sha256": "03346461e32aa501d7fc09f6d618f5b604d0979dab64fc78ce7eb9727f80b8d0",
+    "needed": ["libgcc_s.so.1", "libm.so.6", "libc.so.6", "ld-linux-x86-64.so.2"],
+    "rpath_or_runpath": false,
+    "napi_register_module_v1_exported": true
+  },
+  "reproducibility_diagnostic": {
+    "wall_clock_timestamp_was_nondeterministic": true,
+    "source_date_epoch_fixed_mimalloc_time": true,
+    "unfixed_first_sha256": "a61bae0310a4e4c8f59e28b86997e2e80ad84b94351a01ac406a8c3c4aa03f2b",
+    "unfixed_second_sha256": "f1ce5290b6e8573407fbf1ce4a369ab9236cd99efdcd2cdd9d512d40cf6bc492"
+  },
+  "runtime_smoke": {
+    "node_version": "v24.13.1",
+    "exports": ["ParseTask", "parse", "parseAsync", "xxhashBase16", "xxhashBase36", "xxhashBase64Url"],
+    "xxhash_base16": "e613023ed43aa7d31d6c4b6fde38f602",
+    "parsed_ast_bytes": 224,
+    "wrapper_version": "4.59.0",
+    "wrapper_bundle_output": "const answer = 6 * 7;\n\nexport { answer };",
+    "network_isolated": true
+  },
+  "validation": {
+    "source_identity_verified": true,
+    "published_companion_excluded": true,
+    "two_builds_byte_identical": true,
+    "cargo_workspace_tests_passed": true,
+    "direct_napi_smoke_verified": true,
+    "npm_wrapper_bundle_verified": true,
+    "rpm_build_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}

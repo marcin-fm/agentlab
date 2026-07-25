@@ -20,6 +20,9 @@ receipts:
   esbuild_proof:
     path: openchamber-1.16.3-esbuild-proof.json
     sha256: daa62c3e4a887012f3bca0e8d3873c69994ad5e189dc0420e5f21c3a234bd65d
+  rollup_proof:
+    path: openchamber-1.16.3-rollup-proof.json
+    sha256: 08dbcfa287976a9e9baea96438d445c729176794a012f458fa1034c3fef8596c
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -39,9 +42,9 @@ status:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 7
-  source_mappings_unresolved: 7
-  reproducible_builds_completed: 3
+  source_mappings_verified: 8
+  source_mappings_unresolved: 6
+  reproducible_builds_completed: 4
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
@@ -97,8 +100,14 @@ components:
       executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
-    mapping: { kind: platform_companion, source_package: rollup@4.59.0 }
-    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+    mapping:
+      kind: platform_companion
+      source_package: rollup@4.59.0
+      upstream_tag: v4.59.0
+      upstream_tag_commit: ae846957f109690a866cc3e4c073613c338d3476
+      source_archive_sha256: 3891df7d50bf194c7ec54e8a2d6ac3a52c493c0a640d1496ef18ae8f8e8102ca
+    proof: { path: openchamber-1.16.3-rollup-proof.json }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: true }
   - package: "@tailwindcss/oxide-linux-x64-gnu@4.2.1"
     audit:
       native_payloads: { count: 1, paths_sha256: 84616b52b17aabc52cb4105864c5f03052aaef4835f6d544f92b949d8974ca87 }

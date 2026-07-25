@@ -4,7 +4,7 @@ status: blocked
 blockers:
 - Fedora-source-built Bun 1.3.14 is unavailable.
 - The 818 immutable sources and deterministic role bundles are proven locally, but immutable bundle delivery and offline node_modules/build reconstruction remain unverified.
-- Native, WASM, and executable payloads are classified; seven source mappings remain unresolved, while better-sqlite3, node-pty, and esbuild rebuild reproducibly.
+- Native, WASM, and executable payloads are classified; six source mappings remain unresolved, while better-sqlite3, node-pty, esbuild, and Rollup rebuild reproducibly.
 - Vite-generated browser assets, aggregate licenses, and final bundled Node Provides have not been verified.
 - The separately packaged OpenCode CLI runtime provider remains blocked.
 - Offline Fedora builds and installed CLI/PWA smokes have not been demonstrated.
@@ -38,10 +38,10 @@ source_policy:
   source_bundles_materialized: true
   source_bundle_delivery_verified: false
   native_review: openchamber-1.16.3-native-review.yml
-  native_review_sha256: 1f7066370f35ab956e82589b91f27a3865909b08b9995989a99f4a8d9920a546
+  native_review_sha256: 19aeb1523ecaa87648c7c45c6e359317e64a994cd9b614e2e9f89019cf47e882
   native_components_classified: 14
-  native_source_mappings_unresolved: 7
-  native_reproducible_builds_completed: 3
+  native_source_mappings_unresolved: 6
+  native_reproducible_builds_completed: 4
 upstream:
   provider: github
   repository: openchamber/openchamber
