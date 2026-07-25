@@ -3302,8 +3302,18 @@ module Agentlab
       return errors
     end
 
+    selected_audit = JSON.parse(File.read(selected_path))
     source_audit = JSON.parse(File.read(source_path))
     sources = Array(source_audit["sources"])
+    expected_models_snapshot = {
+      "required" => true,
+      "source_url" => "https://models.dev/api.json",
+      "immutable_source_recorded" => false,
+      "supplied_to_audit" => false
+    }
+    models_snapshot = dependencies.dig("selected_lock_audit", "models_snapshot")
+    errors << "#{prefix} models snapshot policy does not match" unless models_snapshot == expected_models_snapshot
+    errors << "#{prefix} models snapshot receipt does not match" unless selected_audit["models_snapshot"] == models_snapshot
     validate_receipts = lambda do |label, review|
       {
         "selected_lock_audit" => [selected_filename, selected_path],

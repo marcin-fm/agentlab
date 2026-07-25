@@ -1698,6 +1698,17 @@ class AgentlabTest < Minitest::Test
     assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
   end
 
+  def test_rejects_inconsistent_opencode_models_snapshot_evidence
+    package = Agentlab.package_named("opencode")
+    dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
+    dependencies.dig("selected_lock_audit", "models_snapshot")["immutable_source_recorded"] = true
+
+    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+
+    assert(errors.any? { |error| error.include?("models snapshot policy does not match") })
+    assert(errors.any? { |error| error.include?("models snapshot receipt does not match") })
+  end
+
   def test_rejects_incomplete_opencode_lifecycle_review
     package = Agentlab.package_named("opencode")
     dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
