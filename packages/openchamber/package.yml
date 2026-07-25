@@ -3,7 +3,7 @@ name: openchamber
 status: blocked
 blockers:
 - Fedora-source-built Bun 1.3.14 is unavailable.
-- The authoritative 832-record package-identity closure has not been acquired as immutable source archives or materialized offline without lifecycle scripts.
+- The 818 immutable source archives are acquired and inspected, but the authoritative 832-record closure has not been materialized offline without lifecycle scripts.
 - Native and platform payloads, including better-sqlite3, node-pty, and sherpa-onnx-node, have not been rebuilt from corresponding source.
 - Vite-generated browser assets, aggregate licenses, and final bundled Node Provides have not been verified.
 - The separately packaged OpenCode CLI runtime provider remains blocked.
@@ -30,6 +30,9 @@ source_policy:
   selected_lock_authoritative: true
   source_import_files: 845
   source_import_package_roots: 59
+  source_acquisition_receipt: openchamber-1.16.3-source-audit.json
+  source_acquisition_sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
+  source_acquisition_unique_sources: 818
 upstream:
   provider: github
   repository: openchamber/openchamber

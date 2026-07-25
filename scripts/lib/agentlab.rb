@@ -623,6 +623,96 @@ module Agentlab
     ["openchamber: invalid selected lock evidence: #{e.message}"]
   end
 
+  def validate_openchamber_source_acquisition(package, dependencies)
+    return [] unless package.name == "openchamber"
+
+    errors = []
+    metadata = dependencies.fetch("source_acquisition_receipt")
+    filename = dependencies.dig("source_closure_files", "source_audit")
+    path = filename.is_a?(String) && File.join(package.directory, filename)
+    return ["openchamber: source acquisition receipt is missing: #{filename.inspect}"] unless path && File.file?(path)
+
+    actual_sha256 = Digest::SHA256.file(path).hexdigest
+    errors << "openchamber: source acquisition receipt SHA-256 mismatch" unless metadata["sha256"] == actual_sha256
+
+    receipt = JSON.parse(File.read(path))
+    errors << "openchamber: source acquisition receipt schema mismatch" unless receipt["schema"] == "openchamber-source-acquisition/v1" && metadata["schema"] == receipt["schema"]
+    errors << "openchamber: source acquisition package mismatch" unless receipt["package"] == package.name
+    errors << "openchamber: source acquisition release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
+    errors << "openchamber: source acquisition tag mismatch" unless receipt["source_tag"] == package.upstream.fetch("source_tag")
+    errors << "openchamber: source acquisition commit mismatch" unless receipt["source_commit"] == package.upstream.fetch("source_commit")
+
+    selected_filename = dependencies.dig("source_closure_files", "selected_lock_audit")
+    selected_path = selected_filename.is_a?(String) && File.join(package.directory, selected_filename)
+    return errors << "openchamber: selected lock receipt is unavailable for source acquisition validation" unless selected_path && File.file?(selected_path)
+
+    selected_sha256 = Digest::SHA256.file(selected_path).hexdigest
+    errors << "openchamber: source acquisition selected-lock SHA-256 mismatch" unless receipt["selected_lock_receipt_sha256"] == selected_sha256 && metadata["selected_lock_receipt_sha256"] == selected_sha256
+    selected = JSON.parse(File.read(selected_path))
+
+    expected = {}
+    role_rank = { "test" => 0, "build" => 1, "runtime" => 2 }
+    selected.fetch("packages").each do |record|
+      key = [record.fetch("origin"), record.fetch("source_url"), record.fetch("integrity")]
+      source = expected[key] ||= {
+        "npm_name" => record.fetch("npm_name"),
+        "version" => record.fetch("version"),
+        "origin" => record.fetch("origin"),
+        "source_url" => record.fetch("source_url"),
+        "integrity" => record.fetch("integrity"),
+        "package_paths" => [],
+        "roles" => Set.new,
+        "candidate_for_binary" => false
+      }
+      unless source.values_at("npm_name", "version") == record.values_at("npm_name", "version")
+        errors << "openchamber: selected source identity maps to conflicting package identities"
+      end
+      source["package_paths"] << record.fetch("package_path")
+      source["roles"] << record.fetch("role")
+      source["candidate_for_binary"] ||= record.fetch("candidate_for_binary")
+    end
+
+    records = Array(receipt["sources"])
+    errors << "openchamber: source acquisition records are not sorted" unless records == records.sort_by { |record| [record.fetch("origin"), record.fetch("npm_name"), record.fetch("version")] }
+    errors << "openchamber: source acquisition source count mismatch" unless records.length == expected.length && metadata["unique_sources"] == expected.length
+    actual = records.to_h { |record| [[record["origin"], record["source_url"], record["integrity"]], record] }
+    errors << "openchamber: source acquisition identities are not unique" unless actual.length == records.length
+
+    expected.each do |key, source|
+      record = actual[key]
+      unless record
+        errors << "openchamber: acquired source is missing for #{source['npm_name']}@#{source['version']}"
+        next
+      end
+      errors << "openchamber: acquired package identity mismatch for #{source['npm_name']}" unless record.values_at("npm_name", "version") == source.values_at("npm_name", "version")
+      errors << "openchamber: acquired package paths mismatch for #{source['npm_name']}@#{source['version']}" unless record["package_paths"] == source["package_paths"].uniq.sort
+      expected_roles = source["roles"].to_a.sort_by { |role| role_rank.fetch(role) }.reverse
+      errors << "openchamber: acquired roles mismatch for #{source['npm_name']}@#{source['version']}" unless record["roles"] == expected_roles
+      errors << "openchamber: acquired binary candidacy mismatch for #{source['npm_name']}@#{source['version']}" unless record["candidate_for_binary"] == source["candidate_for_binary"]
+      errors << "openchamber: invalid acquired archive name for #{source['npm_name']}@#{source['version']}" unless record["archive"].to_s.match?(/\Asha512-[0-9a-f]{128}\.tgz\z/)
+      errors << "openchamber: invalid acquired SHA-256 for #{source['npm_name']}@#{source['version']}" unless record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+      errors << "openchamber: invalid acquired size for #{source['npm_name']}@#{source['version']}" unless record["size"].is_a?(Integer) && record["size"].positive?
+      errors << "openchamber: invalid acquired file count for #{source['npm_name']}@#{source['version']}" unless record["file_count"].is_a?(Integer) && record["file_count"].positive?
+      errors << "openchamber: invalid acquired unpacked size for #{source['npm_name']}@#{source['version']}" unless record["unpacked_size"].is_a?(Integer) && record["unpacked_size"].positive?
+    end
+
+    validation = receipt.fetch("validation")
+    %w[registry_integrity_verified archive_paths_verified source_sha256_recorded].each do |flag|
+      errors << "openchamber: source acquisition validation #{flag} is not true" unless validation[flag] == true
+    end
+    %w[lifecycle_scripts_executed dependency_resolution_performed licenses_verified native_sources_verified generated_sources_verified].each do |flag|
+      errors << "openchamber: source acquisition overclaims #{flag}" unless validation[flag] == false
+    end
+
+    source_policy = package.data.fetch("source_policy")
+    errors << "openchamber: package source acquisition receipt mismatch" unless source_policy["source_acquisition_receipt"] == filename
+    errors << "openchamber: package source acquisition SHA-256 mismatch" unless source_policy["source_acquisition_sha256"] == actual_sha256
+    errors << "openchamber: package source acquisition count mismatch" unless source_policy["source_acquisition_unique_sources"] == expected.length
+    errors
+  rescue JSON::ParserError, KeyError, TypeError => e
+    ["openchamber: invalid source acquisition evidence: #{e.message}"]
+  end
+
   def validate_rust_v8_evidence(package, dependencies, spec)
     return [] unless package.name == "rust-v8"
 

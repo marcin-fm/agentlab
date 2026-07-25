@@ -255,6 +255,32 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_openchamber_source_acquisition_validator_rejects_package_path_drift
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    receipt_path = File.join(package.directory, dependencies.dig("source_closure_files", "source_audit"))
+    receipt = JSON.parse(File.read(receipt_path))
+
+    Dir.mktmpdir do |directory|
+      receipt.fetch("sources").first.fetch("package_paths") << "unexpected/path"
+      temporary_receipt = File.join(directory, "source-audit.json")
+      File.write(temporary_receipt, JSON.pretty_generate(receipt) + "\n")
+      FileUtils.cp(File.join(package.directory, dependencies.dig("source_closure_files", "selected_lock_audit")), directory)
+      temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
+      temporary_dependencies.fetch("source_closure_files")["source_audit"] = "source-audit.json"
+      temporary_dependencies.fetch("source_acquisition_receipt")["sha256"] = Digest::SHA256.file(temporary_receipt).hexdigest
+      temporary_package = Struct.new(:name, :directory, :upstream, :data).new(
+        package.name,
+        directory,
+        package.upstream,
+        package.data
+      )
+
+      errors = Agentlab.validate_openchamber_source_acquisition(temporary_package, temporary_dependencies)
+      assert(errors.any? { |error| error.include?("acquired package paths mismatch") }, errors.inspect)
+    end
+  end
+
   def test_rejects_invalid_jsonc
     error = assert_raises(Agentlab::Error) do
       Agentlab.parse_jsonc("{ /* unfinished", source: "fixture")

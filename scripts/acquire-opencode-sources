@@ -15,7 +15,15 @@ require "thread"
 require "tmpdir"
 require_relative "lib/agentlab"
 
-ROLE_RANK = { "build" => 0, "runtime" => 1 }.freeze
+SOURCE_PACKAGE_NAME = ENV.fetch("AGENTLAB_NODE_SOURCE_PACKAGE", "opencode").freeze
+SOURCE_SELECTED_SCHEMA = ENV.fetch("AGENTLAB_NODE_SELECTED_SCHEMA", "opencode-selected-lock-audit/v1").freeze
+SOURCE_RECEIPT_SCHEMA = ENV.fetch("AGENTLAB_NODE_SOURCE_SCHEMA", "opencode-source-acquisition/v1").freeze
+SOURCE_WORKDIR_PREFIX = ENV.fetch("AGENTLAB_NODE_SOURCE_WORKDIR", "/srv/tmp/agentlab-opencode/source-acquisition").freeze
+SOURCE_OUTPUT_PREFIX = ENV.fetch("AGENTLAB_NODE_SOURCE_OUTPUT", "opencode").freeze
+SOURCE_MARKER = ENV.fetch("AGENTLAB_NODE_SOURCE_MARKER", ".agentlab-opencode-source-acquisition").freeze
+SOURCE_LABEL = ENV.fetch("AGENTLAB_NODE_SOURCE_LABEL", "OpenCode").freeze
+
+ROLE_RANK = { "test" => 0, "build" => 1, "runtime" => 2 }.freeze
 LICENSE_BASENAME = /\A(?:licen[cs]e|copying|notice|copyright)(?:[._-].*)?\z/i
 NATIVE_SUFFIXES = %w[.node .so .dylib .dll .exe .a .o .obj .lib].freeze
 NATIVE_SOURCE_SUFFIXES = %w[.c .cc .cpp .cxx .h .hh .hpp .hxx .m .mm .rs .s .asm .gyp .gypi].freeze
@@ -31,12 +39,12 @@ def require_workdir(path)
   expanded = File.expand_path(path)
   raise Agentlab::Error, "workdir must be below /srv/tmp" unless expanded.start_with?("/srv/tmp/")
 
-  marker = File.join(expanded, ".agentlab-opencode-source-acquisition")
+  marker = File.join(expanded, SOURCE_MARKER)
   if Dir.exist?(expanded)
     raise Agentlab::Error, "refusing unmarked workdir #{expanded}" unless File.file?(marker)
   else
     FileUtils.mkdir_p(expanded)
-    File.write(marker, "agentlab opencode source acquisition\n")
+    File.write(marker, "agentlab #{SOURCE_PACKAGE_NAME} source acquisition\n")
   end
   FileUtils.mkdir_p(File.join(expanded, "archives"))
   expanded
@@ -106,7 +114,7 @@ def archive_bytes(source, path, check:)
   bytes = download_with_retries(source.fetch("source_url"), source.fetch("npm_name"))
   verify_integrity!(bytes, source.fetch("integrity"), source.fetch("npm_name")) if source.fetch("origin") == "registry"
 
-  Tempfile.create([".opencode-source-", ".tmp"], File.dirname(path)) do |file|
+  Tempfile.create([".#{SOURCE_PACKAGE_NAME}-source-", ".tmp"], File.dirname(path)) do |file|
     file.binmode
     file.write(bytes)
     file.flush
@@ -275,20 +283,20 @@ def inspect_archive(path, source, scan_parent)
   inspection
 end
 
-package = Agentlab.package_named("opencode")
+package = Agentlab.package_named(SOURCE_PACKAGE_NAME)
 dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
 version = package.upstream.fetch("current_version").to_s
 selected_filename = dependencies.dig("source_closure_files", "selected_lock_audit")
 selected_path = File.join(package.directory, selected_filename)
 selected_config = dependencies.fetch("selected_lock_receipt")
-workdir = "/srv/tmp/agentlab-opencode/source-acquisition-#{version}"
-output = File.join(package.directory, "opencode-#{version}-source-audit.json")
+workdir = "#{SOURCE_WORKDIR_PREFIX}-#{version}"
+output = File.join(package.directory, "#{SOURCE_OUTPUT_PREFIX}-#{version}-source-audit.json")
 jobs = 4
 plan = false
 check = false
 
 OptionParser.new do |parser|
-  parser.banner = "Usage: scripts/acquire-opencode-sources [options]"
+  parser.banner = "Usage: scripts/acquire-#{SOURCE_PACKAGE_NAME}-sources [options]"
   parser.on("--workdir PATH", "Marked resumable work directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Source audit receipt path") { |path| output = path }
   parser.on("--jobs N", Integer, "Concurrent downloads (1-4)") { |value| jobs = value }
@@ -304,8 +312,8 @@ unless actual_selected_sha == selected_config.fetch("sha256")
 end
 
 selected = JSON.parse(File.read(selected_path))
-unless selected.fetch("release").to_s == version && selected.fetch("schema") == "opencode-selected-lock-audit/v1"
-  raise Agentlab::Error, "selected lock receipt identity does not match OpenCode #{version}"
+unless selected.fetch("release").to_s == version && selected.fetch("schema") == SOURCE_SELECTED_SCHEMA
+  raise Agentlab::Error, "selected lock receipt identity does not match #{SOURCE_LABEL} #{version}"
 end
 
 unique = {}
@@ -410,7 +418,7 @@ summary = {
   "sources_with_native_source" => records.count { |record| !record.fetch("native_source_paths").empty? }
 }
 receipt = {
-  "schema" => "opencode-source-acquisition/v1",
+  "schema" => SOURCE_RECEIPT_SCHEMA,
   "package" => package.name,
   "release" => version,
   "source_tag" => package.upstream.fetch("source_tag"),

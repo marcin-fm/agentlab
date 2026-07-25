@@ -4,7 +4,7 @@
 
 Name:           openchamber
 Version:        1.16.3
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -42,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.3
+- Acquire and inspect the complete selected immutable registry-source closure.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.2
 - Derive the authoritative package-identity closure from fail-closed browser source reachability.
 

@@ -176,10 +176,35 @@ selected_lock_receipt:
     node_runtime_exclusions_enforced: true
     source_import_reachability_verified: true
     authoritative_closure_verified: true
+source_acquisition_receipt:
+  schema: openchamber-source-acquisition/v1
+  sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
+  selected_lock_receipt_sha256: 649c0734f1a68aca4a832e32c8906824e1ccd8fb9fa78287236eaff83fb808cc
+  selected_package_records: 832
+  unique_sources: 818
+  registry_sources: 818
+  github_sources: 0
+  sources_without_declared_license: 0
+  sources_without_license_files: 27
+  sources_with_lifecycle_scripts: 98
+  lifecycle_script_count: 100
+  sources_with_native_payloads: 6
+  native_payload_count: 24
+  sources_with_wasm_payloads: 3
+  wasm_payload_count: 4
+  sources_with_executable_payloads: 5
+  executable_payload_count: 10
+  sources_with_native_source: 5
+source_acquisition_findings:
+  lifecycle_scripts_executed: false
+  dependency_resolution_performed: false
+  licenses_verified: false
+  native_sources_verified: false
+  generated_sources_verified: false
 closure_audit:
   audited_release:
-  production_build_sources_verified: false
-  test_sources_verified: false
+  production_build_sources_verified: true
+  test_sources_verified: true
   licenses_verified: false
   native_sources_verified: false
   generated_sources_verified: false
@@ -193,6 +218,7 @@ source_closure_files:
   license_inventory: openchamber-1.16.3-bundled-licenses.txt
   native_manifest: openchamber-1.16.3-native.json
   selected_lock_audit: openchamber-1.16.3-selected-lock-audit.json
+  source_audit: openchamber-1.16.3-source-audit.json
 runtime_provider:
   package: opencode
   resolution: PATH or OPENCODE_BINARY

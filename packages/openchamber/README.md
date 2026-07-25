@@ -27,9 +27,8 @@ the derived closure and installed-runtime smoke must still prove that result.
 The draft remains blocked until:
 
 1. Fedora-source-built Bun `1.3.14` is available.
-2. The exact selected package identities are acquired as immutable sources and
-   materialized without package-manager resolution or lifecycle scripts during
-   RPM phases.
+2. The checked immutable sources are materialized without package-manager
+   resolution or lifecycle scripts during RPM phases.
 3. `better-sqlite3`, `node-pty`, `sherpa-onnx-node`, and every other
    native or platform payload are classified and rebuilt from source.
 4. Vite and PWA generated assets are rebuilt with corresponding-source proof.
@@ -74,3 +73,20 @@ package-identity normalization based only on exact dependency-map equality; it
 does not claim that upstream corrected the importer versions. Immutable source
 acquisition, native rebuilds, generated browser output, licenses, final binary
 inclusion, bundled Provides, and offline builds remain fail-closed.
+
+## Immutable Source Acquisition
+
+`openchamber-1.16.3-source-audit.json` binds the selected-lock receipt to 818
+unique npm registry archives for the 832 selected package records. The
+resumable acquisition verifies every lockfile SHA-512, records each archive's
+SHA-256 and size, rejects unsafe paths and special entries, and confirms the
+matching package name and version without executing dependency resolution or
+lifecycle scripts.
+
+The archive inspection finds no missing license declarations, 27 packages
+without package-local license files, 98 sources with 100 lifecycle scripts, six
+sources containing 24 native payloads, three sources containing four WASM
+payloads, five sources containing 10 non-source executable payloads, and five
+sources containing native build inputs. These are inventory facts, not legal or
+build approval: license, native-source, generated-output, final payload, and
+offline materialization gates remain false.

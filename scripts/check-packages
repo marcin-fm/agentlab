@@ -290,7 +290,8 @@ packages.each do |package|
       begin
         receipt = JSON.parse(File.read(source_path))
         errors << "#{package.name}: source acquisition receipt release does not match" unless receipt["release"].to_s == manifest_version
-        errors << "#{package.name}: source acquisition receipt schema is invalid" unless receipt["schema"] == "opencode-source-acquisition/v1"
+        expected_schema = source_config.fetch("schema", "opencode-source-acquisition/v1")
+        errors << "#{package.name}: source acquisition receipt schema is invalid" unless receipt["schema"] == expected_schema
         errors << "#{package.name}: source acquisition receipt selected-lock SHA-256 does not match" unless receipt["selected_lock_receipt_sha256"] == source_config["selected_lock_receipt_sha256"]
         errors << "#{package.name}: source acquisition receipt lacks registry integrity proof" unless receipt.dig("validation", "registry_integrity_verified") == true
         errors << "#{package.name}: source acquisition receipt lacks archive safety proof" unless receipt.dig("validation", "archive_paths_verified") == true
@@ -328,6 +329,8 @@ packages.each do |package|
   errors.concat(Agentlab.validate_opencode_review_evidence(package, dependencies, manifest_version)) if dependencies
 
   errors.concat(Agentlab.validate_openchamber_selected_lock(package, dependencies)) if dependencies
+
+  errors.concat(Agentlab.validate_openchamber_source_acquisition(package, dependencies)) if dependencies
 
   errors.concat(Agentlab.validate_rust_v8_evidence(package, dependencies, spec)) if dependencies
 
