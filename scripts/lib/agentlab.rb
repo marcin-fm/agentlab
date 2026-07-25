@@ -869,7 +869,7 @@ module Agentlab
       errors << "openchamber: native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
       reproducible = component.dig("decision", "reproducible_build_verified")
       errors << "openchamber: native review reproducibility state is missing for #{identity}" unless [true, false].include?(reproducible)
-      proven_rebuilds = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
+      proven_rebuilds = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1 better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
       errors << "openchamber: native review overclaims a reproducible build for #{identity}" if reproducible == true && !proven_rebuilds.include?(identity)
     end
 
@@ -894,7 +894,7 @@ module Agentlab
     source_packages.each do |identity, source_package|
       component = components.find { |entry| entry["package"] == identity }
       errors << "openchamber: native review source package mismatch for #{identity}" unless component&.dig("mapping", "source_package") == source_package
-      expected_verified = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0].include?(identity)
+      expected_verified = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1].include?(identity)
       errors << "openchamber: native review platform mapping verification mismatch for #{identity}" unless component&.dig("decision", "source_mapping_verified") == expected_verified
     end
     esbuild = components.find { |component| component["package"] == "@esbuild/linux-x64@0.27.3" }
@@ -930,6 +930,23 @@ module Agentlab
       errors << "openchamber: rollup review state mismatch" unless rollup.dig("decision", "reproducible_build_verified") == true
     else
       errors << "openchamber: rollup proof is unavailable"
+    end
+
+    tailwind = components.find { |component| component["package"] == "@tailwindcss/oxide-linux-x64-gnu@4.2.1" }
+    tailwind_filename = dependencies.dig("source_closure_files", "tailwind_oxide_proof")
+    tailwind_path = tailwind_filename.is_a?(String) && File.join(package.directory, tailwind_filename)
+    if tailwind_path && File.file?(tailwind_path)
+      tailwind_sha256 = Digest::SHA256.file(tailwind_path).hexdigest
+      tailwind_proof = JSON.parse(File.read(tailwind_path))
+      errors << "openchamber: tailwind oxide proof path mismatch" unless tailwind&.dig("proof", "path") == tailwind_filename && review.dig("receipts", "tailwind_oxide_proof", "path") == tailwind_filename
+      errors << "openchamber: tailwind oxide proof SHA-256 mismatch" unless review.dig("receipts", "tailwind_oxide_proof", "sha256") == tailwind_sha256
+      errors << "openchamber: tailwind oxide proof identity mismatch" unless tailwind_proof["schema"] == "openchamber-tailwind-oxide-proof/v1" && tailwind_proof["package"] == "@tailwindcss/oxide-linux-x64-gnu@4.2.1" && tailwind_proof.dig("source", "upstream_tag_commit") == "1dce64ee7ec2e414c845b4e268ac3b9b89aaf0c8"
+      errors << "openchamber: tailwind oxide proof source mismatch" unless tailwind_proof.dig("source", "archive_sha256") == "c497193417a98a2de5a791cce64c0b00f6b561066a0e2734bdb584096de44c80" && tailwind_proof.dig("cargo_source", "lock_sha256") == "e4fbd56ae4218d5a731a635a038691aa8c0e46dabb91e35ac64ac1275a65fa3d" && tailwind_proof.dig("cargo_source", "vendor_tree_sha256") == "4132c430a94ba75baf33bd05c3606156d45eb5e3dcf5cede77c4ce84773e510c"
+      errors << "openchamber: tailwind oxide proof build contract mismatch" unless tailwind_proof.dig("build", "network_isolated") == true && tailwind_proof.dig("build", "jobs") == 4 && tailwind_proof.dig("build", "source_date_epoch") == 1771843512 && tailwind_proof.dig("build", "first_sha256") == tailwind_proof.dig("build", "second_sha256") && tailwind_proof.dig("build", "rpath_or_runpath") == false && tailwind_proof.dig("build", "napi_register_module_v1_exported") == true
+      errors << "openchamber: tailwind oxide runtime proof is incomplete" unless tailwind_proof.dig("published_companion", "retained_in_package") == false && tailwind_proof.dig("cargo_source", "immutable_delivery_verified") == false && tailwind_proof.dig("validation", "cargo_workspace_tests_passed") == true && tailwind_proof.dig("validation", "npm_wrapper_scanner_verified") == true && tailwind_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: tailwind oxide review state mismatch" unless tailwind.dig("decision", "reproducible_build_verified") == true
+    else
+      errors << "openchamber: tailwind oxide proof is unavailable"
     end
 
     better = components.find { |component| component["package"] == "better-sqlite3@12.10.0" }

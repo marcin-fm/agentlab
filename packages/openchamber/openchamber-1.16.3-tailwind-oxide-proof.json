@@ -1,0 +1,74 @@
+{
+  "schema": "openchamber-tailwind-oxide-proof/v1",
+  "release": "1.16.3",
+  "package": "@tailwindcss/oxide-linux-x64-gnu@4.2.1",
+  "wrapper": {
+    "package": "@tailwindcss/oxide@4.2.1",
+    "integrity": "sha512-yv9jeEFWnjKCI6/T3Oq50yQEOqmpmpfzG1hcZsAOaXFQPfzWprWrlHSdGPEF3WQTi8zu8ohC9Mh9J470nT5pUw==",
+    "archive_sha256": "a27f027b6b97bf12709ee9f09f1801bfc906e759f30b1b985009dd8576f72647",
+    "index_js_sha256": "c33504925400c6973136b85528576761c24d3871fc207b4da1f4b5eabd6c4b38",
+    "index_d_ts_sha256": "f63daad0ca12de52a3e8136ce042ea0ce5bd0d9ccd9a13895053d5785fad9e54"
+  },
+  "published_companion": {
+    "integrity": "sha512-qMFzxI2YlBOLW5PhblzuSWlWfwLHaneBE0xHzLrBgNtqN6mWfs+qYbhryGSXQjFYB1Dzf5w+LN5qbUTPhW7Y5g==",
+    "archive_sha256": "b8076d8cc9730b77308e4d95e80aa50f651281fca77dc3225acccdb98cd7148f",
+    "binary_sha256": "4ecbb6ca7428b0c76801bd76089a8f20d90db266563630db8eff45502a1c4428",
+    "retained_in_package": false
+  },
+  "source": {
+    "upstream_tag": "v4.2.1",
+    "upstream_tag_commit": "1dce64ee7ec2e414c845b4e268ac3b9b89aaf0c8",
+    "commit_timestamp": 1771843512,
+    "archive_url": "https://github.com/tailwindlabs/tailwindcss/archive/refs/tags/v4.2.1/tailwindcss-4.2.1.tar.gz",
+    "archive_sha256": "c497193417a98a2de5a791cce64c0b00f6b561066a0e2734bdb584096de44c80",
+    "tracked_entries": 531,
+    "tracked_tree_sha256": "294046685f0f08327c8eccfc2f92e7016122b1bc19621c86e580b9e1047404e7",
+    "rust_toolchain": "1.85.0",
+    "rust_toolchain_sha256": "531f73e62fbf8235a68b762f0ca63bdadb3a2de84b17514ae5ae03398286cd64"
+  },
+  "cargo_source": {
+    "lock_sha256": "e4fbd56ae4218d5a731a635a038691aa8c0e46dabb91e35ac64ac1275a65fa3d",
+    "locked_packages": 94,
+    "registry_packages": 90,
+    "git_packages": 0,
+    "vendor_directories": 90,
+    "vendor_entries": 7026,
+    "vendor_bytes": 248715972,
+    "vendor_tree_sha256": "4132c430a94ba75baf33bd05c3606156d45eb5e3dcf5cede77c4ce84773e510c",
+    "immutable_delivery_verified": false
+  },
+  "build": {
+    "network_isolated": true,
+    "jobs": 4,
+    "source_date_epoch": 1771843512,
+    "rustc": "rustc 1.96.1 (31fca3adb 2026-06-26) (Fedora 1.96.1-1.fc44)",
+    "cargo": "cargo 1.96.1 (356927216 2026-06-26) (Fedora 1.96.1-1.fc44)",
+    "gcc": "gcc 16.1.1 20260515 (Red Hat 16.1.1-2)",
+    "command": "cargo --config cargo-vendor-config.toml build --locked --offline --release -p tailwind-oxide -j4",
+    "output_size": 3456456,
+    "first_sha256": "f7629d4b23133495f0bca3c3c56e8bb5f94aaf7f7333680283d3a7acaaac4133",
+    "second_sha256": "f7629d4b23133495f0bca3c3c56e8bb5f94aaf7f7333680283d3a7acaaac4133",
+    "needed": ["libgcc_s.so.1", "libc.so.6", "ld-linux-x86-64.so.2"],
+    "rpath_or_runpath": false,
+    "napi_register_module_v1_exported": true
+  },
+  "runtime_smoke": {
+    "node_version": "v24.13.1",
+    "exports": ["Scanner"],
+    "candidates": ["class", "flex", "hover:bg-blue-600", "text-red-500"],
+    "positioned_candidates": [
+      {"candidate": "font-bold", "position": 0},
+      {"candidate": "p-4", "position": 10}
+    ],
+    "network_isolated": true
+  },
+  "validation": {
+    "source_identity_verified": true,
+    "published_companion_excluded": true,
+    "two_builds_byte_identical": true,
+    "cargo_workspace_tests_passed": true,
+    "npm_wrapper_scanner_verified": true,
+    "rpm_build_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}

@@ -151,3 +151,12 @@ produce the same N-API addon at SHA-256
 direct parse/hash calls and the exact Rollup `4.59.0` wrapper bundling API pass
 under Node 24. Immutable Cargo-vendor delivery and final bundle inclusion remain
 unverified.
+
+`@tailwindcss/oxide-linux-x64-gnu 4.2.1` is rebuilt from exact upstream tag
+`v4.2.1` and its checksum-locked 90-crate Cargo source closure. The immutable
+tag archive matches all 531 tracked source entries. Two four-job,
+network-isolated builds produce the same N-API addon at SHA-256
+`f7629d4b23133495f0bca3c3c56e8bb5f94aaf7f7333680283d3a7acaaac4133`;
+the complete Rust workspace passes and the exact npm wrapper scanner returns
+the expected utility candidates under Node 24. Immutable Cargo-vendor delivery
+and final bundle inclusion remain unverified.
