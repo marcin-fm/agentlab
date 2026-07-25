@@ -1,15 +1,18 @@
-%global source_sha256 34135ce73e82cce494483133752f54d97391351d4faa49fbf66c6058eb18329d
+%global source_sha256 4440eb2118e64e14df45eabf5f927a01eda2c37dcaa50435a708e31c19f8b7f3
 
 Name:           python-docling-slim
-Version:        2.113.0
-Release:        0.2%{?dist}
+Version:        2.115.0
+Release:        0.1%{?dist}
 Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
-Source0:        https://files.pythonhosted.org/packages/22/35/149f23813b0df840945c99a2789f0a749431a23a6846d4da132de4bbda40/docling_slim-%{version}.tar.gz
+Source0:        https://files.pythonhosted.org/packages/25/b8/c78b8c9a07f20325176299d6a58ee8a0dcf088815ddc45590b29fc6c671a/docling_slim-%{version}.tar.gz
 # Keep the selected service-client extra API-only by omitting command-only dependencies.
 # Fedora-specific package split; upstream CLI design is https://github.com/docling-project/docling/pull/3622.
 Patch0:         docling-slim-service-client-api-only.patch
+# Keep optional SciPy use inside the video scene-change execution path.
+# Backport: https://github.com/docling-project/docling/commit/9b51f4f857176cdd95cef53e2ec7f5f32ffbc6a5
+Patch1:         docling-slim-guard-scipy-import.patch
 
 BuildArch:      noarch
 BuildRequires:  pyproject-rpm-macros
@@ -54,9 +57,18 @@ export PYTHONPATH=%{buildroot}%{python3_sitelib}
 python3 - <<'PY'
 import docling
 from docling.datamodel.base_models import InputFormat
-from docling.service_client import DoclingServiceClient
+from docling.service_client import (
+    AsyncDoclingServiceClient,
+    BatchSourceRequestInput,
+    BatchTargetRequestInput,
+    DoclingServiceClient,
+    GenericSourceRequest,
+    GenericTargetRequest,
+)
 
 assert InputFormat.DOCX.value == "docx"
+assert hasattr(DoclingServiceClient, "submit_batch")
+assert hasattr(AsyncDoclingServiceClient, "submit_batch")
 DoclingServiceClient("http://127.0.0.1:1")
 PY
 
@@ -109,6 +121,10 @@ trap - EXIT
 %doc packages/docling-slim/README.md
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 2.115.0-0.1
+- Update to upstream 2.115.0 and verify the expanded service-client API.
+- Backport the upstream fix for optional SciPy use in slim installations.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 2.113.0-0.2
 - Document the API-only service-client patch and upstream design.
 
