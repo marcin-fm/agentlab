@@ -127,13 +127,13 @@ module BunSourceLicenseAudit
     Digest::SHA256.file(path).hexdigest
   end
 
-  def file_record(path, root)
+  def file_record(path, root, recorded_path: nil)
     real = File.realpath(path)
     root_real = File.realpath(root)
     raise Error, "license path escapes source root: #{path}" unless real.start_with?("#{root_real}/")
 
     {
-      "path" => real.delete_prefix("#{root_real}/"),
+      "path" => recorded_path || real.delete_prefix("#{root_real}/"),
       "size_bytes" => File.size(real),
       "sha256" => sha256(real)
     }
@@ -155,13 +155,16 @@ module BunSourceLicenseAudit
     end
   end
 
-  def license_file_records(package_root, source_root)
+  def license_file_records(package_root, source_root, recorded_root: nil)
     Dir.glob(File.join(package_root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
-      file_record(path, source_root) if File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+      next unless File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+
+      recorded_path = recorded_root && File.join(recorded_root, path.delete_prefix("#{package_root}/"))
+      file_record(path, recorded_root ? package_root : source_root, recorded_path: recorded_path)
     end.sort_by { |record| record.fetch("path") }
   end
 
-  def npm_inventory(closure, cache_root, source_root)
+  def npm_inventory(closure, cache_root, source_root, external_cache: false)
     cache_names = source_cache_names(closure)
     records = closure.dig("npm", "source_archives").map do |source|
       cache_name = cache_names.fetch(source.fetch("archive"))
@@ -170,7 +173,8 @@ module BunSourceLicenseAudit
       raise Error, "missing npm package manifest #{cache_name}" unless File.file?(manifest_path)
 
       manifest = JSON.parse(File.read(manifest_path))
-      license_files = license_file_records(package_root, source_root)
+      recorded_root = external_cache ? File.join(".build-tools", "bun-install-cache", cache_name) : nil
+      license_files = license_file_records(package_root, source_root, recorded_root: recorded_root)
       {
         "cache_name" => cache_name,
         "name" => manifest.fetch("name"),
@@ -231,10 +235,13 @@ module BunSourceLicenseAudit
     end
   end
 
-  def webkit_inventory(source_root)
-    webkit_root = File.join(source_root, "vendor", "WebKit")
+  def webkit_inventory(source_root, webkit_source: nil)
+    webkit_root = webkit_source ? File.realpath(webkit_source) : File.join(source_root, "vendor", "WebKit")
     files = Dir.glob(File.join(webkit_root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
-      file_record(path, source_root) if File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+      next unless File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+
+      recorded_path = webkit_source && File.join("vendor", "WebKit", path.delete_prefix("#{webkit_root}/"))
+      file_record(path, webkit_source ? webkit_root : source_root, recorded_path: recorded_path)
     end.sort_by { |record| record.fetch("path") }
     required = %w[
       vendor/WebKit/Source/JavaScriptCore/COPYING.LIB
@@ -250,13 +257,13 @@ module BunSourceLicenseAudit
     }
   end
 
-  def generate(source_root:, closure_path:, rpm_release:, audit_date:)
+  def generate(source_root:, closure_path:, rpm_release:, audit_date:, npm_cache_path: nil, webkit_source_path: nil)
     source_root = File.realpath(source_root)
     closure_path = File.realpath(closure_path)
     closure = JSON.parse(File.read(closure_path))
     raise Error, "unexpected Bun release" unless closure.fetch("release") == "1.3.14"
 
-    npm_cache = File.join(source_root, ".build-tools", "bun-install-cache")
+    npm_cache = npm_cache_path ? File.realpath(npm_cache_path) : File.join(source_root, ".build-tools", "bun-install-cache")
     raise Error, "missing staged npm cache" unless Dir.exist?(npm_cache)
 
     {
@@ -267,9 +274,9 @@ module BunSourceLicenseAudit
       "audit_date" => audit_date,
       "source_closure" => file_record(closure_path, File.dirname(closure_path)),
       "bun_license" => file_record(File.join(source_root, "LICENSE.md"), source_root),
-      "npm" => npm_inventory(closure, npm_cache, source_root),
+      "npm" => npm_inventory(closure, npm_cache, source_root, external_cache: !npm_cache_path.nil?),
       "native" => native_inventory(closure, source_root),
-      "webkit" => webkit_inventory(source_root),
+      "webkit" => webkit_inventory(source_root, webkit_source: webkit_source_path),
       "historical_evidence" => {
         "private_lolhtml_cargo_graph" => HISTORICAL_LOLHTML_EVIDENCE
       },
@@ -312,6 +319,8 @@ module BunSourceLicenseAudit
       parser.on("--source-root PATH") { |value| options[:source_root] = value }
       parser.on("--closure PATH") { |value| options[:closure] = value }
       parser.on("--rpm-release RELEASE") { |value| options[:rpm_release] = value }
+      parser.on("--npm-cache PATH") { |value| options[:npm_cache] = value }
+      parser.on("--webkit-source PATH") { |value| options[:webkit_source] = value }
       parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
       parser.on("--output PATH") { |value| options[:output] = value }
       parser.on("--check") { options[:check] = true }
@@ -330,7 +339,9 @@ module BunSourceLicenseAudit
       source_root: options.fetch(:source_root),
       closure_path: options.fetch(:closure),
       rpm_release: options.fetch(:rpm_release),
-      audit_date: options.fetch(:audit_date)
+      audit_date: options.fetch(:audit_date),
+      npm_cache_path: options[:npm_cache],
+      webkit_source_path: options[:webkit_source]
     )
     serialized = JSON.pretty_generate(result) + "\n"
     if options[:check]

@@ -1,0 +1,658 @@
+{
+  "schema": "bun-final-linked-license-closure/v1",
+  "package": "bun",
+  "version": "1.3.14",
+  "target": "fedora-44-x86_64-glibc-system-lolhtml",
+  "audit_date": "2026-07-26",
+  "inputs": {
+    "self_rebuild": {
+      "path": "packages/bun/self-rebuild-proof.json",
+      "size_bytes": 15883,
+      "sha256": "d028cff814121da1c585b74851976b4eaa9c1d46e17591c3eb7185421f15712c"
+    },
+    "source_license_inventory": {
+      "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
+      "size_bytes": 122697,
+      "sha256": "4754ed971c980ed50b22510660d58ee480c7a93f04da728314edb3eb476b0418"
+    },
+    "relink_audit": {
+      "path": "packages/bun/relink-materials-proof.json",
+      "size_bytes": 6435,
+      "sha256": "f4174112a8bef69442b1697dc5ca5228600e6d6dd41714025e4d78b548a9fa56"
+    },
+    "relink_kit": {
+      "path": "packages/bun/relink-kit-proof.json",
+      "size_bytes": 4158,
+      "sha256": "f79d9aa350ed8b08ee58ec115b24eccb9b99ab7c0c28bf406ad15bccb318d1e5"
+    },
+    "lolhtml_package": {
+      "path": "packages/lol-html/package.yml",
+      "size_bytes": 3945,
+      "sha256": "c8bab9f03901bf2378b64aead63cee5217c733fcb46e23876d53c075507dd2e2"
+    }
+  },
+  "final_link": {
+    "output": "build/release-local/bun-profile",
+    "link_manifest_sha256": "9ad18250fcfe04ccd517b5c2b0d3477dfbe896c9d63f7daab94b8de588fcc666",
+    "direct_object_count": 1162,
+    "direct_object_inventory_sha256": "633f2af21df941f847da189d78447adfaa76b6fca4d8434063b9ceeca3c8e3ea",
+    "direct_archive_count": 3,
+    "linked_input_count": 1165,
+    "linked_input_paths_sha256": "77c41053c487b1a80a1d5ed25132a2451a9cbcfb738154757605f79463986623",
+    "direct_archives": [
+      {
+        "path": "build/release-local/deps/WebKit/lib/libJavaScriptCore.a",
+        "size_bytes": 591020756,
+        "sha256": "a9548b2a2578a1bcdc92e9fea3d009698114f40181f049cc8079003ce05ac1f1",
+        "kind": "archive"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/lib/libWTF.a",
+        "size_bytes": 50528536,
+        "sha256": "1a7e4f7a13959610298d39af32a1e84cc676cdc6d2d590e8f73dc4cd659c6fcc",
+        "kind": "archive"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/lib/libbmalloc.a",
+        "size_bytes": 9526220,
+        "sha256": "6139bf7293bdeb909708c12b9d894bcbb7779e827dd02c5a6e3464781d3279e1",
+        "kind": "archive"
+      }
+    ],
+    "system_link_libraries": [
+      "-l:libatomic.a",
+      "-lc",
+      "-ldl",
+      "-lgcc_s",
+      "-licudata",
+      "-licui18n",
+      "-licuuc",
+      "-llolhtml",
+      "-lpthread",
+      "-lstdc++"
+    ]
+  },
+  "components": [
+    {
+      "name": "boringssl",
+      "kind": "bundled_native_source",
+      "source_identity": "7a2153bae7c799de",
+      "linked_input_count": 422,
+      "linked_inputs_sha256": "764a093634eee5809753484dde75921b9f719f493766b306e6d1784f3270484c",
+      "license_files": [
+        {
+          "path": "vendor/boringssl/LICENSE",
+          "size_bytes": 13115,
+          "sha256": "827c8d8fc207c2392794eef9e00fe246f9f61fdcc132556c275be3dd8c3cd97f"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "brotli",
+      "kind": "bundled_native_source",
+      "source_identity": "0351e58a8e1677f1",
+      "linked_input_count": 31,
+      "linked_inputs_sha256": "a79fb01f7f1fb097ecf93bafa08180b456909274bc16d9855ffe003e9c177a97",
+      "license_files": [
+        {
+          "path": "vendor/brotli/LICENSE",
+          "size_bytes": 1084,
+          "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "bun",
+      "kind": "bun_source_and_generated_objects",
+      "source_identity": "0d9b296af33f2b851fcbf4df3e9ec89751734ba4",
+      "linked_input_count": 122,
+      "linked_inputs_sha256": "8160bbb42d02d36ecebcfebac47ed72a1c214b3bbf5081832db71e6f40138b26",
+      "license_files": [
+        {
+          "path": "LICENSE.md",
+          "size_bytes": 5376,
+          "sha256": "2c6160ec8fb853f7e8f97d9b249e756c9b0ac44860a68b6bf4f1b0bcbc5c3741"
+        }
+      ],
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "Bun release license"
+      },
+      "license_selection_verified": true
+    },
+    {
+      "name": "cares",
+      "kind": "bundled_native_source",
+      "source_identity": "6a9f7592a665eca0",
+      "linked_input_count": 91,
+      "linked_inputs_sha256": "94761ef95724090911e103360c183cb8ec0c0ae2a3e594d173d774d27691e473",
+      "license_files": [
+        {
+          "path": "vendor/cares/LICENSE.md",
+          "size_bytes": 1211,
+          "sha256": "460f5e768fda3752ca2169a95df062578a10fb126bfd65f3b9b1a1bed2f84807"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "hdrhistogram",
+      "kind": "bundled_native_source",
+      "source_identity": "d51cf5561f0ad7a0",
+      "linked_input_count": 3,
+      "linked_inputs_sha256": "2c53f22b41dafdce2c8832bdf41b56279b2c121c30036fc483b0eab7d46842b8",
+      "license_files": [
+        {
+          "path": "vendor/hdrhistogram/COPYING.txt",
+          "size_bytes": 7048,
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        },
+        {
+          "path": "vendor/hdrhistogram/LICENSE.txt",
+          "size_bytes": 2208,
+          "sha256": "93a583ec58cd981232ec6fab797ff6f17f350c97b83ae0700b2d9350c91028af"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "highway",
+      "kind": "bundled_native_source",
+      "source_identity": "7d20e5704b5730be",
+      "linked_input_count": 9,
+      "linked_inputs_sha256": "9767fa34afbb72f6d3d92fb592703f700c0d23b5c0b41a55c2f1b697b987537f",
+      "license_files": [
+        {
+          "path": "vendor/highway/LICENSE",
+          "size_bytes": 20785,
+          "sha256": "e340270d4f64384569a91d546acb5b094d69ce47f0c015db77abb74dc6f815af"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "libarchive",
+      "kind": "bundled_native_source",
+      "source_identity": "ce98adaf8aae5739",
+      "linked_input_count": 123,
+      "linked_inputs_sha256": "8dc3ba123faaab9c1d7ca2bac13b6efd81f56062d1125cde3a78ea3c0a409bc7",
+      "license_files": [
+        {
+          "path": "vendor/libarchive/COPYING",
+          "size_bytes": 3089,
+          "sha256": "30e556b3959e3985d66efefec5eaac51d4995053caa1d3cffe6eb916f146f229"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "libdeflate",
+      "kind": "bundled_native_source",
+      "source_identity": "400b3b8ab3ed87f3",
+      "linked_input_count": 11,
+      "linked_inputs_sha256": "5771924652dee59c62c76d63c7bcff04a095350e61ab83a9a79ffb609ca3de50",
+      "license_files": [
+        {
+          "path": "vendor/libdeflate/COPYING",
+          "size_bytes": 1078,
+          "sha256": "4ad69099cb4374836fd27583d9991e2838cd86b6e4666ab26b2d32582c91e73a"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "libjpeg-turbo",
+      "kind": "bundled_native_source",
+      "source_identity": "9053d831ac76313a",
+      "linked_input_count": 63,
+      "linked_inputs_sha256": "a5ee96d89c3cc72b7cc433b8769dad5dcd6c739a7ccb17d22424e940da0836d8",
+      "license_files": [
+        {
+          "path": "vendor/libjpeg-turbo/LICENSE.md",
+          "size_bytes": 5622,
+          "sha256": "e10114e6e40f3d0311c401ca25245ac5ef459a43c20f976fd63f03e816f5741f"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "libspng",
+      "kind": "bundled_native_source",
+      "source_identity": "8f68c9b1c94ed67e",
+      "linked_input_count": 1,
+      "linked_inputs_sha256": "46200256289df8888c37b38feb4061bf7ce20aaa48a940eff32204e10de83227",
+      "license_files": [
+        {
+          "path": "vendor/libspng/LICENSE",
+          "size_bytes": 1341,
+          "sha256": "0622b0794d0fecde47d743f1bb70a03e6fdf082be8e71f39de672ed995d96ff9"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "libwebp",
+      "kind": "bundled_native_source",
+      "source_identity": "9445242ced9a3647",
+      "linked_input_count": 123,
+      "linked_inputs_sha256": "4f6620fe5f6f0593c37d65d73c118d64e8896e221339d1e0799625d11c68f96c",
+      "license_files": [
+        {
+          "path": "vendor/libwebp/COPYING",
+          "size_bytes": 1496,
+          "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "lshpack",
+      "kind": "bundled_native_source",
+      "source_identity": "06008f7ad49dbc2c",
+      "linked_input_count": 2,
+      "linked_inputs_sha256": "f2ceee54e2386c3c2eea6bbe450cfb6a4f4fe19e6bacdfac7ae2638b2f2f745b",
+      "license_files": [
+        {
+          "path": "vendor/lshpack/LICENSE",
+          "size_bytes": 1090,
+          "sha256": "0490f9666828ad1b6b5503102e7ebbe491451b7174511f3b6255caa967caf955"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "lsqpack",
+      "kind": "bundled_native_source",
+      "source_identity": "5f17acf20a675e10",
+      "linked_input_count": 1,
+      "linked_inputs_sha256": "3765b935a63b740272a8f849b04a9284957ff7c3cda7fa14c8a43eae9543bde7",
+      "license_files": [
+        {
+          "path": "vendor/lsqpack/LICENSE",
+          "size_bytes": 1090,
+          "sha256": "6b1aded50331e34502c8d2b00238c6146b1a54314ce94a5c5feb5d340a6d00d6"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "lsquic",
+      "kind": "bundled_native_source",
+      "source_identity": "c81ba98aa007d021",
+      "linked_input_count": 68,
+      "linked_inputs_sha256": "7b6f0702674ec89eb500cd7094bb85dabc7f9d4472edda6b51320370d7e5d83e",
+      "license_files": [
+        {
+          "path": "vendor/lsquic/LICENSE",
+          "size_bytes": 1090,
+          "sha256": "9bc22643b3ea2b55c547c83e332253d04ba3df4f26696091e6fa9f7a1ccc65ef"
+        },
+        {
+          "path": "vendor/lsquic/LICENSE.chrome",
+          "size_bytes": 1618,
+          "sha256": "85d5dcb0d30ea89fa5922451957ff2a1a2c3c24f1ad2bb9ab23b5d6080763fc9"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "mimalloc",
+      "kind": "bundled_native_source",
+      "source_identity": "1777c5501c92ce2b",
+      "linked_input_count": 1,
+      "linked_inputs_sha256": "e98ba476e2c8465b4a8d1dd7d8cf53f132378c0cd6ad289dab6673ada9e5b370",
+      "license_files": [
+        {
+          "path": "vendor/mimalloc/LICENSE",
+          "size_bytes": 1096,
+          "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "picohttpparser",
+      "kind": "bundled_native_source",
+      "source_identity": "28cb701fbd0273ea",
+      "linked_input_count": 1,
+      "linked_inputs_sha256": "ec36bd457d35a868fed1222e6d36bb16f10c4e0cadab9a1e957eba4823bd488d",
+      "license_files": [
+        {
+          "path": "vendor/picohttpparser/picohttpparser.c",
+          "size_bytes": 26538,
+          "sha256": "177196a72fb3b480de80485a17b5509578f3e2c1e4343dcb1f2b2cf94255065a"
+        }
+      ],
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "complete MIT terms embedded in picohttpparser.c; the Perl-license alternative is not selected"
+      },
+      "license_selection_verified": true
+    },
+    {
+      "name": "tinycc",
+      "kind": "bundled_native_source",
+      "source_identity": "059347b7ef7daf21",
+      "linked_input_count": 10,
+      "linked_inputs_sha256": "af49921a0f1da1fefb2ac99596170013f17571161a3e3d67ab35cbcb9e3b72c6",
+      "license_files": [
+        {
+          "path": "vendor/tinycc/COPYING",
+          "size_bytes": 26428,
+          "sha256": "512d2d21b6b3384ba64781abb0208a1b87740bc31e2df48e2b206ddb7e4d5779"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "zlib",
+      "kind": "bundled_native_source",
+      "source_identity": "21426576697e7e84",
+      "linked_input_count": 49,
+      "linked_inputs_sha256": "747b336545c2998e0088426230683f3cb85a51d4f2688720b936a8de87751289",
+      "license_files": [
+        {
+          "path": "vendor/zlib/LICENSE.md",
+          "size_bytes": 867,
+          "sha256": "6c9f0d975b41afaa34d22f55bb8986ce69e5cb7ad327cb2b28820cd425edf5ee"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    },
+    {
+      "name": "zstd",
+      "kind": "bundled_native_source",
+      "source_identity": "c612046874df2384",
+      "linked_input_count": 31,
+      "linked_inputs_sha256": "572129dc292ed272ecf4d1b20291397a9936937e994c1121034bd67a423edac1",
+      "license_files": [
+        {
+          "path": "vendor/zstd/COPYING",
+          "size_bytes": 18091,
+          "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+        },
+        {
+          "path": "vendor/zstd/LICENSE",
+          "size_bytes": 1549,
+          "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+        }
+      ],
+      "license_selection": null,
+      "license_selection_verified": false
+    }
+  ],
+  "webkit": {
+    "source_commit": "5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b",
+    "source_archive_sha256": "38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d",
+    "direct_archives": [
+      {
+        "path": "build/release-local/deps/WebKit/lib/libJavaScriptCore.a",
+        "size_bytes": 591020756,
+        "sha256": "a9548b2a2578a1bcdc92e9fea3d009698114f40181f049cc8079003ce05ac1f1",
+        "kind": "archive"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/lib/libWTF.a",
+        "size_bytes": 50528536,
+        "sha256": "1a7e4f7a13959610298d39af32a1e84cc676cdc6d2d590e8f73dc4cd659c6fcc",
+        "kind": "archive"
+      },
+      {
+        "path": "build/release-local/deps/WebKit/lib/libbmalloc.a",
+        "size_bytes": 9526220,
+        "sha256": "6139bf7293bdeb909708c12b9d894bcbb7779e827dd02c5a6e3464781d3279e1",
+        "kind": "archive"
+      }
+    ],
+    "candidate_license_files": [
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/COPYING.LIB",
+        "size_bytes": 25584,
+        "sha256": "5094ecb9c9dcd0eadc34f3c11511d9b5535063032bc150164ecd1a5d5a445547"
+      },
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/disassembler/ARM64/LICENSE-binja.txt",
+        "size_bytes": 556,
+        "sha256": "94c095293b051622c4279153e94f8f69e6e9fd41c2d6eef07ad9ea02c30fb4c0"
+      },
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/disassembler/zydis/LICENSE-zycore.txt",
+        "size_bytes": 1122,
+        "sha256": "bad974d260b4697edfdf3a126c33d451a512947b5265f6014fb66173f42ccab3"
+      },
+      {
+        "path": "vendor/WebKit/Source/JavaScriptCore/disassembler/zydis/LICENSE-zydis.txt",
+        "size_bytes": 1122,
+        "sha256": "1218751ea297d1559d768da22dfb95248d6b7c6fdcf3aedecd53a818694b6bf9"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE.TXT",
+        "size_bytes": 1687,
+        "sha256": "65e9ed46a59976eda8f5bd1ea79a680dea38dd299c760bc9a8d87a764ef5029b"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE_LLVM.TXT",
+        "size_bytes": 3331,
+        "sha256": "dfdca2d7fdbabfd937f9dc41b7f61647b0e6cb1f9ee767ecb4520f979ebe91da"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/gtest/LICENSE",
+        "size_bytes": 1475,
+        "sha256": "9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"
+      },
+      {
+        "path": "vendor/WebKit/Source/ThirdParty/unifdef/COPYING",
+        "size_bytes": 4278,
+        "sha256": "37ed46a39446b15b08af418fda23b75c27a769d5aad236d817ee7522cc9caeee"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-LLVM.txt",
+        "size_bytes": 12263,
+        "sha256": "f72b120d1385408e9e380acc020756eb6ba1b461d66c328ea67327ba08d7dcfd"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-dragonbox.txt",
+        "size_bytes": 13858,
+        "sha256": "9bb1036ef8dcb42c59e2a23c9e465f43e75003e06898faf0edd18de662f3ecb8"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-libc++.txt",
+        "size_bytes": 3493,
+        "sha256": "c1938c0e9e90639d1e8f5a7f6bebaab83a3642e0ee44295a4c69934686d0bda8"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/LICENSE-simde.txt",
+        "size_bytes": 1077,
+        "sha256": "75ce0a8c5a7bff42fbd6f8f3b469b518132132c4f4948fb8d02b1ccb5d0df9d8"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/icu/LICENSE",
+        "size_bytes": 21088,
+        "sha256": "de596f6e3482bab99d2425af16add38f959ebc17a5883c6302970355853b6539"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/dtoa/COPYING",
+        "size_bytes": 1527,
+        "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/dtoa/LICENSE",
+        "size_bytes": 1527,
+        "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/fast_float/LICENSE",
+        "size_bytes": 10767,
+        "sha256": "097a889aa954d04e088b790b10a4014d6189561d0a6013935a73ce3d4ddaaf06"
+      },
+      {
+        "path": "vendor/WebKit/Source/WTF/wtf/simdutf/LICENSE-simdutf.txt",
+        "size_bytes": 1059,
+        "sha256": "fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f"
+      },
+      {
+        "path": "vendor/WebKit/Source/bmalloc/mimalloc/mimalloc/LICENSE",
+        "size_bytes": 1096,
+        "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9"
+      },
+      {
+        "path": "vendor/WebKit/Tools/IonGraph/LICENSE",
+        "size_bytes": 16726,
+        "sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/reporelaypy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/resultsdbpy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitapipy/webkitapipy/_vendor/tomli/LICENSE",
+        "size_bytes": 1072,
+        "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitbugspy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitcorepy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitflaskpy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/libraries/webkitscmpy/LICENSE",
+        "size_bytes": 1287,
+        "sha256": "9dc38a49e786ddf77d885bb0dbab5a467ee0d83b72fda5e6fa015bfce9e970fd"
+      },
+      {
+        "path": "vendor/WebKit/Tools/Scripts/webkitpy/thirdparty/wpt/LICENSE.md",
+        "size_bytes": 1502,
+        "sha256": "5a7b465d39b5e018bc40cc34162176269f7c476989cb4dbcf0ec0b81701545a7"
+      },
+      {
+        "path": "vendor/WebKit/Tools/TestWebKitAPI/Tests/WebKit/WKWebView/Copying.mm",
+        "size_bytes": 3228,
+        "sha256": "d23fbf951ae3ab93fa5c5bfd8c16128c263cdf89b37f04ef54c0b93bf71bbc13"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.dejavu",
+        "size_bytes": 2770,
+        "sha256": "53ccee972a18da8da08a92f9d0a86183b9929956106dfae25fd8d7996f192802"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.freefont",
+        "size_bytes": 1241,
+        "sha256": "1f953b86c8505ab5bf834f10d0c951d5c6842e8ddda27588b830854f34685ad0"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.kochi",
+        "size_bytes": 1873,
+        "sha256": "d909f9d43f3c9479613eca6736e3bfde17ed99b23ff27a0513befbc35cce2c14"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.latinmodern",
+        "size_bytes": 1456,
+        "sha256": "2bd69affc3da00715116f713f57eab9707e96daf3562ad0215987b15b9c16f73"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.liberation",
+        "size_bytes": 4938,
+        "sha256": "29068c8e53e4fa7c101ca3915d0a8bd5eed27ab253a4b257d9e2b1cb2506066d"
+      },
+      {
+        "path": "vendor/WebKit/Tools/WebKitTestRunner/glib/fonts/LICENSE.noto-color-emoji",
+        "size_bytes": 5087,
+        "sha256": "3720722d2046accb40e1696f096b57c658b0b47d74031b3d114cf7545b840b3c"
+      },
+      {
+        "path": "vendor/WebKit/Tools/mangleme/LICENSE",
+        "size_bytes": 26436,
+        "sha256": "5df07007198989c622f5d41de8d703e7bef3d0e79d62e24332ee739a452af62a"
+      }
+    ],
+    "semantic_license_selection_verified": false
+  },
+  "external_lolhtml_provider": {
+    "package": "lol-html",
+    "version": "3.0.0",
+    "c_api_version": "1.4.0",
+    "soname": "liblolhtml.so.1",
+    "link_flag": "-llolhtml",
+    "aggregate_expression": "BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib",
+    "linked_license_entries": 29,
+    "license_dependencies_sha256": "4e32b2460074c0364c17f7f2e4eeb12a52f81bd581d4b7e04f111cd22826f541",
+    "fedora_spdx_review_complete": true,
+    "excluded_from_bun_bundled_aggregate": true
+  },
+  "unresolved": {
+    "native_license_selections": [
+      "boringssl",
+      "brotli",
+      "cares",
+      "hdrhistogram",
+      "highway",
+      "libarchive",
+      "libdeflate",
+      "libjpeg-turbo",
+      "libspng",
+      "libwebp",
+      "lshpack",
+      "lsqpack",
+      "lsquic",
+      "mimalloc",
+      "tinycc",
+      "zlib",
+      "zstd"
+    ],
+    "webkit_semantic_license_selection": true,
+    "npm_and_codegen_final_payload_provenance": true,
+    "required_license_text_payload": true,
+    "aggregate_spdx_expression": true,
+    "rpm_payload_validation": true
+  },
+  "validation": {
+    "input_receipts_verified": true,
+    "final_link_inputs_mapped": true,
+    "all_native_components_linked": true,
+    "webkit_archives_verified": true,
+    "system_lolhtml_provider_verified": true,
+    "network_used": false,
+    "native_license_selections_verified": false,
+    "webkit_linked_file_semantic_review_verified": false,
+    "final_npm_codegen_closure_verified": false,
+    "fedora_allowed_spdx_verified": false,
+    "required_license_texts_verified": false,
+    "final_license_expression_verified": false,
+    "rpm_payload_license_verified": false
+  },
+  "scope": "current final-link component and license-evidence mapping only; native/WebKit selections, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+}

@@ -30,8 +30,10 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 6b636b6218bb5467955fddfb830dbdb57c79ffaea4488a55921f0d23f3a61e3b
-%global source_license_audit_script_sha256 76eb418d57c98355a313c085f7a228ece9cf85f60cf61bbfafd2bd07ca5133ca
+%global source_license_inventory_sha256 4754ed971c980ed50b22510660d58ee480c7a93f04da728314edb3eb476b0418
+%global source_license_audit_script_sha256 db351ed51128cf21718162829650d4f4b39ac33392f1d04e55bea62e38e91bed
+%global final_linked_license_closure_sha256 28a704a52fd2c03671c194648de2f9807f39d104fb495dc7520e29f51c951f75
+%global final_linked_license_audit_script_sha256 a964c434a34dfa120f5a93069cdf3036ffe7387b6f1f5e208fd7dc663f2e8c51
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -40,7 +42,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.24%{?dist}
+Release:        0.0.25%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -81,6 +83,10 @@ Source24:       bun-stage-release-local-sources
 Source25:       bun-%{version}-source-license-inventory.json
 # Reproduces and verifies Source25 against the actual prepared source tree.
 Source26:       audit-bun-source-licenses
+# Current final-link component map. Legal selection and payload claims remain blocked.
+Source27:       bun-%{version}-final-linked-license-closure.json
+# Reproduces Source27 from the retained current final build and checked receipts.
+Source28:       audit-bun-final-linked-licenses
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -181,6 +187,8 @@ echo "%{release_local_closure_sha256}  %{SOURCE23}" | sha256sum -c -
 echo "%{source_staging_helper_sha256}  %{SOURCE24}" | sha256sum -c -
 echo "%{source_license_inventory_sha256}  %{SOURCE25}" | sha256sum -c -
 echo "%{source_license_audit_script_sha256}  %{SOURCE26}" | sha256sum -c -
+echo "%{final_linked_license_closure_sha256}  %{SOURCE27}" | sha256sum -c -
+echo "%{final_linked_license_audit_script_sha256}  %{SOURCE28}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -216,7 +224,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.24 \
+  --rpm-release 0.0.25 \
   --date 2026-07-26 \
   --check \
   --receipt "%{SOURCE25}"
@@ -351,6 +359,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.25
+- Map every current final-link input to its source and license evidence.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.24
 - Regenerate current source-delivery and dependency-staging evidence.
 

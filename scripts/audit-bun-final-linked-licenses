@@ -1,0 +1,283 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "json"
+require "optparse"
+require "pathname"
+require "shellwords"
+require "tempfile"
+require "yaml"
+
+module BunFinalLinkedLicenseAudit
+  class Error < StandardError; end
+
+  REPO_ROOT = File.expand_path("..", __dir__)
+  BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
+
+  module_function
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def inventory_digest(records)
+    serialized = records.sort_by { |record| record.fetch("path") }.map do |record|
+      JSON.generate(record.sort.to_h)
+    end.join("\n") + "\n"
+    Digest::SHA256.hexdigest(serialized)
+  end
+
+  def path_set_digest(paths)
+    Digest::SHA256.hexdigest(paths.sort.join("\n") + "\n")
+  end
+
+  def repo_record(path)
+    real = File.realpath(path)
+    root = File.realpath(REPO_ROOT)
+    raise Error, "input is outside the repository: #{path}" unless real.start_with?("#{root}/")
+
+    {
+      "path" => real.delete_prefix("#{root}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def build_record(path, proof_root)
+    real = File.realpath(path)
+    root = File.realpath(proof_root)
+    raise Error, "linked input escapes the proof root: #{path}" unless real.start_with?("#{root}/")
+
+    {
+      "path" => real.delete_prefix("#{root}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real),
+      "kind" => File.extname(real) == ".a" ? "archive" : "object"
+    }
+  end
+
+  def parse_final_link(text)
+    match = text.match(/^build bun-profile: link (.*?)(?=^  ldflags = )/m)
+    raise Error, "cannot find final bun-profile link edge" unless match
+
+    inputs = match[1].gsub(/\$\n\s*/, " ").split
+    inputs = inputs.take_while { |input| input != "|" }
+    ldflags_line = text.match(/^  ldflags = (.*)$/)&.captures&.first
+    raise Error, "cannot find final bun-profile ldflags" unless ldflags_line
+
+    {
+      "objects" => inputs.select { |input| input.end_with?(".o") },
+      "archives" => inputs.select { |input| input.end_with?(".a") },
+      "ldflags" => Shellwords.split(ldflags_line)
+    }
+  end
+
+  def classify_objects(objects, native_names)
+    groups = Hash.new { |hash, key| hash[key] = [] }
+    objects.each do |path|
+      component = if path.start_with?("obj/vendor/")
+                    path.split("/").fetch(2)
+                  elsif BUN_OBJECT_PREFIXES.any? { |prefix| path.start_with?(prefix) } || path.match?(/\Abun-zig\.\d+\.o\z/)
+                    "bun"
+                  end
+      raise Error, "unmapped final-link object #{path}" unless component
+      raise Error, "unknown native final-link component #{component}" if component != "bun" && !native_names.include?(component)
+
+      groups[component] << path
+    end
+    missing = native_names - groups.keys
+    raise Error, "native components are absent from the final link: #{missing.join(', ')}" if missing.any?
+
+    groups.transform_values(&:sort).sort.to_h
+  end
+
+  def load_json(path, schema)
+    receipt = JSON.parse(File.read(path))
+    raise Error, "unexpected schema in #{path}" unless receipt.fetch("schema") == schema
+
+    receipt
+  end
+
+  def generate(proof_root:, source_inventory_path:, self_build_path:, relink_audit_path:, relink_kit_path:, lolhtml_package_path:, audit_date:)
+    proof_root = File.realpath(proof_root)
+    build_root = File.join(proof_root, "build", "release-local")
+    ninja_path = File.join(build_root, "build.ninja")
+    raise Error, "missing retained final build graph" unless File.file?(ninja_path)
+
+    source_inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    self_build = load_json(self_build_path, "bun-self-rebuild-proof/v2")
+    relink_audit = load_json(relink_audit_path, "bun-relink-materials-audit/v3")
+    relink_kit = load_json(relink_kit_path, "bun-relink-kit/v2")
+    lolhtml = YAML.safe_load(File.read(lolhtml_package_path), aliases: false)
+
+    raise Error, "Bun release mismatch" unless source_inventory.fetch("release") == "1.3.14" && self_build.fetch("release") == "1.3.14"
+    raise Error, "relink audit does not bind the self-rebuild" unless relink_audit.dig("source_build", "receipt") == File.basename(self_build_path) &&
+      relink_audit.dig("source_build", "receipt_sha256") == sha256(self_build_path)
+    raise Error, "relink kit does not bind the relink audit" unless relink_kit.dig("source_audit", "sha256") == sha256(relink_audit_path)
+
+    parsed = parse_final_link(File.read(ninja_path))
+    raise Error, "system lol-html is absent from the final link" unless parsed.fetch("ldflags").include?("-llolhtml")
+    raise Error, "unexpected final-link object count" unless parsed.fetch("objects").length == relink_audit.dig("final_link", "direct_object_count")
+    raise Error, "unexpected final-link archive set" unless parsed.fetch("archives").sort == %w[deps/WebKit/lib/libJavaScriptCore.a deps/WebKit/lib/libWTF.a deps/WebKit/lib/libbmalloc.a].sort
+
+    object_records = parsed.fetch("objects").map { |path| build_record(File.join(build_root, path), proof_root) }
+    raise Error, "final-link object inventory does not match the relink audit" unless inventory_digest(object_records) == relink_audit.dig("final_link", "direct_object_inventory_sha256")
+    archive_records = parsed.fetch("archives").map { |path| build_record(File.join(build_root, path), proof_root) }.sort_by { |record| record.fetch("path") }
+    raise Error, "final-link archive inventory does not match the relink audit" unless archive_records == relink_audit.dig("final_link", "direct_archives")
+
+    native_inventory = source_inventory.fetch("native").to_h { |record| [record.fetch("name"), record] }
+    groups = classify_objects(parsed.fetch("objects"), native_inventory.keys)
+    components = groups.map do |name, paths|
+      source = name == "bun" ? nil : native_inventory.fetch(name)
+      {
+        "name" => name,
+        "kind" => name == "bun" ? "bun_source_and_generated_objects" : "bundled_native_source",
+        "source_identity" => name == "bun" ? self_build.dig("source_closure", "source_commit") : source.fetch("source_identity"),
+        "linked_input_count" => paths.length,
+        "linked_inputs_sha256" => path_set_digest(paths),
+        "license_files" => name == "bun" ? [source_inventory.fetch("bun_license")] : source.fetch("license_files"),
+        "license_selection" => name == "bun" ? { "selected_expression" => "MIT", "basis" => "Bun release license" } : source["license_selection"],
+        "license_selection_verified" => name == "bun" || !source["license_selection"].nil?
+      }
+    end
+
+    provider_input = self_build.dig("inputs", "offline_inputs", "system_lolhtml_provider")
+    provider_license = lolhtml.fetch("license_audit")
+    raise Error, "lol-html provider metadata mismatch" unless provider_input.fetch("package") == lolhtml.fetch("name") &&
+      provider_input.fetch("version") == lolhtml.dig("upstream", "current_version") &&
+      provider_input.fetch("c_api_version") == lolhtml.dig("c_api", "crate_version") &&
+      provider_input.fetch("soname") == lolhtml.dig("c_api", "soname") &&
+      provider_license.fetch("fedora_spdx_review_complete") == true
+
+    system_libraries = parsed.fetch("ldflags").select { |flag| flag.match?(/\A-l(?:[^-].*)?\z/) }.uniq.sort
+    unresolved_native = components.reject { |component| component.fetch("license_selection_verified") }.map { |component| component.fetch("name") }
+    linked_paths = parsed.fetch("objects") + parsed.fetch("archives")
+
+    {
+      "schema" => "bun-final-linked-license-closure/v1",
+      "package" => "bun",
+      "version" => "1.3.14",
+      "target" => "fedora-44-x86_64-glibc-system-lolhtml",
+      "audit_date" => audit_date,
+      "inputs" => {
+        "self_rebuild" => repo_record(self_build_path),
+        "source_license_inventory" => repo_record(source_inventory_path),
+        "relink_audit" => repo_record(relink_audit_path),
+        "relink_kit" => repo_record(relink_kit_path),
+        "lolhtml_package" => repo_record(lolhtml_package_path)
+      },
+      "final_link" => {
+        "output" => relink_audit.dig("final_link", "output"),
+        "link_manifest_sha256" => relink_audit.dig("final_link", "link_manifest_sha256"),
+        "direct_object_count" => parsed.fetch("objects").length,
+        "direct_object_inventory_sha256" => relink_audit.dig("final_link", "direct_object_inventory_sha256"),
+        "direct_archive_count" => parsed.fetch("archives").length,
+        "linked_input_count" => linked_paths.length,
+        "linked_input_paths_sha256" => path_set_digest(linked_paths),
+        "direct_archives" => archive_records,
+        "system_link_libraries" => system_libraries
+      },
+      "components" => components,
+      "webkit" => {
+        "source_commit" => self_build.dig("inputs", "webkit", "commit"),
+        "source_archive_sha256" => self_build.dig("inputs", "webkit", "archive_sha256"),
+        "direct_archives" => archive_records,
+        "candidate_license_files" => source_inventory.dig("webkit", "candidate_license_files"),
+        "semantic_license_selection_verified" => false
+      },
+      "external_lolhtml_provider" => {
+        "package" => provider_input.fetch("package"),
+        "version" => provider_input.fetch("version"),
+        "c_api_version" => provider_input.fetch("c_api_version"),
+        "soname" => provider_input.fetch("soname"),
+        "link_flag" => "-llolhtml",
+        "aggregate_expression" => provider_license.fetch("aggregate_expression"),
+        "linked_license_entries" => provider_license.fetch("linked_license_entries"),
+        "license_dependencies_sha256" => provider_license.fetch("license_dependencies_sha256"),
+        "fedora_spdx_review_complete" => true,
+        "excluded_from_bun_bundled_aggregate" => true
+      },
+      "unresolved" => {
+        "native_license_selections" => unresolved_native.sort,
+        "webkit_semantic_license_selection" => true,
+        "npm_and_codegen_final_payload_provenance" => true,
+        "required_license_text_payload" => true,
+        "aggregate_spdx_expression" => true,
+        "rpm_payload_validation" => true
+      },
+      "validation" => {
+        "input_receipts_verified" => true,
+        "final_link_inputs_mapped" => true,
+        "all_native_components_linked" => true,
+        "webkit_archives_verified" => true,
+        "system_lolhtml_provider_verified" => true,
+        "network_used" => false,
+        "native_license_selections_verified" => false,
+        "webkit_linked_file_semantic_review_verified" => false,
+        "final_npm_codegen_closure_verified" => false,
+        "fedora_allowed_spdx_verified" => false,
+        "required_license_texts_verified" => false,
+        "final_license_expression_verified" => false,
+        "rpm_payload_license_verified" => false
+      },
+      "scope" => "current final-link component and license-evidence mapping only; native/WebKit selections, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+    }
+  end
+
+  def write_json(path, data)
+    Tempfile.create([".bun-final-linked-licenses-", ".json"], File.dirname(path)) do |file|
+      file.write(JSON.pretty_generate(data) + "\n")
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+
+  def main(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.on("--proof-root PATH") { |value| options[:proof_root] = value }
+      parser.on("--source-inventory PATH") { |value| options[:source_inventory] = value }
+      parser.on("--self-build PATH") { |value| options[:self_build] = value }
+      parser.on("--relink-audit PATH") { |value| options[:relink_audit] = value }
+      parser.on("--relink-kit PATH") { |value| options[:relink_kit] = value }
+      parser.on("--lolhtml-package PATH") { |value| options[:lolhtml_package] = value }
+      parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
+      parser.on("--output PATH") { |value| options[:output] = value }
+      parser.on("--check") { options[:check] = true }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+    end.parse!(argv)
+    %i[proof_root source_inventory self_build relink_audit relink_kit lolhtml_package audit_date].each do |key|
+      raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key]
+    end
+    Date.iso8601(options.fetch(:audit_date))
+    raise Error, "--output is required unless --check" unless options[:output] || options[:check]
+    raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
+
+    result = generate(
+      proof_root: options.fetch(:proof_root),
+      source_inventory_path: options.fetch(:source_inventory),
+      self_build_path: options.fetch(:self_build),
+      relink_audit_path: options.fetch(:relink_audit),
+      relink_kit_path: options.fetch(:relink_kit),
+      lolhtml_package_path: options.fetch(:lolhtml_package),
+      audit_date: options.fetch(:audit_date)
+    )
+    serialized = JSON.pretty_generate(result) + "\n"
+    if options[:check]
+      raise Error, "Bun final linked-license closure differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized
+      puts "Verified Bun final linked-license closure #{options.fetch(:receipt)}."
+    else
+      write_json(options.fetch(:output), result)
+      puts "Wrote Bun final linked-license closure to #{options.fetch(:output)}."
+    end
+  rescue Date::Error, JSON::ParserError, KeyError, Errno::ENOENT, Error => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end
+
+BunFinalLinkedLicenseAudit.main(ARGV) if $PROGRAM_NAME == __FILE__

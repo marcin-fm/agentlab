@@ -2823,8 +2823,8 @@ module Agentlab
     expected_counts = {
       "direct_sources" => 22,
       "generated_sources" => 1,
-      "packaging_sources" => 4,
-      "declared_sources" => 27,
+      "packaging_sources" => 6,
+      "declared_sources" => 29,
       "patches" => 6
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
@@ -2851,13 +2851,26 @@ module Agentlab
       "sha256" => license_inventory["audit_script_sha256"]
     }
     errors << "bun: source-delivery license audit script mismatch" unless generation["source_license_audit_script"] == expected_license_audit_script
+    final_license = package.data.dig("build_plan", "source_inputs", "final_linked_license_closure") || {}
+    expected_final_license = {
+      "filename" => final_license["source"],
+      "size_bytes" => File.file?(File.join(package.directory, final_license["source"].to_s)) ? File.size(File.join(package.directory, final_license["source"])) : nil,
+      "sha256" => final_license["sha256"]
+    }
+    errors << "bun: source-delivery final linked-license closure mismatch" unless generation["final_linked_license_closure"] == expected_final_license
+    expected_final_audit_script = {
+      "filename" => final_license["audit_script_source"],
+      "size_bytes" => File.file?(script_path = File.join(ROOT, final_license["audit_script"].to_s)) ? File.size(script_path) : nil,
+      "sha256" => final_license["audit_script_sha256"]
+    }
+    errors << "bun: source-delivery final linked-license audit script mismatch" unless generation["final_linked_license_audit_script"] == expected_final_audit_script
 
     srpm = receipt.fetch("srpm", {})
     errors << "bun: source-delivery SRPM filename mismatch" unless srpm["filename"] == "bun-#{version}-#{spec_release}.fc44.src.rpm"
     errors << "bun: source-delivery SRPM size is invalid" unless srpm["size_bytes"].is_a?(Integer) && srpm["size_bytes"].positive?
     errors << "bun: source-delivery SRPM SHA-256 is invalid" unless srpm["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: source-delivery SRPM digest check failed" unless srpm["digest_check"] == "ok"
-    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 34
+    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 36
     %w[inventory_sha256 member_manifest_sha256].each do |key|
       errors << "bun: source-delivery #{key} is invalid" unless srpm[key].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
@@ -2879,7 +2892,7 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source26 layout" unless source_indexes == (0..26).to_a
+    errors << "bun: spec does not declare the complete Source0-Source28 layout" unless source_indexes == (0..28).to_a
     npm_spec_filename = expected_npm["filename"].sub(version, "%{version}")
     errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source22:\s+#{Regexp.escape(npm_spec_filename)}$/)
     staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
@@ -2887,6 +2900,8 @@ module Agentlab
     errors << "bun: spec staging helper filename mismatch" unless spec.match?(/^Source24:\s+#{Regexp.escape(staging["helper_source"].to_s)}$/)
     errors << "bun: spec source-license inventory filename mismatch" unless spec.match?(/^Source25:\s+#{Regexp.escape(license_inventory["source"].to_s.gsub(version, "%{version}"))}$/)
     errors << "bun: spec source-license audit script mismatch" unless spec.match?(/^Source26:\s+#{Regexp.escape(license_inventory["audit_script_source"].to_s)}$/)
+    errors << "bun: spec final linked-license closure filename mismatch" unless spec.match?(/^Source27:\s+#{Regexp.escape(final_license["source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec final linked-license audit script mismatch" unless spec.match?(/^Source28:\s+#{Regexp.escape(final_license["audit_script_source"].to_s)}$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -3031,6 +3046,7 @@ module Agentlab
     end
     errors << "bun: dependency-staging prep log size is invalid" unless prep["log_size_bytes"].is_a?(Integer) && prep["log_size_bytes"].positive?
     errors << "bun: dependency-staging source-license inventory was not checked" unless prep["source_license_inventory_check"] == true
+    errors << "bun: dependency-staging final linked-license closure was not checked" unless prep["final_linked_license_closure_check"] == true
     staged_receipt = prep["staging_receipt"] || {}
     errors << "bun: dependency-staging transient receipt SHA-256 is invalid" unless staged_receipt["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: dependency-staging transient receipt size is invalid" unless staged_receipt["size_bytes"].is_a?(Integer) && staged_receipt["size_bytes"].positive?
@@ -3254,6 +3270,118 @@ module Agentlab
     errors
   rescue JSON::ParserError, KeyError => e
     ["bun: invalid source-license inventory: #{e.message}"]
+  end
+
+  def validate_bun_final_linked_license_closure(package, metadata, source_inventory, stages, lolhtml, version, spec)
+    return [] unless package.name == "bun" && metadata.is_a?(Hash)
+
+    receipt_name = metadata["source"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_sha256 = metadata["sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: final linked-license closure is missing or has wrong SHA-256"]
+    end
+
+    errors = []
+    receipt = JSON.parse(File.read(receipt_path))
+    errors << "bun: unsupported final linked-license closure schema" unless receipt["schema"] == "bun-final-linked-license-closure/v1"
+    errors << "bun: final linked-license closure package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: final linked-license closure release mismatch" unless receipt["version"] == version
+    errors << "bun: final linked-license closure target mismatch" unless receipt["target"] == "fedora-44-x86_64-glibc-system-lolhtml"
+
+    script_path = File.join(ROOT, metadata["audit_script"].to_s)
+    unless File.file?(script_path) && metadata["audit_script_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(script_path).hexdigest == metadata["audit_script_sha256"]
+      errors << "bun: final linked-license audit script is missing or has wrong SHA-256"
+    end
+
+    seed_stage = stages.fetch("seed_build")
+    self_stage = stages.fetch("self_rebuild")
+    expected_inputs = {
+      "self_rebuild" => [self_stage["proof_receipt"], self_stage["proof_receipt_sha256"], package.directory],
+      "source_license_inventory" => [source_inventory["source"], source_inventory["sha256"], package.directory],
+      "relink_audit" => [seed_stage.dig("relink_materials_audit", "proof_receipt"), seed_stage.dig("relink_materials_audit", "proof_receipt_sha256"), package.directory],
+      "relink_kit" => [seed_stage.dig("relink_kit", "proof_receipt"), seed_stage.dig("relink_kit", "proof_receipt_sha256"), package.directory],
+      "lolhtml_package" => ["package.yml", nil, File.join(ROOT, "packages", "lol-html")]
+    }
+    parsed_inputs = {}
+    expected_inputs.each do |key, (name, sha, directory)|
+      path = name.is_a?(String) && File.join(directory, name)
+      record = receipt.dig("inputs", key)
+      valid = path && File.file?(path) && record.is_a?(Hash) &&
+              record["sha256"] == Digest::SHA256.file(path).hexdigest &&
+              record["size_bytes"] == File.size(path)
+      valid &&= record["sha256"] == sha if sha
+      errors << "bun: final linked-license #{key.tr('_', ' ')} input mismatch" unless valid
+      parsed_inputs[key] = JSON.parse(File.read(path)) if valid && File.extname(path) == ".json"
+    end
+
+    relink = parsed_inputs["relink_audit"] || {}
+    self_receipt = parsed_inputs["self_rebuild"] || {}
+    source_receipt = parsed_inputs["source_license_inventory"] || {}
+    final_link = receipt["final_link"] || {}
+    errors << "bun: final linked-license object count mismatch" unless final_link["direct_object_count"] == metadata["direct_object_count"] && final_link["direct_object_count"] == relink.dig("final_link", "direct_object_count")
+    errors << "bun: final linked-license archive count mismatch" unless final_link["direct_archive_count"] == metadata["direct_archive_count"] && final_link["direct_archive_count"] == relink.dig("final_link", "direct_archive_count")
+    errors << "bun: final linked-license input count mismatch" unless final_link["linked_input_count"] == metadata["linked_input_count"] && final_link["linked_input_count"] == final_link["direct_object_count"].to_i + final_link["direct_archive_count"].to_i
+    errors << "bun: final linked-license link manifest mismatch" unless final_link["link_manifest_sha256"] == relink.dig("final_link", "link_manifest_sha256")
+    errors << "bun: final linked-license object inventory mismatch" unless final_link["direct_object_inventory_sha256"] == relink.dig("final_link", "direct_object_inventory_sha256")
+    errors << "bun: final linked-license archive inventory mismatch" unless final_link["direct_archives"] == relink.dig("final_link", "direct_archives")
+    expected_system_libraries = %w[-l:libatomic.a -lc -ldl -lgcc_s -licudata -licui18n -licuuc -llolhtml -lpthread -lstdc++]
+    errors << "bun: final linked-license system library set mismatch" unless final_link["system_link_libraries"] == expected_system_libraries
+
+    components = Array(receipt["components"])
+    component_counts = components.to_h { |component| [component["name"], component["linked_input_count"]] }
+    errors << "bun: final linked-license component counts mismatch" unless component_counts == metadata["component_object_counts"]
+    errors << "bun: final linked-license component object total mismatch" unless component_counts.values.sum == metadata["direct_object_count"]
+    errors << "bun: final linked-license component set is not unique" unless components.map { |component| component["name"] }.uniq.length == components.length
+    errors << "bun: final linked-license component path digest is invalid" unless components.all? { |component| component["linked_inputs_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) }
+
+    native_inventory = Array(source_receipt["native"]).to_h { |component| [component["name"], component] }
+    expected_native_names = native_inventory.keys.sort
+    actual_native_names = components.reject { |component| component["name"] == "bun" }.map { |component| component["name"] }.sort
+    errors << "bun: final linked-license native component set mismatch" unless actual_native_names == expected_native_names && actual_native_names.length == metadata["linked_native_components"]
+    components.each do |component|
+      if component["name"] == "bun"
+        errors << "bun: final linked-license Bun selection mismatch" unless component["source_identity"] == self_receipt.dig("source_closure", "source_commit") && component.dig("license_selection", "selected_expression") == "MIT" && component["license_selection_verified"] == true
+      else
+        source = native_inventory[component["name"]]
+        errors << "bun: final linked-license native evidence mismatch" unless source && component["source_identity"] == source["source_identity"] && component["license_files"] == source["license_files"] && component["license_selection"] == source["license_selection"]
+      end
+    end
+    unresolved_native = components.reject { |component| component["license_selection_verified"] == true }.map { |component| component["name"] }.sort
+    errors << "bun: final linked-license unresolved native set mismatch" unless receipt.dig("unresolved", "native_license_selections") == unresolved_native
+
+    webkit = receipt["webkit"] || {}
+    errors << "bun: final linked-license WebKit source mismatch" unless webkit["source_commit"] == self_receipt.dig("inputs", "webkit", "commit") && webkit["source_archive_sha256"] == self_receipt.dig("inputs", "webkit", "archive_sha256")
+    errors << "bun: final linked-license WebKit evidence mismatch" unless webkit["direct_archives"] == final_link["direct_archives"] && webkit["candidate_license_files"] == source_receipt.dig("webkit", "candidate_license_files") && webkit["semantic_license_selection_verified"] == false
+
+    lolhtml_data = YAML.safe_load(File.read(File.join(ROOT, "packages", "lol-html", "package.yml")), aliases: false)
+    provider = receipt["external_lolhtml_provider"] || {}
+    expected_provider = self_receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider") || {}
+    provider_license = lolhtml_data["license_audit"] || {}
+    errors << "bun: final linked-license lol-html provider mismatch" unless provider["package"] == expected_provider["package"] && provider["version"] == expected_provider["version"] && provider["c_api_version"] == expected_provider["c_api_version"] && provider["soname"] == expected_provider["soname"] && provider["link_flag"] == "-llolhtml"
+    errors << "bun: final linked-license lol-html license boundary mismatch" unless provider["aggregate_expression"] == provider_license["aggregate_expression"] && provider["linked_license_entries"] == provider_license["linked_license_entries"] && provider["license_dependencies_sha256"] == provider_license["license_dependencies_sha256"] && provider["fedora_spdx_review_complete"] == true && provider["excluded_from_bun_bundled_aggregate"] == true
+
+    true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified]
+    false_validation = %w[network_used native_license_selections_verified webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified final_license_expression_verified rpm_payload_license_verified]
+    errors << "bun: final linked-license mapping validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
+    errors << "bun: final linked-license closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
+    metadata_false = %w[native_license_selections_verified webkit_semantic_license_selection_verified final_npm_codegen_closure_verified final_license_expression_verified required_license_texts_verified rpm_payload_license_verified]
+    errors << "bun: final linked-license metadata overclaims completion" unless metadata["all_link_inputs_mapped"] == true && metadata["system_lolhtml_provider_external"] == true && metadata_false.all? { |key| metadata[key] == false }
+
+    required_spec_fragments = [
+      "%global final_linked_license_closure_sha256 #{expected_sha256}",
+      "%global final_linked_license_audit_script_sha256 #{metadata['audit_script_sha256']}",
+      "Source27:       #{receipt_name.sub(version, "%{version}")}",
+      "Source28:       #{metadata['audit_script_source']}",
+      "echo \"%{final_linked_license_closure_sha256}  %{SOURCE27}\" | sha256sum -c -",
+      "echo \"%{final_linked_license_audit_script_sha256}  %{SOURCE28}\" | sha256sum -c -"
+    ]
+    errors << "bun: spec does not integrate the final linked-license closure" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
+    errors
+  rescue JSON::ParserError, KeyError => e
+    ["bun: invalid final linked-license closure: #{e.message}"]
   end
 
   def validate_bun_minimized_webkit_source(package, webkit, version, spec)
@@ -3776,6 +3904,7 @@ module Agentlab
     npm_lock = source_inputs.is_a?(Hash) && source_inputs["npm_lock"]
     release_local_staging = source_inputs.is_a?(Hash) && source_inputs["release_local_staging"]
     source_license_inventory = source_inputs.is_a?(Hash) && source_inputs["source_license_inventory"]
+    final_linked_license_closure = source_inputs.is_a?(Hash) && source_inputs["final_linked_license_closure"]
     build_graph = source_inputs.is_a?(Hash) && source_inputs["build_graph"]
     seed = source_inputs.is_a?(Hash) && source_inputs["bootstrap_seed"]
 
@@ -3805,6 +3934,7 @@ module Agentlab
     errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
     errors.concat(validate_bun_dependency_staging(package, stages["dependency_staging"], stages["source_delivery"], stages["dependency_closure"], release_local_staging, version, spec))
     errors.concat(validate_bun_source_license_inventory(package, source_license_inventory, stages["dependency_closure"], version, spec))
+    errors.concat(validate_bun_final_linked_license_closure(package, final_linked_license_closure, source_license_inventory, stages, lolhtml, version, spec))
 
     if seed.is_a?(Hash)
       errors << "bun: seed source must match the Bun release" unless seed["release_pin"] == "bun-v#{version}"
