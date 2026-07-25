@@ -17,8 +17,6 @@ module BunFinalLinkedLicenseAudit
   BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
   UNRESOLVED_NATIVE_REASONS = {
     "libarchive" => "linked subset still needs file-level aggregation across public-domain, BSD, BLAKE2, NetBSD, and UC Regents terms",
-    "libjpeg-turbo" => "linked subset and Fedora's additional MIT normalization need confirmation against LICENSE.md and README.ijg",
-    "libwebp" => "linked subset needs exact BSD, patent, and additional bundled-source aggregation against COPYING and PATENTS",
   }.freeze
 
   module_function
@@ -82,7 +80,9 @@ module BunFinalLinkedLicenseAudit
   def classify_objects(objects, native_names)
     groups = Hash.new { |hash, key| hash[key] = [] }
     objects.each do |path|
-      component = if path.start_with?("obj/vendor/")
+      component = if path == "obj/vendor/libjpeg-turbo/jbun_stubs.c.o"
+                    "bun"
+                  elsif path.start_with?("obj/vendor/")
                     path.split("/").fetch(2)
                   elsif BUN_OBJECT_PREFIXES.any? { |prefix| path.start_with?(prefix) } || path.match?(/\Abun-zig\.\d+\.o\z/)
                     "bun"

@@ -7,15 +7,15 @@ load File.expand_path("../scripts/audit-bun-final-linked-licenses", __dir__)
 class BunFinalLinkedLicenseAuditTest < Minitest::Test
   def test_parses_and_classifies_the_final_link
     ninja = <<~NINJA
-      build bun-profile: link obj/vendor/foo/a.o obj/src/main.o $ 
+      build bun-profile: link obj/vendor/foo/a.o obj/vendor/libjpeg-turbo/jcapimin.c.o obj/vendor/libjpeg-turbo/jbun_stubs.c.o obj/src/main.o $ 
           bun-zig.0.o deps/WebKit/lib/libWTF.a | source/src/symbols.dyn
         ldflags = -lc -llolhtml
     NINJA
 
     parsed = BunFinalLinkedLicenseAudit.parse_final_link(ninja)
-    assert_equal(%w[obj/vendor/foo/a.o obj/src/main.o bun-zig.0.o], parsed.fetch("objects"))
+    assert_equal(%w[obj/vendor/foo/a.o obj/vendor/libjpeg-turbo/jcapimin.c.o obj/vendor/libjpeg-turbo/jbun_stubs.c.o obj/src/main.o bun-zig.0.o], parsed.fetch("objects"))
     assert_equal(["deps/WebKit/lib/libWTF.a"], parsed.fetch("archives"))
-    assert_equal({ "bun" => %w[bun-zig.0.o obj/src/main.o], "foo" => ["obj/vendor/foo/a.o"] }, BunFinalLinkedLicenseAudit.classify_objects(parsed.fetch("objects"), ["foo"]))
+    assert_equal({ "bun" => %w[bun-zig.0.o obj/src/main.o obj/vendor/libjpeg-turbo/jbun_stubs.c.o], "foo" => ["obj/vendor/foo/a.o"], "libjpeg-turbo" => ["obj/vendor/libjpeg-turbo/jcapimin.c.o"] }, BunFinalLinkedLicenseAudit.classify_objects(parsed.fetch("objects"), ["foo", "libjpeg-turbo"]))
   end
 
   def test_rejects_unknown_and_missing_native_components
@@ -35,9 +35,9 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
     assert_equal(18, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" })
     assert_equal(true, receipt.dig("validation", "final_link_inputs_mapped"))
     assert_equal(true, receipt.dig("validation", "partial_native_license_selection_verified"))
-    assert_equal(15, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" && component.fetch("license_selection_verified") })
-    assert_equal(%w[libarchive libjpeg-turbo libwebp], receipt.dig("unresolved", "native_license_selections"))
-    assert_equal(%w[libarchive libjpeg-turbo libwebp], receipt.dig("unresolved", "native_license_details").map { |record| record.fetch("name") })
+    assert_equal(17, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" && component.fetch("license_selection_verified") })
+    assert_equal(["libarchive"], receipt.dig("unresolved", "native_license_selections"))
+    assert_equal(["libarchive"], receipt.dig("unresolved", "native_license_details").map { |record| record.fetch("name") })
     %w[
       native_license_selections_verified webkit_linked_file_semantic_review_verified
       final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified

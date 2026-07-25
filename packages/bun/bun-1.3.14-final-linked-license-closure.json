@@ -12,8 +12,8 @@
     },
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
-      "size_bytes": 124809,
-      "sha256": "c263be34bcb584d2910f956b63af21b9e55307760d9b1717a43364df99d7ad97"
+      "size_bytes": 125167,
+      "sha256": "3e0456a3f2ae1623701ff45ca5242727766e1a189807ae5524c9d002919bd6b5"
     },
     "relink_audit": {
       "path": "packages/bun/relink-materials-proof.json",
@@ -115,8 +115,8 @@
       "name": "bun",
       "kind": "bun_source_and_generated_objects",
       "source_identity": "0d9b296af33f2b851fcbf4df3e9ec89751734ba4",
-      "linked_input_count": 122,
-      "linked_inputs_sha256": "8160bbb42d02d36ecebcfebac47ed72a1c214b3bbf5081832db71e6f40138b26",
+      "linked_input_count": 123,
+      "linked_inputs_sha256": "91e3d1733037cbf8c67f7c2e713a5bf8ab3b7c452b0562b2527b445fad89333c",
       "license_files": [
         {
           "path": "LICENSE.md",
@@ -231,8 +231,8 @@
       "name": "libjpeg-turbo",
       "kind": "bundled_native_source",
       "source_identity": "9053d831ac76313a",
-      "linked_input_count": 63,
-      "linked_inputs_sha256": "a5ee96d89c3cc72b7cc433b8769dad5dcd6c739a7ccb17d22424e940da0836d8",
+      "linked_input_count": 62,
+      "linked_inputs_sha256": "4f591337a8b3011538fa17b2906eb30c93dab5b03f145d2559ff661665ac5a30",
       "license_files": [
         {
           "path": "vendor/libjpeg-turbo/LICENSE.md",
@@ -245,8 +245,11 @@
           "sha256": "75815e3bf6484201a3c3d17a1bbf10f2e8e3237f84df10a2357ea896db2a81d6"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "IJG AND BSD-3-Clause",
+        "basis": "linked upstream libjpeg and TurboJPEG sources; Bun's separate stub is classified under Bun MIT"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "libspng",
@@ -285,8 +288,11 @@
           "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "BSD-3-Clause WITH Google-Patent-WebM",
+        "basis": "all linked codec and sharpyuv sources carry the upstream BSD terms and WebM patent grant"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "lshpack",
@@ -667,9 +673,7 @@
   },
   "unresolved": {
     "native_license_selections": [
-      "libarchive",
-      "libjpeg-turbo",
-      "libwebp"
+      "libarchive"
     ],
     "native_license_details": [
       {
@@ -680,38 +684,6 @@
             "path": "vendor/libarchive/COPYING",
             "size_bytes": 3089,
             "sha256": "30e556b3959e3985d66efefec5eaac51d4995053caa1d3cffe6eb916f146f229"
-          }
-        ]
-      },
-      {
-        "name": "libjpeg-turbo",
-        "reason": "linked subset and Fedora's additional MIT normalization need confirmation against LICENSE.md and README.ijg",
-        "license_files": [
-          {
-            "path": "vendor/libjpeg-turbo/LICENSE.md",
-            "size_bytes": 5622,
-            "sha256": "e10114e6e40f3d0311c401ca25245ac5ef459a43c20f976fd63f03e816f5741f"
-          },
-          {
-            "path": "vendor/libjpeg-turbo/README.ijg",
-            "size_bytes": 12799,
-            "sha256": "75815e3bf6484201a3c3d17a1bbf10f2e8e3237f84df10a2357ea896db2a81d6"
-          }
-        ]
-      },
-      {
-        "name": "libwebp",
-        "reason": "linked subset needs exact BSD, patent, and additional bundled-source aggregation against COPYING and PATENTS",
-        "license_files": [
-          {
-            "path": "vendor/libwebp/COPYING",
-            "size_bytes": 1496,
-            "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
-          },
-          {
-            "path": "vendor/libwebp/PATENTS",
-            "size_bytes": 1436,
-            "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
           }
         ]
       }

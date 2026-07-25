@@ -2428,7 +2428,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.26", "--rpm-release 0.0.25")
+        spec.sub("--rpm-release 0.0.27", "--rpm-release 0.0.26")
       ),
       "bun: spec does not integrate the source-license inventory"
     )

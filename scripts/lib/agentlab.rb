@@ -3352,9 +3352,7 @@ module Agentlab
     unresolved_native = components.reject { |component| component["license_selection_verified"] == true }.map { |component| component["name"] }.sort
     errors << "bun: final linked-license unresolved native set mismatch" unless receipt.dig("unresolved", "native_license_selections") == unresolved_native
     unresolved_reasons = {
-      "libarchive" => "linked subset still needs file-level aggregation across public-domain, BSD, BLAKE2, NetBSD, and UC Regents terms",
-      "libjpeg-turbo" => "linked subset and Fedora's additional MIT normalization need confirmation against LICENSE.md and README.ijg",
-      "libwebp" => "linked subset needs exact BSD, patent, and additional bundled-source aggregation against COPYING and PATENTS"
+      "libarchive" => "linked subset still needs file-level aggregation across public-domain, BSD, BLAKE2, NetBSD, and UC Regents terms"
     }
     expected_unresolved_details = unresolved_native.map do |name|
       source = native_inventory.fetch(name)

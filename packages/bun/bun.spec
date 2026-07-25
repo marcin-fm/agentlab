@@ -30,10 +30,10 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 c263be34bcb584d2910f956b63af21b9e55307760d9b1717a43364df99d7ad97
-%global source_license_audit_script_sha256 87e7340d31a9d5cd8538991afc3dbdcf9a2cce81b7bba572f936adae71dc5c67
-%global final_linked_license_closure_sha256 ce88f28cc10180299ea8a1fdefd2f4bbfa821a991464618cb5238d3b0e0ae0a3
-%global final_linked_license_audit_script_sha256 2f8e247a92af15963a6aee71eb0a6655ca1656fc09890e7d3c2c046d8eec33be
+%global source_license_inventory_sha256 3e0456a3f2ae1623701ff45ca5242727766e1a189807ae5524c9d002919bd6b5
+%global source_license_audit_script_sha256 827b5ae75290a39317ccb2ba535a951f31d388d9662980a11ee8c18599620298
+%global final_linked_license_closure_sha256 dd7e8ca71975ac6869e21fa59dbf896ac07cb64c0aa1fe1a8c3d76ed12617f1f
+%global final_linked_license_audit_script_sha256 ef363dc95d2561d7b825866c1c3ff4d8b31cc303be111904f0d10b84af7a03a1
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -42,7 +42,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.26%{?dist}
+Release:        0.0.27%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -224,7 +224,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.26 \
+  --rpm-release 0.0.27 \
   --date 2026-07-26 \
   --check \
   --receipt "%{SOURCE25}"
@@ -359,6 +359,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.27
+- Select the exact linked JPEG and WebP license subsets.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.26
 - Select the unambiguous native final-link license subsets.
 
