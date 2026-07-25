@@ -1,0 +1,13 @@
+---
+name: rust-termimad0.34
+retired_on: '2026-07-25'
+reason: Superseded by rust-termimad0.35 after ast-grep 0.45.0 succeeded in all configured
+  chroots.
+copr_project: marcin/agentlab
+configured_chroots_at_retirement:
+- fedora-43-x86_64
+- fedora-43-aarch64
+- fedora-44-x86_64
+- fedora-44-aarch64
+- fedora-rawhide-x86_64
+- fedora-rawhide-aarch64

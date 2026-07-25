@@ -67,9 +67,7 @@ dependency_groups:
     reason: Rust compatibility dependencies selected by ast-grep.
     packages:
       - rust-atty0.2
-      - rust-bit-set0.10
       - rust-bit-set0.11
-      - rust-bit-vec0.9
       - rust-bit-vec0.10
       - rust-cli-log2
       - rust-crokey-proc_macros1
@@ -82,14 +80,12 @@ dependency_groups:
       - rust-lazy-regex3
       - rust-ls-types0.0.6
       - rust-memoffset0.7
-      - rust-minimad0.14
       - rust-minimad0.16
       - rust-nix0.26
       - rust-polling2
       - rust-proc-status0.1
       - rust-serde-sarif0.8
       - rust-strict0.2
-      - rust-termimad0.34
       - rust-termimad0.35
       - rust-terminal-clipboard0.4
       - rust-tower-lsp-server0.23
