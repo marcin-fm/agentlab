@@ -48,7 +48,15 @@ license_mapping:
   core_source_derived_notice_sha256: c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a
   exact_notice_sources_reviewed: true
   legal_payload_complete: false
-  missing_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT
+  missing_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT plus attributed rust-sourcemap BSD-3-Clause and source-map-mappings MIT OR Apache-2.0
+  parcel_sourcemap_provenance:
+    release_commit: a136bd6ba9f1d3cded501ae824341be0a54c5ce3
+    crate_sha256: 485b74d7218068b2b7c0e3ff12fbc61ae11d57cb5d8224f525bd304c6be05bbb
+    introduction_commit: e1be119476e24cf2917a2b1530b16ee0e1ce4b3c
+    declared_license: MIT
+    rust_sourcemap: 3fc6bbbb3348b582d75dfcf896d74129e17710f6; BSD-3-Clause; license sha256 7516e1cf340213f60d96bca77bb012882dbf80e7cca5922c914174f605d9ef71
+    source_map_mappings: 197660faf3dd1167c643797a5ed62cb687482c54; MIT OR Apache-2.0; license sha256 values 7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0 and a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2
+    upstream_resolution: absent from all source history, release artifacts, rewrite PR 52, and repository issues
   upstream_browser_logo_source_scope_verified: true
   upstream_browser_logo_covered_by_repository_mit: false
   browser_logo_resolution_patch: playwright-dashboard-neutral-browser-icons.patch

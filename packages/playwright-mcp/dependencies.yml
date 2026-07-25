@@ -240,15 +240,15 @@ playwright_provider_audit:
         exact_repository_text_coverage: 12
         later_immutable_repository_text_coverage: seahash
         canonical_text_reference_coverage: serde-detach can use the canonical MPL-2.0 steward text while retaining source availability
-        unresolved_required_notice: parcel_sourcemap
+        unresolved_required_notice: parcel_sourcemap MIT declaration plus attributed rust-sourcemap BSD-3-Clause and source-map-mappings MIT OR Apache-2.0
         raw_cargo_expressions: 10
         missing_metadata: lightningcss_node
         missing_metadata_resolution: The publish-disabled node workspace crate is part of the tagged MPL-2.0 source tree; verify and carry the project license manually.
         legacy_slash_expression_packages: 8
         project_license_sha256: 5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e
         selectors_license_sha256: 1af2d2b02d9c86030d29ed77117ca7a1b0e4b6ff35bcf8eeb124867d0f5cb59e
-        candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0
-        source_text_verification: partial; one MIT-only notice identity remains unresolved
+        candidate_aggregate_spdx: Apache-2.0 AND BSD-3-Clause AND MIT AND MPL-2.0 AND Unicode-3.0
+        source_text_verification: partial; parcel_sourcemap omits its own MIT text, the attributed BSD-3-Clause notice, and an explicit dual-license selection and notice for source-map-mappings
     fedora_43_44_provider: absent
   excluded_platform_edges:
     fsevents: Darwin-only

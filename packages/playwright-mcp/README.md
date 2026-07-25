@@ -108,7 +108,8 @@ Cargo metadata gives a bounded license starting point for those release
 graphs. Rolldown's 284 active packages have no missing license field and reduce
 to the provisional aggregate `Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND
 CC0-1.0 AND ISC AND MIT AND Unicode-3.0 AND Zlib`. Lightning CSS's 99 active
-packages reduce to `Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0`; its
+packages reduce to the corrected candidate `Apache-2.0 AND BSD-3-Clause AND MIT
+AND MPL-2.0 AND Unicode-3.0`; its
 publish-disabled `lightningcss_node` workspace crate omits a manifest license
 field, while the tagged source carries the MPL-2.0 project license. These are
 candidate binary-RPM expressions, not a substitute for verifying every source
@@ -117,11 +118,14 @@ license text and retaining the required notices.
 The source-text audit is also bounded. The active Rolldown graph has local
 license or notice files in 192 of 239 registry crates; the Lightning CSS graph
 has them in 77 of 92. Immutable repository or canonical texts resolve 59 of the
-resulting 62 omissions. The remaining MIT-only `base-encode`,
-`json-escape-simd`, and `parcel_sourcemap` declarations do not identify the
-required copyright and permission notice. Exhaustive checks of their Git
-histories and every published crate release found no upstream notice, so those
-three remain genuine blockers under project policy.
+resulting 62 omissions. `base-encode` and `json-escape-simd` remain unresolved
+MIT notice identities, with the latter also borrowing Apache-2.0 sonic-rs code.
+`parcel_sourcemap` is broader: it declares MIT but attributes code to
+BSD-3-Clause `rust-sourcemap` and dual `MIT OR Apache-2.0`
+`source-map-mappings`, while its crate and complete repository history retain
+none of those texts and its rewrite PR records no license selection. These
+remain genuine blockers under project policy rather than notices Agentlab may
+manufacture downstream.
 
 The published payloads contain 7 MCP files, 62 Playwright files, and 104
 Playwright Core files. Five generated `.LICENSE` sidecars map 213 bundled

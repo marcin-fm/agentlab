@@ -92,12 +92,20 @@ CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT`.
 
 The spec reproduces the existing 434-line Core in-tree notice with SHA-256
 `c6bd7798e8e2d789797bfd574dbf574477cc76e5af2a301cf0f10e6031804f9a`.
-The package remains blocked because the exact `base-encode 0.3.1` and
-`parcel_sourcemap 2.1.1` crate and source revisions contain no required MIT
-text or component notice. `json-escape-simd 3.0.2` also contains no MIT text or
-attribution, and its source states that the implementation is borrowed from
-Apache-2.0 `sonic-rs 0.5.5`; an MIT-only generated notice would therefore be
-incomplete.
+The package remains blocked because exact `base-encode 0.3.1` contains no
+required MIT text or component notice. `json-escape-simd 3.0.2` also contains
+no MIT text or attribution, and its source states that the implementation is
+borrowed from Apache-2.0 `sonic-rs 0.5.5`.
+
+`parcel_sourcemap 2.1.1` is a broader provenance failure rather than a generic
+missing-MIT-text case. Its crate, tag, current branch, and complete Git history
+contain no legal text, while the released source attributes `utils.rs` to
+BSD-3-Clause `rust-sourcemap` and `vlq_utils.rs` to dual-licensed
+`source-map-mappings`. The rewrite commit and PR contain no license selection
+or notice resolution. An MIT-only generated notice would omit the
+BSD-3-Clause conditions and would guess which `MIT OR Apache-2.0` branch
+upstream intended, so the Lightning CSS provider remains blocked pending an
+upstream released correction or explicit determination.
 
 The lock receipt records source URLs, npm integrity values, declared license
 fields, platform exclusions, workspaces, and the separate stable-runner lock.
@@ -128,4 +136,7 @@ are complete.
 - https://github.com/microsoft/playwright/tree/9fb36027c64c8edcf08bf06f618b3ca97a7b0d97
 - https://github.com/napi-rs/json-escape-simd/blob/a7eb4e70c5dc007ec618c53914e3301a0c159af7/src/lib.rs
 - https://github.com/cloudwego/sonic-rs/blob/41ae6e8a5962da26eab34432d1412f35ea6d199e/LICENSE
+- https://github.com/parcel-bundler/source-map/tree/a136bd6ba9f1d3cded501ae824341be0a54c5ce3/parcel_sourcemap
+- https://github.com/getsentry/rust-sourcemap/tree/3fc6bbbb3348b582d75dfcf896d74129e17710f6
+- https://github.com/fitzgen/source-map-mappings/tree/197660faf3dd1167c643797a5ed62cb687482c54
 - https://github.com/alrra/browser-logos/blob/7173185f6715f5f1e9be8b6654d8f3e3815f669b/README.md#legal

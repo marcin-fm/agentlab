@@ -284,12 +284,15 @@ playwright_provider_evidence:
       rust_cssparser: cab31ead1cded6a6c48967953298861e914739ad / fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85
       seahash_later_upstream_text: 3088c5c912b70b586d27bf553fbe964e025a2c89 / 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
     canonical_reference_resolutions: serde-detach can use the canonical MPL-2.0 steward text while retaining source availability
-    unresolved_required_notices: parcel_sourcemap 2.1.1 MIT
+    unresolved_required_notices: parcel_sourcemap 2.1.1 MIT plus attributed rust-sourcemap BSD-3-Clause and source-map-mappings MIT OR Apache-2.0
     unresolved_notice_history:
-      parcel_sourcemap: commit a136bd6ba9f1d3cded501ae824341be0a54c5ce3; crate sha256 485b74d7218068b2b7c0e3ff12fbc61ae11d57cb5d8224f525bd304c6be05bbb; no notice in Git history, 13 crate releases, or npm 2.1.1
+      parcel_sourcemap: commit a136bd6ba9f1d3cded501ae824341be0a54c5ce3; crate sha256 485b74d7218068b2b7c0e3ff12fbc61ae11d57cb5d8224f525bd304c6be05bbb; no notice in Git history, 13 crate releases, npm 2.1.1, rewrite PR 52, or repository issues
+    parcel_sourcemap_borrowed_sources:
+      rust_sourcemap: commit 3fc6bbbb3348b582d75dfcf896d74129e17710f6; BSD-3-Clause; license sha256 7516e1cf340213f60d96bca77bb012882dbf80e7cca5922c914174f605d9ef71
+      source_map_mappings: commit 197660faf3dd1167c643797a5ed62cb687482c54; MIT OR Apache-2.0; license sha256 values 7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0 and a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2
     cargo_license_expressions: 10
     missing_license_metadata: lightningcss_node; tagged source project license is MPL-2.0
-    candidate_aggregate_spdx: Apache-2.0 AND MIT AND MPL-2.0 AND Unicode-3.0
+    candidate_aggregate_spdx: Apache-2.0 AND BSD-3-Clause AND MIT AND MPL-2.0 AND Unicode-3.0
     source_build_supported: true
     exact_fedora_provider: false
   lifecycle_edges:

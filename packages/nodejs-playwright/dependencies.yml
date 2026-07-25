@@ -63,7 +63,7 @@ build_closure:
     rolldown_fedora_43: 80
     rolldown_fedora_44: 81
     lightningcss_fedora_43_44: 20
-  unresolved_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT
+  unresolved_required_notices: base-encode MIT; json-escape-simd MIT plus borrowed sonic-rs Apache-2.0; parcel_sourcemap MIT plus attributed rust-sourcemap BSD-3-Clause and source-map-mappings MIT OR Apache-2.0
   upstream_browser_logo_packages: 10
   patched_browser_logo_packages: 0
   browser_logo_review_complete: true
@@ -144,8 +144,23 @@ license_notice_audit:
     - name: parcel_sourcemap
       version: 2.1.1
       source_commit: a136bd6ba9f1d3cded501ae824341be0a54c5ce3
+      source_archive_sha256: 485b74d7218068b2b7c0e3ff12fbc61ae11d57cb5d8224f525bd304c6be05bbb
+      introduction_commit: e1be119476e24cf2917a2b1530b16ee0e1ce4b3c
       declared_license: MIT
-      finding: The crate and exact source commit contain no license text or copyright notice.
+      finding: The crate, release tag, current master, and complete Git history contain no license text or copyright notice; rewrite PR 52 contains no licensing resolution.
+      borrowed_sources:
+        - name: rust-sourcemap
+          source_commit: 3fc6bbbb3348b582d75dfcf896d74129e17710f6
+          license: BSD-3-Clause
+          license_sha256: 7516e1cf340213f60d96bca77bb012882dbf80e7cca5922c914174f605d9ef71
+          attribution: parcel_sourcemap/src/utils.rs:1
+        - name: source-map-mappings
+          source_commit: 197660faf3dd1167c643797a5ed62cb687482c54
+          license: MIT OR Apache-2.0
+          mit_license_sha256: 7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0
+          apache_license_sha256: a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2
+          attribution: parcel_sourcemap/src/vlq_utils.rs:1
+      resolution: Upstream must publish corrected released source or explicitly resolve the license selection and required notices; do not synthesize an MIT-only notice downstream.
 browser_logo_audit:
   upstream_exact_lock_entries: chrome@2.0.0, chrome-beta@3.0.0, chrome-canary@2.0.0, chrome-dev@3.0.0, chromium@2.0.1, edge@2.0.7, firefox@3.0.10, firefox-beta@4.1.4, firefox-nightly@3.0.6, safari@2.1.0
   generated_payload: packages/playwright-core/lib/vite/dashboard
@@ -177,6 +192,6 @@ gates:
   - Refine the retained broad lock selection into exact production, build, and test closures from original immutable source archives without package-manager installation or lifecycle execution in RPM phases.
   - Source-build exact esbuild, Rolldown, Lightning CSS, and every functional native or WASM input.
   - Reproduce the complete public playwright and playwright-core module trees from the pinned source commit.
-  - Complete aggregate legal accounting for the missing MIT and borrowed Apache-2.0 material.
+  - Complete aggregate legal accounting for missing notices and attributed BSD-3-Clause, MIT, and Apache-2.0 source material.
   - Run public-module load tests and upstream tests in clean offline Fedora 43 and Fedora 44 buildroots.
   - Host every generated closure input at immutable URLs usable by COPR SCM builds.

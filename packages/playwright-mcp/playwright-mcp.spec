@@ -5,7 +5,7 @@
 
 Name:           playwright-mcp
 Version:        0.0.78
-Release:        0.15%{?dist}
+Release:        0.16%{?dist}
 Summary:        Model Context Protocol server for Playwright
 
 License:        Apache-2.0
@@ -39,6 +39,9 @@ echo 'playwright-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.16
+- Record the complete parcel_sourcemap mixed-license provenance blocker.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.0.78-0.15
 - Record the exact alpha provider pin after Playwright stable 1.62.0.
 

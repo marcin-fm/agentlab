@@ -2,6 +2,7 @@ name: playwright-mcp
 status: blocked
 blockers:
   - The exact reusable nodejs-playwright and nodejs-playwright-core providers remain blocked on their monorepo source, build, license, and immutable-closure gates.
+  - The Lightning CSS provider remains blocked because parcel_sourcemap 2.1.1 declares only MIT while attributing BSD-3-Clause rust-sourcemap and MIT OR Apache-2.0 source-map-mappings code without retaining their notices or an explicit license selection.
   - Packaged Fedora 43 and Fedora 44 integration through the exact split module providers has not been proven.
 source_policy:
   npm_package: "@playwright/mcp"
