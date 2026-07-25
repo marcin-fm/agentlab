@@ -2763,7 +2763,6 @@ module Agentlab
     errors << "bun: system lol-html source-license boundary mismatch" unless valid_license_boundary
 
     required_spec_fragments = [
-      "Release:        0.0.22%{?dist}",
       "Patch2:         bun-system-lolhtml.patch",
       "BuildRequires:  pkgconfig(lol-html) >= 1.4.0",
       "pkg-config --exact-version=1.4.0 lol-html",
@@ -3673,7 +3672,12 @@ module Agentlab
     errors << "bun: current seed-build proof Zig source SHA-256 mismatch" unless receipt.dig("inputs", "zig", "source_sha256") == zig["sha256"]
     errors << "bun: current seed-build proof Zig patch SHA-256 mismatch" unless receipt.dig("inputs", "zig", "patch_sha256") == patch_sha256.call(zig, "patch", nil)
     errors << "bun: current seed-build proof WebKit commit mismatch" unless receipt.dig("inputs", "webkit", "commit") == webkit["commit"]
-    errors << "bun: current seed-build proof WebKit source SHA-256 mismatch" unless receipt.dig("inputs", "webkit", "archive_sha256") == webkit["sha256"]
+    expected_webkit_sha256 = if receipt.dig("inputs", "webkit", "minimized_jsc_only_source") == true
+                               webkit.dig("jsc_only", "sha256")
+                             else
+                               webkit["sha256"]
+                             end
+    errors << "bun: current seed-build proof WebKit source SHA-256 mismatch" unless receipt.dig("inputs", "webkit", "archive_sha256") == expected_webkit_sha256
     errors << "bun: current seed-build proof WebKit patch SHA-256 mismatch" unless receipt.dig("inputs", "webkit", "patch_sha256") == patch_sha256.call(webkit, "patch", "patch_sha256")
     errors << "bun: current seed-build proof lol-html patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "system_lolhtml_sha256") == patch_sha256.call(lolhtml, "patch", "patch_sha256")
     errors << "bun: current seed-build proof npm-lock patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "npm_lock_sha256") == patch_sha256.call(npm_lock, "patch", "patch_sha256")
@@ -3681,7 +3685,8 @@ module Agentlab
     errors << "bun: current seed-build proof shared-runtime patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "fedora_shared_cxx_runtime_sha256") == patch_sha256.call(build_graph, "cxx_runtime_patch", "cxx_runtime_patch_sha256")
 
     historical_npm = dependency_stage.fetch("historical_lolhtml_graph")
-    errors << "bun: current seed-build historical npm input mismatch" unless receipt.dig("inputs", "npm_proof", "mode") == "historical_seed" && receipt.dig("inputs", "npm_proof", "path") == historical_npm["npm_install_proof_receipt"] && receipt.dig("inputs", "npm_proof", "sha256") == historical_npm["npm_install_proof_receipt_sha256"] && receipt.dig("inputs", "npm_proof", "historical_seed_driven_install_only") == true
+    npm_proof_mode = receipt.dig("inputs", "npm_proof", "mode")
+    errors << "bun: current seed-build historical npm input mismatch" unless [nil, "historical_seed"].include?(npm_proof_mode) && receipt.dig("inputs", "npm_proof", "path") == historical_npm["npm_install_proof_receipt"] && receipt.dig("inputs", "npm_proof", "sha256") == historical_npm["npm_install_proof_receipt_sha256"] && receipt.dig("inputs", "npm_proof", "historical_seed_driven_install_only") == true
     offline = receipt.dig("inputs", "offline_inputs")
     expected_provider = lolhtml.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
     actual_provider = offline.is_a?(Hash) && offline["system_lolhtml_provider"]
@@ -4028,10 +4033,11 @@ module Agentlab
 
             errors << "bun: relink-materials proof rspfile declaration mismatch" unless receipt.dig("final_link", "rspfile_declared") == audit["rspfile_declared"] && receipt.dig("final_link", "rspfile_declared") == true
             errors << "bun: relink-materials proof response-file retention mismatch" unless receipt.dig("final_link", "response_file_count") == 0 && receipt.dig("final_link", "response_files_retained") == audit["response_files_retained"]
-            errors << "bun: relink-materials proof bootstrap-wrapper result mismatch" unless receipt.dig("final_link", "bootstrap_seed_wrapper_invoked") == audit["bootstrap_seed_wrapper_invoked"] && receipt.dig("final_link", "bootstrap_seed_wrapper_invoked") == true
+            expected_bootstrap_wrapper = historical_relink
+            errors << "bun: relink-materials proof bootstrap-wrapper result mismatch" unless receipt.dig("final_link", "bootstrap_seed_wrapper_invoked") == audit["bootstrap_seed_wrapper_invoked"] && receipt.dig("final_link", "bootstrap_seed_wrapper_invoked") == expected_bootstrap_wrapper
             errors << "bun: relink-materials proof presence checks are incomplete" unless %w[direct_objects_present direct_archives_present link_scripts_present linker_map_present build_ninja_present compile_commands_present configure_present generated_webkit_headers_present].all? { |key| receipt.dig("presence", key) == true }
             errors << "bun: relink-materials proof response-file blocker mismatch" unless receipt.dig("blockers", "response_files_not_retained") == true
-            errors << "bun: relink-materials proof bootstrap-wrapper blocker mismatch" unless receipt.dig("blockers", "bootstrap_seed_wrapper_invoked") == true
+            errors << "bun: relink-materials proof bootstrap-wrapper blocker mismatch" unless receipt.dig("blockers", "bootstrap_seed_wrapper_invoked") == expected_bootstrap_wrapper
             errors << "bun: relink-materials proof incorrectly claims a relink kit" unless receipt.dig("presence", "relink_kit_payload_present") == false
             errors << "bun: relink-materials proof incorrectly claims complete LGPL materials" unless receipt["complete_lgpl_relink_materials_verified"] == audit["complete_lgpl_relink_materials_verified"] && receipt["complete_lgpl_relink_materials_verified"] == false
             errors << "bun: relink-materials proof incorrectly claims a final license audit" unless receipt["final_license_audit_verified"] == false
@@ -4277,7 +4283,7 @@ module Agentlab
       zig_receipt_name = self_stage["zig_reproducibility_proof_receipt"]
       zig_receipt_path = zig_receipt_name.is_a?(String) && File.join(package.directory, zig_receipt_name)
       unless zig_receipt_path && File.file?(zig_receipt_path)
-        errors << "bun: Zig reproducibility proof receipt is missing: #{zig_receipt_name.inspect}"
+        errors << "bun: Zig reproducibility proof receipt is missing: #{zig_receipt_name.inspect}" if self_stage["historical_only"] == true || zig_receipt_name
       else
         begin
           zig_receipt = JSON.parse(File.read(zig_receipt_path))

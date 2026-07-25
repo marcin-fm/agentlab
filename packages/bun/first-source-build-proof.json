@@ -1,12 +1,12 @@
 {
-  "schema": "bun-first-source-build-proof/v1",
+  "schema": "bun-first-source-build-proof/v2",
   "package": "bun",
   "release": "1.3.14",
   "profile": "release-local",
-  "proof_date": "2026-07-18",
+  "proof_date": "2026-07-25",
   "source_closure": {
     "path": "bun-1.3.14-release-local-source-closure.json",
-    "sha256": "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0",
+    "sha256": "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080",
     "source_archive_sha256": "112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e",
     "source_commit": "0d9b296af33f2b851fcbf4df3e9ec89751734ba4"
   },
@@ -24,22 +24,25 @@
       "source_commit": "04e7f6ac1e009525bc00934f20199c68f04e0a24",
       "source_sha256": "b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d",
       "patch_sha256": "77be015e0b2a83e6d287cfa832fa190dcfe7296320d111e0b129e11a418161fc",
-      "executable_sha256": "d91991dd7531604f7621a611cc3b3f3d9a8fcd6fe48b55442e9f96a14b4cfae8",
+      "executable_sha256": "7804f17636144ee0e3c75b8d55088fe6f512ae5203ee51be8596b8dc4b096c4a",
       "receipt": "/srv/tmp/agentlab-bun-zig-proof/proof-receipt.json"
     },
     "webkit": {
       "commit": "5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b",
-      "archive_sha256": "c48d419170205210dc40eb70c2c4bf91e5d50db91a2739d13030965c08d31d3c",
+      "archive_sha256": "38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d",
+      "minimized_jsc_only_source": true,
+      "source_receipt_sha256": "01b4549178b6469c4969b46dc1a5e31c17efdfb84d684d5ca192935227c89680",
+      "tree_sha256": "dcf7d67f6bced499d961d20c29a1dc12cead88650c7d9f79a830082969e744d8",
       "patch_sha256": "023a4686ba96eb6ace658bef0226ba8b2968b57075ad11813918da93ed3c14e3"
     },
     "source_patches": {
-      "lolhtml_sha256": "1d530ec7a177285f0e6e819359547b9360b86e930968c4dadc196cce10425055",
+      "system_lolhtml_sha256": "840886d2caf3dd2a25146e329a9c876d4a2d3240ba610b9b0267d85eb325bdaf",
       "npm_lock_sha256": "0ae29543c765ffa18aabd181b8fcc24245e88701f4792b424690f719aef18b80",
       "zig_build_cwd_sha256": "6b8c241a4f1c5253e8dfcdabb943a956dd7867a044c5fef01591522090ad7fb2",
       "fedora_shared_cxx_runtime_sha256": "b9712db0e79d0277dfece2d74c4e943ed5714dff20676ab87b7a4dc6e869850e"
     },
     "offline_inputs": {
-      "native_archives": 19,
+      "native_archives": 18,
       "node_header_archives": 1,
       "npm_install_roots": 3,
       "supplemental_npm_trees": [
@@ -55,28 +58,61 @@
           }
         }
       ],
-      "cargo_vendor_tree_sha256": "28d05e1cc1221039862f7c793d2d703f24cb79e5108065bfebc0584b56b0e521"
+      "cargo_source_archives": 0,
+      "system_lolhtml_provider": {
+        "package": "lol-html",
+        "version": "3.0.0",
+        "c_api_version": "1.4.0",
+        "pkgconfig": "lol-html",
+        "soname": "liblolhtml.so.1",
+        "build_requirement": "pkgconfig(lol-html) >= 1.4.0",
+        "staged_payload": {
+          "root": "/srv/tmp/agentlab-bun-lolhtml-provider/stage",
+          "package": "lol-html",
+          "version": "3.0.0",
+          "c_api_version": "1.4.0",
+          "pkgconfig": "lol-html",
+          "soname": "liblolhtml.so.1",
+          "header": {
+            "path": "usr/include/lol_html.h",
+            "size_bytes": 41277,
+            "sha256": "7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293"
+          },
+          "pkgconfig_file": {
+            "path": "usr/lib64/pkgconfig/lol-html.pc",
+            "size_bytes": 247,
+            "sha256": "e85417c9de2ea6bc28818f3df82c14eb3a5b75c1714a4ac11545a02f47d6119d"
+          },
+          "shared_library": {
+            "path": "usr/lib64/liblolhtml.so.1.4.0",
+            "size_bytes": 888968,
+            "sha256": "3b1f3a3a92c4af9e97630fb845a6a2d69fdedaa6c4034219fe6f75c1a2790d86"
+          },
+          "symlinks": {
+            "liblolhtml.so.1": "liblolhtml.so.1.4.0",
+            "liblolhtml.so": "liblolhtml.so.1.4.0"
+          },
+          "critical_symbols_verified": true
+        }
+      }
     },
     "npm_proof": {
       "path": "npm-offline-install-proof.json",
-      "sha256": "61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f"
-    },
-    "cargo_proof": {
-      "path": "lolhtml-offline-build-proof.json",
-      "sha256": "05785f79c560ce5953500acc7c9dea283a53b18240e59b62c84f57ab02eb5cce"
+      "sha256": "61779f38b08a0bdafd30c3684831f4c5c6586b1ee22c91e279b2f07e6687472f",
+      "historical_seed_driven_install_only": true
     }
   },
   "configure": {
     "profile": "release-local",
     "configure_json_sha256": "756da63575ff1fbccda7d68133189c5270bb60e1e0f21e99b48fbba0ed3a4923",
-    "build_ninja_sha256": "d60af78f11f7a815874de7198ea848544afd81625aacfdf5b284372b60bbc97f",
+    "build_ninja_sha256": "923bb381bd1dd1d0603102febd1f7f69a71c1b65b93771561f8909ae9b3c48bc",
     "install_edges": 3,
     "prevalidated_install_stamps": [
       "stamps/install__srv_tmp_agentlab_bun_first_source_build_proof_source.stamp",
       "stamps/install__srv_tmp_agentlab_bun_first_source_build_proof_source_packages_bun_error.stamp",
       "stamps/install__srv_tmp_agentlab_bun_first_source_build_proof_source_src_node_fallbacks.stamp"
     ],
-    "native_fetch_edges": 19,
+    "native_fetch_edges": 18,
     "node_header_fetch_edges": 1,
     "prepared_inputs_revalidated": true,
     "bootstrap_seed_rule_scope_verified": true,
@@ -102,12 +138,12 @@
     "zig_fetch_absent": true,
     "zig_source_cwd_verified": true,
     "fedora_shared_cxx_runtime_verified": true,
-    "stable_lolhtml_cargo_verified": true,
+    "system_lolhtml_provider_verified": true,
     "unexpected_urls_absent": true,
     "install_rule_bypass": {
       "schema": "bun-prevalidated-install-rule-bypass/v1",
-      "original_build_ninja_sha256": "0d09e3fbe196be59472936b0375d0604f4469a646c80c011bec174a3d2e7fb57",
-      "patched_build_ninja_sha256": "d60af78f11f7a815874de7198ea848544afd81625aacfdf5b284372b60bbc97f",
+      "original_build_ninja_sha256": "39ababe5bfa26b8d04546d2efa7cbc8366fd50f3e27543b9d2900096e2bca577",
+      "patched_build_ninja_sha256": "923bb381bd1dd1d0603102febd1f7f69a71c1b65b93771561f8909ae9b3c48bc",
       "original_command": "command = cd $dir && /srv/tmp/agentlab-bun-first-source-build-proof/seed/bun install --frozen-lockfile && touch $stamp",
       "replacement_command": "command = /usr/bin/test -f $stamp",
       "scope": "generated Ninja bun_install rule only; three prevalidated materialized node_modules trees"
@@ -120,29 +156,31 @@
     "nice_level": 10,
     "jobs": 4,
     "nested_cmake_jobs": 4,
-    "cargo_jobs": 4,
     "bun_profile": {
       "path": "build/release-local/bun-profile",
-      "size_bytes": 336047704,
-      "sha256": "fa12b3c4ba0e8eb4fca7c7cf1e3e1d0354844dc1f532d12bee37306b813a4382"
+      "size_bytes": 332727688,
+      "sha256": "e1e30adf0b8d84593beae1896a542e6997553d7f4eee4ea93cd6a2048ca23fe5"
     },
     "bun": {
       "path": "build/release-local/bun",
-      "size_bytes": 67721320,
-      "sha256": "672eb0cbc0f465b6fd7eb47e1d6a088d0e22bf75d9e201dfbeeb0e481d8f763f"
+      "size_bytes": 66969072,
+      "sha256": "4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569"
     },
     "linker_map": {
       "path": "build/release-local/bun-profile.linker-map",
-      "size_bytes": 69757833,
-      "sha256": "fd0c8b561c464914938a15ba0220580554d887e17738e81d6f100a8c8e030004"
+      "size_bytes": 68538109,
+      "sha256": "dac738b932c25ff387495293daca2b896120361208c0cdcd59851b5756094713"
     },
     "revision": "1.3.14-canary.1+0d9b296af",
     "version": "1.3.14",
+    "build_id": "5d00ae08d1dacf7517bb29fc37a801dbdf688914",
+    "stabilization_passes": 0,
     "smoke_verified": true,
+    "html_rewriter_smoke_verified": true,
     "stripped_output_verified": true,
     "strip_verification": {
-      "bun_profile_file": "/srv/tmp/agentlab-bun-first-source-build-proof/build/release-local/bun-profile: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=1d8db1c001ded4b395b9915439bafcac69bcd4bf, with debug_info, not stripped",
-      "bun_file": "/srv/tmp/agentlab-bun-first-source-build-proof/build/release-local/bun: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=1d8db1c001ded4b395b9915439bafcac69bcd4bf, not stripped",
+      "bun_profile_file": "/srv/tmp/agentlab-bun-first-source-build-proof/build/release-local/bun-profile: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=5d00ae08d1dacf7517bb29fc37a801dbdf688914, with debug_info, not stripped",
+      "bun_file": "/srv/tmp/agentlab-bun-first-source-build-proof/build/release-local/bun: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=5d00ae08d1dacf7517bb29fc37a801dbdf688914, not stripped",
       "bun_profile_debug_sections": [
         ".debug_abbrev",
         ".debug_addr",
@@ -164,14 +202,16 @@
       "size_reduced": true
     },
     "fedora_shared_cxx_runtime_verified": true,
+    "system_lolhtml_provider_verified": true,
     "shared_runtime_libraries": [
       "libgcc_s.so.1",
-      "libstdc++.so.6"
+      "libstdc++.so.6",
+      "liblolhtml.so.1"
     ]
   },
   "retained_relink_evidence": {
-    "object_files": 1760,
-    "static_archives": 5,
+    "object_files": 1728,
+    "static_archives": 3,
     "response_files": 0,
     "compile_commands_retained": true,
     "build_ninja_retained": true,
@@ -197,15 +237,15 @@
     "seed_identity_text_matches": 0,
     "payload_absent_verified": true,
     "runtime_dependency_absent_verified": true,
-    "ldd_sha256": "8b8b4e45ba3527c27ba3adccda0bece821f217d4db5ba6977ae1ad57a2bd421b"
+    "ldd_sha256": "0015998ca90767ff64bfbc8b6d8c1899104cbfcf98d33a0868bf8df840ce802a"
   },
   "resources": {
     "before": {
-      "mem_available": "37085712 kB",
+      "mem_available": "21793052 kB",
       "swap_free": "0 kB",
-      "memory_pressure": "some avg10=1.58 avg60=1.65 avg300=1.35 total=7212921226\nfull avg10=1.58 avg60=1.65 avg300=1.35 total=6999192588",
+      "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=8727532861\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=8486795878",
       "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/libpod-60afb6564c6c45d8b3feaab8fa116b6c2fa6ac89b2e0453f9e993a0c0de5e7ed.scope/container/system.slice/cx-app.service",
-      "memory_current": "23504826368",
+      "memory_current": "5402468352",
       "memory_max": "max",
       "memory_events": {
         "low": 0,
@@ -214,16 +254,16 @@
         "oom": 0,
         "oom_kill": 0,
         "oom_group_kill": 0,
-        "sock_throttled": 223
+        "sock_throttled": 57
       },
-      "disk": "/dev/mapper/main-system4  3856662528 3342469976 482615464      88% /srv"
+      "disk": "/dev/mapper/main-system4  3856662528 3422871524 418824860      90% /srv"
     },
     "after": {
-      "mem_available": "37104196 kB",
+      "mem_available": "20707276 kB",
       "swap_free": "0 kB",
-      "memory_pressure": "some avg10=1.58 avg60=1.65 avg300=1.35 total=7212930176\nfull avg10=1.58 avg60=1.65 avg300=1.35 total=6999201531",
+      "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=8727985874\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=8487230858",
       "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/libpod-60afb6564c6c45d8b3feaab8fa116b6c2fa6ac89b2e0453f9e993a0c0de5e7ed.scope/container/system.slice/cx-app.service",
-      "memory_current": "23285182464",
+      "memory_current": "9002782720",
       "memory_max": "max",
       "memory_events": {
         "low": 0,
@@ -232,9 +272,9 @@
         "oom": 0,
         "oom_kill": 0,
         "oom_group_kill": 0,
-        "sock_throttled": 223
+        "sock_throttled": 57
       },
-      "disk": "/dev/mapper/main-system4  3856662528 3342469976 482615464      88% /srv"
+      "disk": "/dev/mapper/main-system4  3856662528 3424027592 417729080      90% /srv"
     },
     "oom_counters_unchanged": true
   },

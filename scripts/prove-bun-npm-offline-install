@@ -360,7 +360,7 @@ def extract_zip_member!(archive, member, output, workdir)
   end
 end
 
-def verify_source_built_driver!(driver_path, receipt_path, version, source_commit, closure, closure_sha256, seed)
+def verify_source_built_driver!(driver_path, receipt_path, version, source_commit, closure, closure_sha256, seed, lolhtml)
   raise Agentlab::Error, "source-built driver is missing: #{driver_path}" unless File.file?(driver_path)
   raise Agentlab::Error, "source-built driver receipt is missing: #{receipt_path}" unless File.file?(receipt_path)
   driver_stat = File.lstat(driver_path)
@@ -421,6 +421,42 @@ def verify_source_built_driver!(driver_path, receipt_path, version, source_commi
     raise Agentlab::Error, "source-built driver does not match its build receipt"
   end
 
+  provider = receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider")
+  staged = provider&.fetch("staged_payload", nil)
+  unless provider.is_a?(Hash) && staged.is_a?(Hash) &&
+         lolhtml.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement").all? { |key, value| provider[key] == value } &&
+         receipt.dig("build", "system_lolhtml_provider_verified") == true &&
+         Array(receipt.dig("build", "shared_runtime_libraries")).include?(lolhtml.fetch("soname"))
+    raise Agentlab::Error, "source-built driver receipt does not prove the system lol-html provider"
+  end
+  provider_root = staged.fetch("root")
+  unless provider_root.start_with?("/srv/tmp/") && Dir.exist?(provider_root) && File.realpath(provider_root) == provider_root
+    raise Agentlab::Error, "source-built driver provider root is unsafe or missing"
+  end
+  provider_stat = File.lstat(provider_root)
+  raise Agentlab::Error, "source-built driver provider root must not be a symlink" if provider_stat.symlink?
+  raise Agentlab::Error, "source-built driver provider root is owned by another user" unless provider_stat.uid == Process.uid
+  library_record = staged.fetch("shared_library")
+  library_relative = safe_relative_path(library_record.fetch("path"))
+  raise Agentlab::Error, "source-built driver provider library path is unsafe" unless library_relative
+  library = File.join(provider_root, library_relative)
+  unless File.file?(library) && File.size(library) == library_record.fetch("size_bytes") && Digest::SHA256.file(library).hexdigest == library_record.fetch("sha256")
+    raise Agentlab::Error, "source-built driver provider library does not match its receipt"
+  end
+  runtime_dir = File.dirname(library)
+  soname = lolhtml.fetch("soname")
+  soname_link = File.join(runtime_dir, soname)
+  unless File.symlink?(soname_link) && File.realpath(soname_link) == library
+    raise Agentlab::Error, "source-built driver provider SONAME link does not match its receipt"
+  end
+  runtime_environment = { "LD_LIBRARY_PATH" => runtime_dir }
+  dynamic = capture!(runtime_environment, ["readelf", "--dynamic", library], chdir: provider_root)
+  raise Agentlab::Error, "source-built driver provider library has the wrong SONAME" unless dynamic.include?("Library soname: [#{soname}]")
+  resolution = capture!(runtime_environment, ["ldd", driver_path], chdir: proof_root)
+  unless resolution.include?(soname) && resolution.include?(provider_root)
+    raise Agentlab::Error, "source-built driver does not resolve its checked lol-html provider"
+  end
+
   {
     "kind" => "source_built",
     "proof_kind" => proof_kind,
@@ -430,7 +466,13 @@ def verify_source_built_driver!(driver_path, receipt_path, version, source_commi
     "path" => driver_path,
     "size_bytes" => File.size(driver_path),
     "sha256" => Digest::SHA256.file(driver_path).hexdigest,
-    "version" => version
+    "version" => version,
+    "system_lolhtml_provider" => {
+      "root" => provider_root,
+      "soname" => soname,
+      "shared_library_sha256" => library_record.fetch("sha256")
+    },
+    "runtime_environment" => runtime_environment
   }
 rescue JSON::ParserError, KeyError => e
   raise Agentlab::Error, "invalid source-built driver receipt: #{e.message}"
@@ -471,6 +513,7 @@ unless Digest::SHA256.file(bun_source_archive).hexdigest == closure.dig("source_
 end
 
 required_commands = %w[patch tar unshare]
+required_commands.concat(%w[ldd readelf]) if source_driver_mode
 required_commands << "unzip" unless source_driver_mode
 required_commands.each do |command|
   raise Agentlab::Error, "missing tool: #{command}" unless Agentlab.command_available?(command)
@@ -478,10 +521,11 @@ end
 run!({}, ["unshare", "--net", "true"], chdir: workdir)
 driver_record = nil
 if source_driver_mode
-  driver_record = verify_source_built_driver!(source_built_driver, driver_receipt_path, version, source_commit, closure, expected_closure_sha, seed)
+  driver_record = verify_source_built_driver!(source_built_driver, driver_receipt_path, version, source_commit, closure, expected_closure_sha, seed, metadata.fetch("source_inputs").fetch("lolhtml"))
+  driver_environment = driver_record.delete("runtime_environment")
   install_driver = driver_record.fetch("path")
   seed_binary_sha = seed.fetch("binary_sha256")
-  driver_version = capture!({}, [install_driver, "--version"], chdir: workdir).strip
+  driver_version = capture!(driver_environment, [install_driver, "--version"], chdir: workdir).strip
   raise Agentlab::Error, "unexpected source-built Bun driver version #{driver_version.inspect}" unless driver_version == version
 else
   FileUtils.mkdir_p(File.dirname(seed_archive))
@@ -597,6 +641,7 @@ environment = {
   "XDG_CONFIG_HOME" => File.join(home, ".config"),
   "XDG_DATA_HOME" => File.join(home, ".local", "share")
 }
+environment.merge!(driver_environment) if source_driver_mode
 
 root_receipts = []
 install_roots.values.sort_by { |root| root.fetch("path") == "." ? "" : root.fetch("path") }.each do |root|

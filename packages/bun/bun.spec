@@ -30,7 +30,7 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 274b1fd8ce15088c042e1926f143a60a66256ee1c7718ffbef19d619ebce8d34
+%global source_license_inventory_sha256 b4cc8dc8cf70e601e69f4161a82a93782d020c62d8032539328a633ea11c052c
 %global source_license_audit_script_sha256 76eb418d57c98355a313c085f7a228ece9cf85f60cf61bbfafd2bd07ca5133ca
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
@@ -40,7 +40,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.22%{?dist}
+Release:        0.0.23%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -351,6 +351,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.23
+- Prove the current source-built npm, self-rebuild, and LGPL relink chain.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.22
 - Regenerate the source and license closure for Fedora's system lol-html provider.
 

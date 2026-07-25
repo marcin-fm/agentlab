@@ -58,6 +58,10 @@ class ProveBunFirstSourceBuildTest < Minitest::Test
     assert_includes(source, '"forbidden_bootstrap_seed"')
     assert_includes(source, 'source_driver_mode ? "source-built-npm-install-proof.json" : "npm-offline-install-proof.json"')
     assert_includes(source, 'command = ["unshare", "--net", "--", install_driver, "install"')
+    assert_includes(source, '"LD_LIBRARY_PATH" => runtime_dir')
+    assert_includes(source, 'source-built driver provider library does not match its receipt')
+    assert_includes(source, 'source-built driver does not resolve its checked lol-html provider')
+    assert_includes(source, 'environment.merge!(driver_environment) if source_driver_mode')
   end
 
   def test_self_rebuild_requires_the_source_built_npm_receipt
@@ -67,6 +71,7 @@ class ProveBunFirstSourceBuildTest < Minitest::Test
     assert_includes(source, 'npm_receipt["schema"] == "bun-npm-offline-install-proof/v2"')
     assert_includes(source, 'npm_receipt.dig("driver", "receipt_sha256") == Digest::SHA256.file(driver_receipt_path).hexdigest')
     assert_includes(source, 'raise Agentlab::Error, "self-rebuild npm proof does not match the selected source-built driver"')
+    assert_includes(source, '"LD_LIBRARY_PATH" => File.join(lolhtml_provider_root, "usr", "lib64")')
     assert_includes(source, 'npm_proof_mode = "historical_seed"')
     assert_includes(source, 'npm_proof_mode = "source_built"')
     assert_includes(source, 'configure_receipt.slice("npm_proof", "zig", "webkit", "source_patches", "offline_inputs")')

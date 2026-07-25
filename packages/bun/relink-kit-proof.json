@@ -1,30 +1,30 @@
 {
-  "schema": "bun-relink-kit/v1",
+  "schema": "bun-relink-kit/v2",
   "package": "bun",
   "version": "1.3.14",
-  "date": "2026-07-18",
+  "date": "2026-07-25",
   "source_audit": {
-    "schema": "bun-relink-materials-audit/v2",
-    "sha256": "cc8acb65b728cac6e867f01b6e5c461e91879b28c420789a140f9663cec7b068",
-    "link_manifest_sha256": "25b436a72a4ca33817919dc756d3063504b94e7c41c3d59eac8d80d984194823",
-    "direct_object_inventory_sha256": "0d96014958e82f1f3b88763f74f0f4ba5d6ebf82f484b1ea0a921a09fd3bd1f0"
+    "schema": "bun-relink-materials-audit/v3",
+    "sha256": "f4174112a8bef69442b1697dc5ca5228600e6d6dd41714025e4d78b548a9fa56",
+    "link_manifest_sha256": "9ad18250fcfe04ccd517b5c2b0d3477dfbe896c9d63f7daab94b8de588fcc666",
+    "direct_object_inventory_sha256": "633f2af21df941f847da189d78447adfaa76b6fca4d8434063b9ceeca3c8e3ea"
   },
   "kit": {
     "root_name": "bun-1.3.14-relink-kit",
     "archive": "bun-1.3.14-relink-kit.tar.zst",
-    "archive_size_bytes": 329696015,
-    "archive_sha256": "730986ddddf5849aaefd8afe5a9c898668e5e12de9e4bd794d0715d12f64a3c5",
+    "archive_size_bytes": 317961444,
+    "archive_sha256": "92b324d836f0be42e4a4c403cb351259cbf3006de9e6c9855ab550acf46aac95",
     "payload_manifest": {
       "path": "relink/payload-manifest.json",
-      "size_bytes": 1595199,
-      "sha256": "17a8129066962dc89bb648cf8fd4610dea138f72c0d560c181220f330dc6491a",
+      "size_bytes": 1594955,
+      "sha256": "ebdfacdafe2028610baae2c79e411016b136e4e74344f961b6dc47f33a71e0e2",
       "kind": "payload-manifest",
       "mode": "0644"
     },
     "link_command": {
       "path": "relink/link-command.json",
-      "size_bytes": 2121,
-      "sha256": "eea371cac072722b59e287b3d7cba6211b00fe330e22895bdea2478071019a81",
+      "size_bytes": 2161,
+      "sha256": "5204c8fbefd82ae758fb5fece3c79512dfba5d6c0c97adb8f09c1067bbe863c4",
       "kind": "link-command",
       "mode": "0644"
     },
@@ -32,32 +32,32 @@
       "path": "relink/relink.sh",
       "kind": "relink-script",
       "mode": "0755",
-      "size_bytes": 1001,
-      "sha256": "64658a1f3b032929f617994230e9c684a8b2720ad9e5648b6ca42e8c2ec5a0fb"
+      "size_bytes": 1011,
+      "sha256": "2c5bba07ca27aaef7de521f3e6f45ea9ae9932ddaf5fecf59eec83b8fbbf0d2a"
     },
     "readme": {
       "path": "README.relink.txt",
       "kind": "readme",
       "mode": "0644",
-      "size_bytes": 662,
-      "sha256": "69664cb67a239e169924bf0866bbe810057c4c224263b099354dd78895991934"
+      "size_bytes": 672,
+      "sha256": "16d0729b4eeb819d3f321178c1b2e80d114223173a615a836085323dffacae07"
     },
     "response_file": {
       "path": "relink/bun-profile.rsp",
       "kind": "response-file",
       "mode": "0644",
-      "size_bytes": 55267,
-      "sha256": "f4066db70302c018aff564c7be8de8071897c45b4c99eca0bf4b70a4e98572dc"
+      "size_bytes": 55233,
+      "sha256": "0f7bb0856a49d7da9770a50bc5adc603f8544cf813ded3369b6b7ee6b24b16c0"
     },
     "payload_summary": {
-      "file_count": 3465,
+      "file_count": 3464,
       "symlink_count": 1415,
       "object_count": 1162,
-      "archive_count": 4,
+      "archive_count": 3,
       "linker_script_count": 2,
       "generated_header_entry_count": 2294,
       "generated_header_target_count": 1415,
-      "response_file_input_count": 1166
+      "response_file_input_count": 1165
     }
   },
   "validation": {
@@ -72,7 +72,9 @@
     "retained_profile_sha256_equal": true,
     "retained_linker_map_sha256_equal": true,
     "smoke_verified": true,
+    "html_rewriter_smoke_verified": true,
     "fedora_shared_cxx_runtime_verified": true,
+    "system_lolhtml_provider_verified": true,
     "seed_payload_absent_verified": true,
     "seed_runtime_dependency_absent_verified": true
   },
@@ -80,25 +82,28 @@
     "network_namespace": true,
     "output": {
       "path": "build/release-local/bun-profile",
-      "size_bytes": 336047704,
-      "sha256": "fa12b3c4ba0e8eb4fca7c7cf1e3e1d0354844dc1f532d12bee37306b813a4382",
-      "retained_profile_sha256": "fa12b3c4ba0e8eb4fca7c7cf1e3e1d0354844dc1f532d12bee37306b813a4382",
+      "size_bytes": 332874240,
+      "sha256": "886cda299ab4d9cd954925fc800614f651e973aae29f940f54691ece00a15439",
+      "retained_profile_sha256": "886cda299ab4d9cd954925fc800614f651e973aae29f940f54691ece00a15439",
       "retained_profile_sha256_equal": true
     },
     "linker_map": {
       "path": "build/release-local/bun-profile.linker-map",
-      "size_bytes": 69757833,
-      "sha256": "fd0c8b561c464914938a15ba0220580554d887e17738e81d6f100a8c8e030004",
-      "retained_linker_map_sha256": "fd0c8b561c464914938a15ba0220580554d887e17738e81d6f100a8c8e030004",
+      "size_bytes": 68508199,
+      "sha256": "9a33843d9132473e7a2bd64984821f954558b74b1b58840033555cbcd55c3941",
+      "retained_linker_map_sha256": "9a33843d9132473e7a2bd64984821f954558b74b1b58840033555cbcd55c3941",
       "retained_linker_map_sha256_equal": true
     },
     "revision": "1.3.14-canary.1+0d9b296af",
     "version": "1.3.14",
     "smoke_verified": true,
+    "html_rewriter_smoke_verified": true,
     "fedora_shared_cxx_runtime_verified": true,
+    "system_lolhtml_provider_verified": true,
     "shared_runtime_libraries": [
       "libgcc_s.so.1",
-      "libstdc++.so.6"
+      "libstdc++.so.6",
+      "liblolhtml.so.1"
     ],
     "seed_payload_absent_verified": true,
     "seed_runtime_dependency_absent_verified": true

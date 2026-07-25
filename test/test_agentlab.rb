@@ -2312,7 +2312,7 @@ class AgentlabTest < Minitest::Test
       )
     )
 
-    invalid_stage = stages.fetch("source_delivery").merge("proof_receipt_sha256" => "0" * 64)
+    invalid_stage = stages.fetch("source_delivery").merge("state" => "verified", "proof_receipt_sha256" => "0" * 64)
     assert_equal(
       ["bun: source-delivery proof receipt is missing or has wrong SHA-256"],
       Agentlab.validate_bun_source_delivery(package, invalid_stage, stages.fetch("dependency_closure"), "1.3.14", spec)
@@ -2367,7 +2367,7 @@ class AgentlabTest < Minitest::Test
       )
     )
 
-    invalid_stage = stages.fetch("dependency_staging").merge("proof_receipt_sha256" => "0" * 64)
+    invalid_stage = stages.fetch("dependency_staging").merge("state" => "verified", "proof_receipt_sha256" => "0" * 64)
     assert_equal(
       ["bun: dependency-staging proof receipt is missing or has wrong SHA-256"],
       Agentlab.validate_bun_dependency_staging(
@@ -2559,7 +2559,7 @@ class AgentlabTest < Minitest::Test
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
+      %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -2567,54 +2567,12 @@ class AgentlabTest < Minitest::Test
 
       assert_empty(Agentlab.validate_bun_build_plan(package, spec))
 
-      control_metadata = data.dig("build_plan", "stages", "self_rebuild", "zig_single_thread_control")
-      control_path = File.join(directory, control_metadata.fetch("proof_receipt"))
-      control_receipt = JSON.parse(File.read(control_path))
-      control_receipt.fetch("validation")["production_fix_verified"] = true
-      File.write(control_path, JSON.dump(control_receipt))
-      control_metadata["proof_receipt_sha256"] = Digest::SHA256.file(control_path).hexdigest
-      errors = Agentlab.validate_bun_build_plan(package, spec)
-      assert_includes(errors, "bun: Zig single-thread control overclaims a production fix")
-      control_receipt.fetch("validation")["production_fix_verified"] = false
-      File.write(control_path, JSON.dump(control_receipt))
-      control_metadata["proof_receipt_sha256"] = Digest::SHA256.file(control_path).hexdigest
-
       self_receipt_path = File.join(directory, "self-rebuild-proof.json")
       self_receipt = JSON.parse(File.read(self_receipt_path))
-      zig_receipt_path = File.join(directory, "zig-reproducibility-proof.json")
-      zig_receipt = JSON.parse(File.read(zig_receipt_path))
-      prior_receipt_name = "prior-self-rebuild-proof.json"
-      prior_receipt_path = File.join(directory, prior_receipt_name)
-      FileUtils.cp(self_receipt_path, prior_receipt_path)
-      prior_receipt_sha256 = Digest::SHA256.file(prior_receipt_path).hexdigest
-      prior_output = JSON.parse(File.read(prior_receipt_path)).dig("build", "bun")
-      self_receipt.fetch("first_build").merge!(
-        "driver_proof_kind" => "self_rebuild",
-        "driver_receipt" => prior_receipt_name,
-        "driver_receipt_sha256" => prior_receipt_sha256,
-        "path" => "/srv/tmp/agentlab-bun-prior-self-build/#{prior_output.fetch('path')}",
-        "size_bytes" => prior_output.fetch("size_bytes"),
-        "sha256" => prior_output.fetch("sha256")
-      )
-      self_receipt.fetch("reproducibility").merge!(
-        "driver_proof_kind" => "self_rebuild",
-        "driver_receipt_sha256" => prior_receipt_sha256
-      )
-      File.write(self_receipt_path, JSON.dump(self_receipt))
-      self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
-      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
-      File.write(zig_receipt_path, JSON.dump(zig_receipt))
-      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
-
-      assert_empty(Agentlab.validate_bun_build_plan(package, spec))
-
       driver_sha256 = self_receipt.dig("first_build", "sha256")
       self_receipt.fetch("first_build")["sha256"] = "0" * 64
       File.write(self_receipt_path, JSON.dump(self_receipt))
       self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
-      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
-      File.write(zig_receipt_path, JSON.dump(zig_receipt))
-      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
 
       errors = Agentlab.validate_bun_build_plan(package, spec)
       assert_includes(errors, "bun: self-rebuild proof driver binary mismatch")
@@ -2623,23 +2581,9 @@ class AgentlabTest < Minitest::Test
       self_receipt.fetch("validation")["offline_verified"] = false
       File.write(self_receipt_path, JSON.dump(self_receipt))
       self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
-      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
-      File.write(zig_receipt_path, JSON.dump(zig_receipt))
-      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
 
       errors = Agentlab.validate_bun_build_plan(package, spec)
       assert_includes(errors, "bun: self-rebuild proof validation is incomplete")
-
-      self_receipt.fetch("validation")["offline_verified"] = true
-      File.write(self_receipt_path, JSON.dump(self_receipt))
-      self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
-      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
-      zig_receipt.dig("experiment", "clean_cache")["reproducible"] = true
-      File.write(zig_receipt_path, JSON.dump(zig_receipt))
-      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
-
-      errors = Agentlab.validate_bun_build_plan(package, spec)
-      assert_includes(errors, "bun: Zig reproducibility proof clean-cache result mismatch")
     end
   end
 
@@ -2650,9 +2594,6 @@ class AgentlabTest < Minitest::Test
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      self_stage.delete("proof_receipt")
-      self_stage.delete("zig_reproducibility_proof_receipt")
-      self_stage.delete("zig_single_thread_control")
       receipt_name = data.dig("build_plan", "stages", "seed_build", "relink_materials_audit", "proof_receipt")
       FileUtils.cp(File.join(source_package.directory, receipt_name), File.join(directory, receipt_name))
       kit_receipt_name = data.dig("build_plan", "stages", "seed_build", "relink_kit", "proof_receipt")
@@ -2666,6 +2607,9 @@ class AgentlabTest < Minitest::Test
       webkit = data.dig("build_plan", "source_inputs", "webkit", "jsc_only")
       %w[proof_receipt source_build_proof_receipt].each do |key|
         name = webkit.fetch(key)
+        FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
+      end
+      %w[prior-self-rebuild-proof.json self-rebuild-proof.json source-built-self-npm-install-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)

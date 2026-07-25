@@ -965,7 +965,10 @@ if self_rebuild
   first_driver = first_build_receipt.dig("build", "bun")
   verify_file!(build_driver, first_driver.fetch("sha256"), "source-built Bun self-rebuild driver")
   raise Agentlab::Error, "source-built Bun self-rebuild driver size mismatch" unless File.size(build_driver) == first_driver.fetch("size_bytes")
-  driver_version = capture!({ "HOME" => home_dir }, [build_driver, "--version"], chdir: workdir).strip
+  driver_version = capture!({
+    "HOME" => home_dir,
+    "LD_LIBRARY_PATH" => File.join(lolhtml_provider_root, "usr", "lib64")
+  }, [build_driver, "--version"], chdir: workdir).strip
   raise Agentlab::Error, "unexpected source-built Bun driver version #{driver_version.inspect}" unless driver_version == version
 else
   raise Agentlab::Error, "resume tree lacks bootstrap seed" unless File.file?(seed_binary)
