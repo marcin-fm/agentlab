@@ -968,6 +968,23 @@ module Agentlab
       errors << "openchamber: source-map WASM proof is unavailable"
     end
 
+    shiki = components.find { |component| component["package"] == "shiki@3.23.0" }
+    shiki_filename = dependencies.dig("source_closure_files", "shiki_wasm_proof")
+    shiki_path = shiki_filename.is_a?(String) && File.join(package.directory, shiki_filename)
+    if shiki_path && File.file?(shiki_path)
+      shiki_sha256 = Digest::SHA256.file(shiki_path).hexdigest
+      shiki_proof = JSON.parse(File.read(shiki_path))
+      errors << "openchamber: Shiki WASM proof path mismatch" unless shiki&.dig("proof", "path") == shiki_filename && review.dig("receipts", "shiki_wasm_proof", "path") == shiki_filename
+      errors << "openchamber: Shiki WASM proof SHA-256 mismatch" unless review.dig("receipts", "shiki_wasm_proof", "sha256") == shiki_sha256
+      errors << "openchamber: Shiki WASM proof identity mismatch" unless shiki_proof["schema"] == "openchamber-shiki-wasm-proof/v1" && shiki_proof["package"] == "shiki@3.23.0"
+      errors << "openchamber: Shiki WASM release source mismatch" unless shiki_proof.dig("shiki_source", "commit") == "2b33c0cdcedf3e00f65cac7228c62f7f1bcbf86a" && shiki_proof.dig("shiki_source", "archive_sha256") == "f3e33e4f867d5e1983466d2ec7bdb1933bb8f2ced522691b2775b78cbac67ae2" && shiki_proof.dig("shiki_source", "inlined_dependency") == "vscode-oniguruma@1.7.0"
+      errors << "openchamber: Shiki WASM subordinate source mismatch" unless shiki_proof.dig("subordinate_source", "commit") == "716aeaa229e4ae2e3b0057377b55743e9a3e995b" && shiki_proof.dig("subordinate_source", "archive_sha256") == "0e472a9d670d3301024435c04c09870bce2779c22a099185c2988d99b1cea190" && shiki_proof.dig("subordinate_source", "tracked_wasm_sha256") == "fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9" && shiki_proof.dig("subordinate_source", "oniguruma_submodule_commit") == "08d36110c5670c815ad6d6f969e578049d209080" && shiki_proof.dig("subordinate_source", "emscripten_version") == "3.1.21"
+      errors << "openchamber: Shiki WASM validation state mismatch" unless shiki_proof.dig("published_package", "wasm_sha256") == shiki_proof.dig("subordinate_source", "tracked_wasm_sha256") && shiki_proof.dig("validation", "shiki_copy_contract_verified") == true && shiki_proof.dig("validation", "exact_source_mapping_verified") == true && shiki_proof.dig("validation", "reproducible_build_verified") == false && shiki_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: Shiki WASM review state mismatch" unless shiki.dig("decision", "source_mapping_verified") == true && shiki.dig("decision", "reproducible_build_verified") == false
+    else
+      errors << "openchamber: Shiki WASM proof is unavailable"
+    end
+
     better = components.find { |component| component["package"] == "better-sqlite3@12.10.0" }
     proof_filename = dependencies.dig("source_closure_files", "better_sqlite3_proof")
     proof_path = proof_filename.is_a?(String) && File.join(package.directory, proof_filename)

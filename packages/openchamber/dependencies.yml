@@ -203,7 +203,7 @@ source_acquisition_findings:
   generated_sources_verified: false
 native_review_receipt:
   schema: openchamber-native-review/v1
-  sha256: 9ee5ce7fb3bb9ebfbe27975ed6b3f850de4a8f13b0dfe3d4c6ec8674d1ac2a6e
+  sha256: 5829d6a63fca4ce27d7537c382d9ca99ccf4f1cc0b59d4d2dd067c701315ec41
   component_identities_classified: 14
   target_excluded_sources: 3
   platform_companions: 5
@@ -211,8 +211,8 @@ native_review_receipt:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 10
-  source_mappings_unresolved: 4
+  source_mappings_verified: 11
+  source_mappings_unresolved: 3
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
@@ -268,6 +268,7 @@ source_closure_files:
   rollup_proof: openchamber-1.16.3-rollup-proof.json
   tailwind_oxide_proof: openchamber-1.16.3-tailwind-oxide-proof.json
   source_map_wasm_proof: openchamber-1.16.3-source-map-wasm-proof.json
+  shiki_wasm_proof: openchamber-1.16.3-shiki-wasm-proof.json
   selected_lock_audit: openchamber-1.16.3-selected-lock-audit.json
   source_audit: openchamber-1.16.3-source-audit.json
 runtime_provider:

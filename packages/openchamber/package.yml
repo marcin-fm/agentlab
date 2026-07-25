@@ -38,9 +38,9 @@ source_policy:
   source_bundles_materialized: true
   source_bundle_delivery_verified: false
   native_review: openchamber-1.16.3-native-review.yml
-  native_review_sha256: 9ee5ce7fb3bb9ebfbe27975ed6b3f850de4a8f13b0dfe3d4c6ec8674d1ac2a6e
+  native_review_sha256: 5829d6a63fca4ce27d7537c382d9ca99ccf4f1cc0b59d4d2dd067c701315ec41
   native_components_classified: 14
-  native_source_mappings_unresolved: 4
+  native_source_mappings_unresolved: 3
   native_reproducible_builds_completed: 5
 upstream:
   provider: github

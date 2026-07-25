@@ -1,0 +1,45 @@
+{
+  "schema": "openchamber-shiki-wasm-proof/v1",
+  "release": "1.16.3",
+  "package": "shiki@3.23.0",
+  "published_package": {
+    "archive_sha256": "2e0b64ac36831777828f1a2d6c2dcebcf43f08940697d0dee2b6154c0ef8656e",
+    "wasm_path": "dist/onig.wasm",
+    "wasm_size": 466610,
+    "wasm_sha256": "fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9"
+  },
+  "shiki_source": {
+    "tag": "v3.23.0",
+    "commit": "2b33c0cdcedf3e00f65cac7228c62f7f1bcbf86a",
+    "archive_sha256": "f3e33e4f867d5e1983466d2ec7bdb1933bb8f2ced522691b2775b78cbac67ae2",
+    "tracked_entries": 585,
+    "tracked_tree_sha256": "a44729ea6f5ca179f96c3a9e57cd848521eed18e7d6fd65451e118e66ddc20cb",
+    "build_config_sha256": "c9e13cc437e80fb53c4c932e53d6e90ee31bfbb7ed1804fe6987717b72483112",
+    "inlined_dependency": "vscode-oniguruma@1.7.0"
+  },
+  "subordinate_source": {
+    "package": "vscode-oniguruma@1.7.0",
+    "tag": "v1.7.0",
+    "commit": "716aeaa229e4ae2e3b0057377b55743e9a3e995b",
+    "archive_sha256": "0e472a9d670d3301024435c04c09870bce2779c22a099185c2988d99b1cea190",
+    "tracked_entries": 31,
+    "tracked_tree_sha256": "9dff99d1d3f99423824bfd433f1ce5e9078bf0b802b25f1ddbf77fc02214fd4e",
+    "tracked_wasm_path": "out/onig.wasm",
+    "tracked_wasm_sha256": "fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9",
+    "oniguruma_submodule_commit": "08d36110c5670c815ad6d6f969e578049d209080",
+    "package_lock_sha256": "1e017c5af99e733bcc9d9355307628bb67a885a2b4189740a3dc5f72bb7a514c",
+    "emscripten_version": "3.1.21",
+    "container_sha256": "2a53193c1be13bbb38b9d964c92b7b01e9d93be32ccb45b8e651ff0343bccc5a",
+    "build_script_sha256": "e96673fe60d6319761854d4a6d64c6e5cc875efe29d4e13a3fe26009bdde3f55",
+    "license": "MIT",
+    "license_sha256": "ddde8aba8fe72b4830e27901fc78733eb6db7b6c653161075de213a6adeda3fd",
+    "notices_sha256": "615d94d89eacc046241518c247f6650a5df80d1adf4b284a756f500867620b35"
+  },
+  "validation": {
+    "shiki_copy_contract_verified": true,
+    "published_and_subordinate_wasm_identical": true,
+    "exact_source_mapping_verified": true,
+    "reproducible_build_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}

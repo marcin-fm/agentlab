@@ -169,3 +169,9 @@ The exact release tag contains the same bytes, and its update commit identifies
 This closes source correspondence only: the historical nightly Rust version,
 Cargo dependency resolution, and four WASM post-processing tool versions were
 not pinned, so generated-byte reproducibility and final inclusion remain false.
+
+`shiki 3.23.0` copies `vscode-oniguruma 1.7.0`'s tracked `out/onig.wasm`
+byte-for-byte. The exact subordinate source tag pins Oniguruma commit
+`08d36110c5670c815ad6d6f969e578049d209080`, npm dependencies, and Emscripten
+`3.1.21`. This verifies source correspondence; a fresh byte-identical WASM
+generation and final OpenChamber inclusion remain separate gates.
