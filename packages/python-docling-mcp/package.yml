@@ -1,49 +1,53 @@
+---
 name: python-docling-mcp
-status: enabled
-blockers: []
+status: blocked
+blockers:
+  - Upstream 2.1.0 does not provide a package-level bounded stdio generation/manipulation surface without the removed downstream product and security profiles.
+  - The released launcher defaults to conversion plus streamable HTTP and retains HTTP, SSE, conversion, RAG, and optional local-model surfaces.
+  - The complete upstream runtime dependency, transport-security, and selected-provider graph is not approved for Fedora 43, Fedora 44, and Rawhide.
 dependency_status:
   completed_reusable_packages:
     - python-docling-core 2.87.1
-    - python-docling-slim 2.113.0 service-client API
+    - python-docling-slim 2.115.0 service-client API
     - python-doclang 0.7.3
     - python-latex2mathml 3.81.0
-  missing_reusable_packages: []
-  fedora_43_44:
-    python-mcp: available
-    docling_core: local source-built provider validated
-    service_client_stack: local source-built providers validated
-  rpm_fusion_43_44: no duplicate package
+  upstream_runtime:
+    docling_slim_service_client: "~= 2.92"
+    docling_core: ">= 2.51.0"
+    httpx: ">= 0.28.1"
+    mcp_cli: ">= 1.9.4"
+    pydantic: "~= 2.10"
+    pydantic_settings: "~= 2.4"
+    python_dotenv: ">= 1.1.0"
+  selected_surface: unresolved
 license_audit:
   project: MIT
   project_license_file: LICENSE
-  model_artifacts: excluded locally; any remote-service models are outside this RPM closure
-security_boundary:
-  transport: stdio only
-  base_tool_groups: generation and manipulation only
-  optional_tool_groups: remote conversion only through the explicit subpackage launcher
-  remote_conversion: administrator-configured service and upload root; URLs, symlinks, directories, out-of-root paths, and inputs or artifacts above 64 MiB are rejected
-  excluded: local conversion, directory conversion, RAG, HTTP, SSE, WebSocket, and experimental task handlers
-  mcp_1_26_advisories: reviewed as unreachable through the enforced package entry point
+  bundled_or_model_artifacts: not reviewed for the complete upstream surface
+upstream_surface:
+  selectable_configuration: docling-mcp-server --transport stdio generation manipulation
+  default_transport: streamable-http
+  default_tool_groups:
+    - conversion
+    - generation
+    - manipulation
+  broader_surfaces:
+    - SSE and streamable HTTP transports
+    - remote conversion with optional local fallback
+    - directory conversion and URL sources
+    - RAG and local-model extras
 build_validation:
-  fedora_43: release 0.2 clean Mock build passed with the base and remote-conversion MCP smokes
-  fedora_44: release 0.2 clean Mock build passed with the base and remote-conversion MCP smokes
-  remote_conversion_wave: health, bounded upload, polling, inline result, cache, API-key confinement, and fail-closed negative paths passed
-  upstream_tests: unavailable; the PyPI sdist excludes the test tree
-  stdio_mcp_smoke: base defaults remained generation/manipulation; optional launcher added only single-document remote conversion
-  rpmlint: zero errors and three non-fatal documentation/manpage warnings per chroot
-artifacts:
-  spec_sha256: 824bdff808976cb9a30b41151101ee4ae9ad942b2bda64d4bc293663540c0753
-  stdio_patch_sha256: 9df6ba1e63fcf11a7688101019985d339ead205e9dd19ff3b01b3f82ff53e059
-  remote_conversion_patch_sha256: 3b42e39ea5ce0e316fb0935d54f6fb72739dfd6a78f499696dd4d6d5dd528c51
-  remote_smoke_sha256: e8d22004276672dca79b2a182e21268884ab1bb72bf44c8850b3c3ecbad3fd15
-  fedora_43:
-    srpm_sha256: c912a87a7b109a5dc5ff1fd861add2aa05fd4ff3989fb738eae80eeed898ea43
-    base_rpm_sha256: 117fa59d27c851e61d2270ac7158d0c101178c3051e327a43b64530039dcbf9f
-    remote_conversion_rpm_sha256: 8d7690bf3e6c5e186e63b6ce5e55d28c6897b3c62bcb72aa7a58bb4914fd5a2f
-  fedora_44:
-    srpm_sha256: 36d42a4cd6f277f61616b1362994f7ea412e1f148f624d2913e26f6d43b5af79
-    base_rpm_sha256: ffe3373cbb6d57b84ee5c482edd854c6cb99140b77d45ca0189d59619a8806e1
-    remote_conversion_rpm_sha256: 3287dc21ee89f784fcc2af4bc0f94d42f7236531275af5eb8c4723926e7d0cc1
+  release: 2.1.0-0.4
+  status: blocked-source-review-only
+  sdist_source: verified
+  substantive_patches_removed: true
+  source_rpm_sha256: 772fdcab1aab3e427c4d9b5e6dce76a95820c24d8b8cfec82895778d549e6971
+  source_rpm_members:
+    - docling_mcp-2.1.0.tar.gz
+    - python-docling-mcp.spec
+  blocked_prep: failed as intended before unpacking
+  rpmlint: zero errors and three expected missing-section warnings for the fail-closed draft
+  binary_build: prohibited
 upstream:
   provider: pypi
   project: docling-mcp
@@ -51,7 +55,9 @@ upstream:
   source_url: https://files.pythonhosted.org/packages/e3/bc/59f74a19ac66ddebfe2bee76f8f5c6b208f9dd1fe96fff5d020720985f5d/docling_mcp-2.1.0.tar.gz
   source_sha256: 46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7
   canonical_repository: https://github.com/docling-project/docling-mcp
+  source_tag: v2.1.0
+  source_commit: 59f793b1288e8e359778ab9a1230e86a7ffc10ec
 copr:
-  enabled: true
+  enabled: false
   subdir: packages/python-docling-mcp
   spec: python-docling-mcp.spec

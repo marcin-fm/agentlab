@@ -1,59 +1,27 @@
 schema: python-docling-mcp-reproducibility/v1
 package: python-docling-mcp
-version: 2.1.0-0.2
+version: 2.1.0-0.4
 source:
   url: https://files.pythonhosted.org/packages/e3/bc/59f74a19ac66ddebfe2bee76f8f5c6b208f9dd1fe96fff5d020720985f5d/docling_mcp-2.1.0.tar.gz
   sha256: 46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7
-patches:
-  stdio_generation:
-    path: docling-mcp-stdio-generation.patch
-    sha256: 9df6ba1e63fcf11a7688101019985d339ead205e9dd19ff3b01b3f82ff53e059
-    purpose: Enforce stdio generation/manipulation only and remove conversion/network surfaces.
-  remote_conversion:
-    path: docling-mcp-remote-conversion.patch
-    sha256: 3b42e39ea5ce0e316fb0935d54f6fb72739dfd6a78f499696dd4d6d5dd528c51
-    purpose: Add an explicit bounded remote-conversion group and stdio launcher without local conversion.
-test_source:
-  path: docling-mcp-remote-smoke.py
-  sha256: e8d22004276672dca79b2a182e21268884ab1bb72bf44c8850b3c3ecbad3fd15
-prerequisites:
-  python-docling-core: 2.87.1-1
-  python-docling-slim: 2.113.0-1
-  python-doclang: 0.7.3-1
-  python-latex2mathml: 3.81.0-1
+substantive_patches:
+  stdio_generation: removed-prohibited-downstream-product-profile
+  remote_conversion: removed-prohibited-downstream-product-development
 validation:
-  static:
-    source_sha256: verified
-    patch_fuzz_zero: passed
-    compileall: passed
-    spec_parse: passed
-  fedora_43_x86_64:
-    mock_build: passed
-    base_stdio_smoke: default initialize, list_tools, and create-document call passed with conversion absent
-    remote_stdio_smoke: fake Serve health/upload/poll/result/cache and fail-closed negative paths passed
-    rpmlint: zero errors; two missing-manpage warnings and one optional-package documentation warning
-    srpm_sha256: c912a87a7b109a5dc5ff1fd861add2aa05fd4ff3989fb738eae80eeed898ea43
-    base_rpm_sha256: 117fa59d27c851e61d2270ac7158d0c101178c3051e327a43b64530039dcbf9f
-    remote_conversion_rpm_sha256: 8d7690bf3e6c5e186e63b6ce5e55d28c6897b3c62bcb72aa7a58bb4914fd5a2f
-  fedora_44_x86_64:
-    mock_build: passed
-    base_stdio_smoke: default initialize, list_tools, and create-document call passed with conversion absent
-    remote_stdio_smoke: fake Serve health/upload/poll/result/cache and fail-closed negative paths passed
-    rpmlint: zero errors; two missing-manpage warnings and one optional-package documentation warning
-    srpm_sha256: 36d42a4cd6f277f61616b1362994f7ea412e1f148f624d2913e26f6d43b5af79
-    base_rpm_sha256: ffe3373cbb6d57b84ee5c482edd854c6cb99140b77d45ca0189d59619a8806e1
-    remote_conversion_rpm_sha256: 3287dc21ee89f784fcc2af4bc0f94d42f7236531275af5eb8c4723926e7d0cc1
-artifacts:
-  spec_sha256: 824bdff808976cb9a30b41151101ee4ae9ad942b2bda64d4bc293663540c0753
-security:
-  mcp_provider: 1.26.0
-  review: mcp-1.26-stdio-security-review.md
-  boundary: stdio only; base remains generation/manipulation, while the optional launcher adds bounded remote conversion without HTTP MCP transports, local conversion, RAG, or experimental tasks
+  status: blocked-source-review-only
+  source_sha256: verified
+  spec_sha256: fc0cc2ea921d43cba51e3800381bf21425c593ad29d34904f8c7acbd9a7301a0
+  source_rpm_sha256: 772fdcab1aab3e427c4d9b5e6dce76a95820c24d8b8cfec82895778d549e6971
+  source_rpm_members:
+    - docling_mcp-2.1.0.tar.gz
+    - python-docling-mcp.spec
+  blocked_prep: failed as intended before unpacking
+  rpmlint: zero errors and three expected missing-section warnings
+  binary_build: prohibited
 limitations:
   - The PyPI sdist excludes the upstream test tree.
-  - The optional package requires an administrator-operated Docling Serve whose parser, model, authentication, and egress policy are outside this RPM closure.
-  - The package deliberately does not provide local conversion, directory conversion, URL-source submission, or local model processing.
-  - Any future transport or additional tool-group expansion requires renewed dependency and security review.
+  - The complete released dependency and transport surface is not approved for publication.
+  - Historical downstream-profile build evidence is not current publication evidence.
 host_policy:
   produced_rpms_installed: false
   copr_mutated: false

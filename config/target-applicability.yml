@@ -13,10 +13,6 @@ roots:
     kind: core
     releases: ["43", "44", rawhide]
     reason: Selected reusable browser-control runtime for the maintained tool surface.
-  python-docling-mcp:
-    kind: application
-    releases: ["43", "44", rawhide]
-    reason: Selected Docling MCP server.
   python-docling-core:
     kind: core
     releases: ["43", "44", rawhide]
@@ -34,6 +30,9 @@ selected_consumers:
   python-headroom-ai:
     releases: ["43", "44", rawhide]
     reason: Released dependency closure selected for the blocked non-ML Headroom surface.
+  python-docling-mcp:
+    releases: ["43", "44", rawhide]
+    reason: Selected Docling MCP application retained as a blocked consumer pending an upstream-supported package surface.
   python-serena-agent:
     releases: ["43", "44", rawhide]
     reason: Maintainer-designated full-family Serena package retained as a blocked selected consumer pending an upstream-supported surface.
