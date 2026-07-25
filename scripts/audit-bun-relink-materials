@@ -9,6 +9,7 @@ require "open3"
 require "optparse"
 require "pathname"
 require "shellwords"
+require_relative "lib/agentlab"
 
 File.umask(0o022)
 
@@ -20,10 +21,12 @@ audit_date = nil
 kit_output_dir = nil
 force = false
 validate_link = false
+build_receipt_path = nil
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/audit-bun-relink-materials --root PATH --date YYYY-MM-DD [--output PATH | --check --receipt PATH] [--kit-output-dir PATH [--validate-link] [--force]]"
   parser.on("--root PATH", "Successful Bun proof root") { |path| root = path }
+  parser.on("--build-receipt PATH", "Current first-build or self-rebuild proof receipt") { |path| build_receipt_path = path }
   parser.on("--output PATH", "Deterministic JSON audit receipt") { |path| output = path }
   parser.on("--date YYYY-MM-DD", "Evidence date") { |date| audit_date = date }
   parser.on("--check", "Compare the generated receipt with --receipt") { check = true }
@@ -49,6 +52,7 @@ rescue ArgumentError
 end
 
 root = File.realpath(root)
+build_receipt_path = File.expand_path(build_receipt_path) if build_receipt_path
 build_root = File.join(root, "build", "release-local")
 build_ninja_path = File.join(build_root, "build.ninja")
 raise "missing proof build root #{build_root}" unless Dir.exist?(build_root)
@@ -93,20 +97,117 @@ def write_json(path, data)
   File.binwrite(path, JSON.pretty_generate(data) + "\n")
 end
 
-def run!(*command, chdir: nil)
+def run!(*command, chdir: nil, environment: {})
   options = {}
   options[:chdir] = chdir if chdir
-  success = system(*command, **options)
+  success = system(environment, *command, **options)
   raise "command failed: #{command.shelljoin}" unless success
 end
 
-def capture!(*command, chdir: nil)
+def capture!(*command, chdir: nil, environment: {})
   options = {}
   options[:chdir] = chdir if chdir
-  stdout, stderr, status = Open3.capture3(*command, **options)
+  stdout, stderr, status = Open3.capture3(environment, *command, **options)
   raise "command failed: #{command.shelljoin}: #{stderr.strip}" unless status.success?
 
   stdout
+end
+
+def safe_relative_path(path)
+  pathname = Pathname(path)
+  clean = pathname.cleanpath.to_s
+  return nil if pathname.absolute? || clean == ".." || clean.start_with?("../")
+
+  clean
+end
+
+def verify_current_build_receipt!(receipt_path, root, version)
+  raise "--build-receipt is required for the system lol-html graph" unless receipt_path
+  raise "missing build receipt #{receipt_path}" unless File.file?(receipt_path)
+  receipt_bytes = File.binread(receipt_path)
+  receipt = JSON.parse(receipt_bytes)
+  proof_kind = case receipt.fetch("schema")
+               when "bun-first-source-build-proof/v2"
+                 raise "build receipt does not prove the current first build" unless receipt.dig("validation", "source_build_verified") == true
+                 "first_build"
+               when "bun-self-rebuild-proof/v2"
+                 unless receipt.dig("validation", "self_rebuild_performed") == true && receipt.dig("validation", "source_built_driver_verified") == true
+                   raise "build receipt does not prove the current self rebuild"
+                 end
+                 "self_rebuild"
+               else
+                 raise "unsupported current build receipt schema"
+               end
+  unless receipt["package"] == "bun" && receipt["release"] == version && receipt["profile"] == "release-local"
+    raise "build receipt is not for Bun #{version} release-local"
+  end
+
+  package = Agentlab.package_named("bun")
+  dependency_stage = package.data.fetch("build_plan").fetch("stages").fetch("dependency_closure")
+  closure_path = File.join(package.directory, dependency_stage.fetch("proof_receipt"))
+  closure_bytes = File.binread(closure_path)
+  closure_sha256 = Digest::SHA256.hexdigest(closure_bytes)
+  raise "current Bun closure checksum mismatch" unless closure_sha256 == dependency_stage.fetch("proof_receipt_sha256")
+  closure = JSON.parse(closure_bytes)
+  unless closure["schema"] == "bun-release-local-source-closure/v3" && closure["package"] == "bun" &&
+         closure["release"] == version && closure["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+    raise "unsupported current Bun source closure"
+  end
+  unless receipt.dig("source_closure", "path") == File.basename(closure_path) &&
+         receipt.dig("source_closure", "sha256") == closure_sha256 &&
+         receipt.dig("source_closure", "source_archive_sha256") == closure.dig("source_tree", "source_sha256") &&
+         receipt.dig("source_closure", "source_commit") == package.upstream.fetch("source_commit")
+    raise "build receipt does not match the current Bun source closure"
+  end
+
+  provider = receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider")
+  expected_provider = package.data.fetch("build_plan").fetch("source_inputs").fetch("lolhtml")
+  unless receipt.dig("inputs", "offline_inputs", "native_archives") == 18 &&
+         receipt.dig("inputs", "offline_inputs", "node_header_archives") == 1 &&
+         receipt.dig("inputs", "offline_inputs", "cargo_source_archives") == 0 &&
+         receipt.dig("configure", "native_fetch_edges") == 18 &&
+         receipt.dig("configure", "system_lolhtml_provider_verified") == true &&
+         provider&.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement") ==
+           expected_provider.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
+    raise "build receipt does not prove the current system lol-html graph"
+  end
+  staged = provider.fetch("staged_payload")
+  provider_root = staged.fetch("root")
+  raise "staged lol-html provider root must be below /srv/tmp" unless provider_root.start_with?("/srv/tmp/")
+  shared = staged.fetch("shared_library")
+  shared_relative = safe_relative_path(shared.fetch("path"))
+  raise "unsafe staged lol-html shared-library path" unless shared_relative
+  shared_path = File.join(provider_root, shared_relative)
+  unless File.file?(shared_path) && File.size(shared_path) == shared.fetch("size_bytes") && sha256(shared_path) == shared.fetch("sha256")
+    raise "staged lol-html shared library does not match the build receipt"
+  end
+
+  build = receipt.fetch("build")
+  bun_record = build.fetch("bun")
+  _bun_path, bun_real = safe_path!(bun_record.fetch("path"), root, root)
+  unless File.file?(bun_real) && File.size(bun_real) == bun_record.fetch("size_bytes") && sha256(bun_real) == bun_record.fetch("sha256") &&
+         build.fetch("version") == version && build.fetch("system_lolhtml_provider_verified") == true &&
+         build.fetch("shared_runtime_libraries").include?(expected_provider.fetch("soname"))
+    raise "current Bun build artifact does not match its receipt"
+  end
+
+  seed = receipt.fetch("bootstrap_seed")
+  driver_path = proof_kind == "first_build" ? File.join(root, "seed", "bun") : receipt.fetch("first_build").fetch("path")
+  {
+    "proof_kind" => proof_kind,
+    "receipt" => File.basename(receipt_path),
+    "receipt_sha256" => Digest::SHA256.hexdigest(receipt_bytes),
+    "source_closure_sha256" => closure_sha256,
+    "driver_path" => driver_path,
+    "seed" => {
+      "path" => proof_kind == "first_build" ? File.join(root, "seed", "bun") : seed.fetch("path"),
+      "sha256" => seed.fetch("binary_sha256"),
+      "size_bytes" => seed.fetch("size_bytes")
+    },
+    "provider" => provider
+  }
+rescue JSON::ParserError, KeyError, TypeError => e
+  raise "invalid current build receipt: #{e.message}"
 end
 
 def copy_payload_file(source, destination, kit_root, kind: "file", mode: 0o644)
@@ -251,12 +352,12 @@ def rewritten_ldflags(ldflags, root)
   rewritten
 end
 
-def direct_link_argv(command_line, ldflags, root)
+def direct_link_argv(command_line, ldflags, root, expected_driver)
   command = command_line.sub(/\A\s*command\s*=\s*/, "").strip
   tokens = Shellwords.split(command)
   console = tokens.index("--console")
   raise "link rule is not the expected Bun stream wrapper" unless console && console >= 3
-  raise "link rule does not invoke the proof seed" unless tokens.fetch(0) == File.join(root, "seed", "bun")
+  raise "link rule does not invoke the receipt-bound build driver" unless tokens.fetch(0) == expected_driver
   raise "link rule does not invoke stream.ts" unless tokens.fetch(console - 2) == File.join(root, "source", "scripts", "build", "stream.ts")
   raise "link rule is not the expected stream link mode" unless tokens.fetch(console - 1) == "link"
 
@@ -290,36 +391,39 @@ def create_kit_archive(kit_root, archive_path)
   raise "failed to create deterministic relink-kit archive" unless statuses.all?(&:success?)
 end
 
-def validate_relink_kit!(kit_root, root, version, retained_profile)
+def validate_relink_kit!(kit_root, version, retained_profile, seed, provider)
   output = File.join(kit_root, "build", "release-local", "bun-profile")
   map = File.join(kit_root, "build", "release-local", "bun-profile.linker-map")
+  environment = {}
+  shared_libraries = %w[libgcc_s.so.1 libstdc++.so.6]
+  if provider
+    provider_libdir = File.join(provider.dig("staged_payload", "root"), "usr", "lib64")
+    environment = { "LIBRARY_PATH" => provider_libdir, "LD_LIBRARY_PATH" => provider_libdir }
+    shared_libraries << provider.fetch("soname")
+  end
   begin
-    run!("unshare", "--net", "--", File.join(kit_root, "relink", "relink.sh"), chdir: kit_root)
+    run!("unshare", "--net", "--", File.join(kit_root, "relink", "relink.sh"), chdir: kit_root, environment: environment)
     raise "wrapper-free relink did not produce #{output}" unless File.file?(output)
     raise "wrapper-free relink did not produce #{map}" unless File.file?(map)
 
-    revision = capture!("unshare", "--net", "--", output, "--revision", chdir: kit_root).strip
-    built_version = capture!("unshare", "--net", "--", output, "--version", chdir: kit_root).strip
-    smoke = capture!("unshare", "--net", "--", output, "-e", "console.log('agentlab-bun-relink-kit')", chdir: kit_root).strip
+    revision = capture!("unshare", "--net", "--", output, "--revision", chdir: kit_root, environment: environment).strip
+    built_version = capture!("unshare", "--net", "--", output, "--version", chdir: kit_root, environment: environment).strip
+    smoke = capture!("unshare", "--net", "--", output, "-e", "console.log('agentlab-bun-relink-kit')", chdir: kit_root, environment: environment).strip
     raise "unexpected relinked Bun version #{built_version.inspect}" unless built_version == version
     raise "relinked Bun smoke failed" unless smoke == "agentlab-bun-relink-kit"
 
-    ldd = capture!("ldd", output, chdir: kit_root)
-    shared_libraries = %w[libgcc_s.so.1 libstdc++.so.6]
+    ldd = capture!("ldd", output, chdir: kit_root, environment: environment)
     missing_libraries = shared_libraries.reject { |library| ldd.include?(library) }
     raise "relinked Bun is missing Fedora shared runtimes: #{missing_libraries.join(', ')}" unless missing_libraries.empty?
 
-    seed_path = File.join(root, "seed", "bun")
-    seed_sha256 = sha256(seed_path)
-    seed_size = File.size(seed_path)
-    same_seed_payload = File.size(output) == seed_size && sha256(output) == seed_sha256
+    same_seed_payload = File.size(output) == seed.fetch("size_bytes") && sha256(output) == seed.fetch("sha256")
     raise "wrapper-free relink reproduced the bootstrap seed payload" if same_seed_payload
-    [seed_path, "bun-seed", seed_sha256].each do |pattern|
+    [seed.fetch("path"), "bun-seed", seed.fetch("sha256")].each do |pattern|
       _stdout, _stderr, status = Open3.capture3("rg", "-a", "-l", "--fixed-strings", pattern, output)
       raise "cannot scan relinked Bun for seed identity" unless [0, 1].include?(status.exitstatus)
       raise "bootstrap seed identity leaked into relinked Bun" if status.success?
     end
-    raise "relinked Bun has a runtime dependency on the seed" if ldd.include?(seed_path) || ldd.include?("bun-seed")
+    raise "relinked Bun has a runtime dependency on the seed" if ldd.include?(seed.fetch("path")) || ldd.include?("bun-seed")
 
     retained_map = File.join(File.dirname(retained_profile), "bun-profile.linker-map")
     output_sha256 = sha256(output)
@@ -349,6 +453,7 @@ def validate_relink_kit!(kit_root, root, version, retained_profile)
       "version" => built_version,
       "smoke_verified" => true,
       "fedora_shared_cxx_runtime_verified" => true,
+      "system_lolhtml_provider_verified" => !provider.nil?,
       "shared_runtime_libraries" => shared_libraries,
       "seed_payload_absent_verified" => true,
       "seed_runtime_dependency_absent_verified" => true
@@ -358,7 +463,7 @@ def validate_relink_kit!(kit_root, root, version, retained_profile)
   end
 end
 
-def validate_relink_archive!(archive_path, output_dir, kit_name, root, version, retained_profile)
+def validate_relink_archive!(archive_path, output_dir, kit_name, version, retained_profile, seed, provider)
   validation_root = File.join(output_dir, ".#{kit_name}-validation-#{Process.pid}")
   raise "validation directory already exists: #{validation_root}" if File.exist?(validation_root) || File.symlink?(validation_root)
 
@@ -373,7 +478,7 @@ def validate_relink_archive!(archive_path, output_dir, kit_name, root, version, 
     raise "relink-kit archive has unsafe members: #{unsafe.join(', ')}" unless unsafe.empty?
 
     run!("tar", "-xf", archive_path, "-C", validation_root)
-    validate_relink_kit!(File.join(validation_root, kit_name), root, version, retained_profile)
+    validate_relink_kit!(File.join(validation_root, kit_name), version, retained_profile, seed, provider)
   ensure
     FileUtils.rm_rf(validation_root)
   end
@@ -569,12 +674,24 @@ canonical_edge = normalized_text(edge_text, root)
 canonical_rule = normalized_text(rule_text, root)
 canonical_command = normalized_text(command_line.strip, root)
 canonical_ldflags = normalized_text(ldflags_line.strip, root)
+parsed_ldflags = Shellwords.split(ldflags_line.sub(/\A\s*ldflags\s*=\s*/, "").strip)
+system_lolhtml_link = parsed_ldflags.include?("-llolhtml")
+if system_lolhtml_link
+  raise "current Bun graph still links a private lol-html archive" if archives.any? { |record| record.fetch("path").include?("/lolhtml/") }
+  build_proof = verify_current_build_receipt!(build_receipt_path, root, version)
+else
+  raise "--build-receipt is only valid for the current system lol-html graph" if build_receipt_path
+  build_proof = nil
+end
 rspfile_declared = rule_lines.any? { |line| line.start_with?("  rspfile =") }
 bootstrap_seed_wrapper_invoked = canonical_command.match?(%r{(?:^|/)seed/bun(?:\s|$)})
+if build_proof && bootstrap_seed_wrapper_invoked != (build_proof.fetch("proof_kind") == "first_build")
+  raise "final link wrapper does not match the current build receipt"
+end
 link_manifest_sha256 = Digest::SHA256.hexdigest([canonical_rule, canonical_edge, canonical_ldflags].join("\0"))
 
 receipt_data = {
-  "schema" => "bun-relink-materials-audit/v2",
+  "schema" => system_lolhtml_link ? "bun-relink-materials-audit/v3" : "bun-relink-materials-audit/v2",
   "package" => "bun",
   "version" => version,
   "date" => audit_date,
@@ -628,6 +745,10 @@ receipt_data = {
   "final_license_audit_verified" => false,
   "final_rpm_verified" => false
 }
+if build_proof
+  receipt_data["source_build"] = build_proof.slice("proof_kind", "receipt", "receipt_sha256", "source_closure_sha256")
+  receipt_data["system_lolhtml_provider"] = build_proof.fetch("provider")
+end
 
 content = JSON.pretty_generate(receipt_data) + "\n"
 if kit_output_dir
@@ -695,8 +816,10 @@ if kit_output_dir
   rsp_content = relink_inputs.join("\n") + "\n"
   rsp_path = File.join(kit_root, "relink", "bun-profile.rsp")
   rsp_record = write_payload_file(rsp_path, rsp_content, kit_root, kind: "response-file")
-  parsed_ldflags = Shellwords.split(ldflags_line.sub(/\A\s*ldflags\s*=\s*/, "").strip)
-  link_argv = direct_link_argv(command_line, parsed_ldflags, root)
+  expected_driver = build_proof ? build_proof.fetch("driver_path") : File.join(root, "seed", "bun")
+  link_argv = direct_link_argv(command_line, parsed_ldflags, root, expected_driver)
+  system_library_requirements = %w[libatomic.a libdl.so libgcc_s.so.1 libicudata.so libicui18n.so libicuuc.so libc.so libpthread.so libstdc++.so.6]
+  system_library_requirements << build_proof.fetch("provider").fetch("soname") if build_proof
   link_command = {
     "schema" => "bun-relink-command/v1",
     "package" => "bun",
@@ -714,7 +837,7 @@ if kit_output_dir
     "source_link_manifest_sha256" => link_manifest_sha256,
     "bootstrap_wrapper_removed" => true,
     "proof_root_paths_removed_from_argv" => link_argv.none? { |argument| argument.include?(root) },
-    "system_library_requirements" => %w[libatomic.a libdl.so libgcc_s.so.1 libicudata.so libicui18n.so libicuuc.so libc.so libpthread.so libstdc++.so.6]
+    "system_library_requirements" => system_library_requirements
   }
   raise "wrapper-free link argv retains the proof root" unless link_command.fetch("proof_root_paths_removed_from_argv")
   command_path = File.join(kit_root, "relink", "link-command.json")
@@ -767,7 +890,7 @@ if kit_output_dir
 
     Run ./relink/relink.sh from an extracted kit on the matching Fedora toolchain. The command
     uses /usr/lib64/llvm21/bin/clang++ and Fedora's system libc, libpthread, libdl, libatomic,
-    ICU, libstdc++, and libgcc_s libraries. The generated response file preserves the original
+    ICU, libstdc++, libgcc_s#{build_proof ? ", and lol-html" : ""} libraries. The generated response file preserves the original
     Ninja input order and the link command contains no proof-root or bootstrap-wrapper path.
   TEXT
   readme_path = File.join(kit_root, "README.relink.txt")
@@ -776,18 +899,24 @@ if kit_output_dir
   create_kit_archive(kit_root, archive_path)
   archive_sha256 = sha256(archive_path)
   validation = if validate_link
-                 validate_relink_archive!(archive_path, output_dir, kit_name, root, version, File.join(build_root, "bun-profile"))
+                 seed = build_proof ? build_proof.fetch("seed") : {
+                   "path" => File.join(root, "seed", "bun"),
+                   "sha256" => sha256(File.join(root, "seed", "bun")),
+                   "size_bytes" => File.size(File.join(root, "seed", "bun"))
+                 }
+                 validate_relink_archive!(archive_path, output_dir, kit_name, version, File.join(build_root, "bun-profile"), seed, build_proof&.fetch("provider"))
                end
   completeness = validation &&
                  validation.fetch("smoke_verified") &&
                  validation.fetch("fedora_shared_cxx_runtime_verified") &&
+                 (!build_proof || validation.fetch("system_lolhtml_provider_verified")) &&
                  validation.fetch("seed_payload_absent_verified") &&
                  validation.fetch("seed_runtime_dependency_absent_verified") &&
                  validation.dig("output", "retained_profile_sha256_equal") &&
                  validation.dig("linker_map", "retained_linker_map_sha256_equal")
 
   kit_receipt = {
-    "schema" => "bun-relink-kit/v1",
+    "schema" => system_lolhtml_link ? "bun-relink-kit/v2" : "bun-relink-kit/v1",
     "package" => "bun",
     "version" => version,
     "date" => audit_date,
@@ -822,6 +951,7 @@ if kit_output_dir
       "retained_linker_map_sha256_equal" => validation&.dig("linker_map", "retained_linker_map_sha256_equal") || false,
       "smoke_verified" => validation&.fetch("smoke_verified", false) || false,
       "fedora_shared_cxx_runtime_verified" => validation&.fetch("fedora_shared_cxx_runtime_verified", false) || false,
+      "system_lolhtml_provider_verified" => validation&.fetch("system_lolhtml_provider_verified", false) || false,
       "seed_payload_absent_verified" => validation&.fetch("seed_payload_absent_verified", false) || false,
       "seed_runtime_dependency_absent_verified" => validation&.fetch("seed_runtime_dependency_absent_verified", false) || false
     },

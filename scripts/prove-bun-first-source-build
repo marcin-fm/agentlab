@@ -13,6 +13,7 @@ require_relative "lib/bun_webkit_source"
 File.umask(0o022)
 
 package = Agentlab.package_named("bun")
+lolhtml_package = Agentlab.package_named("lol-html")
 version = package.upstream.fetch("current_version").to_s
 source_commit = package.upstream.fetch("source_commit").to_s
 raise Agentlab::Error, "invalid Bun source commit" unless source_commit.match?(/\A[0-9a-f]{40}\z/)
@@ -29,6 +30,7 @@ zig_root = "/srv/tmp/agentlab-bun-zig-proof/bun-zig"
 zig_receipt_path = "/srv/tmp/agentlab-bun-zig-proof/proof-receipt.json"
 webkit_archive = "/srv/tmp/WebKit-5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b.tar.gz"
 webkit_source_receipt_path = nil
+lolhtml_provider_root = "/srv/tmp/agentlab-bun-lolhtml-provider/stage"
 workdir = nil
 output = nil
 self_rebuild_from = nil
@@ -48,6 +50,7 @@ OptionParser.new do |parser|
   parser.on("--zig-receipt PATH", "Receipt for the supplied Zig root") { |path| zig_receipt_path = path }
   parser.on("--webkit-archive PATH", "Checked WebKit source archive") { |path| webkit_archive = path }
   parser.on("--webkit-source-receipt PATH", "Identity receipt for a minimized WebKit archive") { |path| webkit_source_receipt_path = path }
+  parser.on("--lolhtml-provider-root PATH", "Extracted lol-html runtime and devel RPM payload") { |path| lolhtml_provider_root = path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Canonical package proof receipt") { |path| output = path }
   parser.on("--self-rebuild-from PATH", "Verified first source-build proof directory supplying the build driver") { |path| self_rebuild_from = path }
@@ -74,13 +77,14 @@ zig_root = File.expand_path(zig_root)
 zig_receipt_path = File.expand_path(zig_receipt_path)
 webkit_archive = File.expand_path(webkit_archive)
 webkit_source_receipt_path = File.expand_path(webkit_source_receipt_path) if webkit_source_receipt_path
+lolhtml_provider_root = File.expand_path(lolhtml_provider_root)
 self_rebuild_from = File.expand_path(self_rebuild_from) if self_rebuild
 driver_receipt_path = File.expand_path(driver_receipt_path) if self_rebuild
 workdir = File.expand_path(workdir)
 output = File.expand_path(output)
 
 raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
-[source_archive, seed_archive, source_cache, npm_proof, zig_root, zig_receipt_path, webkit_archive, webkit_source_receipt_path, self_rebuild_from, driver_receipt_path].compact.each do |path|
+[source_archive, seed_archive, source_cache, npm_proof, zig_root, zig_receipt_path, webkit_archive, webkit_source_receipt_path, lolhtml_provider_root, self_rebuild_from, driver_receipt_path].compact.each do |path|
   if force && (path == workdir || path.start_with?("#{workdir}/"))
     raise Agentlab::Error, "proof input must be outside the replaced workdir: #{path}"
   end
@@ -296,6 +300,64 @@ def file_receipt(path, base)
     "path" => path.delete_prefix("#{base}/"),
     "size_bytes" => File.size(path),
     "sha256" => sha256(path)
+  }
+end
+
+def verify_lolhtml_provider!(provider_root, metadata)
+  raise Agentlab::Error, "lol-html provider root must be below /srv/tmp" unless provider_root.start_with?("/srv/tmp/")
+  raise Agentlab::Error, "lol-html provider root is missing: #{provider_root}" unless Dir.exist?(provider_root)
+  stat = File.lstat(provider_root)
+  raise Agentlab::Error, "lol-html provider root must not be a symlink" if stat.symlink?
+  raise Agentlab::Error, "lol-html provider root is owned by another user" unless stat.uid == Process.uid
+  raise Agentlab::Error, "lol-html provider root changed during validation" unless File.realpath(provider_root) == provider_root
+
+  include_dir = File.join(provider_root, "usr", "include")
+  lib_dir = File.join(provider_root, "usr", "lib64")
+  header = File.join(include_dir, metadata.fetch("header"))
+  pkgconfig = File.join(lib_dir, "pkgconfig", "lol-html.pc")
+  library = File.join(lib_dir, metadata.fetch("library"))
+  soname_link = File.join(lib_dir, metadata.fetch("soname"))
+  linker_link = File.join(lib_dir, "liblolhtml.so")
+
+  verify_file!(header, metadata.fetch("header_sha256"), "lol-html provider header")
+  [pkgconfig, library].each { |path| raise Agentlab::Error, "missing lol-html provider file: #{path}" unless File.file?(path) }
+  { soname_link => metadata.fetch("library"), linker_link => metadata.fetch("library") }.each do |path, target|
+    raise Agentlab::Error, "missing lol-html provider symlink: #{path}" unless File.symlink?(path)
+    raise Agentlab::Error, "lol-html provider symlink target changed: #{path}" unless File.readlink(path) == target
+  end
+
+  pc = File.read(pkgconfig)
+  unless pc.include?("Name: lol-html\n") && pc.include?("Version: #{metadata.fetch('c_api_version')}\n") &&
+         pc.include?("Libs: -L${libdir} -llolhtml\n") && pc.include?("Cflags: -I${includedir}\n")
+    raise Agentlab::Error, "lol-html pkg-config contract changed"
+  end
+  header_text = File.read(header)
+  unless header_text.include?("bool graceful_bail_out_on_memory_limit_exceeded;") &&
+         header_text.include?("lol_html_str_t lol_html_take_last_error();")
+    raise Agentlab::Error, "lol-html provider header ABI changed"
+  end
+  dynamic = capture!({}, ["readelf", "--dynamic", library], chdir: provider_root)
+  raise Agentlab::Error, "lol-html provider SONAME changed" unless dynamic.include?("Library soname: [#{metadata.fetch('soname')}]")
+  symbols = capture!({}, ["nm", "-D", "--defined-only", library], chdir: provider_root)
+  %w[lol_html_rewriter_build lol_html_take_last_error lol_html_rewriter_builder_new].each do |symbol|
+    raise Agentlab::Error, "lol-html provider omits #{symbol}" unless symbols.lines.any? { |line| line.split.last == symbol }
+  end
+
+  {
+    "root" => provider_root,
+    "package" => metadata.fetch("package"),
+    "version" => metadata.fetch("version"),
+    "c_api_version" => metadata.fetch("c_api_version"),
+    "pkgconfig" => metadata.fetch("pkgconfig"),
+    "soname" => metadata.fetch("soname"),
+    "header" => file_receipt(header, provider_root),
+    "pkgconfig_file" => file_receipt(pkgconfig, provider_root),
+    "shared_library" => file_receipt(library, provider_root),
+    "symlinks" => {
+      metadata.fetch("soname") => File.readlink(soname_link),
+      "liblolhtml.so" => File.readlink(linker_link)
+    },
+    "critical_symbols_verified" => true
   }
 end
 
@@ -576,6 +638,8 @@ seed_metadata = source_inputs.fetch("bootstrap_seed")
 zig_metadata = source_inputs.fetch("zig")
 webkit_metadata = source_inputs.fetch("webkit")
 build_graph_metadata = source_inputs.fetch("build_graph")
+lolhtml_provider_metadata = source_inputs.fetch("lolhtml").merge(lolhtml_package.data.fetch("c_api"))
+lolhtml_provider = verify_lolhtml_provider!(lolhtml_provider_root, lolhtml_provider_metadata)
 webkit_source_receipt = if webkit_source_receipt_path
                           Agentlab::BunWebKitSource.verify_receipt!(
                             receipt_path: webkit_source_receipt_path,
@@ -953,8 +1017,11 @@ environment = {
   "HOME" => home_dir,
   "HTTP_PROXY" => "",
   "HTTPS_PROXY" => "",
+  "LIBRARY_PATH" => File.join(lolhtml_provider_root, "usr", "lib64"),
+  "LD_LIBRARY_PATH" => File.join(lolhtml_provider_root, "usr", "lib64"),
   "NO_PROXY" => "*",
   "PATH" => "/usr/lib64/llvm21/bin:/usr/bin:/bin",
+  "PKG_CONFIG_PATH" => File.join(lolhtml_provider_root, "usr", "lib64", "pkgconfig"),
   "SOURCE_DATE_EPOCH" => "0",
   "TMPDIR" => tmp_dir,
   "XDG_CACHE_HOME" => File.join(home_dir, ".cache"),
@@ -1105,9 +1172,11 @@ configure_receipt = {
     "npm_install_roots" => npm_install_roots.length,
     "supplemental_npm_trees" => supplemental_npm_receipt.fetch("trees"),
     "cargo_source_archives" => 0,
-    "system_lolhtml_provider" => source_inputs.fetch("lolhtml").slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
+    "system_lolhtml_provider" => source_inputs.fetch("lolhtml").slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement").merge(
+      "staged_payload" => lolhtml_provider
+    )
   },
-  "environment" => environment.slice("BUN_BUILD_PREFETCH_DIR", "BUN_WEBKIT_PATH", "BUN_ZIG_PATH", "CMAKE_BUILD_PARALLEL_LEVEL", "GIT_SHA", "HOME"),
+  "environment" => environment.slice("BUN_BUILD_PREFETCH_DIR", "BUN_WEBKIT_PATH", "BUN_ZIG_PATH", "CMAKE_BUILD_PARALLEL_LEVEL", "GIT_SHA", "HOME", "LIBRARY_PATH", "LD_LIBRARY_PATH", "PKG_CONFIG_PATH"),
   "graph" => graph_receipt,
   "network_namespace" => true,
   "jobs" => jobs,
@@ -1170,10 +1239,13 @@ raise Agentlab::Error, "Node header identity was not materialized" unless File.f
 end
 
 contamination = scan_seed_contamination!([source_dir, cache_dir, build_dir], seed_identity_path, seed_metadata.fetch("binary_sha256"), seed_metadata.fetch("binary_size_bytes"), workdir)
-ldd_output = capture!({}, ["ldd", bun], chdir: build_dir)
+ldd_output = capture!({ "LD_LIBRARY_PATH" => File.join(lolhtml_provider_root, "usr", "lib64") }, ["ldd", bun], chdir: build_dir)
 raise Agentlab::Error, "source-built Bun has a runtime dependency on the seed" if ldd_output.include?(seed_identity_path) || ldd_output.include?("bun-seed")
 raise Agentlab::Error, "source-built Bun does not use Fedora's shared libstdc++" unless ldd_output.include?("libstdc++.so.6")
 raise Agentlab::Error, "source-built Bun does not use Fedora's shared libgcc" unless ldd_output.include?("libgcc_s.so.1")
+unless ldd_output.include?(source_inputs.fetch("lolhtml").fetch("soname")) && ldd_output.include?(File.join(lolhtml_provider_root, "usr", "lib64"))
+  raise Agentlab::Error, "source-built Bun does not resolve the staged Fedora lol-html provider"
+end
 
 objects = Dir.glob(File.join(build_dir, "**", "*.o"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
 archives = Dir.glob(File.join(build_dir, "**", "*.a"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
@@ -1201,7 +1273,8 @@ build_receipt = {
     "size_reduced" => true
   },
   "fedora_shared_cxx_runtime_verified" => true,
-  "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6]
+  "system_lolhtml_provider_verified" => true,
+  "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
 }
 
 relink_receipt = {

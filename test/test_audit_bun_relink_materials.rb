@@ -29,7 +29,6 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
     generic_objects = 1120.times.map { |index| "obj/generic/generic-#{index}.o" }
     objects = zig_objects + tinycc_objects + generic_objects
     archives = %w[
-      deps/lolhtml/release/liblolhtml.a
       deps/WebKit/lib/libWTF.a
       deps/WebKit/lib/libJavaScriptCore.a
       deps/WebKit/lib/libbmalloc.a
@@ -44,6 +43,7 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
     write(File.join(root, "source", "package.json"), JSON.generate("name" => "bun", "version" => "1.3.14"))
     write(File.join(root, "seed", "bun"), "bootstrap seed\n")
     write(File.join(build_root, "bun-profile"), "retained profile\n")
+    write(File.join(build_root, "bun"), "source-built bun\n")
     write(File.join(build_root, "bun-profile.linker-map"))
     write(File.join(build_root, "compile_commands.json"), "[]\n")
     write(File.join(build_root, "configure.json"), "{}\n")
@@ -78,20 +78,86 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
         rspfile_content = $in_newline
 
       build bun-profile: link #{inputs.join(' ')} | ../../source/src/symbols.dyn ../../source/src/linker.lds
-        ldflags = -Wl,-Map=#{root}/build/release-local/bun-profile.linker-map -Wl,--dynamic-list=#{root}/source/src/symbols.dyn -Wl,--version-script=#{root}/source/src/linker.lds -lstdc++ -lgcc_s -lc -lpthread -ldl -l:libatomic.a -licudata -licui18n -licuuc
+        ldflags = -Wl,-Map=#{root}/build/release-local/bun-profile.linker-map -Wl,--dynamic-list=#{root}/source/src/symbols.dyn -Wl,--version-script=#{root}/source/src/linker.lds -lstdc++ -lgcc_s -lc -lpthread -ldl -l:libatomic.a -licudata -licui18n -licuuc -llolhtml
     NINJA
     write(File.join(build_root, "build.ninja"), ninja)
     inputs
+  end
+
+  def build_receipt(root)
+    package_dir = File.join(File.expand_path("..", __dir__), "packages", "bun")
+    closure_path = File.join(package_dir, "bun-1.3.14-release-local-source-closure.json")
+    closure = JSON.parse(File.read(closure_path))
+    provider_root = File.join(root, "provider")
+    library = File.join(provider_root, "usr", "lib64", "liblolhtml.so.1.4.0")
+    write(library, "lol-html provider\n")
+    bun = File.join(root, "build", "release-local", "bun")
+    receipt = {
+      "schema" => "bun-first-source-build-proof/v2",
+      "package" => "bun",
+      "release" => "1.3.14",
+      "profile" => "release-local",
+      "source_closure" => {
+        "path" => File.basename(closure_path),
+        "sha256" => Digest::SHA256.file(closure_path).hexdigest,
+        "source_archive_sha256" => closure.dig("source_tree", "source_sha256"),
+        "source_commit" => "0d9b296af33f2b851fcbf4df3e9ec89751734ba4"
+      },
+      "bootstrap_seed" => {
+        "binary_sha256" => Digest::SHA256.file(File.join(root, "seed", "bun")).hexdigest,
+        "size_bytes" => File.size(File.join(root, "seed", "bun"))
+      },
+      "inputs" => {
+        "offline_inputs" => {
+          "native_archives" => 18,
+          "node_header_archives" => 1,
+          "cargo_source_archives" => 0,
+          "system_lolhtml_provider" => {
+            "package" => "lol-html",
+            "version" => "3.0.0",
+            "c_api_version" => "1.4.0",
+            "pkgconfig" => "lol-html",
+            "soname" => "liblolhtml.so.1",
+            "build_requirement" => "pkgconfig(lol-html) >= 1.4.0",
+            "staged_payload" => {
+              "root" => provider_root,
+              "shared_library" => {
+                "path" => "usr/lib64/liblolhtml.so.1.4.0",
+                "size_bytes" => File.size(library),
+                "sha256" => Digest::SHA256.file(library).hexdigest
+              }
+            }
+          }
+        }
+      },
+      "configure" => { "native_fetch_edges" => 18, "system_lolhtml_provider_verified" => true },
+      "build" => {
+        "bun" => {
+          "path" => "build/release-local/bun",
+          "size_bytes" => File.size(bun),
+          "sha256" => Digest::SHA256.file(bun).hexdigest
+        },
+        "version" => "1.3.14",
+        "system_lolhtml_provider_verified" => true,
+        "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+      },
+      "validation" => { "source_build_verified" => true }
+    }
+    path = File.join(root, "first-build-proof.json")
+    write(path, JSON.pretty_generate(receipt) + "\n")
+    path
   end
 
   def test_materializes_a_deterministic_wrapper_free_relink_kit
     Dir.mktmpdir("agentlab-bun-relink-", "/srv/tmp") do |temporary|
       root = File.join(temporary, "proof")
       inputs = build_fixture(root)
+      build_receipt_path = build_receipt(root)
       output_dir = File.join(temporary, "output")
       audit_path = File.join(temporary, "audit.json")
       arguments = [
         "--root", root,
+        "--build-receipt", build_receipt_path,
         "--date", "2026-07-18",
         "--output", audit_path,
         "--kit-output-dir", output_dir
@@ -105,25 +171,33 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
       first_archive_sha256 = Digest::SHA256.file(archive).hexdigest
       first_receipt = File.binread(receipt_path)
 
+      audit = JSON.parse(File.read(audit_path))
+      assert_equal("bun-relink-materials-audit/v3", audit.fetch("schema"))
+      assert_equal("first_build", audit.dig("source_build", "proof_kind"))
+      assert_equal("liblolhtml.so.1", audit.dig("system_lolhtml_provider", "soname"))
+      refute(audit.dig("final_link", "direct_archives").any? { |record| record.fetch("path").include?("/lolhtml/") })
+
       command = JSON.parse(File.read(File.join(kit_root, "relink", "link-command.json")))
       assert_equal("/usr/lib64/llvm21/bin/clang++", command.fetch("argv").first)
       assert(command.fetch("bootstrap_wrapper_removed"))
       assert(command.fetch("proof_root_paths_removed_from_argv"))
+      assert_includes(command.fetch("argv"), "-llolhtml")
+      assert_includes(command.fetch("system_library_requirements"), "liblolhtml.so.1")
       refute_includes(JSON.generate(command), root)
       assert_equal(inputs, File.readlines(File.join(kit_root, "relink", "bun-profile.rsp"), chomp: true))
 
       manifest = JSON.parse(File.read(File.join(kit_root, "relink", "payload-manifest.json")))
       assert_equal(1162, manifest.dig("summary", "object_count"))
-      assert_equal(4, manifest.dig("summary", "archive_count"))
+      assert_equal(3, manifest.dig("summary", "archive_count"))
       assert_equal(2294, manifest.dig("summary", "generated_header_entry_count"))
       assert_equal(2, manifest.dig("summary", "generated_header_target_count"))
-      assert_equal(1166, manifest.dig("summary", "response_file_input_count"))
+      assert_equal(1165, manifest.dig("summary", "response_file_input_count"))
       symlink = manifest.fetch("entries").find { |entry| entry["kind"] == "symlink" }
       refute_nil(symlink)
       assert(File.file?(File.realpath(File.join(kit_root, symlink.fetch("path")))))
 
       receipt = JSON.parse(first_receipt)
-      assert_equal("bun-relink-kit/v1", receipt.fetch("schema"))
+      assert_equal("bun-relink-kit/v2", receipt.fetch("schema"))
       assert(receipt.dig("validation", "archive_generated"))
       assert(receipt.dig("validation", "response_file_reconstructed"))
       refute(receipt.dig("validation", "network_isolated_link_verified"))
@@ -138,6 +212,7 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
       _stdout, collision_error, collision_status = Open3.capture3(
         SCRIPT,
         "--root", root,
+        "--build-receipt", build_receipt_path,
         "--date", "2026-07-18",
         "--output", audit_alias,
         "--kit-output-dir", output_dir,
@@ -156,6 +231,7 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
       _stdout, ancestor_error, ancestor_status = Open3.capture3(
         SCRIPT,
         "--root", root,
+        "--build-receipt", build_receipt_path,
         "--date", "2026-07-18",
         "--output", future_archive_alias,
         "--kit-output-dir", future_output
@@ -173,12 +249,29 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
       _stdout, semantics_error, semantics_status = Open3.capture3(
         SCRIPT,
         "--root", root,
+        "--build-receipt", build_receipt_path,
         "--date", "2026-07-18",
         "--output", File.join(temporary, "invalid-audit.json"),
         "--kit-output-dir", File.join(temporary, "invalid-output")
       )
       refute(semantics_status.success?)
       assert_includes(semantics_error, "link rule does not retain $in_newline response-file semantics")
+
+      historical_root = File.join(temporary, "historical-proof")
+      build_fixture(historical_root)
+      historical_build = File.join(historical_root, "build", "release-local")
+      private_lolhtml = "deps/lolhtml/release/liblolhtml.a"
+      write(File.join(historical_build, private_lolhtml), "historical lol-html\n")
+      historical_ninja = File.read(File.join(historical_build, "build.ninja"))
+      historical_ninja.sub!(" -llolhtml\n", "\n")
+      historical_ninja.sub!("build bun-profile: link ", "build bun-profile: link #{private_lolhtml} ")
+      write(File.join(historical_build, "build.ninja"), historical_ninja)
+      historical_audit_path = File.join(temporary, "historical-audit.json")
+      run_script("--root", historical_root, "--date", "2026-07-18", "--output", historical_audit_path)
+      historical_audit = JSON.parse(File.read(historical_audit_path))
+      assert_equal("bun-relink-materials-audit/v2", historical_audit.fetch("schema"))
+      refute(historical_audit.key?("source_build"))
+      refute(historical_audit.key?("system_lolhtml_provider"))
     end
   end
 end

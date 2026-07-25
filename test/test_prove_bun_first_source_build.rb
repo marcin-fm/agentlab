@@ -30,6 +30,11 @@ class ProveBunFirstSourceBuildTest < Minitest::Test
     assert_includes(source, '"system_lolhtml_provider_verified" => true')
     assert_includes(source, '"cargo_source_archives" => 0')
     assert_includes(source, "def verify_system_lolhtml_patch!(source_dir)")
+    assert_includes(source, '--lolhtml-provider-root PATH')
+    assert_includes(source, "def verify_lolhtml_provider!(provider_root, metadata)")
+    assert_includes(source, '"LD_LIBRARY_PATH" => File.join(lolhtml_provider_root, "usr", "lib64")')
+    assert_includes(source, '"system_lolhtml_provider_verified" => true')
+    assert_includes(source, 'source-built Bun does not resolve the staged Fedora lol-html provider')
     assert_equal(1, source.scan(/"scripts\/build\/deps\/index\.ts"\s*=>\s*closure\.dig/).length)
 
     refute_includes(source, "--cargo-vendor")
