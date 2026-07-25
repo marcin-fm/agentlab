@@ -46,6 +46,7 @@ OptionParser.new do |parser|
   parser.on("--seed-archive PATH", "Checked bootstrap-only Bun seed archive") { |path| seed_archive = path }
   parser.on("--source-cache PATH", "Checked native, Node, and npm source cache") { |path| source_cache = path }
   parser.on("--npm-proof PATH", "Marked npm offline proof directory") { |path| npm_proof = path }
+  parser.on("--npm-receipt PATH", "Checked npm offline install receipt") { |path| npm_receipt_path = path }
   parser.on("--zig-root PATH", "Verified source-built Bun Zig root") { |path| zig_root = path }
   parser.on("--zig-receipt PATH", "Receipt for the supplied Zig root") { |path| zig_receipt_path = path }
   parser.on("--webkit-archive PATH", "Checked WebKit source archive") { |path| webkit_archive = path }
@@ -73,6 +74,7 @@ source_archive = File.expand_path(source_archive)
 seed_archive = File.expand_path(seed_archive)
 source_cache = File.expand_path(source_cache)
 npm_proof = File.expand_path(npm_proof)
+npm_receipt_path = File.expand_path(npm_receipt_path)
 zig_root = File.expand_path(zig_root)
 zig_receipt_path = File.expand_path(zig_receipt_path)
 webkit_archive = File.expand_path(webkit_archive)
@@ -84,7 +86,7 @@ workdir = File.expand_path(workdir)
 output = File.expand_path(output)
 
 raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
-[source_archive, seed_archive, source_cache, npm_proof, zig_root, zig_receipt_path, webkit_archive, webkit_source_receipt_path, lolhtml_provider_root, self_rebuild_from, driver_receipt_path].compact.each do |path|
+[source_archive, seed_archive, source_cache, npm_proof, npm_receipt_path, zig_root, zig_receipt_path, webkit_archive, webkit_source_receipt_path, lolhtml_provider_root, self_rebuild_from, driver_receipt_path].compact.each do |path|
   if force && (path == workdir || path.start_with?("#{workdir}/"))
     raise Agentlab::Error, "proof input must be outside the replaced workdir: #{path}"
   end
@@ -683,18 +685,42 @@ end
 
 npm_receipt_bytes = File.binread(npm_receipt_path)
 npm_receipt_sha256 = Digest::SHA256.hexdigest(npm_receipt_bytes)
-expected_npm_receipt_sha256 = metadata.fetch("stages").fetch("dependency_closure").fetch("historical_lolhtml_graph").fetch("npm_install_proof_receipt_sha256")
-raise Agentlab::Error, "npm proof receipt checksum mismatch" unless npm_receipt_sha256 == expected_npm_receipt_sha256
 npm_receipt = JSON.parse(npm_receipt_bytes)
-unless npm_receipt["schema"] == "bun-npm-offline-install-proof/v1" &&
-       npm_receipt["package"] == "bun" && npm_receipt["release"] == version &&
-       npm_receipt["target"] == closure["target"] &&
-       npm_receipt.dig("source_closure", "bun_source_archive_sha256") == closure.dig("source_tree", "source_sha256") &&
-       npm_receipt.dig("source_closure", "root_lock", "patched_sha256") == source_inputs.fetch("npm_lock").fetch("patched_lock_sha256") &&
-       npm_receipt.dig("cache", "source_archives") == closure.dig("npm", "summary", "unique_sources") &&
-       npm_receipt.dig("cache", "tree", "sha256") == metadata.dig("source_inputs", "release_local_staging", "npm_cache_tree_sha256") &&
-       npm_receipt.dig("validation", "npm_offline_install_verified") == true
-  raise Agentlab::Error, "historical npm install proof does not match the current Bun source/cache inputs"
+common_npm_proof_valid = npm_receipt["package"] == "bun" && npm_receipt["release"] == version &&
+                         npm_receipt["target"] == closure["target"] &&
+                         npm_receipt.dig("source_closure", "bun_source_archive_sha256") == closure.dig("source_tree", "source_sha256") &&
+                         npm_receipt.dig("source_closure", "root_lock", "patched_sha256") == source_inputs.fetch("npm_lock").fetch("patched_lock_sha256") &&
+                         npm_receipt.dig("cache", "source_archives") == closure.dig("npm", "summary", "unique_sources") &&
+                         npm_receipt.dig("cache", "tree", "sha256") == metadata.dig("source_inputs", "release_local_staging", "npm_cache_tree_sha256") &&
+                         npm_receipt.dig("validation", "npm_offline_install_verified") == true
+if self_rebuild
+  raise Agentlab::Error, "source-built npm proof requires a driver receipt" unless File.file?(driver_receipt_path)
+
+  selected_driver_receipt = JSON.parse(File.read(driver_receipt_path))
+  selected_driver_kind = case selected_driver_receipt["schema"]
+                         when "bun-first-source-build-proof/v2" then "first_build"
+                         when "bun-self-rebuild-proof/v2" then "self_rebuild"
+                         end
+  unless common_npm_proof_valid &&
+         npm_receipt["schema"] == "bun-npm-offline-install-proof/v2" &&
+         npm_receipt.dig("source_closure", "path") == File.basename(closure_path) &&
+         npm_receipt.dig("source_closure", "sha256") == closure_sha256 &&
+         npm_receipt.dig("install", "driver_kind") == "source_built" &&
+         npm_receipt.dig("driver", "kind") == "source_built" &&
+         npm_receipt.dig("driver", "proof_kind") == selected_driver_kind &&
+         npm_receipt.dig("driver", "receipt") == File.basename(driver_receipt_path) &&
+         npm_receipt.dig("driver", "receipt_sha256") == Digest::SHA256.file(driver_receipt_path).hexdigest &&
+         %w[source_built_driver_verified driver_receipt_bound driver_version_verified bootstrap_seed_not_used_for_install].all? { |key| npm_receipt.dig("validation", key) == true }
+    raise Agentlab::Error, "self-rebuild npm proof does not match the selected source-built driver"
+  end
+  npm_proof_mode = "source_built"
+else
+  expected_npm_receipt_sha256 = metadata.fetch("stages").fetch("dependency_closure").fetch("historical_lolhtml_graph").fetch("npm_install_proof_receipt_sha256")
+  unless npm_receipt_sha256 == expected_npm_receipt_sha256 && common_npm_proof_valid &&
+         npm_receipt["schema"] == "bun-npm-offline-install-proof/v1"
+    raise Agentlab::Error, "historical npm install proof does not match the current Bun source/cache inputs"
+  end
+  npm_proof_mode = "historical_seed"
 end
 
 zig_canonical_receipt = JSON.parse(File.read(zig_canonical_receipt_path))
@@ -1143,7 +1169,11 @@ configure_receipt = {
   "profile" => "release-local",
   "source_closure_sha256" => closure_sha256,
   "source_commit" => source_commit,
-  "historical_npm_proof_sha256" => npm_receipt_sha256
+  "npm_proof" => {
+    "mode" => npm_proof_mode,
+    "path" => File.basename(npm_receipt_path),
+    "sha256" => npm_receipt_sha256
+  }
 }.merge(driver_receipt).merge(
   "zig" => {
     "source_commit" => zig_metadata.fetch("commit"),
@@ -1374,7 +1404,7 @@ if self_rebuild
       "payload_allowed" => false,
       "runtime_dependency_allowed" => false
     },
-    "inputs" => configure_receipt.slice("zig", "webkit", "source_patches", "offline_inputs"),
+    "inputs" => configure_receipt.slice("npm_proof", "zig", "webkit", "source_patches", "offline_inputs"),
     "configure" => graph_receipt.merge("network_namespace" => true, "jobs" => jobs),
     "build" => build_receipt,
     "reproducibility" => {

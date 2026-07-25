@@ -58,6 +58,18 @@ class ProveBunFirstSourceBuildTest < Minitest::Test
     assert_includes(source, 'command = ["unshare", "--net", "--", install_driver, "install"')
   end
 
+  def test_self_rebuild_requires_the_source_built_npm_receipt
+    source = File.read(SCRIPT)
+
+    assert_includes(source, '--npm-receipt PATH')
+    assert_includes(source, 'npm_receipt["schema"] == "bun-npm-offline-install-proof/v2"')
+    assert_includes(source, 'npm_receipt.dig("driver", "receipt_sha256") == Digest::SHA256.file(driver_receipt_path).hexdigest')
+    assert_includes(source, 'raise Agentlab::Error, "self-rebuild npm proof does not match the selected source-built driver"')
+    assert_includes(source, 'npm_proof_mode = "historical_seed"')
+    assert_includes(source, 'npm_proof_mode = "source_built"')
+    assert_includes(source, 'configure_receipt.slice("npm_proof", "zig", "webkit", "source_patches", "offline_inputs")')
+  end
+
   def test_npm_helper_rejects_ambiguous_driver_options_before_proof_setup
     _stdout, stderr, status = Open3.capture3(NPM_SCRIPT, "--source-built-driver", "/srv/tmp/missing-bun")
     refute(status.success?)
