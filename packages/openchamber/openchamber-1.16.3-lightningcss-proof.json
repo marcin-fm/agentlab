@@ -1,0 +1,55 @@
+{
+  "schema": "openchamber-lightningcss-proof/v1",
+  "release": "1.16.3",
+  "package": "lightningcss-linux-x64-gnu@1.31.1",
+  "published_packages": {
+    "wrapper": {
+      "package": "lightningcss@1.31.1",
+      "archive_sha256": "253cad9321f18c817c7d3e06415cb60bf88e3c01ac08920652b3a1b2c6cabd52"
+    },
+    "platform_companion": {
+      "archive_sha256": "bd064ad4edd3f7308dca3216b14a0ad57115547e4499e3c46e0744335de6b335",
+      "native_path": "lightningcss.linux-x64-gnu.node",
+      "native_size": 9987208,
+      "native_sha256": "751bc92429f1f1c70e330c01dcdc274d478def6f9a93ae0b14a98b6919f171a4"
+    }
+  },
+  "source": {
+    "repository": "parcel-bundler/lightningcss",
+    "tag": "v1.31.1",
+    "public_tag_present": true,
+    "commit": "6993d9f1d3cd69030c5976cd8860361b7679f68d",
+    "commit_timestamp": 1768964180,
+    "commit_subject": "v1.31.1",
+    "archive_url": "https://github.com/parcel-bundler/lightningcss/archive/6993d9f1d3cd69030c5976cd8860361b7679f68d.tar.gz",
+    "archive_sha256": "5b34735be7aa5bc672382a423b3cf0ddfa0ef54acf3340c9bb35faa0b0d7caa8",
+    "package_json_sha256": "242a0460419e7cb91f434be1fda0a3a870634200fd7043a1a14837028ade0ccb",
+    "build_script_sha256": "93b1f5c690bc63a0a49011bba3a263c3694d8e1be11c536a73c7a56206fddef5",
+    "napi_manifest_sha256": "9862940663b2cb7b679c91a7b6afb75a8c25a44204060679fb5c6620a350a099"
+  },
+  "build_contract": {
+    "release_command": "yarn build-release",
+    "native_command": "napi build --platform --cargo-cwd node --release",
+    "rust_version": "1.92.0",
+    "rust_toolchain_sha256": "9084f06a996ac0edec375a19761cfa5f0febfda93a25a40a4f4487fba43bb8ed",
+    "cargo_lock_sha256": "a2b6600e820252af4709d65bd568d4f3dd121cfdc4df82ef9390e13377831b76",
+    "yarn_lock_sha256": "d9cadc3be674f0b45813ef939f52f8f1d1ef80d558dacbd3690069d02489bc4f",
+    "napi_cli_version": "2.18.4"
+  },
+  "legal_hold": {
+    "crate": "parcel_sourcemap@2.1.1",
+    "crate_sha256": "485b74d7218068b2b7c0e3ff12fbc61ae11d57cb5d8224f525bd304c6be05bbb",
+    "direct_napi_dependency": true,
+    "declared_license": "MIT",
+    "license_payload_complete": false,
+    "bsd_3_clause_notice_required": true,
+    "source_map_mappings_license_selection_required": true,
+    "downstream_notice_synthesis_permitted": false
+  },
+  "validation": {
+    "exact_source_mapping_verified": true,
+    "reproducible_build_verified": false,
+    "license_accounting_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}

@@ -185,3 +185,13 @@ The selected JavaScript wrapper creates a terminal, writes and reads back text,
 and reports the expected cursor state against both rebuilt outputs. Immutable
 delivery of the Zig dependency cache and final OpenChamber inclusion remain
 unverified.
+
+`lightningcss-linux-x64-gnu 1.31.1` maps to exact upstream tag `v1.31.1`,
+commit `6993d9f1d3cd69030c5976cd8860361b7679f68d`, and immutable source archive
+SHA-256 `5b34735be7aa5bc672382a423b3cf0ddfa0ef54acf3340c9bb35faa0b0d7caa8`.
+The source pins Rust `1.92.0`, Cargo lock SHA-256
+`a2b6600e820252af4709d65bd568d4f3dd121cfdc4df82ef9390e13377831b76`,
+and the N-API release command. Rebuild and inclusion remain blocked because
+direct locked dependency `parcel_sourcemap 2.1.1` lacks a complete legal
+notice and license-selection record for attributed BSD-3-Clause and
+Apache-2.0/MIT-derived code; Agentlab does not synthesize that determination.

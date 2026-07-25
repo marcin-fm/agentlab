@@ -35,6 +35,9 @@ receipts:
   ghostty_wasm_proof:
     path: openchamber-1.16.3-ghostty-wasm-proof.json
     sha256: 228b184555424e138447a6a4a4ddb412f91bdf6aac3e136ca8f65063a0ed425a
+  lightningcss_proof:
+    path: openchamber-1.16.3-lightningcss-proof.json
+    sha256: 15883c45367d5042d6fbbf1b35805a491ec1ff8a02561684e6e753a2e9a659a1
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -54,8 +57,8 @@ status:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 12
-  source_mappings_unresolved: 2
+  source_mappings_verified: 13
+  source_mappings_unresolved: 1
   reproducible_builds_completed: 6
   native_sources_verified: false
   wasm_sources_verified: false
@@ -166,8 +169,15 @@ components:
       executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
-    mapping: { kind: platform_companion, source_package: lightningcss@1.31.1 }
-    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+    mapping:
+      kind: platform_companion
+      source_package: lightningcss@1.31.1
+      upstream_tag: v1.31.1
+      upstream_tag_commit: 6993d9f1d3cd69030c5976cd8860361b7679f68d
+      source_archive_sha256: 5b34735be7aa5bc672382a423b3cf0ddfa0ef54acf3340c9bb35faa0b0d7caa8
+      legal_hold: parcel_sourcemap-2.1.1-notice-resolution
+    proof: { path: openchamber-1.16.3-lightningcss-proof.json }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
   - package: "node-addon-api@7.1.1"
     audit:
       native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }

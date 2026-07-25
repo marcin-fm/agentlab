@@ -320,7 +320,7 @@ class AgentlabTest < Minitest::Test
       review.fetch("components").first.dig("audit", "executable_payloads")["paths_sha256"] = "0" * 64
       temporary_review = File.join(directory, "native-review.yml")
       File.write(temporary_review, YAML.dump(review))
-      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof].each do |key|
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof lightningcss_proof].each do |key|
         FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
       end
       FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)
@@ -356,7 +356,7 @@ class AgentlabTest < Minitest::Test
       review.dig("receipts", "esbuild_proof")["sha256"] = Digest::SHA256.file(temporary_proof).hexdigest
       temporary_review = File.join(directory, "native-review.yml")
       File.write(temporary_review, YAML.dump(review))
-      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof rollup_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof].each do |key|
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof rollup_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof lightningcss_proof].each do |key|
         FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
       end
       FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)
@@ -392,7 +392,7 @@ class AgentlabTest < Minitest::Test
       review.dig("receipts", "rollup_proof")["sha256"] = Digest::SHA256.file(temporary_proof).hexdigest
       temporary_review = File.join(directory, "native-review.yml")
       File.write(temporary_review, YAML.dump(review))
-      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof].each do |key|
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof lightningcss_proof].each do |key|
         FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
       end
       FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)
@@ -428,7 +428,7 @@ class AgentlabTest < Minitest::Test
       review.dig("receipts", "tailwind_oxide_proof")["sha256"] = Digest::SHA256.file(temporary_proof).hexdigest
       temporary_review = File.join(directory, "native-review.yml")
       File.write(temporary_review, YAML.dump(review))
-      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof].each do |key|
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof lightningcss_proof].each do |key|
         FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
       end
       FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)
@@ -459,7 +459,7 @@ class AgentlabTest < Minitest::Test
       review.dig("receipts", "source_map_wasm_proof")["sha256"] = Digest::SHA256.file(temporary_proof).hexdigest
       temporary_review = File.join(directory, "native-review.yml")
       File.write(temporary_review, YAML.dump(review))
-      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof tailwind_oxide_proof shiki_wasm_proof ghostty_wasm_proof].each do |key|
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof tailwind_oxide_proof shiki_wasm_proof ghostty_wasm_proof lightningcss_proof].each do |key|
         FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
       end
       FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)
@@ -490,7 +490,7 @@ class AgentlabTest < Minitest::Test
       review.dig("receipts", "ghostty_wasm_proof")["sha256"] = Digest::SHA256.file(temporary_proof).hexdigest
       temporary_review = File.join(directory, "native-review.yml")
       File.write(temporary_review, YAML.dump(review))
-      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof].each do |key|
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof lightningcss_proof].each do |key|
         FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
       end
       FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)
@@ -504,6 +504,37 @@ class AgentlabTest < Minitest::Test
 
       errors = Agentlab.validate_openchamber_native_review(temporary_package, temporary_dependencies)
       assert_includes(errors, "openchamber: Ghostty WASM build mismatch")
+    end
+  end
+
+  def test_openchamber_native_review_validator_rejects_lightningcss_legal_hold_drift
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    review = Agentlab.load_yaml(File.join(package.directory, dependencies.dig("source_closure_files", "native_review")))
+    proof_name = dependencies.dig("source_closure_files", "lightningcss_proof")
+    proof = JSON.parse(File.read(File.join(package.directory, proof_name)))
+
+    Dir.mktmpdir do |directory|
+      proof.fetch("legal_hold")["license_payload_complete"] = true
+      temporary_proof = File.join(directory, proof_name)
+      File.write(temporary_proof, JSON.pretty_generate(proof) + "\n")
+      review.dig("receipts", "lightningcss_proof")["sha256"] = Digest::SHA256.file(temporary_proof).hexdigest
+      temporary_review = File.join(directory, "native-review.yml")
+      File.write(temporary_review, YAML.dump(review))
+      %w[selected_lock_audit source_audit source_materialization better_sqlite3_proof node_pty_proof esbuild_proof rollup_proof tailwind_oxide_proof source_map_wasm_proof shiki_wasm_proof ghostty_wasm_proof].each do |key|
+        FileUtils.cp(File.join(package.directory, review.dig("receipts", key, "path")), directory)
+      end
+      FileUtils.cp(File.join(package.directory, "openchamber-better-sqlite3-system-sqlite.patch"), directory)
+      temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
+      temporary_dependencies.fetch("source_closure_files")["native_review"] = "native-review.yml"
+      temporary_dependencies.fetch("native_review_receipt")["sha256"] = Digest::SHA256.file(temporary_review).hexdigest
+      temporary_data = Marshal.load(Marshal.dump(package.data))
+      temporary_data.fetch("source_policy")["native_review"] = "native-review.yml"
+      temporary_data.fetch("source_policy")["native_review_sha256"] = Digest::SHA256.file(temporary_review).hexdigest
+      temporary_package = Struct.new(:name, :directory, :upstream, :data).new(package.name, directory, package.upstream, temporary_data)
+
+      errors = Agentlab.validate_openchamber_native_review(temporary_package, temporary_dependencies)
+      assert_includes(errors, "openchamber: Lightning CSS legal hold mismatch")
     end
   end
 

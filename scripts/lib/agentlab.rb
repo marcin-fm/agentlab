@@ -894,7 +894,7 @@ module Agentlab
     source_packages.each do |identity, source_package|
       component = components.find { |entry| entry["package"] == identity }
       errors << "openchamber: native review source package mismatch for #{identity}" unless component&.dig("mapping", "source_package") == source_package
-      expected_verified = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1].include?(identity)
+      expected_verified = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1 lightningcss-linux-x64-gnu@1.31.1].include?(identity)
       errors << "openchamber: native review platform mapping verification mismatch for #{identity}" unless component&.dig("decision", "source_mapping_verified") == expected_verified
     end
     esbuild = components.find { |component| component["package"] == "@esbuild/linux-x64@0.27.3" }
@@ -947,6 +947,25 @@ module Agentlab
       errors << "openchamber: tailwind oxide review state mismatch" unless tailwind.dig("decision", "reproducible_build_verified") == true
     else
       errors << "openchamber: tailwind oxide proof is unavailable"
+    end
+
+    lightningcss = components.find { |component| component["package"] == "lightningcss-linux-x64-gnu@1.31.1" }
+    lightningcss_filename = dependencies.dig("source_closure_files", "lightningcss_proof")
+    lightningcss_path = lightningcss_filename.is_a?(String) && File.join(package.directory, lightningcss_filename)
+    if lightningcss_path && File.file?(lightningcss_path)
+      lightningcss_sha256 = Digest::SHA256.file(lightningcss_path).hexdigest
+      lightningcss_proof = JSON.parse(File.read(lightningcss_path))
+      errors << "openchamber: Lightning CSS proof path mismatch" unless lightningcss&.dig("proof", "path") == lightningcss_filename && review.dig("receipts", "lightningcss_proof", "path") == lightningcss_filename
+      errors << "openchamber: Lightning CSS proof SHA-256 mismatch" unless review.dig("receipts", "lightningcss_proof", "sha256") == lightningcss_sha256
+      errors << "openchamber: Lightning CSS proof identity mismatch" unless lightningcss_proof["schema"] == "openchamber-lightningcss-proof/v1" && lightningcss_proof["package"] == "lightningcss-linux-x64-gnu@1.31.1"
+      errors << "openchamber: Lightning CSS published payload mismatch" unless lightningcss_proof.dig("published_packages", "wrapper", "archive_sha256") == "253cad9321f18c817c7d3e06415cb60bf88e3c01ac08920652b3a1b2c6cabd52" && lightningcss_proof.dig("published_packages", "platform_companion", "archive_sha256") == "bd064ad4edd3f7308dca3216b14a0ad57115547e4499e3c46e0744335de6b335" && lightningcss_proof.dig("published_packages", "platform_companion", "native_sha256") == "751bc92429f1f1c70e330c01dcdc274d478def6f9a93ae0b14a98b6919f171a4"
+      errors << "openchamber: Lightning CSS source mismatch" unless lightningcss_proof.dig("source", "tag") == "v1.31.1" && lightningcss_proof.dig("source", "commit") == "6993d9f1d3cd69030c5976cd8860361b7679f68d" && lightningcss_proof.dig("source", "archive_sha256") == "5b34735be7aa5bc672382a423b3cf0ddfa0ef54acf3340c9bb35faa0b0d7caa8"
+      errors << "openchamber: Lightning CSS build contract mismatch" unless lightningcss_proof.dig("build_contract", "rust_version") == "1.92.0" && lightningcss_proof.dig("build_contract", "cargo_lock_sha256") == "a2b6600e820252af4709d65bd568d4f3dd121cfdc4df82ef9390e13377831b76" && lightningcss_proof.dig("build_contract", "napi_cli_version") == "2.18.4"
+      errors << "openchamber: Lightning CSS legal hold mismatch" unless lightningcss_proof.dig("legal_hold", "crate") == "parcel_sourcemap@2.1.1" && lightningcss_proof.dig("legal_hold", "crate_sha256") == "485b74d7218068b2b7c0e3ff12fbc61ae11d57cb5d8224f525bd304c6be05bbb" && lightningcss_proof.dig("legal_hold", "direct_napi_dependency") == true && lightningcss_proof.dig("legal_hold", "license_payload_complete") == false && lightningcss_proof.dig("legal_hold", "downstream_notice_synthesis_permitted") == false
+      errors << "openchamber: Lightning CSS validation state mismatch" unless lightningcss_proof.dig("validation", "exact_source_mapping_verified") == true && lightningcss_proof.dig("validation", "reproducible_build_verified") == false && lightningcss_proof.dig("validation", "license_accounting_verified") == false && lightningcss_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: Lightning CSS review state mismatch" unless lightningcss.dig("decision", "source_mapping_verified") == true && lightningcss.dig("decision", "reproducible_build_verified") == false
+    else
+      errors << "openchamber: Lightning CSS proof is unavailable"
     end
 
     source_map = components.find { |component| component["package"] == "source-map@0.8.0-beta.0" }
