@@ -7,12 +7,15 @@
 
 Name:           rust-tree-sitter-kotlin-sg0.4
 Version:        0.4.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Kotlin grammar for the tree-sitter parsing library
 
 License:        MIT
 URL:            https://crates.io/crates/tree-sitter-kotlin-sg
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-only: use the published tree_sitter_kotlin_sg crate name in the doctest.
+# Not yet submitted upstream; the incorrect name remains on current main:
+# https://github.com/ast-grep/tree-sitter-kotlin/commit/7ae1f72910f04e176467d68fb1cb07b4e272384a
 Patch0:         tree-sitter-kotlin-sg-fix-doctest.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -67,5 +70,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-0.2
+- Document the Fedora patch purpose and upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-0.1
 - Add the compatibility grammar crate required by ast-grep.

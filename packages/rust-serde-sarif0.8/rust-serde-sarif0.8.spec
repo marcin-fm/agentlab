@@ -7,12 +7,15 @@
 
 Name:           rust-serde-sarif0.8
 Version:        0.8.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Serde serialization for SARIF files
 
 License:        MIT
 URL:            https://crates.io/crates/serde-sarif
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-only: use TypedBuilder's generated Message::builder() in the doctest.
+# Not yet submitted upstream; the TypedBuilder migration left current main broken:
+# https://github.com/psastras/sarif-rs/commit/25cdf164b12f377010811096d61d95314134f009
 Patch0:         serde-sarif-fix-builder-doctest.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -188,5 +191,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.8.0-0.2
+- Document the Fedora patch purpose and upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.8.0-0.1
 - Add the compatibility crate required by ast-grep.

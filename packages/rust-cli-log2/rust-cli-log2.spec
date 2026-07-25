@@ -7,12 +7,15 @@
 
 Name:           rust-cli-log2
 Version:        2.1.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Environment-configured logging and timing facility
 
 License:        MIT
 URL:            https://crates.io/crates/cli-log
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-only: add the missing `let` so the published doctest compiles.
+# Not yet submitted upstream; the release regression remains on current main:
+# https://github.com/Canop/cli-log/commit/3f793fc69456a8fc64758f51ae903080015b4739
 Patch0:         cli-log-fix-doctest.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -84,5 +87,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 2.1.0-0.2
+- Document the Fedora patch purpose and upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 2.1.0-0.1
 - Add the compatibility crate required by termimad 0.34.
