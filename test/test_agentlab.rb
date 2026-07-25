@@ -181,6 +181,80 @@ class AgentlabTest < Minitest::Test
     assert_match(/forbidden package bun-pty selected through packages\/web -> bun-pty/, error.message)
   end
 
+  def test_openchamber_source_graph_resolves_aliases_packages_and_globs
+    Dir.mktmpdir do |directory|
+      FileUtils.mkdir_p(File.join(directory, "src", "assets"))
+      File.write(File.join(directory, "src", "entry.ts"), <<~SOURCE)
+        import { helper } from '@app/helper';
+        import 'pkg/subpath';
+        void import('lazy-package');
+        const assets = import.meta.glob('./assets/*.svg', { eager: true });
+      SOURCE
+      File.write(File.join(directory, "src", "helper.ts"), "export { value as helper } from 'mapped/subpath';\n")
+      File.write(File.join(directory, "src", "assets", "a.svg"), "<svg/>\n")
+      File.write(File.join(directory, "src", "assets", "b.svg"), "<svg/>\n")
+
+      graph = OpenChamberLockAudit::SourceGraph.new(
+        source_dir: directory,
+        configuration: {
+          "schema" => "openchamber-source-import-graph/v1",
+          "entrypoints" => ["src/entry.ts"],
+          "aliases" => { "@app" => "src" },
+          "package_aliases" => { "mapped" => "mapped-package" },
+          "extensions" => %w[.ts .svg]
+        }
+      ).run
+
+      assert_equal(%w[lazy-package mapped-package pkg], graph.fetch("package_roots").map { |record| record.fetch("name") })
+      assert_equal(4, graph.fetch("files").length)
+      assert_equal(%w[src/assets/a.svg src/assets/b.svg], graph.dig("globs", 0, "matches"))
+      assert_equal(true, graph.dig("validation", "literal_dynamic_imports_only"))
+    end
+  end
+
+  def test_openchamber_source_graph_rejects_nonliteral_dynamic_import
+    Dir.mktmpdir do |directory|
+      File.write(File.join(directory, "entry.ts"), "const name = 'module'; void import(name);\n")
+      graph = OpenChamberLockAudit::SourceGraph.new(
+        source_dir: directory,
+        configuration: {
+          "schema" => "openchamber-source-import-graph/v1",
+          "entrypoints" => ["entry.ts"],
+          "aliases" => {},
+          "extensions" => [".ts"]
+        }
+      )
+
+      error = assert_raises(Agentlab::Error) { graph.run }
+      assert_match(/nonliteral dynamic import in entry\.ts/, error.message)
+    end
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_reachability_overclaim
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    receipt_path = File.join(package.directory, dependencies.dig("source_closure_files", "selected_lock_audit"))
+    receipt = JSON.parse(File.read(receipt_path))
+
+    Dir.mktmpdir do |directory|
+      receipt.dig("validation")["source_import_reachability_verified"] = false
+      temporary_receipt = File.join(directory, "receipt.json")
+      File.write(temporary_receipt, JSON.pretty_generate(receipt) + "\n")
+      temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
+      temporary_dependencies.fetch("source_closure_files")["selected_lock_audit"] = "receipt.json"
+      temporary_dependencies.fetch("selected_lock_receipt")["sha256"] = Digest::SHA256.file(temporary_receipt).hexdigest
+      temporary_package = Struct.new(:name, :directory, :upstream, :data).new(
+        package.name,
+        directory,
+        package.upstream,
+        package.data
+      )
+
+      errors = Agentlab.validate_openchamber_selected_lock(temporary_package, temporary_dependencies)
+      assert_includes(errors, "openchamber: selected lock validation source_import_reachability_verified is not true")
+    end
+  end
+
   def test_rejects_invalid_jsonc
     error = assert_raises(Agentlab::Error) do
       Agentlab.parse_jsonc("{ /* unfinished", source: "fixture")

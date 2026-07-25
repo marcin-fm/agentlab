@@ -27,9 +27,9 @@ the derived closure and installed-runtime smoke must still prove that result.
 The draft remains blocked until:
 
 1. Fedora-source-built Bun `1.3.14` is available.
-2. The exact production, build, and test closure is selected from `bun.lock`,
-   acquired as immutable sources, and materialized without package-manager
-   resolution or lifecycle scripts during RPM phases.
+2. The exact selected package identities are acquired as immutable sources and
+   materialized without package-manager resolution or lifecycle scripts during
+   RPM phases.
 3. `better-sqlite3`, `node-pty`, `sherpa-onnx-node`, and every other
    native or platform payload are classified and rebuilt from source.
 4. Vite and PWA generated assets are rebuilt with corresponding-source proof.
@@ -49,8 +49,8 @@ Electron bundles, npm installs, or platform-native package binaries.
 
 `openchamber-1.16.3-selected-lock-audit.json` is generated directly from the
 released `bun.lock` by `scripts/audit-openchamber-lock-closure`; it performs no
-dependency resolution. For the Linux x86_64 glibc Node target it records 935
-selected packages: 221 runtime, 667 build, and 47 test records. All selected
+dependency resolution. For the Linux x86_64 glibc Node target it records 832
+selected packages: 221 runtime, 564 build, and 47 test records. All selected
 sources are registry records, 76 incompatible platform records are excluded,
 and the checked `@tanstack/virtual-core@3.17.3` patch is linked to its selected
 package record.
@@ -60,9 +60,17 @@ The receipt enforces the Node PTY boundary: `node-pty` is selected once and
 that the root, `packages/web`, and `packages/ui` dependency maps in `bun.lock`
 match their release manifests.
 
-This is not yet the authoritative closure. The lock omits the root importer
-version and reports `1.16.2` for both `packages/web` and `packages/ui`, while
-all three manifests report `1.16.3`. The current build selection also includes
-all `packages/ui` dependencies as a conservative source-alias boundary until
-exact Vite entrypoint reachability is proven. The receipt records both gates
-as false instead of normalizing or hiding them.
+The package-identity closure is authoritative for the selected release surface.
+The audit starts at the web, mobile, mini-chat, and PWA service-worker entries;
+resolves the exact Vite aliases, relative/static imports, literal dynamic
+imports, CSS imports, and Vite query suffixes; and expands the checked provider
+logo `import.meta.glob`. It reaches 845 local files and 59 direct package roots,
+then retains each selected root's complete transitive `bun.lock` closure.
+
+The lock still omits the root importer version and reports `1.16.2` for both
+`packages/web` and `packages/ui`, while all three manifests report `1.16.3`.
+Those original bytes and values remain visible. The receipt records an explicit
+package-identity normalization based only on exact dependency-map equality; it
+does not claim that upstream corrected the importer versions. Immutable source
+acquisition, native rebuilds, generated browser output, licenses, final binary
+inclusion, bundled Provides, and offline builds remain fail-closed.

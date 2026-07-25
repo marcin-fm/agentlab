@@ -5,12 +5,14 @@ require "digest"
 require "json"
 require "open3"
 require "optparse"
+require "pathname"
 require "set"
 require_relative "lib/agentlab"
 
 module OpenChamberLockAudit
   ROLE_RANK = { "test" => 0, "build" => 1, "runtime" => 2 }.freeze
   DEPENDENCY_GROUPS = %w[dependencies optionalDependencies peerDependencies].freeze
+  PARSED_SOURCE_EXTENSIONS = Set.new(%w[.cjs .css .js .jsx .mjs .ts .tsx]).freeze
 
   module_function
 
@@ -150,21 +152,245 @@ module OpenChamberLockAudit
     }
   end
 
-  def root_names(workspace, group, specification)
+  class SourceGraph
+    attr_reader :package_roots
+
+    def initialize(source_dir:, configuration:)
+      @source_dir = File.realpath(source_dir)
+      @configuration = configuration
+      @entrypoints = Array(configuration.fetch("entrypoints"))
+      @aliases = Hash(configuration.fetch("aliases")).sort_by { |name, _path| -name.length }
+      @package_aliases = Hash(configuration.fetch("package_aliases", {})).sort_by { |name, _package| -name.length }
+      @extensions = Array(configuration.fetch("extensions"))
+      @absolute_root = configuration.fetch("absolute_root", "")
+      @queue = []
+      @seen = Set.new
+      @files = {}
+      @package_usages = Hash.new { |hash, key| hash[key] = [] }
+      @globs = []
+      @package_roots = Set.new
+    end
+
+    def run
+      @entrypoints.each { |path| enqueue(resolve_entrypoint(path), importer: nil, specifier: path, kind: "entrypoint") }
+      process_queue until @queue.empty?
+
+      {
+        "schema" => @configuration.fetch("schema"),
+        "entrypoints" => @entrypoints.sort,
+        "aliases" => Hash[@aliases.sort],
+        "package_aliases" => Hash[@package_aliases.sort],
+        "files" => @files.values.sort_by { |record| record.fetch("path") },
+        "package_roots" => @package_usages.sort.map do |name, usages|
+          {
+            "name" => name,
+            "usages" => usages.uniq.sort_by { |usage| [usage.fetch("importer"), usage.fetch("specifier")] }
+          }
+        end,
+        "globs" => @globs.sort_by { |record| [record.fetch("importer"), record.fetch("pattern")] },
+        "validation" => {
+          "entrypoints_resolved" => true,
+          "local_imports_resolved" => true,
+          "literal_dynamic_imports_only" => true,
+          "literal_globs_only" => true,
+          "glob_matches_recorded" => true,
+          "source_files_hashed" => true
+        }
+      }
+    end
+
+    private
+
+    def resolve_entrypoint(path)
+      resolve_file(File.join(@source_dir, path), "entrypoint #{path.inspect}")
+    end
+
+    def process_queue
+      path = @queue.shift
+      return unless PARSED_SOURCE_EXTENSIONS.include?(File.extname(path))
+
+      content = File.read(path, mode: "r:BOM|UTF-8")
+      relative = relative_path(path)
+      specifiers = []
+
+      content.scan(/^[ \t]*import[ \t]*(['"])([^'"\n]+)\1/) { |_quote, specifier| specifiers << specifier }
+      content.scan(/^[ \t]*(?:import|export)\s+(?:type\s+)?(?:(?!;).)*?\bfrom\s*(['"])([^'"\n]+)\1/m) do |_quote, specifier|
+        specifiers << specifier
+      end
+
+      dynamic_calls = content.scan(/\bimport\s*\(/).length
+      dynamic_literals = content.scan(/\bimport\s*\(\s*(?:\/\*.*?\*\/\s*)?(['"])([^'"]+)\1\s*\)/m)
+      if dynamic_calls != dynamic_literals.length
+        raise Agentlab::Error, "nonliteral dynamic import in #{relative}"
+      end
+      dynamic_literals.each { |_quote, specifier| specifiers << specifier }
+
+      require_calls = content.scan(/\brequire\s*\(/).length
+      require_literals = content.scan(/\brequire\s*\(\s*(['"])([^'"]+)\1\s*\)/m)
+      if require_calls != require_literals.length
+        raise Agentlab::Error, "nonliteral require in #{relative}"
+      end
+      require_literals.each { |_quote, specifier| specifiers << specifier }
+
+      if File.extname(path) == ".css"
+        content.scan(/@import\s+(?:url\(\s*)?(['"])([^'"]+)\1/) { |_quote, specifier| specifiers << specifier }
+        content.scan(/url\(\s*(['"]?)([^)'"\s]+)\1\s*\)/) do |_quote, specifier|
+          specifiers << specifier if specifier.start_with?(".")
+        end
+      end
+
+      content.scan(/new\s+URL\s*\(\s*(['"])([^'"]+)\1\s*,\s*import\.meta\.url\s*\)/m) do |_quote, specifier|
+        specifiers << specifier
+      end
+
+      glob_calls = content.scan(/\bimport\.meta\.glob(?:<[^;()]*>)?\s*\(/m).length
+      glob_literals = content.scan(/\bimport\.meta\.glob(?:<[^;()]*>)?\s*\(\s*(['"])([^'"]+)\1/m)
+      if glob_calls != glob_literals.length
+        raise Agentlab::Error, "nonliteral import.meta.glob in #{relative}"
+      end
+      glob_literals.each { |_quote, pattern| expand_glob(path, pattern) }
+
+      specifiers.uniq.sort.each { |specifier| follow_specifier(path, specifier) }
+    end
+
+    def follow_specifier(importer, original_specifier)
+      specifier = original_specifier.split(/[?#]/, 2).first
+      return if specifier.empty? || specifier.start_with?("data:", "http:", "https:", "#")
+      return if specifier.start_with?("node:")
+
+      if (package_name = mapped_package(specifier))
+        record_package(package_name, importer, original_specifier)
+        return
+      end
+
+      if (local_path = aliased_local_path(specifier))
+        enqueue(resolve_file(local_path, "#{original_specifier.inspect} from #{relative_path(importer)}"), importer: importer, specifier: original_specifier)
+        return
+      end
+
+      if specifier.start_with?(".")
+        enqueue(resolve_file(File.expand_path(specifier, File.dirname(importer)), "#{original_specifier.inspect} from #{relative_path(importer)}"), importer: importer, specifier: original_specifier)
+      elsif specifier.start_with?("/")
+        enqueue(resolve_file(File.join(@source_dir, @absolute_root, specifier.delete_prefix("/")), "#{original_specifier.inspect} from #{relative_path(importer)}"), importer: importer, specifier: original_specifier)
+      elsif specifier.match?(/\A(?:[A-Za-z0-9_.-]+|@[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)(?:\/.*)?\z/)
+        record_package(package_root(specifier), importer, original_specifier)
+      else
+        raise Agentlab::Error, "unsupported import #{original_specifier.inspect} in #{relative_path(importer)}"
+      end
+    end
+
+    def mapped_package(specifier)
+      @package_aliases.each do |name, package_name|
+        return package_name if specifier == name || specifier.start_with?("#{name}/")
+      end
+      nil
+    end
+
+    def aliased_local_path(specifier)
+      @aliases.each do |name, replacement|
+        next unless specifier == name || specifier.start_with?("#{name}/")
+
+        suffix = specifier.delete_prefix(name).delete_prefix("/")
+        return File.join(@source_dir, replacement, suffix)
+      end
+      nil
+    end
+
+    def package_root(specifier)
+      segments = specifier.split("/")
+      specifier.start_with?("@") ? segments.first(2).join("/") : segments.first
+    end
+
+    def record_package(name, importer, specifier)
+      @package_roots << name
+      @package_usages[name] << {
+        "importer" => relative_path(importer),
+        "specifier" => specifier
+      }
+    end
+
+    def expand_glob(importer, pattern)
+      unless pattern.start_with?(".")
+        raise Agentlab::Error, "import.meta.glob pattern must be relative in #{relative_path(importer)}: #{pattern.inspect}"
+      end
+
+      absolute_pattern = File.expand_path(pattern, File.dirname(importer))
+      ensure_inside_source!(absolute_pattern, "glob #{pattern.inspect}")
+      matches = Dir.glob(absolute_pattern, File::FNM_EXTGLOB).select { |path| File.file?(path) }.sort
+      raise Agentlab::Error, "import.meta.glob has no matches in #{relative_path(importer)}: #{pattern.inspect}" if matches.empty?
+
+      matches.each { |path| enqueue(path, importer: importer, specifier: pattern, kind: "glob_match") }
+      @globs << {
+        "importer" => relative_path(importer),
+        "pattern" => pattern,
+        "matches" => matches.map { |path| relative_path(path) }
+      }
+    end
+
+    def resolve_file(base, description)
+      candidates = [base]
+      extension = File.extname(base)
+      if extension.empty? || !@extensions.include?(extension)
+        @extensions.each { |candidate_extension| candidates << "#{base}#{candidate_extension}" }
+        @extensions.each { |candidate_extension| candidates << File.join(base, "index#{candidate_extension}") }
+      elsif %w[.js .jsx .mjs .cjs].include?(extension)
+        stem = base.delete_suffix(extension)
+        %w[.ts .tsx].each { |candidate_extension| candidates << "#{stem}#{candidate_extension}" }
+      end
+      resolved = candidates.find { |candidate| File.file?(candidate) }
+      raise Agentlab::Error, "cannot resolve local source #{description}" unless resolved
+
+      real = File.realpath(resolved)
+      ensure_inside_source!(real, description)
+      real
+    end
+
+    def enqueue(path, importer:, specifier:, kind: "import")
+      real = File.realpath(path)
+      ensure_inside_source!(real, specifier.inspect)
+      relative = relative_path(real)
+      unless @files.key?(relative)
+        @files[relative] = {
+          "path" => relative,
+          "sha256" => Digest::SHA256.file(real).hexdigest,
+          "kind" => kind
+        }
+      end
+      return if @seen.include?(real)
+
+      @seen << real
+      @queue << real
+    end
+
+    def ensure_inside_source!(path, description)
+      expanded = File.expand_path(path)
+      return if expanded == @source_dir || expanded.start_with?("#{@source_dir}/")
+
+      raise Agentlab::Error, "source path escapes checkout for #{description}: #{expanded}"
+    end
+
+    def relative_path(path)
+      Pathname.new(path).relative_path_from(Pathname.new(@source_dir)).to_s
+    end
+  end
+
+  def root_names(workspace, group, specification, source_package_roots: Set.new)
     available = Hash(workspace[group])
     names = case specification
             when Array
               specification
             when Hash
-              unless specification["include"] == "all"
-                raise Agentlab::Error, "dependency root #{group} must be an array or use include: all"
-              end
-
               excluded = Array(specification["exclude"])
               missing = excluded - available.keys
               raise Agentlab::Error, "excluded #{group} roots are absent: #{missing.sort.inspect}" if missing.any?
-
-              available.keys - excluded
+              case specification["include"]
+              when "all"
+                available.keys - excluded
+              when "source_reachable"
+                (available.keys & source_package_roots.to_a) - excluded
+              else
+                raise Agentlab::Error, "dependency root #{group} must be an array or use include: all/source_reachable"
+              end
             else
               raise Agentlab::Error, "invalid dependency root selection for #{group}"
             end
@@ -406,6 +632,12 @@ module OpenChamberLockAudit
             "workspace version mismatches differ: expected #{deep_sort(expected_mismatches).inspect}, got #{deep_sort(observed_mismatches).inspect}"
     end
 
+    source_graph = SourceGraph.new(
+      source_dir: source_dir,
+      configuration: selection.fetch("source_import_graph")
+    ).run
+    source_package_roots = Set.new(source_graph.fetch("package_roots").map { |record| record.fetch("name") })
+
     policy_exclusions = Array(selection.fetch("policy_exclusions"))
     exclusion_index = policy_exclusions.to_h do |record|
       key = [record.fetch("workspace"), record.fetch("dependency_group"), record.fetch("name")]
@@ -428,7 +660,7 @@ module OpenChamberLockAudit
             key = [workspace_path, group, name]
             raise Agentlab::Error, "missing policy exclusion for #{key.inspect}" unless exclusion_index.key?(key)
           end
-          root_names(workspace, group, specification).each do |dependency_name|
+          root_names(workspace, group, specification, source_package_roots: source_package_roots).each do |dependency_name|
             selector.select_root(
               workspace_path: workspace_path,
               dependency_group: group,
@@ -445,6 +677,11 @@ module OpenChamberLockAudit
           end
         end
       end
+    end
+    selected_root_names = root_records.map { |record| record.fetch("dependency_name") }.to_set
+    uncovered_source_roots = source_package_roots - selected_root_names
+    if uncovered_source_roots.any?
+      raise Agentlab::Error, "source-import package roots are not selected lock roots: #{uncovered_source_roots.to_a.sort.inspect}"
     end
     selector.run
 
@@ -585,6 +822,13 @@ module OpenChamberLockAudit
       },
       "manifests" => manifest_records.sort_by { |record| record.fetch("workspace_path") },
       "known_workspace_version_mismatches" => observed_mismatches,
+      "workspace_version_normalization" => {
+        "method" => "manifest_dependency_map_equivalence",
+        "original_lock_versions_preserved" => true,
+        "accepted_for_selected_package_identity" => true,
+        "records" => observed_mismatches
+      },
+      "source_import_graph" => source_graph,
       "roots" => root_records.sort_by { |record| [record.fetch("workspace_path"), record.fetch("dependency_group"), record.fetch("dependency_name"), record.fetch("role")] },
       "workspaces" => workspace_records,
       "packages" => package_records,
@@ -599,9 +843,10 @@ module OpenChamberLockAudit
         "manifest_dependency_groups_match" => true,
         "workspace_versions_match" => observed_mismatches.empty?,
         "known_workspace_version_mismatches_match" => true,
+        "workspace_version_metadata_normalized" => true,
         "node_runtime_exclusions_enforced" => true,
-        "source_import_reachability_verified" => false,
-        "authoritative_closure_verified" => false,
+        "source_import_reachability_verified" => true,
+        "authoritative_closure_verified" => true,
         "source_archives_verified" => false,
         "licenses_verified" => false,
         "binary_inclusion_verified" => false,

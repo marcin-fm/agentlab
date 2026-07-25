@@ -539,6 +539,90 @@ module Agentlab
       ["# END GENERATED BUNDLED NODE PROVIDES"]).join("\n")
   end
 
+  def validate_openchamber_selected_lock(package, dependencies)
+    return [] unless package.name == "openchamber"
+
+    errors = []
+    metadata = dependencies.fetch("selected_lock_receipt")
+    filename = dependencies.dig("source_closure_files", "selected_lock_audit")
+    path = filename.is_a?(String) && File.join(package.directory, filename)
+    unless path && File.file?(path)
+      return ["openchamber: selected lock receipt is missing: #{filename.inspect}"]
+    end
+
+    expected_sha256 = metadata.fetch("sha256")
+    actual_sha256 = Digest::SHA256.file(path).hexdigest
+    errors << "openchamber: selected lock receipt SHA-256 mismatch" unless expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && actual_sha256 == expected_sha256
+
+    receipt = JSON.parse(File.read(path))
+    errors << "openchamber: selected lock receipt schema mismatch" unless receipt["schema"] == "openchamber-selected-lock-audit/v2" && metadata["schema"] == receipt["schema"]
+    errors << "openchamber: selected lock receipt release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
+    errors << "openchamber: selected lock receipt source tag mismatch" unless receipt["source_tag"] == package.upstream.fetch("source_tag")
+    errors << "openchamber: selected lock receipt source commit mismatch" unless receipt["source_commit"] == package.upstream.fetch("source_commit")
+    errors << "openchamber: selected lock receipt lock SHA-256 mismatch" unless receipt.dig("lockfile", "sha256") == metadata["lock_sha256"]
+
+    expected_counts = {
+      "selected_workspaces" => receipt.dig("selection", "selected_workspaces"),
+      "selected_packages" => receipt.dig("selection", "selected_packages"),
+      "runtime_packages" => receipt.dig("selection", "roles", "runtime"),
+      "build_packages" => receipt.dig("selection", "roles", "build"),
+      "test_packages" => receipt.dig("selection", "roles", "test"),
+      "registry_packages" => receipt.dig("selection", "origins", "registry"),
+      "github_packages" => receipt.dig("selection", "origins", "github"),
+      "platform_excluded" => receipt.dig("selection", "platform_excluded"),
+      "policy_excluded" => receipt.dig("selection", "policy_excluded"),
+      "source_import_files" => Array(receipt.dig("source_import_graph", "files")).length,
+      "source_import_package_roots" => Array(receipt.dig("source_import_graph", "package_roots")).length,
+      "source_import_globs" => Array(receipt.dig("source_import_graph", "globs")).length
+    }
+    expected_counts.each do |field, value|
+      errors << "openchamber: selected lock receipt #{field} mismatch" unless metadata[field] == value
+    end
+
+    source_policy = package.data.fetch("source_policy")
+    errors << "openchamber: package selected-lock count mismatch" unless source_policy["selected_lock_packages"] == metadata["selected_packages"]
+    errors << "openchamber: package runtime count mismatch" unless source_policy["selected_runtime_packages"] == metadata["runtime_packages"]
+    errors << "openchamber: package build count mismatch" unless source_policy["selected_build_packages"] == metadata["build_packages"]
+    errors << "openchamber: package test count mismatch" unless source_policy["selected_test_packages"] == metadata["test_packages"]
+    errors << "openchamber: package source-import file count mismatch" unless source_policy["source_import_files"] == metadata["source_import_files"]
+    errors << "openchamber: package source-import root count mismatch" unless source_policy["source_import_package_roots"] == metadata["source_import_package_roots"]
+    errors << "openchamber: package does not mark selected lock authoritative" unless source_policy["selected_lock_authoritative"] == true
+
+    normalization = receipt.fetch("workspace_version_normalization")
+    errors << "openchamber: workspace version normalization method mismatch" unless normalization["method"] == "manifest_dependency_map_equivalence"
+    errors << "openchamber: workspace version normalization rewrites lock values" unless normalization["original_lock_versions_preserved"] == true
+    errors << "openchamber: workspace version normalization is not limited to package identity" unless normalization["accepted_for_selected_package_identity"] == true
+    errors << "openchamber: workspace version normalization records mismatch" unless normalization["records"] == receipt["known_workspace_version_mismatches"]
+
+    source_graph = receipt.fetch("source_import_graph")
+    errors << "openchamber: source-import graph schema mismatch" unless source_graph["schema"] == "openchamber-source-import-graph/v1"
+    files = Array(source_graph["files"])
+    roots = Array(source_graph["package_roots"])
+    errors << "openchamber: source-import files are not sorted or unique" unless files.map { |record| record["path"] } == files.map { |record| record["path"] }.sort.uniq
+    errors << "openchamber: source-import package roots are not sorted or unique" unless roots.map { |record| record["name"] } == roots.map { |record| record["name"] }.sort.uniq
+    files.each do |record|
+      source_path = record["path"]
+      errors << "openchamber: invalid source-import path #{source_path.inspect}" unless source_path.is_a?(String) && !source_path.empty? && !Pathname.new(source_path).absolute? && !Pathname.new(source_path).each_filename.include?("..")
+      errors << "openchamber: invalid source-import SHA-256 for #{source_path.inspect}" unless record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+    %w[entrypoints_resolved local_imports_resolved literal_dynamic_imports_only literal_globs_only glob_matches_recorded source_files_hashed].each do |flag|
+      errors << "openchamber: source-import validation #{flag} is not true" unless source_graph.dig("validation", flag) == true
+    end
+
+    validation = receipt.fetch("validation")
+    %w[source_identity_verified manifest_dependency_groups_match known_workspace_version_mismatches_match workspace_version_metadata_normalized node_runtime_exclusions_enforced source_import_reachability_verified authoritative_closure_verified].each do |flag|
+      errors << "openchamber: selected lock validation #{flag} is not true" unless validation[flag] == true
+    end
+    errors << "openchamber: selected lock incorrectly claims matching workspace versions" unless validation["workspace_versions_match"] == false
+    %w[source_archives_verified licenses_verified binary_inclusion_verified bundled_provides_generated].each do |flag|
+      errors << "openchamber: selected lock overclaims #{flag}" unless validation[flag] == false
+    end
+
+    errors
+  rescue JSON::ParserError, KeyError, TypeError => e
+    ["openchamber: invalid selected lock evidence: #{e.message}"]
+  end
+
   def validate_rust_v8_evidence(package, dependencies, spec)
     return [] unless package.name == "rust-v8"
 

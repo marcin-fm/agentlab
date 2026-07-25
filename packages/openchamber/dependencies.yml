@@ -22,10 +22,10 @@ current_lock_snapshot:
   sha256: 19113bdcdfd6babb0a2966fbf6d9bdfd56c13bc7ca312adb6723bb0eb445c881
   workspace_records: 6
   package_records: 1892
-  selected_production_closure: false
-  note: The selected receipt is deterministic but not authoritative while workspace versions are stale and UI source-import reachability is unverified.
+  selected_production_closure: true
+  note: The selected package-identity closure is authoritative after fail-closed source-import traversal; immutable source acquisition and offline materialization remain separate gates.
 selected_lock_audit:
-  schema: openchamber-selected-lock-audit/v1
+  schema: openchamber-selected-lock-audit/v2
   target:
     os: linux
     cpu: x64
@@ -34,7 +34,7 @@ selected_lock_audit:
     runtime: packages/web Node CLI and local server
     browser_build: packages/web Vite and PWA output with packages/ui source aliases
     validation: packages/web Vitest suite and web/UI TypeScript inputs
-    ui_root_strategy: all packages/ui dependencies until source-import reachability is proven
+    ui_root_strategy: fail-closed browser/PWA source-import reachability
   manifest_dependency_groups:
   - dependencies
   - devDependencies
@@ -55,6 +55,31 @@ selected_lock_audit:
       lock: 1.16.2
       manifest: 1.16.3
       release: 1.16.3
+  source_import_graph:
+    schema: openchamber-source-import-graph/v1
+    absolute_root: packages/web
+    entrypoints:
+    - packages/web/src/main.tsx
+    - packages/web/src/mobile-main.tsx
+    - packages/web/src/mini-chat-main.tsx
+    - packages/web/src/sw.ts
+    aliases:
+      "@openchamber/ui": packages/ui/src
+      "@web": packages/web/src
+      "@": packages/ui/src
+    package_aliases:
+      "@opencode-ai/sdk/v2": "@opencode-ai/sdk"
+      "virtual:pwa-register": vite-plugin-pwa
+    extensions:
+    - .ts
+    - .tsx
+    - .js
+    - .jsx
+    - .mjs
+    - .cjs
+    - .css
+    - .json
+    - .svg
   dependency_roots:
     runtime:
       packages/web:
@@ -69,7 +94,7 @@ selected_lock_audit:
         - babel-plugin-react-compiler
       packages/ui:
         dependencies:
-          include: all
+          include: source_reachable
       packages/web:
         devDependencies:
         - "@base-ui/react"
@@ -121,18 +146,21 @@ selected_lock_audit:
     "@tanstack/virtual-core@3.17.3": bun-patches/@tanstack+virtual-core+3.17.3.patch
   git_sources: {}
 selected_lock_receipt:
-  schema: openchamber-selected-lock-audit/v1
-  sha256: a614f5dfae6194abf2d63be7c02a61b82deac8418df3574ff29895247e09b7f4
+  schema: openchamber-selected-lock-audit/v2
+  sha256: 649c0734f1a68aca4a832e32c8906824e1ccd8fb9fa78287236eaff83fb808cc
   lock_sha256: 19113bdcdfd6babb0a2966fbf6d9bdfd56c13bc7ca312adb6723bb0eb445c881
   selected_workspaces: 3
-  selected_packages: 935
+  selected_packages: 832
   runtime_packages: 221
-  build_packages: 667
+  build_packages: 564
   test_packages: 47
-  registry_packages: 935
+  registry_packages: 832
   github_packages: 0
   platform_excluded: 76
   policy_excluded: 1
+  source_import_files: 845
+  source_import_package_roots: 59
+  source_import_globs: 1
   source_identity:
     method: clean_git_checkout
     commit: 8040d43b251a015eb06d96135a442abd4d2f2e27
@@ -144,9 +172,10 @@ selected_lock_receipt:
     manifest_dependency_groups_match: true
     workspace_versions_match: false
     known_workspace_version_mismatches_match: true
+    workspace_version_metadata_normalized: true
     node_runtime_exclusions_enforced: true
-    source_import_reachability_verified: false
-    authoritative_closure_verified: false
+    source_import_reachability_verified: true
+    authoritative_closure_verified: true
 closure_audit:
   audited_release:
   production_build_sources_verified: false
