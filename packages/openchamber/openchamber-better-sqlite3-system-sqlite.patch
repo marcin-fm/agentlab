@@ -1,0 +1,64 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Link better-sqlite3 with system SQLite
+
+Fedora-specific: upstream issue #855 tracks a build-time dynamic-linking
+option, but release 12.10.0 still supports only bundled or custom amalgamation
+sources. Preserve that default and add an explicit system-library mode.
+
+--- a/deps/common.gypi
++++ b/deps/common.gypi
+@@ -4,7 +4,12 @@
+ # ===
+ 
+ {
+-  'variables': { 'sqlite3%': '' },
++  'variables': {
++    'sqlite3%': '',
++    'system_sqlite3%': 0,
++    'sqlite3_include_dir%': '/usr/include',
++    'sqlite3_lib%': 'sqlite3',
++  },
+   'target_defaults': {
+     'default_configuration': 'Release',
+     'msvs_settings': {
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -7,7 +7,6 @@
+   'targets': [
+     {
+       'target_name': 'better_sqlite3',
+-      'dependencies': ['deps/sqlite3.gyp:sqlite3'],
+       'sources': ['src/better_sqlite3.cpp'],
+       'cflags_cc': ['-std=c++20'],
+       'xcode_settings': {
+@@ -21,6 +20,13 @@
+         },
+       },
+       'conditions': [
++        ['system_sqlite3 == 0', {
++          'dependencies': ['deps/sqlite3.gyp:sqlite3'],
++        }, {
++          'include_dirs': ['<(sqlite3_include_dir)'],
++          'libraries': ['-l<(sqlite3_lib)'],
++          'defines': ['SQLITE_ENABLE_COLUMN_METADATA'],
++        }],
+         ['OS=="linux"', {
+           'ldflags': [
+             '-Wl,-Bsymbolic',
+@@ -31,8 +37,14 @@
+     },
+     {
+       'target_name': 'test_extension',
+-      'dependencies': ['deps/sqlite3.gyp:sqlite3'],
+-      'conditions': [['sqlite3 == ""', { 'sources': ['deps/test_extension.c'] }]],
++      'conditions': [
++        ['system_sqlite3 == 0', {
++          'dependencies': ['deps/sqlite3.gyp:sqlite3'],
++          'conditions': [['sqlite3 == ""', { 'sources': ['deps/test_extension.c'] }]],
++        }, {
++          'type': 'none',
++        }],
++      ],
+     },
+   ],
+ }

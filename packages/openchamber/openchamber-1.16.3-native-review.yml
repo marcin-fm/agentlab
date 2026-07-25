@@ -11,6 +11,9 @@ receipts:
   source_materialization:
     path: openchamber-1.16.3-source-materialization.json
     sha256: 48b3a061404f3f362a333d6b3e57d04af8bba450361c2de4c6589d7079632d9c
+  better_sqlite3_proof:
+    path: openchamber-1.16.3-better-sqlite3-proof.json
+    sha256: 3ceb20e4fb4fd8dbcf3afa77f0add02e3bcf336663672b237ae570c73d1e4c97
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -32,6 +35,7 @@ status:
   retained_prebuilt_payloads: 0
   source_mappings_verified: 6
   source_mappings_unresolved: 8
+  reproducible_builds_completed: 1
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
@@ -101,8 +105,9 @@ components:
       executable_payloads: { count: 1, paths_sha256: d5c47e4f5168bd0d7116d93314c647dbd688440ad121aa41bccb31fcf25de6cb }
       native_source_paths: { count: 30, paths_sha256: 3875791c0e52cc8e2d0a662f1c8aafe4febcb2ffd0bddf992e8efd05e89e0a54 }
       lifecycle_scripts_sha256: 13970a42f5c3037247d0f5f3c1baf5640f183e2a65d2c3f9e996f6c42a4631af
-    mapping: { kind: same_archive_rebuild, source_package: better-sqlite3@12.10.0 }
-    decision: { action: rebuild_same_archive, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
+    mapping: { kind: same_archive_rebuild, source_package: better-sqlite3@12.10.0, system_library: "sqlite 3.51.2", node_abi: "137" }
+    proof: { path: openchamber-1.16.3-better-sqlite3-proof.json }
+    decision: { action: rebuild_same_archive, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: true }
   - package: "ghostty-web@0.4.0"
     audit:
       native_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }

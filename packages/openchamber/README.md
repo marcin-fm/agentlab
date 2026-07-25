@@ -122,5 +122,7 @@ candidates, and retains `node-addon-api` only as build support. Five platform
 companions still need exact source builds; Agentlab's esbuild `0.28.1` provider
 does not satisfy selected `0.27.3`. Three generated WASM inputs still need exact
 subordinate source correspondence. No prebuilt payload is approved, eight
-source mappings remain unresolved, and every native/WASM reproducible-build
-claim remains false.
+source mappings remain unresolved. `better-sqlite3 12.10.0` now rebuilds twice
+byte-identically for Node 24 ABI 137 against Fedora SQLite 3.51.2, with no
+prebuild download or bundled SQLite linkage; every other native/WASM rebuild
+and final OpenChamber inclusion claim remains false.

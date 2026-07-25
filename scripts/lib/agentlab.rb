@@ -867,7 +867,9 @@ module Agentlab
       errors << "openchamber: native review action is invalid for #{identity}" unless allowed_actions.include?(component.dig("decision", "action"))
       errors << "openchamber: native review retains a prebuilt payload for #{identity}" unless component.dig("decision", "retain_prebuilt_payloads") == false
       errors << "openchamber: native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
-      errors << "openchamber: native review reproducibility state is missing for #{identity}" unless component.dig("decision", "reproducible_build_verified") == false
+      reproducible = component.dig("decision", "reproducible_build_verified")
+      errors << "openchamber: native review reproducibility state is missing for #{identity}" unless [true, false].include?(reproducible)
+      errors << "openchamber: native review overclaims a reproducible build for #{identity}" if reproducible == true && identity != "better-sqlite3@12.10.0"
     end
 
     expected_groups = {
@@ -896,6 +898,23 @@ module Agentlab
     esbuild = components.find { |component| component["package"] == "@esbuild/linux-x64@0.27.3" }
     errors << "openchamber: native review accepts a version-different esbuild provider" unless esbuild&.dig("mapping", "available_system_provider") == "golang-github-evanw-esbuild-0.28.1" && esbuild&.dig("mapping", "system_provider_exact") == false
 
+    better = components.find { |component| component["package"] == "better-sqlite3@12.10.0" }
+    proof_filename = dependencies.dig("source_closure_files", "better_sqlite3_proof")
+    proof_path = proof_filename.is_a?(String) && File.join(package.directory, proof_filename)
+    if proof_path && File.file?(proof_path)
+      proof_sha256 = Digest::SHA256.file(proof_path).hexdigest
+      proof = JSON.parse(File.read(proof_path))
+      errors << "openchamber: better-sqlite3 proof path mismatch" unless better&.dig("proof", "path") == proof_filename && review.dig("receipts", "better_sqlite3_proof", "path") == proof_filename
+      errors << "openchamber: better-sqlite3 proof SHA-256 mismatch" unless review.dig("receipts", "better_sqlite3_proof", "sha256") == proof_sha256
+      errors << "openchamber: better-sqlite3 proof identity mismatch" unless proof["schema"] == "openchamber-better-sqlite3-proof/v1" && proof["package"] == "better-sqlite3@12.10.0"
+      errors << "openchamber: better-sqlite3 patch mismatch" unless proof.dig("patch", "sha256") == Digest::SHA256.file(File.join(package.directory, proof.dig("patch", "path"))).hexdigest
+      errors << "openchamber: better-sqlite3 build contract mismatch" unless proof.dig("build", "node_module_abi") == "137" && proof.dig("build", "sqlite_version") == "3.51.2" && proof.dig("build", "system_sqlite") == true && proof.dig("build", "bundled_sqlite_compiled") == false && proof.dig("build", "first_sha256") == proof.dig("build", "second_sha256") && Array(proof.dig("build", "needed")).include?("libsqlite3.so.0")
+      errors << "openchamber: better-sqlite3 runtime proof is incomplete" unless proof.fetch("runtime_smoke").values.all?(true) && proof.dig("validation", "two_builds_byte_identical") == true && proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: better-sqlite3 review state mismatch" unless better.dig("decision", "reproducible_build_verified") == true
+    else
+      errors << "openchamber: better-sqlite3 proof is unavailable"
+    end
+
     expected_scope = {
       "component_identities" => sources.length,
       "native_source_records" => sources.count { |source| Array(source["native_source_paths"]).any? },
@@ -916,7 +935,8 @@ module Agentlab
       "build_support_sources" => 1,
       "retained_prebuilt_payloads" => 0,
       "source_mappings_verified" => components.count { |component| component.dig("decision", "source_mapping_verified") == true },
-      "source_mappings_unresolved" => components.count { |component| component.dig("decision", "source_mapping_verified") == false }
+      "source_mappings_unresolved" => components.count { |component| component.dig("decision", "source_mapping_verified") == false },
+      "reproducible_builds_completed" => components.count { |component| component.dig("decision", "reproducible_build_verified") == true }
     }
     expected_status.each do |key, value|
       errors << "openchamber: native review status #{key} mismatch" unless review.dig("status", key) == value && metadata[key] == value
@@ -933,6 +953,7 @@ module Agentlab
     errors << "openchamber: package native review SHA-256 mismatch" unless source_policy["native_review_sha256"] == actual_sha256
     errors << "openchamber: package native component count mismatch" unless source_policy["native_components_classified"] == sources.length
     errors << "openchamber: package unresolved native mapping count mismatch" unless source_policy["native_source_mappings_unresolved"] == expected_status["source_mappings_unresolved"]
+    errors << "openchamber: package reproducible native build count mismatch" unless source_policy["native_reproducible_builds_completed"] == expected_status["reproducible_builds_completed"]
     errors
   rescue JSON::ParserError, KeyError, TypeError => e
     ["openchamber: invalid native review evidence: #{e.message}"]

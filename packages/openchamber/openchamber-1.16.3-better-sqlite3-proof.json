@@ -1,0 +1,48 @@
+{
+  "schema": "openchamber-better-sqlite3-proof/v1",
+  "release": "1.16.3",
+  "package": "better-sqlite3@12.10.0",
+  "source": {
+    "integrity": "sha512-CyzaZRQKyHkB2ZInfTTl2nvT33EbDpjkLEbE8/Zck3Ll6O0qr6uGdrJ45HgtH+HykRg88ITY3AdreBGN70aBSQ==",
+    "archive_sha256": "842b801ef782c40b05c8a6de22d264bf3f5a57ba62c1f1ae74fc2e6854530e59",
+    "upstream_tag_commit": "d8885f900cb626596e28a0ecd1b9d35bf15c7a0b",
+    "dynamic_link_issue": "https://github.com/WiseLibs/better-sqlite3/issues/855"
+  },
+  "patch": {
+    "path": "openchamber-better-sqlite3-system-sqlite.patch",
+    "sha256": "f58e08816c9e0e65cf91bfc917bb1d2abf34f4daf0cbfec7bee4943c5e8612ce",
+    "upstream_status": "fedora-specific; upstream issue remains open"
+  },
+  "build": {
+    "network_isolated": true,
+    "lifecycle_scripts_executed": false,
+    "prebuild_download_executed": false,
+    "node_version": "24.13.1",
+    "node_module_abi": "137",
+    "sqlite_version": "3.51.2",
+    "system_sqlite": true,
+    "bundled_sqlite_compiled": false,
+    "output_size": 144056,
+    "first_sha256": "80a228459ddc6700dc20866b8a11415f9c38e2dbeff4ed359b8b471de23ca389",
+    "second_sha256": "80a228459ddc6700dc20866b8a11415f9c38e2dbeff4ed359b8b471de23ca389",
+    "needed": ["libsqlite3.so.0", "libstdc++.so.6", "libm.so.6", "libgcc_s.so.1", "libc.so.6"],
+    "rpath_or_runpath": false
+  },
+  "runtime_smoke": {
+    "crud": true,
+    "json1": true,
+    "fts5": true,
+    "column_metadata": true,
+    "serialize": true
+  },
+  "validation": {
+    "source_identity_verified": true,
+    "patch_applied": true,
+    "two_builds_byte_identical": true,
+    "node_abi_bound": true,
+    "system_sqlite_linkage_verified": true,
+    "runtime_smoke_verified": true,
+    "rpm_build_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}

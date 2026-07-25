@@ -4,7 +4,7 @@
 
 Name:           openchamber
 Version:        1.16.3
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -14,12 +14,12 @@ URL:            https://github.com/openchamber/openchamber
 Source0:        https://github.com/openchamber/openchamber/archive/refs/tags/v%{version}.tar.gz
 
 BuildRequires:  bun = 1.3.14
-BuildRequires:  nodejs >= 22
-BuildRequires:  nodejs-devel
+BuildRequires:  nodejs24
+BuildRequires:  nodejs24-devel
 BuildRequires:  python3
 BuildRequires:  tar
 BuildRequires:  zstd
-Requires:       nodejs >= 22
+Requires:       nodejs24
 Requires:       opencode
 
 # Add the final private application closure only after its generated sources
@@ -42,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.6
+- Prove a reproducible better-sqlite3 rebuild against Fedora system SQLite.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.5
 - Classify native, WASM, and executable payloads while retaining fail-closed rebuild gates.
 
