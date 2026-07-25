@@ -1900,6 +1900,67 @@ module Agentlab
     errors << "bun: invalid dependency-closure proof receipt: #{e.message}"
   end
 
+  def validate_bun_npm_offline_install(package, dependency_stage, version)
+    return [] unless package.name == "bun" && dependency_stage.is_a?(Hash)
+    return [] unless dependency_stage.key?("npm_offline_install_verified") || dependency_stage.key?("unique_npm_source_archives")
+
+    receipt_name = dependency_stage["npm_install_proof_receipt"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_sha256 = dependency_stage["npm_install_proof_receipt_sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: npm-install proof receipt is missing or has wrong SHA-256"]
+    end
+
+    errors = []
+    receipt = JSON.parse(File.read(receipt_path))
+    errors << "bun: unsupported npm-install proof receipt schema" unless receipt["schema"] == "bun-npm-offline-install-proof/v1"
+    errors << "bun: npm-install proof package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: npm-install proof release mismatch" unless receipt["release"].to_s == version
+    errors << "bun: npm-install proof target mismatch" unless receipt["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+
+    closure = receipt["source_closure"] || {}
+    errors << "bun: npm-install proof source-closure path mismatch" unless closure["path"] == dependency_stage["proof_receipt"]
+    errors << "bun: npm-install proof source-closure SHA-256 mismatch" unless closure["sha256"] == dependency_stage["proof_receipt_sha256"]
+    errors << "bun: npm-install proof Bun source mismatch" unless closure["bun_source_archive_sha256"] == package.upstream["source_sha256"]
+
+    cache = receipt["cache"] || {}
+    errors << "bun: npm-install proof source count mismatch" unless cache["source_archives"] == dependency_stage["unique_npm_source_archives"]
+    errors << "bun: npm-install proof cache count mismatch" unless cache["materialized_entries"] == dependency_stage["npm_cache_entries"]
+    errors << "bun: npm-install proof cache source split mismatch" unless cache["registry_archives"].to_i + cache["github_archives"].to_i == cache["source_archives"]
+    errors << "bun: npm-install proof cache tree mismatch" unless cache.dig("tree", "sha256") == dependency_stage["npm_cache_tree_sha256"]
+
+    install = receipt["install"] || {}
+    install_controls = %w[network_namespace frozen_lockfile ignore_scripts serialized]
+    errors << "bun: npm-install proof install controls are incomplete" unless install_controls.all? { |key| install[key] == true }
+    expected_roots = [[".", "bun"], ["packages/bun-error", "bun-error"], ["src/node-fallbacks", "fallbacks"]]
+    install_roots = Array(install["install_roots"])
+    errors << "bun: npm-install proof root set mismatch" unless install_roots.map { |root| root.is_a?(Hash) ? [root["path"], root["package_name"]] : nil } == expected_roots
+    valid_roots = install_roots.all? do |root|
+      node_modules = root.is_a?(Hash) && root["node_modules"]
+      node_modules.is_a?(Hash) && node_modules["entries"].is_a?(Integer) && node_modules["entries"].positive? &&
+        node_modules["files"].is_a?(Integer) && node_modules["files"].positive? &&
+        node_modules["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+    errors << "bun: npm-install proof root inventories are invalid" unless valid_roots
+
+    stage_claims = %w[
+      npm_cache_materialization_verified npm_offline_install_verified
+      npm_frozen_lockfile_verified npm_ignore_scripts_verified
+      npm_network_namespace_verified
+    ]
+    errors << "bun: npm-install stage metadata is incomplete" unless stage_claims.all? { |key| dependency_stage[key] == true }
+    validation = receipt["validation"] || {}
+    required_validation = %w[source_files_unchanged seed_absent_from_node_modules npm_cache_materialization_verified npm_offline_install_verified]
+    errors << "bun: npm-install proof validation is incomplete" unless required_validation.all? { |key| validation[key] == true }
+    errors << "bun: npm-install proof overclaims complete Bun materialization" unless validation["complete_bun_offline_materialization_verified"] == false
+    errors << "bun: npm-install proof incorrectly claims dependency resolution" unless validation["dependency_resolution_performed"] == false
+    errors << "bun: npm-install proof incorrectly claims a full Bun build" unless validation["full_bun_build_performed"] == false
+    errors
+  rescue JSON::ParserError => e
+    ["bun: invalid npm-install proof receipt: #{e.message}"]
+  end
+
   def validate_bun_source_delivery(package, stage, dependency_stage, version, spec)
     return [] unless package.name == "bun" && stage.is_a?(Hash) && stage["state"] == "verified"
 
@@ -2715,6 +2776,7 @@ module Agentlab
     errors.concat(validate_bun_minimized_webkit_source(package, webkit, version, spec))
 
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
+    errors.concat(validate_bun_npm_offline_install(package, stages["dependency_closure"], version))
     errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
     errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
     errors.concat(validate_bun_dependency_staging(package, stages["dependency_staging"], stages["source_delivery"], stages["dependency_closure"], release_local_staging, version, spec))

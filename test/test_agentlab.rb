@@ -1267,6 +1267,62 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_validates_bun_npm_offline_install_receipt
+    source_package = Agentlab.package_named("bun")
+    source_stage = source_package.data.fetch("build_plan").fetch("stages").fetch("dependency_closure")
+    assert_empty(Agentlab.validate_bun_npm_offline_install(source_package, source_stage, "1.3.14"))
+
+    Dir.mktmpdir do |directory|
+      receipt = JSON.parse(File.read(File.join(source_package.directory, source_stage.fetch("npm_install_proof_receipt"))))
+      receipt_path = File.join(directory, "npm-offline-install-proof.json")
+      dependency_stage = Marshal.load(Marshal.dump(source_stage))
+      dependency_stage["npm_install_proof_receipt"] = File.basename(receipt_path)
+      package = Agentlab::Package.new(
+        directory: directory,
+        manifest_path: "unused",
+        data: {
+          "name" => "bun",
+          "status" => "blocked",
+          "blockers" => ["The final package is incomplete."],
+          "upstream" => {
+            "current_version" => "1.3.14",
+            "source_sha256" => source_package.upstream.fetch("source_sha256")
+          },
+          "copr" => { "enabled" => false }
+        }
+      )
+      write_receipt = lambda do
+        File.write(receipt_path, JSON.dump(receipt))
+        dependency_stage["npm_install_proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      end
+      write_receipt.call
+      assert_empty(Agentlab.validate_bun_npm_offline_install(package, dependency_stage, "1.3.14"))
+
+      receipt["schema"] = "bun-npm-offline-install-proof/v0"
+      write_receipt.call
+      errors = Agentlab.validate_bun_npm_offline_install(package, dependency_stage, "1.3.14")
+      assert_includes(errors, "bun: unsupported npm-install proof receipt schema")
+
+      receipt["schema"] = "bun-npm-offline-install-proof/v1"
+      receipt.fetch("source_closure")["sha256"] = "0" * 64
+      write_receipt.call
+      errors = Agentlab.validate_bun_npm_offline_install(package, dependency_stage, "1.3.14")
+      assert_includes(errors, "bun: npm-install proof source-closure SHA-256 mismatch")
+
+      receipt.fetch("source_closure")["sha256"] = dependency_stage.fetch("proof_receipt_sha256")
+      receipt.fetch("validation")["complete_bun_offline_materialization_verified"] = true
+      write_receipt.call
+      errors = Agentlab.validate_bun_npm_offline_install(package, dependency_stage, "1.3.14")
+      assert_includes(errors, "bun: npm-install proof overclaims complete Bun materialization")
+
+      receipt.fetch("validation")["complete_bun_offline_materialization_verified"] = false
+      dependency_stage["npm_offline_install_verified"] = false
+      write_receipt.call
+      errors = Agentlab.validate_bun_npm_offline_install(package, dependency_stage, "1.3.14")
+      assert_includes(errors, "bun: npm-install stage metadata is incomplete")
+    end
+  end
+
   def test_validates_bun_source_delivery_receipt
     package = Agentlab.package_named("bun")
     stages = package.data.fetch("build_plan").fetch("stages")
@@ -1546,7 +1602,7 @@ class AgentlabTest < Minitest::Test
       data = Marshal.load(Marshal.dump(source_package.data))
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json first-source-build-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
+      %w[bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json first-source-build-proof.json npm-offline-install-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json zig-reproducibility-proof.json zig-single-thread-control-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -1620,6 +1676,8 @@ class AgentlabTest < Minitest::Test
       FileUtils.cp(File.join(source_package.directory, kit_receipt_name), File.join(directory, kit_receipt_name))
       closure_name = data.dig("build_plan", "stages", "dependency_closure", "proof_receipt")
       FileUtils.cp(File.join(source_package.directory, closure_name), File.join(directory, closure_name))
+      npm_proof_name = data.dig("build_plan", "stages", "dependency_closure", "npm_install_proof_receipt")
+      FileUtils.cp(File.join(source_package.directory, npm_proof_name), File.join(directory, npm_proof_name))
       inventory_name = data.dig("build_plan", "source_inputs", "source_license_inventory", "source")
       FileUtils.cp(File.join(source_package.directory, inventory_name), File.join(directory, inventory_name))
       webkit = data.dig("build_plan", "source_inputs", "webkit", "jsc_only")
