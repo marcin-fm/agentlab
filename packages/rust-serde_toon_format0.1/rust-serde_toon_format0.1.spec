@@ -7,12 +7,18 @@
 
 Name:           rust-serde_toon_format0.1
 Version:        0.1.2
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Serde-compatible TOON v3.0 encoder/decoder
 
 License:        MIT
 URL:            https://crates.io/crates/serde_toon_format
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-only: omit profiling examples, benchmarks, CodSpeed Criterion, pprof,
+# and the bench profile; upstream retains those test/performance surfaces:
+# https://github.com/bnomei/serde_toon/commit/ddbf205d77ed63e60288784c2455a1ebbc423033
+# https://github.com/bnomei/serde_toon/commit/1fc35701c8aee28c5cddb7ad747e4d7de0f1dce1
+# https://github.com/bnomei/serde_toon/commit/eb43abadbfc498e15bd31c1aa9d16a97dff96a03
+# Select Fedora's dev-only rstest 0.26 branch; upstream still uses 0.18.2.
 Patch:          serde_toon_format-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -82,6 +88,9 @@ chmod 0755 benchmarks/flamegraph_to_csv.py
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.1.2-0.3
+- Document the Fedora patch purpose and upstream status.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.1.2-0.2
 - Enable configured SCM publication from the immutable crates.io source.
 

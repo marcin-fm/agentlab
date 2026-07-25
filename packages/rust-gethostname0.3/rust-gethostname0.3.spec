@@ -7,12 +7,15 @@
 
 Name:           rust-gethostname0.3
 Version:        0.3.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Gethostname for all platforms
 
 License:        Apache-2.0
 URL:            https://crates.io/crates/gethostname
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
+# Fedora-only: omit the Windows-only winapi dependency from the Linux build graph.
+# Not a backport; upstream replaced winapi with functional windows-rs support:
+# https://codeberg.org/swsnr/gethostname.rs/commit/4f5a1541c03ca057a425983b2c95d4061c35e489
 Patch0:         gethostname-fix-metadata-auto.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -59,6 +62,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.3.0-0.2
+- Document the Fedora patch purpose and upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.3.0-0.1
 - Add the exact compatibility crate required by x11rb 0.12.0.
 - Remove the Windows-only dependency from the Fedora build graph.
