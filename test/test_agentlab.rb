@@ -1262,6 +1262,7 @@ class AgentlabTest < Minitest::Test
             "fedora_shared_cxx_runtime_sha256" => patch_sha256.call(source_inputs.fetch("build_graph"), "cxx_runtime_patch")
           },
           "npm_proof" => {
+            "mode" => "historical_seed",
             "path" => dependency_stage.dig("historical_lolhtml_graph", "npm_install_proof_receipt"),
             "sha256" => dependency_stage.dig("historical_lolhtml_graph", "npm_install_proof_receipt_sha256"),
             "historical_seed_driven_install_only" => true
@@ -1377,6 +1378,13 @@ class AgentlabTest < Minitest::Test
       seed_stage["relink_kit"] = relink_kit_metadata
 
       assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
+      receipt.dig("inputs", "npm_proof")["mode"] = "source_built"
+      File.write(receipt_path, JSON.dump(receipt))
+      seed_stage["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: current seed-build historical npm input mismatch")
+      receipt.dig("inputs", "npm_proof")["mode"] = "historical_seed"
 
       receipt.fetch("configure")["system_lolhtml_provider_verified"] = false
       File.write(receipt_path, JSON.dump(receipt))

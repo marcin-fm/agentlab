@@ -3022,7 +3022,7 @@ module Agentlab
     errors << "bun: current seed-build proof shared-runtime patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "fedora_shared_cxx_runtime_sha256") == patch_sha256.call(build_graph, "cxx_runtime_patch", "cxx_runtime_patch_sha256")
 
     historical_npm = dependency_stage.fetch("historical_lolhtml_graph")
-    errors << "bun: current seed-build historical npm input mismatch" unless receipt.dig("inputs", "npm_proof", "path") == historical_npm["npm_install_proof_receipt"] && receipt.dig("inputs", "npm_proof", "sha256") == historical_npm["npm_install_proof_receipt_sha256"] && receipt.dig("inputs", "npm_proof", "historical_seed_driven_install_only") == true
+    errors << "bun: current seed-build historical npm input mismatch" unless receipt.dig("inputs", "npm_proof", "mode") == "historical_seed" && receipt.dig("inputs", "npm_proof", "path") == historical_npm["npm_install_proof_receipt"] && receipt.dig("inputs", "npm_proof", "sha256") == historical_npm["npm_install_proof_receipt_sha256"] && receipt.dig("inputs", "npm_proof", "historical_seed_driven_install_only") == true
     offline = receipt.dig("inputs", "offline_inputs")
     expected_provider = lolhtml.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
     actual_provider = offline.is_a?(Hash) && offline["system_lolhtml_provider"]
