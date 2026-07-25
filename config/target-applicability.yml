@@ -21,11 +21,6 @@ roots:
     kind: core
     releases: ["43", "44", rawhide]
     reason: Maintainer-designated Docling core package for the complete default matrix.
-  python-serena-agent:
-    kind: application
-    releases: ["43", "44", rawhide]
-    reason: Maintainer-designated Serena MCP package for the complete default matrix.
-
 selected_consumers:
   bun:
     releases: ["43", "44", rawhide]
@@ -39,6 +34,9 @@ selected_consumers:
   python-headroom-ai:
     releases: ["43", "44", rawhide]
     reason: Released dependency closure selected for the blocked non-ML Headroom surface.
+  python-serena-agent:
+    releases: ["43", "44", rawhide]
+    reason: Maintainer-designated full-family Serena package retained as a blocked selected consumer pending an upstream-supported surface.
 
 dependency_groups:
   bun:

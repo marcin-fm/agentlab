@@ -1,37 +1,26 @@
-target_release: 1.6.0
-python_requirement: '>= 3.11, < 3.16 via a conditional Fedora Rawhide compatibility patch'
-runtime:
-  headless_direct:
-    mcp: '>= 1.26, < 2'
-    overrides: '>= 7.7, < 8'
-    sensai-utils: '>= 1.5, < 2'
-    pydantic: '>= 2, < 3'
-    pyyaml: '>= 6, < 7'
-    ruamel.yaml: '>= 0.18, < 0.20'
-    requests: '>= 2.31, < 3'
-    jinja2: '>= 3.1, < 4'
-    pathspec: '>= 0.12, < 2'
-    psutil: '>= 6, < 8'
-    docstring-parser: '>= 0.16, < 1'
-    joblib: '>= 1.4, < 2'
-    tqdm: '>= 4.66, < 5'
-    beautifulsoup4: '>= 4.12, < 5'
-    oslex: '>= 2, < 3'
-  fedora_43_44_branches:
-    mcp: Fedora 1.26.0 accepted only through the enforced stdio/no-task boundary
-    sensai-utils: newly-packaged
-    overrides: newly-packaged
-    mslex: newly-packaged
-    oslex: newly-packaged
-  headless_policy:
-    - Remove pywebview, pystray, anthropic, tiktoken, pygls, lsprotocol, type stubs, dotenv, pythonnet, and direct transitive pins.
-    - Reject non-stdio transport, GUI/dashboard/project-server/JetBrains requests; force LSP headless configuration and disable telemetry.
-    - Fail closed before managed archive, npm, uvx, uv, or direct urllib language-server acquisition; explicit ls_path and ls_base_cmd are supported.
-validation:
-  mcp_1_26_stdio_security_review: passed
-  mcp_1_28_1_private_api_compatible: true
-  fedora_43_44_mock: passed
-  rawhide_python_3_15_mock: passed on Python 3.15.0b3
-  packaged_stdio_initialize_and_tools_list: passed
-  managed_download_denial: passed
-  project_jetbrains_override_denial: passed
+target_release: 1.6.1
+status: blocked
+python_requirement:
+  upstream: '>= 3.11, < 3.15'
+  retained_rawhide_candidate: '>= 3.11, < 3.16 through serena-python-3.15.patch'
+upstream_exact_runtime_changes:
+  mcp: '1.27.0 -> 1.28.1'
+  anthropic: '0.59.0 -> 0.117.0'
+selected_surface:
+  desired: headless local stdio MCP with explicit system language-server commands
+  upstream_configuration:
+  - stdio transport is selectable
+  - dashboard and GUI can be disabled by flags
+  - telemetry can be disabled with SERENA_USAGE_REPORTING=false
+  - explicit local language-server commands are supported
+  unresolved_installed_surfaces:
+  - dashboard and GUI launchers
+  - JetBrains backend
+  - project server and cross-project query tools
+  - non-stdio transports
+  - token estimators and external API integration
+  - managed language-server acquisition
+decision:
+  substantive_patches: removed
+  binary_build: prohibited
+  reenable_when: upstream-supported selected surface and complete Fedora provider graph are proven, or explicit maintainer approval is recorded

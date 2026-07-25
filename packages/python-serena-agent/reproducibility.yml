@@ -1,49 +1,36 @@
-schema: serena-agent-reproducibility/v1
-release: 1.6.0
+schema: serena-agent-reproducibility/v2
+release: 1.6.1
 source:
-  url: https://files.pythonhosted.org/packages/31/5b/de5ebc95ac17909c25e2251e2b2bd8353e6db49c8c1d388cd0ccffb22e84/serena_agent-1.6.0.tar.gz
-  sha256: b547908dce45db62591f434156c016b2cc164306fe8d434e90f42f388befc440
-  pypi_metadata: https://pypi.org/pypi/serena-agent/1.6.0/json
-  upstream_tag: v1.6.0
-  upstream_commit: 93b9544ea9def8e93cb6a90f8ea67befe3c8fee4
+  url: https://files.pythonhosted.org/packages/56/b3/d722048c005d5e5d8b709e2a1395d899e486a77cd74d07ce7e8f07e2adc3/serena_agent-1.6.1.tar.gz
+  sha256: 5e87906cc32271e816b159748204df3c76ea4ac8af64b14e80f417008dbeb4b6
+  pypi_metadata: https://pypi.org/pypi/serena-agent/1.6.1/json
+  upstream_tag: v1.6.1
+  upstream_commit: bcac0969fb8685783ea6d0f2642468fcc47e6395
 current_opencode_mcp:
   command: uvx --from git+https://github.com/oraios/serena serena start-mcp-server
   reproducible: false
   reason: Unpinned moving Git source and dynamically resolved Python closure.
-security:
-  mcp_required_range: '>= 1.26, < 2'
-  mcp_1_26_provider:
-    decision: accepted-only-for-enforced-stdio-no-task-entry-point
-    review: mcp-1.26-stdio-security-review.md
-  mcp_1_28_1_source:
-    url: https://files.pythonhosted.org/packages/6e/77/9450b8f251a13affb6281997d0523c4615f8a8b35d0b21ff30db3a5aac9d/mcp-1.28.1.tar.gz
-    sha256: d51e36a5f5644faea4f85ea649bfffa6bc6c26770d42798ad6a3de3d2ba69683
-  private_fastmcp_api_audit: passed-static-source-review
-  fixed_later_advisories:
-    - CVE-2026-52870 fixed in 1.27.2
-    - CVE-2026-52869 fixed in 1.27.2
-    - CVE-2026-59950 fixed in 1.28.1
 validation:
-  static_patch_validation: completed
-  patches:
-    serena-headless-fedora.patch: 3f073edbcf2a5ef76311f2765ca56232507f3eb4ca4fa83eb21dc2ec2176b29f
-    serena-stdio-only-fedora.patch: e17dde3096ad231b312bb024c5d36d662abb0ab7858aa7baef48513c48b81f49
-  spec_sha256: 49ddc2acfb07833263915fbe2cfe7011c97fa8991c03c935af3b28c2a0ee1e8c
+  source_release_verified: true
+  release_commit_verified: true
+  substantive_patches_apply_zero_fuzz: true
+  substantive_patches_acceptable: false
+  substantive_patches_removed: true
+  source_rpm:
+    sha256: faaa6dae9acba894819bc55e8539183b9711ef05c50b6efc5e0c79e66bb01b55
+    members:
+    - python-serena-agent.spec
+    - serena_agent-1.6.1.tar.gz
+    rpmlint: zero errors and three expected missing-section warnings
+  blocked_prep: failed as intended before unpacking
+  retained_patch:
+    serena-python-3.15.patch: 565937609f35d836826e96573d26e991869b7f6e3ab71a64e22f57958a30fe12
+  binary_build: prohibited
+historical_1_6_0_profile:
+  status: superseded-and-unpublishable
   mcp_api_audit: mcp-1.28.1-api-audit.md
   mcp_security_review: mcp-1.26-stdio-security-review.md
-  headless_surface: stdio-MCP-and-LSP-only
-  fedora_43_x86_64:
-    mock_build: passed
-    stdio_smoke: initialize and list_tools passed; dashboard and cross-project query tools absent
-    rpmlint: zero errors; three expected no-manual-page warnings
-    srpm_sha256: a79aea943a002601076321049593fd6becb71009e6523620a7cfd86f8219f0f7
-    rpm_sha256: b6925307f65a42a1210b2865cfcc02279f453ae83be0d7d5e71f733dcad15f5b
-  fedora_44_x86_64:
-    mock_build: passed
-    stdio_smoke: initialize and list_tools passed; dashboard and cross-project query tools absent
-    rpmlint: zero errors; three expected no-manual-page warnings
-    srpm_sha256: 3f79e4ae71324f908fda106ef026c2fb507956c6236993d52a6cf046ed5a86f5
-    rpm_sha256: fafad32626cb345e8fb0250c3907912e43f842c6d0ae07870acea5fa41d82398
+  note: These audits describe the removed downstream bounded profile and are not current publication evidence.
 host_policy:
   produced_rpms_installed: false
   copr_mutated: false
