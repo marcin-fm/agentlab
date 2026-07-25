@@ -2,7 +2,7 @@
 
 This directory contains a fail-closed source package for Rusty V8 `149.2.0`,
 which binds V8 `14.9.207.2`. It is the selected native V8 provider for the
-blocked `codex-cli 0.144.5` package.
+blocked `codex-cli 0.145.0` package.
 
 ## Why A Separate Package
 
@@ -140,9 +140,11 @@ yet.
 
 All four patches pass zero-fuzz dry-runs against a fresh exact-tag recursive tree.
 The spec now reconstructs that tree from the checked RPM sources and applies the
-patches before reaching its deliberate remaining-gates stop. The memcopy defect
-is reported upstream; the other three patches have not been submitted. The new
-allocator shim is original downstream BSD-3-Clause code by Marcin FM.
+patches before building. The memcopy defect is reported upstream; the other
+three patches remain Fedora adaptations whose equivalent toolchain and source
+treatment follows accepted Fedora Node.js and Chromium precedent. Their
+submission status is retained as provenance, not as an independent publication
+gate. The allocator shim is original downstream BSD-3-Clause code by Marcin FM.
 
 The retained Fedora 44 x86_64 static archive expression is:
 
@@ -214,15 +216,25 @@ claim. It does not claim production provenance, object-to-member content
 equality, network isolation, final archive-member extraction, or final consumer
 link closure.
 
+## Configured Fedora Result
+
+Configured-SCM build `10757049` produces `rust-v8-149.2.0-0.24` successfully in
+Fedora 43, Fedora 44, and Rawhide on both `x86_64` and `aarch64`, with package
+build networking disabled. Every cell reconstructs the reviewed source tree,
+applies the four patches, runs the architecture-specific GN/Ninja graph, checks
+the expected object/member structure, installs the static archive, and verifies
+the exact 24-file license map. Architecture and source-bound provider proof are
+complete.
+
 ## Remaining Gates
 
-1. Regenerate production selected-license evidence from the successful Fedora 43, Fedora 44, and Rawhide x86_64 graphs and run installed consumer smokes.
-2. Pass the architecture-specific archive check across the complete aarch64 matrix and run installed consumer smokes.
-3. Complete the final consumer license closure for the 31 separately linked Rust rlibs.
-4. Submit or otherwise resolve the four downstream system-toolchain, portability, source-selection, and header patches.
+1. Complete the exact final-consumer link, payload, and license closure for the
+   31 separately linked Rust rlibs.
+2. Reopen a provider gate only for a concrete selected-source, payload, or
+   behavior difference not already covered by accepted Fedora Node.js or
+   Chromium precedent.
 
 The spec verifies every source through the checked receipt, reconstructs the
 reviewed filtered tree, applies all four patches, runs the exact retained
-GN/Ninja graph, and checks the selected object/member structure. This local
-production-build path does not close final consumer licensing, architecture, or
-upstream-patch gates. The package remains disabled in COPR.
+GN/Ninja graph, and checks the selected object/member structure. The package
+remains blocked and disabled in COPR only for the consumer-side closure above.

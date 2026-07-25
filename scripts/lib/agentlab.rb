@@ -1738,6 +1738,34 @@ module Agentlab
     unless dependencies.dig("closure_audit", "prototype_selected_build_sources_verified") == false
       errors << "rust-v8: dependency closure metadata overclaims prototype selected-build sources"
     end
+    expected_production_build = {
+      "configured_scm_build" => 10_757_049,
+      "nvr" => "rust-v8-149.2.0-0.24",
+      "package_build_networking" => false,
+      "fedora_43_x86_64" => "succeeded",
+      "fedora_43_aarch64" => "succeeded",
+      "fedora_44_x86_64" => "succeeded",
+      "fedora_44_aarch64" => "succeeded",
+      "rawhide_x86_64" => "succeeded",
+      "rawhide_aarch64" => "succeeded",
+      "architecture_and_source_bound_build_verified" => true,
+      "consumer_link_closure_verified" => false
+    }
+    errors << "rust-v8: package production-build evidence does not match" unless package.data["production_build"] == expected_production_build
+    expected_closure_audit = {
+      "configured_scm_build" => 10_757_049,
+      "production_build_sources_verified" => true,
+      "network_isolated_build_verified" => true,
+      "fedora_43_verified" => true,
+      "fedora_44_verified" => true,
+      "rawhide_verified" => true,
+      "aarch64_verified" => true,
+      "consumer_link_closure_verified" => false,
+      "package_ready" => false
+    }
+    expected_closure_audit.each do |key, value|
+      errors << "rust-v8: dependency production-build evidence #{key} does not match" unless dependencies.dig("closure_audit", key) == value
+    end
 
     reproducibility_path = File.join(package.directory, "reproducibility.yml")
     if File.file?(reproducibility_path)
@@ -1817,6 +1845,19 @@ module Agentlab
       unless reproducibility.dig("licenses", "production_static_archive_license_complete") == false
         errors << "rust-v8: reproducibility overclaims production static licensing"
       end
+      expected_builds = %w[
+        fedora_43_x86_64 fedora_43_aarch64 fedora_44_x86_64
+        fedora_44_aarch64 rawhide_x86_64 rawhide_aarch64
+      ].to_h { |target| [target, { "status" => "passed-copr-build-10757049" }] }
+      errors << "rust-v8: reproducibility build matrix does not match" unless reproducibility["builds"] == expected_builds
+      expected_copr = {
+        "package_definition" => 3_178_860,
+        "build" => 10_757_049,
+        "enabled" => false,
+        "package_build_networking" => false,
+        "all_targets_succeeded" => true
+      }
+      errors << "rust-v8: reproducibility COPR evidence does not match" unless reproducibility["copr"] == expected_copr
     else
       errors << "rust-v8: reproducibility metadata is missing"
     end

@@ -21,7 +21,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.24%{?dist}
+Release:        0.25%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -105,12 +105,11 @@ archives are commit-addressed RPM inputs. The exact V8 input is filtered at SRPM
 time to remove three unused CC0 SipHash files. Every archive is accepted by its
 exact tree rather than compressor-specific bytes. The resulting 21-component
 tree matches Git except for those reviewed exclusions and accepts the four
-Fedora patches. A full Chromium dependency-client checkout is not claimed. A
-retained Fedora 44 prototype witness matches 1,795 selected objects to 1,795
-archive members and has a complete selected static-license expression and text
-map. Exact production checks retain that x86_64 graph and the 1,803-object
-aarch64 graph independently. Final consumer Rust libraries, complete aarch64
-matrix proof, and aarch64 license selection remain separate blocked gates.
+Fedora patches. A full Chromium dependency-client checkout is not claimed.
+Configured-SCM build 10757049 proves the exact x86_64 and aarch64 production
+graphs across Fedora 43, Fedora 44, and Rawhide. Final consumers still own the
+31 separately linked Rust library archives and their combined static-link
+license closure.
 
 %package static
 Summary:        Exact-version Rusty V8 static archive
@@ -412,6 +411,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.25
+- Reconcile the complete six-cell provider proof and remaining consumer gate.
+
 * Tue Jul 21 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.24
 - Verify the exact architecture-specific Rusty V8 archive graphs.
 

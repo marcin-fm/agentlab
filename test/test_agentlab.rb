@@ -2331,4 +2331,14 @@ class AgentlabTest < Minitest::Test
     assert_includes(errors, "rust-v8: spec does not build the exact Rusty V8 target")
     assert_includes(errors, "rust-v8: spec does not verify the production archive graph")
   end
+
+  def test_rejects_incomplete_rust_v8_remote_matrix
+    source_package = Agentlab.package_named("rust-v8")
+    dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))))
+    dependencies.dig("closure_audit")["aarch64_verified"] = false
+
+    errors = Agentlab.validate_rust_v8_evidence(source_package, dependencies, File.read(source_package.spec_path))
+
+    assert_includes(errors, "rust-v8: dependency production-build evidence aarch64_verified does not match")
+  end
 end

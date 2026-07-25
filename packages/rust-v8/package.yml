@@ -2,10 +2,7 @@
 name: rust-v8
 status: blocked
 blockers:
-- The stable Fedora Rust, system-Clang, and GCC portability changes are local zero-fuzz patches and have not been submitted or accepted upstream. The separate V8 `<climits>` repair is reported as Chromium issue 512749476 but has no upstream fix commit yet.
-- Exact-source review confirms that Rusty V8 exposes only a complete static GN target and its Cargo build script always links `static=rusty_v8`. V8 component DSOs are a distinct internal boundary; upstream defines no `librusty_v8.so`, SONAME, exported/versioned bridge ABI, or existing-consumer dynamic mode. Agentlab does not add a cross-package shared provider without that upstream contract; this is a package-design decision, not a Fedora prohibition on application-private DSOs.
-- The retained Fedora 44 x86_64 1,795-object archive has a complete Fedora-allowed SPDX expression and an exact 24-file license-text map. All 21 dynamically generated commit archives are verified by safe layout and exact component trees rather than compressor-specific bytes; the three unused CC0 SipHash files are removed from the V8 tree and the existing `v8_use_siphash=false` graph is enforced by a narrow patch. Exact production graph expectations contain 1,795 x86_64 objects and 1,803 aarch64 objects with the same 31 nonembedded Rust rlibs. The aarch64 graph still requires architecture-specific license selection and final-consumer closure.
-- Configured-SCM builds with package build networking disabled prove Fedora 43, Fedora 44, and Rawhide on x86_64. Build 10756590 proves Fedora 44 and Rawhide aarch64 can install the LLVM archiver and complete all 2,285 build steps, but release 0.23 then fails because `%check` still expects the x86_64 object graph; the complete corrected aarch64 matrix remains unverified.
+- The source-built static provider is complete across Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64. Final consumers must still account for the 31 separately linked Rust rlibs and carry the exact combined static-link license and payload closure.
 source_policy:
   rpm_build_network: forbidden
   upstream_prebuilt_static_archives: forbidden
@@ -87,6 +84,18 @@ archive_graph:
   prototype_selected_archive_graph_captured: true
   selected_build_dependency_closure_verified: false
   final_consumer_link_closure_verified: false
+production_build:
+  configured_scm_build: 10757049
+  nvr: rust-v8-149.2.0-0.24
+  package_build_networking: false
+  fedora_43_x86_64: succeeded
+  fedora_43_aarch64: succeeded
+  fedora_44_x86_64: succeeded
+  fedora_44_aarch64: succeeded
+  rawhide_x86_64: succeeded
+  rawhide_aarch64: succeeded
+  architecture_and_source_bound_build_verified: true
+  consumer_link_closure_verified: false
 patches:
   system_rust_toolchain:
     file: rust-v8-system-rust-toolchain.patch

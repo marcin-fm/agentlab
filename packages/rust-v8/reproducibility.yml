@@ -96,17 +96,17 @@ exact_codex_feature_smoke:
   output: Fedora Rusty V8
 builds:
   fedora_43_x86_64:
-    status: passed-copr-build-10755554
+    status: passed-copr-build-10757049
   fedora_44_x86_64:
-    status: passed-copr-build-10755554
+    status: passed-copr-build-10757049
   fedora_43_aarch64:
-    status: pending-copr-build-10756590
+    status: passed-copr-build-10757049
   fedora_44_aarch64:
-    status: failed-copr-build-10756590-x86_64-archive-graph-expectation
+    status: passed-copr-build-10757049
   rawhide_x86_64:
-    status: passed-copr-build-10755554
+    status: passed-copr-build-10757049
   rawhide_aarch64:
-    status: failed-copr-build-10756590-x86_64-archive-graph-expectation
+    status: passed-copr-build-10757049
 licenses:
   receipt: rust-v8-149.2.0-license-audit.json
   receipt_sha256: e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017
@@ -145,4 +145,8 @@ licenses:
 installation:
   generated_rpms_installed: false
 copr:
-  mutated: false
+  package_definition: 3178860
+  build: 10757049
+  enabled: false
+  package_build_networking: false
+  all_targets_succeeded: true

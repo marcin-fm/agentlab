@@ -223,10 +223,12 @@ closure_audit:
   prototype_selected_archive_graph_captured: true
   prototype_static_archive_license_complete: true
   prototype_selected_build_sources_verified: false
-  production_build_sources_verified: false
-  network_isolated_build_verified: false
-  fedora_43_verified: false
-  fedora_44_verified: false
-  rawhide_verified: false
-  aarch64_verified: false
+  configured_scm_build: 10757049
+  production_build_sources_verified: true
+  network_isolated_build_verified: true
+  fedora_43_verified: true
+  fedora_44_verified: true
+  rawhide_verified: true
+  aarch64_verified: true
+  consumer_link_closure_verified: false
   package_ready: false
