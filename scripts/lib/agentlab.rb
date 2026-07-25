@@ -2412,6 +2412,16 @@ module Agentlab
     closure = receipt["source_closure"] || {}
     errors << "bun: source-license inventory closure filename mismatch" unless closure["path"] == dependency_stage["proof_receipt"]
     errors << "bun: source-license inventory closure SHA-256 mismatch" unless closure["sha256"] == dependency_stage["proof_receipt_sha256"]
+    closure_path = File.join(package.directory, closure["path"].to_s)
+    valid_closure = File.file?(closure_path) && closure["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+                    Digest::SHA256.file(closure_path).hexdigest == closure["sha256"]
+    errors << "bun: source-license inventory closure is missing or has wrong SHA-256" unless valid_closure
+    return errors unless valid_closure
+
+    closure_receipt = JSON.parse(File.read(closure_path))
+    errors << "bun: source-license inventory closure schema mismatch" unless closure_receipt["schema"] == "bun-release-local-source-closure/v3"
+    errors << "bun: source-license inventory closure package mismatch" unless closure_receipt["package"] == "bun"
+    errors << "bun: source-license inventory closure release mismatch" unless closure_receipt["release"].to_s == version
     errors << "bun: source-license Bun license record is invalid" unless valid_file_record.call(receipt["bun_license"])
 
     script_path = File.join(ROOT, inventory["audit_script"].to_s)
@@ -2464,6 +2474,13 @@ module Agentlab
     npm_records = Array(npm["records"])
     errors << "bun: source-license npm record count mismatch" unless npm_records.length == inventory["npm_cache_entries"]
     errors << "bun: source-license npm cache identities are not unique" unless npm_records.map { |record| record["cache_name"] }.uniq.length == npm_records.length
+    expected_npm_identities = Array(closure_receipt.dig("npm", "source_archives")).map do |source|
+      [source["package_name"], source["package_version"]]
+    end.sort_by { |name, source_version| [name.to_s, source_version.to_s] }
+    actual_npm_identities = npm_records.map do |record|
+      [record["name"], record["version"]]
+    end.sort_by { |name, source_version| [name.to_s, source_version.to_s] }
+    errors << "bun: source-license npm identities do not match the source closure" unless actual_npm_identities == expected_npm_identities
     npm_file_records = npm_records.flat_map { |record| Array(record["license_files"]) }
     errors << "bun: source-license npm file record is invalid" unless npm_file_records.all? { |record| valid_file_record.call(record) && record["path"].start_with?(".build-tools/bun-install-cache/") }
     errors << "bun: source-license npm declaration-gap count mismatch" unless Array(npm["missing_license_field"]).length == inventory["npm_missing_license_fields"]
@@ -2473,6 +2490,13 @@ module Agentlab
     errors << "bun: source-license native component count mismatch" unless native.length == inventory["native_components"]
     errors << "bun: source-license native component lacks evidence" unless native.all? { |record| Array(record["license_files"]).any? && Array(record["license_files"]).all? { |file| valid_file_record.call(file) } }
     errors << "bun: source-license native component identities are not unique" unless native.map { |record| record["name"] }.uniq.length == native.length
+    expected_native_identities = Array(closure_receipt["native_github_sources"]).map do |source|
+      [source["name"], source["upstream_source_identity"]]
+    end.sort
+    actual_native_identities = native.map do |record|
+      [record["name"], record["source_identity"]]
+    end.sort
+    errors << "bun: source-license native identities do not match the source closure" unless actual_native_identities == expected_native_identities
     pico = native.find { |record| record["name"] == "picohttpparser" }
     errors << "bun: source-license picohttpparser selection mismatch" unless pico&.dig("license_selection", "selected_expression") == inventory["picohttpparser_selected_license"]
     webkit = receipt["webkit"] || {}

@@ -1540,9 +1540,13 @@ class AgentlabTest < Minitest::Test
       copied_inventory = data.fetch("build_plan").fetch("source_inputs").fetch("source_license_inventory")
       receipt_path = File.join(directory, copied_inventory.fetch("source"))
       FileUtils.cp(File.join(package.directory, copied_inventory.fetch("source")), receipt_path)
+      closure_name = data.fetch("build_plan").fetch("stages").fetch("dependency_closure").fetch("proof_receipt")
+      FileUtils.cp(File.join(package.directory, closure_name), File.join(directory, closure_name))
       mutated = JSON.parse(File.read(receipt_path))
       mutated.fetch("validation")["final_license_expression_verified"] = true
       mutated.fetch("webkit").fetch("candidate_license_files").first["path"] = "../escape"
+      mutated.fetch("native").first["source_identity"] = "wrong-native-source"
+      mutated.fetch("npm").fetch("records").first["version"] = "0.0.0"
       File.write(receipt_path, JSON.pretty_generate(mutated) + "\n")
       copied_inventory["sha256"] = Digest::SHA256.file(receipt_path).hexdigest
       copied_package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -1556,6 +1560,8 @@ class AgentlabTest < Minitest::Test
       )
       assert_includes(errors, "bun: source-license inventory overclaims completion")
       assert_includes(errors, "bun: source-license WebKit file records mismatch")
+      assert_includes(errors, "bun: source-license native identities do not match the source closure")
+      assert_includes(errors, "bun: source-license npm identities do not match the source closure")
     end
   end
 
