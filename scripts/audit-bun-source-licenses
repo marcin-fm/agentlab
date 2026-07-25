@@ -20,9 +20,9 @@ module BunSourceLicenseAudit
     "highway" => %w[LICENSE],
     "libarchive" => %w[COPYING],
     "libdeflate" => %w[COPYING],
-    "libjpeg-turbo" => %w[LICENSE.md],
+    "libjpeg-turbo" => %w[LICENSE.md README.ijg],
     "libspng" => %w[LICENSE],
-    "libwebp" => %w[COPYING],
+    "libwebp" => %w[COPYING PATENTS],
     "lshpack" => %w[LICENSE],
     "lsqpack" => %w[LICENSE],
     "lsquic" => %w[LICENSE LICENSE.chrome],
@@ -31,6 +31,23 @@ module BunSourceLicenseAudit
     "tinycc" => %w[COPYING],
     "zlib" => %w[LICENSE.md],
     "zstd" => %w[COPYING LICENSE]
+  }.freeze
+  NATIVE_LICENSE_SELECTIONS = {
+    "boringssl" => ["Apache-2.0", "linked production crypto and SSL sources; Go test terms are not compiled"],
+    "brotli" => ["MIT", "complete upstream license and Fedora brotli precedent"],
+    "cares" => ["MIT", "complete upstream license and Fedora c-ares precedent"],
+    "hdrhistogram" => ["CC0-1.0 OR BSD-2-Clause", "both upstream alternatives are retained"],
+    "highway" => ["Apache-2.0", "linked subset excludes the CC0 random contribution"],
+    "libdeflate" => ["MIT", "complete upstream license and Fedora libdeflate precedent"],
+    "libspng" => ["BSD-2-Clause AND libpng-2.0", "linked spng source carries both terms"],
+    "lshpack" => ["MIT AND BSD-2-Clause", "linked source includes the BSD-2-Clause xxhash implementation"],
+    "lsqpack" => ["MIT", "complete upstream license"],
+    "lsquic" => ["MIT AND BSD-2-Clause AND BSD-3-Clause", "linked tree includes lsquic, xxhash, and Chromium-derived terms"],
+    "mimalloc" => ["MIT", "complete upstream license and Fedora mimalloc precedent"],
+    "picohttpparser" => ["MIT", "complete MIT terms embedded in picohttpparser.c; the Perl-license alternative is not selected"],
+    "tinycc" => ["LGPL-2.1-only", "linked TinyCC source retains its LGPL relink obligation"],
+    "zlib" => ["Zlib", "complete upstream terms and Fedora zlib-ng precedent"],
+    "zstd" => ["BSD-3-Clause OR GPL-2.0-only", "both upstream alternatives are retained"],
   }.freeze
   HISTORICAL_LOLHTML_EVIDENCE = {
     "source_commit" => "ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5",
@@ -227,10 +244,9 @@ module BunSourceLicenseAudit
         "name" => name,
         "source_identity" => File.read(File.join(component_root, ".ref")).strip,
         "license_files" => files,
-        "license_selection" => name == "picohttpparser" ? {
-          "selected_expression" => "MIT",
-          "basis" => "complete MIT terms embedded in picohttpparser.c; the Perl-license alternative is not selected"
-        } : nil
+        "license_selection" => NATIVE_LICENSE_SELECTIONS[name]&.then do |expression, basis|
+          { "selected_expression" => expression, "basis" => basis }
+        end
       }
     end
   end

@@ -12,8 +12,8 @@
     },
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
-      "size_bytes": 122697,
-      "sha256": "4754ed971c980ed50b22510660d58ee480c7a93f04da728314edb3eb476b0418"
+      "size_bytes": 124809,
+      "sha256": "c263be34bcb584d2910f956b63af21b9e55307760d9b1717a43364df99d7ad97"
     },
     "relink_audit": {
       "path": "packages/bun/relink-materials-proof.json",
@@ -86,8 +86,11 @@
           "sha256": "827c8d8fc207c2392794eef9e00fe246f9f61fdcc132556c275be3dd8c3cd97f"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "Apache-2.0",
+        "basis": "linked production crypto and SSL sources; Go test terms are not compiled"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "brotli",
@@ -102,8 +105,11 @@
           "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "complete upstream license and Fedora brotli precedent"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "bun",
@@ -137,8 +143,11 @@
           "sha256": "460f5e768fda3752ca2169a95df062578a10fb126bfd65f3b9b1a1bed2f84807"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "complete upstream license and Fedora c-ares precedent"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "hdrhistogram",
@@ -158,8 +167,11 @@
           "sha256": "93a583ec58cd981232ec6fab797ff6f17f350c97b83ae0700b2d9350c91028af"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "CC0-1.0 OR BSD-2-Clause",
+        "basis": "both upstream alternatives are retained"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "highway",
@@ -174,8 +186,11 @@
           "sha256": "e340270d4f64384569a91d546acb5b094d69ce47f0c015db77abb74dc6f815af"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "Apache-2.0",
+        "basis": "linked subset excludes the CC0 random contribution"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "libarchive",
@@ -206,8 +221,11 @@
           "sha256": "4ad69099cb4374836fd27583d9991e2838cd86b6e4666ab26b2d32582c91e73a"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "complete upstream license and Fedora libdeflate precedent"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "libjpeg-turbo",
@@ -220,6 +238,11 @@
           "path": "vendor/libjpeg-turbo/LICENSE.md",
           "size_bytes": 5622,
           "sha256": "e10114e6e40f3d0311c401ca25245ac5ef459a43c20f976fd63f03e816f5741f"
+        },
+        {
+          "path": "vendor/libjpeg-turbo/README.ijg",
+          "size_bytes": 12799,
+          "sha256": "75815e3bf6484201a3c3d17a1bbf10f2e8e3237f84df10a2357ea896db2a81d6"
         }
       ],
       "license_selection": null,
@@ -238,8 +261,11 @@
           "sha256": "0622b0794d0fecde47d743f1bb70a03e6fdf082be8e71f39de672ed995d96ff9"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "BSD-2-Clause AND libpng-2.0",
+        "basis": "linked spng source carries both terms"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "libwebp",
@@ -252,6 +278,11 @@
           "path": "vendor/libwebp/COPYING",
           "size_bytes": 1496,
           "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+        },
+        {
+          "path": "vendor/libwebp/PATENTS",
+          "size_bytes": 1436,
+          "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
         }
       ],
       "license_selection": null,
@@ -270,8 +301,11 @@
           "sha256": "0490f9666828ad1b6b5503102e7ebbe491451b7174511f3b6255caa967caf955"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "MIT AND BSD-2-Clause",
+        "basis": "linked source includes the BSD-2-Clause xxhash implementation"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "lsqpack",
@@ -286,8 +320,11 @@
           "sha256": "6b1aded50331e34502c8d2b00238c6146b1a54314ce94a5c5feb5d340a6d00d6"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "complete upstream license"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "lsquic",
@@ -307,8 +344,11 @@
           "sha256": "85d5dcb0d30ea89fa5922451957ff2a1a2c3c24f1ad2bb9ab23b5d6080763fc9"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "MIT AND BSD-2-Clause AND BSD-3-Clause",
+        "basis": "linked tree includes lsquic, xxhash, and Chromium-derived terms"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "mimalloc",
@@ -323,8 +363,11 @@
           "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "MIT",
+        "basis": "complete upstream license and Fedora mimalloc precedent"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "picohttpparser",
@@ -358,8 +401,11 @@
           "sha256": "512d2d21b6b3384ba64781abb0208a1b87740bc31e2df48e2b206ddb7e4d5779"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "LGPL-2.1-only",
+        "basis": "linked TinyCC source retains its LGPL relink obligation"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "zlib",
@@ -374,8 +420,11 @@
           "sha256": "6c9f0d975b41afaa34d22f55bb8986ce69e5cb7ad327cb2b28820cd425edf5ee"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "Zlib",
+        "basis": "complete upstream terms and Fedora zlib-ng precedent"
+      },
+      "license_selection_verified": true
     },
     {
       "name": "zstd",
@@ -395,8 +444,11 @@
           "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
         }
       ],
-      "license_selection": null,
-      "license_selection_verified": false
+      "license_selection": {
+        "selected_expression": "BSD-3-Clause OR GPL-2.0-only",
+        "basis": "both upstream alternatives are retained"
+      },
+      "license_selection_verified": true
     }
   ],
   "webkit": {
@@ -615,23 +667,54 @@
   },
   "unresolved": {
     "native_license_selections": [
-      "boringssl",
-      "brotli",
-      "cares",
-      "hdrhistogram",
-      "highway",
       "libarchive",
-      "libdeflate",
       "libjpeg-turbo",
-      "libspng",
-      "libwebp",
-      "lshpack",
-      "lsqpack",
-      "lsquic",
-      "mimalloc",
-      "tinycc",
-      "zlib",
-      "zstd"
+      "libwebp"
+    ],
+    "native_license_details": [
+      {
+        "name": "libarchive",
+        "reason": "linked subset still needs file-level aggregation across public-domain, BSD, BLAKE2, NetBSD, and UC Regents terms",
+        "license_files": [
+          {
+            "path": "vendor/libarchive/COPYING",
+            "size_bytes": 3089,
+            "sha256": "30e556b3959e3985d66efefec5eaac51d4995053caa1d3cffe6eb916f146f229"
+          }
+        ]
+      },
+      {
+        "name": "libjpeg-turbo",
+        "reason": "linked subset and Fedora's additional MIT normalization need confirmation against LICENSE.md and README.ijg",
+        "license_files": [
+          {
+            "path": "vendor/libjpeg-turbo/LICENSE.md",
+            "size_bytes": 5622,
+            "sha256": "e10114e6e40f3d0311c401ca25245ac5ef459a43c20f976fd63f03e816f5741f"
+          },
+          {
+            "path": "vendor/libjpeg-turbo/README.ijg",
+            "size_bytes": 12799,
+            "sha256": "75815e3bf6484201a3c3d17a1bbf10f2e8e3237f84df10a2357ea896db2a81d6"
+          }
+        ]
+      },
+      {
+        "name": "libwebp",
+        "reason": "linked subset needs exact BSD, patent, and additional bundled-source aggregation against COPYING and PATENTS",
+        "license_files": [
+          {
+            "path": "vendor/libwebp/COPYING",
+            "size_bytes": 1496,
+            "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+          },
+          {
+            "path": "vendor/libwebp/PATENTS",
+            "size_bytes": 1436,
+            "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
+          }
+        ]
+      }
     ],
     "webkit_semantic_license_selection": true,
     "npm_and_codegen_final_payload_provenance": true,
@@ -645,6 +728,7 @@
     "all_native_components_linked": true,
     "webkit_archives_verified": true,
     "system_lolhtml_provider_verified": true,
+    "partial_native_license_selection_verified": true,
     "network_used": false,
     "native_license_selections_verified": false,
     "webkit_linked_file_semantic_review_verified": false,
@@ -654,5 +738,5 @@
     "final_license_expression_verified": false,
     "rpm_payload_license_verified": false
   },
-  "scope": "current final-link component and license-evidence mapping only; native/WebKit selections, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+  "scope": "current final-link mapping with 15 native source-subset selections; three mixed native trees, WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
 }

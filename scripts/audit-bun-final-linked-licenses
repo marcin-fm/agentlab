@@ -15,6 +15,11 @@ module BunFinalLinkedLicenseAudit
 
   REPO_ROOT = File.expand_path("..", __dir__)
   BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
+  UNRESOLVED_NATIVE_REASONS = {
+    "libarchive" => "linked subset still needs file-level aggregation across public-domain, BSD, BLAKE2, NetBSD, and UC Regents terms",
+    "libjpeg-turbo" => "linked subset and Fedora's additional MIT normalization need confirmation against LICENSE.md and README.ijg",
+    "libwebp" => "linked subset needs exact BSD, patent, and additional bundled-source aggregation against COPYING and PATENTS",
+  }.freeze
 
   module_function
 
@@ -153,6 +158,15 @@ module BunFinalLinkedLicenseAudit
 
     system_libraries = parsed.fetch("ldflags").select { |flag| flag.match?(/\A-l(?:[^-].*)?\z/) }.uniq.sort
     unresolved_native = components.reject { |component| component.fetch("license_selection_verified") }.map { |component| component.fetch("name") }
+    raise Error, "unexpected unresolved native license set" unless unresolved_native.sort == UNRESOLVED_NATIVE_REASONS.keys.sort
+    unresolved_native_details = unresolved_native.sort.map do |name|
+      component = components.find { |record| record.fetch("name") == name }
+      {
+        "name" => name,
+        "reason" => UNRESOLVED_NATIVE_REASONS.fetch(name),
+        "license_files" => component.fetch("license_files")
+      }
+    end
     linked_paths = parsed.fetch("objects") + parsed.fetch("archives")
 
     {
@@ -201,6 +215,7 @@ module BunFinalLinkedLicenseAudit
       },
       "unresolved" => {
         "native_license_selections" => unresolved_native.sort,
+        "native_license_details" => unresolved_native_details,
         "webkit_semantic_license_selection" => true,
         "npm_and_codegen_final_payload_provenance" => true,
         "required_license_text_payload" => true,
@@ -213,6 +228,7 @@ module BunFinalLinkedLicenseAudit
         "all_native_components_linked" => true,
         "webkit_archives_verified" => true,
         "system_lolhtml_provider_verified" => true,
+        "partial_native_license_selection_verified" => true,
         "network_used" => false,
         "native_license_selections_verified" => false,
         "webkit_linked_file_semantic_review_verified" => false,
@@ -222,7 +238,7 @@ module BunFinalLinkedLicenseAudit
         "final_license_expression_verified" => false,
         "rpm_payload_license_verified" => false
       },
-      "scope" => "current final-link component and license-evidence mapping only; native/WebKit selections, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+      "scope" => "current final-link mapping with 15 native source-subset selections; three mixed native trees, WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
     }
   end
 

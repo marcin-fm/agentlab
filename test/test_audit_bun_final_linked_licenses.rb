@@ -34,6 +34,10 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
     assert_equal(19, receipt.fetch("components").length)
     assert_equal(18, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" })
     assert_equal(true, receipt.dig("validation", "final_link_inputs_mapped"))
+    assert_equal(true, receipt.dig("validation", "partial_native_license_selection_verified"))
+    assert_equal(15, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" && component.fetch("license_selection_verified") })
+    assert_equal(%w[libarchive libjpeg-turbo libwebp], receipt.dig("unresolved", "native_license_selections"))
+    assert_equal(%w[libarchive libjpeg-turbo libwebp], receipt.dig("unresolved", "native_license_details").map { |record| record.fetch("name") })
     %w[
       native_license_selections_verified webkit_linked_file_semantic_review_verified
       final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified

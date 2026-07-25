@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.25",
+  "rpm_release": "0.0.26",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-26",
   "source_generation": {
@@ -22,40 +22,40 @@
     },
     "source_license_inventory": {
       "filename": "bun-1.3.14-source-license-inventory.json",
-      "size_bytes": 122697,
-      "sha256": "4754ed971c980ed50b22510660d58ee480c7a93f04da728314edb3eb476b0418"
+      "size_bytes": 124809,
+      "sha256": "c263be34bcb584d2910f956b63af21b9e55307760d9b1717a43364df99d7ad97"
     },
     "source_license_audit_script": {
       "filename": "audit-bun-source-licenses",
-      "size_bytes": 15860,
-      "sha256": "db351ed51128cf21718162829650d4f4b39ac33392f1d04e55bea62e38e91bed"
+      "size_bytes": 17265,
+      "sha256": "87e7340d31a9d5cd8538991afc3dbdcf9a2cce81b7bba572f936adae71dc5c67"
     },
     "final_linked_license_closure": {
       "filename": "bun-1.3.14-final-linked-license-closure.json",
-      "size_bytes": 23871,
-      "sha256": "28a704a52fd2c03671c194648de2f9807f39d104fb495dc7520e29f51c951f75"
+      "size_bytes": 27470,
+      "sha256": "ce88f28cc10180299ea8a1fdefd2f4bbfa821a991464618cb5238d3b0e0ae0a3"
     },
     "final_linked_license_audit_script": {
       "filename": "audit-bun-final-linked-licenses",
-      "size_bytes": 13713,
-      "sha256": "a964c434a34dfa120f5a93069cdf3036ffe7387b6f1f5e208fd7dc663f2e8c51"
+      "size_bytes": 14742,
+      "sha256": "2f8e247a92af15963a6aee71eb0a6655ca1656fc09890e7d3c2c046d8eec33be"
     },
     "retired_lolhtml_inputs_absent": true
   },
   "spec": {
     "filename": "bun.spec",
-    "size_bytes": 22557,
-    "sha256": "615a11ab6138d8d7c2b73f3267a4b0d150feff536927618587baec462b981eec"
+    "size_bytes": 22679,
+    "sha256": "cc66e5506fd2590c29a9a99eaca161fb231eceb02a71c67ff2d21735e33432c7"
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.25.fc44.src.rpm",
-    "size_bytes": 317752930,
-    "sha256": "dace6b7e630635325d26273aa692bb2b87457041f6dcc6ccc3db36a20b24f3f5",
+    "filename": "bun-1.3.14-0.0.26.fc44.src.rpm",
+    "size_bytes": 317756246,
+    "sha256": "800edf95644572ea2802c422aa0a5d3c995baaa7df766797652171bf97f20d13",
     "digest_check": "ok",
     "inventory_members": 36,
-    "inventory_sha256": "34476de828272919005702ae531309a9bf9102a39d4244644ee123dbc51e0e02",
-    "member_manifest_sha256": "6a8fed313dc3fb83dff5c3b5fb71fcfa2848136b895a23900d304b15ad388a86",
-    "uncompressed_member_bytes": 322116235
+    "inventory_sha256": "8e0af0e9cc14fbd6f4d87732e7e0d79d20d7d68590aec67aefc853330bf6d936",
+    "member_manifest_sha256": "22ad21092e2684e5ea2820966a74ca5d3ea0b0c7c9778ae57bca0e90a483cf2d",
+    "uncompressed_member_bytes": 322124502
   },
   "validation": {
     "direct_source_checksums_verified": true,
