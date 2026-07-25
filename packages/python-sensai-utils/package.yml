@@ -9,19 +9,28 @@ license_audit:
   expression: MIT
   license_file: LICENSE
 duplicate_check:
-  fedora_43_44: absent
-  rpm_fusion_43_44: absent
+  checked: '2026-07-25'
+  fedora_43: absent
+  fedora_44: absent
+  fedora_rawhide: absent
+  rpm_fusion_43: absent
+  rpm_fusion_44: absent
+  rpm_fusion_rawhide: absent
 validation:
-  fedora_43: clean mock build passed
-  fedora_44: clean mock build passed
-  tests: 16 published import cases passed in both chroots
-  rpmlint: zero errors and zero warnings in both chroots
+  local_fedora_44_x86_64: clean Mock build passed
+  configured_matrix: pending
+  tests: 16 published import cases passed
+  rpmlint: zero errors and zero warnings
+artifacts:
+  local_fedora_44_x86_64:
+    source_rpm_sha256: 93ef7586f9176a434cd38946f2a61a8dc07dea1c39e2f1e7829056a521755147
+    binary_rpm_sha256: e8f000a92c9a944e790bae1bbbefc92c9427347d2e195012c9c5117c4a3b0827
 upstream:
   provider: pypi
   project: sensai-utils
-  current_version: 1.5.0
-  source_url: https://files.pythonhosted.org/packages/8c/dd/faa2e2de71a03af3def212c70777e794dd54ad5ab87927bb5c29f85f24fc/sensai_utils-1.5.0.tar.gz
-  source_sha256: 2ca709a0d5807caf1632d665a455c173987b25276ce61693021672e875f0f17b
+  current_version: 1.6.0
+  source_url: https://files.pythonhosted.org/packages/75/5a/b0a1db8703754ec933b0b8288541ee585c13f7bd0684d8623da4271b374b/sensai_utils-1.6.0.tar.gz
+  source_sha256: e50ae6bbd7c62a961f25b98e55b29029450efd66444678931b3b9c43e9bf9e95
   repository: opcode81/sensAI-utils
 copr:
   enabled: true

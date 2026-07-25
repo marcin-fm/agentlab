@@ -1,23 +1,22 @@
 schema: sensai-utils-reproducibility/v1
 package: python-sensai-utils
-version: 1.5.0-1
+version: 1.6.0-0.1
 source:
-  url: https://files.pythonhosted.org/packages/8c/dd/faa2e2de71a03af3def212c70777e794dd54ad5ab87927bb5c29f85f24fc/sensai_utils-1.5.0.tar.gz
-  sha256: 2ca709a0d5807caf1632d665a455c173987b25276ce61693021672e875f0f17b
+  url: https://files.pythonhosted.org/packages/75/5a/b0a1db8703754ec933b0b8288541ee585c13f7bd0684d8623da4271b374b/sensai_utils-1.6.0.tar.gz
+  sha256: e50ae6bbd7c62a961f25b98e55b29029450efd66444678931b3b9c43e9bf9e95
 patches:
-  sensai-utils-fix-missing-requirements.patch: 5e0dc4ce9dd4fd873b7693a50aadb20bdce92b5f00f70fe82407c6170e6c412e
-spec_sha256: 1b42271cf540e6b93b81a80fd33ffd1a05ce47e41c6bfe285c444101c90bfaa9
+  sensai-utils-fix-missing-requirements.patch: 4d4735b2f33db5c9f04b40b62910c2afaff024d753ac4cf06530d98c21754bb4
+spec_sha256: 29ccbfcd21ba63c20b1733b79d28c9adca2f0494550192cc6c829e14ae511173
 validation:
   fedora_43_x86_64:
-    source_rpm_sha256: 6273c38be23217c4b5cf1d18fabbadb1f3ba7d10d6825d4bdf42a202624436a4
-    binary_rpm_sha256: 7b3130fe258293aee2e298c1056b9e679a02efd1c7c4b5a29d9014fa497e7cb3
-    tests: 16 passed
-    rpmlint: zero errors and zero warnings
+    status: pending configured build
   fedora_44_x86_64:
-    source_rpm_sha256: 8fed9ba2504eac033a2bd137efc9972b35abfc1c87d7bb2734751f261022a0ce
-    binary_rpm_sha256: 10d2f799f8c3cedf74bb0449027eef49120d1273645524bc0c2457ca46914d49
+    source_rpm_sha256: 93ef7586f9176a434cd38946f2a61a8dc07dea1c39e2f1e7829056a521755147
+    binary_rpm_sha256: e8f000a92c9a944e790bae1bbbefc92c9427347d2e195012c9c5117c4a3b0827
     tests: 16 passed
     rpmlint: zero errors and zero warnings
+  configured_matrix:
+    status: pending
 host_policy:
   produced_rpms_installed: false
   copr_mutated: false

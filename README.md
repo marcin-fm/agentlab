@@ -63,7 +63,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | python-docling-slim | 2.113.0 | enabled | API-only base/service-client package; clean F43/F44 loopback health smokes passed without local parser/model branches |
 | playwright-mcp | 0.0.78 | blocked | All wrapper files match source and the exact stdio MCP works with Fedora Chromium 150; full generated monorepo closure, source-built esbuild, and licenses remain |
 | python-serena-agent | 1.6.0 | enabled | Headless stdio/LSP package; clean F43/F44 MCP smokes and download-denial checks passed |
-| python-sensai-utils | 1.5.0 | enabled | Repaired published sdist metadata; clean F43/F44 builds and 16 tests passed |
+| python-sensai-utils | 1.6.0 | enabled | Repaired published sdist metadata; F44 Mock and 16 tests passed |
 | python-overrides | 7.7.0 | enabled | Clean F43/F44 builds and 67 tests passed |
 | python-mslex | 1.3.0 | enabled | Clean F43/F44 builds and tests passed; expected missing-manpage warning only |
 | python-oslex | 2.0.0 | enabled | Clean F43/F44 builds passed using the local mslex provider |

@@ -1,13 +1,13 @@
-%global source_sha256 2ca709a0d5807caf1632d665a455c173987b25276ce61693021672e875f0f17b
+%global source_sha256 e50ae6bbd7c62a961f25b98e55b29029450efd66444678931b3b9c43e9bf9e95
 
 Name:           python-sensai-utils
-Version:        1.5.0
-Release:        0.3%{?dist}
+Version:        1.6.0
+Release:        0.1%{?dist}
 Summary:        General-purpose utility modules from sensAI
 License:        MIT
 URL:            https://github.com/opcode81/sensAI-utils
-Source0:        https://files.pythonhosted.org/packages/8c/dd/faa2e2de71a03af3def212c70777e794dd54ad5ab87927bb5c29f85f24fc/sensai_utils-%{version}.tar.gz
-# Restore the sole runtime requirement omitted from the published 1.5.0 sdist.
+Source0:        https://files.pythonhosted.org/packages/75/5a/b0a1db8703754ec933b0b8288541ee585c13f7bd0684d8623da4271b374b/sensai_utils-%{version}.tar.gz
+# Restore the sole runtime requirement omitted from the published 1.6.0 sdist.
 # Source-artifact-specific; upstream repository includes requirements.txt, so this was not submitted.
 Patch0:         sensai-utils-fix-missing-requirements.patch
 
@@ -54,6 +54,9 @@ sed -i 's/\r$//' setup.py README.md
 %doc README.md
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.6.0-0.1
+- Update to sensAI Utils 1.6.0.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.5.0-0.3
 - Document the expanded COPR architecture and Rawhide target matrix.
 
