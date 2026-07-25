@@ -1109,6 +1109,7 @@ class AgentlabTest < Minitest::Test
       )
       stages.fetch("seed_build").merge!(
         "state" => "verified",
+        "historical_only" => true,
         "bootstrap_seed_verified" => true,
         "seed_isolated_verified" => true,
         "source_build_verified" => true,
@@ -1189,6 +1190,199 @@ class AgentlabTest < Minitest::Test
       stages.fetch("seed_build")["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
       errors = Agentlab.validate_bun_build_plan(package, "exit 1\n")
       assert_includes(errors, "bun: seed-build proof did not revalidate prepared inputs")
+    end
+  end
+
+  def test_validates_current_bun_seed_build_stage
+    source_package = Agentlab.package_named("bun")
+    Dir.mktmpdir do |directory|
+      FileUtils.cp_r("#{source_package.directory}/.", directory)
+      data = Marshal.load(Marshal.dump(source_package.data))
+      version = source_package.upstream.fetch("current_version").to_s
+      source_inputs = data.dig("build_plan", "source_inputs")
+      stages = data.dig("build_plan", "stages")
+      dependency_stage = stages.fetch("dependency_closure")
+      seed_stage = stages.fetch("seed_build")
+      self_stage = stages.fetch("self_rebuild")
+      relink_audit_metadata = Marshal.load(Marshal.dump(seed_stage.fetch("relink_materials_audit")))
+      relink_kit_metadata = Marshal.load(Marshal.dump(seed_stage.fetch("relink_kit")))
+      self_stage.delete("proof_receipt")
+      self_stage.delete("zig_reproducibility_proof_receipt")
+      self_stage.delete("zig_single_thread_control")
+      seed_stage.delete("relink_materials_audit")
+      seed_stage.delete("relink_kit")
+      seed_stage.merge!(
+        "state" => "verified",
+        "historical_only" => false,
+        "proof_date" => "2026-07-25",
+        "proof_receipt" => "current-first-source-build-proof.json"
+      )
+      closure_path = File.join(directory, dependency_stage.fetch("proof_receipt"))
+      closure = JSON.parse(File.read(closure_path))
+      patch_sha256 = lambda do |metadata, key|
+        Digest::SHA256.file(File.join(directory, metadata.fetch(key))).hexdigest
+      end
+      provider = source_inputs.fetch("lolhtml")
+      receipt = {
+        "schema" => "bun-first-source-build-proof/v2",
+        "package" => "bun",
+        "release" => version,
+        "profile" => "release-local",
+        "proof_date" => seed_stage.fetch("proof_date"),
+        "source_closure" => {
+          "path" => dependency_stage.fetch("proof_receipt"),
+          "sha256" => dependency_stage.fetch("proof_receipt_sha256"),
+          "source_archive_sha256" => closure.dig("source_tree", "source_sha256"),
+          "source_commit" => source_package.upstream.fetch("source_commit")
+        },
+        "bootstrap_seed" => {
+          "archive_sha256" => source_inputs.dig("bootstrap_seed", "sha256"),
+          "binary_sha256" => source_inputs.dig("bootstrap_seed", "binary_sha256"),
+          "size_bytes" => source_inputs.dig("bootstrap_seed", "binary_size_bytes"),
+          "version" => version,
+          "bootstrap_only" => true,
+          "final_payload_allowed" => false,
+          "final_runtime_dependency_allowed" => false
+        },
+        "inputs" => {
+          "zig" => {
+            "source_commit" => source_inputs.dig("zig", "commit"),
+            "source_sha256" => source_inputs.dig("zig", "sha256"),
+            "patch_sha256" => patch_sha256.call(source_inputs.fetch("zig"), "patch")
+          },
+          "webkit" => {
+            "commit" => source_inputs.dig("webkit", "commit"),
+            "archive_sha256" => source_inputs.dig("webkit", "sha256"),
+            "patch_sha256" => patch_sha256.call(source_inputs.fetch("webkit"), "patch")
+          },
+          "source_patches" => {
+            "system_lolhtml_sha256" => patch_sha256.call(provider, "patch"),
+            "npm_lock_sha256" => patch_sha256.call(source_inputs.fetch("npm_lock"), "patch"),
+            "zig_build_cwd_sha256" => patch_sha256.call(source_inputs.fetch("build_graph"), "patch"),
+            "fedora_shared_cxx_runtime_sha256" => patch_sha256.call(source_inputs.fetch("build_graph"), "cxx_runtime_patch")
+          },
+          "npm_proof" => {
+            "path" => dependency_stage.dig("historical_lolhtml_graph", "npm_install_proof_receipt"),
+            "sha256" => dependency_stage.dig("historical_lolhtml_graph", "npm_install_proof_receipt_sha256"),
+            "historical_seed_driven_install_only" => true
+          },
+          "offline_inputs" => {
+            "native_archives" => 18,
+            "node_header_archives" => 1,
+            "npm_install_roots" => 3,
+            "supplemental_npm_trees" => [{ "path" => "packages/@types/bun/node_modules", "tree" => { "sha256" => "a" * 64 } }],
+            "cargo_source_archives" => 0,
+            "system_lolhtml_provider" => provider.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement").merge(
+              "staged_payload" => {
+                "root" => "/srv/tmp/agentlab-bun-lolhtml-provider/stage",
+                "header" => { "path" => "usr/include/lol_html.h", "size_bytes" => 1, "sha256" => "b" * 64 },
+                "pkgconfig_file" => { "path" => "usr/lib64/pkgconfig/lol-html.pc", "size_bytes" => 1, "sha256" => "c" * 64 },
+                "shared_library" => { "path" => "usr/lib64/liblolhtml.so.1.4.0", "size_bytes" => 1, "sha256" => "d" * 64 },
+                "critical_symbols_verified" => true
+              }
+            )
+          }
+        },
+        "configure" => {
+          "network_namespace" => true,
+          "prepared_inputs_revalidated" => true,
+          "bootstrap_seed_rule_scope_verified" => true,
+          "bootstrap_seed_rules" => %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch],
+          "install_edges" => 3,
+          "native_fetch_edges" => 18,
+          "node_header_fetch_edges" => 1,
+          "local_webkit_verified" => true,
+          "zig_fetch_absent" => true,
+          "zig_source_cwd_verified" => true,
+          "fedora_shared_cxx_runtime_verified" => true,
+          "system_lolhtml_provider_verified" => true,
+          "unexpected_urls_absent" => true
+        },
+        "build" => {
+          "network_namespace" => true,
+          "bun_profile" => { "path" => "build/release-local/bun-profile", "size_bytes" => 200, "sha256" => "e" * 64 },
+          "bun" => { "path" => "build/release-local/bun", "size_bytes" => 100, "sha256" => "f" * 64 },
+          "linker_map" => { "path" => "build/release-local/bun-profile.linker-map", "size_bytes" => 50, "sha256" => "1" * 64 },
+          "revision" => "#{version}-canary.1+#{source_package.upstream.fetch('source_commit')[0, 9]}",
+          "version" => version,
+          "smoke_verified" => true,
+          "stripped_output_verified" => true,
+          "fedora_shared_cxx_runtime_verified" => true,
+          "system_lolhtml_provider_verified" => true,
+          "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+        },
+        "retained_relink_evidence" => { "complete_lgpl_relink_materials_verified" => false },
+        "seed_contamination" => { "seed_hash_matches" => 0, "payload_absent_verified" => true, "runtime_dependency_absent_verified" => true },
+        "validation" => {
+          "bootstrap_seed_verified" => true,
+          "seed_isolated_verified" => true,
+          "source_build_verified" => true,
+          "self_rebuild_performed" => false,
+          "reproducibility_compared" => false,
+          "complete_lgpl_relink_materials_verified" => false,
+          "final_license_audit_verified" => false,
+          "final_rpm_verified" => false
+        }
+      }
+      receipt_path = File.join(directory, seed_stage.fetch("proof_receipt"))
+      File.write(receipt_path, JSON.dump(receipt))
+      seed_stage["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+      spec = File.read(File.join(directory, "bun.spec"))
+
+      assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
+      relink_audit_path = File.join(directory, relink_audit_metadata.fetch("proof_receipt"))
+      relink_audit = JSON.parse(File.read(relink_audit_path))
+      relink_audit["schema"] = "bun-relink-materials-audit/v3"
+      relink_audit["date"] = seed_stage.fetch("proof_date")
+      relink_audit.fetch("final_link")["direct_archives"].reject! { |entry| entry.fetch("path").include?("/lolhtml/") }
+      relink_audit.fetch("final_link")["direct_archive_count"] = 3
+      relink_audit["source_build"] = {
+        "proof_kind" => "first_build",
+        "receipt" => seed_stage.fetch("proof_receipt"),
+        "receipt_sha256" => seed_stage.fetch("proof_receipt_sha256"),
+        "source_closure_sha256" => dependency_stage.fetch("proof_receipt_sha256")
+      }
+      relink_audit["system_lolhtml_provider"] = receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider")
+      File.write(relink_audit_path, JSON.dump(relink_audit))
+      relink_audit_metadata.merge!(
+        "proof_date" => seed_stage.fetch("proof_date"),
+        "proof_receipt_sha256" => Digest::SHA256.file(relink_audit_path).hexdigest,
+        "direct_archive_count" => 3
+      )
+
+      relink_kit_path = File.join(directory, relink_kit_metadata.fetch("proof_receipt"))
+      relink_kit = JSON.parse(File.read(relink_kit_path))
+      relink_kit["schema"] = "bun-relink-kit/v2"
+      relink_kit["date"] = seed_stage.fetch("proof_date")
+      relink_kit.fetch("source_audit").merge!(
+        "schema" => relink_audit.fetch("schema"),
+        "sha256" => relink_audit_metadata.fetch("proof_receipt_sha256")
+      )
+      relink_kit.dig("kit", "payload_summary")["archive_count"] = 3
+      relink_kit.dig("kit", "payload_summary")["response_file_input_count"] = relink_audit_metadata.fetch("direct_object_count") + 3
+      relink_kit.fetch("validation")["system_lolhtml_provider_verified"] = true
+      relink_kit.fetch("link_validation").merge!(
+        "system_lolhtml_provider_verified" => true,
+        "shared_runtime_libraries" => %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+      )
+      File.write(relink_kit_path, JSON.dump(relink_kit))
+      relink_kit_metadata.merge!(
+        "historical_only" => false,
+        "proof_date" => seed_stage.fetch("proof_date"),
+        "proof_receipt_sha256" => Digest::SHA256.file(relink_kit_path).hexdigest
+      )
+      seed_stage["relink_materials_audit"] = relink_audit_metadata
+      seed_stage["relink_kit"] = relink_kit_metadata
+
+      assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
+      receipt.fetch("configure")["system_lolhtml_provider_verified"] = false
+      File.write(receipt_path, JSON.dump(receipt))
+      seed_stage["proof_receipt_sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: current seed-build proof graph checks are incomplete")
     end
   end
 
@@ -1698,6 +1892,31 @@ class AgentlabTest < Minitest::Test
       self_receipt = JSON.parse(File.read(self_receipt_path))
       zig_receipt_path = File.join(directory, "zig-reproducibility-proof.json")
       zig_receipt = JSON.parse(File.read(zig_receipt_path))
+      prior_receipt_name = "prior-self-rebuild-proof.json"
+      prior_receipt_path = File.join(directory, prior_receipt_name)
+      FileUtils.cp(self_receipt_path, prior_receipt_path)
+      prior_receipt_sha256 = Digest::SHA256.file(prior_receipt_path).hexdigest
+      prior_output = JSON.parse(File.read(prior_receipt_path)).dig("build", "bun")
+      self_receipt.fetch("first_build").merge!(
+        "driver_proof_kind" => "self_rebuild",
+        "driver_receipt" => prior_receipt_name,
+        "driver_receipt_sha256" => prior_receipt_sha256,
+        "path" => "/srv/tmp/agentlab-bun-prior-self-build/#{prior_output.fetch('path')}",
+        "size_bytes" => prior_output.fetch("size_bytes"),
+        "sha256" => prior_output.fetch("sha256")
+      )
+      self_receipt.fetch("reproducibility").merge!(
+        "driver_proof_kind" => "self_rebuild",
+        "driver_receipt_sha256" => prior_receipt_sha256
+      )
+      File.write(self_receipt_path, JSON.dump(self_receipt))
+      self_stage["proof_receipt_sha256"] = Digest::SHA256.file(self_receipt_path).hexdigest
+      zig_receipt.fetch("self_rebuild_proof")["sha256"] = self_stage["proof_receipt_sha256"]
+      File.write(zig_receipt_path, JSON.dump(zig_receipt))
+      self_stage["zig_reproducibility_proof_receipt_sha256"] = Digest::SHA256.file(zig_receipt_path).hexdigest
+
+      assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
       driver_sha256 = self_receipt.dig("first_build", "sha256")
       self_receipt.fetch("first_build")["sha256"] = "0" * 64
       File.write(self_receipt_path, JSON.dump(self_receipt))

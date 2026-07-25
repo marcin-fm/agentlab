@@ -2073,12 +2073,15 @@ module Agentlab
                           %w[blocked verified].include?(stages.dig("dependency_staging", "state")) &&
                           stages.dig("dependency_staging", "historical_only") != true
     errors << "bun: system lol-html current source stages are inconsistent" unless current_graph_valid
-    historical_stages = %w[lolhtml_rpm_cargo seed_build self_rebuild]
-    valid_invalidation = stages.is_a?(Hash) && historical_stages.all? do |stage_name|
-      stage = stages[stage_name]
+    historical_stage = lambda do |stage|
       stage.is_a?(Hash) && stage["state"] == "blocked" && stage["historical_only"] == true &&
         stage["invalidated_by"].is_a?(String) && !stage["invalidated_by"].empty?
     end
+    current_or_historical_stage = lambda do |stage|
+      historical_stage.call(stage) || (stage.is_a?(Hash) && %w[blocked verified].include?(stage["state"]) && stage["historical_only"] != true)
+    end
+    valid_invalidation = stages.is_a?(Hash) && historical_stage.call(stages["lolhtml_rpm_cargo"]) &&
+                           current_or_historical_stage.call(stages["seed_build"]) && current_or_historical_stage.call(stages["self_rebuild"])
     errors << "bun: system lol-html split did not invalidate historical build stages" unless valid_invalidation
     errors << "bun: system lol-html source closure is not regenerated" unless package.data.dig("build_plan", "system_lolhtml_source_closure_regenerated") == true
 
@@ -2852,6 +2855,107 @@ module Agentlab
     ["pdfium: invalid source release metadata: #{e.message}"]
   end
 
+  def valid_bun_staged_lolhtml_provider?(provider, expected)
+    return false unless provider.is_a?(Hash) && provider.slice(*expected.keys) == expected
+
+    staged = provider["staged_payload"]
+    root = staged.is_a?(Hash) && staged["root"]
+    valid_root = root.is_a?(String) && Pathname.new(root).absolute? && root.start_with?("/srv/tmp/") && Pathname.new(root).cleanpath.to_s == root
+    valid_records = %w[header pkgconfig_file shared_library].all? do |key|
+      record = staged.is_a?(Hash) && staged[key]
+      path = record.is_a?(Hash) && record["path"]
+      path.is_a?(String) && !path.empty? && !Pathname.new(path).absolute? && !Pathname.new(path).each_filename.include?("..") &&
+        record["size_bytes"].is_a?(Integer) && record["size_bytes"].positive? &&
+        record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+    valid_root && valid_records && staged["critical_symbols_verified"] == true
+  end
+
+  def validate_bun_current_first_build_receipt(package, receipt, seed_stage, stages, source_inputs, version)
+    errors = []
+    seed = source_inputs.fetch("bootstrap_seed")
+    zig = source_inputs.fetch("zig")
+    webkit = source_inputs.fetch("webkit")
+    lolhtml = source_inputs.fetch("lolhtml")
+    npm_lock = source_inputs.fetch("npm_lock")
+    build_graph = source_inputs.fetch("build_graph")
+    dependency_stage = stages.fetch("dependency_closure")
+
+    errors << "bun: unsupported current seed-build proof receipt schema" unless receipt["schema"] == "bun-first-source-build-proof/v2"
+    errors << "bun: current seed-build proof package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: current seed-build proof release mismatch" unless receipt["release"] == version
+    errors << "bun: current seed-build proof profile mismatch" unless receipt["profile"] == "release-local"
+    errors << "bun: current seed-build proof date mismatch" unless receipt["proof_date"] == seed_stage["proof_date"]
+    closure_name = dependency_stage.fetch("proof_receipt")
+    closure_sha256 = dependency_stage.fetch("proof_receipt_sha256")
+    closure_path = File.join(package.directory, closure_name)
+    errors << "bun: current seed-build proof source-closure path mismatch" unless receipt.dig("source_closure", "path") == closure_name
+    errors << "bun: current seed-build proof source-closure SHA-256 mismatch" unless receipt.dig("source_closure", "sha256") == closure_sha256
+    unless File.file?(closure_path) && closure_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(closure_path).hexdigest == closure_sha256
+      errors << "bun: current dependency-closure proof receipt is missing or has the wrong SHA-256"
+    end
+    errors << "bun: current seed-build proof source commit mismatch" unless receipt.dig("source_closure", "source_commit") == package.upstream["source_commit"]
+    errors << "bun: current seed-build proof source SHA-256 mismatch" unless receipt.dig("source_closure", "source_archive_sha256") == package.upstream["source_sha256"]
+    errors << "bun: current seed-build proof seed archive mismatch" unless receipt.dig("bootstrap_seed", "archive_sha256") == seed["sha256"]
+    errors << "bun: current seed-build proof seed binary mismatch" unless receipt.dig("bootstrap_seed", "binary_sha256") == seed["binary_sha256"]
+    errors << "bun: current seed-build proof seed size mismatch" unless receipt.dig("bootstrap_seed", "size_bytes") == seed["binary_size_bytes"]
+    errors << "bun: current seed-build proof seed version mismatch" unless receipt.dig("bootstrap_seed", "version") == version
+    errors << "bun: current seed-build proof seed is not bootstrap-only" unless receipt.dig("bootstrap_seed", "bootstrap_only") == true
+    errors << "bun: current seed-build proof permits the seed in the payload" unless receipt.dig("bootstrap_seed", "final_payload_allowed") == false
+    errors << "bun: current seed-build proof permits a seed runtime dependency" unless receipt.dig("bootstrap_seed", "final_runtime_dependency_allowed") == false
+
+    patch_sha256 = lambda do |metadata, path_key, sha_key|
+      path = metadata[path_key].is_a?(String) && File.join(package.directory, metadata[path_key])
+      next nil unless path && File.file?(path)
+
+      actual = Digest::SHA256.file(path).hexdigest
+      expected = sha_key && metadata[sha_key]
+      errors << "bun: current seed-build input patch SHA-256 mismatch" if expected && expected != actual
+      actual
+    end
+    errors << "bun: current seed-build proof Zig commit mismatch" unless receipt.dig("inputs", "zig", "source_commit") == zig["commit"]
+    errors << "bun: current seed-build proof Zig source SHA-256 mismatch" unless receipt.dig("inputs", "zig", "source_sha256") == zig["sha256"]
+    errors << "bun: current seed-build proof Zig patch SHA-256 mismatch" unless receipt.dig("inputs", "zig", "patch_sha256") == patch_sha256.call(zig, "patch", nil)
+    errors << "bun: current seed-build proof WebKit commit mismatch" unless receipt.dig("inputs", "webkit", "commit") == webkit["commit"]
+    errors << "bun: current seed-build proof WebKit source SHA-256 mismatch" unless receipt.dig("inputs", "webkit", "archive_sha256") == webkit["sha256"]
+    errors << "bun: current seed-build proof WebKit patch SHA-256 mismatch" unless receipt.dig("inputs", "webkit", "patch_sha256") == patch_sha256.call(webkit, "patch", "patch_sha256")
+    errors << "bun: current seed-build proof lol-html patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "system_lolhtml_sha256") == patch_sha256.call(lolhtml, "patch", "patch_sha256")
+    errors << "bun: current seed-build proof npm-lock patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "npm_lock_sha256") == patch_sha256.call(npm_lock, "patch", "patch_sha256")
+    errors << "bun: current seed-build proof Zig-cwd patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "zig_build_cwd_sha256") == patch_sha256.call(build_graph, "patch", "patch_sha256")
+    errors << "bun: current seed-build proof shared-runtime patch SHA-256 mismatch" unless receipt.dig("inputs", "source_patches", "fedora_shared_cxx_runtime_sha256") == patch_sha256.call(build_graph, "cxx_runtime_patch", "cxx_runtime_patch_sha256")
+
+    historical_npm = dependency_stage.fetch("historical_lolhtml_graph")
+    errors << "bun: current seed-build historical npm input mismatch" unless receipt.dig("inputs", "npm_proof", "path") == historical_npm["npm_install_proof_receipt"] && receipt.dig("inputs", "npm_proof", "sha256") == historical_npm["npm_install_proof_receipt_sha256"] && receipt.dig("inputs", "npm_proof", "historical_seed_driven_install_only") == true
+    offline = receipt.dig("inputs", "offline_inputs")
+    expected_provider = lolhtml.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
+    actual_provider = offline.is_a?(Hash) && offline["system_lolhtml_provider"]
+    errors << "bun: current seed-build offline input counts mismatch" unless offline.is_a?(Hash) && offline["native_archives"] == dependency_stage["selected_github_archives"] && offline["node_header_archives"] == dependency_stage["selected_node_header_archives"] && offline["npm_install_roots"] == 3 && offline["cargo_source_archives"] == 0
+    errors << "bun: current seed-build system lol-html provider mismatch" unless valid_bun_staged_lolhtml_provider?(actual_provider, expected_provider)
+    supplemental_npm = offline.is_a?(Hash) && offline["supplemental_npm_trees"]
+    errors << "bun: current seed-build supplemental npm inputs are invalid" unless supplemental_npm.is_a?(Array) && supplemental_npm.all? { |entry| entry.is_a?(Hash) && entry["path"].is_a?(String) && entry.dig("tree", "sha256").to_s.match?(/\A[0-9a-f]{64}\z/) }
+
+    expected_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+    errors << "bun: current seed-build proof was not network isolated" unless receipt.dig("configure", "network_namespace") == true && receipt.dig("build", "network_namespace") == true
+    errors << "bun: current seed-build proof did not revalidate prepared inputs" unless receipt.dig("configure", "prepared_inputs_revalidated") == true
+    errors << "bun: current seed-build proof bootstrap-seed rule set mismatch" unless receipt.dig("configure", "bootstrap_seed_rule_scope_verified") == true && receipt.dig("configure", "bootstrap_seed_rules") == expected_rules
+    errors << "bun: current seed-build proof graph mismatch" unless receipt.dig("configure", "install_edges") == 3 && receipt.dig("configure", "native_fetch_edges") == dependency_stage["selected_github_archives"] && receipt.dig("configure", "node_header_fetch_edges") == dependency_stage["selected_node_header_archives"]
+    errors << "bun: current seed-build proof graph checks are incomplete" unless %w[local_webkit_verified zig_fetch_absent zig_source_cwd_verified fedora_shared_cxx_runtime_verified system_lolhtml_provider_verified unexpected_urls_absent].all? { |key| receipt.dig("configure", key) == true }
+    errors << "bun: current seed-build proof output version mismatch" unless receipt.dig("build", "version") == version
+    errors << "bun: current seed-build proof revision mismatch" unless receipt.dig("build", "revision") == "#{version}-canary.1+#{package.upstream['source_commit'].to_s[0, 9]}"
+    outputs = %w[bun_profile bun linker_map].map { |key| receipt.dig("build", key) }
+    valid_outputs = outputs.all? { |output| output.is_a?(Hash) && output["path"].is_a?(String) && !Pathname.new(output["path"]).absolute? && !Pathname.new(output["path"]).each_filename.include?("..") && output["size_bytes"].is_a?(Integer) && output["size_bytes"].positive? && output["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) }
+    errors << "bun: current seed-build output receipts are invalid" unless valid_outputs
+    errors << "bun: current seed-build stripped output is not smaller than bun-profile" unless receipt.dig("build", "bun", "size_bytes").is_a?(Integer) && receipt.dig("build", "bun_profile", "size_bytes").is_a?(Integer) && receipt.dig("build", "bun", "size_bytes") < receipt.dig("build", "bun_profile", "size_bytes")
+    errors << "bun: current seed-build runtime validation is incomplete" unless receipt.dig("build", "smoke_verified") == true && receipt.dig("build", "stripped_output_verified") == true && receipt.dig("build", "fedora_shared_cxx_runtime_verified") == true && receipt.dig("build", "system_lolhtml_provider_verified") == true && receipt.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+    errors << "bun: current seed-build found a seed payload" unless receipt.dig("seed_contamination", "payload_absent_verified") == true && receipt.dig("seed_contamination", "seed_hash_matches") == 0
+    errors << "bun: current seed-build found a seed runtime dependency" unless receipt.dig("seed_contamination", "runtime_dependency_absent_verified") == true
+    errors << "bun: current seed-build validation is incomplete" unless %w[bootstrap_seed_verified seed_isolated_verified source_build_verified].all? { |key| receipt.dig("validation", key) == true }
+    errors << "bun: current seed-build overclaims later gates" unless receipt.dig("validation", "self_rebuild_performed") == false && receipt.dig("validation", "reproducibility_compared") == false && receipt.dig("validation", "complete_lgpl_relink_materials_verified") == false && receipt.dig("validation", "final_license_audit_verified") == false && receipt.dig("validation", "final_rpm_verified") == false
+    errors
+  rescue KeyError, TypeError => e
+    ["bun: invalid current seed-build proof receipt: #{e.message}"]
+  end
+
   def validate_bun_build_plan(package, spec)
     return [] unless package.name == "bun"
 
@@ -2966,6 +3070,9 @@ module Agentlab
           receipt = JSON.parse(File.read(receipt_path))
           expected_receipt_sha256 = seed_stage["proof_receipt_sha256"]
           errors << "bun: seed-build proof receipt SHA-256 mismatch" unless expected_receipt_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_receipt_sha256
+          if seed_stage["historical_only"] != true
+            errors.concat(validate_bun_current_first_build_receipt(package, receipt, seed_stage, stages, source_inputs, version))
+          else
           errors << "bun: unsupported seed-build proof receipt schema" unless receipt["schema"] == "bun-first-source-build-proof/v1"
           errors << "bun: seed-build proof package mismatch" unless receipt["package"] == "bun"
           errors << "bun: seed-build proof release mismatch" unless receipt["release"] == version
@@ -3081,6 +3188,7 @@ module Agentlab
           errors << "bun: seed-build proof incorrectly claims complete LGPL relink materials" unless receipt.dig("validation", "complete_lgpl_relink_materials_verified") == false
           errors << "bun: seed-build proof incorrectly claims a final license audit" unless receipt.dig("validation", "final_license_audit_verified") == false
           errors << "bun: seed-build proof incorrectly claims a final RPM" unless receipt.dig("validation", "final_rpm_verified") == false
+          end
         rescue JSON::ParserError => e
           errors << "bun: invalid seed-build proof receipt: #{e.message}"
         end
@@ -3102,10 +3210,25 @@ module Agentlab
             receipt = JSON.parse(File.read(receipt_path))
             expected_sha256 = audit["proof_receipt_sha256"]
             errors << "bun: relink-materials proof receipt SHA-256 mismatch" unless expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
-            errors << "bun: unsupported relink-materials proof receipt schema" unless receipt["schema"] == "bun-relink-materials-audit/v2"
+            historical_relink = seed_stage["historical_only"] == true
+            expected_relink_schema = historical_relink ? "bun-relink-materials-audit/v2" : "bun-relink-materials-audit/v3"
+            errors << "bun: unsupported relink-materials proof receipt schema" unless receipt["schema"] == expected_relink_schema
             errors << "bun: relink-materials proof package mismatch" unless receipt["package"] == "bun"
             errors << "bun: relink-materials proof release mismatch" unless receipt["version"] == version
-            errors << "bun: relink-materials proof date mismatch" unless receipt["date"] == seed_stage["proof_date"]
+            errors << "bun: relink-materials proof date mismatch" unless receipt["date"] == (audit["proof_date"] || seed_stage["proof_date"])
+            unless historical_relink
+              dependency_stage = stages.fetch("dependency_closure")
+              proof_kind = receipt.dig("source_build", "proof_kind")
+              build_stage = proof_kind == "self_rebuild" ? stages["self_rebuild"] : seed_stage
+              valid_build_kind = %w[first_build self_rebuild].include?(proof_kind)
+              errors << "bun: current relink-materials source build mismatch" unless valid_build_kind && build_stage.is_a?(Hash) &&
+                receipt.dig("source_build", "receipt") == build_stage["proof_receipt"] &&
+                receipt.dig("source_build", "receipt_sha256") == build_stage["proof_receipt_sha256"] &&
+                receipt.dig("source_build", "source_closure_sha256") == dependency_stage["proof_receipt_sha256"]
+              expected_provider = lolhtml.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
+              provider = receipt["system_lolhtml_provider"]
+              errors << "bun: current relink-materials system lol-html provider mismatch" unless valid_bun_staged_lolhtml_provider?(provider, expected_provider)
+            end
 
             scalar_fields = {
               ["final_link", "direct_object_count"] => "direct_object_count",
@@ -3129,6 +3252,9 @@ module Agentlab
                 entry["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && entry["kind"] == "archive"
             end
             errors << "bun: relink-materials proof archive inventory is invalid" unless valid_archives
+            expected_archive_count = historical_relink ? 4 : 3
+            errors << "bun: relink-materials proof archive count mismatch" unless audit["direct_archive_count"] == expected_archive_count
+            errors << "bun: current relink-materials proof retains private lol-html" if !historical_relink && archives.is_a?(Array) && archives.any? { |entry| entry["path"].to_s.include?("/lolhtml/") }
 
             expected_headers = {
               "build/release-local/deps/WebKit/JavaScriptCore/Headers" => 9,
@@ -3175,14 +3301,17 @@ module Agentlab
             receipt = JSON.parse(File.read(receipt_path))
             expected_sha256 = metadata["proof_receipt_sha256"]
             errors << "bun: relink-kit proof receipt SHA-256 mismatch" unless expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
-            errors << "bun: unsupported relink-kit proof receipt schema" unless receipt["schema"] == "bun-relink-kit/v1"
+            historical_relink = seed_stage["historical_only"] == true
+            expected_kit_schema = historical_relink ? "bun-relink-kit/v1" : "bun-relink-kit/v2"
+            expected_audit_schema = historical_relink ? "bun-relink-materials-audit/v2" : "bun-relink-materials-audit/v3"
+            errors << "bun: unsupported relink-kit proof receipt schema" unless receipt["schema"] == expected_kit_schema
             errors << "bun: relink-kit proof package mismatch" unless receipt["package"] == "bun"
             errors << "bun: relink-kit proof release mismatch" unless receipt["version"] == version
-            errors << "bun: relink-kit proof date mismatch" unless receipt["date"] == seed_stage["proof_date"]
+            errors << "bun: relink-kit proof date mismatch" unless receipt["date"] == (metadata["proof_date"] || seed_stage["proof_date"])
 
             audit = seed_stage["relink_materials_audit"]
             errors << "bun: relink-kit source audit mismatch" unless audit.is_a?(Hash) &&
-              receipt.dig("source_audit", "schema") == "bun-relink-materials-audit/v2" &&
+              receipt.dig("source_audit", "schema") == expected_audit_schema &&
               receipt.dig("source_audit", "sha256") == audit["proof_receipt_sha256"] &&
               receipt.dig("source_audit", "link_manifest_sha256") == audit["link_manifest_sha256"] &&
               receipt.dig("source_audit", "direct_object_inventory_sha256") == audit["direct_object_inventory_sha256"]
@@ -3196,15 +3325,24 @@ module Agentlab
               metadata["archive_hosted"] == false
 
             summary = kit.is_a?(Hash) && kit["payload_summary"]
-            expected_summary = {
-              "object_count" => 1162,
-              "archive_count" => 4,
-              "linker_script_count" => 2,
-              "generated_header_entry_count" => 2294,
-              "generated_header_target_count" => 1415,
-              "response_file_input_count" => 1166
-            }
-            errors << "bun: relink-kit payload summary mismatch" unless summary.is_a?(Hash) && expected_summary.all? { |key, value| summary[key] == value }
+            if historical_relink
+              expected_summary = {
+                "object_count" => 1162,
+                "archive_count" => 4,
+                "linker_script_count" => 2,
+                "generated_header_entry_count" => 2294,
+                "generated_header_target_count" => 1415,
+                "response_file_input_count" => 1166
+              }
+              errors << "bun: relink-kit payload summary mismatch" unless summary.is_a?(Hash) && expected_summary.all? { |key, value| summary[key] == value }
+            else
+              valid_summary = summary.is_a?(Hash) && summary["object_count"] == audit["direct_object_count"] &&
+                              summary["archive_count"] == audit["direct_archive_count"] && summary["linker_script_count"] == 2 &&
+                              summary["generated_header_entry_count"] == audit["generated_webkit_header_count"] &&
+                              summary["generated_header_target_count"].is_a?(Integer) && summary["generated_header_target_count"].positive? &&
+                              summary["response_file_input_count"] == audit["direct_object_count"] + audit["direct_archive_count"]
+              errors << "bun: current relink-kit payload summary mismatch" unless valid_summary
+            end
 
             errors << "bun: relink-kit payload manifest mismatch" unless kit.is_a?(Hash) && kit.dig("payload_manifest", "sha256") == metadata["payload_manifest_sha256"]
             errors << "bun: relink-kit response file mismatch" unless kit.is_a?(Hash) && kit.dig("response_file", "sha256") == metadata["response_file_sha256"]
@@ -3225,6 +3363,7 @@ module Agentlab
               fedora_shared_cxx_runtime_verified seed_payload_absent_verified
               seed_runtime_dependency_absent_verified
             ]
+            validation_keys << "system_lolhtml_provider_verified" unless historical_relink
             errors << "bun: relink-kit proof validation is incomplete" unless validation_keys.all? { |key| receipt.dig("validation", key) == true }
 
             link = receipt["link_validation"]
@@ -3238,9 +3377,11 @@ module Agentlab
               link.dig("linker_map", "sha256") == metadata["linker_map_sha256"] &&
               link.dig("linker_map", "retained_linker_map_sha256") == metadata["linker_map_sha256"] &&
               link.dig("linker_map", "retained_linker_map_sha256_equal") == true
+            expected_runtime_libraries = historical_relink ? %w[libgcc_s.so.1 libstdc++.so.6] : %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
             errors << "bun: relink-kit runtime proof is incomplete" unless link.is_a?(Hash) &&
               link["smoke_verified"] == true && link["fedora_shared_cxx_runtime_verified"] == true &&
-              link["shared_runtime_libraries"] == %w[libgcc_s.so.1 libstdc++.so.6] &&
+              link["shared_runtime_libraries"] == expected_runtime_libraries &&
+              (historical_relink || link["system_lolhtml_provider_verified"] == true) &&
               link["seed_payload_absent_verified"] == true && link["seed_runtime_dependency_absent_verified"] == true
 
             errors << "bun: relink-kit completeness mismatch" unless receipt["complete_lgpl_relink_materials_verified"] == metadata["complete_lgpl_relink_materials_verified"] && receipt["complete_lgpl_relink_materials_verified"] == true
@@ -3274,26 +3415,37 @@ module Agentlab
 
           driver = receipt["first_build"]
           seed_stage = stages.fetch("seed_build")
-          errors << "bun: self-rebuild proof driver kind mismatch" unless driver.is_a?(Hash) && driver["driver_proof_kind"] == "first_build"
-          errors << "bun: self-rebuild proof driver receipt mismatch" unless driver.is_a?(Hash) && driver["driver_receipt"] == seed_stage["proof_receipt"] && driver["driver_receipt_sha256"] == seed_stage["proof_receipt_sha256"]
-          first_receipt_name = seed_stage["proof_receipt"]
-          first_receipt_path = first_receipt_name.is_a?(String) && File.join(package.directory, first_receipt_name)
-          if first_receipt_path && File.file?(first_receipt_path)
-            first_receipt = JSON.parse(File.read(first_receipt_path))
-            first_output = first_receipt.dig("build", "bun")
-            valid_driver_binary = driver.is_a?(Hash) && first_output.is_a?(Hash) &&
-                                  driver["sha256"] == first_output["sha256"] &&
-                                  driver["size_bytes"] == first_output["size_bytes"]
+          driver_kind = driver.is_a?(Hash) && driver["driver_proof_kind"]
+          errors << "bun: self-rebuild proof driver kind mismatch" unless %w[first_build self_rebuild].include?(driver_kind)
+          driver_receipt_name = driver.is_a?(Hash) && driver["driver_receipt"]
+          driver_receipt_path = driver_receipt_name.is_a?(String) && File.join(package.directory, driver_receipt_name)
+          if driver_receipt_path && File.file?(driver_receipt_path)
+            driver_receipt_sha256 = Digest::SHA256.file(driver_receipt_path).hexdigest
+            errors << "bun: self-rebuild proof driver receipt SHA-256 mismatch" unless driver["driver_receipt_sha256"] == driver_receipt_sha256
+            driver_receipt = JSON.parse(File.read(driver_receipt_path))
+            expected_driver_schema = driver_kind == "self_rebuild" ? "bun-self-rebuild-proof/v2" : (self_stage["historical_only"] == true ? "bun-first-source-build-proof/v1" : "bun-first-source-build-proof/v2")
+            errors << "bun: self-rebuild proof driver receipt schema mismatch" unless driver_receipt["schema"] == expected_driver_schema
+            if driver_kind == "first_build"
+              errors << "bun: self-rebuild proof driver receipt mismatch" unless driver_receipt_name == seed_stage["proof_receipt"] && driver["driver_receipt_sha256"] == seed_stage["proof_receipt_sha256"]
+            else
+              errors << "bun: self-rebuild proof driver receipt is recursive" if driver_receipt_name == receipt_name
+              errors << "bun: self-rebuild proof driver is not verified" unless driver_receipt.dig("validation", "self_rebuild_performed") == true
+            end
+            driver_output = driver_receipt.dig("build", "bun")
+            valid_driver_binary = driver.is_a?(Hash) && driver_output.is_a?(Hash) &&
+                                  driver["sha256"] == driver_output["sha256"] &&
+                                  driver["size_bytes"] == driver_output["size_bytes"]
             errors << "bun: self-rebuild proof driver binary mismatch" unless valid_driver_binary
-            valid_driver_path = driver.is_a?(Hash) && first_output.is_a?(Hash) &&
-                                driver["path"].to_s.end_with?("/#{first_output['path']}")
+            valid_driver_path = driver.is_a?(Hash) && driver_output.is_a?(Hash) &&
+                                driver["path"].to_s.end_with?("/#{driver_output['path']}")
             errors << "bun: self-rebuild proof driver path mismatch" unless valid_driver_path
           else
-            errors << "bun: self-rebuild proof driver receipt is missing: #{first_receipt_name.inspect}"
+            errors << "bun: self-rebuild proof driver receipt is missing: #{driver_receipt_name.inspect}"
           end
 
           dependency_stage = stages.fetch("dependency_closure")
-          closure_contract = if self_stage["historical_only"] == true
+          historical_self_rebuild = self_stage["historical_only"] == true
+          closure_contract = if historical_self_rebuild
                                dependency_stage.fetch("historical_lolhtml_graph")
                              else
                                dependency_stage
@@ -3321,7 +3473,14 @@ module Agentlab
           errors << "bun: self-rebuild proof did not use local WebKit" unless receipt.dig("configure", "local_webkit_verified") == true
           errors << "bun: self-rebuild proof retained a Zig fetch edge" unless receipt.dig("configure", "zig_fetch_absent") == true
           errors << "bun: self-rebuild proof did not verify the Zig source cwd" unless receipt.dig("configure", "zig_source_cwd_verified") == true
-          errors << "bun: self-rebuild proof did not verify stable lol-html Cargo" unless receipt.dig("configure", "stable_lolhtml_cargo_verified") == true
+          if historical_self_rebuild
+            errors << "bun: self-rebuild proof did not verify stable lol-html Cargo" unless receipt.dig("configure", "stable_lolhtml_cargo_verified") == true
+          else
+            provider = receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider")
+            expected_provider = lolhtml.slice("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement")
+            errors << "bun: current self-rebuild proof did not verify system lol-html" unless receipt.dig("configure", "system_lolhtml_provider_verified") == true &&
+              receipt.dig("inputs", "offline_inputs", "cargo_source_archives") == 0 && valid_bun_staged_lolhtml_provider?(provider, expected_provider)
+          end
           errors << "bun: self-rebuild proof contains unexpected URLs" unless receipt.dig("configure", "unexpected_urls_absent") == true
           errors << "bun: self-rebuild proof output version mismatch" unless receipt.dig("build", "version") == version
           errors << "bun: self-rebuild proof revision mismatch" unless receipt.dig("build", "revision") == "#{version}-canary.1+#{package.upstream['source_commit'].to_s[0, 9]}"
@@ -3339,10 +3498,13 @@ module Agentlab
           errors << "bun: self-rebuild proof smoke failed" unless receipt.dig("build", "smoke_verified") == true
           errors << "bun: self-rebuild proof did not verify stripped output" unless receipt.dig("build", "stripped_output_verified") == true
           errors << "bun: self-rebuild proof did not verify Fedora's shared C++ runtime" unless receipt.dig("build", "fedora_shared_cxx_runtime_verified") == true
-          errors << "bun: self-rebuild proof shared-runtime library set mismatch" unless receipt.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6]
+          expected_shared_libraries = historical_self_rebuild ? %w[libgcc_s.so.1 libstdc++.so.6] : %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+          errors << "bun: self-rebuild proof shared-runtime library set mismatch" unless receipt.dig("build", "shared_runtime_libraries") == expected_shared_libraries
+          errors << "bun: current self-rebuild proof did not verify system lol-html runtime" if !historical_self_rebuild && receipt.dig("build", "system_lolhtml_provider_verified") != true
           errors << "bun: self-rebuild proof found a seed payload" unless receipt.dig("seed_contamination", "payload_absent_verified") == true && receipt.dig("seed_contamination", "seed_hash_matches") == 0
           errors << "bun: self-rebuild proof found a seed runtime dependency" unless receipt.dig("seed_contamination", "runtime_dependency_absent_verified") == true
           errors << "bun: self-rebuild proof did not compare reproducibility" unless receipt.dig("reproducibility", "compared") == true
+          errors << "bun: self-rebuild proof reproducibility driver mismatch" unless receipt.dig("reproducibility", "driver_proof_kind") == driver_kind && receipt.dig("reproducibility", "driver_receipt_sha256") == driver["driver_receipt_sha256"]
           errors << "bun: self-rebuild proof fixed-point result mismatch" unless receipt.dig("reproducibility", "fixed_point_verified") == self_stage["source_rebuild_fixed_point_verified"]
           errors << "bun: self-rebuild proof validation is incomplete" unless %w[source_built_driver_verified self_rebuild_performed offline_verified seed_payload_absent_verified seed_runtime_dependency_absent_verified reproducibility_compared].all? { |key| receipt.dig("validation", key) == true }
           errors << "bun: self-rebuild proof fixed-point validation mismatch" unless receipt.dig("validation", "source_rebuild_fixed_point_verified") == self_stage["source_rebuild_fixed_point_verified"]
