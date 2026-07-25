@@ -17,9 +17,24 @@ SHA-256
 | `playwright` | `1.62.0-alpha-1783623505000` | `738aa4e5602f023b68dbad49cf6bd93e8f2aa14277831109458de1262fad557a` |
 | `playwright-core` | `1.62.0-alpha-1783623505000` | `a5412aee4ac779f1c662272f77fd5fe716218cf555c222a301f089447f49b24c` |
 
-The RPM version is `1.62.0~alpha.1783623505000`, which sorts before the future
-stable `1.62.0` release. The installed npm manifests retain the published
+The RPM version is `1.62.0~alpha.1783623505000`, which sorts before stable
+`1.62.0`. The installed npm manifests retain the published
 hyphenated semver.
+
+## Stable Release Selection
+
+Playwright stable `1.62.0` is exact tag/commit
+`e3950d9c140d007bd52853b45813c6274b24e36f`; its 40,516,422-byte source archive
+has SHA-256 `b778e484d6ec5c93a2ac8872f1c353e80aff9e5f7103d6b3b51b85dfd9ba56b2`.
+It is not selected independently because released `@playwright/mcp 0.0.78`
+requires the exact alpha versions of both `playwright` and `playwright-core`.
+
+The MCP-used bundle APIs exist in stable, but that source inspection is not a
+packaged integration proof and does not rewrite the released consumer manifest.
+Stable also changes browser revisions and generated payloads and adds a
+libwebp/Emscripten WASM source-build gate. A stable provider therefore requires
+a coordinated MCP metadata update, regenerated closure evidence, and packaged
+Fedora Chromium integration rather than a provider-only version substitution.
 
 ## Metadata Boundary
 

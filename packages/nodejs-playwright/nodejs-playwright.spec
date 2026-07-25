@@ -16,7 +16,7 @@
 
 Name:           nodejs-playwright
 Version:        1.62.0~alpha.1783623505000
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        High-level browser automation API for Node.js
 
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT
@@ -43,7 +43,7 @@ Provides:       npm(playwright) = %{version}
 %description
 Playwright is a high-level Node.js API for browser automation. This source
 package builds the public playwright and playwright-core modules from one
-monorepo source tree.
+upstream source tree.
 
 This draft is intentionally blocked. It must not produce RPMs until the exact
 offline build and test closures, generated assets, native build tools, complete
@@ -104,6 +104,9 @@ echo 'nodejs-playwright is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.62.0~alpha.1783623505000-0.6
+- Record why Playwright MCP retains the exact alpha after stable 1.62.0.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 1.62.0~alpha.1783623505000-0.5
 - Require the source-built esbuild provider and record the Rolldown boundary.
 

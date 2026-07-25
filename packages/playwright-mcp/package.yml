@@ -12,6 +12,15 @@ source_policy:
     playwright_rpm_capability: 1.62.0~alpha.1783623505000
     source_package: nodejs-playwright
     binary_packages: nodejs-playwright and nodejs-playwright-core
+  stable_provider_review:
+    checked: "2026-07-25"
+    latest_stable: 1.62.0
+    source_commit: e3950d9c140d007bd52853b45813c6274b24e36f
+    source_archive_sha256: b778e484d6ec5c93a2ac8872f1c353e80aff9e5f7103d6b3b51b85dfd9ba56b2
+    released_manifest_requirement: exact alpha playwright and playwright-core versions
+    inspected_bundle_api_boundary_present: true
+    packaged_stable_substitution_verified: false
+    decision: Retain the exact released provider pin until MCP metadata and packaged integration are updated together.
   installed_metadata_boundary: The scoped root does not trigger Fedora's current Node file attribute, so npm(@playwright/mcp) is declared manually.
   browser: Fedora chromium-headless only
   browser_compatibility: Exact MCP wrapper ran over stdio with Fedora 44 chromium-headless 150.0.7871.114, listed 24 tools, and passed local data-URL navigation and evaluation.
@@ -37,10 +46,9 @@ upstream:
   source_tag_archive_sha256: 9f4b1c550c24aaf202b422c568c105a6c29e4c3d10735cc317c56aa650cda3d7
   license: Apache-2.0
 duplicate_check:
-  checked: "2026-07-17"
-  fedora_43_44: absent
-  rpm_fusion_release_43_44: absent
-  rpm_fusion_updates_43_44: absent
+  checked: "2026-07-25"
+  fedora_43_44_rawhide: absent
+  rpm_fusion_43_44: absent
 copr:
   enabled: false
   subdir: packages/playwright-mcp

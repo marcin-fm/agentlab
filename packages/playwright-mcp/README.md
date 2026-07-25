@@ -19,6 +19,15 @@ which will build the Playwright monorepo once and emit `nodejs-playwright` plus
 `@playwright/mcp` public module and requires both exact normalized capabilities:
 `1.62.0~alpha.1783623505000`.
 
+Playwright stable `1.62.0` is available at exact commit
+`e3950d9c140d007bd52853b45813c6274b24e36f`, with source archive SHA-256
+`b778e484d6ec5c93a2ac8872f1c353e80aff9e5f7103d6b3b51b85dfd9ba56b2`.
+This package does not switch providers independently: its released manifest
+requires the exact alpha versions of both Playwright modules. The MCP-used
+bundle APIs are present in stable, but the changed browser revisions, generated
+payloads, and new libwebp WASM source gate still require a coordinated metadata,
+closure, and packaged Fedora integration update.
+
 The original npm manifests retain
 `1.62.0-alpha-1783623505000`. Fedora's automatic Node provider emits that raw
 prerelease as invalid RPM syntax and its requirement generator discards the

@@ -21,6 +21,23 @@ optional_runtime_dependencies:
   - npm_name: fsevents
     version: 2.3.2
     scope: Darwin-only optional dependency; excluded on Fedora
+stable_release_review:
+  checked: "2026-07-25"
+  latest_stable: 1.62.0
+  source_tag: v1.62.0
+  source_commit: e3950d9c140d007bd52853b45813c6274b24e36f
+  source_url: https://codeload.github.com/microsoft/playwright/tar.gz/refs/tags/v1.62.0
+  source_archive_bytes: 40516422
+  source_archive_sha256: b778e484d6ec5c93a2ac8872f1c353e80aff9e5f7103d6b3b51b85dfd9ba56b2
+  node_requirement: ">=20"
+  selected_consumer: "@playwright/mcp 0.0.78"
+  consumer_manifest_requirements:
+    playwright: 1.62.0-alpha-1783623505000
+    playwright-core: 1.62.0-alpha-1783623505000
+  inspected_bundle_apis_present: true
+  stable_substitution_verified: false
+  stable_additional_gate: Source-build and license-map lib/webp_codec.wasm from pinned libwebp and Emscripten inputs.
+  decision: Retain the selected alpha until the consumer metadata and packaged Fedora integration are updated together.
 build_closure:
   status: audited-blocked
   source_commit: 9fb36027c64c8edcf08bf06f618b3ca97a7b0d97

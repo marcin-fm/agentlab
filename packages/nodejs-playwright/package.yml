@@ -27,11 +27,22 @@ source_policy:
   dashboard_icons: Patch0 preserves the dashboard and exact channel tooltip while replacing ten third-party browser marks with the existing neutral initial fallback.
   dashboard_logo_inputs_after_patch: 0
   browser: Fedora chromium-headless for downstream integration tests
+  stable_release_review:
+    checked: "2026-07-25"
+    latest_stable: 1.62.0
+    source_tag: v1.62.0
+    source_commit: e3950d9c140d007bd52853b45813c6274b24e36f
+    source_archive_sha256: b778e484d6ec5c93a2ac8872f1c353e80aff9e5f7103d6b3b51b85dfd9ba56b2
+    selected_provider: 1.62.0-alpha-1783623505000
+    consumer: "@playwright/mcp 0.0.78"
+    consumer_manifest_requirement: exact alpha playwright and playwright-core versions
+    stable_bundle_api_boundary_present: true
+    packaged_stable_substitution_verified: false
+    decision: Retain the exact released MCP provider pin; require a coordinated stable provider and MCP metadata update.
 duplicate_check:
-  checked: "2026-07-17"
-  fedora_43_44: absent
-  rpm_fusion_release_43_44: absent
-  rpm_fusion_updates_43_44: absent
+  checked: "2026-07-25"
+  fedora_43_44_rawhide: absent
+  rpm_fusion_43_44: absent
 upstream:
   provider: npm-and-github
   repository: microsoft/playwright

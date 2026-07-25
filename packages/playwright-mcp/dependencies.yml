@@ -13,6 +13,23 @@ rpm_runtime_dependencies:
   required_capabilities:
     - npm(playwright) = 1.62.0~alpha.1783623505000
     - npm(playwright-core) = 1.62.0~alpha.1783623505000
+stable_provider_review:
+  checked: "2026-07-25"
+  latest_stable: 1.62.0
+  source_tag: v1.62.0
+  source_commit: e3950d9c140d007bd52853b45813c6274b24e36f
+  source_archive_sha256: b778e484d6ec5c93a2ac8872f1c353e80aff9e5f7103d6b3b51b85dfd9ba56b2
+  released_manifest_requirements:
+    playwright: 1.62.0-alpha-1783623505000
+    playwright-core: 1.62.0-alpha-1783623505000
+  inspected_mcp_bundle_apis:
+    - tools.decorateMCPCommand
+    - tools.createConnection
+    - libCli.decorateProgram
+    - utilsBundle.program
+  stable_bundle_api_boundary_present: true
+  stable_provider_substitution_verified: false
+  decision: Retain the exact alpha provider until consumer metadata, rebuilt browser assets, and packaged Fedora integration are updated together.
 playwright_provider_audit:
   canonical_package_record: ../nodejs-playwright/dependencies.yml
   status: audited-blocked
