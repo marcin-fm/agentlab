@@ -7,14 +7,17 @@
 
 Name:           rust-cfb0.14
 Version:        0.14.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Read/write Compound File Binary (structured storage) files
 
 License:        MIT
 URL:            https://crates.io/crates/cfb
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
-# Drop benchmark-only Criterion metadata and skip a debug-only panic test in
-# optimized builds; runtime library behavior remains unchanged.
+# Fedora-specific: omit benchmark-only Criterion 0.8, which upstream retains:
+# https://github.com/mdsteele/rust-cfb/commit/0c4cc5be137dc2d0aef70889721f34217903d9fc
+# Run the debug-assertion-dependent should-panic test only with debug assertions;
+# upstream still leaves it unguarded after its introduction:
+# https://github.com/mdsteele/rust-cfb/commit/4bdfbdf162ca871ef412d68b55d10b417b90df48
 Patch:          cfb-fix-metadata.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -70,6 +73,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.3
+- Document the Fedora patch purpose and upstream status.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.14.0-0.2
 - Enable configured SCM publication from the immutable crates.io source.
 

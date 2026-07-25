@@ -7,7 +7,7 @@
 
 Name:           rust-infer0.19
 Version:        0.19.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Small crate to infer file type based on magic number signatures
 
 License:        MIT
@@ -15,6 +15,8 @@ URL:            https://crates.io/crates/infer
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # The published crate omits testdata files referenced by these doctests.
 # Ignore only those examples; runtime library behavior remains unchanged.
+# Upstream intentionally excludes the fixtures while current releases retain the doctests:
+# https://github.com/bojand/infer/commit/3d600010ba2b55879f1ad035f1842d0817f88061
 Patch:          infer-fedora-doctests.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -106,6 +108,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.19.0-0.3
+- Document the Fedora patch purpose and upstream status.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.19.0-0.2
 - Enable configured SCM publication from the immutable crates.io source.
 
