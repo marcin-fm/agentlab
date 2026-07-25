@@ -1,11 +1,11 @@
 # OpenCode Packaging Status
 
-OpenCode `1.18.3` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.3`; final binary inclusion, generated bundled Provides, aggregate licensing, the remaining native and WASM rebuilds, and a complete offline build remain unverified.
+OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; final binary inclusion, generated bundled Provides, aggregate licensing, the remaining native and WASM rebuilds, and a complete offline build remain unverified.
 
-The immutable `v1.18.3` tag resolves to commit
-`127bdb30784d508cc556c71a0f32b508a3061517`, and its source archive has
-SHA-256 `494041aedd7407079f91fd694de355f4ff022ba6bf876e09ff30983bbdc70ae1`.
-The root lock contains 37 workspace records and 3,215 package records. Those
+The immutable `v1.18.5` tag resolves to commit
+`e5cc278dec9294a627a7b05f47ce6a564408c1a2`, and its source archive has
+SHA-256 `eb3daee12da937a36c3276efda2ce1253d3c8fbe2828ebd581a39a2c2d3efdab`.
+The root lock contains 37 workspace records and 3,221 package records. Those
 are lockfile-wide inventory counts, not the standalone Linux binary closure
 and not valid `bundled(nodejs-...)` input.
 
@@ -15,20 +15,20 @@ and not valid `bundled(nodejs-...)` input.
 the released Bun lock for the Linux x86_64 glibc terminal CLI. The selected
 feature surface uses upstream's `--skip-embed-web-ui` build flag, excluding the
 app/Vite/Sentry path without patching product code. It selects 14 workspaces and
-1,014 runtime package records, all from the npm registry, while 36 non-target
+1,018 runtime package records, all from the npm registry, while 36 non-target
 platform records are excluded.
 
 The deterministic receipt is
-[`opencode-1.18.3-selected-lock-audit.json`](opencode-1.18.3-selected-lock-audit.json),
-SHA-256 `2edb9d0fb479330a5d5466a1ff1a1aa9d468b43352f1e20d9b2c95306238a0f0`.
+[`opencode-1.18.5-selected-lock-audit.json`](opencode-1.18.5-selected-lock-audit.json),
+SHA-256 `8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1`.
 It intentionally does not claim source archive verification, license review,
 binary inclusion, or final bundled Provides. Regenerate or verify it with:
 
 ```bash
 scripts/audit-opencode-lock-closure \
-  --source-dir /srv/tmp/agentlab-opencode/source/opencode-1.18.3
+  --source-dir /srv/tmp/agentlab-opencode/source/opencode-1.18.5
 scripts/audit-opencode-lock-closure \
-  --source-dir /srv/tmp/agentlab-opencode/source/opencode-1.18.3 --check
+  --source-dir /srv/tmp/agentlab-opencode/source/opencode-1.18.5 --check
 ```
 
 The standalone build also fetches `https://models.dev/api.json` unless
@@ -38,14 +38,14 @@ snapshot, so immutable source acquisition remains a separate blocker.
 ## Source Acquisition Audit
 
 `scripts/acquire-opencode-sources` deduplicates the selected package paths to
-826 unique npm registry sources. Every archive passed its released SHA-512
+828 unique npm registry sources. Every archive passed its released SHA-512
 integrity check, every retained archive has a SHA-256 receipt, and archive
 path/type validation passed. The resumable cache is under
-`/srv/tmp/agentlab-opencode/source-acquisition-1.18.3`.
+`/srv/tmp/agentlab-opencode/source-acquisition-1.18.5`.
 
 The deterministic receipt is
-[`opencode-1.18.3-source-audit.json`](opencode-1.18.3-source-audit.json),
-SHA-256 `0f067275e2513d5e2cb6658ba9b58fef42549f2fbeb650c3bd1c65fac1b8f179`.
+[`opencode-1.18.5-source-audit.json`](opencode-1.18.5-source-audit.json),
+SHA-256 `619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc`.
 It records these unresolved gates:
 
 - 3 raw source archives without declared license metadata; all three are
@@ -100,17 +100,12 @@ Fedora macros, and preserves the release path expected by Bun's static import.
 Empty-cache vendored builds were byte-identical; public vendor hosting, final
 Bun embedding, F43/F44 macro builds, and aggregate license closure remain open.
 
-OpenTUI's native library now has a complete source recipe. The draft privately
-bootstraps the exact Zig 0.15.2 fork pinned by Bun, preloads the exact uucode and
-Yoga package sources into Zig's cache, builds the OpenTUI `v0.4.3` source for
-`x86_64-linux-gnu.2.17` without network access, strips non-runtime metadata, and
-replaces the removed `@opentui/core-linux-x64` npm payload before Bun compiles
-OpenCode. The exact recipe output loaded successfully, resolved all dynamic
-symbols, exposed representative renderer/Yoga FFI exports, and required no
-glibc symbol newer than `GLIBC_2.17`. Independent builds were not byte-identical;
-Fedora does not require byte-for-byte reproducibility, so the evidence remains
-honestly false without blocking the source-built replacement. Final Bun
-embedding and clean Fedora 43/44 package builds remain unverified.
+OpenTUI `0.4.5` retains the same Bun-pinned Zig 0.15.2 fork and exact uucode and
+Yoga source pins used by the prior native recipe. The draft updates both the
+source archive and published Linux payload identities, but the successful local
+`0.4.3` rebuild, symbol, and glibc-floor proof does not transfer to the changed
+source. The current `0.4.5` native rebuild, dynamic-linkage checks, Bun embedding,
+and clean Fedora 43/44 package builds therefore remain unverified.
 
 All functional WASM remains fail-closed. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp

@@ -3276,7 +3276,7 @@ module Agentlab
     end
 
     expected_lifecycle_review = {
-      "source_audit_sha256" => "0f067275e2513d5e2cb6658ba9b58fef42549f2fbeb650c3bd1c65fac1b8f179",
+      "source_audit_sha256" => dependencies.dig("source_acquisition_receipt", "sha256"),
       "reviewed" => true,
       "selected_sources" => 73,
       "counts" => { "prepare" => 68, "install" => 4, "postinstall" => 1 },
@@ -3444,8 +3444,9 @@ module Agentlab
         end
       end
 
+      opentui_version = dependencies.dig("current_sensitive_versions", "@opentui/core").to_s
       required_subordinate_sources = {
-        "@opentui/core@0.4.3" => {
+        "@opentui/core@#{opentui_version}" => {
           "ids" => %w[
             tree-sitter-javascript-0.25.0
             tree-sitter-typescript-0.23.2
@@ -3522,12 +3523,12 @@ module Agentlab
         errors << "#{prefix} spec does not apply the FFF disable patch"
       end
 
-      opentui_identity = "@opentui/core-linux-x64@0.4.3"
+      opentui_identity = "@opentui/core-linux-x64@#{opentui_version}"
       opentui = components.find { |component| component["package"] == opentui_identity }
       expected_opentui_build = {
-        "source_url" => "https://github.com/anomalyco/opentui/archive/refs/tags/v0.4.3.tar.gz",
-        "source_sha256" => "3a72427d6cc6c7dc1086d44037d4f4c499ebc38c2e3e67ecf998695e65c8337a",
-        "source_commit" => "5803b2cfa2942c45a3aedbb3601754e27f2cdc68",
+        "source_url" => "https://github.com/anomalyco/opentui/archive/refs/tags/v0.4.5.tar.gz",
+        "source_sha256" => "a87acc1af6d5f62ee48905176965514b06c7b6e8f9c1fe869604e5933825ca50",
+        "source_commit" => "0c8c4f7cff2927e3df63a9757a45eff9a343611c",
         "zig" => {
           "release_pin" => "bun-v1.3.14",
           "source_url" => "https://codeload.github.com/oven-sh/zig/tar.gz/04e7f6ac1e009525bc00934f20199c68f04e0a24",
@@ -3556,23 +3557,28 @@ module Agentlab
         "command" => ".build-tools/bun-zig/zig build --seed 0 --build-id=sha1 -fno-incremental -Dtarget=x86_64-linux-gnu.2.17 -Doptimize=ReleaseFast -j1",
         "strip_command" => "strip --strip-unneeded lib/x86_64-linux/libopentui.so",
         "output" => "packages/core/src/zig/lib/x86_64-linux/libopentui.so",
-        "platform_package" => "@opentui/core-linux-x64@0.4.3",
+        "platform_package" => "@opentui/core-linux-x64@0.4.5",
         "platform_payload" => "libopentui.so",
-        "published_payload_sha256" => "6a0ea52ab0408a7909f35565d4e204f2a6fd884e33ff6ec570fa9357126ead49",
-        "local_recipe_output_sha256" => "1ce4b92b1a075602837c361c6423b7b54298d0c402e3801cbeb27e4e7d935baa",
+        "published_payload_sha256" => "0c557e6f59b397c35d25eaa28d874a054f7bffecaf90c521a2a0307ede45bd1f",
+        "previous_release_proof" => {
+          "release" => "0.4.3",
+          "local_recipe_output_sha256" => "1ce4b92b1a075602837c361c6423b7b54298d0c402e3801cbeb27e4e7d935baa",
+          "ffi_exports" => %w[bufferDrawBox createRenderer destroyRenderer render yogaNodeCreate],
+          "dynamic_libraries" => %w[libm.so.6 libpthread.so.0 libc.so.6 libdl.so.2 ld-linux-x86-64.so.2],
+          "max_glibc" => "GLIBC_2.17",
+          "offline_build_verified" => true,
+          "ctypes_dlopen_verified" => true
+        },
         "byte_reproducible" => false,
         "reproducibility_required_by_fedora" => false,
-        "ffi_exports" => %w[bufferDrawBox createRenderer destroyRenderer render yogaNodeCreate],
-        "dynamic_libraries" => %w[libm.so.6 libpthread.so.0 libc.so.6 libdl.so.2 ld-linux-x86-64.so.2],
-        "max_glibc" => "GLIBC_2.17",
         "linked_source_licenses" => %w[opentui-LICENSE opentui-uucode-LICENSE.md opentui-yoga-LICENSE],
-        "offline_build_verified" => true,
-        "ctypes_dlopen_verified" => true,
+        "offline_build_verified" => false,
+        "ctypes_dlopen_verified" => false,
         "bun_ffi_smoke_in_spec" => true,
         "published_payload_discarded" => true,
         "final_bun_embedding_verified" => false,
         "f43_f44_builds_verified" => false,
-        "local_proof_only" => true
+        "local_proof_only" => false
       }
       unless opentui&.dig("provenance", "source_build") == expected_opentui_build
         errors << "#{prefix} OpenTUI source-build evidence does not match"
@@ -3585,7 +3591,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.7%{?dist}",
+        "Release:        0.1%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://codeload.github.com/facebook/yoga/tar.gz/%{yoga_commit}",
@@ -3771,10 +3777,10 @@ module Agentlab
         "npm_git_package_json_sha256" => "df55f9b3f2559b66321021f8566b88d940b6ea300072dbb07898f0f957fa1ab9",
         "npm_git_terminal_ts_sha256" => "0c6cdf358568816ec96aef9b320239ef6f9552e9298f8609f0c94cfb12ad51f9",
         "npm_git_wrapper_byte_identical" => true,
-        "cargo_vendor_archive" => "opencode-1.18.3-bun-pty-cargo-vendor.tar.zst",
+        "cargo_vendor_archive" => "opencode-#{release}-bun-pty-cargo-vendor.tar.zst",
         "cargo_vendor_sha256" => "5c22d4bd79109a3460f3a3d3840d2541da9a6c4c91513c39065a1f4611b7ec5e",
         "cargo_vendor_crates" => 43,
-        "cargo_vendor_manifest" => "opencode-1.18.3-bun-pty-cargo-vendor.txt",
+        "cargo_vendor_manifest" => "opencode-#{release}-bun-pty-cargo-vendor.txt",
         "cargo_vendor_manifest_sha256" => "d57a66c2a1e90516e0b103b3074001f96cefcb4adb4ecc8c3a5532a2c884e500",
         "cargo_vendor_archive_reproducible" => true,
         "cargo_vendor_command" => "cargo vendor --locked --versioned-dirs",

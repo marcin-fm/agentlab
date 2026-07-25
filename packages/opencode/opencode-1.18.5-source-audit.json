@@ -1,16 +1,16 @@
 {
   "schema": "opencode-source-acquisition/v1",
   "package": "opencode",
-  "release": "1.18.3",
-  "source_tag": "v1.18.3",
-  "source_commit": "127bdb30784d508cc556c71a0f32b508a3061517",
-  "selected_lock_receipt_sha256": "2edb9d0fb479330a5d5466a1ff1a1aa9d468b43352f1e20d9b2c95306238a0f0",
+  "release": "1.18.5",
+  "source_tag": "v1.18.5",
+  "source_commit": "e5cc278dec9294a627a7b05f47ce6a564408c1a2",
+  "selected_lock_receipt_sha256": "8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1",
   "summary": {
-    "selected_package_records": 1014,
-    "unique_sources": 826,
+    "selected_package_records": 1018,
+    "unique_sources": 828,
     "origins": {
       "github": 0,
-      "registry": 826
+      "registry": 828
     },
     "sources_without_declared_license": 3,
     "sources_without_license_files": 28,
@@ -1163,7 +1163,7 @@
       "size": 53897,
       "archive": "sha512-6577bb9d94209620dd8f3e6e7c7e512a91d6c5b37bd80ce6cf32866c5ff3fb42bd18de6d5029dfb6b411bd34451c0e630334daa5c9b60447af9862d56cc916f8.tgz",
       "package_paths": [
-        "@ai-sdk/mistral"
+        "ai-gateway-provider/@ai-sdk/mistral"
       ],
       "roles": [
         "runtime"
@@ -1192,6 +1192,48 @@
       "hardlinks": [],
       "file_count": 25,
       "unpacked_size": 252710
+    },
+    {
+      "npm_name": "@ai-sdk/mistral",
+      "version": "3.0.51",
+      "origin": "registry",
+      "source_url": "https://registry.npmjs.org/@ai-sdk/mistral/-/mistral-3.0.51.tgz",
+      "source_commit": null,
+      "integrity": "sha512-83eXY6p0lUFhSuMvNDmTKDuMciK5XDAWDlNh5c0L80tKjmtCFRItA1MZHp4IKe1r7eK8Rb5nN7qtxqMLUFRIRw==",
+      "sha256": "2ea7e4d15b67a5c0b66d8c8b24c7301aa9720ce04f9fc2c6eca436ea4a3e6a2b",
+      "size": 63223,
+      "archive": "sha512-f3779763aa749541614ae32f343993283b8c7222b95c30160e5361e5cd0bf34b4a8e6b4215122d0353191e9e0829ed6bede2bc45be6737baadc6a30b50544847.tgz",
+      "package_paths": [
+        "@ai-sdk/mistral"
+      ],
+      "roles": [
+        "runtime"
+      ],
+      "candidate_for_binary": true,
+      "package_json": "package/package.json",
+      "declared_license": "Apache-2.0",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/vercel/ai",
+        "directory": "packages/mistral"
+      },
+      "homepage": "https://ai-sdk.dev/docs",
+      "license_files": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "b4f9adb7c568904834d0dd6cc98d16c390d21ca32fc17ae7a267715269bd5529",
+          "size": 552
+        }
+      ],
+      "lifecycle_scripts": {},
+      "native_payloads": [],
+      "wasm_payloads": [],
+      "executable_payloads": [],
+      "native_source_paths": [],
+      "symlinks": [],
+      "hardlinks": [],
+      "file_count": 27,
+      "unpacked_size": 294325
     },
     {
       "npm_name": "@ai-sdk/openai",
@@ -1801,7 +1843,8 @@
       "archive": "sha512-e57d64e7b2412781fb1f54235fb0a7258001d48d7daffb6b5594cc7129aceff90b359f11694e0db766a0730673bfcd877f1e90eff4ce2d4eda80029e15f73c70.tgz",
       "package_paths": [
         "@ai-sdk/azure/@ai-sdk/provider",
-        "@ai-sdk/deepseek/@ai-sdk/provider"
+        "@ai-sdk/deepseek/@ai-sdk/provider",
+        "@ai-sdk/mistral/@ai-sdk/provider"
       ],
       "roles": [
         "runtime"
@@ -1888,13 +1931,13 @@
         "@ai-sdk/cohere/@ai-sdk/provider-utils",
         "@ai-sdk/deepinfra/@ai-sdk/provider-utils",
         "@ai-sdk/groq/@ai-sdk/provider-utils",
-        "@ai-sdk/mistral/@ai-sdk/provider-utils",
         "@ai-sdk/openai-compatible/@ai-sdk/provider-utils",
         "@ai-sdk/openai/@ai-sdk/provider-utils",
         "@ai-sdk/perplexity/@ai-sdk/provider-utils",
         "@ai-sdk/togetherai/@ai-sdk/provider-utils",
         "@ai-sdk/vercel/@ai-sdk/provider-utils",
-        "ai-gateway-provider/@ai-sdk/azure/@ai-sdk/provider-utils"
+        "ai-gateway-provider/@ai-sdk/azure/@ai-sdk/provider-utils",
+        "ai-gateway-provider/@ai-sdk/mistral/@ai-sdk/provider-utils"
       ],
       "roles": [
         "runtime"
@@ -2142,6 +2185,48 @@
       "hardlinks": [],
       "file_count": 131,
       "unpacked_size": 950124
+    },
+    {
+      "npm_name": "@ai-sdk/provider-utils",
+      "version": "4.0.40",
+      "origin": "registry",
+      "source_url": "https://registry.npmjs.org/@ai-sdk/provider-utils/-/provider-utils-4.0.40.tgz",
+      "source_commit": null,
+      "integrity": "sha512-OL5IrpUm9Y8Dwy+w/vvFwPotS6m52O9W0op2oXgXdCROMJIBalBI0oro6OIBYkPxvm5Xg02GSkoQN25RlR0bnw==",
+      "sha256": "8601d354d70a7320a36cb18e02f4f3f541e615fca281312aea423ce867d85df4",
+      "size": 227816,
+      "archive": "sha512-38be48ae9526f58f03c32fb0fefbc5c0fa2d4ba9b9d8ef56d28a76a1781774244e3092016a5048d28ae8e8e2016243f1be6e57834d864a4a10376e51951d1b9f.tgz",
+      "package_paths": [
+        "@ai-sdk/mistral/@ai-sdk/provider-utils"
+      ],
+      "roles": [
+        "runtime"
+      ],
+      "candidate_for_binary": true,
+      "package_json": "package/package.json",
+      "declared_license": "Apache-2.0",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/vercel/ai",
+        "directory": "packages/provider-utils"
+      },
+      "homepage": "https://ai-sdk.dev/docs",
+      "license_files": [
+        {
+          "path": "package/src/to-json-schema/zod3-to-json-schema/LICENSE",
+          "sha256": "6dd0d97acd4d13f4608a0f530f0487e0ff20812888bd1803aecfaaa17ff0f849",
+          "size": 777
+        }
+      ],
+      "lifecycle_scripts": {},
+      "native_payloads": [],
+      "wasm_payloads": [],
+      "executable_payloads": [],
+      "native_source_paths": [],
+      "symlinks": [],
+      "hardlinks": [],
+      "file_count": 131,
+      "unpacked_size": 953708
     },
     {
       "npm_name": "@ai-sdk/togetherai",
@@ -8912,14 +8997,14 @@
     },
     {
       "npm_name": "@opentui/core",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
-      "source_url": "https://registry.npmjs.org/@opentui/core/-/core-0.4.3.tgz",
+      "source_url": "https://registry.npmjs.org/@opentui/core/-/core-0.4.5.tgz",
       "source_commit": null,
-      "integrity": "sha512-rrJfAk13tALDqldYjhc78eWQ+aKq1iknJgffIOg3OwyZoqQo+p6gtuqyhmWvXIfQzlNUbpgpCPcxbXlhMnlaHQ==",
-      "sha256": "0e01d57ae1218fa230dd36c87709a915243151447e9fcefb069caa17a22a73ec",
-      "size": 1211137,
-      "archive": "sha512-aeb25f024d77b402c3aa57588e173bf1e590f9a2aad629272607df20e8373b0c99a2a428fa9ea0b6eab28665af5c87d0ce53546e982908f7316d796132795a1d.tgz",
+      "integrity": "sha512-JsgRTPkA6e+Vxmumxai6SElOSlRQkbzNKHlCfemlArRiLhfC1IZ9RXJo2QH4xSu+uBOWAM90uss73/pPlkdEig==",
+      "sha256": "363a06a5ffaf597c953433f5ae6df5e61b36f067f4c7c7943e588badf0e06ffe",
+      "size": 2053295,
+      "archive": "sha512-26c8114cf900e9ef95c66ba6c5a8ba48494e4a545091bccd2879427de9a502b4622e17c2d4867d457268d901f8c52bbeb8139600cf74bacb3bdffa4f9647448a.tgz",
       "package_paths": [
         "@opentui/core"
       ],
@@ -8970,19 +9055,19 @@
       "native_source_paths": [],
       "symlinks": [],
       "hardlinks": [],
-      "file_count": 156,
-      "unpacked_size": 7782809
+      "file_count": 178,
+      "unpacked_size": 12334575
     },
     {
       "npm_name": "@opentui/core-linux-x64",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
-      "source_url": "https://registry.npmjs.org/@opentui/core-linux-x64/-/core-linux-x64-0.4.3.tgz",
+      "source_url": "https://registry.npmjs.org/@opentui/core-linux-x64/-/core-linux-x64-0.4.5.tgz",
       "source_commit": null,
-      "integrity": "sha512-dXpJitiZdYE3hq2Pvx6e9I0uPQSOcnaLLp1pDgWAHv+3kvKSHEX//9Yr/pV/Ua6qqT7p+2D/K4vXNap/NKVo2w==",
-      "sha256": "8fae04c3746459d33273b734140ea89570ad13ef5e1465f8a1b9e3f61b47808b",
-      "size": 3621134,
-      "archive": "sha512-757a498ad89975813786ad8fbf1e9ef48d2e3d048e72768b2e9d690e05801effb792f2921c45ffffd62bfe957f51aeaaa93ee9fb60ff2b8bd735aa7f34a568db.tgz",
+      "integrity": "sha512-SNyuQoxMKI1vuJhgxSSW96adWM6LqFl2SoS3GM4tGeneGOanVVG2Y06PvlytXvF4cKik97t0rqkVMRetmOs93w==",
+      "sha256": "0c557e6f59b397c35d25eaa28d874a054f7bffecaf90c521a2a0307ede45bd1f",
+      "size": 3659329,
+      "archive": "sha512-48dcae428c4c288d6fb89860c52496f7a69d58ce8ba859764a84b718ce2d19e9de18e6a75551b6634e8fbe5cad5ef17870a8a4f7bb74aea9153117ad98eb3ddf.tgz",
       "package_paths": [
         "@opentui/core-linux-x64"
       ],
@@ -9019,18 +9104,18 @@
       "symlinks": [],
       "hardlinks": [],
       "file_count": 7,
-      "unpacked_size": 13624695
+      "unpacked_size": 13747319
     },
     {
       "npm_name": "@opentui/keymap",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
-      "source_url": "https://registry.npmjs.org/@opentui/keymap/-/keymap-0.4.3.tgz",
+      "source_url": "https://registry.npmjs.org/@opentui/keymap/-/keymap-0.4.5.tgz",
       "source_commit": null,
-      "integrity": "sha512-sinX0pyQBRrEvo89PSSUbSUDIYpL3xWo81VEfec58VFoVRB5FG48/deAtvRTQfJ8w1kgbzN8hzdOXdSm61zBmw==",
-      "sha256": "715084faeb4d24f6b007c9274e8465966fa68705fe9cf7d8ae148cb24099864c",
-      "size": 191381,
-      "archive": "sha512-b229d7d29c90051ac4be8f3d3d24946d2503218a4bdf15a8f355447de739f15168551079146e3cfdd780b6f45341f27cc359206f337c87374e5dd4a6eb5cc19b.tgz",
+      "integrity": "sha512-S1wzKHhF70zT6bH+VBFY+lSeTImLcIFW28JNQiME8MoPcy6KGPs7rKFSHrb/U7P8rsTJeRfW5A4d1Cy6PKodDg==",
+      "sha256": "42bb91ece371397d93fe73edfb41a942a2bf1798fba7d059208cf5438d386f75",
+      "size": 191380,
+      "archive": "sha512-4b5c33287845ef4cd3e9b1fe541158fa549e4c898b708156dbc24d422304f0ca0f732e8a18fb3baca1521eb6ff53b3fcaec4c97917d6e40e1dd42cba3caa1d0e.tgz",
       "package_paths": [
         "@opentui/keymap"
       ],
@@ -9065,14 +9150,14 @@
     },
     {
       "npm_name": "@opentui/solid",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
-      "source_url": "https://registry.npmjs.org/@opentui/solid/-/solid-0.4.3.tgz",
+      "source_url": "https://registry.npmjs.org/@opentui/solid/-/solid-0.4.5.tgz",
       "source_commit": null,
-      "integrity": "sha512-RcV0+S8HMdXOASyr7HmJUBuTUIaFPzAxMDa44VftS5C2JUgrmAuWo0Njv1q3TWRB1owjHnyKhEfWGKq7A82wxw==",
-      "sha256": "63a4b48c939980acfcd9e163cf338025f95a24b3b808e96367f31063882db916",
-      "size": 74892,
-      "archive": "sha512-45c574f92f0731d5ce012cabec7989501b935086853f30313036b8e157ed4b90b625482b980b96a34363bf5ab74d6441d68c231e7c8a8447d618aabb03cdb0c7.tgz",
+      "integrity": "sha512-B0RSkXnrtPVfEJOX+Hj+axjLJ3lzbG1BZw5I7Pvb9OPp48Vzg2cW2a3cSa86/q48ndLt647i/XwFPIw/jqnI5g==",
+      "sha256": "36279f261a6dff9ad0cbdd15dd05a0466152faf852f99290a1ab13cbb2b04098",
+      "size": 75195,
+      "archive": "sha512-0744529179ebb4f55f109397f878fe6b18cb2779736c6d41670e48ecfbdbf4e3e9e3c573836716d9addc49af3afeae3c9dd2edeb8ee2fd7c053c8c3f8ea9c8e6.tgz",
       "package_paths": [
         "@opentui/solid"
       ],
@@ -9103,7 +9188,7 @@
       "symlinks": [],
       "hardlinks": [],
       "file_count": 49,
-      "unpacked_size": 325836
+      "unpacked_size": 326888
     },
     {
       "npm_name": "@oslojs/asn1",
@@ -12366,6 +12451,7 @@
         "ai-gateway-provider/@ai-sdk/anthropic/@ai-sdk/provider-utils/@standard-schema/spec",
         "ai-gateway-provider/@ai-sdk/azure/@ai-sdk/provider-utils/@standard-schema/spec",
         "ai-gateway-provider/@ai-sdk/deepseek/@ai-sdk/provider-utils/@standard-schema/spec",
+        "ai-gateway-provider/@ai-sdk/mistral/@ai-sdk/provider-utils/@standard-schema/spec",
         "effect/@standard-schema/spec",
         "venice-ai-sdk-provider/@ai-sdk/provider-utils/@standard-schema/spec"
       ],

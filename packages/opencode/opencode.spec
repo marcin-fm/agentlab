@@ -1,13 +1,13 @@
 # Disabled by package.yml until Bun and the audited npm source closure are
 # available. Do not replace these inputs with upstream platform binaries.
-%global source_sha256 494041aedd7407079f91fd694de355f4ff022ba6bf876e09ff30983bbdc70ae1
+%global source_sha256 eb3daee12da937a36c3276efda2ce1253d3c8fbe2828ebd581a39a2c2d3efdab
 %global bun_pty_commit 41dd5b887f3f47d7c307fd93f828a75dbee97d5a
 %global bun_pty_source_sha256 d4731314a00c46d3810fa08b94ee0bcddb7a5026e47dbca88c83449d351bff9e
 %global bun_pty_vendor_sha256 5c22d4bd79109a3460f3a3d3840d2541da9a6c4c91513c39065a1f4611b7ec5e
 %global bun_pty_vendor_manifest_sha256 d57a66c2a1e90516e0b103b3074001f96cefcb4adb4ecc8c3a5532a2c884e500
-%global opentui_version 0.4.3
-%global opentui_source_sha256 3a72427d6cc6c7dc1086d44037d4f4c499ebc38c2e3e67ecf998695e65c8337a
-%global opentui_published_sha256 6a0ea52ab0408a7909f35565d4e204f2a6fd884e33ff6ec570fa9357126ead49
+%global opentui_version 0.4.5
+%global opentui_source_sha256 a87acc1af6d5f62ee48905176965514b06c7b6e8f9c1fe869604e5933825ca50
+%global opentui_published_sha256 0c557e6f59b397c35d25eaa28d874a054f7bffecaf90c521a2a0307ede45bd1f
 %global uucode_commit 84ceda8561a17ba4a9b96ac5c583f779660bbd4e
 %global uucode_source_sha256 4a7f194ad1f583ffae00bf625986527df89ddd55309ff30314d2d17539a7b011
 %global uucode_zig_hash uucode-0.1.0-ZZjBPtA_TQCWp5PIKmfm5tu1WOkKWFmBGFEMxircPfkA
@@ -36,8 +36,8 @@
 %global web_tree_sitter_published_aux_wasm_sha256 2b8b96e0f0f4624c4f885d40d76e25a25d9c58d40fe8ff4ab9563ee0297eed5e
 
 Name:           opencode
-Version:        1.18.3
-Release:        0.7%{?dist}
+Version:        1.18.5
+Release:        0.1%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -515,6 +515,10 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.1
+- Refresh exact release and selected-source evidence.
+- Update OpenTUI identities while retaining fail-closed build gates.
+
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.7
 - Rebuild the selected Tree-sitter runtime and shell grammars from source.
 * Fri Jul 17 2026 Marcin FM <marcin@lgic.pl> - 1.18.3-0.6

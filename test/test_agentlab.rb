@@ -1544,7 +1544,7 @@ class AgentlabTest < Minitest::Test
     package = Agentlab.package_named("opencode")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
 
-    assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3"))
+    assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
   end
 
   def test_rejects_incomplete_opencode_lifecycle_review
@@ -1552,7 +1552,7 @@ class AgentlabTest < Minitest::Test
     dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
     dependencies.fetch("source_acquisition_findings").delete("lifecycle_script_review")
 
-    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
     assert(errors.any? { |error| error.include?("lifecycle-script review does not match") })
   end
@@ -1572,7 +1572,7 @@ class AgentlabTest < Minitest::Test
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("source coverage does not match") })
     end
@@ -1594,7 +1594,7 @@ class AgentlabTest < Minitest::Test
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("subordinate source ids do not match for shiki@4.2.0") })
     end
@@ -1618,7 +1618,7 @@ class AgentlabTest < Minitest::Test
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("Photon generated candidate file evidence does not match") })
     end
@@ -1642,7 +1642,7 @@ class AgentlabTest < Minitest::Test
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("FFF supported-disable evidence does not match") })
     end
@@ -1666,7 +1666,7 @@ class AgentlabTest < Minitest::Test
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("Parcel watcher source-build evidence does not match") })
     end
@@ -1684,13 +1684,13 @@ class AgentlabTest < Minitest::Test
       native_path = File.join(directory, dependencies.dig("source_closure_files", "native_review"))
       native_review = Agentlab.load_yaml(native_path)
       opentui = native_review.fetch("components").find do |component|
-        component["package"] == "@opentui/core-linux-x64@0.4.3"
+        component["npm_name"] == "@opentui/core-linux-x64"
       end
       opentui.fetch("provenance").delete("source_build")
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("OpenTUI source-build evidence does not match") })
     end
@@ -1712,7 +1712,7 @@ class AgentlabTest < Minitest::Test
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("bun-pty source-build evidence does not match") })
     end
@@ -1736,7 +1736,7 @@ class AgentlabTest < Minitest::Test
       File.write(native_path, YAML.dump(native_review))
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
 
-      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, "1.18.3")
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
       assert(errors.any? { |error| error.include?("Tree-sitter source-build evidence does not match") })
     end

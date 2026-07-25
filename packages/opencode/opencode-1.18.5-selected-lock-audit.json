@@ -1,15 +1,15 @@
 {
   "schema": "opencode-selected-lock-audit/v1",
   "package": "opencode",
-  "release": "1.18.3",
-  "source_tag": "v1.18.3",
-  "source_commit": "127bdb30784d508cc556c71a0f32b508a3061517",
+  "release": "1.18.5",
+  "source_tag": "v1.18.5",
+  "source_commit": "e5cc278dec9294a627a7b05f47ce6a564408c1a2",
   "lockfile": {
     "path": "bun.lock",
-    "sha256": "307b9ca4c74b7d5786ce24b6536ec6335639151cc5a3ad971507016341a66697",
+    "sha256": "57cb1674b5cbc87cf320f2be703afa57aa2ef9989a77ccda8b83712ee09bd541",
     "bun": "1.3.14",
     "workspace_records": 37,
-    "package_records": 3215
+    "package_records": 3221
   },
   "selection": {
     "config_sha256": "29667a1e02f0eb5ca312b8919415259fd79cf2150a206b321c8ff2f4dbcb81eb",
@@ -24,14 +24,14 @@
       "upstream_build_flag": "--skip-embed-web-ui"
     },
     "selected_workspaces": 14,
-    "selected_packages": 1014,
+    "selected_packages": 1018,
     "roles": {
       "build": 0,
-      "runtime": 1014
+      "runtime": 1018
     },
     "origins": {
       "github": 0,
-      "registry": 1014
+      "registry": 1018
     },
     "platform_excluded": 36
   },
@@ -45,43 +45,43 @@
     {
       "path": "packages/codemode",
       "name": "@opencode-ai/codemode",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/core",
       "name": "@opencode-ai/core",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/effect-drizzle-sqlite",
       "name": "@opencode-ai/effect-drizzle-sqlite",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/effect-sqlite-node",
       "name": "@opencode-ai/effect-sqlite-node",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/llm",
       "name": "@opencode-ai/llm",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/opencode",
       "name": "opencode",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/plugin",
       "name": "@opencode-ai/plugin",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
@@ -105,25 +105,25 @@
     {
       "path": "packages/sdk/js",
       "name": "@opencode-ai/sdk",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/server",
       "name": "@opencode-ai/server",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/tui",
       "name": "@opencode-ai/tui",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     },
     {
       "path": "packages/ui",
       "name": "@opencode-ai/ui",
-      "version": "1.18.3",
+      "version": "1.18.5",
       "role": "runtime"
     }
   ],
@@ -945,24 +945,35 @@
     {
       "package_path": "@ai-sdk/mistral",
       "npm_name": "@ai-sdk/mistral",
-      "version": "3.0.27",
+      "version": "3.0.51",
       "origin": "registry",
       "role": "runtime",
       "candidate_for_binary": true,
-      "integrity": "sha512-ZXe7nZQgliDdjz5ufH5RKpHWxbN72AzmzzKGbF/z+0K9GN5tUCnftrQRvTRFHA5jAzTapcm2BEevmGLVbMkW+A==",
+      "integrity": "sha512-83eXY6p0lUFhSuMvNDmTKDuMciK5XDAWDlNh5c0L80tKjmtCFRItA1MZHp4IKe1r7eK8Rb5nN7qtxqMLUFRIRw==",
       "platform": {},
-      "source_url": "https://registry.npmjs.org/@ai-sdk/mistral/-/mistral-3.0.27.tgz"
+      "source_url": "https://registry.npmjs.org/@ai-sdk/mistral/-/mistral-3.0.51.tgz"
+    },
+    {
+      "package_path": "@ai-sdk/mistral/@ai-sdk/provider",
+      "npm_name": "@ai-sdk/provider",
+      "version": "3.0.14",
+      "origin": "registry",
+      "role": "runtime",
+      "candidate_for_binary": true,
+      "integrity": "sha512-5X1k57JBJ4H7H1QjX7CnJYAB1I19r/trVZTMcSms7/kLNZ8RaU4Nt2agcwZzv82Hfx6Q7/TOLU7agAKeFfc8cA==",
+      "platform": {},
+      "source_url": "https://registry.npmjs.org/@ai-sdk/provider/-/provider-3.0.14.tgz"
     },
     {
       "package_path": "@ai-sdk/mistral/@ai-sdk/provider-utils",
       "npm_name": "@ai-sdk/provider-utils",
-      "version": "4.0.21",
+      "version": "4.0.40",
       "origin": "registry",
       "role": "runtime",
       "candidate_for_binary": true,
-      "integrity": "sha512-MtFUYI1/8mgDvRmaBDjbLJPFFrMG777AvSgyIFQtZHIMzm88R/12vYBBpnk7pfiWLFE1DSZzY4WDYzGbKAcmiw==",
+      "integrity": "sha512-OL5IrpUm9Y8Dwy+w/vvFwPotS6m52O9W0op2oXgXdCROMJIBalBI0oro6OIBYkPxvm5Xg02GSkoQN25RlR0bnw==",
       "platform": {},
-      "source_url": "https://registry.npmjs.org/@ai-sdk/provider-utils/-/provider-utils-4.0.21.tgz"
+      "source_url": "https://registry.npmjs.org/@ai-sdk/provider-utils/-/provider-utils-4.0.40.tgz"
     },
     {
       "package_path": "@ai-sdk/mistral/@ai-sdk/provider-utils/@standard-schema/spec",
@@ -4418,27 +4429,27 @@
     {
       "package_path": "@opentui/core",
       "npm_name": "@opentui/core",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
       "role": "runtime",
       "candidate_for_binary": true,
-      "integrity": "sha512-rrJfAk13tALDqldYjhc78eWQ+aKq1iknJgffIOg3OwyZoqQo+p6gtuqyhmWvXIfQzlNUbpgpCPcxbXlhMnlaHQ==",
+      "integrity": "sha512-JsgRTPkA6e+Vxmumxai6SElOSlRQkbzNKHlCfemlArRiLhfC1IZ9RXJo2QH4xSu+uBOWAM90uss73/pPlkdEig==",
       "platform": {},
-      "source_url": "https://registry.npmjs.org/@opentui/core/-/core-0.4.3.tgz"
+      "source_url": "https://registry.npmjs.org/@opentui/core/-/core-0.4.5.tgz"
     },
     {
       "package_path": "@opentui/core-linux-x64",
       "npm_name": "@opentui/core-linux-x64",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
       "role": "runtime",
       "candidate_for_binary": true,
-      "integrity": "sha512-dXpJitiZdYE3hq2Pvx6e9I0uPQSOcnaLLp1pDgWAHv+3kvKSHEX//9Yr/pV/Ua6qqT7p+2D/K4vXNap/NKVo2w==",
+      "integrity": "sha512-SNyuQoxMKI1vuJhgxSSW96adWM6LqFl2SoS3GM4tGeneGOanVVG2Y06PvlytXvF4cKik97t0rqkVMRetmOs93w==",
       "platform": {
         "os": "linux",
         "cpu": "x64"
       },
-      "source_url": "https://registry.npmjs.org/@opentui/core-linux-x64/-/core-linux-x64-0.4.3.tgz"
+      "source_url": "https://registry.npmjs.org/@opentui/core-linux-x64/-/core-linux-x64-0.4.5.tgz"
     },
     {
       "package_path": "@opentui/core/diff",
@@ -4465,24 +4476,24 @@
     {
       "package_path": "@opentui/keymap",
       "npm_name": "@opentui/keymap",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
       "role": "runtime",
       "candidate_for_binary": true,
-      "integrity": "sha512-sinX0pyQBRrEvo89PSSUbSUDIYpL3xWo81VEfec58VFoVRB5FG48/deAtvRTQfJ8w1kgbzN8hzdOXdSm61zBmw==",
+      "integrity": "sha512-S1wzKHhF70zT6bH+VBFY+lSeTImLcIFW28JNQiME8MoPcy6KGPs7rKFSHrb/U7P8rsTJeRfW5A4d1Cy6PKodDg==",
       "platform": {},
-      "source_url": "https://registry.npmjs.org/@opentui/keymap/-/keymap-0.4.3.tgz"
+      "source_url": "https://registry.npmjs.org/@opentui/keymap/-/keymap-0.4.5.tgz"
     },
     {
       "package_path": "@opentui/solid",
       "npm_name": "@opentui/solid",
-      "version": "0.4.3",
+      "version": "0.4.5",
       "origin": "registry",
       "role": "runtime",
       "candidate_for_binary": true,
-      "integrity": "sha512-RcV0+S8HMdXOASyr7HmJUBuTUIaFPzAxMDa44VftS5C2JUgrmAuWo0Njv1q3TWRB1owjHnyKhEfWGKq7A82wxw==",
+      "integrity": "sha512-B0RSkXnrtPVfEJOX+Hj+axjLJ3lzbG1BZw5I7Pvb9OPp48Vzg2cW2a3cSa86/q48ndLt647i/XwFPIw/jqnI5g==",
       "platform": {},
-      "source_url": "https://registry.npmjs.org/@opentui/solid/-/solid-0.4.3.tgz"
+      "source_url": "https://registry.npmjs.org/@opentui/solid/-/solid-0.4.5.tgz"
     },
     {
       "package_path": "@opentui/solid/@babel/core",
@@ -5787,6 +5798,39 @@
     },
     {
       "package_path": "ai-gateway-provider/@ai-sdk/deepseek/@ai-sdk/provider-utils/@standard-schema/spec",
+      "npm_name": "@standard-schema/spec",
+      "version": "1.1.0",
+      "origin": "registry",
+      "role": "runtime",
+      "candidate_for_binary": true,
+      "integrity": "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==",
+      "platform": {},
+      "source_url": "https://registry.npmjs.org/@standard-schema/spec/-/spec-1.1.0.tgz"
+    },
+    {
+      "package_path": "ai-gateway-provider/@ai-sdk/mistral",
+      "npm_name": "@ai-sdk/mistral",
+      "version": "3.0.27",
+      "origin": "registry",
+      "role": "runtime",
+      "candidate_for_binary": true,
+      "integrity": "sha512-ZXe7nZQgliDdjz5ufH5RKpHWxbN72AzmzzKGbF/z+0K9GN5tUCnftrQRvTRFHA5jAzTapcm2BEevmGLVbMkW+A==",
+      "platform": {},
+      "source_url": "https://registry.npmjs.org/@ai-sdk/mistral/-/mistral-3.0.27.tgz"
+    },
+    {
+      "package_path": "ai-gateway-provider/@ai-sdk/mistral/@ai-sdk/provider-utils",
+      "npm_name": "@ai-sdk/provider-utils",
+      "version": "4.0.21",
+      "origin": "registry",
+      "role": "runtime",
+      "candidate_for_binary": true,
+      "integrity": "sha512-MtFUYI1/8mgDvRmaBDjbLJPFFrMG777AvSgyIFQtZHIMzm88R/12vYBBpnk7pfiWLFE1DSZzY4WDYzGbKAcmiw==",
+      "platform": {},
+      "source_url": "https://registry.npmjs.org/@ai-sdk/provider-utils/-/provider-utils-4.0.21.tgz"
+    },
+    {
+      "package_path": "ai-gateway-provider/@ai-sdk/mistral/@ai-sdk/provider-utils/@standard-schema/spec",
       "npm_name": "@standard-schema/spec",
       "version": "1.1.0",
       "origin": "registry",
