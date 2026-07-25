@@ -7,7 +7,7 @@
 
 Name:           rust-terminal-clipboard0.4
 Version:        0.4.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Minimal cross-platform clipboard
 
 License:        MIT
@@ -15,6 +15,9 @@ URL:            https://crates.io/crates/terminal-clipboard
 Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate
 # The published crate declares MIT but omits the license file.
 Source1:        LICENSE.mit
+# Fedora-only: omit Android, macOS, and Windows crates from the Linux build graph.
+# Not a backport; upstream release and current main retain those target dependencies:
+# https://github.com/Canop/terminal-clipboard/commit/f00647c1189c44a2510818ca31108a143b49c173
 Patch0:         terminal-clipboard-fix-metadata-auto.diff
 
 BuildRequires:  cargo-rpm-macros >= 24
@@ -61,6 +64,9 @@ install -Dpm0644 %{SOURCE1} %{buildroot}%{crate_instdir}/LICENSE
 %endif
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-0.2
+- Document the Fedora patch purpose and upstream status.
+
 * Wed Jul 15 2026 Marcin FM <marcin@lgic.pl> - 0.4.1-0.1
 - Add the compatibility crate required by termimad 0.34.1.
 - Remove foreign target dependencies and restore the omitted MIT license text.
