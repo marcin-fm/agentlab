@@ -1,13 +1,13 @@
 # OpenChamber Packaging Status
 
-OpenChamber `1.16.1` is not enabled for COPR. This draft packages the released
+OpenChamber `1.16.3` is not enabled for COPR. This draft packages the released
 `@openchamber/web` CLI/PWA server, which is upstream's practical Linux path,
 rather than the Electron desktop shell. Upstream disables the release's Linux
-desktop build and publish jobs, and `v1.16.1` contains no Linux desktop asset.
+desktop build and publish jobs, and `v1.16.3` contains no Linux desktop asset.
 
-The immutable `v1.16.1` tag resolves to commit
-`ee10f85d9ca866387abf7285985b268c8e3fa601`. Its source archive has SHA-256
-`9457c4fa86ba5bf236c14648d94403af65915235fa9089ca9947a09532482018`.
+The immutable `v1.16.3` tag resolves to commit
+`8040d43b251a015eb06d96135a442abd4d2f2e27`. Its source archive has SHA-256
+`54a1724c872de6ba64955ca98fc8eeef73bc2e49739be1b27ba89deb10c5b115`.
 The project is MIT-licensed, uses Bun `1.3.14` for workspace management and
 builds, and requires Node.js 22 or newer.
 
@@ -47,10 +47,10 @@ Electron bundles, npm installs, or platform-native package binaries.
 
 ## Deterministic Lock Selection
 
-`openchamber-1.16.1-selected-lock-audit.json` is generated directly from the
+`openchamber-1.16.3-selected-lock-audit.json` is generated directly from the
 released `bun.lock` by `scripts/audit-openchamber-lock-closure`; it performs no
-dependency resolution. For the Linux x86_64 glibc Node target it records 934
-selected packages: 221 runtime, 666 build, and 47 test records. All selected
+dependency resolution. For the Linux x86_64 glibc Node target it records 935
+selected packages: 221 runtime, 667 build, and 47 test records. All selected
 sources are registry records, 76 incompatible platform records are excluded,
 and the checked `@tanstack/virtual-core@3.17.3` patch is linked to its selected
 package record.
@@ -61,8 +61,8 @@ that the root, `packages/web`, and `packages/ui` dependency maps in `bun.lock`
 match their release manifests.
 
 This is not yet the authoritative closure. The lock omits the root importer
-version and reports `1.14.1` for both `packages/web` and `packages/ui`, while
-all three manifests report `1.16.1`. The current build selection also includes
+version and reports `1.16.2` for both `packages/web` and `packages/ui`, while
+all three manifests report `1.16.3`. The current build selection also includes
 all `packages/ui` dependencies as a conservative source-alias boundary until
 exact Vite entrypoint reachability is proven. The receipt records both gates
 as false instead of normalizing or hiding them.

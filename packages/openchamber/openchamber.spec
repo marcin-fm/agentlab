@@ -1,10 +1,10 @@
 # Disabled by package.yml. This spec deliberately aborts before unpacking or
 # building until the selected web closure and OpenCode runtime are proven.
-%global source_sha256 9457c4fa86ba5bf236c14648d94403af65915235fa9089ca9947a09532482018
+%global source_sha256 54a1724c872de6ba64955ca98fc8eeef73bc2e49739be1b27ba89deb10c5b115
 
 Name:           openchamber
-Version:        1.16.1
-Release:        0.2%{?dist}
+Version:        1.16.3
+Release:        0.1%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -33,7 +33,8 @@ OpenCode coding agent, together with a local server and command-line launcher.
 
 This draft intentionally selects the web CLI rather than the Electron desktop
 shell. It must not produce an RPM until every source, native, generated-asset,
-license, runtime-provider, and offline-build gate in package.yml is complete.
+license, runtime-provider, and offline-build gate recorded in the package
+metadata is complete.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -41,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.1
+- Refresh exact release and deterministic lock evidence while retaining all fail-closed build gates.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 1.16.1-0.2
 - Add a deterministic Node-target lock selection while retaining fail-closed provenance and source-reachability gates.
 

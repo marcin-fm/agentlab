@@ -1,10 +1,10 @@
-target_release: 1.16.1
+target_release: 1.16.3
 selected_scope:
   workspace: packages/web
   npm_name: "@openchamber/web"
   executable: packages/web/bin/cli.js
   package_manifest: packages/web/package.json
-  package_manifest_sha256: 4938ecf000d2f26f1b7bfc6cef2e16e3a83994953f10bba4567e0d6c03886674
+  package_manifest_sha256: 60e45e38f8e408b962d47c8d88698ca3c7a719804100a66075ecfc67c40e30f4
   executable_sha256: 27db143b5c4a2415a45103aa308f2836a72f8c4ce50918699324893f16558f6c
   runtime_engine: node
   pty_backend: node-pty
@@ -15,13 +15,13 @@ selected_scope:
   mobile_workspace_included: false
   vscode_workspace_included: false
 current_lock_snapshot:
-  release: 1.16.1
+  release: 1.16.3
   lockfile: bun.lock
   lockfile_version: 1
   bun: 1.3.14
-  sha256: 1cd16b6c7ac6368b63194ca7aa0125c8a4acf80fc57f77a9fe30e7be7c9980e1
+  sha256: 19113bdcdfd6babb0a2966fbf6d9bdfd56c13bc7ca312adb6723bb0eb445c881
   workspace_records: 6
-  package_records: 1891
+  package_records: 1892
   selected_production_closure: false
   note: The selected receipt is deterministic but not authoritative while workspace versions are stale and UI source-import reachability is unverified.
 selected_lock_audit:
@@ -45,16 +45,16 @@ selected_lock_audit:
   known_workspace_version_mismatches:
     "":
       lock:
-      manifest: 1.16.1
-      release: 1.16.1
+      manifest: 1.16.3
+      release: 1.16.3
     packages/ui:
-      lock: 1.14.1
-      manifest: 1.16.1
-      release: 1.16.1
+      lock: 1.16.2
+      manifest: 1.16.3
+      release: 1.16.3
     packages/web:
-      lock: 1.14.1
-      manifest: 1.16.1
-      release: 1.16.1
+      lock: 1.16.2
+      manifest: 1.16.3
+      release: 1.16.3
   dependency_roots:
     runtime:
       packages/web:
@@ -118,26 +118,26 @@ selected_lock_audit:
   - packages/ui
   - packages/web
   patched_dependencies:
-    "@tanstack/virtual-core@3.17.3": patches/@tanstack%2Fvirtual-core@3.17.3.patch
+    "@tanstack/virtual-core@3.17.3": bun-patches/@tanstack+virtual-core+3.17.3.patch
   git_sources: {}
 selected_lock_receipt:
   schema: openchamber-selected-lock-audit/v1
-  sha256: 735139c5e47fa731749e77506526e44d75bfea78ae4d2df3aa5612245fd6aa55
-  lock_sha256: 1cd16b6c7ac6368b63194ca7aa0125c8a4acf80fc57f77a9fe30e7be7c9980e1
+  sha256: a614f5dfae6194abf2d63be7c02a61b82deac8418df3574ff29895247e09b7f4
+  lock_sha256: 19113bdcdfd6babb0a2966fbf6d9bdfd56c13bc7ca312adb6723bb0eb445c881
   selected_workspaces: 3
-  selected_packages: 934
+  selected_packages: 935
   runtime_packages: 221
-  build_packages: 666
+  build_packages: 667
   test_packages: 47
-  registry_packages: 934
+  registry_packages: 935
   github_packages: 0
   platform_excluded: 76
   policy_excluded: 1
   source_identity:
     method: clean_git_checkout
-    commit: ee10f85d9ca866387abf7285985b268c8e3fa601
-    tag: v1.16.1
-    tag_commit: ee10f85d9ca866387abf7285985b268c8e3fa601
+    commit: 8040d43b251a015eb06d96135a442abd4d2f2e27
+    tag: v1.16.3
+    tag_commit: 8040d43b251a015eb06d96135a442abd4d2f2e27
     tracked_worktree_clean: true
   validation:
     source_identity_verified: true
@@ -158,12 +158,12 @@ closure_audit:
   upstream_contact_recorded: false
   offline_verified: false
 source_closure_files:
-  production_build_closure: openchamber-1.16.1-nm-prod-build.tar.zst
-  test_closure: openchamber-1.16.1-nm-dev-test.tar.zst
-  closure_manifest: openchamber-1.16.1-closure.json
-  license_inventory: openchamber-1.16.1-bundled-licenses.txt
-  native_manifest: openchamber-1.16.1-native.json
-  selected_lock_audit: openchamber-1.16.1-selected-lock-audit.json
+  production_build_closure: openchamber-1.16.3-nm-prod-build.tar.zst
+  test_closure: openchamber-1.16.3-nm-dev-test.tar.zst
+  closure_manifest: openchamber-1.16.3-closure.json
+  license_inventory: openchamber-1.16.3-bundled-licenses.txt
+  native_manifest: openchamber-1.16.3-native.json
+  selected_lock_audit: openchamber-1.16.3-selected-lock-audit.json
 runtime_provider:
   package: opencode
   resolution: PATH or OPENCODE_BINARY

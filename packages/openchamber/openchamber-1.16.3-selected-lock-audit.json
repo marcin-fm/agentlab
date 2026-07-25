@@ -1,25 +1,25 @@
 {
   "schema": "openchamber-selected-lock-audit/v1",
   "package": "openchamber",
-  "release": "1.16.1",
-  "source_tag": "v1.16.1",
-  "source_commit": "ee10f85d9ca866387abf7285985b268c8e3fa601",
+  "release": "1.16.3",
+  "source_tag": "v1.16.3",
+  "source_commit": "8040d43b251a015eb06d96135a442abd4d2f2e27",
   "source_identity": {
     "method": "clean_git_checkout",
-    "commit": "ee10f85d9ca866387abf7285985b268c8e3fa601",
-    "tag": "v1.16.1",
-    "tag_commit": "ee10f85d9ca866387abf7285985b268c8e3fa601",
+    "commit": "8040d43b251a015eb06d96135a442abd4d2f2e27",
+    "tag": "v1.16.3",
+    "tag_commit": "8040d43b251a015eb06d96135a442abd4d2f2e27",
     "tracked_worktree_clean": true
   },
   "lockfile": {
     "path": "bun.lock",
-    "sha256": "1cd16b6c7ac6368b63194ca7aa0125c8a4acf80fc57f77a9fe30e7be7c9980e1",
+    "sha256": "19113bdcdfd6babb0a2966fbf6d9bdfd56c13bc7ca312adb6723bb0eb445c881",
     "bun": "1.3.14",
     "workspace_records": 6,
-    "package_records": 1891
+    "package_records": 1892
   },
   "selection": {
-    "config_sha256": "4faabae6681e88d4f1fb314fa11b75c5c93b295d361a909b224819b49b8b9fd4",
+    "config_sha256": "1195fa39f0c4ef84b1560693b6ef01b2709eefc14c974a088aa47faa0f731835",
     "target": {
       "os": "linux",
       "cpu": "x64",
@@ -32,9 +32,9 @@
       "ui_root_strategy": "all packages/ui dependencies until source-import reachability is proven"
     },
     "selected_workspaces": 3,
-    "selected_packages": 934,
+    "selected_packages": 935,
     "roles": {
-      "build": 666,
+      "build": 667,
       "runtime": 221,
       "test": 47
     },
@@ -42,7 +42,7 @@
       "file": 0,
       "git": 0,
       "github": 0,
-      "registry": 934,
+      "registry": 935,
       "url": 0
     },
     "platform_excluded": 76,
@@ -53,45 +53,45 @@
       "workspace_path": "",
       "manifest_path": "package.json",
       "name": "openchamber-monorepo",
-      "manifest_version": "1.16.1",
+      "manifest_version": "1.16.3",
       "lock_version": null,
-      "manifest_sha256": "4fc93544d262fd9ecd797761088cb703ce6ee22128718d764a419f2a8d7621e5",
+      "manifest_sha256": "c8ac1382d9415500221ebb4fba104e7a749027286d8d2885fadd253531fcb410",
       "dependency_groups_match": true
     },
     {
       "workspace_path": "packages/ui",
       "manifest_path": "packages/ui/package.json",
       "name": "@openchamber/ui",
-      "manifest_version": "1.16.1",
-      "lock_version": "1.14.1",
-      "manifest_sha256": "8bfaa97a0a99820600283bc98d04273017feaa5192522f67915bb68239266955",
+      "manifest_version": "1.16.3",
+      "lock_version": "1.16.2",
+      "manifest_sha256": "4b6e5e45073e2efcf45925c586f6951a6ee3c58afd96250a3fe77b18de314df0",
       "dependency_groups_match": true
     },
     {
       "workspace_path": "packages/web",
       "manifest_path": "packages/web/package.json",
       "name": "@openchamber/web",
-      "manifest_version": "1.16.1",
-      "lock_version": "1.14.1",
-      "manifest_sha256": "4938ecf000d2f26f1b7bfc6cef2e16e3a83994953f10bba4567e0d6c03886674",
+      "manifest_version": "1.16.3",
+      "lock_version": "1.16.2",
+      "manifest_sha256": "60e45e38f8e408b962d47c8d88698ca3c7a719804100a66075ecfc67c40e30f4",
       "dependency_groups_match": true
     }
   ],
   "known_workspace_version_mismatches": {
     "": {
       "lock": null,
-      "manifest": "1.16.1",
-      "release": "1.16.1"
+      "manifest": "1.16.3",
+      "release": "1.16.3"
     },
     "packages/ui": {
-      "lock": "1.14.1",
-      "manifest": "1.16.1",
-      "release": "1.16.1"
+      "lock": "1.16.2",
+      "manifest": "1.16.3",
+      "release": "1.16.3"
     },
     "packages/web": {
-      "lock": "1.14.1",
-      "manifest": "1.16.1",
-      "release": "1.16.1"
+      "lock": "1.16.2",
+      "manifest": "1.16.3",
+      "release": "1.16.3"
     }
   },
   "roots": [
@@ -344,7 +344,7 @@
       "workspace_path": "packages/ui",
       "dependency_group": "dependencies",
       "dependency_name": "@opencode-ai/sdk",
-      "requirement": "1.17.18",
+      "requirement": "1.18.4",
       "role": "build"
     },
     {
@@ -443,6 +443,13 @@
       "dependency_group": "dependencies",
       "dependency_name": "express",
       "requirement": "^5.1.0",
+      "role": "build"
+    },
+    {
+      "workspace_path": "packages/ui",
+      "dependency_group": "dependencies",
+      "dependency_name": "fflate",
+      "requirement": "^0.8.3",
       "role": "build"
     },
     {
@@ -652,7 +659,7 @@
       "workspace_path": "packages/web",
       "dependency_group": "dependencies",
       "dependency_name": "@opencode-ai/sdk",
-      "requirement": "1.17.18",
+      "requirement": "1.18.4",
       "role": "runtime"
     },
     {
@@ -974,13 +981,13 @@
     {
       "path": "packages/ui",
       "name": "@openchamber/ui",
-      "version": "1.14.1",
+      "version": "1.16.2",
       "role": "build"
     },
     {
       "path": "packages/web",
       "name": "@openchamber/web",
-      "version": "1.14.1",
+      "version": "1.16.2",
       "role": "runtime"
     }
   ],
@@ -3155,13 +3162,13 @@
     {
       "package_path": "@opencode-ai/sdk",
       "npm_name": "@opencode-ai/sdk",
-      "version": "1.17.18",
+      "version": "1.18.4",
       "origin": "registry",
       "role": "runtime",
       "candidate_for_binary": true,
-      "integrity": "sha512-c/C9PhY8PrbcxDY+JIYtOZsrmMD0KzoVvxq+RGUrZ6LQp57SuVBbT4lfwA2G8Se5RNC1N5JtYjiuaXeECnF2SQ==",
+      "integrity": "sha512-p/3P0KtWknoLvpsk8QrUzCKd4Q1A5Z3RmACEvwuQBGxnUy4AGo379lUYMgt7fczFn53079oroLuo6BosQri+HA==",
       "platform": {},
-      "source_url": "https://registry.npmjs.org/@opencode-ai/sdk/-/sdk-1.17.18.tgz"
+      "source_url": "https://registry.npmjs.org/@opencode-ai/sdk/-/sdk-1.18.4.tgz"
     },
     {
       "package_path": "@paralleldrive/cuid2",
@@ -6127,6 +6134,17 @@
       "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
       "platform": {},
       "source_url": "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz"
+    },
+    {
+      "package_path": "fflate",
+      "npm_name": "fflate",
+      "version": "0.8.3",
+      "origin": "registry",
+      "role": "build",
+      "candidate_for_binary": false,
+      "integrity": "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==",
+      "platform": {},
+      "source_url": "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz"
     },
     {
       "package_path": "file-uri-to-path",
@@ -11756,7 +11774,7 @@
   "patched_dependencies": [
     {
       "identity": "@tanstack/virtual-core@3.17.3",
-      "path": "patches/@tanstack%2Fvirtual-core@3.17.3.patch",
+      "path": "bun-patches/@tanstack+virtual-core+3.17.3.patch",
       "sha256": "3a6ff842ba0efd76b7535cf65776794509ae173436b5ff40a9f3844893b529e5",
       "selected_package_paths": [
         "@tanstack/virtual-core"
