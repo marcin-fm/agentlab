@@ -3351,9 +3351,7 @@ module Agentlab
     end
     unresolved_native = components.reject { |component| component["license_selection_verified"] == true }.map { |component| component["name"] }.sort
     errors << "bun: final linked-license unresolved native set mismatch" unless receipt.dig("unresolved", "native_license_selections") == unresolved_native
-    unresolved_reasons = {
-      "libarchive" => "linked subset still needs file-level aggregation across public-domain, BSD, BLAKE2, NetBSD, and UC Regents terms"
-    }
+    unresolved_reasons = {}
     expected_unresolved_details = unresolved_native.map do |name|
       source = native_inventory.fetch(name)
       { "name" => name, "reason" => unresolved_reasons[name], "license_files" => source["license_files"] }
@@ -3371,14 +3369,13 @@ module Agentlab
     errors << "bun: final linked-license lol-html provider mismatch" unless provider["package"] == expected_provider["package"] && provider["version"] == expected_provider["version"] && provider["c_api_version"] == expected_provider["c_api_version"] && provider["soname"] == expected_provider["soname"] && provider["link_flag"] == "-llolhtml"
     errors << "bun: final linked-license lol-html license boundary mismatch" unless provider["aggregate_expression"] == provider_license["aggregate_expression"] && provider["linked_license_entries"] == provider_license["linked_license_entries"] && provider["license_dependencies_sha256"] == provider_license["license_dependencies_sha256"] && provider["fedora_spdx_review_complete"] == true && provider["excluded_from_bun_bundled_aggregate"] == true
 
-    true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified]
-    false_validation = %w[network_used native_license_selections_verified webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified final_license_expression_verified rpm_payload_license_verified]
+    true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified native_license_selection_review_verified native_license_selections_verified]
+    false_validation = %w[network_used webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified final_license_expression_verified rpm_payload_license_verified]
     errors << "bun: final linked-license mapping validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
-    errors << "bun: final linked-license partial native review is incomplete" unless receipt.dig("validation", "partial_native_license_selection_verified") == true
     errors << "bun: final linked-license closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
-    metadata_false = %w[native_license_selections_verified webkit_semantic_license_selection_verified final_npm_codegen_closure_verified final_license_expression_verified required_license_texts_verified rpm_payload_license_verified]
+    metadata_false = %w[webkit_semantic_license_selection_verified final_npm_codegen_closure_verified final_license_expression_verified required_license_texts_verified rpm_payload_license_verified]
     errors << "bun: final linked-license native review counts mismatch" unless metadata["selected_native_license_components"] == components.count { |component| component["name"] != "bun" && component["license_selection_verified"] == true } && metadata["unresolved_native_license_components"] == unresolved_native.length && metadata["unresolved_native_license_component_names"] == unresolved_native
-    errors << "bun: final linked-license metadata overclaims completion" unless metadata["all_link_inputs_mapped"] == true && metadata["system_lolhtml_provider_external"] == true && metadata["partial_native_license_selection_verified"] == true && metadata_false.all? { |key| metadata[key] == false }
+    errors << "bun: final linked-license metadata overclaims completion" unless metadata["all_link_inputs_mapped"] == true && metadata["system_lolhtml_provider_external"] == true && metadata["native_license_selection_review_verified"] == true && metadata["native_license_selections_verified"] == true && metadata_false.all? { |key| metadata[key] == false }
 
     required_spec_fragments = [
       "%global final_linked_license_closure_sha256 #{expected_sha256}",

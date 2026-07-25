@@ -15,9 +15,7 @@ module BunFinalLinkedLicenseAudit
 
   REPO_ROOT = File.expand_path("..", __dir__)
   BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
-  UNRESOLVED_NATIVE_REASONS = {
-    "libarchive" => "linked subset still needs file-level aggregation across public-domain, BSD, BLAKE2, NetBSD, and UC Regents terms",
-  }.freeze
+  UNRESOLVED_NATIVE_REASONS = {}.freeze
 
   module_function
 
@@ -228,9 +226,9 @@ module BunFinalLinkedLicenseAudit
         "all_native_components_linked" => true,
         "webkit_archives_verified" => true,
         "system_lolhtml_provider_verified" => true,
-        "partial_native_license_selection_verified" => true,
+        "native_license_selection_review_verified" => true,
         "network_used" => false,
-        "native_license_selections_verified" => false,
+        "native_license_selections_verified" => true,
         "webkit_linked_file_semantic_review_verified" => false,
         "final_npm_codegen_closure_verified" => false,
         "fedora_allowed_spdx_verified" => false,
@@ -238,7 +236,7 @@ module BunFinalLinkedLicenseAudit
         "final_license_expression_verified" => false,
         "rpm_payload_license_verified" => false
       },
-      "scope" => "current final-link mapping with 15 native source-subset selections; three mixed native trees, WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+      "scope" => "current final-link mapping with all 18 native source-subset selections; WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
     }
   end
 

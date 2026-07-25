@@ -34,13 +34,14 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
     assert_equal(19, receipt.fetch("components").length)
     assert_equal(18, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" })
     assert_equal(true, receipt.dig("validation", "final_link_inputs_mapped"))
-    assert_equal(true, receipt.dig("validation", "partial_native_license_selection_verified"))
-    assert_equal(17, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" && component.fetch("license_selection_verified") })
-    assert_equal(["libarchive"], receipt.dig("unresolved", "native_license_selections"))
-    assert_equal(["libarchive"], receipt.dig("unresolved", "native_license_details").map { |record| record.fetch("name") })
+    assert_equal(true, receipt.dig("validation", "native_license_selection_review_verified"))
+    assert_equal(true, receipt.dig("validation", "native_license_selections_verified"))
+    assert_equal(18, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" && component.fetch("license_selection_verified") })
+    assert_equal([], receipt.dig("unresolved", "native_license_selections"))
+    assert_equal([], receipt.dig("unresolved", "native_license_details"))
     %w[
-      native_license_selections_verified webkit_linked_file_semantic_review_verified
-      final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified
+      webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified
+      fedora_allowed_spdx_verified required_license_texts_verified
       final_license_expression_verified rpm_payload_license_verified
     ].each do |key|
       assert_equal(false, receipt.dig("validation", key), key)

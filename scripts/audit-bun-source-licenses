@@ -38,6 +38,7 @@ module BunSourceLicenseAudit
     "cares" => ["MIT", "complete upstream license and Fedora c-ares precedent"],
     "hdrhistogram" => ["CC0-1.0 OR BSD-2-Clause", "both upstream alternatives are retained"],
     "highway" => ["Apache-2.0", "linked subset excludes the CC0 random contribution"],
+    "libarchive" => ["BSD-2-Clause AND BSD-3-Clause AND CC0-1.0", "linked default, xxhash, NetBSD, UC Regents, public-domain, and CC0-selected BLAKE2 sources"],
     "libdeflate" => ["MIT", "complete upstream license and Fedora libdeflate precedent"],
     "libjpeg-turbo" => ["IJG AND BSD-3-Clause", "linked upstream libjpeg and TurboJPEG sources; Bun's separate stub is classified under Bun MIT"],
     "libspng" => ["BSD-2-Clause AND libpng-2.0", "linked spng source carries both terms"],

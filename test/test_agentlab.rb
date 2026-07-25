@@ -2428,7 +2428,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.27", "--rpm-release 0.0.26")
+        spec.sub("--rpm-release 0.0.28", "--rpm-release 0.0.27")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2511,7 +2511,8 @@ class AgentlabTest < Minitest::Test
       receipt = JSON.parse(File.read(receipt_path))
       receipt.fetch("components").first["linked_input_count"] -= 1
       receipt.fetch("validation")["final_license_expression_verified"] = true
-      receipt.dig("unresolved", "native_license_details").first["reason"] = "drifted"
+      receipt.dig("unresolved", "native_license_selections") << "libarchive"
+      receipt.dig("unresolved", "native_license_details") << { "name" => "drifted" }
       File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
       copied_metadata["sha256"] = Digest::SHA256.file(receipt_path).hexdigest
       copied_package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
