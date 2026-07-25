@@ -17,6 +17,9 @@ receipts:
   node_pty_proof:
     path: openchamber-1.16.3-node-pty-proof.json
     sha256: c80c61d55ca62e1644fa822ef0447ce00fd9dc65e6c4fdda95974744f97cb257
+  esbuild_proof:
+    path: openchamber-1.16.3-esbuild-proof.json
+    sha256: daa62c3e4a887012f3bca0e8d3873c69994ad5e189dc0420e5f21c3a234bd65d
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -36,9 +39,9 @@ status:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 6
-  source_mappings_unresolved: 8
-  reproducible_builds_completed: 2
+  source_mappings_verified: 7
+  source_mappings_unresolved: 7
+  reproducible_builds_completed: 3
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
@@ -80,9 +83,13 @@ components:
     mapping:
       kind: platform_companion
       source_package: esbuild@0.27.3
+      upstream_tag: v0.27.3
+      upstream_tag_commit: 9129e00e6c36a3e374820cb5e3fc2cd319c8ab85
+      source_archive_sha256: 05d56070104b46d24c8921bfc4c83209d71cf583eb0396c13d0f359705bb5b61
       available_system_provider: golang-github-evanw-esbuild-0.28.1
       system_provider_exact: false
-    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+    proof: { path: openchamber-1.16.3-esbuild-proof.json }
+    decision: { action: require_exact_source_build, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: true }
   - package: "@rollup/rollup-linux-x64-gnu@4.59.0"
     audit:
       native_payloads: { count: 1, paths_sha256: 9efeb741fab9bad21e2314868bf5f76c64f22eb79d1f7f99811a92a258437960 }

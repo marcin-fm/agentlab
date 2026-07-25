@@ -118,11 +118,13 @@ prebuilt payloads into a prospective package.
 
 The review excludes three mobile-only Capacitor source/mode findings from the
 Linux target, records `better-sqlite3` and `node-pty` as same-archive rebuild
-candidates, and retains `node-addon-api` only as build support. Five platform
-companions still need exact source builds; Agentlab's esbuild `0.28.1` provider
-does not satisfy selected `0.27.3`. Three generated WASM inputs still need exact
-subordinate source correspondence. No prebuilt payload is approved, eight
-source mappings remain unresolved. `better-sqlite3 12.10.0` now rebuilds twice
+candidates, and retains `node-addon-api` only as build support. Four platform
+companions still need exact source builds. Selected esbuild `0.27.3` now builds
+twice byte-identically from exact tag source because Agentlab's `0.28.1` provider
+cannot satisfy the wrapper's exact binary version contract. Three generated WASM
+inputs still need exact subordinate source correspondence. No prebuilt payload is
+approved, and seven source mappings remain unresolved. `better-sqlite3 12.10.0`
+now rebuilds twice
 byte-identically for Node 24 ABI 137 against Fedora SQLite 3.51.2, with no
 prebuild download or bundled SQLite linkage; every other native/WASM rebuild
 and final OpenChamber inclusion claim remains false.
@@ -131,3 +133,11 @@ and final OpenChamber inclusion claim remains false.
 137 from the selected source and `node-addon-api 7.1.1`. Linux spawn, resize,
 exit-code, and open-PTY smokes pass without lifecycle scripts or published
 prebuilds; final OpenChamber inclusion remains unverified.
+
+`@esbuild/linux-x64 0.27.3` is replaced by a four-job, network-isolated build
+from upstream tag `v0.27.3` and its pinned `golang.org/x/sys` module. Two builds
+produce the same executable at SHA-256
+`9ef2af828dc9fb5a267d445f07933fa856a8602287abe5bca321ebe0c1f509b7`;
+the upstream Go suite passes, and the selected npm wrapper reports `0.27.3` and
+performs a TypeScript transform with that executable. Final offline bundle
+inclusion remains unverified.

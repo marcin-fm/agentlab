@@ -203,7 +203,7 @@ source_acquisition_findings:
   generated_sources_verified: false
 native_review_receipt:
   schema: openchamber-native-review/v1
-  sha256: 4f12b1d73f0e0596d09e56a07fbb41124ecc46e84fd92792cdce2eaa212fad3a
+  sha256: 1f7066370f35ab956e82589b91f27a3865909b08b9995989a99f4a8d9920a546
   component_identities_classified: 14
   target_excluded_sources: 3
   platform_companions: 5
@@ -211,12 +211,12 @@ native_review_receipt:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 6
-  source_mappings_unresolved: 8
+  source_mappings_verified: 7
+  source_mappings_unresolved: 7
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
-  reproducible_builds_completed: 2
+  reproducible_builds_completed: 3
 source_materialization_receipt:
   schema: openchamber-source-materialization/v1
   sha256: 48b3a061404f3f362a333d6b3e57d04af8bba450361c2de4c6589d7079632d9c
@@ -264,6 +264,7 @@ source_closure_files:
   native_review: openchamber-1.16.3-native-review.yml
   better_sqlite3_proof: openchamber-1.16.3-better-sqlite3-proof.json
   node_pty_proof: openchamber-1.16.3-node-pty-proof.json
+  esbuild_proof: openchamber-1.16.3-esbuild-proof.json
   selected_lock_audit: openchamber-1.16.3-selected-lock-audit.json
   source_audit: openchamber-1.16.3-source-audit.json
 runtime_provider:

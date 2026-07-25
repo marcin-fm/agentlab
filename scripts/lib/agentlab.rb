@@ -869,7 +869,7 @@ module Agentlab
       errors << "openchamber: native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
       reproducible = component.dig("decision", "reproducible_build_verified")
       errors << "openchamber: native review reproducibility state is missing for #{identity}" unless [true, false].include?(reproducible)
-      proven_rebuilds = %w[better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
+      proven_rebuilds = %w[@esbuild/linux-x64@0.27.3 better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
       errors << "openchamber: native review overclaims a reproducible build for #{identity}" if reproducible == true && !proven_rebuilds.include?(identity)
     end
 
@@ -894,10 +894,26 @@ module Agentlab
     source_packages.each do |identity, source_package|
       component = components.find { |entry| entry["package"] == identity }
       errors << "openchamber: native review source package mismatch for #{identity}" unless component&.dig("mapping", "source_package") == source_package
-      errors << "openchamber: native review platform mapping must remain unresolved for #{identity}" unless component&.dig("decision", "source_mapping_verified") == false
+      expected_verified = identity == "@esbuild/linux-x64@0.27.3"
+      errors << "openchamber: native review platform mapping verification mismatch for #{identity}" unless component&.dig("decision", "source_mapping_verified") == expected_verified
     end
     esbuild = components.find { |component| component["package"] == "@esbuild/linux-x64@0.27.3" }
     errors << "openchamber: native review accepts a version-different esbuild provider" unless esbuild&.dig("mapping", "available_system_provider") == "golang-github-evanw-esbuild-0.28.1" && esbuild&.dig("mapping", "system_provider_exact") == false
+    esbuild_filename = dependencies.dig("source_closure_files", "esbuild_proof")
+    esbuild_path = esbuild_filename.is_a?(String) && File.join(package.directory, esbuild_filename)
+    if esbuild_path && File.file?(esbuild_path)
+      esbuild_sha256 = Digest::SHA256.file(esbuild_path).hexdigest
+      esbuild_proof = JSON.parse(File.read(esbuild_path))
+      errors << "openchamber: esbuild proof path mismatch" unless esbuild&.dig("proof", "path") == esbuild_filename && review.dig("receipts", "esbuild_proof", "path") == esbuild_filename
+      errors << "openchamber: esbuild proof SHA-256 mismatch" unless review.dig("receipts", "esbuild_proof", "sha256") == esbuild_sha256
+      errors << "openchamber: esbuild proof identity mismatch" unless esbuild_proof["schema"] == "openchamber-esbuild-proof/v1" && esbuild_proof["package"] == "@esbuild/linux-x64@0.27.3" && esbuild_proof.dig("source", "upstream_tag_commit") == "9129e00e6c36a3e374820cb5e3fc2cd319c8ab85"
+      errors << "openchamber: esbuild proof source mismatch" unless esbuild_proof.dig("source", "archive_sha256") == "05d56070104b46d24c8921bfc4c83209d71cf583eb0396c13d0f359705bb5b61" && esbuild_proof.dig("go_dependency", "zip_sha256") == "3b180937216e93559f16b6076d09baf54a5707378f11b867b6eb914c56b09b91"
+      errors << "openchamber: esbuild proof build contract mismatch" unless esbuild_proof.dig("build", "network_isolated") == true && esbuild_proof.dig("build", "jobs") == 4 && esbuild_proof.dig("build", "first_sha256") == esbuild_proof.dig("build", "second_sha256") && esbuild_proof.dig("build", "rpath_or_runpath") == false
+      errors << "openchamber: esbuild runtime proof is incomplete" unless esbuild_proof.dig("validation", "published_companion_excluded") == true && esbuild_proof.dig("validation", "upstream_go_tests_passed") == true && esbuild_proof.dig("validation", "binary_version_verified") == true && esbuild_proof.dig("validation", "npm_wrapper_transform_verified") == true && esbuild_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: esbuild review state mismatch" unless esbuild.dig("decision", "reproducible_build_verified") == true
+    else
+      errors << "openchamber: esbuild proof is unavailable"
+    end
 
     better = components.find { |component| component["package"] == "better-sqlite3@12.10.0" }
     proof_filename = dependencies.dig("source_closure_files", "better_sqlite3_proof")

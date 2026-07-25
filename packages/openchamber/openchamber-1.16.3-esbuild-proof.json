@@ -1,0 +1,54 @@
+{
+  "schema": "openchamber-esbuild-proof/v1",
+  "release": "1.16.3",
+  "package": "@esbuild/linux-x64@0.27.3",
+  "wrapper": {
+    "package": "esbuild@0.27.3",
+    "integrity": "sha512-8VwMnyGCONIs6cWue2IdpHxHnAjzxnw2Zr7MkVxB2vjmQ2ivqGFb4LEG3SMnv0Gb2F/G/2yA8zUaiL1gywDCCg==",
+    "archive_sha256": "ddbdb72c9efc280450365cf3e3e3baae70d3d4cac7a0494d2f6df5b9e93f396b"
+  },
+  "published_companion": {
+    "integrity": "sha512-Czi8yzXUWIQYAtL/2y6vogER8pvcsOsk5cpwL4Gk5nJqH5UZiVByIY8Eorm5R13gq+DQKYg0+JyQoytLQas4dA==",
+    "archive_sha256": "066e20cdb882994160e18524a552b97e03648eb9aa0c7cdf5680a6493be65ab2",
+    "binary_sha256": "fd49340cbb5f7ca3ce6f313db78d056de21f07338135ec8dfad63294a304fd2c",
+    "retained_in_package": false
+  },
+  "source": {
+    "upstream_tag": "v0.27.3",
+    "upstream_tag_commit": "9129e00e6c36a3e374820cb5e3fc2cd319c8ab85",
+    "archive_url": "https://github.com/evanw/esbuild/archive/refs/tags/v0.27.3/esbuild-0.27.3.tar.gz",
+    "archive_sha256": "05d56070104b46d24c8921bfc4c83209d71cf583eb0396c13d0f359705bb5b61",
+    "tracked_files": 347,
+    "tracked_tree_sha256": "829533fa8a4ba30b2dede81771fcc38dd0b2409fd849b6770ce58fc3a2710e11"
+  },
+  "go_dependency": {
+    "module": "golang.org/x/sys",
+    "version": "v0.0.0-20220715151400-c0bba94af5f8",
+    "module_sum": "h1:0A+M6Uqn+Eje4kHMK80dtF3JCXC4ykBgQG4Fe06QRhQ=",
+    "zip_sha256": "3b180937216e93559f16b6076d09baf54a5707378f11b867b6eb914c56b09b91"
+  },
+  "build": {
+    "network_isolated": true,
+    "jobs": 4,
+    "go_version": "go1.26.5-X:nodwarf5",
+    "goos": "linux",
+    "goarch": "amd64",
+    "cgo_enabled": true,
+    "command": "go build -p 4 -buildvcs=false -ldflags=-s\\ -w -trimpath ./cmd/esbuild",
+    "output_size": 11428105,
+    "first_sha256": "9ef2af828dc9fb5a267d445f07933fa856a8602287abe5bca321ebe0c1f509b7",
+    "second_sha256": "9ef2af828dc9fb5a267d445f07933fa856a8602287abe5bca321ebe0c1f509b7",
+    "needed": ["libresolv.so.2", "libc.so.6"],
+    "rpath_or_runpath": false
+  },
+  "validation": {
+    "source_identity_verified": true,
+    "published_companion_excluded": true,
+    "two_builds_byte_identical": true,
+    "upstream_go_tests_passed": true,
+    "binary_version_verified": true,
+    "npm_wrapper_transform_verified": true,
+    "rpm_build_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}
