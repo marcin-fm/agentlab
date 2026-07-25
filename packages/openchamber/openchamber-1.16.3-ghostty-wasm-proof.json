@@ -1,0 +1,64 @@
+{
+  "schema": "openchamber-ghostty-wasm-proof/v1",
+  "release": "1.16.3",
+  "package": "ghostty-web@0.4.0",
+  "published_package": {
+    "archive_sha256": "90bf473b6c7f43ab5e52ee98d8295e04fb1c6b07b928e9795489df1e8cb8802e",
+    "wasm_paths": [
+      "dist/ghostty-vt.wasm",
+      "ghostty-vt.wasm"
+    ],
+    "wasm_size": 423045,
+    "wasm_sha256": "d6f0326f1874ad2ce9f289e3a4a0c5f3507d4cb38d8747e4b287def470a0c60a"
+  },
+  "ghostty_web_source": {
+    "tag": "v0.4.0",
+    "commit": "9e4e126d89ac3537d2b2ebec075849851566de9f",
+    "archive_sha256": "67c1f752cab0e100de31878bbcede03c898d831eed6cb88ea0f2bac68015e161",
+    "build_script_sha256": "dee4f827c43fe3110a16031b51074c80d44076582b87128d79048942d4839bb5",
+    "patch_sha256": "ae5b1b034143885e130e5b795209c5bb52ce5987a62240bab1ac5ff4f99f430a",
+    "setup_zig_action_sha256": "f85f1000c77147ae26a76069a2961b59688945806f5f4751fd4d40b504a8ebd1"
+  },
+  "subordinate_source": {
+    "repository": "ghostty-org/ghostty",
+    "commit": "5714ed07a1012573261b7b7e3ed2add9c1504496",
+    "archive_sha256": "55cee28558945de6e984bc183cd51f28eefdbf805544da2e70d4635476178790",
+    "patch_applied": true
+  },
+  "toolchain": {
+    "zig_version": "0.15.2",
+    "archive_url": "https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz",
+    "archive_size": 53733924,
+    "archive_sha256": "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239",
+    "upstream_index_sha256": "2eeb60e26416fd6379a3469a0961cacee3469a54ae350d714da9bab9f956b1a4"
+  },
+  "build": {
+    "command": "zig build lib-vt -Dtarget=wasm32-freestanding -Doptimize=ReleaseSmall -j4",
+    "target": "wasm32-freestanding",
+    "optimize": "ReleaseSmall",
+    "jobs": 4,
+    "dependency_fetch_separate": true,
+    "first_build_network_isolated": true,
+    "second_build_network_isolated": true,
+    "first_size": 423045,
+    "second_size": 423045,
+    "first_sha256": "d6f0326f1874ad2ce9f289e3a4a0c5f3507d4cb38d8747e4b287def470a0c60a",
+    "second_sha256": "d6f0326f1874ad2ce9f289e3a4a0c5f3507d4cb38d8747e4b287def470a0c60a"
+  },
+  "runtime_smoke": {
+    "wrapper_sha256": "078b3fe37e4ef469d3f3d7772ee263070f8613e5a6f5ff305c85778907f45e72",
+    "network_isolated": true,
+    "webassembly_compile_verified": true,
+    "terminal_create_verified": true,
+    "terminal_write_readback_verified": true,
+    "cursor_state_verified": true
+  },
+  "validation": {
+    "exact_source_mapping_verified": true,
+    "two_builds_byte_identical": true,
+    "published_wasm_reproduced": true,
+    "npm_wrapper_runtime_verified": true,
+    "dependency_cache_immutable_delivery_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}

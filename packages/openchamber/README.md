@@ -175,3 +175,13 @@ byte-for-byte. The exact subordinate source tag pins Oniguruma commit
 `08d36110c5670c815ad6d6f969e578049d209080`, npm dependencies, and Emscripten
 `3.1.21`. This verifies source correspondence; a fresh byte-identical WASM
 generation and final OpenChamber inclusion remain separate gates.
+
+`ghostty-web 0.4.0` builds its terminal WASM from Ghostty commit
+`5714ed07a1012573261b7b7e3ed2add9c1504496` plus the released package's exact
+API patch using Zig `0.15.2`. Two four-job, network-isolated builds produce the
+same 423,045-byte module as both npm payload copies at SHA-256
+`d6f0326f1874ad2ce9f289e3a4a0c5f3507d4cb38d8747e4b287def470a0c60a`.
+The selected JavaScript wrapper creates a terminal, writes and reads back text,
+and reports the expected cursor state against both rebuilt outputs. Immutable
+delivery of the Zig dependency cache and final OpenChamber inclusion remain
+unverified.

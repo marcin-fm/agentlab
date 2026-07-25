@@ -869,7 +869,7 @@ module Agentlab
       errors << "openchamber: native review source mapping state is missing for #{identity}" unless [true, false].include?(component.dig("decision", "source_mapping_verified"))
       reproducible = component.dig("decision", "reproducible_build_verified")
       errors << "openchamber: native review reproducibility state is missing for #{identity}" unless [true, false].include?(reproducible)
-      proven_rebuilds = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1 better-sqlite3@12.10.0 node-pty@1.2.0-beta.12]
+      proven_rebuilds = %w[@esbuild/linux-x64@0.27.3 @rollup/rollup-linux-x64-gnu@4.59.0 @tailwindcss/oxide-linux-x64-gnu@4.2.1 better-sqlite3@12.10.0 ghostty-web@0.4.0 node-pty@1.2.0-beta.12]
       errors << "openchamber: native review overclaims a reproducible build for #{identity}" if reproducible == true && !proven_rebuilds.include?(identity)
     end
 
@@ -983,6 +983,24 @@ module Agentlab
       errors << "openchamber: Shiki WASM review state mismatch" unless shiki.dig("decision", "source_mapping_verified") == true && shiki.dig("decision", "reproducible_build_verified") == false
     else
       errors << "openchamber: Shiki WASM proof is unavailable"
+    end
+
+    ghostty = components.find { |component| component["package"] == "ghostty-web@0.4.0" }
+    ghostty_filename = dependencies.dig("source_closure_files", "ghostty_wasm_proof")
+    ghostty_path = ghostty_filename.is_a?(String) && File.join(package.directory, ghostty_filename)
+    if ghostty_path && File.file?(ghostty_path)
+      ghostty_sha256 = Digest::SHA256.file(ghostty_path).hexdigest
+      ghostty_proof = JSON.parse(File.read(ghostty_path))
+      errors << "openchamber: Ghostty WASM proof path mismatch" unless ghostty&.dig("proof", "path") == ghostty_filename && review.dig("receipts", "ghostty_wasm_proof", "path") == ghostty_filename
+      errors << "openchamber: Ghostty WASM proof SHA-256 mismatch" unless review.dig("receipts", "ghostty_wasm_proof", "sha256") == ghostty_sha256
+      errors << "openchamber: Ghostty WASM proof identity mismatch" unless ghostty_proof["schema"] == "openchamber-ghostty-wasm-proof/v1" && ghostty_proof["package"] == "ghostty-web@0.4.0"
+      errors << "openchamber: Ghostty WASM source mismatch" unless ghostty_proof.dig("ghostty_web_source", "commit") == "9e4e126d89ac3537d2b2ebec075849851566de9f" && ghostty_proof.dig("ghostty_web_source", "archive_sha256") == "67c1f752cab0e100de31878bbcede03c898d831eed6cb88ea0f2bac68015e161" && ghostty_proof.dig("ghostty_web_source", "patch_sha256") == "ae5b1b034143885e130e5b795209c5bb52ce5987a62240bab1ac5ff4f99f430a" && ghostty_proof.dig("subordinate_source", "commit") == "5714ed07a1012573261b7b7e3ed2add9c1504496" && ghostty_proof.dig("subordinate_source", "archive_sha256") == "55cee28558945de6e984bc183cd51f28eefdbf805544da2e70d4635476178790"
+      errors << "openchamber: Ghostty WASM toolchain mismatch" unless ghostty_proof.dig("toolchain", "zig_version") == "0.15.2" && ghostty_proof.dig("toolchain", "archive_sha256") == "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239"
+      errors << "openchamber: Ghostty WASM build mismatch" unless ghostty_proof.dig("build", "target") == "wasm32-freestanding" && ghostty_proof.dig("build", "optimize") == "ReleaseSmall" && ghostty_proof.dig("build", "jobs") == 4 && ghostty_proof.dig("build", "first_build_network_isolated") == true && ghostty_proof.dig("build", "second_build_network_isolated") == true && ghostty_proof.dig("build", "first_sha256") == ghostty_proof.dig("build", "second_sha256") && ghostty_proof.dig("build", "first_sha256") == ghostty_proof.dig("published_package", "wasm_sha256")
+      errors << "openchamber: Ghostty WASM runtime proof is incomplete" unless ghostty_proof.dig("runtime_smoke", "wrapper_sha256") == "078b3fe37e4ef469d3f3d7772ee263070f8613e5a6f5ff305c85778907f45e72" && %w[network_isolated webassembly_compile_verified terminal_create_verified terminal_write_readback_verified cursor_state_verified].all? { |key| ghostty_proof.dig("runtime_smoke", key) == true } && ghostty_proof.dig("validation", "exact_source_mapping_verified") == true && ghostty_proof.dig("validation", "two_builds_byte_identical") == true && ghostty_proof.dig("validation", "published_wasm_reproduced") == true && ghostty_proof.dig("validation", "npm_wrapper_runtime_verified") == true && ghostty_proof.dig("validation", "dependency_cache_immutable_delivery_verified") == false && ghostty_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: Ghostty WASM review state mismatch" unless ghostty.dig("decision", "source_mapping_verified") == true && ghostty.dig("decision", "reproducible_build_verified") == true
+    else
+      errors << "openchamber: Ghostty WASM proof is unavailable"
     end
 
     better = components.find { |component| component["package"] == "better-sqlite3@12.10.0" }

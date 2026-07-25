@@ -32,6 +32,9 @@ receipts:
   shiki_wasm_proof:
     path: openchamber-1.16.3-shiki-wasm-proof.json
     sha256: 333f613165175cbcc70ec7750b1c87db372e6e208f806706ed7076217c60998b
+  ghostty_wasm_proof:
+    path: openchamber-1.16.3-ghostty-wasm-proof.json
+    sha256: 228b184555424e138447a6a4a4ddb412f91bdf6aac3e136ca8f65063a0ed425a
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -51,9 +54,9 @@ status:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 11
-  source_mappings_unresolved: 3
-  reproducible_builds_completed: 5
+  source_mappings_verified: 12
+  source_mappings_unresolved: 2
+  reproducible_builds_completed: 6
   native_sources_verified: false
   wasm_sources_verified: false
   reproducible_builds_verified: false
@@ -149,8 +152,13 @@ components:
       executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
-    mapping: { kind: generated_wasm, source_package: unresolved }
-    decision: { action: require_subordinate_source, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+    mapping:
+      kind: generated_wasm
+      source_package: ghostty-org/ghostty
+      source_commit: 5714ed07a1012573261b7b7e3ed2add9c1504496
+      toolchain: Zig 0.15.2
+    proof: { path: openchamber-1.16.3-ghostty-wasm-proof.json }
+    decision: { action: require_subordinate_source, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: true }
   - package: "lightningcss-linux-x64-gnu@1.31.1"
     audit:
       native_payloads: { count: 1, paths_sha256: 75c8d51ebaa2e4b711f878377a174be5e420f8b901c6e26b5df8228af28e872b }
