@@ -2,11 +2,13 @@
 
 require "json"
 require "minitest/autorun"
+require "open3"
 require "yaml"
 
 class ProveBunFirstSourceBuildTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SCRIPT = File.join(ROOT, "scripts", "prove-bun-first-source-build")
+  NPM_SCRIPT = File.join(ROOT, "scripts", "prove-bun-npm-offline-install")
   PACKAGE_DIR = File.join(ROOT, "packages", "bun")
 
   def test_helper_tracks_the_current_system_lolhtml_source_graph
@@ -32,5 +34,39 @@ class ProveBunFirstSourceBuildTest < Minitest::Test
     refute_includes(source, "cargo_receipt_path")
     refute_includes(source, "stable_lolhtml_cargo_verified")
     refute_includes(source, "expected 19 native source archives")
+  end
+
+  def test_npm_helper_supports_a_receipt_bound_source_built_driver
+    source = File.read(NPM_SCRIPT)
+
+    assert_includes(source, '--source-built-driver PATH')
+    assert_includes(source, '--driver-receipt PATH')
+    assert_includes(source, '"bun-first-source-build-proof/v2"')
+    assert_includes(source, '"bun-self-rebuild-proof/v2"')
+    assert_includes(source, '"bun-npm-offline-install-proof/v2"')
+    assert_includes(source, '"source_built_driver_verified" => true')
+    assert_includes(source, '"bootstrap_seed_not_used_for_install" => true')
+    assert_includes(source, '"forbidden_bootstrap_seed"')
+    assert_includes(source, 'source_driver_mode ? "source-built-npm-install-proof.json" : "npm-offline-install-proof.json"')
+    assert_includes(source, 'command = ["unshare", "--net", "--", install_driver, "install"')
+  end
+
+  def test_npm_helper_rejects_ambiguous_driver_options_before_proof_setup
+    _stdout, stderr, status = Open3.capture3(NPM_SCRIPT, "--source-built-driver", "/srv/tmp/missing-bun")
+    refute(status.success?)
+    assert_includes(stderr, "--driver-receipt is required with --source-built-driver")
+
+    _stdout, stderr, status = Open3.capture3(NPM_SCRIPT, "--driver-receipt", "/srv/tmp/missing-receipt.json")
+    refute(status.success?)
+    assert_includes(stderr, "--driver-receipt requires --source-built-driver")
+
+    _stdout, stderr, status = Open3.capture3(
+      NPM_SCRIPT,
+      "--seed-archive", "/srv/tmp/missing-seed.zip",
+      "--source-built-driver", "/srv/tmp/missing-bun",
+      "--driver-receipt", "/srv/tmp/missing-receipt.json"
+    )
+    refute(status.success?)
+    assert_includes(stderr, "--seed-archive and --source-built-driver are mutually exclusive")
   end
 end

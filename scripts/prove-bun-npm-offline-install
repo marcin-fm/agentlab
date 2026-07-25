@@ -17,13 +17,17 @@ File.umask(0o022)
 
 package = Agentlab.package_named("bun")
 version = package.upstream.fetch("current_version").to_s
+source_commit = package.upstream.fetch("source_commit").to_s
 closure_path = File.join(package.directory, "bun-#{version}-release-local-source-closure.json")
 lock_patch = File.join(package.directory, "bun-lightningcss-fedora-glibc-lock.patch")
 cache_dir = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
 bun_source_archive = "/srv/tmp/agentlab-bun/bun-v#{version}.tar.gz"
 seed_archive = "/srv/tmp/agentlab-bun/bun-seed-#{version}-linux-x64.zip"
+seed_archive_explicit = false
+source_built_driver = nil
+driver_receipt_path = nil
 workdir = "/srv/tmp/agentlab-bun-npm-offline-proof"
-output = File.join(package.directory, "npm-offline-install-proof.json")
+output = nil
 force = false
 check = false
 
@@ -31,19 +35,30 @@ OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prove-bun-npm-offline-install [options]"
   parser.on("--cache-dir PATH", "Checked Bun dependency-source cache") { |path| cache_dir = path }
   parser.on("--bun-source-archive PATH", "Checked Bun release source archive") { |path| bun_source_archive = path }
-  parser.on("--seed-archive PATH", "Checked bootstrap-only Bun seed archive") { |path| seed_archive = path }
+  parser.on("--seed-archive PATH", "Checked bootstrap-only Bun seed archive") { |path| seed_archive = path; seed_archive_explicit = true }
+  parser.on("--source-built-driver PATH", "Checked source-built Bun executable") { |path| source_built_driver = path }
+  parser.on("--driver-receipt PATH", "Checked receipt for the source-built Bun executable") { |path| driver_receipt_path = path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Canonical package proof receipt") { |path| output = path }
   parser.on("--force", "Replace an existing marked proof directory") { force = true }
   parser.on("--check", "Rebuild offline and compare the checked receipt") { check = true }
 end.parse!
 
+source_driver_mode = !source_built_driver.nil?
+raise Agentlab::Error, "--seed-archive and --source-built-driver are mutually exclusive" if source_driver_mode && seed_archive_explicit
+raise Agentlab::Error, "--driver-receipt is required with --source-built-driver" if source_driver_mode && driver_receipt_path.nil?
+raise Agentlab::Error, "--driver-receipt requires --source-built-driver" if !source_driver_mode && driver_receipt_path
+output ||= File.join(package.directory, source_driver_mode ? "source-built-npm-install-proof.json" : "npm-offline-install-proof.json")
+
 cache_dir = File.realpath(cache_dir)
 bun_source_archive = File.expand_path(bun_source_archive)
 seed_archive = File.expand_path(seed_archive)
+source_built_driver = File.expand_path(source_built_driver) if source_built_driver
+driver_receipt_path = File.expand_path(driver_receipt_path) if driver_receipt_path
 workdir = File.expand_path(workdir)
 output = File.expand_path(output)
 raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+raise Agentlab::Error, "source-built driver must be below /srv/tmp" if source_driver_mode && !source_built_driver.start_with?("/srv/tmp/")
 raise Agentlab::Error, "missing source-closure receipt #{closure_path}" unless File.file?(closure_path)
 raise Agentlab::Error, "missing Fedora glibc lock patch #{lock_patch}" unless File.file?(lock_patch)
 
@@ -345,6 +360,82 @@ def extract_zip_member!(archive, member, output, workdir)
   end
 end
 
+def verify_source_built_driver!(driver_path, receipt_path, version, source_commit, closure, closure_sha256, seed)
+  raise Agentlab::Error, "source-built driver is missing: #{driver_path}" unless File.file?(driver_path)
+  raise Agentlab::Error, "source-built driver receipt is missing: #{receipt_path}" unless File.file?(receipt_path)
+  driver_stat = File.lstat(driver_path)
+  receipt_stat = File.lstat(receipt_path)
+  raise Agentlab::Error, "source-built driver must not be a symlink" if driver_stat.symlink?
+  raise Agentlab::Error, "source-built driver receipt must not be a symlink" if receipt_stat.symlink?
+  raise Agentlab::Error, "source-built driver is owned by another user" unless driver_stat.uid == Process.uid
+  raise Agentlab::Error, "source-built driver receipt is owned by another user" unless receipt_stat.uid == Process.uid
+  driver_path = File.realpath(driver_path)
+
+  receipt_sha256 = Digest::SHA256.file(receipt_path).hexdigest
+  receipt = JSON.parse(File.read(receipt_path))
+  proof_kind, marker = case receipt.fetch("schema")
+                       when "bun-first-source-build-proof/v2"
+                         raise Agentlab::Error, "source-built driver receipt does not prove a source build" unless receipt.dig("validation", "source_build_verified") == true
+                         ["first_build", [".agentlab-bun-first-source-build-proof", "agentlab bun first source build proof\n"]]
+                       when "bun-self-rebuild-proof/v2"
+                         unless receipt.dig("validation", "self_rebuild_performed") == true && receipt.dig("validation", "source_built_driver_verified") == true
+                           raise Agentlab::Error, "source-built driver receipt does not prove a self-rebuild"
+                         end
+                         ["self_rebuild", [".agentlab-bun-self-rebuild-proof", "agentlab bun self rebuild proof\n"]]
+                       else
+                         raise Agentlab::Error, "unsupported source-built driver receipt schema"
+                       end
+  unless receipt["package"] == "bun" && receipt["release"] == version && receipt["profile"] == "release-local"
+    raise Agentlab::Error, "source-built driver receipt is not for Bun #{version} release-local"
+  end
+  unless receipt.dig("source_closure", "path") == "bun-#{version}-release-local-source-closure.json" &&
+         receipt.dig("source_closure", "sha256") == closure_sha256 &&
+         receipt.dig("source_closure", "source_archive_sha256") == closure.dig("source_tree", "source_sha256") &&
+         receipt.dig("source_closure", "source_commit") == source_commit
+    raise Agentlab::Error, "source-built driver receipt does not match the current source graph"
+  end
+  unless receipt.dig("seed_contamination", "payload_absent_verified") == true &&
+         receipt.dig("seed_contamination", "runtime_dependency_absent_verified") == true &&
+         receipt.dig("bootstrap_seed", "binary_sha256") == seed.fetch("binary_sha256") &&
+         receipt.dig("bootstrap_seed", "size_bytes") == seed.fetch("binary_size_bytes")
+    raise Agentlab::Error, "source-built driver receipt does not prove bootstrap-seed absence"
+  end
+
+  build = receipt.dig("build", "bun")
+  unless build.is_a?(Hash) && build["path"].is_a?(String)
+    raise Agentlab::Error, "source-built driver receipt lacks a build artifact"
+  end
+  relative = safe_relative_path(build.fetch("path"))
+  raise Agentlab::Error, "source-built driver receipt has an unsafe build path" unless relative
+  suffix = "/#{relative}"
+  raise Agentlab::Error, "source-built driver path does not match its receipt" unless driver_path.end_with?(suffix)
+  proof_root = driver_path.delete_suffix(suffix)
+  raise Agentlab::Error, "source-built driver proof root must be below /srv/tmp" unless proof_root.start_with?("/srv/tmp/")
+  raise Agentlab::Error, "source-built driver proof root changed during validation" unless File.realpath(proof_root) == proof_root
+  marker_path = File.join(proof_root, marker.fetch(0))
+  unless File.file?(marker_path) && File.read(marker_path) == marker.fetch(1)
+    raise Agentlab::Error, "source-built driver proof root is not marked"
+  end
+  unless build.fetch("sha256") == Digest::SHA256.file(driver_path).hexdigest &&
+         build.fetch("size_bytes") == File.size(driver_path) && receipt.dig("build", "version") == version
+    raise Agentlab::Error, "source-built driver does not match its build receipt"
+  end
+
+  {
+    "kind" => "source_built",
+    "proof_kind" => proof_kind,
+    "receipt" => File.basename(receipt_path),
+    "receipt_sha256" => receipt_sha256,
+    "proof_root" => proof_root,
+    "path" => driver_path,
+    "size_bytes" => File.size(driver_path),
+    "sha256" => Digest::SHA256.file(driver_path).hexdigest,
+    "version" => version
+  }
+rescue JSON::ParserError, KeyError => e
+  raise Agentlab::Error, "invalid source-built driver receipt: #{e.message}"
+end
+
 metadata = package.data.fetch("build_plan")
 seed = metadata.fetch("source_inputs").fetch("bootstrap_seed")
 raise Agentlab::Error, "Bun seed is not bootstrap-only" unless seed.fetch("bootstrap_only") == true
@@ -379,31 +470,41 @@ unless Digest::SHA256.file(bun_source_archive).hexdigest == closure.dig("source_
   raise Agentlab::Error, "Bun release source archive checksum mismatch"
 end
 
-FileUtils.mkdir_p(File.dirname(seed_archive))
-unless File.file?(seed_archive)
-  raise Agentlab::Error, "checked Bun seed archive is missing in --check mode" if check
-
-  puts "Downloading checked bootstrap-only Bun seed #{seed.fetch('url')}"
-  Agentlab.atomic_write(seed_archive, Agentlab.download(seed.fetch("url")))
-end
-raise Agentlab::Error, "Bun seed archive checksum mismatch" unless Digest::SHA256.file(seed_archive).hexdigest == seed.fetch("sha256")
-
-%w[patch tar unshare unzip].each do |command|
+required_commands = %w[patch tar unshare]
+required_commands << "unzip" unless source_driver_mode
+required_commands.each do |command|
   raise Agentlab::Error, "missing tool: #{command}" unless Agentlab.command_available?(command)
 end
 run!({}, ["unshare", "--net", "true"], chdir: workdir)
-zip_entries = capture!({}, ["unzip", "-Z1", seed_archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
-zip_entries.each do |entry|
-  raise Agentlab::Error, "unsafe Bun seed ZIP entry: #{entry}" unless safe_relative_path(entry)
+driver_record = nil
+if source_driver_mode
+  driver_record = verify_source_built_driver!(source_built_driver, driver_receipt_path, version, source_commit, closure, expected_closure_sha, seed)
+  install_driver = driver_record.fetch("path")
+  seed_binary_sha = seed.fetch("binary_sha256")
+  driver_version = capture!({}, [install_driver, "--version"], chdir: workdir).strip
+  raise Agentlab::Error, "unexpected source-built Bun driver version #{driver_version.inspect}" unless driver_version == version
+else
+  FileUtils.mkdir_p(File.dirname(seed_archive))
+  unless File.file?(seed_archive)
+    raise Agentlab::Error, "checked Bun seed archive is missing in --check mode" if check
+
+    puts "Downloading checked bootstrap-only Bun seed #{seed.fetch('url')}"
+    Agentlab.atomic_write(seed_archive, Agentlab.download(seed.fetch("url")))
+  end
+  raise Agentlab::Error, "Bun seed archive checksum mismatch" unless Digest::SHA256.file(seed_archive).hexdigest == seed.fetch("sha256")
+  zip_entries = capture!({}, ["unzip", "-Z1", seed_archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
+  zip_entries.each do |entry|
+    raise Agentlab::Error, "unsafe Bun seed ZIP entry: #{entry}" unless safe_relative_path(entry)
+  end
+  seed_member = "bun-linux-x64/bun"
+  raise Agentlab::Error, "Bun seed ZIP lacks #{seed_member}" unless zip_entries.include?(seed_member)
+  install_driver = File.join(workdir, "bun-seed")
+  extract_zip_member!(seed_archive, seed_member, install_driver, workdir)
+  File.chmod(0o755, install_driver)
+  seed_binary_sha = Digest::SHA256.file(install_driver).hexdigest
+  driver_version = capture!({}, [install_driver, "--version"], chdir: workdir).strip
+  raise Agentlab::Error, "unexpected Bun seed version #{driver_version.inspect}" unless driver_version == version
 end
-seed_member = "bun-linux-x64/bun"
-raise Agentlab::Error, "Bun seed ZIP lacks #{seed_member}" unless zip_entries.include?(seed_member)
-seed_binary = File.join(workdir, "bun-seed")
-extract_zip_member!(seed_archive, seed_member, seed_binary, workdir)
-File.chmod(0o755, seed_binary)
-seed_binary_sha = Digest::SHA256.file(seed_binary).hexdigest
-seed_version = capture!({}, [seed_binary, "--version"], chdir: workdir).strip
-raise Agentlab::Error, "unexpected Bun seed version #{seed_version.inspect}" unless seed_version == version
 
 prerelease_parts = sources.filter_map do |source|
   next unless source.fetch("origin") == "registry"
@@ -511,7 +612,7 @@ install_roots.values.sort_by { |root| root.fetch("path") == "." ? "" : root.fetc
   raise Agentlab::Error, "install root contains lifecycle scripts: #{relative}" unless lifecycle.empty?
 
   log = File.join(workdir, "bun-install-#{relative == '.' ? 'root' : relative.tr('/', '-')}.log")
-  command = ["unshare", "--net", "--", seed_binary, "install", "--frozen-lockfile", "--ignore-scripts", "--cache-dir", install_cache]
+  command = ["unshare", "--net", "--", install_driver, "install", "--frozen-lockfile", "--ignore-scripts", "--cache-dir", install_cache]
   run!(environment, command, chdir: directory, log: log)
 
   raise Agentlab::Error, "install-root package checksum changed" unless Digest::SHA256.file(package_path).hexdigest == root.fetch("package_json_sha256")
@@ -561,8 +662,60 @@ unless cache_receipt_after == cache_receipt
 end
 assert_seed_absent!(install_cache, seed_binary_sha, workdir)
 
+driver_evidence = if source_driver_mode
+                    {
+                      "driver" => driver_record,
+                      "forbidden_bootstrap_seed" => {
+                        "binary_sha256" => seed.fetch("binary_sha256"),
+                        "size_bytes" => seed.fetch("binary_size_bytes"),
+                        "payload_allowed" => false,
+                        "runtime_dependency_allowed" => false
+                      }
+                    }
+                  else
+                    {
+                      "bootstrap_seed" => {
+                        "filename" => seed.fetch("filename"),
+                        "url" => seed.fetch("url"),
+                        "archive_sha256" => seed.fetch("sha256"),
+                        "binary_sha256" => seed_binary_sha,
+                        "binary_size_bytes" => File.size(install_driver),
+                        "version" => driver_version,
+                        "bootstrap_only" => true,
+                        "final_payload_allowed" => false,
+                        "final_runtime_dependency_allowed" => false
+                      }
+                    }
+                  end
+
+install_receipt = {
+  "network_namespace" => true,
+  "frozen_lockfile" => true,
+  "ignore_scripts" => true,
+  "serialized" => true,
+  "install_roots" => root_receipts
+}
+validation_receipt = {
+  "source_files_unchanged" => true,
+  "seed_absent_from_node_modules" => true,
+  "npm_cache_materialization_verified" => true,
+  "npm_offline_install_verified" => true,
+  "complete_bun_offline_materialization_verified" => false,
+  "dependency_resolution_performed" => false,
+  "full_bun_build_performed" => false
+}
+if source_driver_mode
+  install_receipt = { "driver_kind" => "source_built" }.merge(install_receipt)
+  validation_receipt = {
+    "source_built_driver_verified" => true,
+    "driver_receipt_bound" => true,
+    "driver_version_verified" => true,
+    "bootstrap_seed_not_used_for_install" => true
+  }.merge(validation_receipt)
+end
+
 receipt = {
-  "schema" => "bun-npm-offline-install-proof/v1",
+  "schema" => source_driver_mode ? "bun-npm-offline-install-proof/v2" : "bun-npm-offline-install-proof/v1",
   "package" => "bun",
   "release" => version,
   "target" => closure.fetch("target"),
@@ -579,17 +732,7 @@ receipt = {
       "lightningcss_musl_enabled" => false
     }
   },
-  "bootstrap_seed" => {
-    "filename" => seed.fetch("filename"),
-    "url" => seed.fetch("url"),
-    "archive_sha256" => seed.fetch("sha256"),
-    "binary_sha256" => seed_binary_sha,
-    "binary_size_bytes" => File.size(seed_binary),
-    "version" => seed_version,
-    "bootstrap_only" => true,
-    "final_payload_allowed" => false,
-    "final_runtime_dependency_allowed" => false
-  },
+}.merge(driver_evidence).merge(
   "cache" => {
     "version" => 1,
     "source_archives" => sources.length,
@@ -600,29 +743,17 @@ receipt = {
     "semver_hashes" => semver_hashes,
     "tree" => cache_receipt
   },
-  "install" => {
-    "network_namespace" => true,
-    "frozen_lockfile" => true,
-    "ignore_scripts" => true,
-    "serialized" => true,
-    "install_roots" => root_receipts
-  },
-  "validation" => {
-    "source_files_unchanged" => true,
-    "seed_absent_from_node_modules" => true,
-    "npm_cache_materialization_verified" => true,
-    "npm_offline_install_verified" => true,
-    "complete_bun_offline_materialization_verified" => false,
-    "dependency_resolution_performed" => false,
-    "full_bun_build_performed" => false
-  },
-  "scope" => "network-isolated frozen installs for Bun 1.3.14's three codegen npm roots; native integration, the first source build, self-rebuild, final payload, and RPM remain blocked"
-}
+  "install" => install_receipt,
+  "validation" => validation_receipt,
+  "scope" => source_driver_mode ?
+    "network-isolated source-built-driver frozen installs for Bun 1.3.14's three codegen npm roots; final graph, relink payload, license review, aarch64, and RPM remain blocked" :
+    "network-isolated frozen installs for Bun 1.3.14's three codegen npm roots; native integration, the first source build, self-rebuild, final payload, and RPM remain blocked"
+)
 canonical = JSON.pretty_generate(receipt) + "\n"
 if check
   raise Agentlab::Error, "checked npm proof receipt is missing: #{output}" unless File.file?(output)
   raise Agentlab::Error, "npm proof receipt differs from checked evidence" unless File.binread(output) == canonical
-  puts "Verified #{expected_source_count} Bun cache entries and three network-isolated frozen installs"
+  puts "Verified #{expected_source_count} Bun cache entries and three network-isolated #{source_driver_mode ? 'source-built-driver ' : ''}frozen installs"
 else
   Agentlab.atomic_write(output, canonical)
   puts "Wrote #{output}"
