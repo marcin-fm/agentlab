@@ -310,6 +310,37 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_openchamber_source_license_inventory_rejects_license_text_hash_drift
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    inventory_path = File.join(package.directory, dependencies.dig("source_closure_files", "source_license_inventory"))
+    inventory = JSON.parse(File.read(inventory_path))
+
+    Dir.mktmpdir do |directory|
+      inventory.fetch("archives").first.fetch("license_files").first["sha256"] = "0" * 64
+      temporary_inventory = File.join(directory, "source-license-inventory.json")
+      File.write(temporary_inventory, JSON.pretty_generate(inventory) + "\n")
+      %w[selected_lock_audit source_audit].each do |key|
+        FileUtils.cp(File.join(package.directory, dependencies.dig("source_closure_files", key)), directory)
+      end
+      temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
+      temporary_dependencies.fetch("source_closure_files")["source_license_inventory"] = "source-license-inventory.json"
+      temporary_dependencies.fetch("source_license_inventory_receipt")["sha256"] = Digest::SHA256.file(temporary_inventory).hexdigest
+      temporary_data = Marshal.load(Marshal.dump(package.data))
+      temporary_data.fetch("source_policy")["source_license_inventory_receipt"] = "source-license-inventory.json"
+      temporary_data.fetch("source_policy")["source_license_inventory_sha256"] = Digest::SHA256.file(temporary_inventory).hexdigest
+      temporary_package = Struct.new(:name, :directory, :upstream, :data).new(
+        package.name,
+        directory,
+        package.upstream,
+        temporary_data
+      )
+
+      errors = Agentlab.validate_openchamber_source_license_inventory(temporary_package, temporary_dependencies)
+      assert_includes(errors, "openchamber: source-license inventory archive evidence mismatch")
+    end
+  end
+
   def test_openchamber_native_review_validator_rejects_path_digest_drift
     package = Agentlab.package_named("openchamber")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))

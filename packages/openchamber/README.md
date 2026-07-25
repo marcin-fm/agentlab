@@ -91,6 +91,21 @@ sources containing native build inputs. These are inventory facts, not legal or
 build approval: license, native-source, generated-output, final payload, and
 offline materialization gates remain false.
 
+## Source License Inventory
+
+`scripts/audit-openchamber-source-licenses` re-reads only the retained checked
+archives and records each raw `package.json` license declaration plus every
+package-local LICENSE, COPYING, NOTICE, or COPYRIGHT path, size, and SHA-256 in
+`openchamber-1.16.3-source-license-inventory.json`. The receipt binds those 818
+archive identities to the 832-record selected-lock receipt and the acquisition
+receipt. It also separates missing declarations and local texts from ambiguous
+or non-SPDX declaration evidence for later review.
+
+This deterministic inventory is not an aggregate SPDX `License:` expression or
+a decision about `%license` payloads. It does not verify generated-asset
+licensing, final binary inclusion, bundled Provides, offline builds, package
+enablement, or COPR readiness.
+
 ## Deterministic Source Bundles
 
 `openchamber-1.16.3-source-materialization.json` binds the acquisition receipt to two raw-source

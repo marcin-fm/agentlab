@@ -244,6 +244,27 @@ source_materialization_receipt:
     lifecycle_scripts_executed: false
     package_build_performed: false
     rpm_integrated: false
+source_license_inventory_receipt:
+  schema: openchamber-source-license-inventory/v1
+  sha256: d456081cb33476924d474a7fbf55a0126012298b8bdbfd4e6315fb6bb75fedd7
+  selected_lock_receipt_sha256: 649c0734f1a68aca4a832e32c8906824e1ccd8fb9fa78287236eaff83fb808cc
+  source_audit_sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
+  selected_package_records: 832
+  unique_archives: 818
+  license_file_count: 795
+  sources_without_declared_license: 0
+  sources_without_license_files: 27
+  ambiguous_declared_license_sources: 1
+  non_spdx_declared_license_sources: 3
+  validation:
+    aggregate_license_expression_verified: false
+    rpm_license_payload_complete: false
+    generated_asset_licenses_verified: false
+    binary_inclusion_verified: false
+    bundled_provides_verified: false
+    offline_build_verified: false
+    package_enabled: false
+    copr_enabled: false
 closure_audit:
   audited_release:
   production_build_sources_verified: true
@@ -259,6 +280,7 @@ source_closure_files:
   test_closure: openchamber-1.16.3-nm-dev-test.tar.zst
   closure_manifest: openchamber-1.16.3-closure.json
   source_materialization: openchamber-1.16.3-source-materialization.json
+  source_license_inventory: openchamber-1.16.3-source-license-inventory.json
   license_inventory: openchamber-1.16.3-bundled-licenses.txt
   native_manifest: openchamber-1.16.3-native.json
   native_review: openchamber-1.16.3-native-review.yml

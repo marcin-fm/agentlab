@@ -11,6 +11,7 @@ require "shellwords"
 require "tempfile"
 require "uri"
 require "yaml"
+require_relative "openchamber_licenses"
 
 module Agentlab
   ROOT = File.expand_path("../..", __dir__)
@@ -808,6 +809,84 @@ module Agentlab
     errors
   rescue JSON::ParserError, KeyError, TypeError => e
     ["openchamber: invalid source materialization evidence: #{e.message}"]
+  end
+
+  def validate_openchamber_source_license_inventory(package, dependencies)
+    return [] unless package.name == "openchamber"
+
+    errors = []
+    metadata = dependencies.fetch("source_license_inventory_receipt")
+    filename = dependencies.dig("source_closure_files", "source_license_inventory")
+    path = filename.is_a?(String) && File.join(package.directory, filename)
+    return ["openchamber: source-license inventory is missing: #{filename.inspect}"] unless path && File.file?(path)
+
+    actual_sha256 = Digest::SHA256.file(path).hexdigest
+    errors << "openchamber: source-license inventory SHA-256 mismatch" unless metadata["sha256"] == actual_sha256
+    receipt = JSON.parse(File.read(path))
+    errors << "openchamber: source-license inventory schema mismatch" unless receipt["schema"] == "openchamber-source-license-inventory/v1" && metadata["schema"] == receipt["schema"]
+    errors << "openchamber: source-license inventory package mismatch" unless receipt["package"] == package.name
+    errors << "openchamber: source-license inventory release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
+
+    bindings = {
+      "selected_lock" => ["selected_lock_audit", "selected_lock_receipt_sha256"],
+      "source_audit" => ["source_audit", "source_audit_sha256"]
+    }
+    bindings.each do |receipt_key, (source_key, metadata_key)|
+      source_filename = dependencies.dig("source_closure_files", source_key)
+      source_path = source_filename.is_a?(String) && File.join(package.directory, source_filename)
+      unless source_path && File.file?(source_path)
+        errors << "openchamber: source-license inventory #{receipt_key} is unavailable"
+        next
+      end
+      source_sha256 = Digest::SHA256.file(source_path).hexdigest
+      errors << "openchamber: source-license inventory #{receipt_key} filename mismatch" unless receipt.dig(receipt_key, "filename") == source_filename
+      errors << "openchamber: source-license inventory #{receipt_key} SHA-256 mismatch" unless receipt.dig(receipt_key, "sha256") == source_sha256 && metadata[metadata_key] == source_sha256
+    end
+
+    source_filename = dependencies.dig("source_closure_files", "source_audit")
+    source_path = source_filename.is_a?(String) && File.join(package.directory, source_filename)
+    return errors << "openchamber: source audit is unavailable for source-license validation" unless source_path && File.file?(source_path)
+
+    source_audit = JSON.parse(File.read(source_path))
+    expected_archives = source_audit.fetch("sources").map do |source|
+      source.slice("archive", "sha256", "size", "npm_name", "version", "package_paths", "roles", "package_json", "declared_license", "license_files")
+    end.sort_by { |source| source.fetch("archive") }
+    archives = receipt.fetch("archives")
+    errors << "openchamber: source-license inventory archives are not sorted" unless archives == archives.sort_by { |source| source.fetch("archive") }
+    errors << "openchamber: source-license inventory archive evidence mismatch" unless archives == expected_archives
+
+    expected_findings = OpenChamberLicenses.findings_for(expected_archives)
+    errors << "openchamber: source-license inventory findings mismatch" unless receipt["findings"] == expected_findings
+    expected_summary = {
+      "selected_package_records" => source_audit.dig("summary", "selected_package_records"),
+      "unique_archives" => expected_archives.length,
+      "license_file_count" => expected_archives.sum { |source| source.fetch("license_files").length },
+      "sources_without_declared_license" => expected_findings.fetch("missing_declared_license").length,
+      "sources_without_license_files" => expected_findings.fetch("missing_license_files").length,
+      "ambiguous_declared_license_sources" => expected_findings.fetch("ambiguous_declared_license").length,
+      "non_spdx_declared_license_sources" => expected_findings.fetch("non_spdx_declared_license").length
+    }
+    expected_summary.each do |field, value|
+      errors << "openchamber: source-license inventory #{field} mismatch" unless receipt.dig("summary", field) == value && metadata[field] == value
+    end
+
+    validation = receipt.fetch("validation")
+    %w[selected_lock_binding_verified source_audit_binding_verified archive_identity_verified package_manifest_license_recorded package_local_license_texts_hashed missing_evidence_isolated ambiguous_evidence_isolated non_spdx_evidence_isolated].each do |flag|
+      errors << "openchamber: source-license inventory validation #{flag} is not true" unless validation[flag] == true
+    end
+    %w[aggregate_license_expression_verified rpm_license_payload_complete generated_asset_licenses_verified binary_inclusion_verified bundled_provides_verified offline_build_verified package_enabled copr_enabled].each do |flag|
+      errors << "openchamber: source-license inventory overclaims #{flag}" unless validation[flag] == false && metadata.dig("validation", flag) == false
+    end
+
+    source_policy = package.data.fetch("source_policy")
+    errors << "openchamber: package source-license inventory receipt mismatch" unless source_policy["source_license_inventory_receipt"] == filename
+    errors << "openchamber: package source-license inventory SHA-256 mismatch" unless source_policy["source_license_inventory_sha256"] == actual_sha256
+    errors << "openchamber: package source-license archive count mismatch" unless source_policy["source_license_inventory_archives"] == expected_archives.length
+    errors << "openchamber: package overclaims source-license aggregate" unless source_policy["source_license_aggregate_verified"] == false
+    errors << "openchamber: package overclaims source-license RPM payload" unless source_policy["source_license_rpm_payload_complete"] == false
+    errors
+  rescue JSON::ParserError, KeyError, TypeError => e
+    ["openchamber: invalid source-license inventory evidence: #{e.message}"]
   end
 
   def validate_openchamber_native_review(package, dependencies)

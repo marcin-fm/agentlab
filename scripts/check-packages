@@ -334,6 +334,8 @@ packages.each do |package|
 
   errors.concat(Agentlab.validate_openchamber_source_materialization(package, dependencies)) if dependencies
 
+  errors.concat(Agentlab.validate_openchamber_source_license_inventory(package, dependencies)) if dependencies
+
   errors.concat(Agentlab.validate_openchamber_native_review(package, dependencies)) if dependencies
 
   errors.concat(Agentlab.validate_rust_v8_evidence(package, dependencies, spec)) if dependencies

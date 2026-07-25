@@ -37,6 +37,11 @@ source_policy:
   source_materialization_sha256: 48b3a061404f3f362a333d6b3e57d04af8bba450361c2de4c6589d7079632d9c
   source_bundles_materialized: true
   source_bundle_delivery_verified: false
+  source_license_inventory_receipt: openchamber-1.16.3-source-license-inventory.json
+  source_license_inventory_sha256: d456081cb33476924d474a7fbf55a0126012298b8bdbfd4e6315fb6bb75fedd7
+  source_license_inventory_archives: 818
+  source_license_aggregate_verified: false
+  source_license_rpm_payload_complete: false
   native_review: openchamber-1.16.3-native-review.yml
   native_review_sha256: d87c5afeb1921bd9f450906bb0f1fd33075901d6ef388ab2916cce0c8f75dc57
   native_components_classified: 14
