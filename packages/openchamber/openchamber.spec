@@ -4,7 +4,7 @@
 
 Name:           openchamber
 Version:        1.16.3
-Release:        0.10%{?dist}
+Release:        0.11%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -42,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.11
+- Record the exact subordinate source for the selected source-map WASM
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.10
 - Rebuild the selected Tailwind Oxide addon from released source
 

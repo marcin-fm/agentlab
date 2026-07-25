@@ -26,6 +26,9 @@ receipts:
   tailwind_oxide_proof:
     path: openchamber-1.16.3-tailwind-oxide-proof.json
     sha256: bc71e094a39fcca33b6b3cc6fa35ed853ad1849b5975ffa9f6e9aec9956af182
+  source_map_wasm_proof:
+    path: openchamber-1.16.3-source-map-wasm-proof.json
+    sha256: cc8848c8f97e7ff532e9ea5ed883cde825dc81b821e37df650533d638b07b5c6
 scope:
   feature_surface: web_cli_pwa_and_local_server
   target: linux-x86_64-glibc
@@ -45,8 +48,8 @@ status:
   generated_wasm_sources: 3
   build_support_sources: 1
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 9
-  source_mappings_unresolved: 5
+  source_mappings_verified: 10
+  source_mappings_unresolved: 4
   reproducible_builds_completed: 5
   native_sources_verified: false
   wasm_sources_verified: false
@@ -198,8 +201,13 @@ components:
       executable_payloads: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       native_source_paths: { count: 0, paths_sha256: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570 }
       lifecycle_scripts_sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
-    mapping: { kind: generated_wasm, source_package: unresolved }
-    decision: { action: require_subordinate_source, retain_prebuilt_payloads: false, source_mapping_verified: false, reproducible_build_verified: false }
+    mapping:
+      kind: generated_wasm
+      source_package: source-map-mappings@0.5.0
+      source_commit: 12a2f8e5fb87a582abb05b3eda6740cf5778e503
+      source_map_update_commit: 4ade41fd99eaea69f3f3bef7e7857a29da02a9d4
+    proof: { path: openchamber-1.16.3-source-map-wasm-proof.json }
+    decision: { action: require_subordinate_source, retain_prebuilt_payloads: false, source_mapping_verified: true, reproducible_build_verified: false }
 validation:
   exact_source_audit_coverage: true
   exact_path_set_digests_verified: true

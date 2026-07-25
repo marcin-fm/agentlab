@@ -160,3 +160,12 @@ network-isolated builds produce the same N-API addon at SHA-256
 the complete Rust workspace passes and the exact npm wrapper scanner returns
 the expected utility candidates under Node 24. Immutable Cargo-vendor delivery
 and final bundle inclusion remain unverified.
+
+`source-map 0.8.0-beta.0` carries `lib/mappings.wasm` at SHA-256
+`be2dc7da3885e55013c8da58d7ba356705d932459db94ada37d5de2fa8733cfe`.
+The exact release tag contains the same bytes, and its update commit identifies
+`source-map-mappings 0.5.0` from exact commit
+`12a2f8e5fb87a582abb05b3eda6740cf5778e503` as the subordinate Rust source.
+This closes source correspondence only: the historical nightly Rust version,
+Cargo dependency resolution, and four WASM post-processing tool versions were
+not pinned, so generated-byte reproducibility and final inclusion remain false.

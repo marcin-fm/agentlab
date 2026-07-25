@@ -1,0 +1,56 @@
+{
+  "schema": "openchamber-source-map-wasm-proof/v1",
+  "release": "1.16.3",
+  "package": "source-map@0.8.0-beta.0",
+  "published_package": {
+    "integrity": "sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA==",
+    "archive_sha256": "59228a9f94352af91e4600bd45c8b293979a87508c7e99c79d1f660e35b17295",
+    "wasm_path": "lib/mappings.wasm",
+    "wasm_size": 48693,
+    "wasm_sha256": "be2dc7da3885e55013c8da58d7ba356705d932459db94ada37d5de2fa8733cfe",
+    "license": "BSD-3-Clause",
+    "license_sha256": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd"
+  },
+  "source_map_source": {
+    "upstream_tag": "0.8.0-beta.0",
+    "upstream_tag_commit": "11cecea2b64ead3f93cde37a5789dc7683685a7c",
+    "archive_url": "https://github.com/mozilla/source-map/archive/refs/tags/0.8.0-beta.0/source-map-0.8.0-beta.0.tar.gz",
+    "archive_sha256": "c977525ce9d07d75d341613fbd476e8d405c0c1553fd7acf08f8c27674b9967e",
+    "tracked_entries": 55,
+    "tracked_tree_sha256": "217ea42685f48f05fb2c151bda14ac85293226ac2567f09809cf5918a6493afb",
+    "wasm_sha256": "be2dc7da3885e55013c8da58d7ba356705d932459db94ada37d5de2fa8733cfe"
+  },
+  "source_correspondence": {
+    "source_map_update_commit": "4ade41fd99eaea69f3f3bef7e7857a29da02a9d4",
+    "source_map_update_timestamp": 1519427131,
+    "source_map_update_subject": "Update lib/mappings.wasm to fitzgen/source-map-mappings 0.5.0",
+    "subordinate_repository": "https://github.com/fitzgen/source-map-mappings",
+    "subordinate_version": "0.5.0",
+    "subordinate_commit": "12a2f8e5fb87a582abb05b3eda6740cf5778e503",
+    "subordinate_commit_timestamp": 1519426926,
+    "subordinate_archive_url": "https://github.com/fitzgen/source-map-mappings/archive/12a2f8e5fb87a582abb05b3eda6740cf5778e503/source-map-mappings-12a2f8e5.tar.gz",
+    "subordinate_archive_sha256": "a65c24425fa2f45961ea7bc8d8fa5486d2684a27173d0372a27767e2fe522d11",
+    "subordinate_tracked_entries": 22,
+    "subordinate_tree_sha256": "6bdb022b469e6f0d90f7e8e9c0da926db5389b1e41067c65ab575a3d00ac14a5",
+    "subordinate_license": "Apache-2.0 OR MIT",
+    "license_apache_sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+    "license_mit_sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0"
+  },
+  "historical_build_contract": {
+    "rust_target": "wasm32-unknown-unknown",
+    "rust_toolchain": "nightly",
+    "rust_toolchain_version_pinned": false,
+    "cargo_lock_present": false,
+    "post_processors": ["wasm-nm", "wasm-gc", "wasm-snip", "wasm-opt"],
+    "post_processor_versions_pinned": false,
+    "generated_wasm_reproduced": false
+  },
+  "validation": {
+    "npm_and_tag_wasm_identical": true,
+    "source_map_archive_verified": true,
+    "subordinate_archive_verified": true,
+    "exact_source_mapping_verified": true,
+    "reproducible_build_verified": false,
+    "final_openchamber_inclusion_verified": false
+  }
+}

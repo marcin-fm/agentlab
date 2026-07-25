@@ -949,6 +949,25 @@ module Agentlab
       errors << "openchamber: tailwind oxide proof is unavailable"
     end
 
+    source_map = components.find { |component| component["package"] == "source-map@0.8.0-beta.0" }
+    source_map_filename = dependencies.dig("source_closure_files", "source_map_wasm_proof")
+    source_map_path = source_map_filename.is_a?(String) && File.join(package.directory, source_map_filename)
+    if source_map_path && File.file?(source_map_path)
+      source_map_sha256 = Digest::SHA256.file(source_map_path).hexdigest
+      source_map_proof = JSON.parse(File.read(source_map_path))
+      errors << "openchamber: source-map WASM proof path mismatch" unless source_map&.dig("proof", "path") == source_map_filename && review.dig("receipts", "source_map_wasm_proof", "path") == source_map_filename
+      errors << "openchamber: source-map WASM proof SHA-256 mismatch" unless review.dig("receipts", "source_map_wasm_proof", "sha256") == source_map_sha256
+      errors << "openchamber: source-map WASM proof identity mismatch" unless source_map_proof["schema"] == "openchamber-source-map-wasm-proof/v1" && source_map_proof["package"] == "source-map@0.8.0-beta.0"
+      errors << "openchamber: source-map WASM published payload mismatch" unless source_map_proof.dig("published_package", "archive_sha256") == "59228a9f94352af91e4600bd45c8b293979a87508c7e99c79d1f660e35b17295" && source_map_proof.dig("published_package", "wasm_sha256") == "be2dc7da3885e55013c8da58d7ba356705d932459db94ada37d5de2fa8733cfe"
+      errors << "openchamber: source-map WASM release source mismatch" unless source_map_proof.dig("source_map_source", "upstream_tag_commit") == "11cecea2b64ead3f93cde37a5789dc7683685a7c" && source_map_proof.dig("source_map_source", "archive_sha256") == "c977525ce9d07d75d341613fbd476e8d405c0c1553fd7acf08f8c27674b9967e" && source_map_proof.dig("source_map_source", "tracked_tree_sha256") == "217ea42685f48f05fb2c151bda14ac85293226ac2567f09809cf5918a6493afb" && source_map_proof.dig("source_map_source", "wasm_sha256") == source_map_proof.dig("published_package", "wasm_sha256")
+      errors << "openchamber: source-map WASM correspondence mismatch" unless source_map_proof.dig("source_correspondence", "source_map_update_commit") == "4ade41fd99eaea69f3f3bef7e7857a29da02a9d4" && source_map_proof.dig("source_correspondence", "subordinate_version") == "0.5.0" && source_map_proof.dig("source_correspondence", "subordinate_commit") == "12a2f8e5fb87a582abb05b3eda6740cf5778e503" && source_map_proof.dig("source_correspondence", "subordinate_archive_sha256") == "a65c24425fa2f45961ea7bc8d8fa5486d2684a27173d0372a27767e2fe522d11" && source_map_proof.dig("source_correspondence", "subordinate_tree_sha256") == "6bdb022b469e6f0d90f7e8e9c0da926db5389b1e41067c65ab575a3d00ac14a5"
+      errors << "openchamber: source-map WASM historical build contract mismatch" unless source_map_proof.dig("historical_build_contract", "rust_target") == "wasm32-unknown-unknown" && source_map_proof.dig("historical_build_contract", "rust_toolchain_version_pinned") == false && source_map_proof.dig("historical_build_contract", "cargo_lock_present") == false && source_map_proof.dig("historical_build_contract", "post_processor_versions_pinned") == false && source_map_proof.dig("historical_build_contract", "generated_wasm_reproduced") == false
+      errors << "openchamber: source-map WASM validation state mismatch" unless source_map_proof.dig("validation", "npm_and_tag_wasm_identical") == true && source_map_proof.dig("validation", "exact_source_mapping_verified") == true && source_map_proof.dig("validation", "reproducible_build_verified") == false && source_map_proof.dig("validation", "final_openchamber_inclusion_verified") == false
+      errors << "openchamber: source-map WASM review state mismatch" unless source_map.dig("decision", "source_mapping_verified") == true && source_map.dig("decision", "reproducible_build_verified") == false
+    else
+      errors << "openchamber: source-map WASM proof is unavailable"
+    end
+
     better = components.find { |component| component["package"] == "better-sqlite3@12.10.0" }
     proof_filename = dependencies.dig("source_closure_files", "better_sqlite3_proof")
     proof_path = proof_filename.is_a?(String) && File.join(package.directory, proof_filename)
