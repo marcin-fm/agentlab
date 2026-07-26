@@ -941,6 +941,18 @@ class AgentlabTest < Minitest::Test
     assert_includes(generator, "does not match audited SHA-256")
   end
 
+  def test_copr_makefile_materializes_the_audited_opencode_sources
+    makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
+
+    assert_includes(makefile, "opencode.spec)")
+    assert_includes(makefile, "scripts/acquire-opencode-sources")
+    assert_includes(makefile, "scripts/materialize-opencode-sources")
+    assert_includes(makefile, 'cmp "$$tempdir/source-audit.json"')
+    assert_includes(makefile, 'cmp "$$tempdir/source-materialization.json"')
+    assert_includes(makefile, "opencode-$$version-nm-prod-build.tar.zst")
+    assert_includes(makefile, "opencode-$$version-nm-dev-test.tar.zst")
+  end
+
   def test_copr_makefile_materializes_the_tree_sitter_parser_subset
     makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
     generator_path = File.expand_path(

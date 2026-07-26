@@ -65,6 +65,30 @@ srpm:
 				install -pm0644 "$$tempdir/output/$$filename" "$$specdir/$$filename"; \
 				done; \
 			;; \
+		opencode.spec) \
+			set -eu; \
+			specdir="$$(dirname "$(spec)")"; \
+			dnf -y install ruby ruby-default-gems rubygem-json tar zstd; \
+			install -d -m0755 /srv/tmp; \
+			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
+			tempdir="$$(mktemp -d /srv/tmp/agentlab-opencode-srpm.XXXXXX)"; \
+			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
+			ruby "$(repo_root)/scripts/acquire-opencode-sources" \
+				--workdir "$$tempdir/acquisition" \
+				--output "$$tempdir/source-audit.json" \
+				--jobs 4; \
+			cmp "$$tempdir/source-audit.json" "$$specdir/opencode-$$version-source-audit.json"; \
+			ruby "$(repo_root)/scripts/materialize-opencode-sources" \
+				--cache-dir "$$tempdir/acquisition/archives" \
+				--output-dir "$$tempdir/output" \
+				--receipt "$$tempdir/source-materialization.json" \
+				--workdir "$$tempdir/materialization"; \
+			cmp "$$tempdir/source-materialization.json" "$$specdir/opencode-$$version-source-materialization.json"; \
+			install -pm0644 "$$tempdir/output/opencode-$$version-nm-prod-build.tar.zst" \
+				"$$specdir/opencode-$$version-nm-prod-build.tar.zst"; \
+			install -pm0644 "$$tempdir/output/opencode-$$version-nm-dev-test.tar.zst" \
+				"$$specdir/opencode-$$version-nm-dev-test.tar.zst"; \
+			;; \
 		kreuzberg.spec) \
 			set -eu; \
 			. /etc/os-release; \
