@@ -141,7 +141,7 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: fbbf291aa745b851e95358f4ba2d56ca478870985bf4cd2615cda43410ab2555
+      sha256: fecbc91b6d3f4078193087de06e4cf5fae1f047bd4b9d45714d9e029696e27b4
       audit_script: scripts/audit-bun-source-licenses
       audit_script_sha256: 7662654a42483ff93c81f33aec6268e63608ee4075f1bb716e877204bf183c8c
       audit_script_source: audit-bun-source-licenses
@@ -164,9 +164,9 @@ build_plan:
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: 072710dd996fa25c3d92f20dac7a085d3d99d75f23e4b69b614e4facda9a1aed
+      sha256: 8f32f6cf0226575bcbdf8e61086268370d67faa3b39ae7a43b60e2a261120a3f
       audit_script: scripts/audit-bun-final-linked-licenses
-      audit_script_sha256: 4453a40cb42af20912cd3cf8c4352be0cb4093cbf707826cfe0e62534d782908
+      audit_script_sha256: 677f60cf925c0a3e5c82bc5d3aa54e145c3d2120d6020781d5444ecd8a2b822c
       audit_script_source: audit-bun-final-linked-licenses
       direct_object_count: 1162
       direct_archive_count: 3
@@ -199,6 +199,22 @@ build_plan:
       unresolved_native_license_components: 0
       unresolved_native_license_component_names: []
       native_license_selections_verified: true
+      webkit_archive_member_source_mapping_verified: true
+      webkit_license_marker_inventory_verified: true
+      webkit_archive_member_count: 531
+      webkit_resolved_source_count: 1601
+      webkit_archive_member_counts:
+        JavaScriptCore: 191
+        WTF: 173
+        bmalloc: 167
+      webkit_resolved_source_counts:
+        JavaScriptCore: 1261
+        WTF: 173
+        bmalloc: 167
+      webkit_license_marker_counts:
+        JavaScriptCore: 4
+        WTF: 6
+        bmalloc: 0
       webkit_semantic_license_selection_verified: false
       final_npm_codegen_closure_verified: false
       final_license_expression_verified: false
@@ -286,7 +302,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: ce6d745c444b09669f6b286f1675bde738f2c7ff710634afd7bef1c1edf1253e
+      proof_receipt_sha256: eeffb830097ec0dd4cb94edf2328ac07923db555470ab76c1c5fa63476bfc862
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -320,7 +336,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: b8b02018cf10781232b22fcc8fe3192173b2fb0d89c0930f01af00418b602cdb
+      proof_receipt_sha256: 9a8de9bd07326820707af878278d2084bd710d1cec8fb55ff4414c00c3ebfa94
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true

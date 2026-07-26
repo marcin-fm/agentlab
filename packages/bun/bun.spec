@@ -30,10 +30,10 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 fbbf291aa745b851e95358f4ba2d56ca478870985bf4cd2615cda43410ab2555
+%global source_license_inventory_sha256 fecbc91b6d3f4078193087de06e4cf5fae1f047bd4b9d45714d9e029696e27b4
 %global source_license_audit_script_sha256 7662654a42483ff93c81f33aec6268e63608ee4075f1bb716e877204bf183c8c
-%global final_linked_license_closure_sha256 072710dd996fa25c3d92f20dac7a085d3d99d75f23e4b69b614e4facda9a1aed
-%global final_linked_license_audit_script_sha256 4453a40cb42af20912cd3cf8c4352be0cb4093cbf707826cfe0e62534d782908
+%global final_linked_license_closure_sha256 8f32f6cf0226575bcbdf8e61086268370d67faa3b39ae7a43b60e2a261120a3f
+%global final_linked_license_audit_script_sha256 677f60cf925c0a3e5c82bc5d3aa54e145c3d2120d6020781d5444ecd8a2b822c
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -42,7 +42,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.28%{?dist}
+Release:        0.0.29%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -224,7 +224,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.28 \
+  --rpm-release 0.0.29 \
   --date 2026-07-26 \
   --check \
   --receipt "%{SOURCE25}"
@@ -359,6 +359,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.29
+- Map the linked WebKit archive members to their exact source files.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.28
 - Select the exact linked libarchive license subset.
 

@@ -4,6 +4,7 @@
 require "date"
 require "digest"
 require "json"
+require "open3"
 require "optparse"
 require "pathname"
 require "shellwords"
@@ -32,6 +33,10 @@ module BunFinalLinkedLicenseAudit
 
   def path_set_digest(paths)
     Digest::SHA256.hexdigest(paths.sort.join("\n") + "\n")
+  end
+
+  def ordered_list_digest(values)
+    Digest::SHA256.hexdigest(values.join("\n") + "\n")
   end
 
   def repo_record(path)
@@ -103,6 +108,167 @@ module BunFinalLinkedLicenseAudit
     receipt
   end
 
+  def parse_ninja_edges(path)
+    edges = {}
+    File.read(path).gsub(/\$\n\s*/, " ").lines.grep(/^build /).each do |line|
+      outputs, rule_and_inputs = line.delete_prefix("build ").split(": ", 2)
+      next unless rule_and_inputs
+
+      rule, inputs = rule_and_inputs.split(" ", 2)
+      explicit_inputs = inputs.to_s.split(/ \|\|? /, 2).first.to_s.split
+      outputs.split.reject { |output| output == "|" }.each do |output|
+        raise Error, "duplicate WebKit Ninja output #{output}" if edges.key?(output)
+
+        edges[output] = { "rule" => rule, "inputs" => explicit_inputs }
+      end
+    end
+    edges
+  end
+
+  def webkit_file_record(path, source_root, build_root)
+    real = File.realpath(path)
+    source = File.realpath(source_root)
+    build = File.realpath(build_root)
+    canonical = if real.start_with?("#{source}/")
+                  "source/#{real.delete_prefix("#{source}/")}" 
+                elsif real.start_with?("#{build}/")
+                  "generated/#{real.delete_prefix("#{build}/")}" 
+                else
+                  raise Error, "WebKit source escapes retained roots: #{path}"
+                end
+    {
+      "path" => canonical,
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def resolve_unified_sources(unified_path, source_root, build_root)
+    includes = File.read(unified_path).scan(/^#include\s+"([^"]+)"/).flatten
+    raise Error, "WebKit unified source has no constituents: #{unified_path}" if includes.empty?
+
+    includes.map do |include_path|
+      candidates = [
+        File.join(File.dirname(unified_path), include_path),
+        File.join(build_root, "JavaScriptCore", "DerivedSources", include_path),
+        File.join(source_root, "Source", "JavaScriptCore", include_path),
+        File.join(source_root, "Source", "WTF", include_path),
+        File.join(source_root, "Source", "bmalloc", include_path)
+      ].select { |candidate| File.file?(candidate) }.map { |candidate| File.realpath(candidate) }.uniq
+      raise Error, "cannot uniquely resolve WebKit unified include #{include_path}" unless candidates.length == 1
+
+      webkit_file_record(candidates.first, source_root, build_root)
+    end
+  end
+
+  def webkit_archive_mapping(proof_root:, archive_records:, source_inventory:, self_build:)
+    build_root = File.join(proof_root, "build", "release-local", "deps", "WebKit")
+    commit = self_build.dig("inputs", "webkit", "commit")
+    source_root = File.join(proof_root, "webkit", "WebKit-#{commit}")
+    ninja_path = File.join(build_root, "build.ninja")
+    compile_commands_path = File.join(build_root, "compile_commands.json")
+    raise Error, "missing retained WebKit source tree" unless File.directory?(source_root)
+    raise Error, "missing WebKit build graph" unless File.file?(ninja_path)
+    raise Error, "missing WebKit compilation database" unless File.file?(compile_commands_path)
+
+    edges = parse_ninja_edges(ninja_path)
+    compile_commands = JSON.parse(File.read(compile_commands_path))
+    compilation_sources = {}
+    compile_commands.each do |entry|
+      output = File.expand_path(entry.fetch("output"), entry.fetch("directory"))
+      source = File.realpath(entry.fetch("file"))
+      raise Error, "duplicate WebKit compilation output #{output}" if compilation_sources.key?(output)
+
+      compilation_sources[output] = source
+    end
+    candidate_markers = source_inventory.dig("webkit", "candidate_license_files")
+
+    archives = archive_records.map do |archive|
+      relative_archive = archive.fetch("path").delete_prefix("build/release-local/deps/WebKit/")
+      archive_edge = edges.fetch(relative_archive) { raise Error, "missing WebKit archive edge #{relative_archive}" }
+      object_paths = archive_edge.fetch("inputs")
+      member_output, status = Open3.capture2("ar", "t", File.join(proof_root, archive.fetch("path")))
+      raise Error, "cannot list WebKit archive #{relative_archive}" unless status.success?
+
+      members = member_output.lines.map(&:strip).reject(&:empty?)
+      raise Error, "WebKit archive member/input count mismatch for #{relative_archive}" unless members.length == object_paths.length
+      members.zip(object_paths).each do |member, object_path|
+        raise Error, "WebKit archive member order mismatch for #{relative_archive}" unless member == File.basename(object_path)
+      end
+
+      member_mappings = members.zip(object_paths).map do |member, object_path|
+        object_edge = edges.fetch(object_path) { raise Error, "missing WebKit object edge #{object_path}" }
+        compiled_source_path = object_edge.fetch("inputs").first
+        raise Error, "missing WebKit compiled source for #{object_path}" unless compiled_source_path
+
+        compiled_source_path = File.join(build_root, compiled_source_path) unless Pathname.new(compiled_source_path).absolute?
+        compiled_source_path = File.realpath(compiled_source_path)
+        object_output = File.expand_path(object_path, build_root)
+        raise Error, "WebKit Ninja/compilation database mismatch for #{object_path}" unless compilation_sources.fetch(object_output) == compiled_source_path
+
+        compiled_source = webkit_file_record(compiled_source_path, source_root, build_root)
+        unified = File.basename(compiled_source_path).start_with?("UnifiedSource-")
+        sources = unified ? resolve_unified_sources(compiled_source_path, source_root, build_root) : [compiled_source]
+        {
+          "member" => member,
+          "object_path" => object_path,
+          "compiled_source" => compiled_source,
+          "source_kind" => unified ? "unified" : (compiled_source.fetch("path").start_with?("generated/") ? "generated" : "direct"),
+          "sources" => sources
+        }
+      end
+
+      source_records = member_mappings.flat_map { |mapping| mapping.fetch("sources") }.uniq { |record| record.fetch("path") }.sort_by { |record| record.fetch("path") }
+      source_paths = source_records.map { |record| record.fetch("path") }
+      component = File.basename(relative_archive).delete_prefix("lib").delete_suffix(".a")
+      component_root = "Source/#{component}"
+      marker_records = candidate_markers.filter_map do |marker|
+        marker_path = marker.fetch("path").delete_prefix("vendor/WebKit/")
+        marker_directory = File.dirname(marker_path)
+        selected = source_paths.any? do |source_path|
+          next false unless source_path.start_with?("source/")
+
+          relative_source = source_path.delete_prefix("source/")
+          relative_source.start_with?("#{marker_directory}/") || marker_directory == component_root
+        end
+        next unless selected
+
+        actual = File.join(source_root, marker_path)
+        raise Error, "missing selected WebKit license marker #{marker_path}" unless File.file?(actual)
+        raise Error, "WebKit license marker size mismatch #{marker_path}" unless File.size(actual) == marker.fetch("size_bytes")
+        raise Error, "WebKit license marker hash mismatch #{marker_path}" unless sha256(actual) == marker.fetch("sha256")
+
+        marker
+      end.sort_by { |record| record.fetch("path") }
+
+      {
+        "name" => component,
+        "archive_path" => archive.fetch("path"),
+        "archive_sha256" => archive.fetch("sha256"),
+        "member_count" => members.length,
+        "member_list_sha256" => ordered_list_digest(members),
+        "object_path_set_sha256" => path_set_digest(object_paths),
+        "source_count" => source_records.length,
+        "source_path_set_sha256" => path_set_digest(source_paths),
+        "license_marker_count" => marker_records.length,
+        "license_markers" => marker_records,
+        "members" => member_mappings
+      }
+    end
+
+    {
+      "build_ninja" => webkit_file_record(ninja_path, source_root, build_root),
+      "compile_commands" => webkit_file_record(compile_commands_path, source_root, build_root),
+      "archive_count" => archives.length,
+      "archive_member_count" => archives.sum { |archive| archive.fetch("member_count") },
+      "resolved_source_count" => archives.sum { |archive| archive.fetch("source_count") },
+      "archives" => archives,
+      "member_source_mapping_verified" => true,
+      "license_marker_inventory_verified" => true,
+      "semantic_license_selection_verified" => false
+    }
+  end
+
   def generate(proof_root:, source_inventory_path:, self_build_path:, relink_audit_path:, relink_kit_path:, lolhtml_package_path:, audit_date:)
     proof_root = File.realpath(proof_root)
     build_root = File.join(proof_root, "build", "release-local")
@@ -167,8 +333,15 @@ module BunFinalLinkedLicenseAudit
     end
     linked_paths = parsed.fetch("objects") + parsed.fetch("archives")
 
+    webkit_mapping = webkit_archive_mapping(
+      proof_root: proof_root,
+      archive_records: archive_records,
+      source_inventory: source_inventory,
+      self_build: self_build
+    )
+
     {
-      "schema" => "bun-final-linked-license-closure/v1",
+      "schema" => "bun-final-linked-license-closure/v2",
       "package" => "bun",
       "version" => "1.3.14",
       "target" => "fedora-44-x86_64-glibc-system-lolhtml",
@@ -192,13 +365,12 @@ module BunFinalLinkedLicenseAudit
         "system_link_libraries" => system_libraries
       },
       "components" => components,
-      "webkit" => {
+      "webkit" => webkit_mapping.merge(
         "source_commit" => self_build.dig("inputs", "webkit", "commit"),
         "source_archive_sha256" => self_build.dig("inputs", "webkit", "archive_sha256"),
         "direct_archives" => archive_records,
-        "candidate_license_files" => source_inventory.dig("webkit", "candidate_license_files"),
-        "semantic_license_selection_verified" => false
-      },
+        "candidate_license_files" => source_inventory.dig("webkit", "candidate_license_files")
+      ),
       "external_lolhtml_provider" => {
         "package" => provider_input.fetch("package"),
         "version" => provider_input.fetch("version"),
@@ -229,6 +401,8 @@ module BunFinalLinkedLicenseAudit
         "native_license_selection_review_verified" => true,
         "network_used" => false,
         "native_license_selections_verified" => true,
+        "webkit_member_source_mapping_verified" => true,
+        "webkit_license_marker_inventory_verified" => true,
         "webkit_linked_file_semantic_review_verified" => false,
         "final_npm_codegen_closure_verified" => false,
         "fedora_allowed_spdx_verified" => false,
@@ -236,7 +410,7 @@ module BunFinalLinkedLicenseAudit
         "final_license_expression_verified" => false,
         "rpm_payload_license_verified" => false
       },
-      "scope" => "current final-link mapping with all 18 native source-subset selections; WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+      "scope" => "current final-link mapping with all 18 native source-subset selections and exact WebKit archive-member source mapping; WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
     }
   end
 
