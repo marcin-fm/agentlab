@@ -144,6 +144,7 @@ source_acquisition_findings:
     native_sources_verified: false
     opentui_native_source_build_verified: true
     tree_sitter_wasm_source_builds_verified: 3
+    opentui_grammar_wasm_source_builds_verified: 5
     wasm_sources_verified: false
   install_phase_scripts:
     - "@parcel/watcher@2.5.1"

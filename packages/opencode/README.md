@@ -110,11 +110,14 @@ expected system libraries, and retain a `GLIBC_2.17` floor. Their differing
 bytes are recorded honestly; final Bun embedding and clean Fedora 43/44 package
 builds remain unverified.
 
-All functional WASM remains fail-closed. Exact corresponding sources are now
+Functional WASM remains fail-closed as a whole. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp
 assets, including immutable source archives and byte-level asset correspondence.
-Their rebuilds remain unproven because upstream leaves the Tree-sitter release
-workflow, Emscripten version, or Alpine build packages floating. Photon is the
+OpenTUI's five grammars now rebuild twice byte-identically with Fedora
+tree-sitter CLI `0.26.9`, Clang 20, and the Bun Zig WASI headers; JavaScript,
+TypeScript, Markdown, Markdown-inline, and Zig parse smokes pass through
+web-tree-sitter `0.25.10`. Shiki and Undici rebuilds remain unproven because
+their upstream Emscripten or Alpine build inputs float. Photon is the
 only unresolved WASM source mapping: its authenticated npm 0.3.4 tarball differs
 from both the registry `gitHead` and the nearest generated `compiled-wasm`
 commit in WASM bytes, JavaScript, declarations, package identity, version, and

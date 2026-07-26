@@ -410,12 +410,28 @@ components:
           upstream_url: https://github.com/tree-sitter-grammars/tree-sitter-zig/releases/download/v1.1.2/tree-sitter-zig.wasm
           sha256: 54b3b83dd9c62da5815f06132bc3fc914d9dcc780370b32416446a0b7969e8c6
           verified: true
+      current_rebuild:
+        tool: tree-sitter-cli
+        version: 0.26.9
+        compiler: clang-20 with Bun Zig 0.15.2 WASI headers
+        network_isolated: true
+        local_rebuilds: 2
+        local_rebuilds_byte_identical: true
+        output_sha256:
+          javascript: ff37e071b8eefdc7264ce811ac6614c5ac3bcadb65a802e6dccb6a61c8d71abf
+          typescript: 66bc1049d9b2357a064846e0c3e5f6cdd7dcf3d45c37211649a746890e1e1e70
+          markdown: 1e2773b667adcdef6bc6473a3c436feb7ef9c65d42f2ab2bf07f9771836d7b44
+          markdown_inline: 7bea52c1bc24c9265cd668a522484f7c401867651b62714f81fe84386e7f5225
+          zig: 167220cdb1e80e73109b833eaa491537bb7078d9d572ee3c702b86e2c3b5b2f3
+        runtime: web-tree-sitter 0.25.10
+        parse_smokes: [javascript, typescript, markdown, markdown_inline, zig]
+        runtime_parse_verified: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
-      reproducible_build_verified: false
-      reason: Rebuild every WASM from the pinned grammar sources; upstream release automation floats on tree-sitter/workflows@main, so byte reproducibility is not yet proven.
+      reproducible_build_verified: true
+      reason: Replace every published grammar asset with twice-built byte-identical offline outputs from the pinned sources; all five pass web-tree-sitter runtime parsing.
   - package: "@silvia-odwyer/photon-node@0.3.4"
     npm_name: "@silvia-odwyer/photon-node"
     version: "0.3.4"

@@ -34,10 +34,14 @@
 %global powershell_published_wasm_sha256 1d30b5a21866354aa2eb94845556f1e19126ff00e3335048719a0e6435b1c154
 %global web_tree_sitter_published_wasm_sha256 f38dcc4b43b818f9a0785bc1c6d5611a75ac4cdd428ff3f02757c34ca4e46d7f
 %global web_tree_sitter_published_aux_wasm_sha256 2b8b96e0f0f4624c4f885d40d76e25a25d9c58d40fe8ff4ab9563ee0297eed5e
+%global opentui_javascript_source_sha256 a13fa28148e41bb939b2c2b8cd73c4b4295273b70cbac55a7a589020f52b9611
+%global opentui_typescript_source_sha256 4de2e82e557810eecb93cb3b31fbb3bd28ba4c91ba9a6c6164bcaa074125b7b5
+%global opentui_markdown_source_sha256 74138adf4535291593560d401bf0a6f0b3cc8a0c43d0912f462e5590f7e8fbb9
+%global opentui_zig_grammar_source_sha256 c7af5b1a992fcaffdf50a11a9974fbf8f09d20c4d9ef42245ac90c152dd3a85a
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -66,6 +70,10 @@ Source18:       https://registry.npmjs.org/acorn/-/acorn-8.14.0.tgz#/%{name}-%{v
 Source19:       https://registry.npmjs.org/esbuild/-/esbuild-%{esbuild_version}.tgz#/%{name}-%{version}-esbuild-npm-%{esbuild_version}.tgz
 Source20:       opencode-build-web-tree-sitter-runtime.py
 Source21:       opencode-validate-tree-sitter.mjs
+Source22:       https://codeload.github.com/tree-sitter/tree-sitter-javascript/tar.gz/44c892e0be055ac465d5eeddae6d3e194424e7de#/%{name}-%{version}-tree-sitter-javascript-0.25.0.tar.gz
+Source23:       https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/f975a621f4e7f532fe322e13c4f79495e0a7b2e7#/%{name}-%{version}-tree-sitter-typescript-0.23.2.tar.gz
+Source24:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-markdown/tar.gz/2dfd57f547f06ca5631a80f601e129d73fc8e9f0#/%{name}-%{version}-tree-sitter-markdown-0.5.1.tar.gz
+Source25:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0#/%{name}-%{version}-tree-sitter-zig-1.1.2.tar.gz
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -141,6 +149,10 @@ echo "%{acorn_source_sha256}  %{SOURCE18}" | sha256sum -c -
 echo "%{esbuild_npm_source_sha256}  %{SOURCE19}" | sha256sum -c -
 echo "%{tree_sitter_runtime_helper_sha256}  %{SOURCE20}" | sha256sum -c -
 echo "%{tree_sitter_validator_sha256}  %{SOURCE21}" | sha256sum -c -
+echo "%{opentui_javascript_source_sha256}  %{SOURCE22}" | sha256sum -c -
+echo "%{opentui_typescript_source_sha256}  %{SOURCE23}" | sha256sum -c -
+echo "%{opentui_markdown_source_sha256}  %{SOURCE24}" | sha256sum -c -
+echo "%{opentui_zig_grammar_source_sha256}  %{SOURCE25}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
 
@@ -232,6 +244,11 @@ mkdir -p .opentui-source .opentui-uucode .opentui-yoga
 tar --extract --gzip --file %{SOURCE9} --strip-components=1 --directory .opentui-source
 tar --extract --gzip --file %{SOURCE10} --strip-components=1 --directory .opentui-uucode
 tar --extract --gzip --file %{SOURCE11} --strip-components=1 --directory .opentui-yoga
+for grammar in javascript typescript markdown zig; do mkdir -p ".opentui-grammar-$grammar"; done
+tar --extract --gzip --file %{SOURCE22} --strip-components=1 --directory .opentui-grammar-javascript
+tar --extract --gzip --file %{SOURCE23} --strip-components=1 --directory .opentui-grammar-typescript
+tar --extract --gzip --file %{SOURCE24} --strip-components=1 --directory .opentui-grammar-markdown
+tar --extract --gzip --file %{SOURCE25} --strip-components=1 --directory .opentui-grammar-zig
 test ! -e .opentui-source/packages/core/src/zig/lib/x86_64-linux/libopentui.so
 
 mkdir -p \
@@ -382,6 +399,16 @@ TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm \
   --output "$PWD/.build-tools/tree-sitter-powershell.wasm" "$powershell_parser"
 install -pm0644 .build-tools/tree-sitter-bash.wasm "$bash_parser/tree-sitter-bash.wasm"
 install -pm0644 .build-tools/tree-sitter-powershell.wasm "$powershell_parser/tree-sitter-powershell.wasm"
+mkdir -p .build-tools/opentui-wasm
+TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-tools/opentui-wasm/tree-sitter-javascript.wasm .opentui-grammar-javascript
+TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-tools/opentui-wasm/tree-sitter-typescript.wasm .opentui-grammar-typescript/typescript
+TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-tools/opentui-wasm/tree-sitter-markdown.wasm .opentui-grammar-markdown/tree-sitter-markdown
+TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-tools/opentui-wasm/tree-sitter-markdown_inline.wasm .opentui-grammar-markdown/tree-sitter-markdown-inline
+TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-tools/opentui-wasm/tree-sitter-zig.wasm .opentui-grammar-zig
+pushd packages/opencode >/dev/null
+opentui_core="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(fileURLToPath(import.meta.resolve("@opentui/core/package.json"))))')"
+popd >/dev/null
+for grammar in javascript typescript markdown markdown_inline zig; do install -pm0644 ".build-tools/opentui-wasm/tree-sitter-$grammar.wasm" "$opentui_core/assets/$grammar/tree-sitter-$grammar.wasm"; done
 cp -p "$bash_parser/LICENSE" tree-sitter-bash-LICENSE
 cp -p "$powershell_parser/LICENSE" tree-sitter-powershell-LICENSE
 
@@ -515,6 +542,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.3
+- Rebuild OpenTUI's five grammar WASMs from pinned sources.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.2
 - Rebuild the current OpenTUI native library from exact sources.
 

@@ -5163,6 +5163,27 @@ module Agentlab
           errors << "#{prefix} native review asset correspondence is not verified for #{identity}" unless asset["verified"] == true
         end
       end
+      opentui_wasm = components.find { |entry| entry["package"] == "@opentui/core@#{opentui_version}" }
+      expected_opentui_wasm_rebuild = {
+        "tool" => "tree-sitter-cli",
+        "version" => "0.26.9",
+        "compiler" => "clang-20 with Bun Zig 0.15.2 WASI headers",
+        "network_isolated" => true,
+        "local_rebuilds" => 2,
+        "local_rebuilds_byte_identical" => true,
+        "output_sha256" => {
+          "javascript" => "ff37e071b8eefdc7264ce811ac6614c5ac3bcadb65a802e6dccb6a61c8d71abf",
+          "typescript" => "66bc1049d9b2357a064846e0c3e5f6cdd7dcf3d45c37211649a746890e1e1e70",
+          "markdown" => "1e2773b667adcdef6bc6473a3c436feb7ef9c65d42f2ab2bf07f9771836d7b44",
+          "markdown_inline" => "7bea52c1bc24c9265cd668a522484f7c401867651b62714f81fe84386e7f5225",
+          "zig" => "167220cdb1e80e73109b833eaa491537bb7078d9d572ee3c702b86e2c3b5b2f3"
+        },
+        "runtime" => "web-tree-sitter 0.25.10",
+        "parse_smokes" => %w[javascript typescript markdown markdown_inline zig],
+        "runtime_parse_verified" => true
+      }
+      errors << "#{prefix} OpenTUI grammar rebuild evidence does not match" unless opentui_wasm&.dig("provenance", "current_rebuild") == expected_opentui_wasm_rebuild
+      errors << "#{prefix} OpenTUI grammar rebuild must be reproducible" unless opentui_wasm&.dig("decision", "reproducible_build_verified") == true
 
       fff_identity = "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
       fff = components.find { |component| component["package"] == fff_identity }
@@ -5272,11 +5293,15 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.2%{?dist}",
+        "Release:        0.3%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
         "Source12:       https://codeload.github.com/oven-sh/zig/tar.gz/%{zig_commit}",
+        "Source22:       https://codeload.github.com/tree-sitter/tree-sitter-javascript/tar.gz/44c892e0be055ac465d5eeddae6d3e194424e7de",
+        "Source23:       https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+        "Source24:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-markdown/tar.gz/2dfd57f547f06ca5631a80f601e129d73fc8e9f0",
+        "Source25:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",
         "BuildRequires:  lld20-devel",
