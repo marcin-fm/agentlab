@@ -24,8 +24,9 @@ begin
 
     package = Agentlab.package_named(package_name)
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
-    filename = dependencies.dig("source_closure_files", "closure_manifest")
-    raise Agentlab::Error, "#{package_name}: closure_manifest is not configured" unless filename
+    source_files = dependencies.fetch("source_closure_files", {})
+    filename = source_files["bundled_provides_manifest"] || source_files["closure_manifest"]
+    raise Agentlab::Error, "#{package_name}: bundled Provides manifest is not configured" unless filename
 
     closure_path = File.join(package.directory, filename)
     spec_path ||= package.spec_path

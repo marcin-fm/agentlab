@@ -637,6 +637,18 @@ class AgentlabTest < Minitest::Test
     )
   end
 
+  def test_normalizes_npm_prereleases_for_rpm_capabilities
+    assert_equal("1.0.0~alpha.1", Agentlab.rpm_node_version("1.0.0-alpha.1"))
+    assert_equal("4.0.0~beta.83", Agentlab.rpm_node_version("4.0.0-beta.83"))
+    assert_equal("3.24.2", Agentlab.rpm_node_version("3.24.2"))
+  end
+
+  def test_rejects_npm_build_metadata_for_rpm_capabilities
+    error = assert_raises(Agentlab::Error) { Agentlab.rpm_node_version("1.0.0+build.1") }
+
+    assert_match(/build metadata is not supported/, error.message)
+  end
+
   def test_rejects_unverified_sources
     error = assert_raises(Agentlab::Error) do
       Agentlab.node_bundled_provides("packages" => [registry_entry("source_verified" => false)])

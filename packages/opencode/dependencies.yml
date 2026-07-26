@@ -6,7 +6,7 @@ closure_audit:
   licenses_verified: false
   native_sources_verified: false
   generated_sources_verified: false
-  bundled_provides_verified: false
+  bundled_provides_verified: true
   upstream_contact_recorded: false
   offline_verified: true
 historical_audit:
@@ -21,7 +21,7 @@ current_lock_snapshot:
   workspace_records: 37
   package_records: 3221
   selected_production_closure: true
-  note: Lockfile-wide counts include unrelated inputs; the separate selected source set is current, but final binary inclusion and bundled Provides remain unverified.
+  note: Lockfile-wide counts include unrelated inputs; the normalized Bun compiler graph proves 531 embedded package paths across 491 public name/version identities, while final aggregate licensing remains unverified.
 rpm_subpackages: []
 closure_entry_schema:
   required:
@@ -172,10 +172,11 @@ node_modules_materialization_proof:
   lifecycle_scripts_executed: false
   package_build_performed: false
 binary_build_proof:
-  nvr: opencode-1.18.5-0.11.fc44
-  source_rpm_sha256: 02b633badb43ba814133c9a5549e6625ed148621f8064df8dc37336bcfe2d96d
-  binary_rpm_sha256: d3b3b107e4e22450ffd527848c6704f512e656ea6e3bd55ca138b7b0e9991bc9
-  payload_sha256: 3b7b6622b2dc84d2579792569c3ebc8df12da062fdeafbf14d8a00f7a9dcd5b1
+  nvr: opencode-1.18.5-0.12.fc44
+  source_rpm_sha256: 8310a97cf2f1cec3a84f7f4da5d6320bbe608e8d2b82b3c28bdedbdf52f72fc2
+  source_members: 43
+  binary_rpm_sha256: 4e12d67ee3057df0ee014b4321cfbea17ee561a3e9359b815044c7ffae5f1c43
+  payload_sha256: 159ba070b44d55f730dd97c7b716677820e9b9cb3136e01b2e2e6c3e841c6f38
   payload_size_bytes: 127035136
   source_built_bun_version: 1.3.14
   source_built_bun_sha256: 4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569
@@ -196,6 +197,25 @@ binary_build_proof:
   final_license_verified: false
   rpm_installed: false
   copr_submitted: false
+binary_embedding_proof:
+  schema: agentlab-opencode-binary-embedding/v1
+  receipt_sha256: 875a50872ca1bdc6ea139767f12a6006aa31f96b33b3259c57d01e4aabf37f70
+  metafile_input_records: 4038
+  positive_input_records: 3895
+  zero_contribution_input_records: 143
+  metafile_output_records: 324
+  metafile_input_path_set_sha256: 33fae5a36023aa788df23ebcc86bcab7caee5d7ffb2326fede5ad2a308199e91
+  positive_input_path_set_sha256: 87e4f2cd404a478215dfeccf5e0f26381c3071db7db4ad6d996ee4ab68f55895
+  embedded_package_paths: 531
+  embedded_unique_registry_sources: 491
+  embedded_public_name_versions: 491
+  embedded_workspace_paths: 12
+  included_license_text_gaps: 13
+  candidate_npm_license_expression: 0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT
+  final_npm_binary_inclusion_verified: true
+  bundled_provides_generated: true
+  final_aggregate_license_expression_verified: false
+  rpm_license_payload_complete: false
 source_acquisition_findings:
   raw_missing_declared_license:
     - "@openauthjs/openauth@0.0.0-20250322224806"
@@ -288,6 +308,7 @@ source_closure_files:
   production_build_archive: opencode-1.18.5-nm-prod-build.tar.zst
   test_archive: opencode-1.18.5-nm-dev-test.tar.zst
   closure_manifest: opencode-1.18.5-closure.json
+  bundled_provides_manifest: opencode-1.18.5-binary-embedding.json
   bundled_licenses: opencode-1.18.5-bundled-licenses.txt
   native_manifest: opencode-1.18.5-native.json
   selected_lock_audit: opencode-1.18.5-selected-lock-audit.json

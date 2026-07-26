@@ -506,9 +506,22 @@ module Agentlab
     raise Error, "release tag #{tag.inspect} is not an RPM-compatible version for #{package.name}"
   end
 
+  def rpm_node_version(version)
+    unless version.is_a?(String)
+      raise Error, "invalid npm package version: #{version.inspect}"
+    end
+
+    match = version.match(/\A(\d+\.\d+\.\d+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?\z/)
+    raise Error, "invalid npm package version: #{version.inspect}" unless match
+    raise Error, "npm build metadata is not supported in RPM capabilities: #{version.inspect}" if match[3]
+
+    match[2] ? "#{match[1]}~#{match[2].tr('-', '.')}" : match[1]
+  end
+
   def node_bundled_provides(closure)
     packages = closure.is_a?(Array) ? closure : closure.fetch("packages")
     raise Error, "closure packages must be an array" unless packages.is_a?(Array)
+    binary_embedding = closure.is_a?(Hash) && closure["schema"] == "agentlab-opencode-binary-embedding/v1"
 
     packages.each do |entry|
       raise Error, "closure package entries must be objects" unless entry.is_a?(Hash)
@@ -524,7 +537,7 @@ module Agentlab
       license = entry.fetch("license")
 
       raise Error, "invalid npm package name: #{name.inspect}" unless name.is_a?(String) && name.match?(/\A(?:@[A-Za-z0-9_.-]+\/)?[A-Za-z0-9_.-]+\z/)
-      raise Error, "invalid npm package version: #{version.inspect}" unless version.is_a?(String) && version.match?(/\A[^\s()]+\z/)
+      rpm_version = rpm_node_version(version)
       raise Error, "unsupported source origin for #{name}: #{origin.inspect}" unless origin == "registry"
       raise Error, "invalid dependency role for #{name}: #{role.inspect}" unless %w[runtime build test].include?(role)
       raise Error, "included_in_binary must be boolean for #{name}" unless [true, false].include?(included_in_binary)
@@ -535,16 +548,38 @@ module Agentlab
       raise Error, "invalid SHA-256 for #{name}" unless sha256.is_a?(String) && sha256.match?(/\A[0-9a-f]{64}\z/)
       raise Error, "missing license for #{name}" unless license.is_a?(String) && !license.strip.empty?
       raise Error, "source is not verified for #{name}" unless entry["source_verified"] == true
+      next unless binary_embedding
+
+      raise Error, "private must be boolean for #{name}" unless [true, false].include?(entry["private"])
+      unless entry["rpm_version"] == rpm_version
+        raise Error, "RPM-normalized npm version mismatch for #{name}: #{entry['rpm_version'].inspect}"
+      end
+      evidence = entry["inclusion_evidence"]
+      unless evidence.is_a?(Hash) && evidence["method"] == "bun_build_metafile_positive_bytes" &&
+             evidence["metafile_input_count"].is_a?(Integer) && evidence["metafile_input_count"].positive?
+        raise Error, "missing positive Bun metafile inclusion evidence for #{name}"
+      end
     end
 
-    embedded = packages.select { |entry| entry["role"] == "runtime" && entry["included_in_binary"] == true }
+    embedded = packages.select do |entry|
+      entry["role"] == "runtime" && entry["included_in_binary"] == true && entry["private"] != true
+    end
     raise Error, "closure has no verified registry runtime packages included in the binary" if embedded.empty?
 
-    embedded.map do |entry|
+    capabilities = embedded.map do |entry|
       name = entry.fetch("npm_name")
       version = entry.fetch("version")
-      "Provides:       bundled(nodejs-#{name}) = #{version}"
-    end.uniq.sort
+      [name, version, entry["rpm_version"] || rpm_node_version(version)]
+    end.uniq
+    capabilities.group_by { |name, _version, rpm_version| [name, rpm_version] }.each do |(name, rpm_version), records|
+      versions = records.map { |_package, version, _normalized| version }.uniq
+      if versions.length > 1
+        raise Error, "npm versions normalize to the same RPM capability for #{name} #{rpm_version}: #{versions.join(', ')}"
+      end
+    end
+    capabilities.map do |name, _version, rpm_version|
+      "Provides:       bundled(nodejs-#{name}) = #{rpm_version}"
+    end.sort
   rescue URI::InvalidURIError => e
     raise Error, "invalid npm source URL: #{e.message}"
   end
@@ -5169,10 +5204,11 @@ module Agentlab
       errors << "#{prefix} node_modules materialization proof does not match" unless dependencies["node_modules_materialization_proof"] == expected_node_modules
 
       expected_binary_build = {
-        "nvr" => "opencode-1.18.5-0.11.fc44",
-        "source_rpm_sha256" => "02b633badb43ba814133c9a5549e6625ed148621f8064df8dc37336bcfe2d96d",
-        "binary_rpm_sha256" => "d3b3b107e4e22450ffd527848c6704f512e656ea6e3bd55ca138b7b0e9991bc9",
-        "payload_sha256" => "3b7b6622b2dc84d2579792569c3ebc8df12da062fdeafbf14d8a00f7a9dcd5b1",
+        "nvr" => "opencode-1.18.5-0.12.fc44",
+        "source_rpm_sha256" => "8310a97cf2f1cec3a84f7f4da5d6320bbe608e8d2b82b3c28bdedbdf52f72fc2",
+        "source_members" => 43,
+        "binary_rpm_sha256" => "4e12d67ee3057df0ee014b4321cfbea17ee561a3e9359b815044c7ffae5f1c43",
+        "payload_sha256" => "159ba070b44d55f730dd97c7b716677820e9b9cb3136e01b2e2e6c3e841c6f38",
         "payload_size_bytes" => 127_035_136,
         "source_built_bun_version" => "1.3.14",
         "source_built_bun_sha256" => "4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569",
@@ -5195,6 +5231,199 @@ module Agentlab
         "copr_submitted" => false
       }
       errors << "#{prefix} binary build proof does not match" unless dependencies["binary_build_proof"] == expected_binary_build
+
+      embedding_filename = source_files["bundled_provides_manifest"]
+      embedding_path = embedding_filename.is_a?(String) && File.join(package.directory, embedding_filename)
+      unless embedding_path && File.file?(embedding_path)
+        errors << "#{prefix} binary embedding receipt is missing"
+      else
+        embedding = JSON.parse(File.read(embedding_path))
+        embedding_metadata = dependencies.fetch("binary_embedding_proof", {})
+        expected_embedding_metadata = {
+          "schema" => "agentlab-opencode-binary-embedding/v1",
+          "receipt_sha256" => "875a50872ca1bdc6ea139767f12a6006aa31f96b33b3259c57d01e4aabf37f70",
+          "metafile_input_records" => 4_038,
+          "positive_input_records" => 3_895,
+          "zero_contribution_input_records" => 143,
+          "metafile_output_records" => 324,
+          "metafile_input_path_set_sha256" => "33fae5a36023aa788df23ebcc86bcab7caee5d7ffb2326fede5ad2a308199e91",
+          "positive_input_path_set_sha256" => "87e4f2cd404a478215dfeccf5e0f26381c3071db7db4ad6d996ee4ab68f55895",
+          "embedded_package_paths" => 531,
+          "embedded_unique_registry_sources" => 491,
+          "embedded_public_name_versions" => 491,
+          "embedded_workspace_paths" => 12,
+          "included_license_text_gaps" => 13,
+          "candidate_npm_license_expression" => "0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT",
+          "final_npm_binary_inclusion_verified" => true,
+          "bundled_provides_generated" => true,
+          "final_aggregate_license_expression_verified" => false,
+          "rpm_license_payload_complete" => false
+        }
+        errors << "#{prefix} binary embedding metadata does not match" unless embedding_metadata == expected_embedding_metadata
+        errors << "#{prefix} binary embedding receipt SHA-256 does not match" unless Digest::SHA256.file(embedding_path).hexdigest == embedding_metadata["receipt_sha256"]
+        errors << "#{prefix} binary embedding schema is invalid" unless embedding["schema"] == embedding_metadata["schema"]
+        errors << "#{prefix} binary embedding release does not match" unless embedding["release"].to_s == release
+        errors << "#{prefix} binary embedding target does not match" unless embedding["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+
+        closure_filename = source_files["closure_manifest"]
+        closure_path = closure_filename.is_a?(String) && File.join(package.directory, closure_filename)
+        auditor_path = File.join(ROOT, "scripts", "audit-opencode-binary-embedding")
+        build_patch_path = File.join(package.directory, "opencode-record-bundle-metafile.patch")
+        errors << "#{prefix} binary embedding source closure is missing" unless closure_path && File.file?(closure_path)
+        errors << "#{prefix} binary embedding auditor is missing" unless File.file?(auditor_path)
+        errors << "#{prefix} binary embedding build patch is missing" unless File.file?(build_patch_path)
+        if closure_path && File.file?(closure_path)
+          errors << "#{prefix} binary embedding closure receipt does not match" unless embedding.dig("receipts", "source_closure") == {
+            "filename" => closure_filename, "sha256" => Digest::SHA256.file(closure_path).hexdigest
+          }
+        end
+        errors << "#{prefix} binary embedding source-audit receipt does not match" unless embedding.dig("receipts", "source_audit") == {
+          "filename" => source_filename, "sha256" => Digest::SHA256.file(source_path).hexdigest
+        }
+        if license_set_path && File.file?(license_set_path)
+          errors << "#{prefix} binary embedding source-license receipt does not match" unless embedding.dig("receipts", "source_license_set") == {
+            "filename" => File.basename(license_set_path), "sha256" => Digest::SHA256.file(license_set_path).hexdigest
+          }
+        end
+        if license_path && File.file?(license_path)
+          errors << "#{prefix} binary embedding license-review receipt does not match" unless embedding.dig("receipts", "license_review") == {
+            "filename" => File.basename(license_path), "sha256" => Digest::SHA256.file(license_path).hexdigest
+          }
+        end
+        errors << "#{prefix} binary embedding materialization receipt does not match" unless embedding.dig("receipts", "node_modules_materialization") == {
+          "filename" => "node-modules-materialization.json",
+          "sha256" => dependencies.dig("node_modules_materialization_proof", "receipt_sha256")
+        }
+        if File.file?(auditor_path)
+          errors << "#{prefix} binary embedding auditor receipt does not match" unless embedding.dig("build", "auditor") == {
+            "filename" => "audit-opencode-binary-embedding", "sha256" => Digest::SHA256.file(auditor_path).hexdigest
+          }
+        end
+        if File.file?(build_patch_path)
+          errors << "#{prefix} binary embedding build patch receipt does not match" unless embedding.dig("build", "build_patch") == {
+            "filename" => "opencode-record-bundle-metafile.patch", "sha256" => Digest::SHA256.file(build_patch_path).hexdigest
+          }
+        end
+        errors << "#{prefix} binary embedding build command does not match" unless embedding.dig("build", "command") == "bun run packages/opencode/script/build.ts --single --skip-install --skip-embed-web-ui"
+
+        expected_metafile = {
+          "filename" => "opencode-bundle-metafile.json",
+          "source_root_marker" => "$SOURCE_ROOT",
+          "sha256_in_canonical_receipt" => false,
+          "sha256_omission_reason" => "Bun chunk hashes and byte counts are build-root-sensitive; normalized contributing input paths are compared instead.",
+          "input_records" => embedding_metadata["metafile_input_records"],
+          "positive_input_records" => embedding_metadata["positive_input_records"],
+          "zero_contribution_input_records" => embedding_metadata["zero_contribution_input_records"],
+          "output_records" => embedding_metadata["metafile_output_records"],
+          "input_path_set_sha256" => embedding_metadata["metafile_input_path_set_sha256"],
+          "positive_input_path_set_sha256" => embedding_metadata["positive_input_path_set_sha256"]
+        }
+        errors << "#{prefix} binary embedding metafile evidence does not match" unless embedding["metafile"] == expected_metafile
+        errors << "#{prefix} binary embedding payload evidence does not match" unless embedding["binary"] == {
+          "path" => "packages/opencode/dist/opencode-linux-x64/bin/opencode",
+          "size_bytes" => 127_035_136,
+          "reported_version" => "1.18.5",
+          "sha256_in_canonical_receipt" => false,
+          "sha256_omission_reason" => "Bun standalone bytes are build-root-sensitive; the normalized compiler input graph is compared instead."
+        }
+        errors << "#{prefix} binary embedding supplemental inputs do not match" unless embedding["supplemental_embedded_inputs"] == [
+          {
+            "kind" => "models_dev_snapshot", "path" => ".build-tools/models-dev-api.json", "size_bytes" => 1_731_900,
+            "sha256" => "8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287",
+            "injection" => "OPENCODE_MODELS_DEV compile-time define"
+          },
+          {
+            "kind" => "opentui_tree_sitter_worker", "path" => "node_modules/@opentui/core/parser.worker.js", "size_bytes" => 172_396,
+            "sha256" => "1d5268bf91c643bfda915e7c9a342f9197b9795a6662b6e8a40bf3aa17c88e7f",
+            "injection" => "Bun.build files entry opentui-tree-sitter-worker.js"
+          }
+        ]
+        expected_scope = {
+          "materialized_package_paths" => 1_019,
+          "embedded_package_paths" => embedding_metadata["embedded_package_paths"],
+          "embedded_public_package_paths" => embedding_metadata["embedded_package_paths"],
+          "embedded_unique_registry_sources" => embedding_metadata["embedded_unique_registry_sources"],
+          "embedded_public_name_versions" => embedding_metadata["embedded_public_name_versions"],
+          "embedded_workspace_paths" => embedding_metadata["embedded_workspace_paths"],
+          "included_license_text_gaps" => embedding_metadata["included_license_text_gaps"]
+        }
+        errors << "#{prefix} binary embedding scope does not match" unless embedding["scope"] == expected_scope
+        errors << "#{prefix} binary embedding npm expression does not match" unless embedding["candidate_npm_license_expression"] == embedding_metadata["candidate_npm_license_expression"]
+        expected_gaps = %w[
+          @aws-sdk/credential-provider-http@3.972.43
+          @aws-sdk/credential-provider-login@3.972.45
+          @aws-sdk/nested-clients@3.997.13
+          @npmcli/agent@4.0.2
+          @sigstore/verify@3.1.1
+          abstract-logging@2.0.1
+          drizzle-orm@1.0.0-rc.2
+          opencode-poe-auth@0.0.1
+          opentui-spinner@0.0.7
+          poe-oauth@0.0.8
+          remeda@2.26.0
+          spdx-exceptions@2.5.0
+          spdx-license-ids@3.0.23
+        ]
+        errors << "#{prefix} binary embedding license-text gaps do not match" unless embedding["included_license_text_gaps"] == expected_gaps
+        embedded_packages = Array(embedding["packages"])
+        errors << "#{prefix} binary embedding package count does not match" unless embedded_packages.length == 531
+        errors << "#{prefix} binary embedding contains private packages" unless embedded_packages.none? { |record| record["private"] == true }
+        errors << "#{prefix} binary embedding package validation is incomplete" unless embedded_packages.all? do |record|
+          record["origin"] == "registry" && record["role"] == "runtime" && record["included_in_binary"] == true &&
+            record["source_verified"] == true && record.dig("inclusion_evidence", "method") == "bun_build_metafile_positive_bytes" &&
+            record.dig("inclusion_evidence", "metafile_input_count").to_i.positive? &&
+            record["rpm_version"] == rpm_node_version(record["version"])
+        end
+        selected_roles = embedded_packages.map { |record| record["selected_role"] }.tally
+        errors << "#{prefix} binary embedding selected roles do not match" unless selected_roles == { "runtime" => 530, "build" => 1 }
+        prettier = embedded_packages.find { |record| record["npm_name"] == "prettier" && record["version"] == "3.6.2" }
+        unless prettier && prettier["selected_role"] == "build" && prettier["candidate_for_binary"] == false && prettier["rpm_version"] == "3.6.2"
+          errors << "#{prefix} binary embedding Prettier evidence does not match"
+        end
+        errors << "#{prefix} binary embedding workspace count does not match" unless Array(embedding["workspaces"]).length == 12
+        expected_validation = {
+          "metafile_paths_normalized" => true,
+          "all_positive_inputs_mapped" => true,
+          "package_identities_verified" => true,
+          "source_archives_verified" => true,
+          "package_manifests_verified" => true,
+          "private_packages_recorded" => 0,
+          "binary_version_verified" => true,
+          "final_npm_binary_inclusion_verified" => true,
+          "bundled_provides_generated" => true,
+          "final_aggregate_license_expression_verified" => false,
+          "rpm_license_payload_complete" => false
+        }
+        errors << "#{prefix} binary embedding validation flags do not match" unless embedding["validation"] == expected_validation
+        errors << "#{prefix} binary embedding overclaims final completion" unless embedding["unresolved"] == {
+          "photon_source_mapping" => true,
+          "bun_runtime_final_license_map" => true,
+          "included_package_local_texts" => 13,
+          "final_aggregate_license_expression" => true,
+          "clean_fedora_build_matrix" => true
+        }
+        begin
+          provides = node_bundled_provides(embedding)
+          errors << "#{prefix} binary embedding bundled Provide count does not match" unless provides.length == 491
+          opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
+          errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
+          [
+            "Release:        0.12%{?dist}",
+            "Source36:       audit-opencode-binary-embedding",
+            "Source37:       opencode-1.18.5-binary-embedding.json",
+            "Source38:       license-review.yml",
+            "Patch2:         opencode-record-bundle-metafile.patch",
+            "export OPENCODE_BUILD_METAFILE=\"$PWD/.build-tools/opencode-bundle-metafile.json\"",
+            "ruby %{SOURCE36}",
+            "cmp \"$PWD/.build-tools/opencode-binary-embedding.json\" %{SOURCE37}",
+            "%doc README.md %{name}-%{version}-binary-embedding.json"
+          ].each do |snippet|
+            errors << "#{prefix} spec is missing binary embedding requirement #{snippet}" unless opencode_spec.include?(snippet)
+          end
+        rescue Agentlab::Error => e
+          errors << "#{prefix} invalid binary embedding bundled Provides: #{e.message}"
+        end
+      end
 
     native_filename = source_files["native_review"]
     native_finding = dependencies.dig("source_acquisition_findings", "native_review")
@@ -5461,7 +5690,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.11%{?dist}",
+        "Release:        0.12%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",

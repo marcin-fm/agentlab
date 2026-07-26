@@ -1,0 +1,507 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "yaml"
+
+module Agentlab
+  Error = Class.new(StandardError) unless const_defined?(:Error)
+
+  unless respond_to?(:atomic_write)
+    def self.atomic_write(path, content)
+      temporary = "#{path}.tmp-#{Process.pid}"
+      File.binwrite(temporary, content)
+      File.rename(temporary, path)
+    ensure
+      File.unlink(temporary) if temporary && File.exist?(temporary)
+    end
+  end
+
+  module OpenCodeBinaryEmbedding
+    module_function
+
+    BUILD_COMMAND = "bun run packages/opencode/script/build.ts --single --skip-install --skip-embed-web-ui"
+    SOURCE_ROOT_MARKER = "$SOURCE_ROOT"
+
+    def generate!(source_root:, metafile_path:, closure_path:, source_audit_path:, source_license_set_path:,
+                  license_review_path:, materialization_path:, build_patch_path:, models_snapshot_path:,
+                  parser_worker_path:, binary_path:, expected_version:, output_path:)
+      source_root = File.realpath(source_root)
+      package_dir = File.join(source_root, "packages", "opencode")
+      raise Agentlab::Error, "OpenCode package source is missing" unless Dir.exist?(package_dir)
+
+      paths = {
+        "metafile" => metafile_path,
+        "closure" => closure_path,
+        "source_audit" => source_audit_path,
+        "source_license_set" => source_license_set_path,
+        "license_review" => license_review_path,
+        "materialization" => materialization_path,
+        "build_patch" => build_patch_path,
+        "models_snapshot" => models_snapshot_path,
+        "parser_worker" => parser_worker_path,
+        "binary" => binary_path
+      }.transform_values { |path| File.expand_path(path) }
+      paths.each do |label, path|
+        raise Agentlab::Error, "OpenCode binary embedding #{label} is missing: #{path}" unless File.file?(path)
+      end
+
+      metafile_bytes = File.binread(paths.fetch("metafile"))
+      closure_bytes = File.binread(paths.fetch("closure"))
+      source_audit_bytes = File.binread(paths.fetch("source_audit"))
+      source_license_set_bytes = File.binread(paths.fetch("source_license_set"))
+      license_review_bytes = File.binread(paths.fetch("license_review"))
+      materialization_bytes = File.binread(paths.fetch("materialization"))
+      build_patch_bytes = File.binread(paths.fetch("build_patch"))
+
+      metafile = JSON.parse(metafile_bytes)
+      closure = JSON.parse(closure_bytes)
+      source_audit = JSON.parse(source_audit_bytes)
+      source_license_set = JSON.parse(source_license_set_bytes)
+      license_review = YAML.safe_load(license_review_bytes, aliases: false)
+      materialization = JSON.parse(materialization_bytes)
+      validate_inputs!(
+        metafile: metafile,
+        metafile_bytes: metafile_bytes,
+        closure: closure,
+        closure_sha256: Digest::SHA256.hexdigest(closure_bytes),
+        source_audit: source_audit,
+        source_audit_sha256: Digest::SHA256.hexdigest(source_audit_bytes),
+        source_license_set: source_license_set,
+        source_license_set_sha256: Digest::SHA256.hexdigest(source_license_set_bytes),
+        license_review: license_review,
+        license_review_sha256: Digest::SHA256.hexdigest(license_review_bytes),
+        materialization: materialization,
+        materialization_sha256: Digest::SHA256.hexdigest(materialization_bytes),
+        source_root: source_root
+      )
+
+      contributions = input_contributions(metafile)
+      positive_inputs = contributions.select { |_path, bytes| bytes.positive? }
+      closure_packages = closure.fetch("packages").to_h { |record| [record.fetch("package_path"), record] }
+      source_by_package_path = source_audit.fetch("sources").each_with_object({}) do |source, index|
+        source.fetch("package_paths").each do |package_path|
+          raise Agentlab::Error, "duplicate OpenCode source package path #{package_path}" if index.key?(package_path)
+
+          index[package_path] = source
+        end
+      end
+      workspace_roots = closure.fetch("workspaces").to_h do |workspace|
+        [File.expand_path(workspace.fetch("path"), source_root), workspace]
+      end
+      package_inputs = Hash.new { |hash, key| hash[key] = [] }
+      workspace_inputs = Hash.new { |hash, key| hash[key] = [] }
+
+      positive_inputs.sort.each do |input_path, bytes_in_output|
+        raise Agentlab::Error, "OpenCode contributing input is absent from the metafile: #{input_path}" unless metafile.fetch("inputs").key?(input_path)
+
+        absolute_path = expand_metafile_path(input_path, package_dir, source_root)
+        package_path = package_path_for(absolute_path, source_root)
+        if package_path && closure_packages.key?(package_path)
+          package_inputs[package_path] << { "path" => input_path, "bytes_in_output" => bytes_in_output }
+          next
+        end
+
+        workspace_root = workspace_roots.keys.sort_by(&:length).reverse.find do |root|
+          absolute_path == root || absolute_path.start_with?("#{root}/")
+        end
+        unless workspace_root
+          raise Agentlab::Error, "unmapped OpenCode contributing input #{input_path}"
+        end
+
+        workspace_inputs[workspace_roots.fetch(workspace_root).fetch("path")] << {
+          "path" => input_path,
+          "bytes_in_output" => bytes_in_output
+        }
+      end
+
+      license_resolutions = resolved_licenses(source_license_set, license_review)
+      packages = package_inputs.keys.sort.map do |package_path|
+        closure_record = closure_packages.fetch(package_path)
+        source = source_by_package_path.fetch(package_path)
+        validate_source_identity!(package_path, closure_record, source)
+        target = package_target(source_root, package_path)
+        manifest_path = File.join(target, "package.json")
+        raise Agentlab::Error, "OpenCode embedded package manifest is missing for #{package_path}" unless File.file?(manifest_path)
+
+        manifest = JSON.parse(File.read(manifest_path))
+        unless manifest["name"] == closure_record["npm_name"] && manifest["version"].to_s == closure_record["version"].to_s
+          raise Agentlab::Error, "OpenCode embedded package manifest identity mismatch for #{package_path}"
+        end
+
+        identity = "#{source.fetch('npm_name')}@#{source.fetch('version')}"
+        license = license_resolutions.fetch(identity) do
+          declared = source["declared_license"]
+          unless declared.is_a?(String) && !declared.empty?
+            raise Agentlab::Error, "OpenCode embedded package license is unresolved for #{identity}"
+          end
+          declared
+        end
+        unless source_license_set.fetch("expression_counts").key?(license)
+          raise Agentlab::Error, "OpenCode embedded package license is absent from the classified source set for #{identity}: #{license}"
+        end
+
+        inputs = package_inputs.fetch(package_path).sort_by { |entry| entry.fetch("path") }
+        input_paths = inputs.map { |entry| entry.fetch("path") }
+        {
+          "package_path" => package_path,
+          "npm_name" => closure_record.fetch("npm_name"),
+          "version" => closure_record.fetch("version"),
+          "rpm_version" => rpm_node_version(closure_record.fetch("version")),
+          "origin" => closure_record.fetch("origin"),
+          "selected_role" => closure_record.fetch("role"),
+          "role" => "runtime",
+          "candidate_for_binary" => closure_record.fetch("candidate_for_binary"),
+          "private" => manifest["private"] == true,
+          "source_url" => source.fetch("source_url"),
+          "integrity" => source.fetch("integrity"),
+          "sha256" => source.fetch("sha256"),
+          "license" => license,
+          "license_files" => source.fetch("license_files"),
+          "license_text_gap" => source.fetch("license_files").empty?,
+          "source_verified" => true,
+          "included_in_binary" => true,
+          "inclusion_evidence" => {
+            "method" => "bun_build_metafile_positive_bytes",
+            "metafile_input_count" => inputs.length,
+            "input_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(input_paths) + "\n")
+          }
+        }
+      end
+
+      workspaces = workspace_inputs.keys.sort.map do |workspace_path|
+        workspace = closure.fetch("workspaces").find { |record| record.fetch("path") == workspace_path }
+        inputs = workspace_inputs.fetch(workspace_path).sort_by { |entry| entry.fetch("path") }
+        input_paths = inputs.map { |entry| entry.fetch("path") }
+        {
+          "path" => workspace.fetch("path"),
+          "name" => workspace.fetch("name"),
+          "version" => workspace["version"],
+          "metafile_input_count" => inputs.length,
+          "input_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(input_paths) + "\n")
+        }
+      end
+
+      source_records = packages.uniq { |record| [record.fetch("npm_name"), record.fetch("version"), record.fetch("sha256")] }
+      license_text_gaps = source_records.select { |record| record.fetch("license_text_gap") }
+        .map { |record| "#{record.fetch('npm_name')}@#{record.fetch('version')}" }.sort
+      private_packages = packages.select { |record| record.fetch("private") }
+      provides = bundled_provides(packages)
+      outputs = metafile.fetch("outputs").sort.map do |output_path, output|
+        {
+          "path" => output_path,
+          "bytes" => output.fetch("bytes"),
+          "entry_point" => output["entryPoint"],
+          "input_count" => output.fetch("inputs", {}).length
+        }
+      end
+      binary_version = executable_version(paths.fetch("binary"))
+      unless binary_version == expected_version
+        raise Agentlab::Error, "OpenCode embedded binary version mismatch: #{binary_version.inspect}"
+      end
+
+      receipt = {
+        "schema" => "agentlab-opencode-binary-embedding/v1",
+        "package" => "opencode",
+        "release" => closure.fetch("release"),
+        "target" => { "os" => "linux", "cpu" => "x64", "libc" => "glibc" },
+        "build" => {
+          "command" => BUILD_COMMAND,
+          "metafile_environment" => "OPENCODE_BUILD_METAFILE",
+          "auditor" => file_receipt(__FILE__, File.binread(__FILE__)),
+          "build_patch" => file_receipt(paths.fetch("build_patch"), build_patch_bytes)
+        },
+        "receipts" => {
+          "source_closure" => file_receipt(paths.fetch("closure"), closure_bytes),
+          "source_audit" => file_receipt(paths.fetch("source_audit"), source_audit_bytes),
+          "source_license_set" => file_receipt(paths.fetch("source_license_set"), source_license_set_bytes),
+          "license_review" => file_receipt(paths.fetch("license_review"), license_review_bytes),
+          "node_modules_materialization" => file_receipt(paths.fetch("materialization"), materialization_bytes)
+        },
+        "metafile" => {
+          "filename" => File.basename(paths.fetch("metafile")),
+          "source_root_marker" => SOURCE_ROOT_MARKER,
+          "sha256_in_canonical_receipt" => false,
+          "sha256_omission_reason" => "Bun chunk hashes and byte counts are build-root-sensitive; normalized contributing input paths are compared instead.",
+          "input_records" => metafile.fetch("inputs").length,
+          "positive_input_records" => positive_inputs.length,
+          "zero_contribution_input_records" => contributions.count { |_path, bytes| bytes.zero? },
+          "output_records" => outputs.length,
+          "input_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(metafile.fetch("inputs").keys.sort) + "\n"),
+          "positive_input_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(positive_inputs.keys.sort) + "\n")
+        },
+        "binary" => {
+          "path" => relative_path(paths.fetch("binary"), source_root),
+          "size_bytes" => File.size(paths.fetch("binary")),
+          "reported_version" => binary_version,
+          "sha256_in_canonical_receipt" => false,
+          "sha256_omission_reason" => "Bun standalone bytes are build-root-sensitive; the normalized compiler input graph is compared instead."
+        },
+        "supplemental_embedded_inputs" => [
+          supplemental_input("models_dev_snapshot", paths.fetch("models_snapshot"), source_root,
+                             "OPENCODE_MODELS_DEV compile-time define"),
+          supplemental_input("opentui_tree_sitter_worker", paths.fetch("parser_worker"), source_root,
+                             "Bun.build files entry opentui-tree-sitter-worker.js")
+        ],
+        "scope" => {
+          "materialized_package_paths" => materialization.dig("scope", "package_paths"),
+          "embedded_package_paths" => packages.length,
+          "embedded_public_package_paths" => packages.count { |record| !record.fetch("private") },
+          "embedded_unique_registry_sources" => source_records.length,
+          "embedded_public_name_versions" => provides.length,
+          "embedded_workspace_paths" => workspaces.length,
+          "included_license_text_gaps" => license_text_gaps.length
+        },
+        "candidate_npm_license_expression" => source_records.map { |record| record.fetch("license") }.uniq.sort.join(" AND "),
+        "included_license_text_gaps" => license_text_gaps,
+        "packages" => packages,
+        "workspaces" => workspaces,
+        "validation" => {
+          "metafile_paths_normalized" => true,
+          "all_positive_inputs_mapped" => true,
+          "package_identities_verified" => true,
+          "source_archives_verified" => true,
+          "package_manifests_verified" => true,
+          "private_packages_recorded" => private_packages.length,
+          "binary_version_verified" => true,
+          "final_npm_binary_inclusion_verified" => true,
+          "bundled_provides_generated" => true,
+          "final_aggregate_license_expression_verified" => false,
+          "rpm_license_payload_complete" => false
+        },
+        "unresolved" => {
+          "photon_source_mapping" => true,
+          "bun_runtime_final_license_map" => true,
+          "included_package_local_texts" => license_text_gaps.length,
+          "final_aggregate_license_expression" => true,
+          "clean_fedora_build_matrix" => true
+        }
+      }
+      content = JSON.pretty_generate(receipt) + "\n"
+      Agentlab.atomic_write(output_path, content)
+      { "size_bytes" => content.bytesize, "sha256" => Digest::SHA256.hexdigest(content), "receipt" => receipt }
+    rescue JSON::ParserError, Psych::SyntaxError => e
+      raise Agentlab::Error, "invalid OpenCode binary embedding input: #{e.message}"
+    end
+
+    def validate_inputs!(metafile:, metafile_bytes:, closure:, closure_sha256:, source_audit:, source_audit_sha256:,
+                         source_license_set:, source_license_set_sha256:, license_review:, license_review_sha256:,
+                         materialization:, materialization_sha256:, source_root:)
+      raise Agentlab::Error, "OpenCode bundle metafile inputs are missing" unless metafile["inputs"].is_a?(Hash)
+      raise Agentlab::Error, "OpenCode bundle metafile outputs are missing" unless metafile["outputs"].is_a?(Hash)
+      if metafile_bytes.include?(source_root)
+        raise Agentlab::Error, "OpenCode bundle metafile contains its absolute source root"
+      end
+      raise Agentlab::Error, "OpenCode closure schema mismatch" unless closure["schema"] == "agentlab-opencode-source-closure/v1"
+      raise Agentlab::Error, "OpenCode source-audit schema mismatch" unless source_audit["schema"] == "opencode-source-acquisition/v1"
+      unless source_license_set["schema"] == "agentlab-opencode-source-license-set/v1"
+        raise Agentlab::Error, "OpenCode source-license schema mismatch"
+      end
+      raise Agentlab::Error, "OpenCode license-review schema mismatch" unless license_review["schema"] == "opencode-license-review/v1"
+      unless materialization["schema"] == "agentlab-opencode-node-modules-materialization/v2"
+        raise Agentlab::Error, "OpenCode node_modules receipt schema mismatch"
+      end
+      releases = [closure["release"], source_audit["release"], source_license_set["release"], license_review["release"], materialization["release"]].map(&:to_s)
+      raise Agentlab::Error, "OpenCode binary embedding release mismatch" unless releases.uniq.length == 1
+      unless closure.dig("receipts", "source_audit", "sha256") == source_audit_sha256
+        raise Agentlab::Error, "OpenCode closure source-audit binding mismatch"
+      end
+      unless source_license_set.dig("receipts", "source_audit", "sha256") == source_audit_sha256
+        raise Agentlab::Error, "OpenCode source-license source-audit binding mismatch"
+      end
+      unless source_license_set.dig("receipts", "license_review", "sha256") == license_review_sha256
+        raise Agentlab::Error, "OpenCode source-license review binding mismatch"
+      end
+      unless materialization.dig("source_audit", "sha256") == source_audit_sha256 &&
+             materialization.dig("source_closure", "sha256") == closure_sha256
+        raise Agentlab::Error, "OpenCode node_modules receipt binding mismatch"
+      end
+    end
+
+    def input_contributions(metafile)
+      contributions = Hash.new(0)
+      metafile.fetch("outputs").each do |output_path, output|
+        raise Agentlab::Error, "invalid OpenCode bundle output bytes for #{output_path}" unless output["bytes"].is_a?(Integer) && output["bytes"] >= 0
+
+        output.fetch("inputs", {}).each do |input_path, entry|
+          bytes = entry.fetch("bytesInOutput")
+          unless bytes.is_a?(Integer) && bytes >= 0
+            raise Agentlab::Error, "invalid OpenCode bundle input contribution for #{input_path}"
+          end
+          contributions[input_path] += bytes
+        end
+      end
+      contributions
+    end
+
+    def expand_metafile_path(path, package_dir, source_root)
+      absolute = if path == SOURCE_ROOT_MARKER
+                   source_root
+                 elsif path.start_with?("#{SOURCE_ROOT_MARKER}/")
+                   File.join(source_root, path.delete_prefix("#{SOURCE_ROOT_MARKER}/"))
+                 else
+                   File.expand_path(path, package_dir)
+                 end
+      unless absolute == source_root || absolute.start_with?("#{source_root}/")
+        raise Agentlab::Error, "OpenCode metafile path escapes the source root: #{path}"
+      end
+      absolute
+    end
+
+    def package_path_for(absolute_path, source_root)
+      parts = Pathname.new(absolute_path).relative_path_from(Pathname.new(source_root)).to_s.split("/")
+      packages = []
+      index = 0
+      while index < parts.length
+        position = (index...parts.length).find { |candidate| parts[candidate] == "node_modules" }
+        break unless position
+
+        first = parts[position + 1]
+        break unless first
+        if first.start_with?("@")
+          second = parts[position + 2]
+          raise Agentlab::Error, "incomplete scoped OpenCode package path" unless second
+
+          packages << "#{first}/#{second}"
+          index = position + 3
+        else
+          packages << first
+          index = position + 2
+        end
+      end
+      packages.empty? ? nil : packages.join("/")
+    rescue ArgumentError
+      nil
+    end
+
+    def package_target(source_root, package_path)
+      parts = package_path.split("/")
+      packages = []
+      until parts.empty?
+        if parts.first.start_with?("@")
+          raise Agentlab::Error, "invalid scoped OpenCode package path #{package_path}" if parts.length < 2
+
+          packages << "#{parts.shift}/#{parts.shift}"
+        else
+          packages << parts.shift
+        end
+      end
+      packages.reduce(source_root) { |path, package| File.join(path, "node_modules", package) }
+    end
+
+    def validate_source_identity!(package_path, closure_record, source)
+      %w[npm_name version origin source_url integrity].each do |field|
+        next if closure_record[field].to_s == source[field].to_s
+
+        raise Agentlab::Error, "OpenCode embedded source identity mismatch for #{package_path}: #{field}"
+      end
+      raise Agentlab::Error, "OpenCode embedded source is not a registry package for #{package_path}" unless source["origin"] == "registry"
+      unless source.fetch("package_paths").include?(package_path)
+        raise Agentlab::Error, "OpenCode embedded source does not own #{package_path}"
+      end
+    end
+
+    def rpm_node_version(version)
+      match = version.to_s.match(/\A(\d+\.\d+\.\d+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?\z/)
+      raise Agentlab::Error, "invalid npm package version: #{version.inspect}" unless match
+      raise Agentlab::Error, "npm build metadata is not supported in RPM capabilities: #{version.inspect}" if match[3]
+
+      match[2] ? "#{match[1]}~#{match[2].tr('-', '.')}" : match[1]
+    end
+
+    def bundled_provides(packages)
+      capabilities = packages.reject { |record| record.fetch("private") }.map do |record|
+        [record.fetch("npm_name"), record.fetch("version"), record.fetch("rpm_version")]
+      end.uniq
+      capabilities.group_by { |name, _version, rpm_version| [name, rpm_version] }.each do |(name, rpm_version), records|
+        versions = records.map { |_package, version, _normalized| version }.uniq
+        if versions.length > 1
+          raise Agentlab::Error, "npm versions normalize to the same RPM capability for #{name} #{rpm_version}: #{versions.join(', ')}"
+        end
+      end
+      capabilities.map { |name, _version, rpm_version| "Provides:       bundled(nodejs-#{name}) = #{rpm_version}" }.sort
+    end
+
+    def resolved_licenses(source_license_set, license_review)
+      resolutions = {}
+      source_license_set.fetch("normalizations").each do |entry|
+        resolutions[entry.fetch("package")] = entry.fetch("normalized")
+      end
+      license_review.fetch("declaration_resolutions").each do |entry|
+        resolutions[entry.fetch("package")] = entry.fetch("resolved_license")
+      end
+      resolutions
+    end
+
+    def executable_version(path)
+      stdout, stderr, status = Open3.capture3(path, "--version")
+      unless status.success? && stderr.empty?
+        raise Agentlab::Error, "OpenCode binary version command failed: #{stderr.strip}"
+      end
+      stdout.strip
+    end
+
+    def supplemental_input(kind, path, source_root, injection)
+      {
+        "kind" => kind,
+        "path" => relative_path(path, source_root),
+        "size_bytes" => File.size(path),
+        "sha256" => Digest::SHA256.file(path).hexdigest,
+        "injection" => injection
+      }
+    end
+
+    def relative_path(path, source_root)
+      absolute = File.expand_path(path)
+      unless absolute == source_root || absolute.start_with?("#{source_root}/")
+        raise Agentlab::Error, "OpenCode receipt path escapes the source root: #{path}"
+      end
+      absolute.delete_prefix("#{source_root}/")
+    end
+
+    def file_receipt(path, bytes)
+      { "filename" => File.basename(path), "sha256" => Digest::SHA256.hexdigest(bytes) }
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  begin
+  options = {}
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/audit-opencode-binary-embedding [options]"
+    %w[source-root metafile closure source-audit source-license-set license-review materialization build-patch
+       models-snapshot parser-worker binary expected-version output].each do |name|
+      parser.on("--#{name} PATH") { |value| options[name.tr("-", "_").to_sym] = value }
+    end
+  end.parse!
+  required = %i[source_root metafile closure source_audit source_license_set license_review materialization build_patch
+                models_snapshot parser_worker binary expected_version output]
+  missing = required.reject { |key| options[key] }
+  abort("error: missing #{missing.map { |key| "--#{key.to_s.tr('_', '-')}" }.join(', ')}") unless missing.empty?
+
+  result = Agentlab::OpenCodeBinaryEmbedding.generate!(
+    source_root: options.fetch(:source_root),
+    metafile_path: options.fetch(:metafile),
+    closure_path: options.fetch(:closure),
+    source_audit_path: options.fetch(:source_audit),
+    source_license_set_path: options.fetch(:source_license_set),
+    license_review_path: options.fetch(:license_review),
+    materialization_path: options.fetch(:materialization),
+    build_patch_path: options.fetch(:build_patch),
+    models_snapshot_path: options.fetch(:models_snapshot),
+    parser_worker_path: options.fetch(:parser_worker),
+    binary_path: options.fetch(:binary),
+    expected_version: options.fetch(:expected_version),
+    output_path: options.fetch(:output)
+  )
+  puts "Wrote #{options.fetch(:output)} (#{result.fetch('size_bytes')} bytes, #{result.fetch('sha256')})"
+  rescue Agentlab::Error, KeyError, Errno::ENOENT => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end

@@ -57,10 +57,14 @@
 %global source_materialization_sha256 518e0b781a8e1ed5a1683fcf7095be1b22360e8d6a7ef101a131d64cbdc13719
 %global source_audit_sha256 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
 %global node_modules_materializer_sha256 d49cdf57f7c2b86103e63d829f00eebbb3d72c5ec985b12186b54ed188d55668
+%global binary_embedding_auditor_sha256 edb839a5924c761063ab4bd2e68f99a874edde248ddeffc237391db478b5794e
+%global binary_embedding_receipt_sha256 875a50872ca1bdc6ea139767f12a6006aa31f96b33b3259c57d01e4aabf37f70
+%global bundle_metafile_patch_sha256 1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4
+%global license_review_sha256 0eef45440b344d39ff39881824b5eab58d8b51a91d56b81459ea02322153c888
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.11%{?dist}
+Release:        0.12%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -103,6 +107,9 @@ Source32:       source-license-set-proof.json
 Source33:       opencode-1.18.5-source-materialization.json
 Source34:       opencode-1.18.5-source-audit.json
 Source35:       materialize-opencode-node-modules
+Source36:       audit-opencode-binary-embedding
+Source37:       opencode-1.18.5-binary-embedding.json
+Source38:       license-review.yml
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -115,6 +122,11 @@ Patch0:         opencode-disable-fff.patch
 # Fedora-specific; not submitted upstream because it adapts the release-pinned
 # fork to Fedora's shared LLVM layout.
 Patch1:         opencode-zig-fedora-lib64.patch
+# Record Bun's normalized compiler input graph without changing the selected
+# application behavior or emitted payload.
+# Fedora-specific; not submitted upstream because this opt-in output is package
+# audit evidence and upstream issue/PR review found no existing equivalent.
+Patch2:         opencode-record-bundle-metafile.patch
 
 ExclusiveArch:  x86_64
 
@@ -158,6 +170,497 @@ Requires:       ripgrep
 # so Fedora's automatic Node generator cannot run. This block is generated
 # from Source3 by scripts/generate-node-bundled-provides.
 # BEGIN GENERATED BUNDLED NODE PROVIDES
+Provides:       bundled(nodejs-@actions/core) = 1.11.1
+Provides:       bundled(nodejs-@actions/exec) = 1.1.1
+Provides:       bundled(nodejs-@actions/github) = 6.0.1
+Provides:       bundled(nodejs-@actions/http-client) = 2.2.3
+Provides:       bundled(nodejs-@actions/io) = 1.1.3
+Provides:       bundled(nodejs-@agentclientprotocol/sdk) = 0.21.0
+Provides:       bundled(nodejs-@ai-sdk/alibaba) = 1.0.17
+Provides:       bundled(nodejs-@ai-sdk/amazon-bedrock) = 4.0.112
+Provides:       bundled(nodejs-@ai-sdk/anthropic) = 3.0.77
+Provides:       bundled(nodejs-@ai-sdk/anthropic) = 3.0.81
+Provides:       bundled(nodejs-@ai-sdk/anthropic) = 3.0.82
+Provides:       bundled(nodejs-@ai-sdk/azure) = 3.0.88
+Provides:       bundled(nodejs-@ai-sdk/cerebras) = 2.0.41
+Provides:       bundled(nodejs-@ai-sdk/cohere) = 3.0.27
+Provides:       bundled(nodejs-@ai-sdk/deepinfra) = 2.0.41
+Provides:       bundled(nodejs-@ai-sdk/deepseek) = 2.0.47
+Provides:       bundled(nodejs-@ai-sdk/gateway) = 3.0.104
+Provides:       bundled(nodejs-@ai-sdk/google) = 3.0.73
+Provides:       bundled(nodejs-@ai-sdk/google-vertex) = 4.0.128
+Provides:       bundled(nodejs-@ai-sdk/groq) = 3.0.31
+Provides:       bundled(nodejs-@ai-sdk/mistral) = 3.0.51
+Provides:       bundled(nodejs-@ai-sdk/openai) = 3.0.48
+Provides:       bundled(nodejs-@ai-sdk/openai) = 3.0.67
+Provides:       bundled(nodejs-@ai-sdk/openai) = 3.0.84
+Provides:       bundled(nodejs-@ai-sdk/openai-compatible) = 2.0.37
+Provides:       bundled(nodejs-@ai-sdk/openai-compatible) = 2.0.41
+Provides:       bundled(nodejs-@ai-sdk/openai-compatible) = 2.0.53
+Provides:       bundled(nodejs-@ai-sdk/perplexity) = 3.0.26
+Provides:       bundled(nodejs-@ai-sdk/provider) = 3.0.10
+Provides:       bundled(nodejs-@ai-sdk/provider) = 3.0.12
+Provides:       bundled(nodejs-@ai-sdk/provider) = 3.0.13
+Provides:       bundled(nodejs-@ai-sdk/provider) = 3.0.14
+Provides:       bundled(nodejs-@ai-sdk/provider) = 3.0.8
+Provides:       bundled(nodejs-@ai-sdk/provider-utils) = 4.0.21
+Provides:       bundled(nodejs-@ai-sdk/provider-utils) = 4.0.23
+Provides:       bundled(nodejs-@ai-sdk/provider-utils) = 4.0.27
+Provides:       bundled(nodejs-@ai-sdk/provider-utils) = 4.0.32
+Provides:       bundled(nodejs-@ai-sdk/provider-utils) = 4.0.35
+Provides:       bundled(nodejs-@ai-sdk/provider-utils) = 4.0.38
+Provides:       bundled(nodejs-@ai-sdk/provider-utils) = 4.0.40
+Provides:       bundled(nodejs-@ai-sdk/togetherai) = 2.0.41
+Provides:       bundled(nodejs-@ai-sdk/vercel) = 2.0.39
+Provides:       bundled(nodejs-@ai-sdk/xai) = 3.0.102
+Provides:       bundled(nodejs-@ampproject/remapping) = 2.3.0
+Provides:       bundled(nodejs-@anthropic-ai/sdk) = 0.71.2
+Provides:       bundled(nodejs-@aws-crypto/crc32) = 5.2.0
+Provides:       bundled(nodejs-@aws-crypto/util) = 5.2.0
+Provides:       bundled(nodejs-@aws-sdk/core) = 3.974.15
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-cognito-identity) = 3.972.38
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-env) = 3.972.41
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-http) = 3.972.43
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-ini) = 3.972.46
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-login) = 3.972.45
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-node) = 3.972.47
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-process) = 3.972.41
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-sso) = 3.972.45
+Provides:       bundled(nodejs-@aws-sdk/credential-provider-web-identity) = 3.972.45
+Provides:       bundled(nodejs-@aws-sdk/credential-providers) = 3.1057.0
+Provides:       bundled(nodejs-@aws-sdk/nested-clients) = 3.997.13
+Provides:       bundled(nodejs-@aws-sdk/signature-v4-multi-region) = 3.996.30
+Provides:       bundled(nodejs-@aws-sdk/token-providers) = 3.1056.0
+Provides:       bundled(nodejs-@aws-sdk/xml-builder) = 3.972.26
+Provides:       bundled(nodejs-@aws/lambda-invoke-store) = 0.2.4
+Provides:       bundled(nodejs-@babel/code-frame) = 7.29.7
+Provides:       bundled(nodejs-@babel/compat-data) = 7.29.7
+Provides:       bundled(nodejs-@babel/core) = 7.28.0
+Provides:       bundled(nodejs-@babel/core) = 7.28.4
+Provides:       bundled(nodejs-@babel/generator) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-annotate-as-pure) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-compilation-targets) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-create-class-features-plugin) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-globals) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-member-expression-to-functions) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-module-imports) = 7.18.6
+Provides:       bundled(nodejs-@babel/helper-module-imports) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-module-transforms) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-optimise-call-expression) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-plugin-utils) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-replace-supers) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-skip-transparent-expression-wrappers) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-string-parser) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-validator-identifier) = 7.29.7
+Provides:       bundled(nodejs-@babel/helper-validator-option) = 7.29.7
+Provides:       bundled(nodejs-@babel/helpers) = 7.29.7
+Provides:       bundled(nodejs-@babel/parser) = 7.29.7
+Provides:       bundled(nodejs-@babel/plugin-syntax-jsx) = 7.29.7
+Provides:       bundled(nodejs-@babel/plugin-syntax-typescript) = 7.29.7
+Provides:       bundled(nodejs-@babel/plugin-transform-modules-commonjs) = 7.29.7
+Provides:       bundled(nodejs-@babel/plugin-transform-typescript) = 7.29.7
+Provides:       bundled(nodejs-@babel/preset-typescript) = 7.27.1
+Provides:       bundled(nodejs-@babel/template) = 7.29.7
+Provides:       bundled(nodejs-@babel/traverse) = 7.29.7
+Provides:       bundled(nodejs-@babel/types) = 7.29.7
+Provides:       bundled(nodejs-@clack/core) = 1.0.0~alpha.1
+Provides:       bundled(nodejs-@clack/prompts) = 1.0.0~alpha.1
+Provides:       bundled(nodejs-@effect/opentelemetry) = 4.0.0~beta.83
+Provides:       bundled(nodejs-@effect/platform-node) = 4.0.0~beta.83
+Provides:       bundled(nodejs-@effect/platform-node-shared) = 4.0.0~beta.83
+Provides:       bundled(nodejs-@fastify/ajv-compiler) = 4.0.5
+Provides:       bundled(nodejs-@fastify/error) = 4.2.0
+Provides:       bundled(nodejs-@fastify/fast-json-stringify-compiler) = 5.0.3
+Provides:       bundled(nodejs-@fastify/forwarded) = 3.0.1
+Provides:       bundled(nodejs-@fastify/merge-json-schemas) = 0.2.1
+Provides:       bundled(nodejs-@fastify/proxy-addr) = 5.1.0
+Provides:       bundled(nodejs-@fastify/rate-limit) = 10.3.0
+Provides:       bundled(nodejs-@gar/promise-retry) = 1.0.3
+Provides:       bundled(nodejs-@isaacs/string-locale-compare) = 1.1.0
+Provides:       bundled(nodejs-@jridgewell/gen-mapping) = 0.3.13
+Provides:       bundled(nodejs-@jridgewell/remapping) = 2.3.5
+Provides:       bundled(nodejs-@jridgewell/resolve-uri) = 3.1.2
+Provides:       bundled(nodejs-@jridgewell/sourcemap-codec) = 1.5.5
+Provides:       bundled(nodejs-@jridgewell/trace-mapping) = 0.3.31
+Provides:       bundled(nodejs-@leichtgewicht/ip-codec) = 2.0.5
+Provides:       bundled(nodejs-@lukeed/ms) = 2.0.2
+Provides:       bundled(nodejs-@mixmark-io/domino) = 2.2.0
+Provides:       bundled(nodejs-@modelcontextprotocol/sdk) = 1.29.0
+Provides:       bundled(nodejs-@npmcli/agent) = 4.0.2
+Provides:       bundled(nodejs-@npmcli/arborist) = 9.4.0
+Provides:       bundled(nodejs-@npmcli/config) = 10.8.1
+Provides:       bundled(nodejs-@npmcli/fs) = 5.0.0
+Provides:       bundled(nodejs-@npmcli/git) = 7.0.2
+Provides:       bundled(nodejs-@npmcli/installed-package-contents) = 4.0.0
+Provides:       bundled(nodejs-@npmcli/map-workspaces) = 5.0.3
+Provides:       bundled(nodejs-@npmcli/metavuln-calculator) = 9.0.3
+Provides:       bundled(nodejs-@npmcli/name-from-folder) = 4.0.0
+Provides:       bundled(nodejs-@npmcli/node-gyp) = 5.0.0
+Provides:       bundled(nodejs-@npmcli/package-json) = 7.0.5
+Provides:       bundled(nodejs-@npmcli/promise-spawn) = 9.0.1
+Provides:       bundled(nodejs-@npmcli/query) = 5.0.0
+Provides:       bundled(nodejs-@npmcli/redact) = 4.0.0
+Provides:       bundled(nodejs-@npmcli/run-script) = 10.0.4
+Provides:       bundled(nodejs-@octokit/auth-token) = 4.0.0
+Provides:       bundled(nodejs-@octokit/auth-token) = 6.0.0
+Provides:       bundled(nodejs-@octokit/core) = 5.2.2
+Provides:       bundled(nodejs-@octokit/core) = 7.0.6
+Provides:       bundled(nodejs-@octokit/endpoint) = 11.0.3
+Provides:       bundled(nodejs-@octokit/endpoint) = 9.0.6
+Provides:       bundled(nodejs-@octokit/graphql) = 7.1.1
+Provides:       bundled(nodejs-@octokit/graphql) = 9.0.2
+Provides:       bundled(nodejs-@octokit/graphql) = 9.0.3
+Provides:       bundled(nodejs-@octokit/plugin-paginate-rest) = 13.2.1
+Provides:       bundled(nodejs-@octokit/plugin-paginate-rest) = 9.2.2
+Provides:       bundled(nodejs-@octokit/plugin-request-log) = 6.0.0
+Provides:       bundled(nodejs-@octokit/plugin-rest-endpoint-methods) = 10.4.1
+Provides:       bundled(nodejs-@octokit/plugin-rest-endpoint-methods) = 16.1.1
+Provides:       bundled(nodejs-@octokit/request) = 10.0.10
+Provides:       bundled(nodejs-@octokit/request) = 8.4.1
+Provides:       bundled(nodejs-@octokit/request-error) = 5.1.1
+Provides:       bundled(nodejs-@octokit/request-error) = 7.1.0
+Provides:       bundled(nodejs-@octokit/rest) = 22.0.0
+Provides:       bundled(nodejs-@openrouter/ai-sdk-provider) = 2.9.0
+Provides:       bundled(nodejs-@opentelemetry/api) = 1.9.0
+Provides:       bundled(nodejs-@opentelemetry/api-logs) = 0.214.0
+Provides:       bundled(nodejs-@opentelemetry/context-async-hooks) = 2.6.1
+Provides:       bundled(nodejs-@opentelemetry/core) = 2.6.1
+Provides:       bundled(nodejs-@opentelemetry/exporter-trace-otlp-http) = 0.214.0
+Provides:       bundled(nodejs-@opentelemetry/otlp-exporter-base) = 0.214.0
+Provides:       bundled(nodejs-@opentelemetry/otlp-transformer) = 0.214.0
+Provides:       bundled(nodejs-@opentelemetry/resources) = 2.6.1
+Provides:       bundled(nodejs-@opentelemetry/sdk-logs) = 0.214.0
+Provides:       bundled(nodejs-@opentelemetry/sdk-metrics) = 2.6.1
+Provides:       bundled(nodejs-@opentelemetry/sdk-trace-base) = 2.6.1
+Provides:       bundled(nodejs-@opentelemetry/sdk-trace-node) = 2.6.1
+Provides:       bundled(nodejs-@opentelemetry/semantic-conventions) = 1.41.1
+Provides:       bundled(nodejs-@opentui/core) = 0.4.5
+Provides:       bundled(nodejs-@opentui/core-linux-x64) = 0.4.5
+Provides:       bundled(nodejs-@opentui/keymap) = 0.4.5
+Provides:       bundled(nodejs-@opentui/solid) = 0.4.5
+Provides:       bundled(nodejs-@parcel/watcher) = 2.5.1
+Provides:       bundled(nodejs-@parcel/watcher-linux-x64-glibc) = 2.5.1
+Provides:       bundled(nodejs-@pinojs/redact) = 0.4.0
+Provides:       bundled(nodejs-@sigstore/bundle) = 4.0.0
+Provides:       bundled(nodejs-@sigstore/core) = 3.2.1
+Provides:       bundled(nodejs-@sigstore/protobuf-specs) = 0.5.1
+Provides:       bundled(nodejs-@sigstore/sign) = 4.1.1
+Provides:       bundled(nodejs-@sigstore/tuf) = 4.0.2
+Provides:       bundled(nodejs-@sigstore/verify) = 3.1.1
+Provides:       bundled(nodejs-@silvia-odwyer/photon-node) = 0.3.4
+Provides:       bundled(nodejs-@smithy/core) = 3.24.5
+Provides:       bundled(nodejs-@smithy/credential-provider-imds) = 4.3.6
+Provides:       bundled(nodejs-@smithy/eventstream-codec) = 4.2.14
+Provides:       bundled(nodejs-@smithy/eventstream-codec) = 4.2.7
+Provides:       bundled(nodejs-@smithy/is-array-buffer) = 2.2.0
+Provides:       bundled(nodejs-@smithy/node-http-handler) = 4.7.5
+Provides:       bundled(nodejs-@smithy/signature-v4) = 5.4.5
+Provides:       bundled(nodejs-@smithy/types) = 4.14.2
+Provides:       bundled(nodejs-@smithy/util-buffer-from) = 2.2.0
+Provides:       bundled(nodejs-@smithy/util-buffer-from) = 4.3.5
+Provides:       bundled(nodejs-@smithy/util-hex-encoding) = 4.3.5
+Provides:       bundled(nodejs-@smithy/util-utf8) = 2.3.0
+Provides:       bundled(nodejs-@smithy/util-utf8) = 4.2.0
+Provides:       bundled(nodejs-@smithy/util-utf8) = 4.2.2
+Provides:       bundled(nodejs-@tufjs/canonical-json) = 2.0.0
+Provides:       bundled(nodejs-@tufjs/models) = 4.1.0
+Provides:       bundled(nodejs-@vercel/oidc) = 3.2.0
+Provides:       bundled(nodejs-abbrev) = 4.0.0
+Provides:       bundled(nodejs-abstract-logging) = 2.0.1
+Provides:       bundled(nodejs-acorn) = 8.15.0
+Provides:       bundled(nodejs-agent-base) = 7.1.4
+Provides:       bundled(nodejs-ai) = 6.0.168
+Provides:       bundled(nodejs-ai-gateway-provider) = 3.1.2
+Provides:       bundled(nodejs-ajv) = 8.20.0
+Provides:       bundled(nodejs-ajv-formats) = 3.0.1
+Provides:       bundled(nodejs-ansi-regex) = 6.2.2
+Provides:       bundled(nodejs-ansi-styles) = 6.2.3
+Provides:       bundled(nodejs-atomic-sleep) = 1.0.0
+Provides:       bundled(nodejs-avvio) = 9.2.0
+Provides:       bundled(nodejs-aws4fetch) = 1.0.20
+Provides:       bundled(nodejs-babel-plugin-jsx-dom-expressions) = 0.40.7
+Provides:       bundled(nodejs-babel-plugin-module-resolver) = 5.0.2
+Provides:       bundled(nodejs-babel-preset-solid) = 1.9.12
+Provides:       bundled(nodejs-balanced-match) = 1.0.2
+Provides:       bundled(nodejs-balanced-match) = 4.0.4
+Provides:       bundled(nodejs-base64-js) = 1.5.1
+Provides:       bundled(nodejs-baseline-browser-mapping) = 2.10.33
+Provides:       bundled(nodejs-before-after-hook) = 2.2.3
+Provides:       bundled(nodejs-before-after-hook) = 4.0.0
+Provides:       bundled(nodejs-bignumber.js) = 9.3.1
+Provides:       bundled(nodejs-bin-links) = 6.0.2
+Provides:       bundled(nodejs-bonjour-service) = 1.3.0
+Provides:       bundled(nodejs-bowser) = 2.14.1
+Provides:       bundled(nodejs-brace-expansion) = 2.1.1
+Provides:       bundled(nodejs-brace-expansion) = 5.0.6
+Provides:       bundled(nodejs-braces) = 3.0.3
+Provides:       bundled(nodejs-browserslist) = 4.28.2
+Provides:       bundled(nodejs-buffer-equal-constant-time) = 1.0.1
+Provides:       bundled(nodejs-bun-pty) = 0.4.8
+Provides:       bundled(nodejs-bundle-name) = 4.1.0
+Provides:       bundled(nodejs-cacache) = 20.0.4
+Provides:       bundled(nodejs-caniuse-lite) = 1.0.30001793
+Provides:       bundled(nodejs-ci-info) = 4.4.0
+Provides:       bundled(nodejs-cli-spinners) = 3.4.0
+Provides:       bundled(nodejs-clipboardy) = 4.0.0
+Provides:       bundled(nodejs-cliui) = 9.0.1
+Provides:       bundled(nodejs-cmd-shim) = 8.0.0
+Provides:       bundled(nodejs-common-ancestor-path) = 2.0.0
+Provides:       bundled(nodejs-content-type) = 2.0.0
+Provides:       bundled(nodejs-convert-source-map) = 2.0.0
+Provides:       bundled(nodejs-cookie) = 1.1.1
+Provides:       bundled(nodejs-cross-spawn) = 7.0.6
+Provides:       bundled(nodejs-cssesc) = 3.0.0
+Provides:       bundled(nodejs-debug) = 4.4.3
+Provides:       bundled(nodejs-decimal.js) = 10.5.0
+Provides:       bundled(nodejs-default-browser) = 5.5.0
+Provides:       bundled(nodejs-default-browser-id) = 5.0.1
+Provides:       bundled(nodejs-define-lazy-prop) = 3.0.0
+Provides:       bundled(nodejs-deprecation) = 2.3.1
+Provides:       bundled(nodejs-dequal) = 2.0.3
+Provides:       bundled(nodejs-diff) = 8.0.2
+Provides:       bundled(nodejs-dns-packet) = 5.6.1
+Provides:       bundled(nodejs-drizzle-orm) = 1.0.0~rc.2
+Provides:       bundled(nodejs-ecdsa-sig-formatter) = 1.0.11
+Provides:       bundled(nodejs-effect) = 4.0.0~beta.83
+Provides:       bundled(nodejs-electron-to-chromium) = 1.5.364
+Provides:       bundled(nodejs-emoji-regex) = 10.6.0
+Provides:       bundled(nodejs-entities) = 4.5.0
+Provides:       bundled(nodejs-entities) = 6.0.1
+Provides:       bundled(nodejs-entities) = 7.0.1
+Provides:       bundled(nodejs-es-errors) = 1.3.0
+Provides:       bundled(nodejs-escalade) = 3.2.0
+Provides:       bundled(nodejs-eventsource) = 3.0.7
+Provides:       bundled(nodejs-eventsource-parser) = 3.1.0
+Provides:       bundled(nodejs-execa) = 8.0.1
+Provides:       bundled(nodejs-extend) = 3.0.2
+Provides:       bundled(nodejs-extend-shallow) = 2.0.1
+Provides:       bundled(nodejs-fast-check) = 4.8.0
+Provides:       bundled(nodejs-fast-decode-uri-component) = 1.0.1
+Provides:       bundled(nodejs-fast-deep-equal) = 3.1.3
+Provides:       bundled(nodejs-fast-json-stringify) = 6.4.0
+Provides:       bundled(nodejs-fast-querystring) = 1.1.2
+Provides:       bundled(nodejs-fast-uri) = 3.1.2
+Provides:       bundled(nodejs-fast-xml-parser) = 5.7.3
+Provides:       bundled(nodejs-fastify) = 5.8.5
+Provides:       bundled(nodejs-fastify-plugin) = 5.1.0
+Provides:       bundled(nodejs-fastq) = 1.20.1
+Provides:       bundled(nodejs-fill-range) = 7.1.1
+Provides:       bundled(nodejs-find-babel-config) = 2.1.2
+Provides:       bundled(nodejs-find-my-way) = 9.6.0
+Provides:       bundled(nodejs-find-my-way-ts) = 0.1.6
+Provides:       bundled(nodejs-find-up) = 3.0.0
+Provides:       bundled(nodejs-fs-minipass) = 3.0.3
+Provides:       bundled(nodejs-function-bind) = 1.1.2
+Provides:       bundled(nodejs-fuzzysort) = 3.1.0
+Provides:       bundled(nodejs-gaxios) = 7.1.4
+Provides:       bundled(nodejs-gcp-metadata) = 8.1.2
+Provides:       bundled(nodejs-gensync) = 1.0.0~beta.2
+Provides:       bundled(nodejs-get-caller-file) = 2.0.5
+Provides:       bundled(nodejs-get-east-asian-width) = 1.6.0
+Provides:       bundled(nodejs-get-stream) = 8.0.1
+Provides:       bundled(nodejs-gitlab-ai-provider) = 6.11.1
+Provides:       bundled(nodejs-glob) = 13.0.5
+Provides:       bundled(nodejs-glob) = 9.3.5
+Provides:       bundled(nodejs-google-auth-library) = 10.5.0
+Provides:       bundled(nodejs-google-logging-utils) = 1.1.3
+Provides:       bundled(nodejs-gray-matter) = 4.0.3
+Provides:       bundled(nodejs-gtoken) = 8.0.0
+Provides:       bundled(nodejs-hasown) = 2.0.4
+Provides:       bundled(nodejs-hosted-git-info) = 9.0.3
+Provides:       bundled(nodejs-html-entities) = 2.3.3
+Provides:       bundled(nodejs-htmlparser2) = 8.0.2
+Provides:       bundled(nodejs-http-cache-semantics) = 4.2.0
+Provides:       bundled(nodejs-http-proxy-agent) = 7.0.2
+Provides:       bundled(nodejs-https-proxy-agent) = 7.0.6
+Provides:       bundled(nodejs-human-signals) = 5.0.0
+Provides:       bundled(nodejs-iconv-lite) = 0.7.2
+Provides:       bundled(nodejs-ignore) = 7.0.5
+Provides:       bundled(nodejs-ignore-walk) = 8.0.0
+Provides:       bundled(nodejs-immer) = 11.1.4
+Provides:       bundled(nodejs-ini) = 6.0.0
+Provides:       bundled(nodejs-ip-address) = 10.2.0
+Provides:       bundled(nodejs-ipaddr.js) = 2.4.0
+Provides:       bundled(nodejs-is-core-module) = 2.16.2
+Provides:       bundled(nodejs-is-docker) = 3.0.0
+Provides:       bundled(nodejs-is-extendable) = 0.1.1
+Provides:       bundled(nodejs-is-extglob) = 2.1.1
+Provides:       bundled(nodejs-is-glob) = 4.0.3
+Provides:       bundled(nodejs-is-inside-container) = 1.0.0
+Provides:       bundled(nodejs-is-number) = 7.0.0
+Provides:       bundled(nodejs-is-stream) = 3.0.0
+Provides:       bundled(nodejs-is-wsl) = 3.1.1
+Provides:       bundled(nodejs-is64bit) = 2.0.0
+Provides:       bundled(nodejs-isexe) = 2.0.0
+Provides:       bundled(nodejs-isexe) = 4.0.0
+Provides:       bundled(nodejs-js-tokens) = 4.0.0
+Provides:       bundled(nodejs-js-yaml) = 3.14.2
+Provides:       bundled(nodejs-jsesc) = 3.1.0
+Provides:       bundled(nodejs-json-bigint) = 1.0.0
+Provides:       bundled(nodejs-json-parse-even-better-errors) = 5.0.0
+Provides:       bundled(nodejs-json-schema-ref-resolver) = 3.0.0
+Provides:       bundled(nodejs-json-schema-traverse) = 1.0.0
+Provides:       bundled(nodejs-json-stringify-nice) = 1.1.4
+Provides:       bundled(nodejs-json-with-bigint) = 3.5.8
+Provides:       bundled(nodejs-json5) = 2.2.3
+Provides:       bundled(nodejs-jsonc-parser) = 3.3.1
+Provides:       bundled(nodejs-jsonparse) = 1.3.1
+Provides:       bundled(nodejs-just-diff) = 6.0.2
+Provides:       bundled(nodejs-just-diff-apply) = 5.5.0
+Provides:       bundled(nodejs-jwa) = 2.0.1
+Provides:       bundled(nodejs-jws) = 4.0.1
+Provides:       bundled(nodejs-kind-of) = 6.0.3
+Provides:       bundled(nodejs-light-my-request) = 6.6.0
+Provides:       bundled(nodejs-locate-path) = 3.0.0
+Provides:       bundled(nodejs-lru-cache) = 10.4.3
+Provides:       bundled(nodejs-lru-cache) = 11.5.1
+Provides:       bundled(nodejs-lru-cache) = 5.1.1
+Provides:       bundled(nodejs-make-fetch-happen) = 15.0.6
+Provides:       bundled(nodejs-merge-stream) = 2.0.0
+Provides:       bundled(nodejs-micromatch) = 4.0.8
+Provides:       bundled(nodejs-mime) = 4.1.0
+Provides:       bundled(nodejs-mime-db) = 1.54.0
+Provides:       bundled(nodejs-mime-types) = 3.0.2
+Provides:       bundled(nodejs-mimic-fn) = 4.0.0
+Provides:       bundled(nodejs-minimatch) = 10.2.5
+Provides:       bundled(nodejs-minimatch) = 8.0.7
+Provides:       bundled(nodejs-minipass) = 3.3.6
+Provides:       bundled(nodejs-minipass) = 4.2.8
+Provides:       bundled(nodejs-minipass) = 7.1.3
+Provides:       bundled(nodejs-minipass-collect) = 2.0.1
+Provides:       bundled(nodejs-minipass-fetch) = 5.0.2
+Provides:       bundled(nodejs-minipass-flush) = 1.0.7
+Provides:       bundled(nodejs-minipass-pipeline) = 1.2.4
+Provides:       bundled(nodejs-minipass-sized) = 2.0.0
+Provides:       bundled(nodejs-minizlib) = 3.1.0
+Provides:       bundled(nodejs-ms) = 2.1.3
+Provides:       bundled(nodejs-multicast-dns) = 7.2.5
+Provides:       bundled(nodejs-multipasta) = 0.2.7
+Provides:       bundled(nodejs-negotiator) = 1.0.0
+Provides:       bundled(nodejs-node-releases) = 2.0.46
+Provides:       bundled(nodejs-nopt) = 9.0.0
+Provides:       bundled(nodejs-npm-bundled) = 5.0.0
+Provides:       bundled(nodejs-npm-install-checks) = 8.0.0
+Provides:       bundled(nodejs-npm-normalize-package-bin) = 5.0.0
+Provides:       bundled(nodejs-npm-package-arg) = 13.0.2
+Provides:       bundled(nodejs-npm-packlist) = 10.0.4
+Provides:       bundled(nodejs-npm-pick-manifest) = 11.0.3
+Provides:       bundled(nodejs-npm-registry-fetch) = 19.1.1
+Provides:       bundled(nodejs-npm-run-path) = 5.3.0
+Provides:       bundled(nodejs-on-exit-leak-free) = 2.1.2
+Provides:       bundled(nodejs-once) = 1.4.0
+Provides:       bundled(nodejs-onetime) = 6.0.0
+Provides:       bundled(nodejs-open) = 10.1.2
+Provides:       bundled(nodejs-open) = 10.2.0
+Provides:       bundled(nodejs-openai) = 6.39.1
+Provides:       bundled(nodejs-opencode-gitlab-auth) = 2.1.0
+Provides:       bundled(nodejs-opencode-poe-auth) = 0.0.1
+Provides:       bundled(nodejs-opentui-spinner) = 0.0.7
+Provides:       bundled(nodejs-p-limit) = 2.3.0
+Provides:       bundled(nodejs-p-locate) = 3.0.0
+Provides:       bundled(nodejs-p-map) = 7.0.4
+Provides:       bundled(nodejs-p-try) = 2.2.0
+Provides:       bundled(nodejs-pacote) = 21.5.0
+Provides:       bundled(nodejs-parse-conflict-json) = 5.0.1
+Provides:       bundled(nodejs-parse5) = 7.3.0
+Provides:       bundled(nodejs-path-exists) = 3.0.0
+Provides:       bundled(nodejs-path-key) = 3.1.1
+Provides:       bundled(nodejs-path-key) = 4.0.0
+Provides:       bundled(nodejs-path-parse) = 1.0.7
+Provides:       bundled(nodejs-path-scurry) = 1.11.1
+Provides:       bundled(nodejs-picocolors) = 1.1.1
+Provides:       bundled(nodejs-picomatch) = 2.3.2
+Provides:       bundled(nodejs-pino) = 10.3.1
+Provides:       bundled(nodejs-pino-std-serializers) = 7.1.0
+Provides:       bundled(nodejs-pkce-challenge) = 5.0.1
+Provides:       bundled(nodejs-pkg-up) = 3.1.0
+Provides:       bundled(nodejs-poe-oauth) = 0.0.8
+Provides:       bundled(nodejs-postcss-selector-parser) = 7.1.1
+Provides:       bundled(nodejs-prettier) = 3.6.2
+Provides:       bundled(nodejs-proc-log) = 6.1.0
+Provides:       bundled(nodejs-process-warning) = 4.0.1
+Provides:       bundled(nodejs-process-warning) = 5.0.0
+Provides:       bundled(nodejs-proggy) = 4.0.0
+Provides:       bundled(nodejs-promise-all-reject-late) = 1.0.1
+Provides:       bundled(nodejs-promise-call-limit) = 3.0.2
+Provides:       bundled(nodejs-pure-rand) = 8.4.0
+Provides:       bundled(nodejs-quick-format-unescaped) = 4.0.4
+Provides:       bundled(nodejs-react) = 18.2.0
+Provides:       bundled(nodejs-read-cmd-shim) = 6.0.0
+Provides:       bundled(nodejs-remeda) = 2.26.0
+Provides:       bundled(nodejs-reselect) = 4.1.8
+Provides:       bundled(nodejs-resolve) = 1.22.12
+Provides:       bundled(nodejs-ret) = 0.5.0
+Provides:       bundled(nodejs-reusify) = 1.1.0
+Provides:       bundled(nodejs-rfdc) = 1.4.1
+Provides:       bundled(nodejs-run-applescript) = 7.1.0
+Provides:       bundled(nodejs-safe-buffer) = 5.2.1
+Provides:       bundled(nodejs-safe-regex2) = 5.1.1
+Provides:       bundled(nodejs-safe-stable-stringify) = 2.5.0
+Provides:       bundled(nodejs-safer-buffer) = 2.1.2
+Provides:       bundled(nodejs-section-matter) = 1.0.0
+Provides:       bundled(nodejs-secure-json-parse) = 4.1.0
+Provides:       bundled(nodejs-semver) = 6.3.1
+Provides:       bundled(nodejs-semver) = 7.8.1
+Provides:       bundled(nodejs-seroval) = 1.3.2
+Provides:       bundled(nodejs-seroval-plugins) = 1.3.3
+Provides:       bundled(nodejs-set-cookie-parser) = 2.7.2
+Provides:       bundled(nodejs-shebang-command) = 2.0.0
+Provides:       bundled(nodejs-shebang-regex) = 3.0.0
+Provides:       bundled(nodejs-signal-exit) = 4.1.0
+Provides:       bundled(nodejs-sigstore) = 4.1.1
+Provides:       bundled(nodejs-sisteransi) = 1.0.5
+Provides:       bundled(nodejs-smart-buffer) = 4.2.0
+Provides:       bundled(nodejs-socks) = 2.8.9
+Provides:       bundled(nodejs-socks-proxy-agent) = 8.0.5
+Provides:       bundled(nodejs-solid-js) = 1.9.10
+Provides:       bundled(nodejs-sonic-boom) = 4.2.1
+Provides:       bundled(nodejs-spdx-exceptions) = 2.5.0
+Provides:       bundled(nodejs-spdx-expression-parse) = 4.0.0
+Provides:       bundled(nodejs-spdx-license-ids) = 3.0.23
+Provides:       bundled(nodejs-ssri) = 13.0.1
+Provides:       bundled(nodejs-string-width) = 7.2.0
+Provides:       bundled(nodejs-strip-ansi) = 7.1.2
+Provides:       bundled(nodejs-strip-bom-string) = 1.0.0
+Provides:       bundled(nodejs-strip-final-newline) = 3.0.0
+Provides:       bundled(nodejs-system-architecture) = 0.1.0
+Provides:       bundled(nodejs-tar) = 7.5.15
+Provides:       bundled(nodejs-thread-stream) = 4.2.0
+Provides:       bundled(nodejs-thunky) = 1.1.0
+Provides:       bundled(nodejs-to-regex-range) = 5.0.1
+Provides:       bundled(nodejs-toad-cache) = 3.7.1
+Provides:       bundled(nodejs-tree-sitter-bash) = 0.25.0
+Provides:       bundled(nodejs-tree-sitter-powershell) = 0.25.10
+Provides:       bundled(nodejs-treeverse) = 3.0.0
+Provides:       bundled(nodejs-tslib) = 2.8.1
+Provides:       bundled(nodejs-tuf-js) = 4.1.0
+Provides:       bundled(nodejs-tunnel) = 0.0.6
+Provides:       bundled(nodejs-turndown) = 7.2.0
+Provides:       bundled(nodejs-typescript) = 5.8.2
+Provides:       bundled(nodejs-ulid) = 3.0.1
+Provides:       bundled(nodejs-universal-user-agent) = 6.0.1
+Provides:       bundled(nodejs-universal-user-agent) = 7.0.3
+Provides:       bundled(nodejs-util-deprecate) = 1.0.2
+Provides:       bundled(nodejs-validate-npm-package-name) = 7.0.2
+Provides:       bundled(nodejs-venice-ai-sdk-provider) = 2.1.1
+Provides:       bundled(nodejs-vscode-jsonrpc) = 8.2.1
+Provides:       bundled(nodejs-walk-up-path) = 4.0.0
+Provides:       bundled(nodejs-web-tree-sitter) = 0.25.10
+Provides:       bundled(nodejs-which) = 2.0.2
+Provides:       bundled(nodejs-which) = 6.0.1
+Provides:       bundled(nodejs-wrap-ansi) = 9.0.2
+Provides:       bundled(nodejs-wrappy) = 1.0.2
+Provides:       bundled(nodejs-write-file-atomic) = 7.0.1
+Provides:       bundled(nodejs-wsl-utils) = 0.1.0
+Provides:       bundled(nodejs-xdg-basedir) = 5.1.0
+Provides:       bundled(nodejs-y18n) = 5.0.8
+Provides:       bundled(nodejs-yallist) = 3.1.1
+Provides:       bundled(nodejs-yargs) = 18.0.0
+Provides:       bundled(nodejs-yargs-parser) = 22.0.0
+Provides:       bundled(nodejs-zod) = 3.25.76
+Provides:       bundled(nodejs-zod) = 4.1.8
+Provides:       bundled(nodejs-zod) = 4.4.3
+Provides:       bundled(nodejs-zod-to-json-schema) = 3.25.2
 # END GENERATED BUNDLED NODE PROVIDES
 
 %description
@@ -196,8 +699,13 @@ echo "%{source_license_set_proof_sha256}  %{SOURCE32}" | sha256sum -c -
 echo "%{source_materialization_sha256}  %{SOURCE33}" | sha256sum -c -
 echo "%{source_audit_sha256}  %{SOURCE34}" | sha256sum -c -
 echo "%{node_modules_materializer_sha256}  %{SOURCE35}" | sha256sum -c -
+echo "%{binary_embedding_auditor_sha256}  %{SOURCE36}" | sha256sum -c -
+echo "%{binary_embedding_receipt_sha256}  %{SOURCE37}" | sha256sum -c -
+echo "%{license_review_sha256}  %{SOURCE38}" | sha256sum -c -
+echo "%{bundle_metafile_patch_sha256}  %{PATCH2}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
+patch -p1 < %{PATCH2}
 
 test -f %{SOURCE1}
 test -f %{SOURCE3}
@@ -219,12 +727,16 @@ test -f %{SOURCE18}
 test -f %{SOURCE19}
 test -f %{SOURCE20}
 test -f %{SOURCE21}
+test -f %{SOURCE36}
+test -f %{SOURCE37}
+test -f %{SOURCE38}
 echo "%{bun_pty_source_sha256}  %{SOURCE6}" | sha256sum -c -
 echo "%{bun_pty_vendor_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{bun_pty_vendor_manifest_sha256}  %{SOURCE8}" | sha256sum -c -
 python3 -m json.tool %{SOURCE3} >/dev/null
 python3 -m json.tool %{SOURCE5} >/dev/null
 cp -p %{SOURCE4} .
+cp -p %{SOURCE37} .
 tar --extract --zstd --file %{SOURCE1}
 mkdir -p .build-tools
 ruby %{SOURCE35} \
@@ -600,7 +1112,23 @@ install -pm0755 "$parcel_source/build/Release/watcher.node" "$parcel_platform/wa
 
 # The source closure is reconstructed before this point. Network-backed
 # package resolution and lifecycle scripts are not permitted here.
+export OPENCODE_BUILD_METAFILE="$PWD/.build-tools/opencode-bundle-metafile.json"
 bun run packages/opencode/script/build.ts --single --skip-install --skip-embed-web-ui
+ruby %{SOURCE36} \
+  --source-root "$PWD" \
+  --metafile "$OPENCODE_BUILD_METAFILE" \
+  --closure %{SOURCE3} \
+  --source-audit %{SOURCE34} \
+  --source-license-set %{SOURCE32} \
+  --license-review %{SOURCE38} \
+  --materialization "$PWD/.build-tools/node-modules-materialization.json" \
+  --build-patch %{PATCH2} \
+  --models-snapshot "$PWD/.build-tools/models-dev-api.json" \
+  --parser-worker "$PWD/node_modules/@opentui/core/parser.worker.js" \
+  --binary "$PWD/packages/opencode/dist/opencode-linux-x64/bin/opencode" \
+  --expected-version "%{version}" \
+  --output "$PWD/.build-tools/opencode-binary-embedding.json"
+cmp "$PWD/.build-tools/opencode-binary-embedding.json" %{SOURCE37}
 
 %check
 test -f %{SOURCE2}
@@ -696,10 +1224,15 @@ install -Dpm0755 \
 %license bun-pty-LICENSE.dependencies bun-pty-cargo-vendor.txt
 %license opentui-LICENSE opentui-uucode-LICENSE.md opentui-yoga-LICENSE
 %license web-tree-sitter-LICENSE tree-sitter-bash-LICENSE tree-sitter-powershell-LICENSE
-%doc README.md
+%doc README.md %{name}-%{version}-binary-embedding.json
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.12
+- Record the normalized Bun compiler input graph for the standalone executable.
+- Generate exact manual bundled Node Provides from 491 embedded public package identities.
+- Reduce package-local license-text review to the 13 gaps present in the shipped npm graph.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.11
 - Isolate Emscripten builds from Fedora's native compiler and linker flags.
 - Materialize the selected source workspaces without package-manager execution.

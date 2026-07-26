@@ -93,6 +93,8 @@ srpm:
 				--output-dir "$$tempdir/output"; \
 			install -pm0755 "$(repo_root)/scripts/materialize-opencode-node-modules" \
 				"$$specdir/materialize-opencode-node-modules"; \
+			install -pm0755 "$(repo_root)/scripts/audit-opencode-binary-embedding" \
+				"$$specdir/audit-opencode-binary-embedding"; \
 			for suffix in closure.json bundled-licenses.txt native.json; do \
 				install -pm0644 "$$tempdir/output/opencode-$$version-$$suffix" \
 					"$$specdir/opencode-$$version-$$suffix"; \

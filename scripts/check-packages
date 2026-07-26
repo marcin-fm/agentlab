@@ -215,8 +215,20 @@ packages.each do |package|
             unless source_packages.all? { |entry| entry["included_in_binary"] == false }
               errors << "#{package.name}: source-only closure overclaims binary inclusion"
             end
-            expected_block = "# BEGIN GENERATED BUNDLED NODE PROVIDES\n# END GENERATED BUNDLED NODE PROVIDES"
-            errors << "#{package.name}: blocked source-only Provides block is not empty" unless actual_block == expected_block
+            provides_filename = source_files["bundled_provides_manifest"]
+            if provides_filename
+              provides_path = File.join(package.directory, provides_filename)
+              if File.file?(provides_path)
+                provides_receipt = JSON.parse(File.read(provides_path))
+                expected_block = Agentlab.node_bundled_provides_block(provides_receipt)
+                errors << "#{package.name}: bundled Node Provides block does not match #{provides_filename}" unless actual_block == expected_block
+              else
+                errors << "#{package.name}: bundled Provides manifest is missing: #{provides_filename}"
+              end
+            else
+              expected_block = "# BEGIN GENERATED BUNDLED NODE PROVIDES\n# END GENERATED BUNDLED NODE PROVIDES"
+              errors << "#{package.name}: blocked source-only Provides block is not empty" unless actual_block == expected_block
+            end
           else
             expected_block = Agentlab.node_bundled_provides_block(closure)
             errors << "#{package.name}: bundled Node Provides block does not match #{closure_filename}" unless actual_block == expected_block

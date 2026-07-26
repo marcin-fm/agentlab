@@ -1,6 +1,6 @@
 # OpenCode Packaging Status
 
-OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; a local network-isolated Fedora 44 x86_64 build now passes, while final binary license mapping, generated bundled Provides, clean Mock/COPR results, and target-matrix verification remain unverified.
+OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; a local network-isolated Fedora 44 x86_64 build, exact compiler-input map, and generated bundled Provides now pass. Final aggregate licensing, clean Mock/COPR results, and target-matrix verification remain unverified.
 
 The 829 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the selected set has 1,018 runtime packages, one build-only Prettier package, and no test-only packages. Configured-SCM preparation regenerates those bundles plus the exact bun-pty Cargo vendor archive and includes all three in the source RPM. Offline dependency-tree assembly and the local application build are verified.
 
@@ -11,6 +11,10 @@ The exact source audit and closure now also drive direct dependency-tree assembl
 The resulting `opencode-1.18.5-0.10.fc44.src.rpm` has 39 members at SHA-256 `091eaf8919b915ddfeb381d154a2c503b5b8f313020db24b7c42ff2764c5985f`, passes RPM digest checks, and completes `%prep` under network isolation. This is source-preparation evidence only; no OpenCode binary was built or installed.
 
 Release `1.18.5-0.11` completes a local Fedora 44 x86_64 network-isolated `rpmbuild -bb`. The 39-member source RPM has SHA-256 `02b633badb43ba814133c9a5549e6625ed148621f8064df8dc37336bcfe2d96d`; the binary RPM has SHA-256 `d3b3b107e4e22450ffd527848c6704f512e656ea6e3bd55ca138b7b0e9991bc9`. Its preserved 127,035,136-byte standalone payload has SHA-256 `3b7b6622b2dc84d2579792569c3ebc8df12da062fdeafbf14d8a00f7a9dcd5b1` and reports `1.18.5` after extraction. All `%check` native/WASM/runtime smokes pass, RPM digests pass, and `rpmlint` reports zero errors with 14 expected generated-source, configure, standalone-strip, PIE, and missing-man-page warnings. No RPM was installed or submitted to COPR; clean Mock builds, final binary/license mapping, bundled Provides, and the target matrix remain open.
+
+Release `1.18.5-0.12` adds an environment-gated Bun metafile patch and a fail-closed binary-embedding audit. The normalized compiler graph has 4,038 inputs, including 3,895 positive-contribution inputs that map completely to 531 materialized package paths, 491 public npm name/version identities, and 12 OpenCode workspaces. The resulting 617,625-byte receipt has SHA-256 `875a50872ca1bdc6ea139767f12a6006aa31f96b33b3259c57d01e4aabf37f70`; the spec generates exactly 491 versioned `bundled(nodejs-...)` capabilities from it, normalizes npm prereleases for RPM, and does not provide `npm(opencode)`. Raw metafile output hashes are intentionally excluded from the canonical receipt because Bun's standalone output records contain build-root-sensitive path data; the normalized input path sets reproduce byte-identically across distinct build roots.
+
+The final `0.12` 43-member source RPM has SHA-256 `8310a97cf2f1cec3a84f7f4da5d6320bbe608e8d2b82b3c28bdedbdf52f72fc2`; the binary RPM has SHA-256 `4e12d67ee3057df0ee014b4321cfbea17ee561a3e9359b815044c7ffae5f1c43`. Its extracted 127,035,136-byte payload has SHA-256 `159ba070b44d55f730dd97c7b716677820e9b9cb3136e01b2e2e6c3e841c6f38` and reports `1.18.5` under network isolation. RPM digests pass, the packaged receipt is byte-identical to the tracked source, and `rpmlint` reports zero errors with the same 14 expected warnings. No RPM was installed or submitted to COPR. The compiler map narrows the source-set license-text review from 28 gaps to 13 embedded npm identities, but it does not close Photon source correspondence, the final Bun/native/WASM license map, aggregate SPDX, `%license` payload, or clean target builds.
 
 The immutable `v1.18.5` tag resolves to commit
 `e5cc278dec9294a627a7b05f47ce6a564408c1a2`, and its source archive has
@@ -32,7 +36,8 @@ The deterministic receipt is
 [`opencode-1.18.5-selected-lock-audit.json`](opencode-1.18.5-selected-lock-audit.json),
 SHA-256 `e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8`.
 It intentionally does not claim source archive verification, license review,
-binary inclusion, or final bundled Provides. Regenerate or verify it with:
+binary inclusion, or final bundled Provides by itself. Those later claims are
+bound separately by `opencode-1.18.5-binary-embedding.json`. Regenerate or verify it with:
 
 ```bash
 scripts/audit-opencode-lock-closure \
@@ -47,8 +52,8 @@ nixpkgs commit `9dd5558b06dbdacbf635a3dd36dce1b1a7ee3a89`, whose Models.dev deri
 selects commit `1eb0b8c8e17ffddd89f53b2a3e426777dc560542`. The RPM rebuilds that snapshot
 twice byte-identically from the exact source plus `zod 3.24.2` and injects the
 1,731,900-byte SHA-256 `8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287`
-JSON through the supported override. Final standalone-binary inclusion remains
-a separate build-time gate.
+JSON through the supported override. The `0.12` compiler map verifies that exact
+snapshot as a supplemental standalone input.
 
 ## Source Acquisition Audit
 
@@ -76,8 +81,9 @@ It records these unresolved gates:
 [`source-license-set-proof.json`](source-license-set-proof.json) classifies all
 829 selected source archives. Every declaration resolves to a Fedora
 allowed-software or allowed-content identifier, but this is not the final
-binary expression: 28 package-local text gaps, Photon correspondence, and
-actual standalone-binary inclusion remain open.
+binary expression: the compiler map narrows 28 package-local text gaps to 13
+embedded identities, while those texts, Photon correspondence, and aggregate
+payload accounting remain open.
 
 No lifecycle script was executed. The lifecycle review now requires dependency
 reconstruction by direct extraction of the reviewed registry archives and
@@ -112,14 +118,16 @@ required system ripgrep provides find, glob, and grep without `libfff_c.so`.
 Parcel watcher cannot be disabled without losing Git branch-update events. The
 draft recipe therefore rebuilds `watcher.node` from the authenticated main npm
 package with Fedora Node 24 headers and replaces the published platform payload
-before Bun compilation. Two local rebuilds were byte-identical and an inotify
-smoke passed, but final Bun embedding and F43/F44 reproduction remain unproven.
+before Bun compilation. Two local rebuilds were byte-identical, an inotify
+smoke passed, and the exact compiler map includes the rebuilt addon; F43/F44
+reproduction and aggregate licensing remain unproven.
 The bun-pty npm wrapper byte-matches its release commit but omits Rust source.
 The draft replaces only its prebuilt `rust-pty` directory with the exact Git
 source, builds against a deterministic 43-crate Cargo vendor archive through
 Fedora macros, and preserves the release path expected by Bun's static import.
-Empty-cache vendored builds were byte-identical; public vendor hosting, final
-Bun embedding, F43/F44 macro builds, and aggregate license closure remain open.
+Empty-cache vendored builds were byte-identical, configured-SCM regenerates the
+vendor archive, and the exact compiler map includes the rebuilt library. F43/F44
+macro builds and aggregate license closure remain open.
 
 OpenTUI `0.4.5` retains the same Bun-pinned Zig 0.15.2 fork and exact uucode and
 Yoga source pins used by the prior native recipe. Two network-isolated current
@@ -128,8 +136,8 @@ builds produced valid stripped libraries at SHA-256
 `02b53e7539b785366cd3f01d11f04eedcd9f866c224d8cfd39b759be7fe70a6a`.
 Both expose the required FFI surface, load with `ctypes`, resolve only the
 expected system libraries, and retain a `GLIBC_2.17` floor. Their differing
-bytes are recorded honestly; final Bun embedding and clean Fedora 43/44 package
-builds remain unverified.
+bytes are recorded honestly; exact local compiler-input inclusion now passes,
+while clean Fedora 43/44 package builds and aggregate licensing remain unverified.
 
 Functional WASM remains fail-closed as a whole. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp
@@ -159,7 +167,7 @@ both grammar WASMs with Fedora `tree-sitter-cli` and the Bun-pinned Zig WASI
 headers. The rebuilt runtime parsed representative Bash and PowerShell inputs
 without errors. Repeated grammar builds were not byte-identical, so
 reproducibility remains honestly false and non-blocking; clean F43/F44 package
-builds and final Bun embedding are still unverified.
+builds remain unverified, while exact local compiler-input inclusion passes.
 
 ```bash
 scripts/acquire-opencode-sources --plan
@@ -169,13 +177,10 @@ scripts/acquire-opencode-sources --jobs 4 --check
 
 The npm `opencode-ai` package and existing binary-oriented COPR/AUR/Homebrew recipes are intentionally not used. They select or install upstream platform executables instead of rebuilding from source.
 
-The draft spec becomes eligible only after:
-
-1. Bun 1.3.14 is source-built in Fedora without bootstrap binaries.
-2. The exact npm source closure is acquired, checksummed, and license-audited.
-3. Native modules and generated assets are rebuilt from source.
-4. Manual `bundled(nodejs-...)` metadata is generated for code embedded in the standalone binary.
-5. System-library decisions and required upstream contacts are recorded.
-6. The build and checks pass without network access.
+The draft remains blocked until the source-built Bun package is available to a
+clean buildroot, Photon corresponding source is resolved, the 13 applicable npm
+text gaps and complete Bun/native/WASM payload produce a final aggregate SPDX
+expression and `%license` payload, required upstream contacts are recorded, and
+the configured Fedora 43, Fedora 44, and Rawhide matrix passes.
 
 Technical dependency facts are tracked in [`dependencies.yml`](dependencies.yml).
