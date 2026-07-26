@@ -43,6 +43,12 @@ source_policy:
   source_license_inventory_archives: 818
   source_license_normalizations_verified: 3
   source_license_not_allowed_sources: 1
+  remix_icon_sprite_sha256: f368eef22c7a605bc3d2794cd9974fbb098ca7bdbafbe3071fddbe300fe7265d
+  remix_icon_sprite_icons: 232
+  remix_icon_sprite_runtime_embedded: true
+  remix_icon_dependency_removal_sufficient: false
+  remix_icon_upstream_issue_url:
+  remix_icon_upstream_request_attempted: true
   source_license_aggregate_verified: false
   source_license_rpm_payload_complete: false
   native_review: openchamber-1.16.3-native-review.yml

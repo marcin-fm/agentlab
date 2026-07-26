@@ -911,6 +911,26 @@ module Agentlab
     }]
     errors << "openchamber: Fedora not-allowed source count mismatch" unless metadata["fedora_not_allowed_sources"] == not_allowed.length
     errors << "openchamber: Fedora license data SHA-256 mismatch" unless metadata["fedora_license_data_sha256"] == review.dig("fedora_license_data", "sha256")
+    remix_hold = metadata.fetch("remix_icon_runtime_hold")
+    expected_remix_hold = {
+      "migration_commit" => "cc59bb822e358e98baf0ae019b9a82c18324bc50",
+      "sprite_path" => "packages/ui/src/components/icon/sprite.ts",
+      "sprite_sha256" => "f368eef22c7a605bc3d2794cd9974fbb098ca7bdbafbe3071fddbe300fe7265d",
+      "sprite_bytes" => 111_859,
+      "sprite_icon_records" => 232,
+      "sprite_path_records" => 232,
+      "generator_path" => "scripts/generate-icon-sprite.mjs",
+      "generator_sha256" => "fa583a792e2f7252244180761e5b9495851fdb42b542f2c556b69846cb97b43d",
+      "generator_bytes" => 10_949,
+      "direct_mobile_import_files" => 4,
+      "normal_build_includes_mobile_entry" => true,
+      "runtime_sprite_injected" => true,
+      "dependency_removal_sufficient" => false,
+      "upstream_issue_url" => nil,
+      "upstream_request_attempted" => true,
+      "upstream_request_failure" => "Resource not accessible by personal access token"
+    }
+    errors << "openchamber: Remix Icon runtime hold mismatch" unless remix_hold == expected_remix_hold
     errors << "openchamber: source-license review overclaims aggregate expression" unless review["aggregate_license_expression_verified"] == false
     errors << "openchamber: source-license review overclaims RPM payload" unless review["rpm_license_payload_complete"] == false
 
@@ -928,6 +948,10 @@ module Agentlab
     errors << "openchamber: package source-license archive count mismatch" unless source_policy["source_license_inventory_archives"] == expected_archives.length
     errors << "openchamber: package source-license normalization count mismatch" unless source_policy["source_license_normalizations_verified"] == expected_normalizations.length
     errors << "openchamber: package Fedora not-allowed source count mismatch" unless source_policy["source_license_not_allowed_sources"] == not_allowed.length
+    errors << "openchamber: package Remix Icon sprite hash mismatch" unless source_policy["remix_icon_sprite_sha256"] == expected_remix_hold["sprite_sha256"]
+    errors << "openchamber: package Remix Icon count mismatch" unless source_policy["remix_icon_sprite_icons"] == 232
+    errors << "openchamber: package overclaims Remix Icon dependency removal" unless source_policy["remix_icon_sprite_runtime_embedded"] == true && source_policy["remix_icon_dependency_removal_sufficient"] == false
+    errors << "openchamber: package fabricates Remix Icon upstream issue" unless source_policy["remix_icon_upstream_issue_url"].nil? && source_policy["remix_icon_upstream_request_attempted"] == true
     errors << "openchamber: package overclaims source-license aggregate" unless source_policy["source_license_aggregate_verified"] == false
     errors << "openchamber: package overclaims source-license RPM payload" unless source_policy["source_license_rpm_payload_complete"] == false
     errors

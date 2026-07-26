@@ -259,6 +259,23 @@ source_license_inventory_receipt:
   normalized_declared_license_sources: 3
   fedora_not_allowed_sources: 1
   fedora_license_data_sha256: 27a1fda193d8a7e7170d2a41929da52bb32416ce970bda3f0fc8fb013d25c8ee
+  remix_icon_runtime_hold:
+    migration_commit: cc59bb822e358e98baf0ae019b9a82c18324bc50
+    sprite_path: packages/ui/src/components/icon/sprite.ts
+    sprite_sha256: f368eef22c7a605bc3d2794cd9974fbb098ca7bdbafbe3071fddbe300fe7265d
+    sprite_bytes: 111859
+    sprite_icon_records: 232
+    sprite_path_records: 232
+    generator_path: scripts/generate-icon-sprite.mjs
+    generator_sha256: fa583a792e2f7252244180761e5b9495851fdb42b542f2c556b69846cb97b43d
+    generator_bytes: 10949
+    direct_mobile_import_files: 4
+    normal_build_includes_mobile_entry: true
+    runtime_sprite_injected: true
+    dependency_removal_sufficient: false
+    upstream_issue_url:
+    upstream_request_attempted: true
+    upstream_request_failure: Resource not accessible by personal access token
   validation:
     aggregate_license_expression_verified: false
     rpm_license_payload_complete: false

@@ -109,6 +109,18 @@ The v2 review normalizes only three evidence-safe Apache declarations:
 blocked on that selected build dependency and on 27 archives without local
 license texts.
 
+The legal hold is also embedded runtime content, not only an npm dependency.
+Upstream commit `cc59bb822e358e98baf0ae019b9a82c18324bc50` generated
+`packages/ui/src/components/icon/sprite.ts` from `@remixicon/react`; release
+`v1.16.3` ships 232 icon records and 232 SVG paths in that 111,859-byte file
+(SHA-256 `f368eef22c7a605bc3d2794cd9974fbb098ca7bdbafbe3071fddbe300fe7265d`).
+The normal Vite build includes the mobile entry, four mobile components still
+import Remix Icon directly, and `Icon.tsx` injects the sprite into the runtime
+DOM. Removing the dependency alone therefore does not remove the not-allowed
+content. Both GraphQL and REST issue creation were attempted after a duplicate
+search, but the scoped GitHub token returned `Resource not accessible by
+personal access token`; no issue URL is claimed.
+
 This deterministic inventory is not an aggregate SPDX `License:` expression or
 a decision about `%license` payloads. It does not verify generated-asset
 licensing, final binary inclusion, bundled Provides, offline builds, package

@@ -4,7 +4,7 @@
 
 Name:           openchamber
 Version:        1.16.3
-Release:        0.17%{?dist}
+Release:        0.18%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -42,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.18
+- Record the embedded Remix Icon runtime payload and upstream request blocker.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.17
 - Classify exceptional source licenses and record the Fedora Remix Icon hold.
 
