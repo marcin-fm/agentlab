@@ -139,6 +139,16 @@ source_materialization_receipt:
     sha256: f755107a94b6ef40bcdc089223ea6cb01253f5729517d77a9b4ea39b9837a3e6
   deterministic_regeneration_verified: true
   rpm_integrated: false
+source_delivery_proof:
+  nvr: opencode-1.18.5-0.9.fc44
+  srpm_sha256: 476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992
+  source_members: 38
+  configured_scm_generation_verified: true
+  npm_bundles_integrated: true
+  bun_pty_vendor_integrated: true
+  closure_evidence_integrated: true
+  package_build_performed: false
+  rpm_installed: false
 source_acquisition_findings:
   raw_missing_declared_license:
     - "@openauthjs/openauth@0.0.0-20250322224806"

@@ -88,6 +88,13 @@ srpm:
 				--spec "$(spec)" \
 				--workdir "$$tempdir/bun-pty" \
 				--output "$$tempdir/output/opencode-$$version-bun-pty-cargo-vendor.tar.zst"; \
+			ruby "$(repo_root)/scripts/prepare-opencode-closure-evidence" \
+				--package-dir "$$specdir" \
+				--output-dir "$$tempdir/output"; \
+			for suffix in closure.json bundled-licenses.txt native.json; do \
+				install -pm0644 "$$tempdir/output/opencode-$$version-$$suffix" \
+					"$$specdir/opencode-$$version-$$suffix"; \
+			done; \
 			install -pm0644 "$$tempdir/output/opencode-$$version-nm-prod-build.tar.zst" \
 				"$$specdir/opencode-$$version-nm-prod-build.tar.zst"; \
 			install -pm0644 "$$tempdir/output/opencode-$$version-nm-dev-test.tar.zst" \

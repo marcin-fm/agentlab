@@ -56,7 +56,7 @@
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.8%{?dist}
+Release:        0.9%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -155,10 +155,10 @@ Requires:       ripgrep
 
 %description
 OpenCode is an open-source coding agent with a terminal user interface, local
-server, and provider integrations.
+server, and provider support.
 
 This draft is intentionally excluded from COPR until every source-build and
-license gate recorded in package.yml is complete.
+license gate recorded in the package metadata is complete.
 
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
@@ -673,6 +673,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.9
+- Integrate the checked npm and bun-pty sources into the source RPM.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.8
 - Materialize the checked npm source bundles deterministically.
 

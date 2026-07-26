@@ -5132,6 +5132,19 @@ module Agentlab
       errors << "#{prefix} source materialization receipt is missing"
     end
 
+    expected_source_delivery = {
+      "nvr" => "opencode-1.18.5-0.9.fc44",
+      "srpm_sha256" => "476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992",
+      "source_members" => 38,
+      "configured_scm_generation_verified" => true,
+      "npm_bundles_integrated" => true,
+      "bun_pty_vendor_integrated" => true,
+      "closure_evidence_integrated" => true,
+      "package_build_performed" => false,
+      "rpm_installed" => false
+    }
+    errors << "#{prefix} source delivery proof does not match" unless dependencies["source_delivery_proof"] == expected_source_delivery
+
     native_filename = source_files["native_review"]
     native_finding = dependencies.dig("source_acquisition_findings", "native_review")
     errors << "#{prefix} native review path linkage is invalid" unless native_finding.is_a?(Hash) && native_finding["path"] == native_filename
@@ -5391,7 +5404,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.8%{?dist}",
+        "Release:        0.9%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",

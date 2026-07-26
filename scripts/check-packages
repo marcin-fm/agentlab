@@ -208,9 +208,19 @@ packages.each do |package|
       if closure_path && File.file?(closure_path)
         begin
           closure = JSON.parse(File.read(closure_path))
-          expected_block = Agentlab.node_bundled_provides_block(closure)
           actual_block = spec[/# BEGIN GENERATED BUNDLED NODE PROVIDES\n.*?# END GENERATED BUNDLED NODE PROVIDES/m]
-          errors << "#{package.name}: bundled Node Provides block does not match #{closure_filename}" unless actual_block == expected_block
+          if closure["schema"] == "agentlab-opencode-source-closure/v1"
+            errors << "#{package.name}: enabled package cannot use a source-only closure manifest" if package.enabled?
+            source_packages = closure.fetch("packages")
+            unless source_packages.all? { |entry| entry["included_in_binary"] == false }
+              errors << "#{package.name}: source-only closure overclaims binary inclusion"
+            end
+            expected_block = "# BEGIN GENERATED BUNDLED NODE PROVIDES\n# END GENERATED BUNDLED NODE PROVIDES"
+            errors << "#{package.name}: blocked source-only Provides block is not empty" unless actual_block == expected_block
+          else
+            expected_block = Agentlab.node_bundled_provides_block(closure)
+            errors << "#{package.name}: bundled Node Provides block does not match #{closure_filename}" unless actual_block == expected_block
+          end
         rescue JSON::ParserError, Agentlab::Error, KeyError => e
           errors << "#{package.name}: invalid closure manifest #{closure_filename}: #{e.message}"
         end

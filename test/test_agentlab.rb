@@ -948,11 +948,13 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "scripts/acquire-opencode-sources")
     assert_includes(makefile, "scripts/materialize-opencode-sources")
     assert_includes(makefile, "scripts/prepare-opencode-bun-pty-sources")
+    assert_includes(makefile, "scripts/prepare-opencode-closure-evidence")
     assert_includes(makefile, 'cmp "$$tempdir/source-audit.json"')
     assert_includes(makefile, 'cmp "$$tempdir/source-materialization.json"')
     assert_includes(makefile, "opencode-$$version-nm-prod-build.tar.zst")
     assert_includes(makefile, "opencode-$$version-nm-dev-test.tar.zst")
     assert_includes(makefile, "opencode-$$version-bun-pty-cargo-vendor.tar.zst")
+    assert_includes(makefile, "closure.json bundled-licenses.txt native.json")
   end
 
   def test_copr_makefile_materializes_the_tree_sitter_parser_subset
@@ -2850,6 +2852,16 @@ class AgentlabTest < Minitest::Test
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
 
     assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
+  end
+
+  def test_rejects_incomplete_opencode_source_delivery_proof
+    package = Agentlab.package_named("opencode")
+    dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
+    dependencies.fetch("source_delivery_proof")["source_members"] -= 1
+
+    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+
+    assert_includes(errors, "opencode: source delivery proof does not match")
   end
 
   def test_rejects_inconsistent_opencode_models_snapshot_evidence

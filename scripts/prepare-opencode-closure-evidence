@@ -1,0 +1,122 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "optparse"
+require "yaml"
+require_relative "lib/agentlab"
+
+module Agentlab
+  module OpenCodeClosureEvidence
+    module_function
+
+    def prepare!(package_dir:, output_dir:)
+      package_dir = File.expand_path(package_dir)
+      output_dir = File.expand_path(output_dir)
+      dependencies = Agentlab.load_yaml(File.join(package_dir, "dependencies.yml"))
+      files = dependencies.fetch("source_closure_files")
+      selected_path = File.join(package_dir, files.fetch("selected_lock_audit"))
+      source_path = File.join(package_dir, files.fetch("source_audit"))
+      license_path = File.join(package_dir, files.fetch("source_license_set_proof"))
+      native_path = File.join(package_dir, files.fetch("native_review"))
+
+      selected = JSON.parse(File.read(selected_path))
+      license_set = JSON.parse(File.read(license_path))
+      native = YAML.safe_load(File.read(native_path), aliases: false)
+      validate_inputs!(selected, license_set, native)
+      release = selected.fetch("release")
+
+      closure = {
+        "schema" => "agentlab-opencode-source-closure/v1",
+        "package" => "opencode",
+        "release" => release,
+        "receipts" => {
+          "selected_lock" => file_receipt(selected_path),
+          "source_audit" => file_receipt(source_path),
+          "source_license_set" => file_receipt(license_path),
+          "native_review" => file_receipt(native_path)
+        },
+        "workspaces" => selected.fetch("workspaces"),
+        "packages" => selected.fetch("packages").map do |record|
+          record.slice(
+            "package_path", "npm_name", "version", "origin", "role", "candidate_for_binary",
+            "integrity", "source_url"
+          ).merge("included_in_binary" => false)
+        end,
+        "validation" => {
+          "selected_source_set_verified" => true,
+          "source_archives_verified" => true,
+          "final_binary_inclusion_verified" => false,
+          "bundled_provides_verified" => false,
+          "offline_build_verified" => false
+        }
+      }
+      licenses = license_inventory(license_set)
+      native_json = JSON.pretty_generate(native) + "\n"
+      outputs = {
+        files.fetch("closure_manifest") => JSON.pretty_generate(closure) + "\n",
+        files.fetch("bundled_licenses") => licenses,
+        files.fetch("native_manifest") => native_json
+      }
+      FileUtils.mkdir_p(output_dir)
+      outputs.each { |filename, content| Agentlab.atomic_write(File.join(output_dir, filename), content) }
+      outputs.transform_values { |content| { "size_bytes" => content.bytesize, "sha256" => Digest::SHA256.hexdigest(content) } }
+    rescue JSON::ParserError, Psych::SyntaxError => e
+      raise Agentlab::Error, "invalid OpenCode closure evidence input: #{e.message}"
+    end
+
+    def validate_inputs!(selected, license_set, native)
+      raise Agentlab::Error, "OpenCode selected-lock schema mismatch" unless selected["schema"] == "opencode-selected-lock-audit/v1"
+      raise Agentlab::Error, "OpenCode source-license schema mismatch" unless license_set["schema"] == "agentlab-opencode-source-license-set/v1"
+      raise Agentlab::Error, "OpenCode native-review schema mismatch" unless native["schema"] == "opencode-native-review/v1"
+      releases = [selected["release"], license_set["release"], native["release"]].map(&:to_s)
+      raise Agentlab::Error, "OpenCode closure evidence release mismatch" unless releases.uniq.length == 1
+      raise Agentlab::Error, "OpenCode selected package count mismatch" unless selected.dig("selection", "selected_packages") == selected.fetch("packages").length
+      raise Agentlab::Error, "OpenCode license archive count mismatch" unless license_set.dig("scope", "unique_source_archives") == 828
+      raise Agentlab::Error, "OpenCode native review retains prebuilts" unless native.dig("status", "retained_prebuilt_payloads") == 0
+    end
+
+    def license_inventory(license_set)
+      lines = [
+        "OpenCode #{license_set.fetch('release')} selected source-license inventory",
+        "",
+        "Candidate source expression:",
+        license_set.fetch("candidate_source_expression"),
+        "",
+        "Expression counts:"
+      ]
+      license_set.fetch("expression_counts").sort.each do |expression, count|
+        lines << "#{count}\t#{expression}"
+      end
+      lines.concat([
+        "",
+        "Package-local text gaps: #{license_set.dig('unresolved', 'package_local_text_gaps')}",
+        "Final binary inclusion verified: false",
+        "Final binary license expression verified: false",
+        "RPM license payload complete: false",
+        ""
+      ])
+      lines.join("\n")
+    end
+
+    def file_receipt(path)
+      { "filename" => File.basename(path), "sha256" => Digest::SHA256.file(path).hexdigest }
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  package_dir = nil
+  output_dir = nil
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/prepare-opencode-closure-evidence --package-dir PATH --output-dir PATH"
+    parser.on("--package-dir PATH", "OpenCode package directory") { |path| package_dir = path }
+    parser.on("--output-dir PATH", "Generated source directory") { |path| output_dir = path }
+  end.parse!
+  abort("error: --package-dir and --output-dir are required") unless package_dir && output_dir
+
+  outputs = Agentlab::OpenCodeClosureEvidence.prepare!(package_dir: package_dir, output_dir: output_dir)
+  outputs.each { |filename, receipt| puts "Wrote #{filename} (#{receipt.fetch('size_bytes')} bytes, #{receipt.fetch('sha256')})" }
+end
