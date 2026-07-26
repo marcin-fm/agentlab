@@ -101,11 +101,14 @@ Empty-cache vendored builds were byte-identical; public vendor hosting, final
 Bun embedding, F43/F44 macro builds, and aggregate license closure remain open.
 
 OpenTUI `0.4.5` retains the same Bun-pinned Zig 0.15.2 fork and exact uucode and
-Yoga source pins used by the prior native recipe. The draft updates both the
-source archive and published Linux payload identities, but the successful local
-`0.4.3` rebuild, symbol, and glibc-floor proof does not transfer to the changed
-source. The current `0.4.5` native rebuild, dynamic-linkage checks, Bun embedding,
-and clean Fedora 43/44 package builds therefore remain unverified.
+Yoga source pins used by the prior native recipe. Two network-isolated current
+builds produced valid stripped libraries at SHA-256
+`e24478d37ba1ed3aa3c93ce5265d3bbfc396297c6a1e838f4a42341562ae04e3` and
+`02b53e7539b785366cd3f01d11f04eedcd9f866c224d8cfd39b759be7fe70a6a`.
+Both expose the required FFI surface, load with `ctypes`, resolve only the
+expected system libraries, and retain a `GLIBC_2.17` floor. Their differing
+bytes are recorded honestly; final Bun embedding and clean Fedora 43/44 package
+builds remain unverified.
 
 All functional WASM remains fail-closed. Exact corresponding sources are now
 mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp

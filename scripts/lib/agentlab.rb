@@ -5215,7 +5215,7 @@ module Agentlab
           "zig_package_hash" => "uucode-0.1.0-ZZjBPtA_TQCWp5PIKmfm5tu1WOkKWFmBGFEMxircPfkA"
         },
         "yoga" => {
-          "source_url" => "https://codeload.github.com/facebook/yoga/tar.gz/042f5013152eb81c1552dec945b88f7b95ca350f",
+          "source_url" => "https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz",
           "source_tag" => "v3.2.1",
           "source_commit" => "042f5013152eb81c1552dec945b88f7b95ca350f",
           "source_sha256" => "86b399ac31fd820d8ffa823c3fae31bb690b6fc45301b2a8a966c09b5a088b55",
@@ -5238,16 +5238,28 @@ module Agentlab
           "offline_build_verified" => true,
           "ctypes_dlopen_verified" => true
         },
+        "current_release_proof" => {
+          "release" => "0.4.5",
+          "local_recipe_output_sha256" => %w[e24478d37ba1ed3aa3c93ce5265d3bbfc396297c6a1e838f4a42341562ae04e3 02b53e7539b785366cd3f01d11f04eedcd9f866c224d8cfd39b759be7fe70a6a],
+          "output_bytes" => 3_708_104,
+          "local_rebuilds" => 2,
+          "local_rebuilds_byte_identical" => false,
+          "ffi_exports" => %w[bufferDrawBox createRenderer destroyRenderer render yogaNodeCreate],
+          "dynamic_libraries" => %w[libm.so.6 libpthread.so.0 libc.so.6 libdl.so.2 ld-linux-x86-64.so.2],
+          "max_glibc" => "GLIBC_2.17",
+          "offline_build_verified" => true,
+          "ctypes_dlopen_verified" => true
+        },
         "byte_reproducible" => false,
         "reproducibility_required_by_fedora" => false,
         "linked_source_licenses" => %w[opentui-LICENSE opentui-uucode-LICENSE.md opentui-yoga-LICENSE],
-        "offline_build_verified" => false,
-        "ctypes_dlopen_verified" => false,
+        "offline_build_verified" => true,
+        "ctypes_dlopen_verified" => true,
         "bun_ffi_smoke_in_spec" => true,
         "published_payload_discarded" => true,
         "final_bun_embedding_verified" => false,
         "f43_f44_builds_verified" => false,
-        "local_proof_only" => false
+        "local_proof_only" => true
       }
       unless opentui&.dig("provenance", "source_build") == expected_opentui_build
         errors << "#{prefix} OpenTUI source-build evidence does not match"
@@ -5260,10 +5272,10 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.1%{?dist}",
+        "Release:        0.2%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
-        "Source11:       https://codeload.github.com/facebook/yoga/tar.gz/%{yoga_commit}",
+        "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
         "Source12:       https://codeload.github.com/oven-sh/zig/tar.gz/%{zig_commit}",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",

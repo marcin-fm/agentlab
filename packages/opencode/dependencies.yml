@@ -142,7 +142,7 @@ source_acquisition_findings:
     source_mappings_verified: 13
     source_mappings_unresolved: 1
     native_sources_verified: false
-    opentui_native_source_build_verified: false
+    opentui_native_source_build_verified: true
     tree_sitter_wasm_source_builds_verified: 3
     wasm_sources_verified: false
   install_phase_scripts:

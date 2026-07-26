@@ -37,7 +37,7 @@
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -55,7 +55,7 @@ Source7:        %{name}-%{version}-bun-pty-cargo-vendor.tar.zst
 Source8:        %{name}-%{version}-bun-pty-cargo-vendor.txt
 Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz#/%{name}-%{version}-opentui-%{opentui_version}.tar.gz
 Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz#/%{name}-%{version}-uucode-%{uucode_commit}.tar.gz
-Source11:       https://codeload.github.com/facebook/yoga/tar.gz/%{yoga_commit}#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz
+Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz
 Source12:       https://codeload.github.com/oven-sh/zig/tar.gz/%{zig_commit}#/%{name}-%{version}-zig-%{zig_commit}.tar.gz
 Source13:       https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v%{tree_sitter_version}.tar.gz#/%{name}-%{version}-tree-sitter-%{tree_sitter_version}.tar.gz
 Source14:       https://github.com/emscripten-core/emscripten/archive/refs/tags/%{emscripten_version}.tar.gz#/%{name}-%{version}-emscripten-%{emscripten_version}.tar.gz
@@ -515,6 +515,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.2
+- Rebuild the current OpenTUI native library from exact sources.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.1
 - Refresh exact release and selected-source evidence.
 - Update OpenTUI identities while retaining fail-closed build gates.
