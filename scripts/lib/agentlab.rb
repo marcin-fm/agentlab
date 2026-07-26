@@ -377,6 +377,20 @@ module Agentlab
     [stdout, stderr, status]
   end
 
+  def unavailable_rpm_macro_parse_failure(spec_path, stderr, macro_available: nil)
+    match = stderr.match(/Unknown tag: %([A-Za-z][A-Za-z0-9_]*)/)
+    return unless match
+
+    macro = match[1]
+    return unless File.foreach(spec_path).any? { |line| line.lstrip.start_with?("%#{macro}") }
+
+    if macro_available.nil?
+      stdout, _macro_stderr, status = capture(["rpm", "--eval", "%{?#{macro}:present}"])
+      macro_available = status.success? && stdout.strip == "present"
+    end
+    macro unless macro_available
+  end
+
   def copr_resource_missing?(message)
     message.match?(/\b404\b|does not exist|not found|no (?:package|project|copr) with name/i)
   end

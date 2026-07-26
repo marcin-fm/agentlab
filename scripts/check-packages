@@ -347,7 +347,13 @@ packages.each do |package|
   next unless Agentlab.command_available?("rpmspec")
 
   _stdout, stderr, status = Agentlab.capture(["rpmspec", "-P", package.spec_path])
-  errors << "#{package.name}: rpmspec parse failed: #{stderr.strip}" unless status.success?
+  unless status.success?
+    if (macro = Agentlab.unavailable_rpm_macro_parse_failure(package.spec_path, stderr))
+      warnings << "#{package.name}: rpmspec parsing skipped because runner lacks Fedora macro %#{macro}"
+    else
+      errors << "#{package.name}: rpmspec parse failed: #{stderr.strip}"
+    end
+  end
 end
 
 unless selected_name

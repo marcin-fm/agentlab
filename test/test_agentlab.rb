@@ -44,6 +44,17 @@ class AgentlabTest < Minitest::Test
     assert_equal(true, parsed.dig("nested", "enabled"))
   end
 
+  def test_identifies_only_an_invoked_unavailable_rpm_macro
+    Dir.mktmpdir do |directory|
+      spec = File.join(directory, "fixture.spec")
+      File.write(spec, "%gometa -L -f\nName: fixture\n")
+      assert_equal("gometa", Agentlab.unavailable_rpm_macro_parse_failure(spec, "error: line 1: Unknown tag: %gometa -L -f", macro_available: false))
+      assert_nil(Agentlab.unavailable_rpm_macro_parse_failure(spec, "error: line 1: Unknown tag: %gometa -L -f", macro_available: true))
+      assert_nil(Agentlab.unavailable_rpm_macro_parse_failure(spec, "error: line 1: Unknown tag: %other", macro_available: false))
+      assert_nil(Agentlab.unavailable_rpm_macro_parse_failure(spec, "error: unrelated parse failure", macro_available: false))
+    end
+  end
+
   def test_openchamber_lock_selector_preserves_role_precedence_and_platform_filters
     integrity = "sha512-fixture"
     workspaces = {
