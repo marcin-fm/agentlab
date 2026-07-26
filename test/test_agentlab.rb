@@ -2867,6 +2867,37 @@ class AgentlabTest < Minitest::Test
     assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
   end
 
+  def test_validates_opencode_review_without_generated_source_closure
+    source_package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    Dir.mktmpdir do |directory|
+      dependencies.fetch("source_closure_files").each do |key, filename|
+        next if key == "closure_manifest"
+
+        source = File.join(source_package.directory, filename)
+        FileUtils.cp(source, File.join(directory, filename)) if File.file?(source)
+      end
+      %w[
+        opencode.spec
+        opencode-record-bundle-metafile.patch
+        opencode-disable-fff.patch
+        opencode-zig-fedora-lib64.patch
+        opencode-build-web-tree-sitter-runtime.py
+        opencode-validate-tree-sitter.mjs
+        opencode-1.18.5-bun-pty-cargo-vendor.txt
+      ].each do |filename|
+        FileUtils.cp(File.join(source_package.directory, filename), File.join(directory, filename))
+      end
+      package = Agentlab::Package.new(
+        directory: directory,
+        manifest_path: "unused",
+        data: source_package.data
+      )
+
+      assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
+    end
+  end
+
   def test_rejects_incomplete_opencode_source_delivery_proof
     package = Agentlab.package_named("opencode")
     dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))

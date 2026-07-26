@@ -5267,15 +5267,20 @@ module Agentlab
 
         closure_filename = source_files["closure_manifest"]
         closure_path = closure_filename.is_a?(String) && File.join(package.directory, closure_filename)
+        expected_closure_sha256 = dependencies.dig("node_modules_materialization_proof", "source_closure_sha256")
         auditor_path = File.join(ROOT, "scripts", "audit-opencode-binary-embedding")
         build_patch_path = File.join(package.directory, "opencode-record-bundle-metafile.patch")
-        errors << "#{prefix} binary embedding source closure is missing" unless closure_path && File.file?(closure_path)
         errors << "#{prefix} binary embedding auditor is missing" unless File.file?(auditor_path)
         errors << "#{prefix} binary embedding build patch is missing" unless File.file?(build_patch_path)
-        if closure_path && File.file?(closure_path)
+        if closure_filename.is_a?(String) && expected_closure_sha256.to_s.match?(/\A[0-9a-f]{64}\z/)
+          if closure_path && File.file?(closure_path)
+            errors << "#{prefix} generated source closure SHA-256 does not match" unless Digest::SHA256.file(closure_path).hexdigest == expected_closure_sha256
+          end
           errors << "#{prefix} binary embedding closure receipt does not match" unless embedding.dig("receipts", "source_closure") == {
-            "filename" => closure_filename, "sha256" => Digest::SHA256.file(closure_path).hexdigest
+            "filename" => closure_filename, "sha256" => expected_closure_sha256
           }
+        else
+          errors << "#{prefix} binary embedding source closure contract is invalid"
         end
         errors << "#{prefix} binary embedding source-audit receipt does not match" unless embedding.dig("receipts", "source_audit") == {
           "filename" => source_filename, "sha256" => Digest::SHA256.file(source_path).hexdigest
