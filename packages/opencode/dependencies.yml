@@ -149,6 +149,20 @@ source_delivery_proof:
   closure_evidence_integrated: true
   package_build_performed: false
   rpm_installed: false
+node_modules_materialization_proof:
+  schema: agentlab-opencode-node-modules-materialization/v1
+  source_archives: 828
+  package_paths: 1018
+  target_path_set_sha256: 9ba7604dbfba348ee77626f535d24e06a78e7d591c341726465b3f43bf1ec0e7
+  archive_sizes_verified: true
+  archive_sha256_verified: true
+  package_identities_verified: true
+  package_paths_verified: true
+  network_access_performed: false
+  package_manager_executed: false
+  dependency_resolution_performed: false
+  lifecycle_scripts_executed: false
+  package_build_performed: false
 source_acquisition_findings:
   raw_missing_declared_license:
     - "@openauthjs/openauth@0.0.0-20250322224806"

@@ -91,6 +91,8 @@ srpm:
 			ruby "$(repo_root)/scripts/prepare-opencode-closure-evidence" \
 				--package-dir "$$specdir" \
 				--output-dir "$$tempdir/output"; \
+			install -pm0755 "$(repo_root)/scripts/materialize-opencode-node-modules" \
+				"$$specdir/materialize-opencode-node-modules"; \
 			for suffix in closure.json bundled-licenses.txt native.json; do \
 				install -pm0644 "$$tempdir/output/opencode-$$version-$$suffix" \
 					"$$specdir/opencode-$$version-$$suffix"; \

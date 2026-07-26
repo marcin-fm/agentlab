@@ -1,0 +1,160 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+
+module Agentlab
+  Error = Class.new(StandardError) unless const_defined?(:Error)
+
+  unless respond_to?(:atomic_write)
+    def self.atomic_write(path, content)
+      temporary = "#{path}.tmp-#{Process.pid}"
+      File.binwrite(temporary, content)
+      File.rename(temporary, path)
+    ensure
+      FileUtils.rm_f(temporary) if temporary
+    end
+  end
+
+  module OpenCodeNodeModules
+    module_function
+
+    def materialize!(source_audit_path:, bundle_root:, source_root:, receipt_path:)
+      source_audit_path = File.expand_path(source_audit_path)
+      bundle_root = File.realpath(bundle_root)
+      source_root = File.realpath(source_root)
+      receipt_path = File.expand_path(receipt_path)
+      audit_bytes = File.binread(source_audit_path)
+      audit = JSON.parse(audit_bytes)
+      validate_audit!(audit)
+      node_modules = File.join(source_root, "node_modules")
+      if Dir.exist?(node_modules) && !Dir.empty?(node_modules)
+        raise Agentlab::Error, "OpenCode node_modules target is not empty"
+      end
+      FileUtils.mkdir_p(node_modules)
+
+      targets = {}
+      audit.fetch("sources").sort_by { |source| source.fetch("archive") }.each do |source|
+        archive = File.join(bundle_root, source.fetch("archive"))
+        verify_archive!(archive, source)
+        source.fetch("package_paths").sort.each do |package_path|
+          target = package_target(source_root, package_path)
+          raise Agentlab::Error, "duplicate OpenCode package target #{package_path}" if targets.key?(target)
+          if File.file?(File.join(target, "package.json"))
+            raise Agentlab::Error, "OpenCode package target already exists #{target}"
+          end
+          FileUtils.mkdir_p(target)
+          run!(
+            "tar", "-xzf", archive, "--strip-components=1", "--no-same-owner",
+            "--warning=no-unknown-keyword", "-C", target
+          )
+          manifest_path = File.join(target, "package.json")
+          raise Agentlab::Error, "OpenCode package manifest is missing for #{package_path}" unless File.file?(manifest_path)
+          manifest = JSON.parse(File.read(manifest_path))
+          unless manifest["name"] == source["npm_name"] && manifest["version"].to_s == source["version"].to_s
+            raise Agentlab::Error, "OpenCode package identity mismatch for #{package_path}"
+          end
+          targets[target] = {
+            "package_path" => package_path,
+            "target" => target.delete_prefix("#{source_root}/"),
+            "npm_name" => source.fetch("npm_name"),
+            "version" => source.fetch("version"),
+            "archive" => source.fetch("archive")
+          }
+        end
+      end
+
+      receipt = {
+        "schema" => "agentlab-opencode-node-modules-materialization/v1",
+        "package" => "opencode",
+        "release" => audit.fetch("release"),
+        "source_audit" => {
+          "filename" => File.basename(source_audit_path),
+          "sha256" => Digest::SHA256.hexdigest(audit_bytes)
+        },
+        "scope" => {
+          "source_archives" => audit.fetch("sources").length,
+          "package_paths" => targets.length,
+          "target_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(targets.values.sort_by { |entry| entry.fetch("target") }) + "\n")
+        },
+        "validation" => {
+          "archive_sizes_verified" => true,
+          "archive_sha256_verified" => true,
+          "package_identities_verified" => true,
+          "package_paths_verified" => true,
+          "network_access_performed" => false,
+          "package_manager_executed" => false,
+          "dependency_resolution_performed" => false,
+          "lifecycle_scripts_executed" => false,
+          "package_build_performed" => false
+        }
+      }
+      Agentlab.atomic_write(receipt_path, JSON.pretty_generate(receipt) + "\n")
+      receipt
+    rescue JSON::ParserError => e
+      raise Agentlab::Error, "invalid OpenCode node_modules input: #{e.message}"
+    end
+
+    def package_target(source_root, package_path)
+      parts = package_path.split("/")
+      packages = []
+      until parts.empty?
+        if parts.first.start_with?("@")
+          raise Agentlab::Error, "invalid scoped OpenCode package path #{package_path}" if parts.length < 2
+          packages << "#{parts.shift}/#{parts.shift}"
+        else
+          packages << parts.shift
+        end
+      end
+      raise Agentlab::Error, "empty OpenCode package path" if packages.empty?
+      packages.reduce(source_root) { |path, package| File.join(path, "node_modules", package) }
+    end
+
+    def validate_audit!(audit)
+      raise Agentlab::Error, "OpenCode source-audit schema mismatch" unless audit["schema"] == "opencode-source-acquisition/v1"
+      raise Agentlab::Error, "OpenCode source-audit package mismatch" unless audit["package"] == "opencode"
+      sources = audit.fetch("sources")
+      paths = sources.flat_map { |source| source.fetch("package_paths") }
+      raise Agentlab::Error, "duplicate OpenCode package path" unless paths.uniq.length == paths.length
+    end
+
+    def verify_archive!(archive, source)
+      raise Agentlab::Error, "missing OpenCode source archive #{archive}" unless File.file?(archive)
+      raise Agentlab::Error, "OpenCode source archive size mismatch" unless File.size(archive) == source.fetch("size")
+      raise Agentlab::Error, "OpenCode source archive SHA-256 mismatch" unless Digest::SHA256.file(archive).hexdigest == source.fetch("sha256")
+    end
+
+    def run!(*command)
+      output, error, status = Open3.capture3(*command)
+      return output if status.success?
+      raise Agentlab::Error, "command failed: #{command.join(' ')}\n#{error}#{output}"
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  source_audit = nil
+  bundle_root = nil
+  source_root = nil
+  receipt = nil
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/materialize-opencode-node-modules --source-audit PATH --bundle-root PATH --source-root PATH --receipt PATH"
+    parser.on("--source-audit PATH") { |path| source_audit = path }
+    parser.on("--bundle-root PATH") { |path| bundle_root = path }
+    parser.on("--source-root PATH") { |path| source_root = path }
+    parser.on("--receipt PATH") { |path| receipt = path }
+  end.parse!
+  abort("error: all options are required") unless source_audit && bundle_root && source_root && receipt
+
+  result = Agentlab::OpenCodeNodeModules.materialize!(
+    source_audit_path: source_audit,
+    bundle_root: bundle_root,
+    source_root: source_root,
+    receipt_path: receipt
+  )
+  puts "Materialized #{result.dig('scope', 'package_paths')} OpenCode package paths from #{result.dig('scope', 'source_archives')} archives."
+end

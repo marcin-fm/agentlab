@@ -141,7 +141,7 @@ components:
         output: packages/core/src/zig/lib/x86_64-linux/libopentui.so
         platform_package: "@opentui/core-linux-x64@0.4.5"
         platform_payload: libopentui.so
-        published_payload_sha256: 0c557e6f59b397c35d25eaa28d874a054f7bffecaf90c521a2a0307ede45bd1f
+        published_payload_sha256: ce73133a58d35e35610ef53353ddeeeb93fb29505dde0cf1854ce25facee241d
         previous_release_proof:
           release: "0.4.3"
           local_recipe_output_sha256: 1ce4b92b1a075602837c361c6423b7b54298d0c402e3801cbeb27e4e7d935baa

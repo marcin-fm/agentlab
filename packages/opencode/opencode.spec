@@ -7,7 +7,7 @@
 %global bun_pty_vendor_manifest_sha256 d57a66c2a1e90516e0b103b3074001f96cefcb4adb4ecc8c3a5532a2c884e500
 %global opentui_version 0.4.5
 %global opentui_source_sha256 a87acc1af6d5f62ee48905176965514b06c7b6e8f9c1fe869604e5933825ca50
-%global opentui_published_sha256 0c557e6f59b397c35d25eaa28d874a054f7bffecaf90c521a2a0307ede45bd1f
+%global opentui_published_sha256 ce73133a58d35e35610ef53353ddeeeb93fb29505dde0cf1854ce25facee241d
 %global uucode_commit 84ceda8561a17ba4a9b96ac5c583f779660bbd4e
 %global uucode_source_sha256 4a7f194ad1f583ffae00bf625986527df89ddd55309ff30314d2d17539a7b011
 %global uucode_zig_hash uucode-0.1.0-ZZjBPtA_TQCWp5PIKmfm5tu1WOkKWFmBGFEMxircPfkA
@@ -53,10 +53,12 @@
 %global models_dev_proof_sha256 3b54b21170b3901f3614284ad301ceb1706e310cda027849a55f234bcc6ca1aa
 %global source_license_set_proof_sha256 0d3a4c00971ed5a21f99ea0710d7fde7d045ab93f2be922087b8b4af27ed2247
 %global source_materialization_sha256 dd8beedf7a3ceac79cb18cbad3dc97149072bc360b6ea76f8cd18b2cdd6f0b46
+%global source_audit_sha256 619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc
+%global node_modules_materializer_sha256 2d81ab9b4809d50ff49dc0552539fdea86c504a976065785660b17c749915802
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.9%{?dist}
+Release:        0.10%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -97,6 +99,8 @@ Source30:       https://registry.npmjs.org/zod/-/zod-3.24.2.tgz#/%{name}-%{versi
 Source31:       models-snapshot-proof.json
 Source32:       source-license-set-proof.json
 Source33:       opencode-1.18.5-source-materialization.json
+Source34:       opencode-1.18.5-source-audit.json
+Source35:       materialize-opencode-node-modules
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -140,6 +144,7 @@ BuildRequires:  nodejs24-npm
 BuildRequires:  patch
 BuildRequires:  pkgconfig
 BuildRequires:  python3
+BuildRequires:  ruby
 BuildRequires:  coreutils
 BuildRequires:  tar
 BuildRequires:  tree-sitter-cli >= 0.26.9
@@ -187,6 +192,8 @@ echo "%{models_dev_zod_sha256}  %{SOURCE30}" | sha256sum -c -
 echo "%{models_dev_proof_sha256}  %{SOURCE31}" | sha256sum -c -
 echo "%{source_license_set_proof_sha256}  %{SOURCE32}" | sha256sum -c -
 echo "%{source_materialization_sha256}  %{SOURCE33}" | sha256sum -c -
+echo "%{source_audit_sha256}  %{SOURCE34}" | sha256sum -c -
+echo "%{node_modules_materializer_sha256}  %{SOURCE35}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
 
@@ -217,6 +224,12 @@ python3 -m json.tool %{SOURCE3} >/dev/null
 python3 -m json.tool %{SOURCE5} >/dev/null
 cp -p %{SOURCE4} .
 tar --extract --zstd --file %{SOURCE1}
+mkdir -p .build-tools
+ruby %{SOURCE35} \
+  --source-audit %{SOURCE34} \
+  --bundle-root "$PWD/opencode-%{version}-nm-prod-build/npm" \
+  --source-root "$PWD" \
+  --receipt "$PWD/.build-tools/node-modules-materialization.json"
 
 # Materialize only corresponding source and the two minimal registry build
 # inputs. No package-manager resolution or dependency lifecycle script runs.
@@ -323,8 +336,8 @@ shiki_root="$(node-24 --input-type=module -e 'import { dirname } from "node:path
 popd >/dev/null
 echo "%{shiki_published_wasm_sha256}  $shiki_root/dist/onig.wasm" | sha256sum -c -
 rm -f "$shiki_root/dist/onig.wasm"
-find packages/opencode/node_modules -path '*/undici/package.json' -print0 | while IFS= read -r -d '' manifest; do
-  test "$(node-24 -p 'require(process.argv[1]).version' "$manifest")" = "5.29.0" || continue
+find node_modules -path '*/undici/package.json' -print0 | while IFS= read -r -d '' manifest; do
+  test "$(node-24 -p 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).version' "$manifest")" = "5.29.0" || continue
   root="$(dirname "$manifest")"
   echo "%{undici_published_wasm_sha256}  $root/lib/llhttp/llhttp.wasm" | sha256sum -c -
   echo "%{undici_published_simd_wasm_sha256}  $root/lib/llhttp/llhttp_simd.wasm" | sha256sum -c -
@@ -673,6 +686,11 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.10
+- Materialize the checked npm dependency tree without package-manager execution.
+- Correct the OpenTUI published-payload checksum exposed by full materialization.
+- Align Undici cleanup with the audited dependency layout and manifest paths.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.9
 - Integrate the checked npm and bun-pty sources into the source RPM.
 

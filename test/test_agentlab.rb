@@ -949,6 +949,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "scripts/materialize-opencode-sources")
     assert_includes(makefile, "scripts/prepare-opencode-bun-pty-sources")
     assert_includes(makefile, "scripts/prepare-opencode-closure-evidence")
+    assert_includes(makefile, "scripts/materialize-opencode-node-modules")
     assert_includes(makefile, 'cmp "$$tempdir/source-audit.json"')
     assert_includes(makefile, 'cmp "$$tempdir/source-materialization.json"')
     assert_includes(makefile, "opencode-$$version-nm-prod-build.tar.zst")
@@ -2862,6 +2863,16 @@ class AgentlabTest < Minitest::Test
     errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
     assert_includes(errors, "opencode: source delivery proof does not match")
+  end
+
+  def test_rejects_incomplete_opencode_node_modules_proof
+    package = Agentlab.package_named("opencode")
+    dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
+    dependencies.fetch("node_modules_materialization_proof")["package_paths"] -= 1
+
+    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+
+    assert_includes(errors, "opencode: node_modules materialization proof does not match")
   end
 
   def test_rejects_inconsistent_opencode_models_snapshot_evidence

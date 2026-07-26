@@ -5145,6 +5145,23 @@ module Agentlab
     }
     errors << "#{prefix} source delivery proof does not match" unless dependencies["source_delivery_proof"] == expected_source_delivery
 
+    expected_node_modules = {
+      "schema" => "agentlab-opencode-node-modules-materialization/v1",
+      "source_archives" => 828,
+      "package_paths" => 1_018,
+      "target_path_set_sha256" => "9ba7604dbfba348ee77626f535d24e06a78e7d591c341726465b3f43bf1ec0e7",
+      "archive_sizes_verified" => true,
+      "archive_sha256_verified" => true,
+      "package_identities_verified" => true,
+      "package_paths_verified" => true,
+      "network_access_performed" => false,
+      "package_manager_executed" => false,
+      "dependency_resolution_performed" => false,
+      "lifecycle_scripts_executed" => false,
+      "package_build_performed" => false
+    }
+    errors << "#{prefix} node_modules materialization proof does not match" unless dependencies["node_modules_materialization_proof"] == expected_node_modules
+
     native_filename = source_files["native_review"]
     native_finding = dependencies.dig("source_acquisition_findings", "native_review")
     errors << "#{prefix} native review path linkage is invalid" unless native_finding.is_a?(Hash) && native_finding["path"] == native_filename
@@ -5295,6 +5312,13 @@ module Agentlab
       }
       errors << "#{prefix} Undici WASM rebuild evidence does not match" unless undici&.dig("provenance", "current_rebuild") == expected_undici_rebuild
       errors << "#{prefix} Undici WASM rebuild must be reproducible" unless undici&.dig("decision", "reproducible_build_verified") == true
+      opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
+      unless opencode_spec.include?("find node_modules -path '*/undici/package.json' -print0")
+        errors << "#{prefix} spec must locate Undici from the audited repository-level dependency tree"
+      end
+      unless opencode_spec.include?('JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).version')
+        errors << "#{prefix} spec must read Undici manifests from their filesystem paths"
+      end
 
       fff_identity = "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
       fff = components.find { |component| component["package"] == fff_identity }
@@ -5319,7 +5343,6 @@ module Agentlab
       if File.file?(fff_patch)
         errors << "#{prefix} FFF disable patch SHA-256 does not match" unless Digest::SHA256.file(fff_patch).hexdigest == expected_fff_disable.fetch("patch_sha256")
       end
-      opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
       unless opencode_spec.match?(/^Patch\d+:\s+#{Regexp.escape(expected_fff_disable.fetch("build_patch"))}$/)
         errors << "#{prefix} spec does not apply the FFF disable patch"
       end
@@ -5360,7 +5383,7 @@ module Agentlab
         "output" => "packages/core/src/zig/lib/x86_64-linux/libopentui.so",
         "platform_package" => "@opentui/core-linux-x64@0.4.5",
         "platform_payload" => "libopentui.so",
-        "published_payload_sha256" => "0c557e6f59b397c35d25eaa28d874a054f7bffecaf90c521a2a0307ede45bd1f",
+        "published_payload_sha256" => "ce73133a58d35e35610ef53353ddeeeb93fb29505dde0cf1854ce25facee241d",
         "previous_release_proof" => {
           "release" => "0.4.3",
           "local_recipe_output_sha256" => "1ce4b92b1a075602837c361c6423b7b54298d0c402e3801cbeb27e4e7d935baa",
@@ -5404,7 +5427,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.9%{?dist}",
+        "Release:        0.10%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",

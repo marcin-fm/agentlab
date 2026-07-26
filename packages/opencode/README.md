@@ -2,9 +2,13 @@
 
 OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; final binary inclusion, generated bundled Provides, aggregate licensing, the remaining native and WASM rebuilds, and a complete offline build remain unverified.
 
-The 828 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the current selected audit classifies every selected package as runtime. Configured-SCM preparation regenerates those bundles plus the exact bun-pty Cargo vendor archive and includes all three in the source RPM; offline dependency-tree assembly and the application build remain separate gates.
+The 828 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the current selected audit classifies every selected package as runtime. Configured-SCM preparation regenerates those bundles plus the exact bun-pty Cargo vendor archive and includes all three in the source RPM. Offline dependency-tree assembly is now verified; the application build remains a separate gate.
 
 The first complete repository-backed source job produces `opencode-1.18.5-0.9.fc44.src.rpm`, SHA-256 `476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992`, with all 38 declared source members and valid RPM digests. This proves source delivery only; no OpenCode binary was built or installed.
+
+The exact source audit now also drives direct dependency-tree assembly. All 828 checked archives materialize to 1,018 lock paths with target path-set SHA-256 `9ba7604dbfba348ee77626f535d24e06a78e7d591c341726465b3f43bf1ec0e7`; every extracted `package.json` matches the selected name/version. No package manager, dependency resolution, lifecycle hook, or network access runs.
+
+The resulting `opencode-1.18.5-0.10.fc44.src.rpm` has 39 members at SHA-256 `091eaf8919b915ddfeb381d154a2c503b5b8f313020db24b7c42ff2764c5985f`, passes RPM digest checks, and completes `%prep` under network isolation. This is source-preparation evidence only; no OpenCode binary was built or installed.
 
 The immutable `v1.18.5` tag resolves to commit
 `e5cc278dec9294a627a7b05f47ce6a564408c1a2`, and its source archive has
