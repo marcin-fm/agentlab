@@ -47,10 +47,14 @@
 %global undici_published_simd_wasm_sha256 cd48aefa974e9fc21adec14ef0c73f0ad501b598078b12568ed129c320318154
 %global undici_rebuilt_wasm_sha256 58fe510f2f5dbb5f79bc2ab0d108ebe7d0ee49f2938bc82d737e82809cab3dcb
 %global undici_rebuilt_simd_wasm_sha256 276a49065fdce6e19c2083fb0dea3b53c390f382c0e6dd3370dbc7fa19f48a57
+%global models_dev_source_sha256 d620cc51536d56d8d8d1a84f1de444d91f7afd116fe5e3e0c08e1a13011df905
+%global models_dev_zod_sha256 f365a049bd1fcc3079e91d9cbcf968b7adce705662bfb3ca1ab3930c03b2ede3
+%global models_dev_snapshot_sha256 8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287
+%global models_dev_proof_sha256 3b54b21170b3901f3614284ad301ceb1706e310cda027849a55f234bcc6ca1aa
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -86,6 +90,9 @@ Source25:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig
 Source26:       https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b#/%{name}-%{version}-vscode-oniguruma-1.7.0.tar.gz
 Source27:       https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080#/%{name}-%{version}-oniguruma-08d36110.tar.gz
 Source28:       https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41#/%{name}-%{version}-llhttp-release-8.1.0.tar.gz
+Source29:       https://codeload.github.com/anomalyco/models.dev/tar.gz/1eb0b8c8e17ffddd89f53b2a3e426777dc560542#/%{name}-%{version}-models-dev-1eb0b8c8.tar.gz
+Source30:       https://registry.npmjs.org/zod/-/zod-3.24.2.tgz#/%{name}-%{version}-zod-3.24.2.tgz
+Source31:       models-snapshot-proof.json
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -171,6 +178,9 @@ echo "%{opentui_zig_grammar_source_sha256}  %{SOURCE25}" | sha256sum -c -
 echo "%{shiki_vscode_oniguruma_source_sha256}  %{SOURCE26}" | sha256sum -c -
 echo "%{shiki_oniguruma_source_sha256}  %{SOURCE27}" | sha256sum -c -
 echo "%{undici_llhttp_source_sha256}  %{SOURCE28}" | sha256sum -c -
+echo "%{models_dev_source_sha256}  %{SOURCE29}" | sha256sum -c -
+echo "%{models_dev_zod_sha256}  %{SOURCE30}" | sha256sum -c -
+echo "%{models_dev_proof_sha256}  %{SOURCE31}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
 
@@ -265,6 +275,7 @@ tar --extract --gzip --file %{SOURCE11} --strip-components=1 --directory .opentu
 for grammar in javascript typescript markdown zig; do mkdir -p ".opentui-grammar-$grammar"; done
 mkdir -p .shiki-vscode-oniguruma/deps/oniguruma
 mkdir -p .undici-llhttp
+mkdir -p .models-dev/node_modules/zod
 tar --extract --gzip --file %{SOURCE22} --strip-components=1 --directory .opentui-grammar-javascript
 tar --extract --gzip --file %{SOURCE23} --strip-components=1 --directory .opentui-grammar-typescript
 tar --extract --gzip --file %{SOURCE24} --strip-components=1 --directory .opentui-grammar-markdown
@@ -272,6 +283,8 @@ tar --extract --gzip --file %{SOURCE25} --strip-components=1 --directory .opentu
 tar --extract --gzip --file %{SOURCE26} --strip-components=1 --directory .shiki-vscode-oniguruma
 tar --extract --gzip --file %{SOURCE27} --strip-components=1 --directory .shiki-vscode-oniguruma/deps/oniguruma
 tar --extract --gzip --file %{SOURCE28} --strip-components=1 --directory .undici-llhttp
+tar --extract --gzip --file %{SOURCE29} --strip-components=1 --directory .models-dev
+tar --extract --gzip --file %{SOURCE30} --strip-components=1 --directory .models-dev/node_modules/zod
 test ! -e .opentui-source/packages/core/src/zig/lib/x86_64-linux/libopentui.so
 
 mkdir -p \
@@ -413,6 +426,17 @@ fs.writeFileSync(process.argv[3], `module.exports = '${fs.readFileSync(process.a
 JS
 done < .build-tools/undici-5.29-roots
 cp -p .undici-llhttp/LICENSE-MIT llhttp-LICENSE-MIT
+
+# Generate the exact Models.dev snapshot selected by OpenCode's release flake.
+# The release's supported local-file override prevents any live API fetch.
+cat > .build-tools/generate-models-snapshot.ts <<EOF
+import { generate } from "$PWD/.models-dev/packages/core/src/generate.ts"
+const providers = await generate("$PWD/.models-dev/providers")
+await Bun.write(process.argv[2], JSON.stringify(providers))
+EOF
+bun .build-tools/generate-models-snapshot.ts .build-tools/models-dev-api.json
+echo "%{models_dev_snapshot_sha256}  .build-tools/models-dev-api.json" | sha256sum -c -
+export MODELS_DEV_API_JSON="$PWD/.build-tools/models-dev-api.json"
 
 tree_sitter_source="$PWD/.build-tools/tree-sitter"
 esbuild_binary="$PWD/.build-tools/esbuild-bin"
@@ -643,6 +667,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.6
+- Pin and source-build the Models.dev snapshot selected by upstream Nix packaging.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.5
 - Rebuild Undici's scalar and SIMD llhttp WASMs from source.
 

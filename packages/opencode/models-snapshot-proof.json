@@ -1,0 +1,52 @@
+{
+  "schema": "agentlab-opencode-models-snapshot/v1",
+  "package": "opencode",
+  "release": "1.18.5",
+  "audit_date": "2026-07-26",
+  "release_behavior": {
+    "source_url": "https://models.dev/api.json",
+    "local_override": "MODELS_DEV_API_JSON",
+    "snapshot_pinned_by_release": false
+  },
+  "upstream_packaging_precedent": {
+    "opencode_commit": "e5cc278dec9294a627a7b05f47ce6a564408c1a2",
+    "nixpkgs_commit": "9dd5558b06dbdacbf635a3dd36dce1b1a7ee3a89",
+    "derivation_path": "pkgs/by-name/mo/models-dev/package.nix",
+    "opencode_path": "nix/opencode.nix",
+    "snapshot_path": "dist/_api.json"
+  },
+  "source": {
+    "repository": "https://github.com/anomalyco/models.dev",
+    "commit": "1eb0b8c8e17ffddd89f53b2a3e426777dc560542",
+    "url": "https://codeload.github.com/anomalyco/models.dev/tar.gz/1eb0b8c8e17ffddd89f53b2a3e426777dc560542",
+    "sha256": "d620cc51536d56d8d8d1a84f1de444d91f7afd116fe5e3e0c08e1a13011df905"
+  },
+  "registry_inputs": [
+    {
+      "name": "zod",
+      "version": "3.24.2",
+      "url": "https://registry.npmjs.org/zod/-/zod-3.24.2.tgz",
+      "integrity": "sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==",
+      "sha256": "f365a049bd1fcc3079e91d9cbcf968b7adce705662bfb3ca1ab3930c03b2ede3"
+    }
+  ],
+  "build": {
+    "tool": "bun",
+    "version": "1.3.14",
+    "network_isolated": true,
+    "dependency_resolution": false,
+    "lifecycle_scripts_executed": false,
+    "runs": 2,
+    "byte_identical": true,
+    "output_size": 1731900,
+    "output_sha256": "8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287"
+  },
+  "validation": {
+    "upstream_supported_local_override": true,
+    "immutable_source_recorded": true,
+    "source_build_verified": true,
+    "spec_supplies_snapshot": true,
+    "final_binary_inclusion_verified": false,
+    "fedora_build_verified": false
+  }
+}

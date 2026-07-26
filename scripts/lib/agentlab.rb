@@ -4933,6 +4933,24 @@ module Agentlab
     models_snapshot = dependencies.dig("selected_lock_audit", "models_snapshot")
     errors << "#{prefix} models snapshot policy does not match" unless models_snapshot == expected_models_snapshot
     errors << "#{prefix} models snapshot receipt does not match" unless selected_audit["models_snapshot"] == models_snapshot
+    models_proof_filename = source_files["models_snapshot_proof"]
+    models_proof_path = models_proof_filename.is_a?(String) && File.join(package.directory, models_proof_filename)
+    unless models_proof_path && File.file?(models_proof_path)
+      errors << "#{prefix} models snapshot proof is missing"
+    else
+      proof = JSON.parse(File.read(models_proof_path))
+      expected_proof = {
+        "schema" => "agentlab-opencode-models-snapshot/v1", "package" => "opencode", "release" => release,
+        "audit_date" => "2026-07-26",
+        "release_behavior" => { "source_url" => "https://models.dev/api.json", "local_override" => "MODELS_DEV_API_JSON", "snapshot_pinned_by_release" => false },
+        "upstream_packaging_precedent" => { "opencode_commit" => "e5cc278dec9294a627a7b05f47ce6a564408c1a2", "nixpkgs_commit" => "9dd5558b06dbdacbf635a3dd36dce1b1a7ee3a89", "derivation_path" => "pkgs/by-name/mo/models-dev/package.nix", "opencode_path" => "nix/opencode.nix", "snapshot_path" => "dist/_api.json" },
+        "source" => { "repository" => "https://github.com/anomalyco/models.dev", "commit" => "1eb0b8c8e17ffddd89f53b2a3e426777dc560542", "url" => "https://codeload.github.com/anomalyco/models.dev/tar.gz/1eb0b8c8e17ffddd89f53b2a3e426777dc560542", "sha256" => "d620cc51536d56d8d8d1a84f1de444d91f7afd116fe5e3e0c08e1a13011df905" },
+        "registry_inputs" => [{ "name" => "zod", "version" => "3.24.2", "url" => "https://registry.npmjs.org/zod/-/zod-3.24.2.tgz", "integrity" => "sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==", "sha256" => "f365a049bd1fcc3079e91d9cbcf968b7adce705662bfb3ca1ab3930c03b2ede3" }],
+        "build" => { "tool" => "bun", "version" => "1.3.14", "network_isolated" => true, "dependency_resolution" => false, "lifecycle_scripts_executed" => false, "runs" => 2, "byte_identical" => true, "output_size" => 1_731_900, "output_sha256" => "8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287" },
+        "validation" => { "upstream_supported_local_override" => true, "immutable_source_recorded" => true, "source_build_verified" => true, "spec_supplies_snapshot" => true, "final_binary_inclusion_verified" => false, "fedora_build_verified" => false }
+      }
+      errors << "#{prefix} models snapshot proof does not match" unless proof == expected_proof
+    end
     validate_receipts = lambda do |label, review|
       {
         "selected_lock_audit" => [selected_filename, selected_path],
@@ -5323,7 +5341,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.5%{?dist}",
+        "Release:        0.6%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
@@ -5335,6 +5353,9 @@ module Agentlab
         "Source26:       https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b",
         "Source27:       https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080",
         "Source28:       https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41",
+        "Source29:       https://codeload.github.com/anomalyco/models.dev/tar.gz/1eb0b8c8e17ffddd89f53b2a3e426777dc560542",
+        "Source30:       https://registry.npmjs.org/zod/-/zod-3.24.2.tgz",
+        "Source31:       models-snapshot-proof.json",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",
         "BuildRequires:  lld20-devel",

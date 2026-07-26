@@ -2849,6 +2849,24 @@ class AgentlabTest < Minitest::Test
     assert(errors.any? { |error| error.include?("models snapshot receipt does not match") })
   end
 
+  def test_rejects_incomplete_opencode_models_snapshot_proof
+    source_package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    Dir.mktmpdir do |directory|
+      dependencies.fetch("source_closure_files").each_value do |filename|
+        source = File.join(source_package.directory, filename)
+        FileUtils.cp(source, File.join(directory, filename)) if File.file?(source)
+      end
+      proof_path = File.join(directory, dependencies.dig("source_closure_files", "models_snapshot_proof"))
+      proof = JSON.parse(File.read(proof_path))
+      proof.dig("build", "output_sha256").replace("0" * 64)
+      File.write(proof_path, JSON.pretty_generate(proof) + "\n")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+      assert(errors.any? { |error| error.include?("models snapshot proof does not match") })
+    end
+  end
+
   def test_rejects_incomplete_opencode_lifecycle_review
     package = Agentlab.package_named("opencode")
     dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))

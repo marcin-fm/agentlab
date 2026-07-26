@@ -31,9 +31,14 @@ scripts/audit-opencode-lock-closure \
   --source-dir /srv/tmp/agentlab-opencode/source/opencode-1.18.5 --check
 ```
 
-The standalone build also fetches `https://models.dev/api.json` unless
-`MODELS_DEV_API_JSON` supplies a local file. The release does not pin that
-snapshot, so immutable source acquisition remains a separate blocker.
+The standalone build fetches `https://models.dev/api.json` unless
+`MODELS_DEV_API_JSON` supplies a local file. OpenCode's release flake pins
+nixpkgs commit `9dd5558b06dbdacbf635a3dd36dce1b1a7ee3a89`, whose Models.dev derivation
+selects commit `1eb0b8c8e17ffddd89f53b2a3e426777dc560542`. The RPM rebuilds that snapshot
+twice byte-identically from the exact source plus `zod 3.24.2` and injects the
+1,731,900-byte SHA-256 `8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287`
+JSON through the supported override. Final standalone-binary inclusion remains
+a separate build-time gate.
 
 ## Source Acquisition Audit
 
