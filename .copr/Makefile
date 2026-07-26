@@ -32,6 +32,7 @@ srpm:
 			command -v ruby >/dev/null 2>&1 || dnf -y install ruby ruby-bundled-gems; \
 			install -pm0755 "$(repo_root)/scripts/audit-bun-source-licenses" "$$(dirname "$(spec)")/audit-bun-source-licenses"; \
 			install -pm0755 "$(repo_root)/scripts/audit-bun-final-linked-licenses" "$$(dirname "$(spec)")/audit-bun-final-linked-licenses"; \
+			install -pm0755 "$(repo_root)/scripts/audit-bun-npm-code-generation" "$$(dirname "$(spec)")/audit-bun-npm-code-generation"; \
 			ruby "$(repo_root)/scripts/prepare-bun-srpm-sources" --spec "$(spec)"; \
 			;; \
 		pdfium.spec) \

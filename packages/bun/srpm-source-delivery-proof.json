@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.30",
+  "rpm_release": "0.0.31",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-26",
   "source_generation": {
@@ -10,8 +10,8 @@
     "network_scope": "srpm-generation-only",
     "direct_sources": 22,
     "generated_sources": 1,
-    "packaging_sources": 6,
-    "declared_sources": 29,
+    "packaging_sources": 8,
+    "declared_sources": 31,
     "patches": 6,
     "canonical_closure_inputs": 255,
     "canonical_closure_sha256": "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080",
@@ -23,7 +23,7 @@
     "source_license_inventory": {
       "filename": "bun-1.3.14-source-license-inventory.json",
       "size_bytes": 125358,
-      "sha256": "87d3ebb05a840f510db6115ee5950fa6ef2d4cb4ac2a107ace788cfcf3031bcc"
+      "sha256": "b9a2c9d6770daf67405ced2c609ae67d024e905ea5110e68ce2796b0fb888617"
     },
     "source_license_audit_script": {
       "filename": "audit-bun-source-licenses",
@@ -33,29 +33,39 @@
     "final_linked_license_closure": {
       "filename": "bun-1.3.14-final-linked-license-closure.json",
       "size_bytes": 1978162,
-      "sha256": "552cb46ce22881066c72a9e3b260f0ae81a49a02b0873e85c69995ebbf50a69c"
+      "sha256": "185013a147abf5bbc8e8035fbdce3ed9e26fed848d6772c507fff084d78aaf61"
     },
     "final_linked_license_audit_script": {
       "filename": "audit-bun-final-linked-licenses",
       "size_bytes": 31433,
       "sha256": "274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a"
     },
+    "npm_code_generation_closure": {
+      "filename": "bun-1.3.14-npm-code-generation-closure.json",
+      "size_bytes": 40789,
+      "sha256": "b13e6f12b2fccd8bee8be7afb104e1f5b91e641645dc1a3617c70b22053d7ae5"
+    },
+    "npm_code_generation_audit_script": {
+      "filename": "audit-bun-npm-code-generation",
+      "size_bytes": 14134,
+      "sha256": "880e4f2e4e7aadb36787a6716c2b146d816d3d34ba9d013ad9b5901166e51466"
+    },
     "retired_lolhtml_inputs_absent": true
   },
   "spec": {
     "filename": "bun.spec",
-    "size_bytes": 23184,
-    "sha256": "7b40a5bb228d29490a5fdd9dbb088bfe07b1bdc7f77365c3e3dcd780d977932e"
+    "size_bytes": 23971,
+    "sha256": "e54014f1ba06efbd9272af263e500711da33edde6d5bbc344e6a087215dda599"
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.30.fc44.src.rpm",
-    "size_bytes": 318164588,
-    "sha256": "629a3fbd3bed4655189089b476bff40c598a1fd26650f29bd6a1fc260637ef29",
+    "filename": "bun-1.3.14-0.0.31.fc44.src.rpm",
+    "size_bytes": 318179395,
+    "sha256": "df09db15329e36f29323c88fddaf263dab336d175d418544f9db5f6c8d55856a",
     "digest_check": "ok",
-    "inventory_members": 36,
-    "inventory_sha256": "8e0af0e9cc14fbd6f4d87732e7e0d79d20d7d68590aec67aefc853330bf6d936",
-    "member_manifest_sha256": "fd4f9aa16529e6640068994ca2ead640d1140fa44e481ddcd2103e29cf6a80bf",
-    "uncompressed_member_bytes": 324093398
+    "inventory_members": 38,
+    "inventory_sha256": "f92cb9fa8ca7b88ac637169075daa4345226bb1742b12a02638c48dfbab94992",
+    "member_manifest_sha256": "82009f3b6fe99ad77187f8a223d6486c54af557f4012a58bba13dad7c15101e8",
+    "uncompressed_member_bytes": 324149108
   },
   "validation": {
     "direct_source_checksums_verified": true,

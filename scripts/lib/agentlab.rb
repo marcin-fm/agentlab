@@ -2823,8 +2823,8 @@ module Agentlab
     expected_counts = {
       "direct_sources" => 22,
       "generated_sources" => 1,
-      "packaging_sources" => 6,
-      "declared_sources" => 29,
+      "packaging_sources" => 8,
+      "declared_sources" => 31,
       "patches" => 6
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
@@ -2864,13 +2864,26 @@ module Agentlab
       "sha256" => final_license["audit_script_sha256"]
     }
     errors << "bun: source-delivery final linked-license audit script mismatch" unless generation["final_linked_license_audit_script"] == expected_final_audit_script
+    npm_codegen = package.data.dig("build_plan", "source_inputs", "npm_code_generation_closure") || {}
+    expected_npm_codegen = {
+      "filename" => npm_codegen["source"],
+      "size_bytes" => File.file?(File.join(package.directory, npm_codegen["source"].to_s)) ? File.size(File.join(package.directory, npm_codegen["source"])) : nil,
+      "sha256" => npm_codegen["sha256"]
+    }
+    errors << "bun: source-delivery npm code-generation closure mismatch" unless generation["npm_code_generation_closure"] == expected_npm_codegen
+    expected_npm_codegen_script = {
+      "filename" => npm_codegen["audit_script_source"],
+      "size_bytes" => File.file?(script_path = File.join(ROOT, npm_codegen["audit_script"].to_s)) ? File.size(script_path) : nil,
+      "sha256" => npm_codegen["audit_script_sha256"]
+    }
+    errors << "bun: source-delivery npm code-generation audit script mismatch" unless generation["npm_code_generation_audit_script"] == expected_npm_codegen_script
 
     srpm = receipt.fetch("srpm", {})
     errors << "bun: source-delivery SRPM filename mismatch" unless srpm["filename"] == "bun-#{version}-#{spec_release}.fc44.src.rpm"
     errors << "bun: source-delivery SRPM size is invalid" unless srpm["size_bytes"].is_a?(Integer) && srpm["size_bytes"].positive?
     errors << "bun: source-delivery SRPM SHA-256 is invalid" unless srpm["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: source-delivery SRPM digest check failed" unless srpm["digest_check"] == "ok"
-    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 36
+    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 38
     %w[inventory_sha256 member_manifest_sha256].each do |key|
       errors << "bun: source-delivery #{key} is invalid" unless srpm[key].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
@@ -2892,7 +2905,7 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source28 layout" unless source_indexes == (0..28).to_a
+    errors << "bun: spec does not declare the complete Source0-Source30 layout" unless source_indexes == (0..30).to_a
     npm_spec_filename = expected_npm["filename"].sub(version, "%{version}")
     errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source22:\s+#{Regexp.escape(npm_spec_filename)}$/)
     staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
@@ -2902,6 +2915,8 @@ module Agentlab
     errors << "bun: spec source-license audit script mismatch" unless spec.match?(/^Source26:\s+#{Regexp.escape(license_inventory["audit_script_source"].to_s)}$/)
     errors << "bun: spec final linked-license closure filename mismatch" unless spec.match?(/^Source27:\s+#{Regexp.escape(final_license["source"].to_s.gsub(version, "%{version}"))}$/)
     errors << "bun: spec final linked-license audit script mismatch" unless spec.match?(/^Source28:\s+#{Regexp.escape(final_license["audit_script_source"].to_s)}$/)
+    errors << "bun: spec npm code-generation closure filename mismatch" unless spec.match?(/^Source29:\s+#{Regexp.escape(npm_codegen["source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec npm code-generation audit script mismatch" unless spec.match?(/^Source30:\s+#{Regexp.escape(npm_codegen["audit_script_source"].to_s)}$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -3270,6 +3285,130 @@ module Agentlab
     errors
   rescue JSON::ParserError, KeyError => e
     ["bun: invalid source-license inventory: #{e.message}"]
+  end
+
+  def validate_bun_npm_code_generation_closure(package, metadata, source_inventory, stages, version, spec)
+    return [] unless package.name == "bun" && metadata.is_a?(Hash)
+
+    receipt_name = metadata["source"]
+    receipt_path = receipt_name.is_a?(String) && File.join(package.directory, receipt_name)
+    expected_sha256 = metadata["sha256"]
+    unless receipt_path && File.file?(receipt_path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(receipt_path).hexdigest == expected_sha256
+      return ["bun: npm code-generation closure is missing or has wrong SHA-256"]
+    end
+
+    errors = []
+    receipt = JSON.parse(File.read(receipt_path))
+    errors << "bun: unsupported npm code-generation closure schema" unless receipt["schema"] == "bun-npm-code-generation-closure/v1"
+    errors << "bun: npm code-generation closure package mismatch" unless receipt["package"] == "bun"
+    errors << "bun: npm code-generation closure release mismatch" unless receipt["version"].to_s == version
+    spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
+    errors << "bun: npm code-generation closure RPM release mismatch" unless receipt["rpm_release"] == spec_release
+
+    script_path = File.join(ROOT, metadata["audit_script"].to_s)
+    unless File.file?(script_path) && metadata["audit_script_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(script_path).hexdigest == metadata["audit_script_sha256"]
+      errors << "bun: npm code-generation audit script is missing or has wrong SHA-256"
+    end
+
+    expected_inputs = {
+      "source_license_inventory" => [source_inventory["source"], source_inventory["sha256"]],
+      "first_source_built_npm" => [stages.dig("seed_build", "source_built_npm_install", "proof_receipt"), stages.dig("seed_build", "source_built_npm_install", "proof_receipt_sha256")],
+      "self_source_built_npm" => [stages.dig("self_rebuild", "source_built_npm_install", "proof_receipt"), stages.dig("self_rebuild", "source_built_npm_install", "proof_receipt_sha256")]
+    }
+    expected_inputs.each do |key, (filename, sha256)|
+      record = receipt.dig("inputs", key) || {}
+      errors << "bun: npm code-generation #{key.tr('_', ' ')} mismatch" unless record["path"] == "packages/bun/#{filename}" && record["sha256"] == sha256
+    end
+
+    final_link = receipt["final_link"] || {}
+    expected_undeclared = %w[
+      codegen/GeneratedALPNProtocols.h
+      codegen/GeneratedBunObject.h
+      codegen/GeneratedNodeModuleModule.h
+      codegen/GeneratedSSLConfig.h
+      codegen/GeneratedSSLConfigFile.h
+      codegen/GeneratedSSLConfigSingleFile.h
+      codegen/GeneratedSocketConfigBinaryType.h
+      codegen/GeneratedSocketConfigHandlers.h
+      codegen/GeneratedSocketConfigTLS.h
+    ]
+    valid_final_link = final_link["direct_object_count"] == metadata["direct_object_count"] &&
+                       final_link["objects_consuming_generated_code"] == metadata["objects_consuming_generated_code"] &&
+                       final_link["generated_output_count"] == metadata["generated_output_count"] &&
+                       final_link["undeclared_producer_output_count"] == expected_undeclared.length &&
+                       final_link["undeclared_producer_output_paths"] == expected_undeclared &&
+                       Array(final_link["generated_outputs"]).length == metadata["generated_output_count"]
+    errors << "bun: npm code-generation final-link counts mismatch" unless valid_final_link
+    generated_outputs = Array(final_link["generated_outputs"])
+    valid_generated_outputs = generated_outputs.all? do |record|
+      record["path"].to_s.start_with?("codegen/") && record["size_bytes"].is_a?(Integer) && record["size_bytes"].positive? &&
+        record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && record["consumer_object_count"].is_a?(Integer) &&
+        record["consumer_object_count"].positive? && record["consumer_objects_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+    errors << "bun: npm code-generation generated-output records mismatch" unless valid_generated_outputs
+
+    npm = receipt["npm"] || {}
+    expected_expressions = { "Apache-2.0" => 1, "Artistic-2.0" => 1, "BSD-3-Clause" => 1, "MIT" => 35 }
+    valid_npm_counts = npm["selected_package_manifest_count"] == metadata["selected_package_manifest_count"] &&
+                       npm["selected_expression_counts"] == expected_expressions &&
+                       npm["packages_with_required_text"] == metadata["packages_with_required_text"] &&
+                       Array(npm["selected_packages"]).length == metadata["selected_package_manifest_count"]
+    errors << "bun: npm code-generation package counts mismatch" unless valid_npm_counts
+    package_records = Array(npm["selected_packages"])
+    identities = package_records.map { |record| [record["name"], record["version"], record.dig("manifest", "path")] }
+    errors << "bun: npm code-generation package identities are not unique" unless identities.uniq.length == identities.length
+    valid_packages = package_records.all? do |record|
+      manifest = record["manifest"] || {}
+      manifest["path"].to_s.match?(%r{\A(?:node_modules/.+|packages/@types/bun|packages/bun-error/node_modules/.+|src/node-fallbacks/node_modules/.+)/package\.json\z}) &&
+        manifest["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && record["selected_expression"].is_a?(String) &&
+        !record["selected_expression"].empty? && Array(record["license_files"]).all? { |file| file["path"].is_a?(String) && file["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) }
+    end
+    errors << "bun: npm code-generation package records mismatch" unless valid_packages
+    missing_texts = Array(npm["packages_missing_required_text"])
+    expected_missing = [["constants-browserify", "1.0.0"], ["peechy", "0.4.34"]]
+    actual_missing = missing_texts.map { |record| [record["name"], record["version"]] }.sort
+    errors << "bun: npm code-generation missing-text inventory mismatch" unless actual_missing == expected_missing
+    valid_missing = missing_texts.all? do |record|
+      evidence = record["evidence"] || {}
+      evidence["repository"].to_s.start_with?("https://github.com/") && evidence["commit"].to_s.match?(/\A[0-9a-f]{40}\z/) &&
+        evidence["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && evidence["exact_release_source_correspondence_verified"] == false
+    end
+    errors << "bun: npm code-generation missing-text evidence mismatch" unless valid_missing
+
+    true_validation = %w[
+      source_built_npm_receipts_verified
+      declared_codegen_package_manifest_mapping_verified
+      linked_generated_output_mapping_verified
+      selected_package_license_expressions_verified
+    ]
+    false_validation = %w[
+      network_used
+      package_manager_invoked
+      build_invoked
+      generated_output_producer_edges_verified
+      all_selected_package_license_texts_verified
+      final_npm_codegen_closure_verified
+      final_license_expression_verified
+      rpm_payload_license_verified
+    ]
+    errors << "bun: npm code-generation mapping validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
+    errors << "bun: npm code-generation closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
+    errors << "bun: npm code-generation metadata overclaims completion" unless metadata["final_npm_codegen_closure_verified"] == false && metadata["all_selected_package_license_texts_verified"] == false
+
+    required_spec_fragments = [
+      "%global npm_code_generation_closure_sha256 #{expected_sha256}",
+      "%global npm_code_generation_audit_script_sha256 #{metadata['audit_script_sha256']}",
+      "Source29:       #{receipt_name.sub(version, '%{version}')}",
+      "Source30:       #{metadata['audit_script_source']}",
+      "echo \"%{npm_code_generation_closure_sha256}  %{SOURCE29}\" | sha256sum -c -",
+      "echo \"%{npm_code_generation_audit_script_sha256}  %{SOURCE30}\" | sha256sum -c -"
+    ]
+    errors << "bun: spec does not integrate the npm code-generation closure" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
+    errors
+  rescue JSON::ParserError, KeyError => e
+    ["bun: invalid npm code-generation closure: #{e.message}"]
   end
 
   def validate_bun_final_linked_license_closure(package, metadata, source_inventory, stages, lolhtml, version, spec)
@@ -3967,6 +4106,7 @@ module Agentlab
     npm_lock = source_inputs.is_a?(Hash) && source_inputs["npm_lock"]
     release_local_staging = source_inputs.is_a?(Hash) && source_inputs["release_local_staging"]
     source_license_inventory = source_inputs.is_a?(Hash) && source_inputs["source_license_inventory"]
+    npm_code_generation_closure = source_inputs.is_a?(Hash) && source_inputs["npm_code_generation_closure"]
     final_linked_license_closure = source_inputs.is_a?(Hash) && source_inputs["final_linked_license_closure"]
     build_graph = source_inputs.is_a?(Hash) && source_inputs["build_graph"]
     seed = source_inputs.is_a?(Hash) && source_inputs["bootstrap_seed"]
@@ -3997,6 +4137,7 @@ module Agentlab
     errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
     errors.concat(validate_bun_dependency_staging(package, stages["dependency_staging"], stages["source_delivery"], stages["dependency_closure"], release_local_staging, version, spec))
     errors.concat(validate_bun_source_license_inventory(package, source_license_inventory, stages["dependency_closure"], version, spec))
+    errors.concat(validate_bun_npm_code_generation_closure(package, npm_code_generation_closure, source_license_inventory, stages, version, spec))
     errors.concat(validate_bun_final_linked_license_closure(package, final_linked_license_closure, source_license_inventory, stages, lolhtml, version, spec))
 
     if seed.is_a?(Hash)

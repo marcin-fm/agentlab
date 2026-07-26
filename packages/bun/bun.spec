@@ -30,10 +30,12 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 87d3ebb05a840f510db6115ee5950fa6ef2d4cb4ac2a107ace788cfcf3031bcc
+%global source_license_inventory_sha256 b9a2c9d6770daf67405ced2c609ae67d024e905ea5110e68ce2796b0fb888617
 %global source_license_audit_script_sha256 7662654a42483ff93c81f33aec6268e63608ee4075f1bb716e877204bf183c8c
-%global final_linked_license_closure_sha256 552cb46ce22881066c72a9e3b260f0ae81a49a02b0873e85c69995ebbf50a69c
+%global final_linked_license_closure_sha256 185013a147abf5bbc8e8035fbdce3ed9e26fed848d6772c507fff084d78aaf61
 %global final_linked_license_audit_script_sha256 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
+%global npm_code_generation_closure_sha256 b13e6f12b2fccd8bee8be7afb104e1f5b91e641645dc1a3617c70b22053d7ae5
+%global npm_code_generation_audit_script_sha256 880e4f2e4e7aadb36787a6716c2b146d816d3d34ba9d013ad9b5901166e51466
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -42,7 +44,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.30%{?dist}
+Release:        0.0.31%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -87,6 +89,10 @@ Source26:       audit-bun-source-licenses
 Source27:       bun-%{version}-final-linked-license-closure.json
 # Reproduces Source27 from the retained current final build and checked receipts.
 Source28:       audit-bun-final-linked-licenses
+# Current npm code-generation package and linked-output map. Final payload claims remain blocked.
+Source29:       bun-%{version}-npm-code-generation-closure.json
+# Reproduces and verifies Source29 from the retained current source build.
+Source30:       audit-bun-npm-code-generation
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -189,6 +195,8 @@ echo "%{source_license_inventory_sha256}  %{SOURCE25}" | sha256sum -c -
 echo "%{source_license_audit_script_sha256}  %{SOURCE26}" | sha256sum -c -
 echo "%{final_linked_license_closure_sha256}  %{SOURCE27}" | sha256sum -c -
 echo "%{final_linked_license_audit_script_sha256}  %{SOURCE28}" | sha256sum -c -
+echo "%{npm_code_generation_closure_sha256}  %{SOURCE29}" | sha256sum -c -
+echo "%{npm_code_generation_audit_script_sha256}  %{SOURCE30}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -224,7 +232,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.30 \
+  --rpm-release 0.0.31 \
   --date 2026-07-26 \
   --check \
   --receipt "%{SOURCE25}"
@@ -359,6 +367,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.31
+- Map the npm code-generation package and linked-output boundary.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.30
 - Map the complete WebKit transitive dependency and headerless-file boundary.
 

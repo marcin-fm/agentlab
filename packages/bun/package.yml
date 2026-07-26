@@ -4,6 +4,7 @@ blockers:
   - Fedora Packaging Committee approval is required before the upstream Bun seed may drive the initial source build.
   - The external lol-html 3.0.0 package and Bun system-link patch require target Mock proof.
   - The complete LGPL relink kit is proven locally but lacks approved immutable delivery and final RPM integration.
+  - Six Bun WebKit fork files lack explicit terms, and peechy 0.4.34 plus constants-browserify 1.0.0 omit required MIT texts from their exact npm archives.
   - Final bundled-license accounting, aarch64 build proof, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
   provider: github
@@ -141,7 +142,7 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: 87d3ebb05a840f510db6115ee5950fa6ef2d4cb4ac2a107ace788cfcf3031bcc
+      sha256: b9a2c9d6770daf67405ced2c609ae67d024e905ea5110e68ce2796b0fb888617
       audit_script: scripts/audit-bun-source-licenses
       audit_script_sha256: 7662654a42483ff93c81f33aec6268e63608ee4075f1bb716e877204bf183c8c
       audit_script_source: audit-bun-source-licenses
@@ -161,10 +162,29 @@ build_plan:
       final_linked_closure_verified: false
       final_license_expression_verified: false
       required_license_texts_verified: false
+    npm_code_generation_closure:
+      relationship: current_codegen_package_and_linked_output_mapping
+      source: bun-1.3.14-npm-code-generation-closure.json
+      sha256: b13e6f12b2fccd8bee8be7afb104e1f5b91e641645dc1a3617c70b22053d7ae5
+      audit_script: scripts/audit-bun-npm-code-generation
+      audit_script_sha256: 880e4f2e4e7aadb36787a6716c2b146d816d3d34ba9d013ad9b5901166e51466
+      audit_script_source: audit-bun-npm-code-generation
+      direct_object_count: 1162
+      objects_consuming_generated_code: 37
+      generated_output_count: 30
+      selected_package_manifest_count: 38
+      packages_with_required_text: 36
+      unresolved_required_text_packages:
+        - constants-browserify@1.0.0
+        - peechy@0.4.34
+      declared_codegen_package_manifest_mapping_verified: true
+      linked_generated_output_mapping_verified: true
+      all_selected_package_license_texts_verified: false
+      final_npm_codegen_closure_verified: false
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: 552cb46ce22881066c72a9e3b260f0ae81a49a02b0873e85c69995ebbf50a69c
+      sha256: 185013a147abf5bbc8e8035fbdce3ed9e26fed848d6772c507fff084d78aaf61
       audit_script: scripts/audit-bun-final-linked-licenses
       audit_script_sha256: 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
       audit_script_source: audit-bun-final-linked-licenses
@@ -328,7 +348,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: a534c554b0dc0efb46515fc33e7603471ad0f6e7cb71a7a8601580daef0e3bf3
+      proof_receipt_sha256: bbf1d77a6736d72eb4d3853ceae0280a725980e733b03ccdf30495105f69f59c
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -362,7 +382,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: e7a49922e8f17406009d69b9971c457b9d8f0e7107d272ca558adf9e884e4d66
+      proof_receipt_sha256: c2dcdecf028e845f8ce43a17e80c97b0dfd9320d8ae4e42e2ad961d264ebd222
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true

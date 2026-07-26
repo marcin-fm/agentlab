@@ -2428,7 +2428,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.30", "--rpm-release 0.0.29")
+        spec.sub("--rpm-release 0.0.31", "--rpm-release 0.0.30")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2536,6 +2536,57 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: final linked-license WebKit transitive counts mismatch")
       assert_includes(errors, "bun: final linked-license mapping validation is incomplete")
       assert_includes(errors, "bun: final linked-license closure overclaims completion")
+    end
+  end
+
+  def test_validates_bun_npm_code_generation_closure
+    package = Agentlab.package_named("bun")
+    plan = package.data.fetch("build_plan")
+    metadata = plan.fetch("source_inputs").fetch("npm_code_generation_closure")
+    source_inventory = plan.fetch("source_inputs").fetch("source_license_inventory")
+    spec = File.read(File.join(package.directory, "bun.spec"))
+
+    assert_empty(
+      Agentlab.validate_bun_npm_code_generation_closure(
+        package, metadata, source_inventory, plan.fetch("stages"), "1.3.14", spec
+      )
+    )
+    assert_includes(
+      Agentlab.validate_bun_npm_code_generation_closure(
+        package, metadata.merge("sha256" => "0" * 64), source_inventory, plan.fetch("stages"), "1.3.14", spec
+      ),
+      "bun: npm code-generation closure is missing or has wrong SHA-256"
+    )
+
+    Dir.mktmpdir do |directory|
+      data = Marshal.load(Marshal.dump(package.data))
+      copied_metadata = data.dig("build_plan", "source_inputs", "npm_code_generation_closure")
+      %w[
+        bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-source-license-inventory.json
+        source-built-npm-install-proof.json source-built-self-npm-install-proof.json
+      ].each do |name|
+        FileUtils.cp(File.join(package.directory, name), File.join(directory, name))
+      end
+      receipt_path = File.join(directory, copied_metadata.fetch("source"))
+      receipt = JSON.parse(File.read(receipt_path))
+      receipt.fetch("final_link")["generated_output_count"] -= 1
+      receipt.fetch("npm")["packages_with_required_text"] -= 1
+      receipt.fetch("validation")["final_npm_codegen_closure_verified"] = true
+      File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
+      copied_metadata["sha256"] = Digest::SHA256.file(receipt_path).hexdigest
+      copied_package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      errors = Agentlab.validate_bun_npm_code_generation_closure(
+        copied_package,
+        copied_metadata,
+        data.dig("build_plan", "source_inputs", "source_license_inventory"),
+        data.dig("build_plan", "stages"),
+        "1.3.14",
+        spec
+      )
+      assert_includes(errors, "bun: npm code-generation final-link counts mismatch")
+      assert_includes(errors, "bun: npm code-generation package counts mismatch")
+      assert_includes(errors, "bun: npm code-generation closure overclaims completion")
     end
   end
 
@@ -2648,7 +2699,7 @@ class AgentlabTest < Minitest::Test
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json].each do |name|
+      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-source-license-inventory.json bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -2693,6 +2744,8 @@ class AgentlabTest < Minitest::Test
       FileUtils.cp(File.join(source_package.directory, inventory_name), File.join(directory, inventory_name))
       final_license_name = data.dig("build_plan", "source_inputs", "final_linked_license_closure", "source")
       FileUtils.cp(File.join(source_package.directory, final_license_name), File.join(directory, final_license_name))
+      npm_codegen_name = data.dig("build_plan", "source_inputs", "npm_code_generation_closure", "source")
+      FileUtils.cp(File.join(source_package.directory, npm_codegen_name), File.join(directory, npm_codegen_name))
       patch_name = data.dig("build_plan", "source_inputs", "lolhtml", "patch")
       FileUtils.cp(File.join(source_package.directory, patch_name), File.join(directory, patch_name))
       webkit = data.dig("build_plan", "source_inputs", "webkit", "jsc_only")
@@ -2700,7 +2753,7 @@ class AgentlabTest < Minitest::Test
         name = webkit.fetch(key)
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
-      %w[prior-self-rebuild-proof.json self-rebuild-proof.json source-built-self-npm-install-proof.json].each do |name|
+      %w[prior-self-rebuild-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)

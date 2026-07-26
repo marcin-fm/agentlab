@@ -1,0 +1,1061 @@
+{
+  "schema": "bun-npm-code-generation-closure/v1",
+  "package": "bun",
+  "version": "1.3.14",
+  "rpm_release": "0.0.31",
+  "audit_date": "2026-07-26",
+  "inputs": {
+    "source_license_inventory": {
+      "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
+      "size_bytes": 125358,
+      "sha256": "b9a2c9d6770daf67405ced2c609ae67d024e905ea5110e68ce2796b0fb888617"
+    },
+    "first_source_built_npm": {
+      "path": "packages/bun/source-built-npm-install-proof.json",
+      "size_bytes": 6903,
+      "sha256": "e9b0198e031e71591e7c1cf0343e5fe5f9a241cd3c7a78176dd3a786a358777f"
+    },
+    "self_source_built_npm": {
+      "path": "packages/bun/source-built-self-npm-install-proof.json",
+      "size_bytes": 6904,
+      "sha256": "eb408b61346dea80b81be7cff949bd3f2f9b1d7e434ea3ddb0ad68b0eb42691d"
+    },
+    "build_ninja": {
+      "path": "build/release-local/build.ninja",
+      "size_bytes": 2469137,
+      "sha256": "9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3"
+    }
+  },
+  "final_link": {
+    "direct_object_count": 1162,
+    "direct_object_paths_sha256": "569e81909dbd8e85cf41358b599ee0e661103fbd9221e8727f44da0b768095b3",
+    "objects_consuming_generated_code": 37,
+    "generated_output_count": 30,
+    "generated_output_paths_sha256": "df3858468acbc6b1b54c9da01ff2955fc227435037d909878b54568582ea6130",
+    "undeclared_producer_output_count": 9,
+    "undeclared_producer_output_paths": [
+      "codegen/GeneratedALPNProtocols.h",
+      "codegen/GeneratedBunObject.h",
+      "codegen/GeneratedNodeModuleModule.h",
+      "codegen/GeneratedSSLConfig.h",
+      "codegen/GeneratedSSLConfigFile.h",
+      "codegen/GeneratedSSLConfigSingleFile.h",
+      "codegen/GeneratedSocketConfigBinaryType.h",
+      "codegen/GeneratedSocketConfigHandlers.h",
+      "codegen/GeneratedSocketConfigTLS.h"
+    ],
+    "generated_outputs": [
+      {
+        "path": "codegen/BunObject.lut.h",
+        "size_bytes": 27549,
+        "sha256": "0836fec0df64e72667cd943bfdf0c862cadd07edb1458a2d3ff76a44e772a8a6",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "2479f9137186a763e6e519d2f5644ed166933f0e8af94292cf17e4c826686d8a"
+      },
+      {
+        "path": "codegen/BunProcess.lut.h",
+        "size_bytes": 17999,
+        "sha256": "35e87194a787bce0358abe27416482f98162738fa05f413d77e0ccb29c8f8641",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "ccb4d203ce5b4e43df47560af85375a8dfbeff52591b8790f09ec38a3aa357b6"
+      },
+      {
+        "path": "codegen/ErrorCode+Data.h",
+        "size_bytes": 24733,
+        "sha256": "61158e0658583773b363fe159afb8bc7c915592dbc04a02241ed5c8825db0fb2",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "01fe1464121ceb6735e206b7bf9aeaaef0806b13d352974e5dff39278a09b48d"
+      },
+      {
+        "path": "codegen/ErrorCode+List.h",
+        "size_bytes": 12121,
+        "sha256": "0ca209cd5f3c0198386c5b99f5b365b7b68951e8dc79fb323e7e62e7df5b333e",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 33,
+        "consumer_objects_sha256": "847a3953ccab097a2311b011e10d933d3bc721c8e412c7153bebc55384934c2c"
+      },
+      {
+        "path": "codegen/GeneratedALPNProtocols.h",
+        "size_bytes": 263,
+        "sha256": "ac3f5f9b38119e83cef30b9c53460736c7fae5b2ba314848f9201134b51c447a",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 2,
+        "consumer_objects_sha256": "a8e82e57d4cbc9eab9b3160d5d7be295c24de3ff5f39d2cc371d14c7cfc7ddd2"
+      },
+      {
+        "path": "codegen/GeneratedBunObject.h",
+        "size_bytes": 642,
+        "sha256": "d24d6b012b927986d9c410f67db3bf6863dd50cbcfa75a485ed5223e99afaa78",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 2,
+        "consumer_objects_sha256": "a86031ddce2cfcbab636e5411302d61fe9c68da9b9af7a920182632d1ab155ab"
+      },
+      {
+        "path": "codegen/GeneratedJS2Native.h",
+        "size_bytes": 66365,
+        "sha256": "bc831699aa886de035efafddfdc7c0326cf0833e6410eb02fe62d14ee5a664ef",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "01fe1464121ceb6735e206b7bf9aeaaef0806b13d352974e5dff39278a09b48d"
+      },
+      {
+        "path": "codegen/GeneratedNodeModuleModule.h",
+        "size_bytes": 408,
+        "sha256": "028a5fdacdbb28ce3ae74eced99b7a09e0a0519713967e822c7b2a660dca823d",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "37f1a08c6376dd656c83a543b489e9e7dfad5eb7f77c112033e242e4743dec7d"
+      },
+      {
+        "path": "codegen/GeneratedSSLConfig.h",
+        "size_bytes": 7100,
+        "sha256": "8c83d75782c775fb0380ddeb016d4bd0bfe526251658c364d59e62ee71676ec2",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "129a9c6fc68f1a6dfbd72543ad88db1b61f24eeabfab654d5277cfbae37dfad9"
+      },
+      {
+        "path": "codegen/GeneratedSSLConfigFile.h",
+        "size_bytes": 463,
+        "sha256": "b2e36b7d99e3d15646d9fa993c5a801936392c9607be9af377a4dacaf2e69102",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 2,
+        "consumer_objects_sha256": "a8e82e57d4cbc9eab9b3160d5d7be295c24de3ff5f39d2cc371d14c7cfc7ddd2"
+      },
+      {
+        "path": "codegen/GeneratedSSLConfigSingleFile.h",
+        "size_bytes": 309,
+        "sha256": "020c22e437908f15f4912a3aa555e34fe28b61cfa5a69fbf79db1ece7c422036",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 2,
+        "consumer_objects_sha256": "a8e82e57d4cbc9eab9b3160d5d7be295c24de3ff5f39d2cc371d14c7cfc7ddd2"
+      },
+      {
+        "path": "codegen/GeneratedSocketConfigBinaryType.h",
+        "size_bytes": 1137,
+        "sha256": "5a9282bfa85ff67ef4d9326e4f21331082b11c7fa15fa7502be18fd5a9c5fdb1",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 2,
+        "consumer_objects_sha256": "d3b0e87f550a699d2aa558ab1684bd915d91b9fbb7b99fd872547c1285aa1001"
+      },
+      {
+        "path": "codegen/GeneratedSocketConfigHandlers.h",
+        "size_bytes": 4766,
+        "sha256": "59ffa2ba8eac6f1a0ffd4e87b2d7ce154d1c64a8035f80a2c98dc94d9c105a37",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "129a9c6fc68f1a6dfbd72543ad88db1b61f24eeabfab654d5277cfbae37dfad9"
+      },
+      {
+        "path": "codegen/GeneratedSocketConfigTLS.h",
+        "size_bytes": 317,
+        "sha256": "0bca3d5ec7aabee3a5c573fe30002d8b413b593df7dd7b1af4fa6cf944f892bc",
+        "rule": null,
+        "producer_edge_declared": false,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "129a9c6fc68f1a6dfbd72543ad88db1b61f24eeabfab654d5277cfbae37dfad9"
+      },
+      {
+        "path": "codegen/InternalModuleRegistry+createInternalModuleById.h",
+        "size_bytes": 34938,
+        "sha256": "7cc6720906947f2d115caf4ffff634fa4e0857eed9b6bda729f766f1398b4538",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "01fe1464121ceb6735e206b7bf9aeaaef0806b13d352974e5dff39278a09b48d"
+      },
+      {
+        "path": "codegen/InternalModuleRegistryConstants.h",
+        "size_bytes": 4764062,
+        "sha256": "4c1231d2fe2ce227a01dc52038ffdb5f52c378b2c5ac2bf879b1445abc73e15d",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "01fe1464121ceb6735e206b7bf9aeaaef0806b13d352974e5dff39278a09b48d"
+      },
+      {
+        "path": "codegen/JSBuffer.lut.h",
+        "size_bytes": 2904,
+        "sha256": "f47458edb3b4bb25637f118673c6962e440ac567e1e48cdcd01a7f001214d4d5",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "5d789a48d4c093857bf4e03f505b3d6dfa99ba1bcecd2c055503d8685d0b6304"
+      },
+      {
+        "path": "codegen/JSEvent.lut.h",
+        "size_bytes": 606,
+        "sha256": "73c55b0d9bbc1904ba78c38dc666f24497ca84a4b45f10cec3d479b563a75896",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "6bd9a14d84df0a7b6bdc5c9fac9f93a6e04f52d3380f417abce2c63bc87ea0df"
+      },
+      {
+        "path": "codegen/JSSink.h",
+        "size_bytes": 126076,
+        "sha256": "23d3bf23f0d9adfb0af6539e1c44c06fc1200aa2cbde8422b69eaebc6c3c64fc",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "18b1afbe323e6b17a49c0d161336594a846ff9f606786c86adb9542dc0f87763"
+      },
+      {
+        "path": "codegen/NativeModuleImpl.h",
+        "size_bytes": 591,
+        "sha256": "f360b9a46e1c647eaa7a043f8a9d3b9792006f873c3dba0e0be01239a2e76d3d",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "01fe1464121ceb6735e206b7bf9aeaaef0806b13d352974e5dff39278a09b48d"
+      },
+      {
+        "path": "codegen/NodeModuleModule.lut.h",
+        "size_bytes": 6078,
+        "sha256": "8bf52dde90a491740bb0374d2b1289808292e0c8b23f0d361f06eae044eac93b",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "37f1a08c6376dd656c83a543b489e9e7dfad5eb7f77c112033e242e4743dec7d"
+      },
+      {
+        "path": "codegen/ProcessBindingBuffer.lut.h",
+        "size_bytes": 6894,
+        "sha256": "283397093145d044a6974208d18255eadb4adae011b94d2395598ddeda6d1075",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "fefb833badd5fc93a90720a889ef367f2595d461d7bddb7f5d0700655c8dd312"
+      },
+      {
+        "path": "codegen/ProcessBindingConstants.lut.h",
+        "size_bytes": 1464,
+        "sha256": "57934c2f5da9d1be9d588f2d03d7508d456b219aa4aa2caf109a2c8707dad3e7",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "8751fad6b8f329c36da786bba132a46a53f79e07d850db0ca29597c473f46049"
+      },
+      {
+        "path": "codegen/ProcessBindingFs.lut.h",
+        "size_bytes": 10375,
+        "sha256": "3bb3af2488a2c455ead5e2e42ed1d668347a813701dbbabf12d4b5a703feac2e",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "fefb833badd5fc93a90720a889ef367f2595d461d7bddb7f5d0700655c8dd312"
+      },
+      {
+        "path": "codegen/ProcessBindingHTTPParser.lut.h",
+        "size_bytes": 1245,
+        "sha256": "04757e1d4dc41069c0447e786a4584e7faa21bcc0836b35a51f9fd4cb612d01d",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "fefb833badd5fc93a90720a889ef367f2595d461d7bddb7f5d0700655c8dd312"
+      },
+      {
+        "path": "codegen/ProcessBindingNatives.lut.h",
+        "size_bytes": 31948,
+        "sha256": "e8912ba4f659caa942b4ed1d4148c39e4da0959fc5c2992c5c2388164c9f8661",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "fefb833badd5fc93a90720a889ef367f2595d461d7bddb7f5d0700655c8dd312"
+      },
+      {
+        "path": "codegen/WebCoreJSBuiltins.h",
+        "size_bytes": 483988,
+        "sha256": "2f18d2a2f4e4e9a44af42292e7d646399ee379476ea9df93583a066ff363f9db",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 15,
+        "consumer_objects_sha256": "e900652ca1b2194e3187a85613e4d8d986bf1e7059b63e957940772e11f376e2"
+      },
+      {
+        "path": "codegen/ZigGeneratedClasses+lazyStructureImpl.h",
+        "size_bytes": 44615,
+        "sha256": "6b89afa525ca1720650b7f40225197a5675693b11fc8f8ab715f9c030ee6edce",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "18b1afbe323e6b17a49c0d161336594a846ff9f606786c86adb9542dc0f87763"
+      },
+      {
+        "path": "codegen/ZigGeneratedClasses.h",
+        "size_bytes": 268639,
+        "sha256": "d40b57ccb0a9272256782275f79c5e46759606403b52c98fea4612c8e4831eee",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 16,
+        "consumer_objects_sha256": "0de5738940089901f23dc383d1978467e119c4b30dfdc9f069d25addf3b3f064"
+      },
+      {
+        "path": "codegen/ZigGlobalObject.lut.h",
+        "size_bytes": 19660,
+        "sha256": "e74f26b73348201a4f439023c164fb730cf2947e06eaf333117a83edd7572c65",
+        "rule": "codegen",
+        "producer_edge_declared": true,
+        "consumer_object_count": 1,
+        "consumer_objects_sha256": "18b1afbe323e6b17a49c0d161336594a846ff9f606786c86adb9542dc0f87763"
+      }
+    ]
+  },
+  "npm": {
+    "selected_package_manifest_count": 38,
+    "selected_package_manifest_paths_sha256": "51c3e5f1a880174991f34e0f14f535f99c5256df9d1a5e8202d0ab95611adeaa",
+    "selected_packages": [
+      {
+        "name": "@lezer/common",
+        "version": "1.3.0",
+        "manifest": {
+          "path": "node_modules/.bun/@lezer+common@1.3.0/node_modules/@lezer/common/package.json",
+          "size_bytes": 808,
+          "sha256": "a6138c1043b7f0bfca9af7238ed79b4fd99224e6eb4a5fbef0fb5737d9b0665d"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/@lezer+common@1.3.0/node_modules/@lezer/common/LICENSE",
+            "size_bytes": 1113,
+            "sha256": "568902fb66eaf1f11750e966b33fd7b5d7c618e65af09f35ef843635bcf5f1ba"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "@lezer/cpp",
+        "version": "1.1.3",
+        "manifest": {
+          "path": "node_modules/.bun/@lezer+cpp@1.1.3/node_modules/@lezer/cpp/package.json",
+          "size_bytes": 984,
+          "sha256": "4b25457b7983090f833d5c042156ff6f9de6be9bffb19c32469891abe2d7758b"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/@lezer+cpp@1.1.3/node_modules/@lezer/cpp/LICENSE",
+            "size_bytes": 1113,
+            "sha256": "54bd812a6d334e0c438b78a43cea74b67e882739fd3450115ddc7c52be5706c1"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "@types/bun",
+        "version": "1.2.2",
+        "manifest": {
+          "path": "packages/@types/bun/package.json",
+          "size_bytes": 1507,
+          "sha256": "b9b38009fede3b221cb8cbdafb9176dbc0e850223a1feb11337e8930592f9173"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "packages/@types/bun/LICENSE",
+            "size_bytes": 1141,
+            "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "assert",
+        "version": "2.1.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/assert/package.json",
+          "size_bytes": 1450,
+          "sha256": "16486d0cbd4c207ee07484a9392fdada949e5401ccdd12437f7ca9ea4e87e26f"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/assert/LICENSE",
+            "size_bytes": 1096,
+            "sha256": "6239c6144c31e58cf925c34483606969c555574d64ffa96518ab5d7f45c75d43"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "browserify-zlib",
+        "version": "0.2.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/browserify-zlib/package.json",
+          "size_bytes": 1900,
+          "sha256": "85034e889a63cb57e947d2ed81a87ffcb32831f7854a2e2648eb96ff56b10b91"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/browserify-zlib/LICENSE",
+            "size_bytes": 3486,
+            "sha256": "ddd770379e07bf0574dfaa4485be80a23b3248b36d09f33ec79276c09b829daf"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "buffer",
+        "version": "6.0.3",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/buffer/package.json",
+          "size_bytes": 2546,
+          "sha256": "5b105ac0abbf5985cbe62ad28a34032d85c7ef623e0eb01f39441b0feb419004"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/buffer/LICENSE",
+            "size_bytes": 1106,
+            "sha256": "06bafa45fdad2579ba0e43b0c9b2c6290287c99c4203c300254a462b38a307f6"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "bun-tracestrings",
+        "version": null,
+        "manifest": {
+          "path": "node_modules/.bun/bun-tracestrings@github+oven-sh+bun.report+912ca63/node_modules/bun-tracestrings/package.json",
+          "size_bytes": 734,
+          "sha256": "06de4c18b36fdc305ccf7911a7a2034aedd6021a1669b475f332b0a73a102278"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/bun-tracestrings@github+oven-sh+bun.report+912ca63/node_modules/bun-tracestrings/LICENSE",
+            "size_bytes": 1060,
+            "sha256": "e8db60c1b7c0273efc1da8282ae7e61c1e1a759f18254f4ef4c7f042f5e38698"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "console-browserify",
+        "version": "1.2.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/console-browserify/package.json",
+          "size_bytes": 1655,
+          "sha256": "12a1d48faf399d4798cb0936cd5df3ee7c2ae4144775f5fe5cfb3443a585c29a"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/console-browserify/LICENCE",
+            "size_bytes": 1050,
+            "sha256": "19338d17a974d1c747b3f6c618f08975b8908fdebccbc047c0e72b09daf6ddd3"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "constants-browserify",
+        "version": "1.0.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/constants-browserify/package.json",
+          "size_bytes": 761,
+          "sha256": "5668ea647a849a7295dc82ee264368a23c07e49d0db20166ea0ddbd1da4ce3fb"
+        },
+        "selected_expression": "MIT",
+        "license_files": [],
+        "required_text_present": false,
+        "missing_text_evidence": {
+          "repository": "https://github.com/juliangruber/constants-browserify",
+          "commit": "49d435dd53bcf66d337dba96f979b6141582646b",
+          "path": "LICENSE.md",
+          "sha256": "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+          "exact_release_source_correspondence_verified": false
+        }
+      },
+      {
+        "name": "crypto-browserify",
+        "version": "3.12.1",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/crypto-browserify/package.json",
+          "size_bytes": 1358,
+          "sha256": "74b9d82dc6db5b19493fb47d855d5d26858e85bd16293d34c451203d1f3d1840"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/crypto-browserify/LICENSE",
+            "size_bytes": 1087,
+            "sha256": "6134c69bc22c8289252e70de3af20bd67071233459055be74d83acfcc4865e7e"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "domain-browser",
+        "version": "4.23.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/domain-browser/package.json",
+          "size_bytes": 4588,
+          "sha256": "e558b0847bdeae196200dbaac34b041ca668f1905c9545f9d9e95961dfe4527a"
+        },
+        "selected_expression": "Artistic-2.0",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/domain-browser/LICENSE.md",
+            "size_bytes": 9094,
+            "sha256": "4380ef327b7e7b1f291d74bdccc2995758d76d7f9d179ad1ac41c5fadea9feb5"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "esbuild",
+        "version": "0.21.5",
+        "manifest": {
+          "path": "node_modules/.bun/esbuild@0.21.5/node_modules/esbuild/package.json",
+          "size_bytes": 1340,
+          "sha256": "0f35e0d63bd60a43ed85879604a40f7e9688b321904cf28a95be5b1bc629559c"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/esbuild@0.21.5/node_modules/esbuild/LICENSE.md",
+            "size_bytes": 1069,
+            "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "esbuild",
+        "version": "0.25.12",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/esbuild/package.json",
+          "size_bytes": 1490,
+          "sha256": "cb7d5b1fe478f8cbaae566a86031b6fdf5f7d444354f35d1cb3cba9adf6d2935"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/esbuild/LICENSE.md",
+            "size_bytes": 1069,
+            "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "events",
+        "version": "3.3.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/events/package.json",
+          "size_bytes": 859,
+          "sha256": "878ad3687fef7efe3757c1872a3af998c95197129a7445d632486a9591ee542e"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/events/LICENSE",
+            "size_bytes": 1081,
+            "sha256": "631987b7616a325a5b97566c232418481ddf7dbb5ecadefb991e791876cc2599"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "https-browserify",
+        "version": "1.0.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/https-browserify/package.json",
+          "size_bytes": 601,
+          "sha256": "7a715ab29d140c89244add7df74bd020aa778736ef93f7bfabb792b6910e5fad"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/https-browserify/LICENSE",
+            "size_bytes": 1103,
+            "sha256": "ff151c00207c908581639851dd8504ce4255be0650b2b236edec2aa90342b0cd"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "mitata",
+        "version": "0.1.14",
+        "manifest": {
+          "path": "node_modules/.bun/mitata@0.1.14/node_modules/mitata/package.json",
+          "size_bytes": 466,
+          "sha256": "430e0b301213cd41c5bf27116ad0b7922eb31143c70c0f1c58c17f47b87b3a46"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/mitata@0.1.14/node_modules/mitata/license",
+            "size_bytes": 1050,
+            "sha256": "85ef1781bf83d922097fc8d4c84035ca28f400cf5e60f9de641819e0ce8de003"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "os-browserify",
+        "version": "0.3.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/os-browserify/package.json",
+          "size_bytes": 364,
+          "sha256": "1bd2ec0d3d973d4f337a34701fe18f96de583b87c07e2631f8fe37a5a66693ab"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/os-browserify/LICENSE",
+            "size_bytes": 1077,
+            "sha256": "d25d1d6d28c35cb6f358e2833e405c4e53fec2fa24d156323ddea5cd438d3407"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "path-browserify",
+        "version": "1.0.1",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/path-browserify/package.json",
+          "size_bytes": 650,
+          "sha256": "8adb61e752398b45fbcf7bc35f254b74302622b100e49915a4905e74c97acb42"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/path-browserify/LICENSE",
+            "size_bytes": 1071,
+            "sha256": "a22b9d5763f574e5db347c30acc0b33eaf4846767c03d2e27d012e864e79a824"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "peechy",
+        "version": "0.4.34",
+        "manifest": {
+          "path": "node_modules/.bun/peechy@0.4.34/node_modules/peechy/package.json",
+          "size_bytes": 1952,
+          "sha256": "b19ffe2331ab66159909b130cff1c09cabf2383fd6c5120c319e54f0b4af8159"
+        },
+        "selected_expression": "MIT",
+        "license_files": [],
+        "required_text_present": false,
+        "missing_text_evidence": {
+          "repository": "https://github.com/jarred-sumner/peechy",
+          "commit": "11a618c2fb2d0e05bb0edf1a871d131dedc779ee",
+          "path": "LICENSE.md",
+          "sha256": "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+          "exact_release_source_correspondence_verified": false
+        }
+      },
+      {
+        "name": "preact",
+        "version": "10.27.2",
+        "manifest": {
+          "path": "packages/bun-error/node_modules/preact/package.json",
+          "size_bytes": 8917,
+          "sha256": "18e17180b03e87d66de37fa835830ebdb9826cd036725fe552a5eea89564d5e2"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "packages/bun-error/node_modules/preact/LICENSE",
+            "size_bytes": 1087,
+            "sha256": "1fe6958409c8c257a70c587a18b6f7f412b179b456630790d30b2ec9a8e4b7d4"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "prettier",
+        "version": "3.6.2",
+        "manifest": {
+          "path": "node_modules/.bun/prettier@3.6.2/node_modules/prettier/package.json",
+          "size_bytes": 6304,
+          "sha256": "b7745c082cb15e870748816bbfdc584867644a81be2cd3c17f91647c1c9a0a66"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/prettier@3.6.2/node_modules/prettier/LICENSE",
+            "size_bytes": 1065,
+            "sha256": "b0f2417199889f1c0d28ec4e0244eacf1a15de5819d61f641dd7d8f45153ac9c"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "prettier-plugin-organize-imports",
+        "version": "4.3.0",
+        "manifest": {
+          "path": "node_modules/.bun/prettier-plugin-organize-imports@4.3.0+7c2901f3aa35e8b3/node_modules/prettier-plugin-organize-imports/package.json",
+          "size_bytes": 1371,
+          "sha256": "ab20f5ce98361a91378869d6747b0da1259c1b9d0ce62cdce633c077498f6ddf"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/prettier-plugin-organize-imports@4.3.0+7c2901f3aa35e8b3/node_modules/prettier-plugin-organize-imports/license",
+            "size_bytes": 1066,
+            "sha256": "f336161d4d9b3bfc743f6228bd73a71cb56f8030174c866e3c06fd57dd523fc0"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "process",
+        "version": "0.11.10",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/process/package.json",
+          "size_bytes": 609,
+          "sha256": "8501b4909630e60c9e9f68c4ca8ccb1964688500e61c60408a26d5480a9dd3d4"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/process/LICENSE",
+            "size_bytes": 1098,
+            "sha256": "59a400d04c5078579acc27ddd6452c1bdf763f9506e01364700935fbb1a7c91b"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "punycode",
+        "version": "2.3.1",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/punycode/package.json",
+          "size_bytes": 1227,
+          "sha256": "e025033bd11110af671fb8eb62f0db8895073ccdca70b596aa94a27eb5bf9acb"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/punycode/LICENSE-MIT.txt",
+            "size_bytes": 1077,
+            "sha256": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "querystring-es3",
+        "version": "1.0.0-0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/querystring-es3/package.json",
+          "size_bytes": 1461,
+          "sha256": "76346646839f5f00e9a86350e6f6f03ef0c2ac4c3b8f1220e39c7c94dd19d781"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/querystring-es3/License.md",
+            "size_bytes": 2242,
+            "sha256": "a2d84514bf60e8dab31c3db9b25bf2fcb644171ec91f3a7463173f3e9ac6b8b4"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "manifest": {
+          "path": "node_modules/.bun/react@18.3.1/node_modules/react/package.json",
+          "size_bytes": 999,
+          "sha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/react@18.3.1/node_modules/react/LICENSE",
+            "size_bytes": 1086,
+            "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "manifest": {
+          "path": "node_modules/.bun/react-dom@18.3.1+f4eacebf2041cd4f/node_modules/react-dom/package.json",
+          "size_bytes": 1353,
+          "sha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/react-dom@18.3.1+f4eacebf2041cd4f/node_modules/react-dom/LICENSE",
+            "size_bytes": 1086,
+            "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "react-refresh",
+        "version": "0.17.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/react-refresh/package.json",
+          "size_bytes": 868,
+          "sha256": "c042bac77d19e7de2c7afca47f6d833eba942da2501138b00e0ec74865f44001"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/react-refresh/LICENSE",
+            "size_bytes": 1088,
+            "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "readable-stream",
+        "version": "4.7.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/readable-stream/package.json",
+          "size_bytes": 2643,
+          "sha256": "246e18f32bc77525436b73f8ac600560f246f9bc05a36dedc07f448ae19239ac"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/readable-stream/LICENSE",
+            "size_bytes": 2337,
+            "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "source-map-js",
+        "version": "1.2.1",
+        "manifest": {
+          "path": "node_modules/.bun/source-map-js@1.2.1/node_modules/source-map-js/package.json",
+          "size_bytes": 2548,
+          "sha256": "58f8e94a461a5e461e0cb2bb2be681cbd89b9181989fd26fceb858e67711469a"
+        },
+        "selected_expression": "BSD-3-Clause",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/source-map-js@1.2.1/node_modules/source-map-js/LICENSE",
+            "size_bytes": 1526,
+            "sha256": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "stream-http",
+        "version": "3.2.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/stream-http/package.json",
+          "size_bytes": 1280,
+          "sha256": "c7fe1fb014bca103316d152aa61ee711f6272f0461906808e42820dfd7c95d35"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/stream-http/LICENSE",
+            "size_bytes": 1086,
+            "sha256": "a0e6357a5e8ea65827addeb383e0948a1874d2f46bc7feaf6349b7a376ed6e98"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "string_decoder",
+        "version": "1.3.0",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/string_decoder/package.json",
+          "size_bytes": 823,
+          "sha256": "31984c85cd4f3df0aa75075acdec98c25961496897d1f46d04ed4a701f129c54"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/string_decoder/LICENSE",
+            "size_bytes": 2338,
+            "sha256": "11f2aafb37d06b3ee5bdaf06e9811141d0da05263c316f3d627f45c20d43261b"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "timers-browserify",
+        "version": "2.0.12",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/timers-browserify/package.json",
+          "size_bytes": 1445,
+          "sha256": "da826e288c2dcedd97c9ed36e50ceb527b12b2d4cfc4c03c4ae807958e1bc7d4"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/timers-browserify/LICENSE.md",
+            "size_bytes": 2505,
+            "sha256": "d5f14c3258420dfe5a3b641a143d6e6dd90eabb5962244d937e25699c3a45ec9"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "tty-browserify",
+        "version": "0.0.1",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/tty-browserify/package.json",
+          "size_bytes": 622,
+          "sha256": "571a414170871567b094514212edd9e23785a96ee8553a91814290b05cf0d6e1"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/tty-browserify/LICENSE",
+            "size_bytes": 1073,
+            "sha256": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "typescript",
+        "version": "6.0.2",
+        "manifest": {
+          "path": "node_modules/.bun/typescript@6.0.2/node_modules/typescript/package.json",
+          "size_bytes": 3527,
+          "sha256": "bb6ee7e709ae60426e30b8d393df4d939ee61407794b4f053ce6338d6eaa8c63"
+        },
+        "selected_expression": "Apache-2.0",
+        "license_files": [
+          {
+            "path": "node_modules/.bun/typescript@6.0.2/node_modules/typescript/LICENSE.txt",
+            "size_bytes": 9197,
+            "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "url",
+        "version": "0.11.4",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/url/package.json",
+          "size_bytes": 935,
+          "sha256": "c3b59c6638470d8a0db69e357b41b84fc242648d3a33ab500aa993c649d6d524"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/url/LICENSE",
+            "size_bytes": 1104,
+            "sha256": "00bfc53d658b2173d23e8c2a0f52332a5cfc6044525dafc5ecbe9a733bc3a49d"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "util",
+        "version": "0.12.5",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/util/package.json",
+          "size_bytes": 1314,
+          "sha256": "4957e41a94a2177b25ddd4fa46e60062e2324f0fc665d4318b90a7e4c2401f74"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/util/LICENSE",
+            "size_bytes": 1096,
+            "sha256": "6239c6144c31e58cf925c34483606969c555574d64ffa96518ab5d7f45c75d43"
+          }
+        ],
+        "required_text_present": true
+      },
+      {
+        "name": "vm-browserify",
+        "version": "1.1.2",
+        "manifest": {
+          "path": "src/node-fallbacks/node_modules/vm-browserify/package.json",
+          "size_bytes": 607,
+          "sha256": "5cb7db2a930905f96f3d822f8e2e482e7dd29202fffd79d7583a19f8094c3187"
+        },
+        "selected_expression": "MIT",
+        "license_files": [
+          {
+            "path": "src/node-fallbacks/node_modules/vm-browserify/LICENSE",
+            "size_bytes": 1036,
+            "sha256": "3a62887f73cd035ac1068bc0127ce94291f7a03843391f56df3520e2ca2037f8"
+          }
+        ],
+        "required_text_present": true
+      }
+    ],
+    "selected_expression_counts": {
+      "Apache-2.0": 1,
+      "Artistic-2.0": 1,
+      "BSD-3-Clause": 1,
+      "MIT": 35
+    },
+    "packages_with_required_text": 36,
+    "packages_missing_required_text": [
+      {
+        "name": "constants-browserify",
+        "version": "1.0.0",
+        "evidence": {
+          "repository": "https://github.com/juliangruber/constants-browserify",
+          "commit": "49d435dd53bcf66d337dba96f979b6141582646b",
+          "path": "LICENSE.md",
+          "sha256": "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+          "exact_release_source_correspondence_verified": false
+        }
+      },
+      {
+        "name": "peechy",
+        "version": "0.4.34",
+        "evidence": {
+          "repository": "https://github.com/jarred-sumner/peechy",
+          "commit": "11a618c2fb2d0e05bb0edf1a871d131dedc779ee",
+          "path": "LICENSE.md",
+          "sha256": "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+          "exact_release_source_correspondence_verified": false
+        }
+      }
+    ]
+  },
+  "validation": {
+    "network_used": false,
+    "package_manager_invoked": false,
+    "build_invoked": false,
+    "source_built_npm_receipts_verified": true,
+    "declared_codegen_package_manifest_mapping_verified": true,
+    "linked_generated_output_mapping_verified": true,
+    "generated_output_producer_edges_verified": false,
+    "selected_package_license_expressions_verified": true,
+    "all_selected_package_license_texts_verified": false,
+    "final_npm_codegen_closure_verified": false,
+    "final_license_expression_verified": false,
+    "rpm_payload_license_verified": false
+  },
+  "scope": {
+    "included": "NPM package manifests declared by current code-generation install edges and generated outputs consumed by direct final-link objects",
+    "excluded": "unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
+  }
+}

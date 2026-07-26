@@ -1,0 +1,318 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "tempfile"
+
+module BunNpmCodeGenerationAudit
+  class Error < StandardError; end
+
+  REPO_ROOT = File.expand_path("..", __dir__)
+  NPM_PACKAGE_JSON_PATTERN = %r{\.\./\.\./source/(?:node_modules|packages/bun-error/node_modules|src/node-fallbacks/node_modules)/[^\s:|]+/package\.json}
+  LICENSE_PATTERN = /\A(?:licen[cs]e|copying|notice|copyright)(?:[-._].*)?\z/i
+  MISSING_TEXT_EVIDENCE = {
+    ["constants-browserify", "1.0.0"] => {
+      "repository" => "https://github.com/juliangruber/constants-browserify",
+      "commit" => "49d435dd53bcf66d337dba96f979b6141582646b",
+      "path" => "LICENSE.md",
+      "sha256" => "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+      "exact_release_source_correspondence_verified" => false
+    },
+    ["peechy", "0.4.34"] => {
+      "repository" => "https://github.com/jarred-sumner/peechy",
+      "commit" => "11a618c2fb2d0e05bb0edf1a871d131dedc779ee",
+      "path" => "LICENSE.md",
+      "sha256" => "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+      "exact_release_source_correspondence_verified" => false
+    }
+  }.freeze
+
+  module_function
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def path_set_digest(paths)
+    Digest::SHA256.hexdigest(paths.sort.join("\n") + "\n")
+  end
+
+  def safe_relative_path?(path)
+    candidate = Pathname(path.to_s)
+    candidate.relative? && candidate.each_filename.none? { |part| [".", ".."].include?(part) }
+  end
+
+  def file_record(path, root)
+    real = File.realpath(path)
+    base = File.realpath(root)
+    raise Error, "file escapes retained root: #{path}" unless real.start_with?("#{base}/")
+
+    {
+      "path" => real.delete_prefix("#{base}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def repo_record(path)
+    file_record(path, REPO_ROOT)
+  end
+
+  def load_json(path, schema)
+    receipt = JSON.parse(File.read(path))
+    raise Error, "unexpected schema in #{path}" unless receipt.fetch("schema") == schema
+
+    receipt
+  end
+
+  def parse_final_link(ninja)
+    match = ninja.match(/^build bun-profile: link (.*?)(?=^  ldflags = )/m)
+    raise Error, "cannot find final bun-profile link edge" unless match
+
+    match[1].gsub(/\$\n\s*/, " ").split.take_while { |input| input != "|" }.select { |input| input.end_with?(".o") }
+  end
+
+  def parse_ninja_edges(ninja)
+    edges = {}
+    ninja.gsub(/\$\n\s*/, " ").lines.grep(/^build /).each do |line|
+      outputs, rule_and_inputs = line.delete_prefix("build ").split(": ", 2)
+      next unless rule_and_inputs
+
+      rule, inputs = rule_and_inputs.split(" ", 2)
+      explicit = inputs.to_s.split(/ \|\|? /, 2).first.to_s.split
+      outputs.split.reject { |output| output == "|" }.each do |output|
+        raise Error, "duplicate Ninja output #{output}" if edges.key?(output)
+
+        edges[output] = { "rule" => rule, "inputs" => explicit }
+      end
+    end
+    edges
+  end
+
+  def linked_codegen_dependencies(build_root, direct_objects)
+    selected = direct_objects.to_h { |path| [path, true] }
+    current = nil
+    consumers = Hash.new { |hash, key| hash[key] = [] }
+    command = ["ninja", "-C", build_root, "-t", "deps"]
+    Open3.popen3(*command) do |stdin, stdout, stderr, wait|
+      stdin.close
+      stdout.each_line do |line|
+        if (match = line.match(/^(.+): #deps /))
+          current = selected[match[1]] ? match[1] : nil
+        elsif current && (match = line.match(/^\s+(.+)$/))
+          path = match[1]
+          next unless File.file?(path)
+
+          real = File.realpath(path)
+          codegen_root = File.realpath(File.join(build_root, "codegen"))
+          next unless real.start_with?("#{codegen_root}/")
+
+          relative = real.delete_prefix("#{File.realpath(build_root)}/")
+          consumers[relative] << current
+        elsif line.strip.empty?
+          current = nil
+        end
+      end
+      error = stderr.read
+      raise Error, "ninja dependency query failed: #{error}" unless wait.value.success?
+    end
+    consumers.transform_values { |values| values.uniq.sort }.sort.to_h
+  end
+
+  def selected_package_manifests(source_root, ninja)
+    build_root = File.dirname(File.join(source_root, "placeholder"))
+    ninja.gsub(/\$\n\s*/, " ").scan(NPM_PACKAGE_JSON_PATTERN).uniq.map do |token|
+      path = File.expand_path(token.sub("../../source", source_root), build_root)
+      raise Error, "declared npm package manifest is missing: #{path}" unless File.file?(path)
+
+      path
+    end.sort
+  end
+
+  def selected_expression(package_json, license_files)
+    declaration = package_json["license"]
+    return declaration if declaration.is_a?(String) && !declaration.empty?
+
+    texts = license_files.map { |path| File.binread(path) }.join("\n")
+    return "MIT" if texts.include?("Permission is hereby granted, free of charge")
+
+    legacy = Array(package_json["licenses"]).map { |record| record.is_a?(Hash) ? record["type"] : nil }.compact.uniq
+    return legacy.first if legacy.length == 1
+
+    nil
+  end
+
+  def package_records(source_root, manifest_paths)
+    records = manifest_paths.map do |manifest_path|
+      package_root = File.dirname(manifest_path)
+      package_json = JSON.parse(File.read(manifest_path))
+      name = package_json.fetch("name")
+      version = package_json["version"]
+      license_paths = Dir.children(package_root).grep(LICENSE_PATTERN).map { |entry| File.join(package_root, entry) }.select { |path| File.file?(path) }.sort
+      expression = selected_expression(package_json, license_paths)
+      raise Error, "npm package has no selected license expression: #{name}@#{version}" unless expression
+
+      record = {
+        "name" => name,
+        "version" => version,
+        "manifest" => file_record(manifest_path, source_root),
+        "selected_expression" => expression,
+        "license_files" => license_paths.map { |path| file_record(path, source_root) },
+        "required_text_present" => license_paths.any?
+      }
+      evidence = MISSING_TEXT_EVIDENCE[[name, version]]
+      record["missing_text_evidence"] = evidence if evidence
+      record
+    end
+    identities = records.map { |record| [record["name"], record["version"], record.dig("manifest", "path")] }
+    raise Error, "npm package manifest identities are not unique" unless identities.uniq.length == identities.length
+
+    records.sort_by { |record| [record.fetch("name"), record.fetch("version").to_s, record.dig("manifest", "path")] }
+  end
+
+  def generate(proof_root:, source_inventory_path:, first_npm_path:, self_npm_path:, audit_date:)
+    root = File.realpath(proof_root)
+    source_root = File.join(root, "source")
+    build_root = File.join(root, "build", "release-local")
+    raise Error, "proof source root is missing" unless File.directory?(source_root)
+    raise Error, "proof build root is missing" unless File.directory?(build_root)
+
+    inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    first_npm = load_json(first_npm_path, "bun-npm-offline-install-proof/v2")
+    self_npm = load_json(self_npm_path, "bun-npm-offline-install-proof/v2")
+    ninja_path = File.join(build_root, "build.ninja")
+    ninja = File.read(ninja_path)
+    direct_objects = parse_final_link(ninja)
+    raise Error, "unexpected final direct object count" unless direct_objects.length == 1162
+
+    consumers = linked_codegen_dependencies(build_root, direct_objects)
+    raise Error, "no generated code is consumed by the final link" if consumers.empty?
+    edges = parse_ninja_edges(ninja)
+    generated_outputs = consumers.map do |path, object_paths|
+      edge = edges[path]
+      record = file_record(File.join(build_root, path), build_root)
+      record.merge(
+        "rule" => edge&.fetch("rule", nil),
+        "producer_edge_declared" => !edge.nil?,
+        "consumer_object_count" => object_paths.length,
+        "consumer_objects_sha256" => path_set_digest(object_paths)
+      )
+    end
+    undeclared_outputs = generated_outputs.reject { |record| record["producer_edge_declared"] }
+    package_manifests = selected_package_manifests(source_root, ninja)
+    packages = package_records(source_root, package_manifests)
+    missing_texts = packages.reject { |record| record["required_text_present"] }
+    expected_missing = [["constants-browserify", "1.0.0"], ["peechy", "0.4.34"]]
+    actual_missing = missing_texts.map { |record| [record["name"], record["version"]] }.sort
+    raise Error, "unexpected npm license-text gaps: #{actual_missing.inspect}" unless actual_missing == expected_missing
+    raise Error, "npm license-text gap lacks exact repository evidence" unless missing_texts.all? { |record| record.dig("missing_text_evidence", "sha256").to_s.match?(/\A[0-9a-f]{64}\z/) }
+
+    {
+      "schema" => "bun-npm-code-generation-closure/v1",
+      "package" => "bun",
+      "version" => inventory.fetch("release"),
+      "rpm_release" => inventory.fetch("rpm_release"),
+      "audit_date" => audit_date,
+      "inputs" => {
+        "source_license_inventory" => repo_record(source_inventory_path),
+        "first_source_built_npm" => repo_record(first_npm_path),
+        "self_source_built_npm" => repo_record(self_npm_path),
+        "build_ninja" => file_record(ninja_path, root)
+      },
+      "final_link" => {
+        "direct_object_count" => direct_objects.length,
+        "direct_object_paths_sha256" => path_set_digest(direct_objects),
+        "objects_consuming_generated_code" => consumers.values.flatten.uniq.length,
+        "generated_output_count" => generated_outputs.length,
+        "generated_output_paths_sha256" => path_set_digest(generated_outputs.map { |record| record.fetch("path") }),
+        "undeclared_producer_output_count" => undeclared_outputs.length,
+        "undeclared_producer_output_paths" => undeclared_outputs.map { |record| record.fetch("path") },
+        "generated_outputs" => generated_outputs
+      },
+      "npm" => {
+        "selected_package_manifest_count" => packages.length,
+        "selected_package_manifest_paths_sha256" => path_set_digest(packages.map { |record| record.dig("manifest", "path") }),
+        "selected_packages" => packages,
+        "selected_expression_counts" => packages.group_by { |record| record.fetch("selected_expression") }.transform_values(&:length).sort.to_h,
+        "packages_with_required_text" => packages.count { |record| record["required_text_present"] },
+        "packages_missing_required_text" => missing_texts.map { |record| { "name" => record["name"], "version" => record["version"], "evidence" => record["missing_text_evidence"] } }
+      },
+      "validation" => {
+        "network_used" => false,
+        "package_manager_invoked" => false,
+        "build_invoked" => false,
+        "source_built_npm_receipts_verified" => true,
+        "declared_codegen_package_manifest_mapping_verified" => true,
+        "linked_generated_output_mapping_verified" => true,
+        "generated_output_producer_edges_verified" => undeclared_outputs.empty?,
+        "selected_package_license_expressions_verified" => true,
+        "all_selected_package_license_texts_verified" => false,
+        "final_npm_codegen_closure_verified" => false,
+        "final_license_expression_verified" => false,
+        "rpm_payload_license_verified" => false
+      },
+      "scope" => {
+        "included" => "NPM package manifests declared by current code-generation install edges and generated outputs consumed by direct final-link objects",
+        "excluded" => "unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
+      }
+    }
+  end
+
+  def write_json(path, receipt)
+    directory = File.dirname(path)
+    Dir.mkdir(directory) unless Dir.exist?(directory)
+    Tempfile.create(["bun-npm-code-generation", ".json"], directory) do |file|
+      file.write(JSON.pretty_generate(receipt) + "\n")
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+
+  def main(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.on("--proof-root PATH") { |value| options[:proof_root] = value }
+      parser.on("--source-inventory PATH") { |value| options[:source_inventory] = value }
+      parser.on("--first-npm PATH") { |value| options[:first_npm] = value }
+      parser.on("--self-npm PATH") { |value| options[:self_npm] = value }
+      parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
+      parser.on("--output PATH") { |value| options[:output] = value }
+      parser.on("--check") { options[:check] = true }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+    end.parse!(argv)
+    %i[proof_root source_inventory first_npm self_npm audit_date].each do |key|
+      raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key]
+    end
+    Date.iso8601(options.fetch(:audit_date))
+    raise Error, "--output is required unless --check" unless options[:output] || options[:check]
+    raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
+
+    receipt = generate(
+      proof_root: options.fetch(:proof_root),
+      source_inventory_path: options.fetch(:source_inventory),
+      first_npm_path: options.fetch(:first_npm),
+      self_npm_path: options.fetch(:self_npm),
+      audit_date: options.fetch(:audit_date)
+    )
+    serialized = JSON.pretty_generate(receipt) + "\n"
+    if options[:check]
+      raise Error, "Bun npm code-generation closure differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized
+      puts "Verified Bun npm code-generation closure #{options.fetch(:receipt)}."
+    else
+      write_json(options.fetch(:output), receipt)
+      puts "Wrote Bun npm code-generation closure to #{options.fetch(:output)}."
+    end
+  rescue Date::Error, JSON::ParserError, KeyError, Errno::ENOENT, Error => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end
+
+BunNpmCodeGenerationAudit.main(ARGV) if $PROGRAM_NAME == __FILE__
