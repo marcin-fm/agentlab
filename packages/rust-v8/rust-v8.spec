@@ -12,6 +12,8 @@
 %global dynamic_linking_sha256 d0538f93a00ca6a3498e142cad5d17172fcfee1735245c57f248feb7a85d4097
 %global source_filter_sha256 a611159b2626cb36600c1ebf332d4f7da093f9be310496a9145aec53d1d81ffa
 %global static_license_sha256 34900dc976f3345fc5be32af29b4f805099855a641ee46b7a4e6fc4265d830d0
+%global consumer_rlib_license_sha256 e92023e17c274827d7c91047da58d8797f72874d84a552ca08641234b96c3fa3
+%global consumer_rlib_audit_sha256 55141a3c4b886c5372289e36510f1fa8005d440c6106eae8ba5fb378b6fb6e9b
 %global system_rust_patch_sha256 2018aefc8f25ed1372cc964196f987625c34820fafb2ba40085c624e1d37dae7
 %global gcc_patch_sha256 ff66712a0f90eb64ec7f25ef8b0b2e168541238ca7e9e30b7d830540b8f39ede
 %global siphash_patch_sha256 899c0ebecaefd5ca655ecaa8b0b78d168ac1dc980514610ca5fa2c32ee1712ca
@@ -21,7 +23,7 @@
 
 Name:           rust-v8
 Version:        149.2.0
-Release:        0.25%{?dist}
+Release:        0.26%{?dist}
 Summary:        Source-built Rusty V8 static archive
 
 # Complete retained Fedora 44 x86_64 1,795-object archive expression. The 31
@@ -59,6 +61,8 @@ Source27:       %{name}-%{version}-static-license.json
 Source28:       %{name}-stable-system-allocator-license.txt
 Source29:       prepare-rust-v8-srpm-sources
 Source30:       README.md
+Source31:       %{name}-%{version}-consumer-rlib-license.json
+Source32:       audit-rust-v8-consumer-rlibs
 # Guard bundled-toolchain-only behavior and use Fedora's system toolchains.
 # Fedora-specific; not submitted while the exact system-toolchain boundary is reviewed.
 Patch0:         %{name}-system-rust-toolchain.patch
@@ -129,6 +133,8 @@ echo "%{source_filter_sha256}  %{SOURCE26}" | sha256sum -c -
 echo "%{static_license_sha256}  %{SOURCE27}" | sha256sum -c -
 echo "%{allocator_license_sha256}  %{SOURCE28}" | sha256sum -c -
 echo "%{source_preparer_sha256}  %{SOURCE29}" | sha256sum -c -
+echo "%{consumer_rlib_license_sha256}  %{SOURCE31}" | sha256sum -c -
+echo "%{consumer_rlib_audit_sha256}  %{SOURCE32}" | sha256sum -c -
 echo "%{system_rust_patch_sha256}  %{PATCH0}" | sha256sum -c -
 echo "%{gcc_patch_sha256}  %{PATCH1}" | sha256sum -c -
 echo "%{siphash_patch_sha256}  %{PATCH2}" | sha256sum -c -
@@ -144,7 +150,7 @@ TMPDIR="%{_tmppath}" ruby "%{SOURCE29}" \
   --source "%{SOURCE15}" --source "%{SOURCE16}" --source "%{SOURCE17}" \
   --source "%{SOURCE18}" --source "%{SOURCE19}" --source "%{SOURCE20}"
 python3 - "%{SOURCE21}" "%{SOURCE22}" "%{SOURCE23}" "%{SOURCE24}" "%{SOURCE25}" \
-  "%{SOURCE26}" "%{SOURCE27}" \
+  "%{SOURCE26}" "%{SOURCE27}" "%{SOURCE31}" \
   "%{SOURCE0}" "%{SOURCE1}" "%{SOURCE2}" "%{SOURCE3}" "%{SOURCE4}" \
   "%{SOURCE5}" "%{SOURCE6}" "%{SOURCE7}" "%{SOURCE8}" "%{SOURCE9}" \
   "%{SOURCE10}" "%{SOURCE11}" "%{SOURCE12}" "%{SOURCE13}" "%{SOURCE14}" \
@@ -162,7 +168,8 @@ fedora_license_evidence = json.load(open(sys.argv[4], encoding="utf-8"))
 dynamic_linking = json.load(open(sys.argv[5], encoding="utf-8"))
 source_filter = json.load(open(sys.argv[6], encoding="utf-8"))
 static_license = json.load(open(sys.argv[7], encoding="utf-8"))
-sources = sys.argv[8:]
+consumer_rlibs = json.load(open(sys.argv[8], encoding="utf-8"))
+sources = sys.argv[9:]
 components = receipt["components"]
 assert receipt["schema"] == "rust-v8-source-closure/v4"
 assert receipt["release"]["version"] == "%{version}"
@@ -231,6 +238,15 @@ assert static_license["validation"]["required_license_texts_verified"] is True
 assert static_license["validation"]["fedora_allowed_spdx_verified"] is True
 assert static_license["validation"]["prototype_static_archive_license_complete"] is True
 assert static_license["validation"]["production_static_archive_license_complete"] is False
+assert consumer_rlibs["schema"] == "rust-v8-consumer-rlib-license/v1"
+assert consumer_rlibs["release"] == "%{version}"
+assert consumer_rlibs["inputs"]["license_audit"]["sha256"] == "%{license_audit_sha256}"
+assert consumer_rlibs["inputs"]["archive_graph"]["sha256"] == "%{archive_graph_sha256}"
+assert consumer_rlibs["inputs"]["static_license"]["sha256"] == "%{static_license_sha256}"
+assert consumer_rlibs["selected_graph"]["implicit_rust_rlib_count"] == 31
+assert consumer_rlibs["selected_graph"]["implicit_rust_rlib_paths_sha256"] == archive_graph["architecture_expectations"]["x86_64"]["implicit_rust_rlib_paths_sha256"]
+assert consumer_rlibs["validation"]["consumer_manifest_complete"] is True
+assert consumer_rlibs["validation"]["codex_final_link_selection_verified"] is False
 assert archive_graph["schema"] == "rust-v8-archive-graph-witness/v2"
 assert archive_graph["source_closure_reference"]["sha256"] == "%{closure_sha256}"
 assert archive_graph["source_closure_reference"]["provenance_verified"] is False
@@ -370,6 +386,8 @@ assert len(members) == expected["member_count"]
 assert len(set(members)) == expected["unique_member_names"]
 assert lines_sha256(objects) == expected["object_input_paths_sha256"]
 assert lines_sha256(rlibs) == expected["implicit_rust_rlib_paths_sha256"]
+consumer_rlibs = json.load(open("%{SOURCE31}", encoding="utf-8"))
+assert lines_sha256(rlibs) == consumer_rlibs["selected_graph"]["implicit_rust_rlib_paths_sha256"]
 assert lines_sha256(members) == expected["member_names_sha256"]
 assert sorted(members) == sorted(os.path.basename(path) for path in objects)
 assert expected["selected_googletest_inputs"] == []
@@ -411,6 +429,9 @@ PY
 %{_libdir}/rust-v8/%{version}/librusty_v8.a
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.26
+- Map the 31 separately linked Rust libraries and their license texts.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 149.2.0-0.25
 - Reconcile the complete six-cell provider proof and remaining consumer gate.
 

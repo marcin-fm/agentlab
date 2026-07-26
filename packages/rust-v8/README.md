@@ -161,6 +161,12 @@ embedded in `librusty_v8.a`; they remain final-consumer obligations. Receipt
 SHA-256 is
 `34900dc976f3345fc5be32af29b4f805099855a641ee46b7a4e6fc4265d830d0`.
 
+`rust-v8-149.2.0-consumer-rlib-license.json` maps all 31 exact rlib paths
+to reviewed source packages and local license texts. Its candidate expression is
+`Apache-2.0 AND MIT AND Unicode-3.0 AND (Apache-2.0 OR MIT)`. This is a
+provider-side manifest only: Codex must still prove its exact final-link
+selection and install the applicable combined payload.
+
 `rust-v8-149.2.0-license-audit.json` currently hashes 414 candidate legal texts
 and 231 `README.chromium` records. Chromium's Rust vendor tree contains 268
 entries: 216 real source packages and 52 generated empty placeholders. Every

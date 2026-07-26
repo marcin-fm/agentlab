@@ -84,6 +84,18 @@ archive_graph:
   prototype_selected_archive_graph_captured: true
   selected_build_dependency_closure_verified: false
   final_consumer_link_closure_verified: false
+consumer_rlib_license:
+  receipt: rust-v8-149.2.0-consumer-rlib-license.json
+  receipt_sha256: e92023e17c274827d7c91047da58d8797f72874d84a552ca08641234b96c3fa3
+  audit: audit-rust-v8-consumer-rlibs
+  audit_sha256: 55141a3c4b886c5372289e36510f1fa8005d440c6106eae8ba5fb378b6fb6e9b
+  implicit_rust_rlibs: 31
+  implicit_rust_rlib_paths_sha256: 1ffa1fc702d3720704cd4a772952b7283938f1cd83e5edd0e0a662e07978d4a0
+  all_rlibs_mapped_to_reviewed_sources: true
+  all_selected_license_texts_present: true
+  candidate_expression: Apache-2.0 AND MIT AND Unicode-3.0 AND (Apache-2.0 OR MIT)
+  codex_final_link_selection_verified: false
+  final_consumer_payload_verified: false
 production_build:
   configured_scm_build: 10757049
   nvr: rust-v8-149.2.0-0.24

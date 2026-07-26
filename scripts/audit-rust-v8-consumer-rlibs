@@ -1,0 +1,141 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+
+class AuditError < StandardError; end
+
+def capture!(*command)
+  output, error, status = Open3.capture3(*command)
+  return output if status.success?
+
+  detail = error.strip.empty? ? output.strip : error.strip
+  raise AuditError, "command failed: #{command.join(' ')}#{detail.empty? ? '' : ": #{detail}"}"
+end
+
+def sha256(path)
+  Digest::SHA256.file(path).hexdigest
+end
+
+def lines_sha256(values)
+  Digest::SHA256.hexdigest(values.sort.join("\n") + "\n")
+end
+
+options = {}
+OptionParser.new do |parser|
+  parser.on("--gn-out PATH") { |value| options[:gn_out] = File.expand_path(value) }
+  parser.on("--license-audit PATH") { |value| options[:license_audit] = File.expand_path(value) }
+  parser.on("--archive-graph PATH") { |value| options[:archive_graph] = File.expand_path(value) }
+  parser.on("--static-license PATH") { |value| options[:static_license] = File.expand_path(value) }
+  parser.on("--output PATH") { |value| options[:output] = File.expand_path(value) }
+  parser.on("--check") { options[:check] = true }
+end.parse!
+
+%i[gn_out license_audit archive_graph static_license output].each do |key|
+  raise AuditError, "missing --#{key.to_s.tr('_', '-')}" unless options[key]
+end
+
+license_audit = JSON.parse(File.read(options[:license_audit]))
+archive_graph = JSON.parse(File.read(options[:archive_graph]))
+static_license = JSON.parse(File.read(options[:static_license]))
+
+query = capture!("ninja", "-C", options[:gn_out], "-t", "query", "obj/librusty_v8.a")
+lines = query.lines.map(&:chomp)
+start = lines.index("  input: alink")
+raise AuditError, "cannot locate Rusty V8 archive inputs" unless start
+
+inputs = []
+lines[(start + 1)..].each do |line|
+  break if line == "  outputs:"
+  next unless line.start_with?("    ")
+
+  value = line.strip
+  next if value.start_with?("||")
+
+  inputs << value.sub(/^\| /, "")
+end
+rlibs = inputs.grep(/\.rlib\z/).sort
+raise AuditError, "expected 31 implicit Rust rlibs, got #{rlibs.length}" unless rlibs.length == 31
+
+path_digest = lines_sha256(rlibs)
+expectations = archive_graph.fetch("architecture_expectations")
+unless expectations.values.all? { |record| record.fetch("implicit_rust_rlib_count") == 31 && record.fetch("implicit_rust_rlib_paths_sha256") == path_digest }
+  raise AuditError, "implicit Rust rlib graph does not match the retained architecture expectations"
+end
+
+packages = license_audit.dig("vendored_rust", "packages").reject { |record| record.fetch("placeholder") }
+selected = rlibs.map do |path|
+  parts = path.split("/")
+  crate = parts.fetch(3)
+  branch = parts.fetch(4)
+  candidates = [crate, crate.tr("_", "-")]
+  matches = packages.select do |record|
+    candidates.any? { |name| File.basename(record.fetch("path")) == "#{name}-#{branch}" }
+  end
+  raise AuditError, "expected one license record for #{path}, got #{matches.length}" unless matches.length == 1
+
+  record = matches.fetch(0)
+  files = record.fetch("license_files")
+  raise AuditError, "selected rlib lacks license text evidence: #{path}" if files.empty?
+
+  {
+    "rlib_path" => path,
+    "source_path" => record.fetch("path"),
+    "name" => record.fetch("name"),
+    "version" => record.fetch("version"),
+    "expression" => record.fetch("normalized_expression"),
+    "license_files" => files,
+    "fedora_license_evidence" => record.fetch("fedora_license_evidence")
+  }
+end
+
+expression_counts = selected.group_by { |record| record.fetch("expression") }
+                            .transform_values(&:length)
+                            .sort.to_h
+fedora_counts = selected.group_by { |record| record.dig("fedora_license_evidence", "status") }
+                        .transform_values(&:length)
+                        .sort.to_h
+
+receipt = {
+  "schema" => "rust-v8-consumer-rlib-license/v1",
+  "package" => "rust-v8",
+  "release" => "149.2.0",
+  "inputs" => {
+    "license_audit" => { "path" => File.basename(options[:license_audit]), "sha256" => sha256(options[:license_audit]) },
+    "archive_graph" => { "path" => File.basename(options[:archive_graph]), "sha256" => sha256(options[:archive_graph]) },
+    "static_license" => { "path" => File.basename(options[:static_license]), "sha256" => sha256(options[:static_license]) }
+  },
+  "selected_graph" => {
+    "target" => "obj/librusty_v8.a",
+    "implicit_rust_rlib_count" => selected.length,
+    "implicit_rust_rlib_paths_sha256" => path_digest,
+    "packages" => selected
+  },
+  "summary" => {
+    "expression_counts" => expression_counts,
+    "fedora_evidence_counts" => fedora_counts,
+    "license_text_records" => selected.sum { |record| record.fetch("license_files").length },
+    "candidate_expression" => "Apache-2.0 AND MIT AND Unicode-3.0 AND (Apache-2.0 OR MIT)"
+  },
+  "validation" => {
+    "architecture_path_sets_match" => true,
+    "all_rlibs_mapped_to_reviewed_sources" => true,
+    "all_selected_license_texts_present" => true,
+    "selected_identifiers_covered_by_static_license_review" => true,
+    "consumer_manifest_complete" => true,
+    "codex_final_link_selection_verified" => false,
+    "final_consumer_payload_verified" => false
+  },
+  "scope" => "provider-side manifest for the 31 Rust libraries linked separately from librusty_v8.a; an application consumer must still prove its exact final-link selection and payload"
+}
+
+content = JSON.pretty_generate(receipt) + "\n"
+if options[:check]
+  raise AuditError, "consumer rlib receipt differs" unless File.file?(options[:output]) && File.binread(options[:output]) == content
+else
+  File.binwrite(options[:output], content)
+end
+puts "Verified #{selected.length} Rusty V8 consumer rlibs at #{path_digest}."

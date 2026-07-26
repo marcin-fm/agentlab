@@ -3045,7 +3045,7 @@ class AgentlabTest < Minitest::Test
   end
 
   def rust_v8_receipt_names(dependencies)
-    %w[source_closure license_audit archive_graph fedora_license_evidence dynamic_linking static_license].map do |key|
+    %w[source_closure license_audit archive_graph fedora_license_evidence dynamic_linking static_license consumer_rlib_license].map do |key|
       dependencies.dig(key, "receipt")
     end + [dependencies.dig("source_closure", "source_filter_receipt")]
   end

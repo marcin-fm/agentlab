@@ -1,0 +1,1081 @@
+{
+  "schema": "rust-v8-consumer-rlib-license/v1",
+  "package": "rust-v8",
+  "release": "149.2.0",
+  "inputs": {
+    "license_audit": {
+      "path": "rust-v8-149.2.0-license-audit.json",
+      "sha256": "e9789dcf08348cf166779f392bcbc958f09d992e46731a71af853d6141658017"
+    },
+    "archive_graph": {
+      "path": "rust-v8-149.2.0-archive-graph.json",
+      "sha256": "3889e6a3aad1f46864941772da2ab64a4aef5072656c2ee512d85b7a422064c2"
+    },
+    "static_license": {
+      "path": "rust-v8-149.2.0-static-license.json",
+      "sha256": "34900dc976f3345fc5be32af29b4f805099855a641ee46b7a4e6fc4265d830d0"
+    }
+  },
+  "selected_graph": {
+    "target": "obj/librusty_v8.a",
+    "implicit_rust_rlib_count": 31,
+    "implicit_rust_rlib_paths_sha256": "1ffa1fc702d3720704cd4a772952b7283938f1cd83e5edd0e0a662e07978d4a0",
+    "packages": [
+      {
+        "rlib_path": "obj/third_party/rust/calendrical_calculations/v0_2/lib/libcalendrical_calculations_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/calendrical_calculations-v0_2",
+        "name": "calendrical_calculations",
+        "version": "0.2.4",
+        "expression": "Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/calendrical_calculations-v0_2/LICENSE",
+            "bytes": 11351,
+            "sha256": "192ea857d1bff2b87c174de36cbae5c173234726c6b8eceab9790a535d7dbc95"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-calendrical_calculations-devel",
+              "version": "0.2.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-calendrical_calculations-0.2.4-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-calendrical_calculations-devel",
+              "version": "0.2.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0",
+              "source_rpm": "rust-calendrical_calculations-0.2.3-1.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/core_maths/v0_1/lib/libcore_maths_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/core_maths-v0_1",
+        "name": "core_maths",
+        "version": "0.1.1",
+        "expression": "MIT",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/core_maths-v0_1/LICENSE",
+            "bytes": 1070,
+            "sha256": "9ebf8c4cc0b735ca13a766451f7b8097db3185975ceb2ba94b5abf439156a91f"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-core_maths-devel",
+              "version": "0.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-core_maths-0.1.1-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/diplomat_runtime/v0_15/lib/libdiplomat_runtime_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/diplomat-runtime-v0_15",
+        "name": "diplomat-runtime",
+        "version": "0.15.1",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/diplomat-runtime-v0_15/LICENSE-APACHE",
+            "bytes": 10843,
+            "sha256": "639c20c7f14fb122750d5ad1a6cfb116d9bf8d103e709ee40949e5a12a731666"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/diplomat-runtime-v0_15/LICENSE-MIT",
+            "bytes": 1080,
+            "sha256": "3337fe6e4a3830ad87c23cb9d6d750f9a1e5c45efc08de9c76c1a207fc6966c4"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/either/v1/lib/libeither_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/either-v1",
+        "name": "either",
+        "version": "1.15.0",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/either-v1/LICENSE-APACHE",
+            "bytes": 10847,
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/either-v1/LICENSE-MIT",
+            "bytes": 1043,
+            "sha256": "7576269ea71f767b99297934c0b2367532690f8c4badc695edf8e04ab6a1e545"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-either-devel",
+              "version": "1.15.0",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-either-1.15.0-3.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-either-devel",
+              "version": "1.16.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-either-1.16.0-1.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/icu_calendar/v2/lib/libicu_calendar_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/icu_calendar-v2",
+        "name": "icu_calendar",
+        "version": "2.2.1",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/icu_calendar-v2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_calendar-devel",
+              "version": "2.2.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar-2.2.1-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_calendar-devel",
+              "version": "2.1.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar-2.1.1-1.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/icu_calendar_data/v2/lib/libicu_calendar_data_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/icu_calendar_data-v2",
+        "name": "icu_calendar_data",
+        "version": "2.2.0",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/icu_calendar_data-v2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_calendar_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_calendar_data-devel",
+              "version": "2.1.1",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_calendar_data-2.1.1-1.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/icu_collections/v2/lib/libicu_collections_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/icu_collections-v2",
+        "name": "icu_collections",
+        "version": "2.2.0",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/icu_collections-v2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_collections-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_collections-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_collections-devel",
+              "version": "2.1.1",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_collections-2.1.1-5.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/icu_locale/v2/lib/libicu_locale_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/icu_locale-v2",
+        "name": "icu_locale",
+        "version": "2.2.0",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/icu_locale-v2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_locale-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_locale-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/icu_locale_core/v2/lib/libicu_locale_core_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/icu_locale_core-v2",
+        "name": "icu_locale_core",
+        "version": "2.2.0",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/icu_locale_core-v2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_locale_core-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_core-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_locale_core-devel",
+              "version": "2.1.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_core-2.1.1-3.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/icu_locale_data/v2/lib/libicu_locale_data_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/icu_locale_data-v2",
+        "name": "icu_locale_data",
+        "version": "2.2.0",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/icu_locale_data-v2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_locale_data-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_data-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_locale_data-devel",
+              "version": "2.1.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_locale_data-2.1.2-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/icu_provider/v2/lib/libicu_provider_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/icu_provider-v2",
+        "name": "icu_provider",
+        "version": "2.2.0",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/icu_provider-v2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-icu_provider-devel",
+              "version": "2.2.0",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_provider-2.2.0-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-icu_provider-devel",
+              "version": "2.1.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-icu_provider-2.1.1-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/ixdtf/v0_6/lib/libixdtf_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/ixdtf-v0_6",
+        "name": "ixdtf",
+        "version": "0.6.5",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/ixdtf-v0_6/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-ixdtf-devel",
+              "version": "0.6.5",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-ixdtf-0.6.5-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-ixdtf-devel",
+              "version": "0.6.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-ixdtf-0.6.4-1.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/libm/v0_2/lib/liblibm_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/libm-v0_2",
+        "name": "libm",
+        "version": "0.2.16",
+        "expression": "MIT",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/libm-v0_2/LICENSE.txt",
+            "bytes": 14088,
+            "sha256": "3823dda7cf046602f4b4e77ec8e227863dc4736037cc85bb33d9f19febe16bb7"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-libm-devel",
+              "version": "0.2.15",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "MIT",
+              "source_rpm": "rust-libm-0.2.15-3.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/litemap/v0_8/lib/liblitemap_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/litemap-v0_8",
+        "name": "litemap",
+        "version": "0.8.2",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/litemap-v0_8/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-litemap-devel",
+              "version": "0.8.2",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-litemap-0.8.2-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-litemap-devel",
+              "version": "0.8.1",
+              "release": "3.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-litemap-0.8.1-3.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/num_traits/v0_2/lib/libnum_traits_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/num-traits-v0_2",
+        "name": "num-traits",
+        "version": "0.2.19",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/num-traits-v0_2/LICENSE-APACHE",
+            "bytes": 10847,
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/num-traits-v0_2/LICENSE-MIT",
+            "bytes": 1071,
+            "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-num-traits-devel",
+              "version": "0.2.19",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-num-traits-0.2.19-5.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/potential_utf/v0_1/lib/libpotential_utf_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/potential_utf-v0_1",
+        "name": "potential_utf",
+        "version": "0.1.5",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/potential_utf-v0_1/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-potential_utf-devel",
+              "version": "0.1.5",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-potential_utf-0.1.5-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-potential_utf-devel",
+              "version": "0.1.4",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-potential_utf-0.1.4-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/resb/v0_1/lib/libresb_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/resb-v0_1",
+        "name": "resb",
+        "version": "0.1.2",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/resb-v0_1/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/serde/v1/lib/libserde_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/serde-v1",
+        "name": "serde",
+        "version": "1.0.228",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/serde-v1/LICENSE-APACHE",
+            "bytes": 9723,
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/serde-v1/LICENSE-MIT",
+            "bytes": 1023,
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-serde-devel",
+              "version": "1.0.228",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-serde-1.0.228-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/serde_core/v1/lib/libserde_core_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/serde_core-v1",
+        "name": "serde_core",
+        "version": "1.0.228",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/serde_core-v1/LICENSE-APACHE",
+            "bytes": 9723,
+            "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/serde_core-v1/LICENSE-MIT",
+            "bytes": 1023,
+            "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-serde_core-devel",
+              "version": "1.0.228",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-serde_core-1.0.228-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/stable_deref_trait/v1/lib/libstable_deref_trait_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/stable_deref_trait-v1",
+        "name": "stable_deref_trait",
+        "version": "1.2.1",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/stable_deref_trait-v1/LICENSE-APACHE",
+            "bytes": 10847,
+            "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/stable_deref_trait-v1/LICENSE-MIT",
+            "bytes": 1056,
+            "sha256": "5e05b024f653a5ce199e77cbbbd42fb5553562ec714b819421ed0c3e552a75d7"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-stable_deref_trait-devel",
+              "version": "1.2.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "MIT OR Apache-2.0",
+              "source_rpm": "rust-stable_deref_trait-1.2.1-2.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/temporal_capi/v0_2/lib/libtemporal_capi_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2",
+        "name": "temporal_capi",
+        "version": "0.2.3",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/LICENSE-Apache",
+            "bytes": 11333,
+            "sha256": "4e6bdc19db64d455dbddc0ee2f53ecba556f0226d4558954b5f02673c7358e59"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/temporal_capi-v0_2/LICENSE-MIT",
+            "bytes": 1060,
+            "sha256": "073d3574ac6389e263360572b331e045dda7ac5cdba239ce5bdb02f299ef47bb"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/temporal_rs/v0_2/lib/libtemporal_rs_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/temporal_rs-v0_2",
+        "name": "temporal_rs",
+        "version": "0.2.3",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/temporal_rs-v0_2/LICENSE-Apache",
+            "bytes": 11333,
+            "sha256": "4e6bdc19db64d455dbddc0ee2f53ecba556f0226d4558954b5f02673c7358e59"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/temporal_rs-v0_2/LICENSE-MIT",
+            "bytes": 1060,
+            "sha256": "073d3574ac6389e263360572b331e045dda7ac5cdba239ce5bdb02f299ef47bb"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/timezone_provider/v0_2/lib/libtimezone_provider_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/timezone_provider-v0_2",
+        "name": "timezone_provider",
+        "version": "0.2.3",
+        "expression": "MIT OR Apache-2.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/timezone_provider-v0_2/LICENSE-Apache",
+            "bytes": 11333,
+            "sha256": "4e6bdc19db64d455dbddc0ee2f53ecba556f0226d4558954b5f02673c7358e59"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/timezone_provider-v0_2/LICENSE-MIT",
+            "bytes": 1060,
+            "sha256": "073d3574ac6389e263360572b331e045dda7ac5cdba239ce5bdb02f299ef47bb"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/tinystr/v0_8/lib/libtinystr_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/tinystr-v0_8",
+        "name": "tinystr",
+        "version": "0.8.3",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/tinystr-v0_8/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-tinystr-devel",
+              "version": "0.8.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-tinystr-0.8.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-tinystr-devel",
+              "version": "0.8.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-tinystr-0.8.2-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/utf8_iter/v1/lib/libutf8_iter_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/utf8_iter-v1",
+        "name": "utf8_iter",
+        "version": "1.0.4",
+        "expression": "Apache-2.0 OR MIT",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/utf8_iter-v1/COPYRIGHT",
+            "bytes": 1742,
+            "sha256": "c30152c94a6d75e021adbc52b3a52470366a46edb917e17deae3259251af244c"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/utf8_iter-v1/LICENSE-APACHE",
+            "bytes": 11358,
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          },
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/utf8_iter-v1/LICENSE-MIT",
+            "bytes": 1053,
+            "sha256": "3fa4ca83dcc9237839b1bdeb2e6d16bdfb5ec0c5ce42b24694d8bbf0dcbef72c"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-utf8_iter-devel",
+              "version": "1.0.4",
+              "release": "6.fc44",
+              "arch": "noarch",
+              "license": "Apache-2.0 OR MIT",
+              "source_rpm": "rust-utf8_iter-1.0.4-6.fc44.src.rpm"
+            }
+          ],
+          "other_providers": []
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/writeable/v0_6/lib/libwriteable_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/writeable-v0_6",
+        "name": "writeable",
+        "version": "0.6.3",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/writeable-v0_6/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-writeable-devel",
+              "version": "0.6.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-writeable-0.6.3-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-writeable-devel",
+              "version": "0.6.2",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-writeable-0.6.2-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/yoke/v0_8/lib/libyoke_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/yoke-v0_8",
+        "name": "yoke",
+        "version": "0.8.2",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/yoke-v0_8/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-yoke-devel",
+              "version": "0.8.1",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-yoke-0.8.1-2.fc44.src.rpm"
+            },
+            {
+              "package": "rust-yoke-devel",
+              "version": "0.8.3",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-yoke-0.8.3-1.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/zerofrom/v0_1/lib/libzerofrom_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/zerofrom-v0_1",
+        "name": "zerofrom",
+        "version": "0.1.7",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/zerofrom-v0_1/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "version-different",
+          "exact_providers": [],
+          "other_providers": [
+            {
+              "package": "rust-zerofrom-devel",
+              "version": "0.1.6",
+              "release": "5.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerofrom-0.1.6-5.fc44.src.rpm"
+            },
+            {
+              "package": "rust-zerofrom-devel",
+              "version": "0.1.8",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerofrom-0.1.8-1.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/zerotrie/v0_2/lib/libzerotrie_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/zerotrie-v0_2",
+        "name": "zerotrie",
+        "version": "0.2.4",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/zerotrie-v0_2/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-zerotrie-devel",
+              "version": "0.2.4",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerotrie-0.2.4-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-zerotrie-devel",
+              "version": "0.2.3",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerotrie-0.2.3-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/zerovec/v0_11/lib/libzerovec_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/zerovec-v0_11",
+        "name": "zerovec",
+        "version": "0.11.6",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/zerovec-v0_11/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "exact",
+          "exact_providers": [
+            {
+              "package": "rust-zerovec-devel",
+              "version": "0.11.6",
+              "release": "1.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerovec-0.11.6-1.fc44.src.rpm"
+            }
+          ],
+          "other_providers": [
+            {
+              "package": "rust-zerovec-devel",
+              "version": "0.11.5",
+              "release": "2.fc44",
+              "arch": "noarch",
+              "license": "Unicode-3.0",
+              "source_rpm": "rust-zerovec-0.11.5-2.fc44.src.rpm"
+            }
+          ]
+        }
+      },
+      {
+        "rlib_path": "obj/third_party/rust/zoneinfo64/v0_3/lib/libzoneinfo64_lib.rlib",
+        "source_path": "third_party/rust/chromium_crates_io/vendor/zoneinfo64-v0_3",
+        "name": "zoneinfo64",
+        "version": "0.3.0",
+        "expression": "Unicode-3.0",
+        "license_files": [
+          {
+            "path": "third_party/rust/chromium_crates_io/vendor/zoneinfo64-v0_3/LICENSE",
+            "bytes": 2195,
+            "sha256": "f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2"
+          }
+        ],
+        "fedora_license_evidence": {
+          "status": "absent",
+          "exact_providers": [],
+          "other_providers": []
+        }
+      }
+    ]
+  },
+  "summary": {
+    "expression_counts": {
+      "Apache-2.0": 1,
+      "Apache-2.0 OR MIT": 1,
+      "MIT": 2,
+      "MIT OR Apache-2.0": 9,
+      "Unicode-3.0": 18
+    },
+    "fedora_evidence_counts": {
+      "absent": 6,
+      "exact": 22,
+      "version-different": 3
+    },
+    "license_text_records": 42,
+    "candidate_expression": "Apache-2.0 AND MIT AND Unicode-3.0 AND (Apache-2.0 OR MIT)"
+  },
+  "validation": {
+    "architecture_path_sets_match": true,
+    "all_rlibs_mapped_to_reviewed_sources": true,
+    "all_selected_license_texts_present": true,
+    "selected_identifiers_covered_by_static_license_review": true,
+    "consumer_manifest_complete": true,
+    "codex_final_link_selection_verified": false,
+    "final_consumer_payload_verified": false
+  },
+  "scope": "provider-side manifest for the 31 Rust libraries linked separately from librusty_v8.a; an application consumer must still prove its exact final-link selection and payload"
+}

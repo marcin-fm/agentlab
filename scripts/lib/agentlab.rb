@@ -1256,6 +1256,7 @@ module Agentlab
     dynamic_linking_name = dependencies.dig("dynamic_linking", "receipt")
     source_filter_name = dependencies.dig("source_closure", "source_filter_receipt")
     static_license_name = dependencies.dig("static_license", "receipt")
+    consumer_rlib_name = dependencies.dig("consumer_rlib_license", "receipt")
     source_path = source_name.is_a?(String) && File.join(package.directory, source_name)
     license_path = license_name.is_a?(String) && File.join(package.directory, license_name)
     archive_graph_path = archive_graph_name.is_a?(String) && File.join(package.directory, archive_graph_name)
@@ -1263,6 +1264,7 @@ module Agentlab
     dynamic_linking_path = dynamic_linking_name.is_a?(String) && File.join(package.directory, dynamic_linking_name)
     source_filter_path = source_filter_name.is_a?(String) && File.join(package.directory, source_filter_name)
     static_license_path = static_license_name.is_a?(String) && File.join(package.directory, static_license_name)
+    consumer_rlib_path = consumer_rlib_name.is_a?(String) && File.join(package.directory, consumer_rlib_name)
     unless source_path && File.file?(source_path)
       return ["rust-v8: recursive-source receipt is missing"]
     end
@@ -1284,6 +1286,9 @@ module Agentlab
     unless static_license_path && File.file?(static_license_path)
       return ["rust-v8: static-license receipt is missing"]
     end
+    unless consumer_rlib_path && File.file?(consumer_rlib_path)
+      return ["rust-v8: consumer-rlib license receipt is missing"]
+    end
 
     source_sha256 = Digest::SHA256.file(source_path).hexdigest
     license_sha256 = Digest::SHA256.file(license_path).hexdigest
@@ -1292,6 +1297,7 @@ module Agentlab
     dynamic_linking_sha256 = Digest::SHA256.file(dynamic_linking_path).hexdigest
     source_filter_sha256 = Digest::SHA256.file(source_filter_path).hexdigest
     static_license_sha256 = Digest::SHA256.file(static_license_path).hexdigest
+    consumer_rlib_sha256 = Digest::SHA256.file(consumer_rlib_path).hexdigest
     expected_source_hashes = [
       dependencies.dig("source_closure", "receipt_sha256"),
       package.data.dig("source_policy", "source_closure_receipt_sha256")
@@ -1337,6 +1343,11 @@ module Agentlab
     unless expected_static_license_hashes.all? { |value| value == static_license_sha256 }
       errors << "rust-v8: static-license receipt SHA-256 does not match metadata"
     end
+    expected_consumer_rlib_hashes = [
+      dependencies.dig("consumer_rlib_license", "receipt_sha256"),
+      package.data.dig("consumer_rlib_license", "receipt_sha256")
+    ]
+    errors << "rust-v8: consumer-rlib receipt SHA-256 does not match metadata" unless expected_consumer_rlib_hashes.all? { |value| value == consumer_rlib_sha256 }
     errors << "rust-v8: spec recursive-source SHA-256 does not match" unless spec[/^%global closure_sha256\s+(\h{64})$/, 1] == source_sha256
     errors << "rust-v8: spec license-audit SHA-256 does not match" unless spec[/^%global license_audit_sha256\s+(\h{64})$/, 1] == license_sha256
     errors << "rust-v8: spec archive-graph SHA-256 does not match" unless spec[/^%global archive_graph_sha256\s+(\h{64})$/, 1] == archive_graph_sha256
@@ -1344,8 +1355,16 @@ module Agentlab
     errors << "rust-v8: spec dynamic-linking SHA-256 does not match" unless spec[/^%global dynamic_linking_sha256\s+(\h{64})$/, 1] == dynamic_linking_sha256
     errors << "rust-v8: spec source-filter SHA-256 does not match" unless spec[/^%global source_filter_sha256\s+(\h{64})$/, 1] == source_filter_sha256
     errors << "rust-v8: spec static-license SHA-256 does not match" unless spec[/^%global static_license_sha256\s+(\h{64})$/, 1] == static_license_sha256
+    errors << "rust-v8: spec consumer-rlib SHA-256 does not match" unless spec[/^%global consumer_rlib_license_sha256\s+(\h{64})$/, 1] == consumer_rlib_sha256
 
     source = JSON.parse(File.read(source_path))
+    consumer_rlib = JSON.parse(File.read(consumer_rlib_path))
+    unless consumer_rlib["schema"] == "rust-v8-consumer-rlib-license/v1" && consumer_rlib["release"] == version
+      errors << "rust-v8: consumer-rlib receipt identity is invalid"
+    end
+    errors << "rust-v8: consumer-rlib count does not match" unless consumer_rlib.dig("selected_graph", "implicit_rust_rlib_count") == 31
+    errors << "rust-v8: consumer-rlib manifest is incomplete" unless consumer_rlib.dig("validation", "consumer_manifest_complete") == true
+    errors << "rust-v8: consumer-rlib receipt overclaims Codex final-link selection" unless consumer_rlib.dig("validation", "codex_final_link_selection_verified") == false
     errors << "rust-v8: recursive-source schema is invalid" unless source["schema"] == "rust-v8-source-closure/v4"
     errors << "rust-v8: recursive-source release does not match" unless source.dig("release", "version").to_s == version
     closure_scope = source.fetch("closure_scope", {})
@@ -1456,6 +1475,8 @@ module Agentlab
     errors << "rust-v8: spec Source28 does not select the allocator license" unless spec_sources[28] == "rust-v8-stable-system-allocator-license.txt"
     errors << "rust-v8: spec Source29 does not select the source preparer" unless spec_sources[29] == "prepare-rust-v8-srpm-sources"
     errors << "rust-v8: spec Source30 does not select the package README" unless spec_sources[30] == "README.md"
+    errors << "rust-v8: spec Source31 does not select the consumer-rlib receipt" unless spec_sources[31] == consumer_rlib_name
+    errors << "rust-v8: spec Source32 does not select the consumer-rlib auditor" unless spec_sources[32] == "audit-rust-v8-consumer-rlibs"
     unless spec.include?('TMPDIR="%{_tmppath}" ruby "%{SOURCE29}"') &&
            spec.include?('--output "%{SOURCE20}" --receipt "%{SOURCE26}" --check') &&
            spec.include?('--closure "%{SOURCE21}"') &&
