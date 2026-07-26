@@ -5082,6 +5082,29 @@ module Agentlab
       errors << "#{prefix} license review is missing"
     end
 
+    license_set_filename = source_files["source_license_set_proof"]
+    license_set_path = license_set_filename.is_a?(String) && File.join(package.directory, license_set_filename)
+    if license_set_path && File.file?(license_set_path)
+      proof = JSON.parse(File.read(license_set_path))
+      errors << "#{prefix} source license-set schema is invalid" unless proof["schema"] == "agentlab-opencode-source-license-set/v1"
+      errors << "#{prefix} source license-set release does not match" unless proof["release"].to_s == release
+      errors << "#{prefix} source license-set source receipt does not match" unless proof.dig("receipts", "source_audit", "sha256") == Digest::SHA256.file(source_path).hexdigest
+      errors << "#{prefix} source license-set review receipt does not match" unless proof.dig("receipts", "license_review", "sha256") == Digest::SHA256.file(license_path).hexdigest
+      errors << "#{prefix} source license-set archive count does not match" unless proof.dig("scope", "unique_source_archives") == 828
+      errors << "#{prefix} source license-set package count does not match" unless proof.dig("scope", "selected_package_records") == 1_018
+      errors << "#{prefix} source license-set expression counts do not cover all archives" unless proof.fetch("expression_counts", {}).values.sum == 828
+      errors << "#{prefix} source license-set Fedora data does not match" unless proof.dig("fedora_license_data", "sha256") == "27a1fda193d8a7e7170d2a41929da52bb32416ce970bda3f0fc8fb013d25c8ee"
+      errors << "#{prefix} source license-set text gap count does not match" unless proof.dig("unresolved", "package_local_text_gaps") == 28
+      expected_flags = {
+        "all_declarations_resolved" => true, "all_identifiers_classified_by_fedora" => true,
+        "source_set_expression_verified" => true, "applicable_texts_collected" => false,
+        "final_binary_license_expression_verified" => false, "rpm_license_payload_complete" => false
+      }
+      errors << "#{prefix} source license-set validation flags do not match" unless proof["validation"] == expected_flags
+    else
+      errors << "#{prefix} source license-set proof is missing"
+    end
+
     native_filename = source_files["native_review"]
     native_finding = dependencies.dig("source_acquisition_findings", "native_review")
     errors << "#{prefix} native review path linkage is invalid" unless native_finding.is_a?(Hash) && native_finding["path"] == native_filename
@@ -5341,7 +5364,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.6%{?dist}",
+        "Release:        0.7%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
@@ -5356,6 +5379,7 @@ module Agentlab
         "Source29:       https://codeload.github.com/anomalyco/models.dev/tar.gz/1eb0b8c8e17ffddd89f53b2a3e426777dc560542",
         "Source30:       https://registry.npmjs.org/zod/-/zod-3.24.2.tgz",
         "Source31:       models-snapshot-proof.json",
+        "Source32:       source-license-set-proof.json",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",
         "BuildRequires:  lld20-devel",

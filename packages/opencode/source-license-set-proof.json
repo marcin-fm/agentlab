@@ -1,0 +1,61 @@
+{
+  "schema": "agentlab-opencode-source-license-set/v1",
+  "package": "opencode",
+  "release": "1.18.5",
+  "audit_date": "2026-07-26",
+  "receipts": {
+    "source_audit": {
+      "path": "opencode-1.18.5-source-audit.json",
+      "sha256": "619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc"
+    },
+    "license_review": {
+      "path": "license-review.yml",
+      "sha256": "a8f1126ff872131998217137da6f65b380f3f579556737310242aa3666294197"
+    }
+  },
+  "scope": {
+    "unique_source_archives": 828,
+    "selected_package_records": 1018,
+    "final_binary_inclusion_verified": false
+  },
+  "normalizations": [
+    { "package": "@pierre/diffs@1.2.10", "declared": "apache-2.0", "normalized": "Apache-2.0" },
+    { "package": "@pierre/theming@0.0.1", "declared": "apache-2.0", "normalized": "Apache-2.0" },
+    { "package": "xmlhttprequest-ssl@2.1.2", "declared": [{ "type": "MIT", "url": "http://creativecommons.org/licenses/MIT/" }], "normalized": "MIT" }
+  ],
+  "expression_counts": {
+    "(AFL-2.1 OR BSD-3-Clause)": 1,
+    "(MIT OR CC0-1.0)": 1,
+    "(MPL-2.0 OR Apache-2.0)": 1,
+    "0BSD": 1,
+    "Apache-2.0": 141,
+    "BSD-2-Clause": 12,
+    "BSD-3-Clause": 21,
+    "BlueOak-1.0.0": 12,
+    "CC-BY-3.0": 1,
+    "CC-BY-4.0": 1,
+    "CC0-1.0": 1,
+    "ISC": 83,
+    "MIT": 552
+  },
+  "fedora_license_data": {
+    "path": "/usr/share/fedora-license-data/licenses/fedora-licenses.json",
+    "sha256": "27a1fda193d8a7e7170d2a41929da52bb32416ce970bda3f0fc8fb013d25c8ee",
+    "allowed_software": ["0BSD", "AFL-2.1", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "BlueOak-1.0.0", "ISC", "MIT", "MPL-2.0"],
+    "allowed_content": ["CC-BY-3.0", "CC-BY-4.0", "CC0-1.0"]
+  },
+  "candidate_source_expression": "(AFL-2.1 OR BSD-3-Clause) AND (MIT OR CC0-1.0) AND (MPL-2.0 OR Apache-2.0) AND 0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT",
+  "unresolved": {
+    "package_local_text_gaps": 28,
+    "photon_source_mapping": true,
+    "final_binary_inclusion": true
+  },
+  "validation": {
+    "all_declarations_resolved": true,
+    "all_identifiers_classified_by_fedora": true,
+    "source_set_expression_verified": true,
+    "applicable_texts_collected": false,
+    "final_binary_license_expression_verified": false,
+    "rpm_license_payload_complete": false
+  }
+}

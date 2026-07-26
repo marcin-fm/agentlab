@@ -220,6 +220,7 @@ source_closure_files:
   license_review: license-review.yml
   native_review: native-review.yml
   models_snapshot_proof: models-snapshot-proof.json
+  source_license_set_proof: source-license-set-proof.json
 gates:
   - Recompute the complete closure and all counts for target_release before enabling.
   - Parse the tagged release bun.lock without resolving new versions.

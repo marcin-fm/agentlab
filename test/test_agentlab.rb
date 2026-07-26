@@ -2867,6 +2867,24 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_rejects_incomplete_opencode_source_license_set
+    source_package = Agentlab.package_named("opencode")
+    dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
+    Dir.mktmpdir do |directory|
+      dependencies.fetch("source_closure_files").each_value do |filename|
+        source = File.join(source_package.directory, filename)
+        FileUtils.cp(source, File.join(directory, filename)) if File.file?(source)
+      end
+      proof_path = File.join(directory, dependencies.dig("source_closure_files", "source_license_set_proof"))
+      proof = JSON.parse(File.read(proof_path))
+      proof["validation"]["source_set_expression_verified"] = false
+      File.write(proof_path, JSON.pretty_generate(proof) + "\n")
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+      assert(errors.any? { |error| error.include?("source license-set validation flags do not match") })
+    end
+  end
+
   def test_rejects_incomplete_opencode_lifecycle_review
     package = Agentlab.package_named("opencode")
     dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))

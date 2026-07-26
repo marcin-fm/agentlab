@@ -63,6 +63,12 @@ It records these unresolved gates:
 - 7 sources containing 14 WASM payloads; the three selected Tree-sitter package identities now have source-build replacements for their required WASMs.
 - Only 7 source archives with directly visible native source files.
 
+[`source-license-set-proof.json`](source-license-set-proof.json) classifies all
+828 selected source archives. Every declaration resolves to a Fedora
+allowed-software or allowed-content identifier, but this is not the final
+binary expression: 28 package-local text gaps, Photon correspondence, and
+actual standalone-binary inclusion remain open.
+
 No lifecycle script was executed. The lifecycle review now requires dependency
 reconstruction by direct extraction of the reviewed registry archives and
 forbids all dependency hooks. The 68 prepare hooks are publish/development
