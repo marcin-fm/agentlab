@@ -52,10 +52,11 @@
 %global models_dev_snapshot_sha256 8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287
 %global models_dev_proof_sha256 3b54b21170b3901f3614284ad301ceb1706e310cda027849a55f234bcc6ca1aa
 %global source_license_set_proof_sha256 0d3a4c00971ed5a21f99ea0710d7fde7d045ab93f2be922087b8b4af27ed2247
+%global source_materialization_sha256 dd8beedf7a3ceac79cb18cbad3dc97149072bc360b6ea76f8cd18b2cdd6f0b46
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.7%{?dist}
+Release:        0.8%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -95,6 +96,7 @@ Source29:       https://codeload.github.com/anomalyco/models.dev/tar.gz/1eb0b8c8
 Source30:       https://registry.npmjs.org/zod/-/zod-3.24.2.tgz#/%{name}-%{version}-zod-3.24.2.tgz
 Source31:       models-snapshot-proof.json
 Source32:       source-license-set-proof.json
+Source33:       opencode-1.18.5-source-materialization.json
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -184,6 +186,7 @@ echo "%{models_dev_source_sha256}  %{SOURCE29}" | sha256sum -c -
 echo "%{models_dev_zod_sha256}  %{SOURCE30}" | sha256sum -c -
 echo "%{models_dev_proof_sha256}  %{SOURCE31}" | sha256sum -c -
 echo "%{source_license_set_proof_sha256}  %{SOURCE32}" | sha256sum -c -
+echo "%{source_materialization_sha256}  %{SOURCE33}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
 
@@ -670,6 +673,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.8
+- Materialize the checked npm source bundles deterministically.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.7
 - Classify the complete selected npm source-license set.
 

@@ -1,8 +1,8 @@
 target_release: 1.18.5
 closure_audit:
   audited_release: 1.18.5
-  production_build_sources_verified: false
-  test_sources_verified: false
+  production_build_sources_verified: true
+  test_sources_verified: true
   licenses_verified: false
   native_sources_verified: false
   generated_sources_verified: false
@@ -121,6 +121,24 @@ source_acquisition_receipt:
   sources_with_executable_payloads: 4
   executable_payload_count: 9
   sources_with_native_source: 7
+source_materialization_receipt:
+  schema: opencode-source-materialization/v1
+  sha256: dd8beedf7a3ceac79cb18cbad3dc97149072bc360b6ea76f8cd18b2cdd6f0b46
+  source_audit_sha256: 619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc
+  production_build:
+    members: 828
+    input_bytes: 89240042
+    member_manifest_sha256: 3a017be8bd3588fd35521d87d8f54c40db4acc71328a31fdb5764944b0c9542b
+    size_bytes: 89163404
+    sha256: b580feac741af6272c3695da39883fd72499f04b3f3f91ecc7cfad73ac639260
+  test:
+    members: 828
+    input_bytes: 89240042
+    member_manifest_sha256: 3a017be8bd3588fd35521d87d8f54c40db4acc71328a31fdb5764944b0c9542b
+    size_bytes: 89155039
+    sha256: f755107a94b6ef40bcdc089223ea6cb01253f5729517d77a9b4ea39b9837a3e6
+  deterministic_regeneration_verified: true
+  rpm_integrated: false
 source_acquisition_findings:
   raw_missing_declared_license:
     - "@openauthjs/openauth@0.0.0-20250322224806"
@@ -221,6 +239,7 @@ source_closure_files:
   native_review: native-review.yml
   models_snapshot_proof: models-snapshot-proof.json
   source_license_set_proof: source-license-set-proof.json
+  source_materialization: opencode-1.18.5-source-materialization.json
 gates:
   - Recompute the complete closure and all counts for target_release before enabling.
   - Parse the tagged release bun.lock without resolving new versions.

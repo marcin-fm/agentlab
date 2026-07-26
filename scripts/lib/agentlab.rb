@@ -5105,6 +5105,33 @@ module Agentlab
       errors << "#{prefix} source license-set proof is missing"
     end
 
+    materialization_filename = source_files["source_materialization"]
+    materialization_path = materialization_filename.is_a?(String) && File.join(package.directory, materialization_filename)
+    if materialization_path && File.file?(materialization_path)
+      receipt = JSON.parse(File.read(materialization_path))
+      metadata = dependencies.fetch("source_materialization_receipt", {})
+      errors << "#{prefix} source materialization schema is invalid" unless receipt["schema"] == "opencode-source-materialization/v1"
+      errors << "#{prefix} source materialization release does not match" unless receipt["release"].to_s == release
+      errors << "#{prefix} source materialization receipt SHA-256 does not match" unless metadata["sha256"] == Digest::SHA256.file(materialization_path).hexdigest
+      errors << "#{prefix} source materialization source audit does not match" unless receipt.dig("source_audit", "sha256") == Digest::SHA256.file(source_path).hexdigest && metadata["source_audit_sha256"] == receipt.dig("source_audit", "sha256")
+      { "production_build" => "production_build", "test" => "test" }.each do |receipt_key, metadata_key|
+        archive = receipt.dig("archives", receipt_key)
+        expected = metadata.fetch(metadata_key, {})
+        errors << "#{prefix} source materialization #{receipt_key} does not match" unless archive &&
+          expected == {
+            "members" => archive["member_count"], "input_bytes" => archive["input_bytes"],
+            "member_manifest_sha256" => archive["member_manifest_sha256"], "size_bytes" => archive["size_bytes"],
+            "sha256" => archive["sha256"]
+          }
+      end
+      validation = receipt.fetch("validation", {})
+      errors << "#{prefix} source materialization is not deterministic" unless validation["deterministic_regeneration_verified"] == true && metadata["deterministic_regeneration_verified"] == true
+      errors << "#{prefix} source materialization overclaims RPM integration" unless validation["rpm_integrated"] == false && metadata["rpm_integrated"] == false
+      errors << "#{prefix} source materialization performed forbidden work" unless %w[network_access_performed node_modules_materialized dependency_resolution_performed patches_applied lifecycle_scripts_executed package_build_performed].all? { |flag| validation[flag] == false }
+    else
+      errors << "#{prefix} source materialization receipt is missing"
+    end
+
     native_filename = source_files["native_review"]
     native_finding = dependencies.dig("source_acquisition_findings", "native_review")
     errors << "#{prefix} native review path linkage is invalid" unless native_finding.is_a?(Hash) && native_finding["path"] == native_filename
@@ -5364,7 +5391,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.7%{?dist}",
+        "Release:        0.8%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
@@ -5380,6 +5407,7 @@ module Agentlab
         "Source30:       https://registry.npmjs.org/zod/-/zod-3.24.2.tgz",
         "Source31:       models-snapshot-proof.json",
         "Source32:       source-license-set-proof.json",
+        "Source33:       opencode-1.18.5-source-materialization.json",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",
         "BuildRequires:  lld20-devel",
