@@ -116,8 +116,11 @@ assets, including immutable source archives and byte-level asset correspondence.
 OpenTUI's five grammars now rebuild twice byte-identically with Fedora
 tree-sitter CLI `0.26.9`, Clang 20, and the Bun Zig WASI headers; JavaScript,
 TypeScript, Markdown, Markdown-inline, and Zig parse smokes pass through
-web-tree-sitter `0.25.10`. Shiki and Undici rebuilds remain unproven because
-their upstream Emscripten or Alpine build inputs float. Photon is the
+web-tree-sitter `0.25.10`. Shiki's pinned vscode-oniguruma and Oniguruma sources
+now rebuild twice byte-identically with the package's Emscripten `4.0.4`,
+Binaryen `121`, and Clang 20 toolchain; the exact wrapper scan passes after the
+published WASM is replaced. Undici remains unproven because its historical
+Alpine build inputs float. Photon is the
 only unresolved WASM source mapping: its authenticated npm 0.3.4 tarball differs
 from both the registry `gitHead` and the nearest generated `compiled-wasm`
 commit in WASM bytes, JavaScript, declarations, package identity, version, and

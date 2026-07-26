@@ -38,10 +38,14 @@
 %global opentui_typescript_source_sha256 4de2e82e557810eecb93cb3b31fbb3bd28ba4c91ba9a6c6164bcaa074125b7b5
 %global opentui_markdown_source_sha256 74138adf4535291593560d401bf0a6f0b3cc8a0c43d0912f462e5590f7e8fbb9
 %global opentui_zig_grammar_source_sha256 c7af5b1a992fcaffdf50a11a9974fbf8f09d20c4d9ef42245ac90c152dd3a85a
+%global shiki_vscode_oniguruma_source_sha256 7b3616492af2d012bdb8904e35c6a5584f8d4326bfe013ebbda079330cf3c1ed
+%global shiki_oniguruma_source_sha256 197bdc01b6e71245ca95e652827fe53c4b1532a4175870f62157b5f909fa0e6f
+%global shiki_published_wasm_sha256 fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9
+%global shiki_rebuilt_wasm_sha256 1ef5a51b6e7d2d2b9caeb0563368a8e8807699aab50f3ff9bc0fa480564212d0
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -74,6 +78,8 @@ Source22:       https://codeload.github.com/tree-sitter/tree-sitter-javascript/t
 Source23:       https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/f975a621f4e7f532fe322e13c4f79495e0a7b2e7#/%{name}-%{version}-tree-sitter-typescript-0.23.2.tar.gz
 Source24:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-markdown/tar.gz/2dfd57f547f06ca5631a80f601e129d73fc8e9f0#/%{name}-%{version}-tree-sitter-markdown-0.5.1.tar.gz
 Source25:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0#/%{name}-%{version}-tree-sitter-zig-1.1.2.tar.gz
+Source26:       https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b#/%{name}-%{version}-vscode-oniguruma-1.7.0.tar.gz
+Source27:       https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080#/%{name}-%{version}-oniguruma-08d36110.tar.gz
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -90,6 +96,8 @@ Patch1:         opencode-zig-fedora-lib64.patch
 ExclusiveArch:  x86_64
 
 BuildRequires:  bun = 1.3.14
+BuildRequires:  autoconf
+BuildRequires:  automake
 BuildRequires:  binutils
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  clang20
@@ -104,6 +112,7 @@ BuildRequires:  libzstd-devel
 BuildRequires:  lld20
 BuildRequires:  lld20-devel
 BuildRequires:  lld20-libs
+BuildRequires:  libtool
 BuildRequires:  llvm20-devel
 BuildRequires:  llvm20-libs
 BuildRequires:  make
@@ -153,6 +162,8 @@ echo "%{opentui_javascript_source_sha256}  %{SOURCE22}" | sha256sum -c -
 echo "%{opentui_typescript_source_sha256}  %{SOURCE23}" | sha256sum -c -
 echo "%{opentui_markdown_source_sha256}  %{SOURCE24}" | sha256sum -c -
 echo "%{opentui_zig_grammar_source_sha256}  %{SOURCE25}" | sha256sum -c -
+echo "%{shiki_vscode_oniguruma_source_sha256}  %{SOURCE26}" | sha256sum -c -
+echo "%{shiki_oniguruma_source_sha256}  %{SOURCE27}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
 
@@ -245,10 +256,13 @@ tar --extract --gzip --file %{SOURCE9} --strip-components=1 --directory .opentui
 tar --extract --gzip --file %{SOURCE10} --strip-components=1 --directory .opentui-uucode
 tar --extract --gzip --file %{SOURCE11} --strip-components=1 --directory .opentui-yoga
 for grammar in javascript typescript markdown zig; do mkdir -p ".opentui-grammar-$grammar"; done
+mkdir -p .shiki-vscode-oniguruma/deps/oniguruma
 tar --extract --gzip --file %{SOURCE22} --strip-components=1 --directory .opentui-grammar-javascript
 tar --extract --gzip --file %{SOURCE23} --strip-components=1 --directory .opentui-grammar-typescript
 tar --extract --gzip --file %{SOURCE24} --strip-components=1 --directory .opentui-grammar-markdown
 tar --extract --gzip --file %{SOURCE25} --strip-components=1 --directory .opentui-grammar-zig
+tar --extract --gzip --file %{SOURCE26} --strip-components=1 --directory .shiki-vscode-oniguruma
+tar --extract --gzip --file %{SOURCE27} --strip-components=1 --directory .shiki-vscode-oniguruma/deps/oniguruma
 test ! -e .opentui-source/packages/core/src/zig/lib/x86_64-linux/libopentui.so
 
 mkdir -p \
@@ -276,6 +290,11 @@ opentui_platform="$(node-24 --input-type=module -e 'import { dirname } from "nod
 popd >/dev/null
 echo "%{opentui_published_sha256}  $opentui_platform/libopentui.so" | sha256sum -c -
 rm -f "$opentui_platform/libopentui.so"
+pushd packages/opencode >/dev/null
+shiki_root="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(dirname(fileURLToPath(import.meta.resolve("shiki")))))')"
+popd >/dev/null
+echo "%{shiki_published_wasm_sha256}  $shiki_root/dist/onig.wasm" | sha256sum -c -
+rm -f "$shiki_root/dist/onig.wasm"
 
 # The npm package carries the released JS wrapper but only prebuilt Rust
 # libraries. Replace that directory with the exact Git source and vendor input.
@@ -336,6 +355,24 @@ EM_CONFIG="$PWD/.build-tools/emscripten-config.py" \
   python3 %{SOURCE20} \
   --emcc "$PWD/.build-tools/emscripten/emcc" \
   --source "$PWD/.build-tools/tree-sitter"
+
+# Rebuild Shiki's Oniguruma WASM from the exact vscode-oniguruma and Oniguruma
+# sources using the same private Emscripten/Binaryen toolchain.
+export PATH="$PWD/.build-tools/emscripten:$PATH"
+export EM_CONFIG="$PWD/.build-tools/emscripten-config.py"
+pushd .shiki-vscode-oniguruma/deps/oniguruma >/dev/null
+autoreconf -vfi
+emconfigure ./configure
+make clean
+emmake make -j4
+popd >/dev/null
+pushd .shiki-vscode-oniguruma >/dev/null
+bash scripts/build.sh
+popd >/dev/null
+echo "%{shiki_rebuilt_wasm_sha256}  .shiki-vscode-oniguruma/out/onig.wasm" | sha256sum -c -
+install -pm0644 .shiki-vscode-oniguruma/out/onig.wasm "$shiki_root/dist/onig.wasm"
+cp -p .shiki-vscode-oniguruma/LICENSE.txt vscode-oniguruma-LICENSE.txt
+cp -p .shiki-vscode-oniguruma/deps/oniguruma/COPYING oniguruma-COPYING
 
 tree_sitter_source="$PWD/.build-tools/tree-sitter"
 esbuild_binary="$PWD/.build-tools/esbuild-bin"
@@ -526,6 +563,17 @@ node-24 %{SOURCE21} \
   "$web_tree_sitter" \
   "$bash_parser/tree-sitter-bash.wasm" \
   "$powershell_parser/tree-sitter-powershell.wasm"
+echo "%{shiki_rebuilt_wasm_sha256}  $shiki_root/dist/onig.wasm" | sha256sum -c -
+pushd packages/opencode >/dev/null
+node-24 --input-type=module - "$shiki_root/dist/onig.wasm" <<'JS'
+import { readFileSync } from "node:fs"
+import { loadWASM, OnigScanner, OnigString } from "vscode-oniguruma"
+const bytes = readFileSync(process.argv[2])
+await loadWASM(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength))
+const match = new OnigScanner(["\\b(agentlab)\\b"]).findNextMatchSync(new OnigString("x agentlab y"), 0)
+if (!match || match.captureIndices[0].start !== 2 || match.captureIndices[0].end !== 10) throw new Error("Shiki Oniguruma smoke failed")
+JS
+popd >/dev/null
 packages/opencode/dist/opencode-linux-x64/bin/opencode --version
 
 %install
@@ -542,6 +590,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.4
+- Rebuild Shiki's Oniguruma WASM from corresponding source.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.3
 - Rebuild OpenTUI's five grammar WASMs from pinned sources.
 

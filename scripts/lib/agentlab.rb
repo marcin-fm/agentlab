@@ -5185,6 +5185,24 @@ module Agentlab
       errors << "#{prefix} OpenTUI grammar rebuild evidence does not match" unless opentui_wasm&.dig("provenance", "current_rebuild") == expected_opentui_wasm_rebuild
       errors << "#{prefix} OpenTUI grammar rebuild must be reproducible" unless opentui_wasm&.dig("decision", "reproducible_build_verified") == true
 
+      shiki = components.find { |entry| entry["package"] == "shiki@4.2.0" }
+      expected_shiki_rebuild = {
+        "toolchain" => "emscripten-4.0.4-binaryen-121-clang20",
+        "source_date_epoch" => 1_668_779_661,
+        "network_isolated" => true,
+        "local_rebuilds" => 2,
+        "local_rebuilds_byte_identical" => true,
+        "output_size" => 464_708,
+        "output_sha256" => "1ef5a51b6e7d2d2b9caeb0563368a8e8807699aab50f3ff9bc0fa480564212d0",
+        "published_output_sha256" => "fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9",
+        "published_output_matches" => false,
+        "runtime" => "vscode-oniguruma-1.7.0",
+        "wrapper_smoke_verified" => true,
+        "published_payload_discarded" => true
+      }
+      errors << "#{prefix} Shiki WASM rebuild evidence does not match" unless shiki&.dig("provenance", "current_rebuild") == expected_shiki_rebuild
+      errors << "#{prefix} Shiki WASM rebuild must be reproducible" unless shiki&.dig("decision", "reproducible_build_verified") == true
+
       fff_identity = "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
       fff = components.find { |component| component["package"] == fff_identity }
       expected_fff_disable = {
@@ -5293,7 +5311,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.3%{?dist}",
+        "Release:        0.4%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
@@ -5302,6 +5320,8 @@ module Agentlab
         "Source23:       https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
         "Source24:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-markdown/tar.gz/2dfd57f547f06ca5631a80f601e129d73fc8e9f0",
         "Source25:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0",
+        "Source26:       https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b",
+        "Source27:       https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",
         "BuildRequires:  lld20-devel",
@@ -5311,6 +5331,8 @@ module Agentlab
         "strip --strip-unneeded \"$opentui_lib\"",
         "rm -f \"$opentui_platform/libopentui.so\"",
         "install -pm0755 \"$opentui_lib\" \"$opentui_platform/libopentui.so\"",
+        "echo \"%{shiki_rebuilt_wasm_sha256}  .shiki-vscode-oniguruma/out/onig.wasm\" | sha256sum -c -",
+        "install -pm0644 .shiki-vscode-oniguruma/out/onig.wasm \"$shiki_root/dist/onig.wasm\"",
         "opentui-uucode-LICENSE.md",
         "opentui-yoga-LICENSE",
         "bun -e '",

@@ -522,12 +522,25 @@ components:
           upstream_path: package/release/onig.wasm
           sha256: fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9
           verified: true
+      current_rebuild:
+        toolchain: emscripten-4.0.4-binaryen-121-clang20
+        source_date_epoch: 1668779661
+        network_isolated: true
+        local_rebuilds: 2
+        local_rebuilds_byte_identical: true
+        output_size: 464708
+        output_sha256: 1ef5a51b6e7d2d2b9caeb0563368a8e8807699aab50f3ff9bc0fa480564212d0
+        published_output_sha256: fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9
+        published_output_matches: false
+        runtime: vscode-oniguruma-1.7.0
+        wrapper_smoke_verified: true
+        published_payload_discarded: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
-      reproducible_build_verified: false
-      reason: Rebuild from the pinned vscode-oniguruma and Oniguruma sources; Emscripten and CI build environments remain unpinned.
+      reproducible_build_verified: true
+      reason: Replace the published payload with the byte-identical two-build current Fedora toolchain output and verify it through the exact vscode-oniguruma wrapper.
   - package: "tree-sitter-powershell@0.25.10"
     npm_name: tree-sitter-powershell
     version: "0.25.10"

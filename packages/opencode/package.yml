@@ -6,7 +6,7 @@ blockers:
 - Final applicable license texts and the aggregate expression await source and binary payload mapping; the three raw declaration omissions are resolved in license-review.yml.
 - The release does not pin the models.dev snapshot embedded during the standalone build.
 - The native review classifies all 22 prebuilt payloads. OpenTUI 0.4.5 now has a current offline native rebuild and ABI/linkage proof; final Bun embedding and F43/F44 builds remain unverified, and bun-pty still needs immutable vendor hosting. FFF is omitted through the documented system-ripgrep fallback patch.
-- The WASM review classifies all 14 payloads. Tree-sitter Bash, PowerShell, web-tree-sitter, and all five OpenTUI grammars now have verified offline source-build replacements; Photon, Shiki, Undici, and final Bun embedding remain incomplete.
+- The WASM review classifies all 14 payloads. Tree-sitter Bash, PowerShell, web-tree-sitter, all five OpenTUI grammars, and Shiki Oniguruma now have verified offline source-build replacements; Photon, Undici, and final Bun embedding remain incomplete.
 - Offline OpenCode build and test execution has not been demonstrated.
 artifacts:
   selected_lock_audit: opencode-1.18.5-selected-lock-audit.json
