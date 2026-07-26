@@ -9,7 +9,7 @@ require "tmpdir"
 
 module Agentlab
   module OpenChamberLicenses
-    SCHEMA = "openchamber-source-license-inventory/v1"
+    SCHEMA = "openchamber-source-license-inventory/v2"
     SOURCE_SCHEMA = "openchamber-source-acquisition/v1"
     SHA256 = /\A[0-9a-f]{64}\z/
     ARCHIVE_NAME = /\Asha512-[0-9a-f]{128}\.tgz\z/
@@ -23,11 +23,18 @@ module Agentlab
       PostgreSQL Python-2.0 Ruby UPL-1.0 Unlicense Unicode-DFS-2016
       WTFPL X11 Zlib
     ].freeze
+    FEDORA_LICENSE_DATA = "/usr/share/fedora-license-data/licenses/fedora-licenses.json"
+    NORMALIZED_LICENSES = {
+      ["qrcode-terminal", "0.12.0"] => "Apache-2.0",
+      ["@pierre/diffs", "1.3.0-beta.6"] => "Apache-2.0",
+      ["@pierre/theming", "0.0.2"] => "Apache-2.0"
+    }.freeze
 
     module_function
 
     def audit!(selected_lock_path:, expected_selected_lock_sha256:, source_audit_path:,
-               expected_source_audit_sha256:, cache_dir:, receipt_path:, workdir:, check: false)
+               expected_source_audit_sha256:, cache_dir:, receipt_path:, workdir:,
+               fedora_license_data_path: FEDORA_LICENSE_DATA, check: false)
       selected_lock_path = File.expand_path(selected_lock_path)
       source_audit_path = File.expand_path(source_audit_path)
       cache_dir = File.realpath(cache_dir)
@@ -45,6 +52,7 @@ module Agentlab
         inspect_archive!(source, cache_dir, workdir)
       end.sort_by { |record| record.fetch("archive") }
       findings = findings_for(archives)
+      review = review_for!(archives, fedora_license_data_path)
       receipt = {
         "schema" => SCHEMA,
         "package" => "openchamber",
@@ -70,6 +78,7 @@ module Agentlab
         },
         "archives" => archives,
         "findings" => findings,
+        "review" => review,
         "validation" => {
           "selected_lock_binding_verified" => true,
           "source_audit_binding_verified" => true,
@@ -79,6 +88,8 @@ module Agentlab
           "missing_evidence_isolated" => true,
           "ambiguous_evidence_isolated" => true,
           "non_spdx_evidence_isolated" => true,
+          "safe_license_normalizations_verified" => true,
+          "fedora_license_policy_verified" => true,
           "aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
           "generated_asset_licenses_verified" => false,
@@ -174,6 +185,54 @@ module Agentlab
         "missing_license_files" => archives.select { |record| record.fetch("license_files").empty? }.map(&finding),
         "ambiguous_declared_license" => archives.select { |record| ambiguous_license?(record["declared_license"]) }.map(&finding),
         "non_spdx_declared_license" => archives.select { |record| non_spdx_license?(record["declared_license"]) }.map(&finding)
+      }
+    end
+
+    def review_for!(archives, fedora_license_data_path)
+      normalized = NORMALIZED_LICENSES.map do |(name, version), expression|
+        archive = archives.find { |record| record["npm_name"] == name && record["version"] == version }
+        next unless archive
+
+        {
+          "archive" => archive.fetch("archive"),
+          "npm_name" => name,
+          "version" => version,
+          "declared_license" => archive["declared_license"],
+          "normalized_expression" => expression,
+          "license_files" => archive.fetch("license_files")
+        }
+      end.compact.sort_by { |record| [record.fetch("npm_name"), record.fetch("version")] }
+
+      remix = archives.find { |record| record["npm_name"] == "@remixicon/react" && record["version"] == "4.9.0" }
+      fedora_path = File.expand_path(fedora_license_data_path)
+      entry = nil
+      if remix
+        fedora = JSON.parse(File.binread(fedora_path))
+        entry = fedora.values.map { |record| record["license"] }.compact.find do |license|
+          license["expression"] == "LicenseRef-Remix-icon-license-1.0"
+        end
+        unless entry && entry["status"] == ["not-allowed"]
+          raise Agentlab::Error, "Fedora Remix Icon license policy is not the expected not-allowed record"
+        end
+      end
+
+      {
+        "normalizations" => normalized,
+        "fedora_license_data" => remix && {
+          "filename" => File.basename(fedora_path),
+          "sha256" => Digest::SHA256.file(fedora_path).hexdigest
+        },
+        "not_allowed" => remix ? [{
+          "archive" => remix.fetch("archive"),
+          "npm_name" => remix.fetch("npm_name"),
+          "version" => remix.fetch("version"),
+          "declared_license" => remix.fetch("declared_license"),
+          "fedora_expression" => entry.fetch("expression"),
+          "fedora_status" => entry.fetch("status"),
+          "fedora_url" => entry.fetch("url")
+        }] : [],
+        "aggregate_license_expression_verified" => false,
+        "rpm_license_payload_complete" => false
       }
     end
 

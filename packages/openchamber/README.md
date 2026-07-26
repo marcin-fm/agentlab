@@ -101,6 +101,14 @@ archive identities to the 832-record selected-lock receipt and the acquisition
 receipt. It also separates missing declarations and local texts from ambiguous
 or non-SPDX declaration evidence for later review.
 
+The v2 review normalizes only three evidence-safe Apache declarations:
+`qrcode-terminal 0.12.0`, `@pierre/diffs 1.3.0-beta.6`, and
+`@pierre/theming 0.0.2`. Fedora license data classifies the selected
+`@remixicon/react 4.9.0` terms as
+`LicenseRef-Remix-icon-license-1.0`, status `not-allowed`. The package remains
+blocked on that selected build dependency and on 27 archives without local
+license texts.
+
 This deterministic inventory is not an aggregate SPDX `License:` expression or
 a decision about `%license` payloads. It does not verify generated-asset
 licensing, final binary inclusion, bundled Provides, offline builds, package

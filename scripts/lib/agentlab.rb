@@ -823,7 +823,7 @@ module Agentlab
     actual_sha256 = Digest::SHA256.file(path).hexdigest
     errors << "openchamber: source-license inventory SHA-256 mismatch" unless metadata["sha256"] == actual_sha256
     receipt = JSON.parse(File.read(path))
-    errors << "openchamber: source-license inventory schema mismatch" unless receipt["schema"] == "openchamber-source-license-inventory/v1" && metadata["schema"] == receipt["schema"]
+    errors << "openchamber: source-license inventory schema mismatch" unless receipt["schema"] == "openchamber-source-license-inventory/v2" && metadata["schema"] == receipt["schema"]
     errors << "openchamber: source-license inventory package mismatch" unless receipt["package"] == package.name
     errors << "openchamber: source-license inventory release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
 
@@ -870,8 +870,38 @@ module Agentlab
       errors << "openchamber: source-license inventory #{field} mismatch" unless receipt.dig("summary", field) == value && metadata[field] == value
     end
 
+    review = receipt.fetch("review")
+    expected_normalizations = OpenChamberLicenses::NORMALIZED_LICENSES.map do |(name, version), expression|
+      archive = expected_archives.find { |record| record["npm_name"] == name && record["version"] == version }
+      archive && {
+        "archive" => archive.fetch("archive"),
+        "npm_name" => name,
+        "version" => version,
+        "declared_license" => archive["declared_license"],
+        "normalized_expression" => expression,
+        "license_files" => archive.fetch("license_files")
+      }
+    end.compact.sort_by { |record| [record.fetch("npm_name"), record.fetch("version")] }
+    errors << "openchamber: source-license normalizations mismatch" unless review["normalizations"] == expected_normalizations
+    errors << "openchamber: source-license normalization count mismatch" unless metadata["normalized_declared_license_sources"] == expected_normalizations.length
+    remix = expected_archives.find { |record| record["npm_name"] == "@remixicon/react" && record["version"] == "4.9.0" }
+    not_allowed = Array(review["not_allowed"])
+    errors << "openchamber: Remix Icon Fedora license hold mismatch" unless remix && not_allowed == [{
+      "archive" => remix.fetch("archive"),
+      "npm_name" => "@remixicon/react",
+      "version" => "4.9.0",
+      "declared_license" => "Remix Icon License 1.0",
+      "fedora_expression" => "LicenseRef-Remix-icon-license-1.0",
+      "fedora_status" => ["not-allowed"],
+      "fedora_url" => "https://github.com/Remix-Design/RemixIcon/blob/master/License"
+    }]
+    errors << "openchamber: Fedora not-allowed source count mismatch" unless metadata["fedora_not_allowed_sources"] == not_allowed.length
+    errors << "openchamber: Fedora license data SHA-256 mismatch" unless metadata["fedora_license_data_sha256"] == review.dig("fedora_license_data", "sha256")
+    errors << "openchamber: source-license review overclaims aggregate expression" unless review["aggregate_license_expression_verified"] == false
+    errors << "openchamber: source-license review overclaims RPM payload" unless review["rpm_license_payload_complete"] == false
+
     validation = receipt.fetch("validation")
-    %w[selected_lock_binding_verified source_audit_binding_verified archive_identity_verified package_manifest_license_recorded package_local_license_texts_hashed missing_evidence_isolated ambiguous_evidence_isolated non_spdx_evidence_isolated].each do |flag|
+    %w[selected_lock_binding_verified source_audit_binding_verified archive_identity_verified package_manifest_license_recorded package_local_license_texts_hashed missing_evidence_isolated ambiguous_evidence_isolated non_spdx_evidence_isolated safe_license_normalizations_verified fedora_license_policy_verified].each do |flag|
       errors << "openchamber: source-license inventory validation #{flag} is not true" unless validation[flag] == true
     end
     %w[aggregate_license_expression_verified rpm_license_payload_complete generated_asset_licenses_verified binary_inclusion_verified bundled_provides_verified offline_build_verified package_enabled copr_enabled].each do |flag|
@@ -882,6 +912,8 @@ module Agentlab
     errors << "openchamber: package source-license inventory receipt mismatch" unless source_policy["source_license_inventory_receipt"] == filename
     errors << "openchamber: package source-license inventory SHA-256 mismatch" unless source_policy["source_license_inventory_sha256"] == actual_sha256
     errors << "openchamber: package source-license archive count mismatch" unless source_policy["source_license_inventory_archives"] == expected_archives.length
+    errors << "openchamber: package source-license normalization count mismatch" unless source_policy["source_license_normalizations_verified"] == expected_normalizations.length
+    errors << "openchamber: package Fedora not-allowed source count mismatch" unless source_policy["source_license_not_allowed_sources"] == not_allowed.length
     errors << "openchamber: package overclaims source-license aggregate" unless source_policy["source_license_aggregate_verified"] == false
     errors << "openchamber: package overclaims source-license RPM payload" unless source_policy["source_license_rpm_payload_complete"] == false
     errors

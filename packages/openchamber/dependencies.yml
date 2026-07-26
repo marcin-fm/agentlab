@@ -245,8 +245,8 @@ source_materialization_receipt:
     package_build_performed: false
     rpm_integrated: false
 source_license_inventory_receipt:
-  schema: openchamber-source-license-inventory/v1
-  sha256: d456081cb33476924d474a7fbf55a0126012298b8bdbfd4e6315fb6bb75fedd7
+  schema: openchamber-source-license-inventory/v2
+  sha256: 4cf954b20559cf7c206970d99c4cfae8bace19efeccceca82dbd20bf28dbc932
   selected_lock_receipt_sha256: 649c0734f1a68aca4a832e32c8906824e1ccd8fb9fa78287236eaff83fb808cc
   source_audit_sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
   selected_package_records: 832
@@ -256,6 +256,9 @@ source_license_inventory_receipt:
   sources_without_license_files: 27
   ambiguous_declared_license_sources: 1
   non_spdx_declared_license_sources: 3
+  normalized_declared_license_sources: 3
+  fedora_not_allowed_sources: 1
+  fedora_license_data_sha256: 27a1fda193d8a7e7170d2a41929da52bb32416ce970bda3f0fc8fb013d25c8ee
   validation:
     aggregate_license_expression_verified: false
     rpm_license_payload_complete: false
