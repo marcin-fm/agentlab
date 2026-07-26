@@ -624,12 +624,22 @@ components:
           upstream_url: https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41
           sha256: cd48aefa974e9fc21adec14ef0c73f0ad501b598078b12568ed129c320318154
           verified: true
+      current_rebuild:
+        toolchain: emscripten-4.0.4-binaryen-121-clang20
+        network_isolated: true
+        local_rebuilds: 2
+        local_rebuilds_byte_identical: true
+        scalar: { size: 47692, sha256: 58fe510f2f5dbb5f79bc2ab0d108ebe7d0ee49f2938bc82d737e82809cab3dcb }
+        simd: { size: 47926, sha256: 276a49065fdce6e19c2083fb0dea3b53c390f382c0e6dd3370dbc7fa19f48a57 }
+        callback_imports_verified: true
+        allocator_parser_smoke_verified: true
+        published_payloads_discarded: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
       source_mapping_verified: true
-      reproducible_build_verified: false
-      reason: Rebuild both WASMs from the pinned llhttp inputs; floating Alpine packages and npm install keep the upstream toolchain non-reproducible.
+      reproducible_build_verified: true
+      reason: Replace both published payloads with byte-identical current-toolchain builds and verify the callback, allocator, and parser ABI.
   - package: "web-tree-sitter@0.25.10"
     npm_name: web-tree-sitter
     version: "0.25.10"

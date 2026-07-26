@@ -42,10 +42,15 @@
 %global shiki_oniguruma_source_sha256 197bdc01b6e71245ca95e652827fe53c4b1532a4175870f62157b5f909fa0e6f
 %global shiki_published_wasm_sha256 fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9
 %global shiki_rebuilt_wasm_sha256 1ef5a51b6e7d2d2b9caeb0563368a8e8807699aab50f3ff9bc0fa480564212d0
+%global undici_llhttp_source_sha256 ca8b68d982b1c2a7aa28599fe46596738f17fffd05d2ad27d7ffc3e7fca43591
+%global undici_published_wasm_sha256 ee82b848a5ca8e9f99fda109e59bbc20193d049a7f6bff93f4130cba5b68261c
+%global undici_published_simd_wasm_sha256 cd48aefa974e9fc21adec14ef0c73f0ad501b598078b12568ed129c320318154
+%global undici_rebuilt_wasm_sha256 58fe510f2f5dbb5f79bc2ab0d108ebe7d0ee49f2938bc82d737e82809cab3dcb
+%global undici_rebuilt_simd_wasm_sha256 276a49065fdce6e19c2083fb0dea3b53c390f382c0e6dd3370dbc7fa19f48a57
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -80,6 +85,7 @@ Source24:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-mar
 Source25:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0#/%{name}-%{version}-tree-sitter-zig-1.1.2.tar.gz
 Source26:       https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b#/%{name}-%{version}-vscode-oniguruma-1.7.0.tar.gz
 Source27:       https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080#/%{name}-%{version}-oniguruma-08d36110.tar.gz
+Source28:       https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41#/%{name}-%{version}-llhttp-release-8.1.0.tar.gz
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -164,6 +170,7 @@ echo "%{opentui_markdown_source_sha256}  %{SOURCE24}" | sha256sum -c -
 echo "%{opentui_zig_grammar_source_sha256}  %{SOURCE25}" | sha256sum -c -
 echo "%{shiki_vscode_oniguruma_source_sha256}  %{SOURCE26}" | sha256sum -c -
 echo "%{shiki_oniguruma_source_sha256}  %{SOURCE27}" | sha256sum -c -
+echo "%{undici_llhttp_source_sha256}  %{SOURCE28}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
 
@@ -257,12 +264,14 @@ tar --extract --gzip --file %{SOURCE10} --strip-components=1 --directory .opentu
 tar --extract --gzip --file %{SOURCE11} --strip-components=1 --directory .opentui-yoga
 for grammar in javascript typescript markdown zig; do mkdir -p ".opentui-grammar-$grammar"; done
 mkdir -p .shiki-vscode-oniguruma/deps/oniguruma
+mkdir -p .undici-llhttp
 tar --extract --gzip --file %{SOURCE22} --strip-components=1 --directory .opentui-grammar-javascript
 tar --extract --gzip --file %{SOURCE23} --strip-components=1 --directory .opentui-grammar-typescript
 tar --extract --gzip --file %{SOURCE24} --strip-components=1 --directory .opentui-grammar-markdown
 tar --extract --gzip --file %{SOURCE25} --strip-components=1 --directory .opentui-grammar-zig
 tar --extract --gzip --file %{SOURCE26} --strip-components=1 --directory .shiki-vscode-oniguruma
 tar --extract --gzip --file %{SOURCE27} --strip-components=1 --directory .shiki-vscode-oniguruma/deps/oniguruma
+tar --extract --gzip --file %{SOURCE28} --strip-components=1 --directory .undici-llhttp
 test ! -e .opentui-source/packages/core/src/zig/lib/x86_64-linux/libopentui.so
 
 mkdir -p \
@@ -295,6 +304,15 @@ shiki_root="$(node-24 --input-type=module -e 'import { dirname } from "node:path
 popd >/dev/null
 echo "%{shiki_published_wasm_sha256}  $shiki_root/dist/onig.wasm" | sha256sum -c -
 rm -f "$shiki_root/dist/onig.wasm"
+find packages/opencode/node_modules -path '*/undici/package.json' -print0 | while IFS= read -r -d '' manifest; do
+  test "$(node-24 -p 'require(process.argv[1]).version' "$manifest")" = "5.29.0" || continue
+  root="$(dirname "$manifest")"
+  echo "%{undici_published_wasm_sha256}  $root/lib/llhttp/llhttp.wasm" | sha256sum -c -
+  echo "%{undici_published_simd_wasm_sha256}  $root/lib/llhttp/llhttp_simd.wasm" | sha256sum -c -
+  printf '%s\n' "$root" >> .build-tools/undici-5.29-roots
+  rm -f "$root/lib/llhttp/llhttp.wasm" "$root/lib/llhttp/llhttp_simd.wasm" "$root/lib/llhttp/llhttp-wasm.js" "$root/lib/llhttp/llhttp_simd-wasm.js"
+done
+test "$(wc -l < .build-tools/undici-5.29-roots)" -eq 2
 
 # The npm package carries the released JS wrapper but only prebuilt Rust
 # libraries. Replace that directory with the exact Git source and vendor input.
@@ -373,6 +391,28 @@ echo "%{shiki_rebuilt_wasm_sha256}  .shiki-vscode-oniguruma/out/onig.wasm" | sha
 install -pm0644 .shiki-vscode-oniguruma/out/onig.wasm "$shiki_root/dist/onig.wasm"
 cp -p .shiki-vscode-oniguruma/LICENSE.txt vscode-oniguruma-LICENSE.txt
 cp -p .shiki-vscode-oniguruma/deps/oniguruma/COPYING oniguruma-COPYING
+
+# Rebuild both Undici 5.29 llhttp modules from the exact generated release C
+# source, replacing the historical Alpine-built scalar and SIMD payloads.
+undici_emcc="$PWD/.build-tools/emscripten/emcc"
+common_undici_flags=(-O3 -ffast-math -fno-exceptions -fvisibility=hidden -s STANDALONE_WASM=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s "EXPORTED_FUNCTIONS=['_malloc','_free']" -Wl,--export-dynamic -Wl,--export-table -Wl,--no-entry)
+"$undici_emcc" "${common_undici_flags[@]}" .undici-llhttp/src/llhttp.c .undici-llhttp/src/http.c .undici-llhttp/src/api.c -I.undici-llhttp/include -o .build-tools/llhttp.wasm
+"$undici_emcc" "${common_undici_flags[@]}" -msimd128 .undici-llhttp/src/llhttp.c .undici-llhttp/src/http.c .undici-llhttp/src/api.c -I.undici-llhttp/include -o .build-tools/llhttp_simd.wasm
+echo "%{undici_rebuilt_wasm_sha256}  .build-tools/llhttp.wasm" | sha256sum -c -
+echo "%{undici_rebuilt_simd_wasm_sha256}  .build-tools/llhttp_simd.wasm" | sha256sum -c -
+while IFS= read -r root; do
+  install -pm0644 .build-tools/llhttp.wasm "$root/lib/llhttp/llhttp.wasm"
+  install -pm0644 .build-tools/llhttp_simd.wasm "$root/lib/llhttp/llhttp_simd.wasm"
+  node-24 - "$root/lib/llhttp/llhttp.wasm" "$root/lib/llhttp/llhttp-wasm.js" <<'JS'
+const fs = require("node:fs")
+fs.writeFileSync(process.argv[3], `module.exports = '${fs.readFileSync(process.argv[2]).toString("base64")}'\n`)
+JS
+  node-24 - "$root/lib/llhttp/llhttp_simd.wasm" "$root/lib/llhttp/llhttp_simd-wasm.js" <<'JS'
+const fs = require("node:fs")
+fs.writeFileSync(process.argv[3], `module.exports = '${fs.readFileSync(process.argv[2]).toString("base64")}'\n`)
+JS
+done < .build-tools/undici-5.29-roots
+cp -p .undici-llhttp/LICENSE-MIT llhttp-LICENSE-MIT
 
 tree_sitter_source="$PWD/.build-tools/tree-sitter"
 esbuild_binary="$PWD/.build-tools/esbuild-bin"
@@ -574,6 +614,19 @@ const match = new OnigScanner(["\\b(agentlab)\\b"]).findNextMatchSync(new OnigSt
 if (!match || match.captureIndices[0].start !== 2 || match.captureIndices[0].end !== 10) throw new Error("Shiki Oniguruma smoke failed")
 JS
 popd >/dev/null
+while IFS= read -r root; do
+  echo "%{undici_rebuilt_wasm_sha256}  $root/lib/llhttp/llhttp.wasm" | sha256sum -c -
+  echo "%{undici_rebuilt_simd_wasm_sha256}  $root/lib/llhttp/llhttp_simd.wasm" | sha256sum -c -
+  node-24 - "$root/lib/llhttp/llhttp.wasm" "$root/lib/llhttp/llhttp_simd.wasm" <<'JS'
+const fs = require("node:fs")
+for (const path of process.argv.slice(2)) {
+  const module = new WebAssembly.Module(fs.readFileSync(path))
+  const env = Object.fromEntries(WebAssembly.Module.imports(module).filter((entry) => entry.module === "env").map((entry) => [entry.name, () => 0]))
+  const instance = new WebAssembly.Instance(module, { env })
+  for (const name of ["malloc", "free", "llhttp_init", "llhttp_execute"]) if (typeof instance.exports[name] !== "function") throw new Error(`${path}: missing ${name}`)
+}
+JS
+done < .build-tools/undici-5.29-roots
 packages/opencode/dist/opencode-linux-x64/bin/opencode --version
 
 %install
@@ -590,6 +643,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.5
+- Rebuild Undici's scalar and SIMD llhttp WASMs from source.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.4
 - Rebuild Shiki's Oniguruma WASM from corresponding source.
 

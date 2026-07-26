@@ -120,7 +120,10 @@ web-tree-sitter `0.25.10`. Shiki's pinned vscode-oniguruma and Oniguruma sources
 now rebuild twice byte-identically with the package's Emscripten `4.0.4`,
 Binaryen `121`, and Clang 20 toolchain; the exact wrapper scan passes after the
 published WASM is replaced. Undici remains unproven because its historical
-Alpine build inputs float. Photon is the
+Undici's scalar and SIMD llhttp modules also rebuild twice byte-identically from
+the exact generated llhttp `8.1.0` C release with the same Emscripten/Binaryen
+toolchain; both instantiate with the expected callbacks and allocator/parser
+exports. Photon is the
 only unresolved WASM source mapping: its authenticated npm 0.3.4 tarball differs
 from both the registry `gitHead` and the nearest generated `compiled-wasm`
 commit in WASM bytes, JavaScript, declarations, package identity, version, and

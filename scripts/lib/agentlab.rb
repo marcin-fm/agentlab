@@ -5203,6 +5203,18 @@ module Agentlab
       errors << "#{prefix} Shiki WASM rebuild evidence does not match" unless shiki&.dig("provenance", "current_rebuild") == expected_shiki_rebuild
       errors << "#{prefix} Shiki WASM rebuild must be reproducible" unless shiki&.dig("decision", "reproducible_build_verified") == true
 
+      undici = components.find { |entry| entry["package"] == "undici@5.29.0" }
+      expected_undici_rebuild = {
+        "toolchain" => "emscripten-4.0.4-binaryen-121-clang20", "network_isolated" => true,
+        "local_rebuilds" => 2, "local_rebuilds_byte_identical" => true,
+        "scalar" => { "size" => 47_692, "sha256" => "58fe510f2f5dbb5f79bc2ab0d108ebe7d0ee49f2938bc82d737e82809cab3dcb" },
+        "simd" => { "size" => 47_926, "sha256" => "276a49065fdce6e19c2083fb0dea3b53c390f382c0e6dd3370dbc7fa19f48a57" },
+        "callback_imports_verified" => true, "allocator_parser_smoke_verified" => true,
+        "published_payloads_discarded" => true
+      }
+      errors << "#{prefix} Undici WASM rebuild evidence does not match" unless undici&.dig("provenance", "current_rebuild") == expected_undici_rebuild
+      errors << "#{prefix} Undici WASM rebuild must be reproducible" unless undici&.dig("decision", "reproducible_build_verified") == true
+
       fff_identity = "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
       fff = components.find { |component| component["package"] == fff_identity }
       expected_fff_disable = {
@@ -5311,7 +5323,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.4%{?dist}",
+        "Release:        0.5%{?dist}",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
@@ -5322,6 +5334,7 @@ module Agentlab
         "Source25:       https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0",
         "Source26:       https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b",
         "Source27:       https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080",
+        "Source28:       https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",
         "BuildRequires:  lld20-devel",
