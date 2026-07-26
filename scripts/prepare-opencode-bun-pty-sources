@@ -1,0 +1,196 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems"
+require "yaml"
+require_relative "lib/agentlab"
+
+module Agentlab
+  module OpenCodeBunPtySources
+    SHA256 = /\A[0-9a-f]{64}\z/
+
+    module_function
+
+    def prepare!(spec_path:, workdir:, output_path:)
+      spec_path = File.expand_path(spec_path)
+      workdir = File.expand_path(workdir)
+      output_path = File.expand_path(output_path)
+      raise Agentlab::Error, "OpenCode bun-pty workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+
+      spec = File.read(spec_path)
+      version = spec_field(spec, "Version")
+      commit = spec_global(spec, "bun_pty_commit")
+      source_sha256 = spec_global(spec, "bun_pty_source_sha256")
+      vendor_sha256 = spec_global(spec, "bun_pty_vendor_sha256")
+      manifest_sha256 = spec_global(spec, "bun_pty_vendor_manifest_sha256")
+      [source_sha256, vendor_sha256, manifest_sha256].each do |sha256|
+        raise Agentlab::Error, "invalid OpenCode bun-pty SHA-256" unless sha256.match?(SHA256)
+      end
+
+      specdir = File.dirname(spec_path)
+      source_path = File.join(specdir, "bun-pty-#{commit}.tar.gz")
+      manifest_path = File.join(specdir, "opencode-#{version}-bun-pty-cargo-vendor.txt")
+      native_review_path = File.join(specdir, "native-review.yml")
+      verify_file!(source_path, source_sha256, "source archive")
+      verify_file!(manifest_path, manifest_sha256, "vendor manifest")
+      source_date_epoch = vendor_source_date_epoch(native_review_path)
+      archive_members = safe_archive_members(source_path)
+      source_root_name = archive_members.map { |path| path.split("/", 2).first }.uniq
+      raise Agentlab::Error, "OpenCode bun-pty archive must contain one source root" unless source_root_name.length == 1
+
+      FileUtils.rm_rf(workdir)
+      extract_dir = File.join(workdir, "source")
+      vendor_root = "agentlab-bun-pty-0.4.8-vendor"
+      vendor_dir = File.join(workdir, vendor_root)
+      cargo_home = File.join(workdir, "cargo-home")
+      generated_dir = File.join(workdir, "generated")
+      comparison_dir = File.join(workdir, "comparison")
+      [extract_dir, cargo_home, generated_dir, comparison_dir].each { |path| FileUtils.mkdir_p(path) }
+      run!("tar", "-xzf", source_path, "-C", extract_dir)
+      source_root = File.join(extract_dir, source_root_name.fetch(0))
+      manifest = File.join(source_root, "rust-pty", "Cargo.toml")
+      raise Agentlab::Error, "OpenCode bun-pty Cargo manifest is missing" unless File.file?(manifest)
+
+      run!(
+        { "CARGO_HOME" => cargo_home },
+        "cargo", "vendor", "--locked", "--versioned-dirs",
+        "--manifest-path", manifest, vendor_dir
+      )
+      generated_manifest = manifest_bytes(vendor_dir)
+      unless generated_manifest == File.binread(manifest_path)
+        raise Agentlab::Error, "OpenCode bun-pty generated vendor manifest does not match the checked manifest"
+      end
+
+      first = File.join(generated_dir, File.basename(output_path))
+      second = File.join(comparison_dir, File.basename(output_path))
+      create_archive!(workdir, vendor_root, first, source_date_epoch)
+      create_archive!(workdir, vendor_root, second, source_date_epoch)
+      raise Agentlab::Error, "OpenCode bun-pty vendor archive is not deterministic" unless FileUtils.compare_file(first, second)
+      verify_file!(first, vendor_sha256, "vendor archive")
+
+      FileUtils.mkdir_p(File.dirname(output_path))
+      temporary = "#{output_path}.tmp-#{Process.pid}"
+      FileUtils.copy_file(first, temporary)
+      File.chmod(0o644, temporary)
+      File.rename(temporary, output_path)
+      { "path" => output_path, "size_bytes" => File.size(output_path), "sha256" => vendor_sha256 }
+    ensure
+      FileUtils.rm_f(temporary) if defined?(temporary) && temporary
+    end
+
+    def manifest_bytes(vendor_dir)
+      records = Dir.children(vendor_dir).sort.map do |directory|
+        manifest = File.join(vendor_dir, directory, "Cargo.toml")
+        raise Agentlab::Error, "missing vendored Cargo manifest #{manifest}" unless File.file?(manifest)
+        package = package_identity(File.read(manifest))
+        [package.fetch("name"), Gem::Version.new(package.fetch("version"))]
+      end
+      raise Agentlab::Error, "duplicate OpenCode bun-pty vendor package identity" unless records.uniq.length == records.length
+
+      records.sort_by { |name, version| [name, version] }
+        .map { |name, version| "#{name} v#{version}\n" }.join
+    end
+
+    def package_identity(manifest)
+      section = nil
+      values = {}
+      manifest.each_line do |line|
+        stripped = line.strip
+        if (section_match = stripped.match(/\A\[([^\]]+)\]\z/))
+          section = section_match[1]
+          next
+        end
+        next unless section == "package"
+        next unless (match = stripped.match(/\A(name|version)\s*=\s*"([^"]+)"\z/))
+
+        values[match[1]] = match[2]
+      end
+      unless values.keys.sort == %w[name version]
+        raise Agentlab::Error, "vendored Cargo package identity is incomplete"
+      end
+      values
+    end
+
+    def safe_archive_members(path)
+      output, error, status = Open3.capture3("tar", "-tzf", path)
+      raise Agentlab::Error, "failed to list OpenCode bun-pty source archive: #{error}" unless status.success?
+      members = output.lines.map(&:chomp).reject(&:empty?)
+      raise Agentlab::Error, "OpenCode bun-pty source archive is empty" if members.empty?
+      members.each do |member|
+        pathname = Pathname.new(member)
+        if pathname.absolute? || pathname.each_filename.any? { |part| part == ".." }
+          raise Agentlab::Error, "unsafe OpenCode bun-pty source archive path #{member.inspect}"
+        end
+      end
+      members
+    end
+
+    def vendor_source_date_epoch(native_review_path)
+      review = YAML.safe_load(File.read(native_review_path), aliases: false)
+      component = review.fetch("components").find { |entry| entry["package"] == "bun-pty@0.4.8" }
+      epoch = component&.dig("provenance", "source_build", "cargo_vendor_source_date_epoch")
+      unless epoch.is_a?(Integer) && epoch.positive?
+        raise Agentlab::Error, "OpenCode bun-pty source-date epoch is missing"
+      end
+      epoch
+    rescue Psych::SyntaxError => e
+      raise Agentlab::Error, "invalid OpenCode native review: #{e.message}"
+    end
+
+    def create_archive!(workdir, vendor_root, output, source_date_epoch)
+      run!(
+        "tar", "--create", "--zstd", "--file", output,
+        "--sort=name", "--mtime=@#{source_date_epoch}", "--owner=0", "--group=0", "--numeric-owner",
+        "--pax-option=delete=atime,delete=ctime", "--transform=s,^#{vendor_root},cargo-vendor,",
+        "--directory", workdir, vendor_root
+      )
+    end
+
+    def verify_file!(path, expected_sha256, description)
+      raise Agentlab::Error, "missing OpenCode bun-pty #{description} #{path}" unless File.file?(path)
+      actual = Digest::SHA256.file(path).hexdigest
+      raise Agentlab::Error, "OpenCode bun-pty #{description} SHA-256 mismatch" unless actual == expected_sha256
+    end
+
+    def spec_global(spec, name)
+      match = spec.match(/^%global\s+#{Regexp.escape(name)}\s+(\S+)\s*$/)
+      raise Agentlab::Error, "OpenCode spec is missing %global #{name}" unless match
+      match[1]
+    end
+
+    def spec_field(spec, name)
+      match = spec.match(/^#{Regexp.escape(name)}:\s+(\S+)\s*$/)
+      raise Agentlab::Error, "OpenCode spec is missing #{name}" unless match
+      match[1]
+    end
+
+    def run!(*command)
+      environment = command.first.is_a?(Hash) ? command.shift : {}
+      output, error, status = Open3.capture3(environment, *command)
+      return output if status.success?
+
+      raise Agentlab::Error, "command failed: #{command.join(' ')}\n#{error}#{output}"
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  spec = nil
+  workdir = nil
+  output = nil
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/prepare-opencode-bun-pty-sources --spec PATH --workdir PATH --output PATH"
+    parser.on("--spec PATH", "OpenCode spec") { |path| spec = path }
+    parser.on("--workdir PATH", "Scratch directory below /srv/tmp") { |path| workdir = path }
+    parser.on("--output PATH", "Generated Cargo vendor archive") { |path| output = path }
+  end.parse!
+  abort("error: --spec, --workdir, and --output are required") unless spec && workdir && output
+
+  receipt = Agentlab::OpenCodeBunPtySources.prepare!(spec_path: spec, workdir: workdir, output_path: output)
+  puts "Wrote #{receipt.fetch('path')} (#{receipt.fetch('size_bytes')} bytes, #{receipt.fetch('sha256')})"
+end

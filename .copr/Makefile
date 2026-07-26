@@ -68,7 +68,7 @@ srpm:
 		opencode.spec) \
 			set -eu; \
 			specdir="$$(dirname "$(spec)")"; \
-			dnf -y install ruby ruby-default-gems rubygem-json tar zstd; \
+			dnf -y install cargo ruby ruby-default-gems rubygem-json tar zstd; \
 			install -d -m0755 /srv/tmp; \
 			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
 			tempdir="$$(mktemp -d /srv/tmp/agentlab-opencode-srpm.XXXXXX)"; \
@@ -84,10 +84,16 @@ srpm:
 				--receipt "$$tempdir/source-materialization.json" \
 				--workdir "$$tempdir/materialization"; \
 			cmp "$$tempdir/source-materialization.json" "$$specdir/opencode-$$version-source-materialization.json"; \
+			ruby "$(repo_root)/scripts/prepare-opencode-bun-pty-sources" \
+				--spec "$(spec)" \
+				--workdir "$$tempdir/bun-pty" \
+				--output "$$tempdir/output/opencode-$$version-bun-pty-cargo-vendor.tar.zst"; \
 			install -pm0644 "$$tempdir/output/opencode-$$version-nm-prod-build.tar.zst" \
 				"$$specdir/opencode-$$version-nm-prod-build.tar.zst"; \
 			install -pm0644 "$$tempdir/output/opencode-$$version-nm-dev-test.tar.zst" \
 				"$$specdir/opencode-$$version-nm-dev-test.tar.zst"; \
+			install -pm0644 "$$tempdir/output/opencode-$$version-bun-pty-cargo-vendor.tar.zst" \
+				"$$specdir/opencode-$$version-bun-pty-cargo-vendor.tar.zst"; \
 			;; \
 		kreuzberg.spec) \
 			set -eu; \

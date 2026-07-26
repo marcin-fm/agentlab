@@ -947,10 +947,12 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "opencode.spec)")
     assert_includes(makefile, "scripts/acquire-opencode-sources")
     assert_includes(makefile, "scripts/materialize-opencode-sources")
+    assert_includes(makefile, "scripts/prepare-opencode-bun-pty-sources")
     assert_includes(makefile, 'cmp "$$tempdir/source-audit.json"')
     assert_includes(makefile, 'cmp "$$tempdir/source-materialization.json"')
     assert_includes(makefile, "opencode-$$version-nm-prod-build.tar.zst")
     assert_includes(makefile, "opencode-$$version-nm-dev-test.tar.zst")
+    assert_includes(makefile, "opencode-$$version-bun-pty-cargo-vendor.tar.zst")
   end
 
   def test_copr_makefile_materializes_the_tree_sitter_parser_subset
