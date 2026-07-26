@@ -59,10 +59,24 @@ class AuditOpenCodeBinaryEmbeddingTest < Minitest::Test
       closure_sha256 = Digest::SHA256.file(closure_path).hexdigest
 
       license_review_path = File.join(directory, "license-review.yml")
+      license_text_dir = File.join(directory, "license-texts")
+      FileUtils.mkdir_p(license_text_dir)
+      license_text = "MIT fixture license\n"
+      File.write(File.join(license_text_dir, "build-pkg-LICENSE"), license_text)
       File.write(license_review_path, YAML.dump(
         "schema" => "opencode-license-review/v1",
         "release" => "1.0.0",
-        "declaration_resolutions" => []
+        "declaration_resolutions" => [],
+        "package_local_text_resolutions" => [
+          {
+            "packages" => ["build-pkg@2.0.0-beta.1"],
+            "license" => "MIT",
+            "disposition" => "payload_file",
+            "evidence_kind" => "fixture",
+            "payload_file" => "build-pkg-LICENSE",
+            "license_sha256" => Digest::SHA256.hexdigest(license_text)
+          }
+        ]
       ))
       license_review_sha256 = Digest::SHA256.file(license_review_path).hexdigest
       source_license_set_path = File.join(directory, "source-license-set.json")
@@ -120,6 +134,7 @@ class AuditOpenCodeBinaryEmbeddingTest < Minitest::Test
         source_audit_path: source_audit_path,
         source_license_set_path: source_license_set_path,
         license_review_path: license_review_path,
+        license_text_dir: license_text_dir,
         materialization_path: materialization_path,
         build_patch_path: build_patch_path,
         models_snapshot_path: File.join(source_root, ".build-tools", "models.json"),
@@ -133,12 +148,22 @@ class AuditOpenCodeBinaryEmbeddingTest < Minitest::Test
       assert_equal(2, receipt.dig("scope", "embedded_package_paths"))
       assert_equal(2, receipt.dig("scope", "embedded_public_name_versions"))
       assert_equal(1, receipt.dig("scope", "embedded_workspace_paths"))
-      assert_equal(1, receipt.dig("scope", "included_license_text_gaps"))
-      assert_equal(["build-pkg@2.0.0-beta.1"], receipt.fetch("included_license_text_gaps"))
+      assert_equal(1, receipt.dig("scope", "resolved_license_text_gaps"))
+      assert_equal(0, receipt.dig("scope", "included_license_text_gaps"))
+      assert_empty(receipt.fetch("included_license_text_gaps"))
+      assert_equal([
+        {
+          "filename" => "build-pkg-LICENSE",
+          "sha256" => Digest::SHA256.hexdigest(license_text),
+          "packages" => ["build-pkg@2.0.0-beta.1"]
+        }
+      ], receipt.fetch("license_text_payloads"))
       build_record = receipt.fetch("packages").find { |record| record.fetch("npm_name") == "build-pkg" }
       assert_equal("build", build_record.fetch("selected_role"))
       assert_equal("runtime", build_record.fetch("role"))
       assert_equal("2.0.0~beta.1", build_record.fetch("rpm_version"))
+      refute(build_record.fetch("license_text_gap"))
+      assert_equal("build-pkg-LICENSE", build_record.dig("license_text_resolution", "payload_file"))
       assert(receipt.dig("validation", "final_npm_binary_inclusion_verified"))
       assert_equal(result.fetch("sha256"), Digest::SHA256.file(output_path).hexdigest)
     end

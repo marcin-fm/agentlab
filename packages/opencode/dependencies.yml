@@ -172,11 +172,11 @@ node_modules_materialization_proof:
   lifecycle_scripts_executed: false
   package_build_performed: false
 binary_build_proof:
-  nvr: opencode-1.18.5-0.12.fc44
-  source_rpm_sha256: 8310a97cf2f1cec3a84f7f4da5d6320bbe608e8d2b82b3c28bdedbdf52f72fc2
-  source_members: 43
-  binary_rpm_sha256: 4e12d67ee3057df0ee014b4321cfbea17ee561a3e9359b815044c7ffae5f1c43
-  payload_sha256: 159ba070b44d55f730dd97c7b716677820e9b9cb3136e01b2e2e6c3e841c6f38
+  nvr: opencode-1.18.5-0.13.fc44
+  source_rpm_sha256: b8fcc1a9e27dd3257c59554051d2955d28bf34451df36b42ec20175bb7c75355
+  source_members: 49
+  binary_rpm_sha256: 352bbe6d64c3c15de9ef67a26e0919cd390df140adb809033aca38e7324bb58c
+  payload_sha256: e2a6a3f12eb7a8c81e7e5b4dde01c6774438621d91a9c021a90b994cea9443db
   payload_size_bytes: 127035136
   source_built_bun_version: 1.3.14
   source_built_bun_sha256: 4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569
@@ -199,7 +199,7 @@ binary_build_proof:
   copr_submitted: false
 binary_embedding_proof:
   schema: agentlab-opencode-binary-embedding/v1
-  receipt_sha256: 875a50872ca1bdc6ea139767f12a6006aa31f96b33b3259c57d01e4aabf37f70
+  receipt_sha256: 63e40ebebba95d0e790b08808905a5acb73ff3e50563fdd1064716d2763674ec
   metafile_input_records: 4038
   positive_input_records: 3895
   zero_contribution_input_records: 143
@@ -210,7 +210,8 @@ binary_embedding_proof:
   embedded_unique_registry_sources: 491
   embedded_public_name_versions: 491
   embedded_workspace_paths: 12
-  included_license_text_gaps: 13
+  resolved_license_text_gaps: 10
+  included_license_text_gaps: 3
   candidate_npm_license_expression: 0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT
   final_npm_binary_inclusion_verified: true
   bundled_provides_generated: true
@@ -225,6 +226,8 @@ source_acquisition_findings:
     path: license-review.yml
     absent_declarations_resolved: 3
     package_local_text_gaps_classified: 28
+    embedded_package_local_text_resolutions: 10
+    embedded_package_local_text_holds: 3
     final_payload_license_set_verified: false
   native_review:
     path: native-review.yml

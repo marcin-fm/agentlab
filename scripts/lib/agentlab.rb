@@ -5110,6 +5110,29 @@ module Agentlab
       errors << "#{prefix} license review text counts are internally inconsistent" unless reviewed_text_count == reviewed_text_packages.length
       errors << "#{prefix} license review text count does not match" unless license_review.dig("status", "package_local_text_gaps_classified") == missing_text_packages.length
       errors << "#{prefix} dependency license text count does not match" unless license_finding["package_local_text_gaps_classified"] == missing_text_packages.length
+      text_resolutions = Array(license_review["package_local_text_resolutions"])
+      resolved_text_packages = text_resolutions.flat_map { |entry| Array(entry["packages"]) }.sort
+      expected_resolved_text_packages = %w[
+        @aws-sdk/credential-provider-http@3.972.43
+        @aws-sdk/credential-provider-login@3.972.45
+        @aws-sdk/nested-clients@3.997.13
+        @sigstore/verify@3.1.1
+        drizzle-orm@1.0.0-rc.2
+        opencode-poe-auth@0.0.1
+        poe-oauth@0.0.8
+        remeda@2.26.0
+        spdx-exceptions@2.5.0
+        spdx-license-ids@3.0.23
+      ].sort
+      errors << "#{prefix} embedded license-text resolutions do not match" unless resolved_text_packages == expected_resolved_text_packages
+      errors << "#{prefix} embedded license-text resolutions are outside source gaps" unless (resolved_text_packages - missing_text_packages).empty?
+      errors << "#{prefix} embedded license-text resolution count does not match" unless license_review.dig("status", "embedded_package_local_text_resolutions") == resolved_text_packages.length
+      text_holds = license_review.fetch("embedded_package_local_text_holds", {})
+      held_text_packages = Array(text_holds["packages"]).map { |entry| entry["package"] }.sort
+      expected_held_text_packages = %w[@npmcli/agent@4.0.2 abstract-logging@2.0.1 opentui-spinner@0.0.7]
+      errors << "#{prefix} embedded license-text holds do not match" unless held_text_packages == expected_held_text_packages
+      errors << "#{prefix} embedded license-text hold count does not match" unless text_holds["count"] == held_text_packages.length && license_review.dig("status", "embedded_package_local_text_holds") == held_text_packages.length
+      errors << "#{prefix} embedded upstream license request blocker does not match" unless text_holds["upstream_request_status"] == "blocked_before_mutation_by_github_token" && text_holds["error"] == "GraphQL: Resource not accessible by personal access token (createIssue)"
       %w[raw_source_audit_unchanged_by_resolution missing_text_count_matches_source_audit excluded_fsl_source_absent_from_selected_receipt].each do |flag|
         errors << "#{prefix} license review validation flag #{flag} is not true" unless license_review.dig("validation", flag) == true
       end
@@ -5204,11 +5227,11 @@ module Agentlab
       errors << "#{prefix} node_modules materialization proof does not match" unless dependencies["node_modules_materialization_proof"] == expected_node_modules
 
       expected_binary_build = {
-        "nvr" => "opencode-1.18.5-0.12.fc44",
-        "source_rpm_sha256" => "8310a97cf2f1cec3a84f7f4da5d6320bbe608e8d2b82b3c28bdedbdf52f72fc2",
-        "source_members" => 43,
-        "binary_rpm_sha256" => "4e12d67ee3057df0ee014b4321cfbea17ee561a3e9359b815044c7ffae5f1c43",
-        "payload_sha256" => "159ba070b44d55f730dd97c7b716677820e9b9cb3136e01b2e2e6c3e841c6f38",
+        "nvr" => "opencode-1.18.5-0.13.fc44",
+        "source_rpm_sha256" => "b8fcc1a9e27dd3257c59554051d2955d28bf34451df36b42ec20175bb7c75355",
+        "source_members" => 49,
+        "binary_rpm_sha256" => "352bbe6d64c3c15de9ef67a26e0919cd390df140adb809033aca38e7324bb58c",
+        "payload_sha256" => "e2a6a3f12eb7a8c81e7e5b4dde01c6774438621d91a9c021a90b994cea9443db",
         "payload_size_bytes" => 127_035_136,
         "source_built_bun_version" => "1.3.14",
         "source_built_bun_sha256" => "4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569",
@@ -5241,7 +5264,7 @@ module Agentlab
         embedding_metadata = dependencies.fetch("binary_embedding_proof", {})
         expected_embedding_metadata = {
           "schema" => "agentlab-opencode-binary-embedding/v1",
-          "receipt_sha256" => "875a50872ca1bdc6ea139767f12a6006aa31f96b33b3259c57d01e4aabf37f70",
+          "receipt_sha256" => "63e40ebebba95d0e790b08808905a5acb73ff3e50563fdd1064716d2763674ec",
           "metafile_input_records" => 4_038,
           "positive_input_records" => 3_895,
           "zero_contribution_input_records" => 143,
@@ -5252,7 +5275,8 @@ module Agentlab
           "embedded_unique_registry_sources" => 491,
           "embedded_public_name_versions" => 491,
           "embedded_workspace_paths" => 12,
-          "included_license_text_gaps" => 13,
+          "resolved_license_text_gaps" => 10,
+          "included_license_text_gaps" => 3,
           "candidate_npm_license_expression" => "0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT",
           "final_npm_binary_inclusion_verified" => true,
           "bundled_provides_generated" => true,
@@ -5350,26 +5374,47 @@ module Agentlab
           "embedded_unique_registry_sources" => embedding_metadata["embedded_unique_registry_sources"],
           "embedded_public_name_versions" => embedding_metadata["embedded_public_name_versions"],
           "embedded_workspace_paths" => embedding_metadata["embedded_workspace_paths"],
+          "resolved_license_text_gaps" => embedding_metadata["resolved_license_text_gaps"],
           "included_license_text_gaps" => embedding_metadata["included_license_text_gaps"]
         }
         errors << "#{prefix} binary embedding scope does not match" unless embedding["scope"] == expected_scope
         errors << "#{prefix} binary embedding npm expression does not match" unless embedding["candidate_npm_license_expression"] == embedding_metadata["candidate_npm_license_expression"]
-        expected_gaps = %w[
-          @aws-sdk/credential-provider-http@3.972.43
-          @aws-sdk/credential-provider-login@3.972.45
-          @aws-sdk/nested-clients@3.997.13
-          @npmcli/agent@4.0.2
-          @sigstore/verify@3.1.1
-          abstract-logging@2.0.1
-          drizzle-orm@1.0.0-rc.2
-          opencode-poe-auth@0.0.1
-          opentui-spinner@0.0.7
-          poe-oauth@0.0.8
-          remeda@2.26.0
-          spdx-exceptions@2.5.0
-          spdx-license-ids@3.0.23
-        ]
+        expected_gaps = %w[@npmcli/agent@4.0.2 abstract-logging@2.0.1 opentui-spinner@0.0.7]
         errors << "#{prefix} binary embedding license-text gaps do not match" unless embedding["included_license_text_gaps"] == expected_gaps
+        errors << "#{prefix} binary embedding no-additional-text resolution does not match" unless embedding["no_additional_license_text_required"] == ["spdx-license-ids@3.0.23"]
+        expected_license_payloads = [
+          {
+            "filename" => "opencode-1.18.5-aws-sdk-js-v3-LICENSE",
+            "sha256" => "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+            "packages" => %w[@aws-sdk/credential-provider-http@3.972.43 @aws-sdk/credential-provider-login@3.972.45 @aws-sdk/nested-clients@3.997.13]
+          },
+          {
+            "filename" => "opencode-1.18.5-drizzle-orm-LICENSE",
+            "sha256" => "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+            "packages" => ["drizzle-orm@1.0.0-rc.2"]
+          },
+          {
+            "filename" => "opencode-1.18.5-poe-platform-LICENSE",
+            "sha256" => "0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13",
+            "packages" => %w[opencode-poe-auth@0.0.1 poe-oauth@0.0.8]
+          },
+          {
+            "filename" => "opencode-1.18.5-remeda-LICENSE",
+            "sha256" => "acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535",
+            "packages" => ["remeda@2.26.0"]
+          },
+          {
+            "filename" => "opencode-1.18.5-sigstore-verify-LICENSE",
+            "sha256" => "364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0",
+            "packages" => ["@sigstore/verify@3.1.1"]
+          },
+          {
+            "filename" => "opencode-1.18.5-spdx-exceptions-README.md",
+            "sha256" => "554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513",
+            "packages" => ["spdx-exceptions@2.5.0"]
+          }
+        ]
+        errors << "#{prefix} binary embedding license-text payloads do not match" unless embedding["license_text_payloads"] == expected_license_payloads
         embedded_packages = Array(embedding["packages"])
         errors << "#{prefix} binary embedding package count does not match" unless embedded_packages.length == 531
         errors << "#{prefix} binary embedding contains private packages" unless embedded_packages.none? { |record| record["private"] == true }
@@ -5396,6 +5441,7 @@ module Agentlab
           "binary_version_verified" => true,
           "final_npm_binary_inclusion_verified" => true,
           "bundled_provides_generated" => true,
+          "resolved_license_text_payloads_verified" => true,
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false
         }
@@ -5403,7 +5449,7 @@ module Agentlab
         errors << "#{prefix} binary embedding overclaims final completion" unless embedding["unresolved"] == {
           "photon_source_mapping" => true,
           "bun_runtime_final_license_map" => true,
-          "included_package_local_texts" => 13,
+          "included_package_local_texts" => 3,
           "final_aggregate_license_expression" => true,
           "clean_fedora_build_matrix" => true
         }
@@ -5413,14 +5459,18 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.12%{?dist}",
+            "Release:        0.13%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
+            "Source39:       https://raw.githubusercontent.com/aws/aws-sdk-js-v3/4b035429227c5be4093e5b3898a4eb5dc70824b0/LICENSE#/%{name}-%{version}-aws-sdk-js-v3-LICENSE",
+            "Source44:       https://raw.githubusercontent.com/kemitchell/spdx-exceptions.json/3aa64bec339abc6a3eca00c3436aaa7e154b8799/README.md#/%{name}-%{version}-spdx-exceptions-README.md",
             "Patch2:         opencode-record-bundle-metafile.patch",
             "export OPENCODE_BUILD_METAFILE=\"$PWD/.build-tools/opencode-bundle-metafile.json\"",
             "ruby %{SOURCE36}",
+            "--license-text-dir \"$PWD\"",
             "cmp \"$PWD/.build-tools/opencode-binary-embedding.json\" %{SOURCE37}",
+            "%license %{name}-%{version}-aws-sdk-js-v3-LICENSE %{name}-%{version}-sigstore-verify-LICENSE",
             "%doc README.md %{name}-%{version}-binary-embedding.json"
           ].each do |snippet|
             errors << "#{prefix} spec is missing binary embedding requirement #{snippet}" unless opencode_spec.include?(snippet)
@@ -5695,7 +5745,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.12%{?dist}",
+        "Release:        0.13%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",

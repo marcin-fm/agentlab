@@ -16,6 +16,10 @@ Release `1.18.5-0.12` adds an environment-gated Bun metafile patch and a fail-cl
 
 The final `0.12` 43-member source RPM has SHA-256 `8310a97cf2f1cec3a84f7f4da5d6320bbe608e8d2b82b3c28bdedbdf52f72fc2`; the binary RPM has SHA-256 `4e12d67ee3057df0ee014b4321cfbea17ee561a3e9359b815044c7ffae5f1c43`. Its extracted 127,035,136-byte payload has SHA-256 `159ba070b44d55f730dd97c7b716677820e9b9cb3136e01b2e2e6c3e841c6f38` and reports `1.18.5` under network isolation. RPM digests pass, the packaged receipt is byte-identical to the tracked source, and `rpmlint` reports zero errors with the same 14 expected warnings. No RPM was installed or submitted to COPR. The compiler map narrows the source-set license-text review from 28 gaps to 13 embedded npm identities, but it does not close Photon source correspondence, the final Bun/native/WASM license map, aggregate SPDX, `%license` payload, or clean target builds.
 
+Release `1.18.5-0.13` resolves ten of those embedded text gaps from exact upstream provenance. The three AWS packages share the license at release commit `4b035429227c5be4093e5b3898a4eb5dc70824b0`; Drizzle's npm SLSA attestation binds its exact release commit; Sigstore Verify and Remeda use exact `gitHead` texts; Poe's upstream clarification covers both selected packages; the SPDX exception attribution is installed; and CC0 requires no additional full-text payload. The regenerated 622,252-byte binary receipt has SHA-256 `63e40ebebba95d0e790b08808905a5acb73ff3e50563fdd1064716d2763674ec` and leaves only `@npmcli/agent@4.0.2`, `abstract-logging@2.0.1`, and `opentui-spinner@0.0.7` unresolved. Upstream issue creation for all three failed before mutation because the current GitHub token cannot create issues, so no notice was manufactured.
+
+The final `0.13` 49-member source RPM has SHA-256 `b8fcc1a9e27dd3257c59554051d2955d28bf34451df36b42ec20175bb7c75355`; the binary RPM has SHA-256 `352bbe6d64c3c15de9ef67a26e0919cd390df140adb809033aca38e7324bb58c`. Its extracted 127,035,136-byte payload has SHA-256 `e2a6a3f12eb7a8c81e7e5b4dde01c6774438621d91a9c021a90b994cea9443db` and reports `1.18.5` under network isolation. The RPM installs all six resolved license/attribution payload files, preserves exactly 491 bundled Node capabilities with no `npm(opencode)`, passes digest checks, and has zero `rpmlint` errors with 14 expected warnings. No RPM was installed or submitted to COPR.
+
 The immutable `v1.18.5` tag resolves to commit
 `e5cc278dec9294a627a7b05f47ce6a564408c1a2`, and its source archive has
 SHA-256 `eb3daee12da937a36c3276efda2ce1253d3c8fbe2828ebd581a39a2c2d3efdab`.
@@ -82,8 +86,9 @@ It records these unresolved gates:
 829 selected source archives. Every declaration resolves to a Fedora
 allowed-software or allowed-content identifier, but this is not the final
 binary expression: the compiler map narrows 28 package-local text gaps to 13
-embedded identities, while those texts, Photon correspondence, and aggregate
-payload accounting remain open.
+embedded identities. Release `0.13` resolves and installs applicable evidence
+for ten of them, leaving three exact upstream notice holds plus Photon
+correspondence and aggregate payload accounting open.
 
 No lifecycle script was executed. The lifecycle review now requires dependency
 reconstruction by direct extraction of the reviewed registry archives and
@@ -178,9 +183,9 @@ scripts/acquire-opencode-sources --jobs 4 --check
 The npm `opencode-ai` package and existing binary-oriented COPR/AUR/Homebrew recipes are intentionally not used. They select or install upstream platform executables instead of rebuilding from source.
 
 The draft remains blocked until the source-built Bun package is available to a
-clean buildroot, Photon corresponding source is resolved, the 13 applicable npm
-text gaps and complete Bun/native/WASM payload produce a final aggregate SPDX
-expression and `%license` payload, required upstream contacts are recorded, and
+clean buildroot, Photon corresponding source is resolved, the 3 remaining npm
+notice holds and complete Bun/native/WASM payload produce a final aggregate SPDX
+expression and `%license` payload, the blocked upstream requests can be sent, and
 the configured Fedora 43, Fedora 44, and Rawhide matrix passes.
 
 Technical dependency facts are tracked in [`dependencies.yml`](dependencies.yml).

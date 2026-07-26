@@ -12,7 +12,7 @@
     "metafile_environment": "OPENCODE_BUILD_METAFILE",
     "auditor": {
       "filename": "audit-opencode-binary-embedding",
-      "sha256": "edb839a5924c761063ab4bd2e68f99a874edde248ddeffc237391db478b5794e"
+      "sha256": "a7093d83a5906f5ad13cf836e4ee438b4f9fcc97a01789fc56f0097b9f38a9ad"
     },
     "build_patch": {
       "filename": "opencode-record-bundle-metafile.patch",
@@ -30,11 +30,11 @@
     },
     "source_license_set": {
       "filename": "source-license-set-proof.json",
-      "sha256": "c2ca7620638b482b83f8f952a7bc19ad696c954e51d9c2766eaedfa4f6093c6f"
+      "sha256": "f17bd033f7067c729b8f0c32d299581a73cca60ca2bc178cac87a470c8b358c8"
     },
     "license_review": {
       "filename": "license-review.yml",
-      "sha256": "0eef45440b344d39ff39881824b5eab58d8b51a91d56b81459ea02322153c888"
+      "sha256": "4248cf9d4e78236ad4b30f403137ff33f8b300b9fbd9cbf7f55a9599cc149848"
     },
     "node_modules_materialization": {
       "filename": "node-modules-materialization.json",
@@ -83,23 +83,64 @@
     "embedded_unique_registry_sources": 491,
     "embedded_public_name_versions": 491,
     "embedded_workspace_paths": 12,
-    "included_license_text_gaps": 13
+    "resolved_license_text_gaps": 10,
+    "included_license_text_gaps": 3
   },
   "candidate_npm_license_expression": "0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT",
-  "included_license_text_gaps": [
-    "@aws-sdk/credential-provider-http@3.972.43",
-    "@aws-sdk/credential-provider-login@3.972.45",
-    "@aws-sdk/nested-clients@3.997.13",
-    "@npmcli/agent@4.0.2",
-    "@sigstore/verify@3.1.1",
-    "abstract-logging@2.0.1",
-    "drizzle-orm@1.0.0-rc.2",
-    "opencode-poe-auth@0.0.1",
-    "opentui-spinner@0.0.7",
-    "poe-oauth@0.0.8",
-    "remeda@2.26.0",
-    "spdx-exceptions@2.5.0",
+  "license_text_payloads": [
+    {
+      "filename": "opencode-1.18.5-aws-sdk-js-v3-LICENSE",
+      "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+      "packages": [
+        "@aws-sdk/credential-provider-http@3.972.43",
+        "@aws-sdk/credential-provider-login@3.972.45",
+        "@aws-sdk/nested-clients@3.997.13"
+      ]
+    },
+    {
+      "filename": "opencode-1.18.5-drizzle-orm-LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "packages": [
+        "drizzle-orm@1.0.0-rc.2"
+      ]
+    },
+    {
+      "filename": "opencode-1.18.5-poe-platform-LICENSE",
+      "sha256": "0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13",
+      "packages": [
+        "opencode-poe-auth@0.0.1",
+        "poe-oauth@0.0.8"
+      ]
+    },
+    {
+      "filename": "opencode-1.18.5-remeda-LICENSE",
+      "sha256": "acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535",
+      "packages": [
+        "remeda@2.26.0"
+      ]
+    },
+    {
+      "filename": "opencode-1.18.5-sigstore-verify-LICENSE",
+      "sha256": "364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0",
+      "packages": [
+        "@sigstore/verify@3.1.1"
+      ]
+    },
+    {
+      "filename": "opencode-1.18.5-spdx-exceptions-README.md",
+      "sha256": "554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513",
+      "packages": [
+        "spdx-exceptions@2.5.0"
+      ]
+    }
+  ],
+  "no_additional_license_text_required": [
     "spdx-license-ids@3.0.23"
+  ],
+  "included_license_text_gaps": [
+    "@npmcli/agent@4.0.2",
+    "abstract-logging@2.0.1",
+    "opentui-spinner@0.0.7"
   ],
   "packages": [
     {
@@ -2277,13 +2318,20 @@
       "sha256": "e3e4fbba9e2e42f9247c9aa395314a2f2d19cb27d2e0f30ada0a178e2c31bb36",
       "license": "Apache-2.0",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 4,
         "input_path_set_sha256": "ad34919fbd686c6c593615ee00840bbe2f58f167ecb2d802e6bf514b7b1ff0b4"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "exact_release_repository_history",
+        "license": "Apache-2.0",
+        "payload_file": "opencode-1.18.5-aws-sdk-js-v3-LICENSE",
+        "license_sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d"
       }
     },
     {
@@ -2391,13 +2439,20 @@
       "sha256": "5edeca4159bb8f824e4dfd063c82ab3e77b252e6d584c74d0891a514170eb1ba",
       "license": "Apache-2.0",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 2,
         "input_path_set_sha256": "da14ab410825d8d47e8a6614123eef25bfc16c73ad85871194e70ff7705d367b"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "exact_release_repository_history",
+        "license": "Apache-2.0",
+        "payload_file": "opencode-1.18.5-aws-sdk-js-v3-LICENSE",
+        "license_sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d"
       }
     },
     {
@@ -2715,13 +2770,20 @@
       "sha256": "03b3e8a57613550b870e58041c4bde1512aec01131aa263ed8a96ecd8a345fcc",
       "license": "Apache-2.0",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 5,
         "input_path_set_sha256": "1796c1b90229073367cb26e4f661545c4980545d3e11dd9330a82ba3a83809b8"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "exact_release_repository_history",
+        "license": "Apache-2.0",
+        "payload_file": "opencode-1.18.5-aws-sdk-js-v3-LICENSE",
+        "license_sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d"
       }
     },
     {
@@ -6828,13 +6890,20 @@
       "sha256": "66fba97654e6850703065d461678965f604aba69f6f792b3fed316a6ffba4154",
       "license": "Apache-2.0",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 21,
         "input_path_set_sha256": "323133005464a1d8b5140d057442c2ca18f9dca753a38e76c7a9da12f2a84bd8"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "exact_npm_githead_and_release_source",
+        "license": "Apache-2.0",
+        "payload_file": "opencode-1.18.5-sigstore-verify-LICENSE",
+        "license_sha256": "364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0"
       }
     },
     {
@@ -9066,13 +9135,20 @@
       "sha256": "2f538765ce55f89b3f4db8e35c24591c8558120b02c806ea8564bf407171c173",
       "license": "Apache-2.0",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 102,
         "input_path_set_sha256": "4cb0a17c9ac281ec19c951d7b10729dee296c48ffc3967b25252d0592e817856"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "npm_slsa_provenance_and_exact_release_source",
+        "license": "Apache-2.0",
+        "payload_file": "opencode-1.18.5-drizzle-orm-LICENSE",
+        "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
       }
     },
     {
@@ -12910,13 +12986,20 @@
       "sha256": "b9254082be81266d45e3c43692726141c0e1b9ea40d245fe68ebc1c5ea5fb2ab",
       "license": "MIT",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 1,
         "input_path_set_sha256": "14f667dda712905c52094032f1a524db522653d66f77e8c9f3891837ad833ab6"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "authoritative_post_release_clarification",
+        "license": "MIT",
+        "payload_file": "opencode-1.18.5-poe-platform-LICENSE",
+        "license_sha256": "0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13"
       }
     },
     {
@@ -13498,13 +13581,20 @@
       "sha256": "c25555f098d269a381eaad376a437d647dca18f4087c03ac39d58fbbad583022",
       "license": "MIT",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 4,
         "input_path_set_sha256": "66be7fd7e0377fd847823663bed2078fbd1f69c5b2d2b5caefb710bd6558f299"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "authoritative_post_release_clarification",
+        "license": "MIT",
+        "payload_file": "opencode-1.18.5-poe-platform-LICENSE",
+        "license_sha256": "0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13"
       }
     },
     {
@@ -13822,13 +13912,20 @@
       "sha256": "70ce73ccb2108843d280853fe001748dce4ab5d4f10ad068261174c8ab03571d",
       "license": "MIT",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 23,
         "input_path_set_sha256": "72d6f3896f733940ce66a5b4768a85a434bf846516398951694ae6a7afbd2e33"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "exact_npm_githead_and_release_source",
+        "license": "MIT",
+        "payload_file": "opencode-1.18.5-remeda-LICENSE",
+        "license_sha256": "acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535"
       }
     },
     {
@@ -14626,13 +14723,20 @@
       "sha256": "c5295dd22415e8b60a5af2560e7461954f660bcb591be7c5622e463956d33256",
       "license": "CC-BY-3.0",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 1,
         "input_path_set_sha256": "657d3c7333892e200000ce157f78c48c6a21610924c6782e832cd7be8ffe6bdd"
+      },
+      "license_text_resolution": {
+        "disposition": "payload_file",
+        "evidence_kind": "exact_npm_githead_attribution_readme",
+        "license": "CC-BY-3.0",
+        "payload_file": "opencode-1.18.5-spdx-exceptions-README.md",
+        "license_sha256": "554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513"
       }
     },
     {
@@ -14680,13 +14784,19 @@
       "sha256": "fea7d95340e83a403c73463ea683cdde960029d956a86a023af6e283fd1e82fe",
       "license": "CC0-1.0",
       "license_files": [],
-      "license_text_gap": true,
+      "license_text_gap": false,
       "source_verified": true,
       "included_in_binary": true,
       "inclusion_evidence": {
         "method": "bun_build_metafile_positive_bytes",
         "metafile_input_count": 2,
         "input_path_set_sha256": "2148d93eb78a34cfdb11c7f985433803b15d8bf50b45fcf5a4ee6c26c8a66dd8"
+      },
+      "license_text_resolution": {
+        "disposition": "no_additional_full_text_required",
+        "evidence_kind": "exact_npm_githead_cc0_dedication",
+        "license": "CC0-1.0",
+        "reason": "CC0-1.0 imposes no condition requiring distribution of the full legal text."
       }
     },
     {
@@ -16076,13 +16186,14 @@
     "binary_version_verified": true,
     "final_npm_binary_inclusion_verified": true,
     "bundled_provides_generated": true,
+    "resolved_license_text_payloads_verified": true,
     "final_aggregate_license_expression_verified": false,
     "rpm_license_payload_complete": false
   },
   "unresolved": {
     "photon_source_mapping": true,
     "bun_runtime_final_license_map": true,
-    "included_package_local_texts": 13,
+    "included_package_local_texts": 3,
     "final_aggregate_license_expression": true,
     "clean_fedora_build_matrix": true
   }

@@ -16,6 +16,8 @@ scope:
 status:
   absent_declarations_resolved: 3
   package_local_text_gaps_classified: 28
+  embedded_package_local_text_resolutions: 10
+  embedded_package_local_text_holds: 3
   final_license_expression_verified: false
   applicable_texts_collected: false
 fedora_policy:
@@ -53,6 +55,100 @@ declaration_resolutions:
     package_json_path: packages/socket.io-client/package.json
     license_path: LICENSE
     license_sha256: 70aebb46c7195354683546b0ffebd5989cb18e726e715d9ba71d964f929f0075
+package_local_text_resolutions:
+  - packages:
+      - "@aws-sdk/credential-provider-http@3.972.43"
+      - "@aws-sdk/credential-provider-login@3.972.45"
+      - "@aws-sdk/nested-clients@3.997.13"
+    license: Apache-2.0
+    disposition: payload_file
+    evidence_kind: exact_release_repository_history
+    source_repository: https://github.com/aws/aws-sdk-js-v3
+    source_commit: 4b035429227c5be4093e5b3898a4eb5dc70824b0
+    package_versions_verified_at_commit: true
+    source_path: LICENSE
+    payload_file: opencode-1.18.5-aws-sdk-js-v3-LICENSE
+    license_sha256: edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
+  - packages:
+      - "@sigstore/verify@3.1.1"
+    license: Apache-2.0
+    disposition: payload_file
+    evidence_kind: exact_npm_githead_and_release_source
+    source_repository: https://github.com/sigstore/sigstore-js
+    source_commit: c1dc7d4778a450787fc72b083f2490ad02b714c6
+    source_path: LICENSE
+    payload_file: opencode-1.18.5-sigstore-verify-LICENSE
+    license_sha256: 364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0
+  - packages:
+      - drizzle-orm@1.0.0-rc.2
+    license: Apache-2.0
+    disposition: payload_file
+    evidence_kind: npm_slsa_provenance_and_exact_release_source
+    source_repository: https://github.com/drizzle-team/drizzle-orm
+    source_commit: eec7260841c468ab4c2f2dc9d8ebb69105da0c34
+    provenance_invocation: https://github.com/drizzle-team/drizzle-orm/actions/runs/25394468879/attempts/1
+    source_path: LICENSE
+    payload_file: opencode-1.18.5-drizzle-orm-LICENSE
+    license_sha256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+  - packages:
+      - opencode-poe-auth@0.0.1
+      - poe-oauth@0.0.8
+    license: MIT
+    disposition: payload_file
+    evidence_kind: authoritative_post_release_clarification
+    source_repository: https://github.com/poe-platform/poe-code
+    release_source_commits:
+      opencode-poe-auth@0.0.1: 6f2a7e9c43f7a75e3f1130b821f738083da0f685
+      poe-oauth@0.0.8: 898a8c7f8782777da92e19f728cdd1e3f79537d5
+    clarification_commit: 0a8922656d075ddcd43ae9abb6de8aaf28fdf73a
+    clarification_message: "fix(packages): publish MIT license metadata (#493)"
+    source_path: packages/poe-oauth/LICENSE
+    payload_file: opencode-1.18.5-poe-platform-LICENSE
+    license_sha256: 0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13
+  - packages:
+      - remeda@2.26.0
+    license: MIT
+    disposition: payload_file
+    evidence_kind: exact_npm_githead_and_release_source
+    source_repository: https://github.com/remeda/remeda
+    source_commit: 0fde627fc4ca8a19ab93f000fe931f22d4472338
+    source_path: LICENSE
+    payload_file: opencode-1.18.5-remeda-LICENSE
+    license_sha256: acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535
+  - packages:
+      - spdx-exceptions@2.5.0
+    license: CC-BY-3.0
+    disposition: payload_file
+    evidence_kind: exact_npm_githead_attribution_readme
+    source_repository: https://github.com/kemitchell/spdx-exceptions.json
+    source_commit: 3aa64bec339abc6a3eca00c3436aaa7e154b8799
+    source_path: README.md
+    payload_file: opencode-1.18.5-spdx-exceptions-README.md
+    license_sha256: 554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513
+  - packages:
+      - spdx-license-ids@3.0.23
+    license: CC0-1.0
+    disposition: no_additional_full_text_required
+    evidence_kind: exact_npm_githead_cc0_dedication
+    source_repository: https://github.com/jslicense/spdx-license-ids
+    source_commit: a2a975daf48bbc2afdc8e7c304405b44c656fd53
+    source_path: README.md
+    source_sha256: b4807793db6058c819f76c023362b7d522b3d19c9b41563fcc01c2b2c5b1ccd3
+    reason: CC0-1.0 imposes no condition requiring distribution of the full legal text.
+embedded_package_local_text_holds:
+  count: 3
+  upstream_request_status: blocked_before_mutation_by_github_token
+  error: "GraphQL: Resource not accessible by personal access token (createIssue)"
+  packages:
+    - package: "@npmcli/agent@4.0.2"
+      license: ISC
+      reason: The exact npm archive and v4.0.2 source omit the applicable copyright and permission notice.
+    - package: abstract-logging@2.0.1
+      license: MIT
+      reason: The exact npm archive and v2.0.1 source omit a stable package-specific full notice.
+    - package: opentui-spinner@0.0.7
+      license: MIT
+      reason: The exact npm archive and v0.0.7 source contain only the MIT identifier.
 missing_package_local_texts:
   obligation: Collect an upstream notice or canonical text only for source or binary content retained in the final RPM payload.
   software:

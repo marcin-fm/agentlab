@@ -53,18 +53,24 @@
 %global models_dev_zod_sha256 f365a049bd1fcc3079e91d9cbcf968b7adce705662bfb3ca1ab3930c03b2ede3
 %global models_dev_snapshot_sha256 8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287
 %global models_dev_proof_sha256 3b54b21170b3901f3614284ad301ceb1706e310cda027849a55f234bcc6ca1aa
-%global source_license_set_proof_sha256 c2ca7620638b482b83f8f952a7bc19ad696c954e51d9c2766eaedfa4f6093c6f
+%global source_license_set_proof_sha256 f17bd033f7067c729b8f0c32d299581a73cca60ca2bc178cac87a470c8b358c8
 %global source_materialization_sha256 518e0b781a8e1ed5a1683fcf7095be1b22360e8d6a7ef101a131d64cbdc13719
 %global source_audit_sha256 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
 %global node_modules_materializer_sha256 d49cdf57f7c2b86103e63d829f00eebbb3d72c5ec985b12186b54ed188d55668
-%global binary_embedding_auditor_sha256 edb839a5924c761063ab4bd2e68f99a874edde248ddeffc237391db478b5794e
-%global binary_embedding_receipt_sha256 875a50872ca1bdc6ea139767f12a6006aa31f96b33b3259c57d01e4aabf37f70
+%global binary_embedding_auditor_sha256 a7093d83a5906f5ad13cf836e4ee438b4f9fcc97a01789fc56f0097b9f38a9ad
+%global binary_embedding_receipt_sha256 63e40ebebba95d0e790b08808905a5acb73ff3e50563fdd1064716d2763674ec
 %global bundle_metafile_patch_sha256 1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4
-%global license_review_sha256 0eef45440b344d39ff39881824b5eab58d8b51a91d56b81459ea02322153c888
+%global license_review_sha256 4248cf9d4e78236ad4b30f403137ff33f8b300b9fbd9cbf7f55a9599cc149848
+%global aws_sdk_license_sha256 edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
+%global sigstore_verify_license_sha256 364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0
+%global drizzle_orm_license_sha256 c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+%global poe_platform_license_sha256 0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13
+%global remeda_license_sha256 acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535
+%global spdx_exceptions_readme_sha256 554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.12%{?dist}
+Release:        0.13%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -110,6 +116,12 @@ Source35:       materialize-opencode-node-modules
 Source36:       audit-opencode-binary-embedding
 Source37:       opencode-1.18.5-binary-embedding.json
 Source38:       license-review.yml
+Source39:       https://raw.githubusercontent.com/aws/aws-sdk-js-v3/4b035429227c5be4093e5b3898a4eb5dc70824b0/LICENSE#/%{name}-%{version}-aws-sdk-js-v3-LICENSE
+Source40:       https://raw.githubusercontent.com/sigstore/sigstore-js/c1dc7d4778a450787fc72b083f2490ad02b714c6/LICENSE#/%{name}-%{version}-sigstore-verify-LICENSE
+Source41:       https://raw.githubusercontent.com/drizzle-team/drizzle-orm/eec7260841c468ab4c2f2dc9d8ebb69105da0c34/LICENSE#/%{name}-%{version}-drizzle-orm-LICENSE
+Source42:       https://raw.githubusercontent.com/poe-platform/poe-code/0a8922656d075ddcd43ae9abb6de8aaf28fdf73a/packages/poe-oauth/LICENSE#/%{name}-%{version}-poe-platform-LICENSE
+Source43:       https://raw.githubusercontent.com/remeda/remeda/0fde627fc4ca8a19ab93f000fe931f22d4472338/LICENSE#/%{name}-%{version}-remeda-LICENSE
+Source44:       https://raw.githubusercontent.com/kemitchell/spdx-exceptions.json/3aa64bec339abc6a3eca00c3436aaa7e154b8799/README.md#/%{name}-%{version}-spdx-exceptions-README.md
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -702,6 +714,12 @@ echo "%{node_modules_materializer_sha256}  %{SOURCE35}" | sha256sum -c -
 echo "%{binary_embedding_auditor_sha256}  %{SOURCE36}" | sha256sum -c -
 echo "%{binary_embedding_receipt_sha256}  %{SOURCE37}" | sha256sum -c -
 echo "%{license_review_sha256}  %{SOURCE38}" | sha256sum -c -
+echo "%{aws_sdk_license_sha256}  %{SOURCE39}" | sha256sum -c -
+echo "%{sigstore_verify_license_sha256}  %{SOURCE40}" | sha256sum -c -
+echo "%{drizzle_orm_license_sha256}  %{SOURCE41}" | sha256sum -c -
+echo "%{poe_platform_license_sha256}  %{SOURCE42}" | sha256sum -c -
+echo "%{remeda_license_sha256}  %{SOURCE43}" | sha256sum -c -
+echo "%{spdx_exceptions_readme_sha256}  %{SOURCE44}" | sha256sum -c -
 echo "%{bundle_metafile_patch_sha256}  %{PATCH2}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
@@ -730,6 +748,12 @@ test -f %{SOURCE21}
 test -f %{SOURCE36}
 test -f %{SOURCE37}
 test -f %{SOURCE38}
+test -f %{SOURCE39}
+test -f %{SOURCE40}
+test -f %{SOURCE41}
+test -f %{SOURCE42}
+test -f %{SOURCE43}
+test -f %{SOURCE44}
 echo "%{bun_pty_source_sha256}  %{SOURCE6}" | sha256sum -c -
 echo "%{bun_pty_vendor_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{bun_pty_vendor_manifest_sha256}  %{SOURCE8}" | sha256sum -c -
@@ -737,6 +761,7 @@ python3 -m json.tool %{SOURCE3} >/dev/null
 python3 -m json.tool %{SOURCE5} >/dev/null
 cp -p %{SOURCE4} .
 cp -p %{SOURCE37} .
+cp -p %{SOURCE39} %{SOURCE40} %{SOURCE41} %{SOURCE42} %{SOURCE43} %{SOURCE44} .
 tar --extract --zstd --file %{SOURCE1}
 mkdir -p .build-tools
 ruby %{SOURCE35} \
@@ -1121,6 +1146,7 @@ ruby %{SOURCE36} \
   --source-audit %{SOURCE34} \
   --source-license-set %{SOURCE32} \
   --license-review %{SOURCE38} \
+  --license-text-dir "$PWD" \
   --materialization "$PWD/.build-tools/node-modules-materialization.json" \
   --build-patch %{PATCH2} \
   --models-snapshot "$PWD/.build-tools/models-dev-api.json" \
@@ -1224,10 +1250,17 @@ install -Dpm0755 \
 %license bun-pty-LICENSE.dependencies bun-pty-cargo-vendor.txt
 %license opentui-LICENSE opentui-uucode-LICENSE.md opentui-yoga-LICENSE
 %license web-tree-sitter-LICENSE tree-sitter-bash-LICENSE tree-sitter-powershell-LICENSE
+%license %{name}-%{version}-aws-sdk-js-v3-LICENSE %{name}-%{version}-sigstore-verify-LICENSE
+%license %{name}-%{version}-drizzle-orm-LICENSE %{name}-%{version}-poe-platform-LICENSE
+%license %{name}-%{version}-remeda-LICENSE %{name}-%{version}-spdx-exceptions-README.md
 %doc README.md %{name}-%{version}-binary-embedding.json
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.13
+- Add exact upstream license texts for ten embedded npm package identities.
+- Preserve the three unresolved package notices as explicit publication blockers.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.12
 - Record the normalized Bun compiler input graph for the standalone executable.
 - Generate exact manual bundled Node Provides from 491 embedded public package identities.

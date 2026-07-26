@@ -28,11 +28,13 @@ module Agentlab
     SOURCE_ROOT_MARKER = "$SOURCE_ROOT"
 
     def generate!(source_root:, metafile_path:, closure_path:, source_audit_path:, source_license_set_path:,
-                  license_review_path:, materialization_path:, build_patch_path:, models_snapshot_path:,
+                  license_review_path:, license_text_dir:, materialization_path:, build_patch_path:, models_snapshot_path:,
                   parser_worker_path:, binary_path:, expected_version:, output_path:)
       source_root = File.realpath(source_root)
+      license_text_dir = File.realpath(license_text_dir)
       package_dir = File.join(source_root, "packages", "opencode")
       raise Agentlab::Error, "OpenCode package source is missing" unless Dir.exist?(package_dir)
+      raise Agentlab::Error, "OpenCode license-text directory is missing" unless Dir.exist?(license_text_dir)
 
       paths = {
         "metafile" => metafile_path,
@@ -120,6 +122,7 @@ module Agentlab
       end
 
       license_resolutions = resolved_licenses(source_license_set, license_review)
+      license_text_resolutions, license_text_payloads = resolved_license_texts(license_review, license_text_dir)
       packages = package_inputs.keys.sort.map do |package_path|
         closure_record = closure_packages.fetch(package_path)
         source = source_by_package_path.fetch(package_path)
@@ -144,10 +147,14 @@ module Agentlab
         unless source_license_set.fetch("expression_counts").key?(license)
           raise Agentlab::Error, "OpenCode embedded package license is absent from the classified source set for #{identity}: #{license}"
         end
+        text_resolution = license_text_resolutions[identity]
+        if text_resolution && text_resolution.fetch("license") != license
+          raise Agentlab::Error, "OpenCode embedded package license-text resolution does not match #{identity}: #{license}"
+        end
 
         inputs = package_inputs.fetch(package_path).sort_by { |entry| entry.fetch("path") }
         input_paths = inputs.map { |entry| entry.fetch("path") }
-        {
+        record = {
           "package_path" => package_path,
           "npm_name" => closure_record.fetch("npm_name"),
           "version" => closure_record.fetch("version"),
@@ -162,7 +169,7 @@ module Agentlab
           "sha256" => source.fetch("sha256"),
           "license" => license,
           "license_files" => source.fetch("license_files"),
-          "license_text_gap" => source.fetch("license_files").empty?,
+          "license_text_gap" => source.fetch("license_files").empty? && text_resolution.nil?,
           "source_verified" => true,
           "included_in_binary" => true,
           "inclusion_evidence" => {
@@ -171,6 +178,8 @@ module Agentlab
             "input_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(input_paths) + "\n")
           }
         }
+        record["license_text_resolution"] = text_resolution if text_resolution
+        record
       end
 
       workspaces = workspace_inputs.keys.sort.map do |workspace_path|
@@ -187,6 +196,11 @@ module Agentlab
       end
 
       source_records = packages.uniq { |record| [record.fetch("npm_name"), record.fetch("version"), record.fetch("sha256")] }
+      included_identities = source_records.map { |record| "#{record.fetch('npm_name')}@#{record.fetch('version')}" }
+      unused_text_resolutions = license_text_resolutions.keys - included_identities
+      unless unused_text_resolutions.empty?
+        raise Agentlab::Error, "OpenCode license-text resolutions are outside the embedded graph: #{unused_text_resolutions.sort.join(', ')}"
+      end
       license_text_gaps = source_records.select { |record| record.fetch("license_text_gap") }
         .map { |record| "#{record.fetch('npm_name')}@#{record.fetch('version')}" }.sort
       private_packages = packages.select { |record| record.fetch("private") }
@@ -254,9 +268,14 @@ module Agentlab
           "embedded_unique_registry_sources" => source_records.length,
           "embedded_public_name_versions" => provides.length,
           "embedded_workspace_paths" => workspaces.length,
+          "resolved_license_text_gaps" => license_text_resolutions.length,
           "included_license_text_gaps" => license_text_gaps.length
         },
         "candidate_npm_license_expression" => source_records.map { |record| record.fetch("license") }.uniq.sort.join(" AND "),
+        "license_text_payloads" => license_text_payloads,
+        "no_additional_license_text_required" => license_text_resolutions.filter_map do |identity, resolution|
+          identity if resolution.fetch("disposition") == "no_additional_full_text_required"
+        end.sort,
         "included_license_text_gaps" => license_text_gaps,
         "packages" => packages,
         "workspaces" => workspaces,
@@ -270,6 +289,7 @@ module Agentlab
           "binary_version_verified" => true,
           "final_npm_binary_inclusion_verified" => true,
           "bundled_provides_generated" => true,
+          "resolved_license_text_payloads_verified" => true,
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false
         },
@@ -437,6 +457,61 @@ module Agentlab
       resolutions
     end
 
+    def resolved_license_texts(license_review, license_text_dir)
+      resolutions = {}
+      payloads = {}
+      Array(license_review["package_local_text_resolutions"]).each do |entry|
+        packages = Array(entry["packages"])
+        raise Agentlab::Error, "OpenCode license-text resolution has no packages" if packages.empty?
+
+        disposition = entry.fetch("disposition")
+        license = entry.fetch("license")
+        resolution = {
+          "disposition" => disposition,
+          "evidence_kind" => entry.fetch("evidence_kind"),
+          "license" => license
+        }
+        case disposition
+        when "payload_file"
+          filename = entry.fetch("payload_file")
+          unless File.basename(filename) == filename
+            raise Agentlab::Error, "OpenCode license-text payload filename is invalid: #{filename}"
+          end
+          path = File.join(license_text_dir, filename)
+          raise Agentlab::Error, "OpenCode license-text payload is missing: #{filename}" unless File.file?(path)
+
+          sha256 = Digest::SHA256.file(path).hexdigest
+          unless sha256 == entry.fetch("license_sha256")
+            raise Agentlab::Error, "OpenCode license-text payload SHA-256 mismatch: #{filename}"
+          end
+          resolution = resolution.merge("payload_file" => filename, "license_sha256" => sha256)
+          payload = payloads[filename] ||= {
+            "filename" => filename,
+            "sha256" => sha256,
+            "packages" => []
+          }
+          if payload.fetch("sha256") != sha256
+            raise Agentlab::Error, "OpenCode license-text payload identity collision: #{filename}"
+          end
+          payload.fetch("packages").concat(packages)
+        when "no_additional_full_text_required"
+          resolution["reason"] = entry.fetch("reason")
+        else
+          raise Agentlab::Error, "OpenCode license-text disposition is invalid: #{disposition.inspect}"
+        end
+
+        packages.each do |package|
+          raise Agentlab::Error, "duplicate OpenCode license-text resolution for #{package}" if resolutions.key?(package)
+
+          resolutions[package] = resolution
+        end
+      end
+      normalized_payloads = payloads.values.sort_by { |payload| payload.fetch("filename") }.each do |payload|
+        payload["packages"] = payload.fetch("packages").uniq.sort
+      end
+      [resolutions, normalized_payloads]
+    end
+
     def executable_version(path)
       stdout, stderr, status = Open3.capture3(path, "--version")
       unless status.success? && stderr.empty?
@@ -474,13 +549,13 @@ if $PROGRAM_NAME == __FILE__
   options = {}
   OptionParser.new do |parser|
     parser.banner = "Usage: scripts/audit-opencode-binary-embedding [options]"
-    %w[source-root metafile closure source-audit source-license-set license-review materialization build-patch
+    %w[source-root metafile closure source-audit source-license-set license-review license-text-dir materialization build-patch
        models-snapshot parser-worker binary expected-version output].each do |name|
       parser.on("--#{name} PATH") { |value| options[name.tr("-", "_").to_sym] = value }
     end
   end.parse!
-  required = %i[source_root metafile closure source_audit source_license_set license_review materialization build_patch
-                models_snapshot parser_worker binary expected_version output]
+  required = %i[source_root metafile closure source_audit source_license_set license_review license_text_dir materialization build_patch
+                 models_snapshot parser_worker binary expected_version output]
   missing = required.reject { |key| options[key] }
   abort("error: missing #{missing.map { |key| "--#{key.to_s.tr('_', '-')}" }.join(', ')}") unless missing.empty?
 
@@ -491,6 +566,7 @@ if $PROGRAM_NAME == __FILE__
     source_audit_path: options.fetch(:source_audit),
     source_license_set_path: options.fetch(:source_license_set),
     license_review_path: options.fetch(:license_review),
+    license_text_dir: options.fetch(:license_text_dir),
     materialization_path: options.fetch(:materialization),
     build_patch_path: options.fetch(:build_patch),
     models_snapshot_path: options.fetch(:models_snapshot),
