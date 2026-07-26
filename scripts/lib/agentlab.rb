@@ -5090,9 +5090,9 @@ module Agentlab
       errors << "#{prefix} source license-set release does not match" unless proof["release"].to_s == release
       errors << "#{prefix} source license-set source receipt does not match" unless proof.dig("receipts", "source_audit", "sha256") == Digest::SHA256.file(source_path).hexdigest
       errors << "#{prefix} source license-set review receipt does not match" unless proof.dig("receipts", "license_review", "sha256") == Digest::SHA256.file(license_path).hexdigest
-      errors << "#{prefix} source license-set archive count does not match" unless proof.dig("scope", "unique_source_archives") == 828
-      errors << "#{prefix} source license-set package count does not match" unless proof.dig("scope", "selected_package_records") == 1_018
-      errors << "#{prefix} source license-set expression counts do not cover all archives" unless proof.fetch("expression_counts", {}).values.sum == 828
+      errors << "#{prefix} source license-set archive count does not match" unless proof.dig("scope", "unique_source_archives") == 829
+      errors << "#{prefix} source license-set package count does not match" unless proof.dig("scope", "selected_package_records") == 1_019
+      errors << "#{prefix} source license-set expression counts do not cover all archives" unless proof.fetch("expression_counts", {}).values.sum == 829
       errors << "#{prefix} source license-set Fedora data does not match" unless proof.dig("fedora_license_data", "sha256") == "27a1fda193d8a7e7170d2a41929da52bb32416ce970bda3f0fc8fb013d25c8ee"
       errors << "#{prefix} source license-set text gap count does not match" unless proof.dig("unresolved", "package_local_text_gaps") == 28
       expected_flags = {
@@ -5145,22 +5145,56 @@ module Agentlab
     }
     errors << "#{prefix} source delivery proof does not match" unless dependencies["source_delivery_proof"] == expected_source_delivery
 
-    expected_node_modules = {
-      "schema" => "agentlab-opencode-node-modules-materialization/v1",
-      "source_archives" => 828,
-      "package_paths" => 1_018,
-      "target_path_set_sha256" => "9ba7604dbfba348ee77626f535d24e06a78e7d591c341726465b3f43bf1ec0e7",
-      "archive_sizes_verified" => true,
-      "archive_sha256_verified" => true,
-      "package_identities_verified" => true,
-      "package_paths_verified" => true,
-      "network_access_performed" => false,
-      "package_manager_executed" => false,
-      "dependency_resolution_performed" => false,
-      "lifecycle_scripts_executed" => false,
-      "package_build_performed" => false
-    }
-    errors << "#{prefix} node_modules materialization proof does not match" unless dependencies["node_modules_materialization_proof"] == expected_node_modules
+      expected_node_modules = {
+        "schema" => "agentlab-opencode-node-modules-materialization/v2",
+        "receipt_sha256" => "b80b2dcb902cfdfd8a3e62036b9820845c20ba88ef805cd04de2dfa7e019a903",
+        "source_closure_sha256" => "23bff9b408d62d83dda3a2c2f5fc6c39c949ec81be2c3183fa3a506d500de76b",
+        "source_archives" => 829,
+        "package_paths" => 1_019,
+        "target_path_set_sha256" => "f6f13913497b2845a9eb23c0c21af014cc50c3ae868f5c9766e208896a9af602",
+        "workspace_links" => 14,
+        "workspace_link_path_set_sha256" => "be5f3c1b7dd0208eebee69a97ddd9ed330c74c5affc45e88e56fcd2edff6a2b8",
+        "archive_sizes_verified" => true,
+        "archive_sha256_verified" => true,
+        "package_identities_verified" => true,
+        "package_paths_verified" => true,
+        "workspace_identities_verified" => true,
+        "workspace_links_verified" => true,
+        "network_access_performed" => false,
+        "package_manager_executed" => false,
+        "dependency_resolution_performed" => false,
+        "lifecycle_scripts_executed" => false,
+        "package_build_performed" => false
+      }
+      errors << "#{prefix} node_modules materialization proof does not match" unless dependencies["node_modules_materialization_proof"] == expected_node_modules
+
+      expected_binary_build = {
+        "nvr" => "opencode-1.18.5-0.11.fc44",
+        "source_rpm_sha256" => "02b633badb43ba814133c9a5549e6625ed148621f8064df8dc37336bcfe2d96d",
+        "binary_rpm_sha256" => "d3b3b107e4e22450ffd527848c6704f512e656ea6e3bd55ca138b7b0e9991bc9",
+        "payload_sha256" => "3b7b6622b2dc84d2579792569c3ebc8df12da062fdeafbf14d8a00f7a9dcd5b1",
+        "payload_size_bytes" => 127_035_136,
+        "source_built_bun_version" => "1.3.14",
+        "source_built_bun_sha256" => "4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569",
+        "lol_html_provider_sha256" => "3b1f3a3a92c4af9e97630fb845a6a2d69fdedaa6c4034219fe6f75c1a2790d86",
+        "node_modules_receipt_sha256" => "b80b2dcb902cfdfd8a3e62036b9820845c20ba88ef805cd04de2dfa7e019a903",
+        "materialized_package_paths" => 1_019,
+        "materialized_workspace_links" => 14,
+        "network_isolated" => true,
+        "build_passed" => true,
+        "check_passed" => true,
+        "binary_rpm_created" => true,
+        "extracted_version" => "1.18.5",
+        "rpmlint_errors" => 0,
+        "rpmlint_warnings" => 14,
+        "local_rpmbuild_only" => true,
+        "clean_mock_verified" => false,
+        "fedora_43_44_verified" => false,
+        "final_license_verified" => false,
+        "rpm_installed" => false,
+        "copr_submitted" => false
+      }
+      errors << "#{prefix} binary build proof does not match" unless dependencies["binary_build_proof"] == expected_binary_build
 
     native_filename = source_files["native_review"]
     native_finding = dependencies.dig("source_acquisition_findings", "native_review")
@@ -5427,7 +5461,9 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.10%{?dist}",
+        "Release:        0.11%{?dist}",
+        "%global debug_package %{nil}",
+        "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
         "Source10:       https://github.com/jacobsandlund/uucode/archive/%{uucode_commit}.tar.gz",
         "Source11:       https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz#/%{name}-%{version}-yoga-%{yoga_commit}.tar.gz",
@@ -5444,23 +5480,40 @@ module Agentlab
         "Source31:       models-snapshot-proof.json",
         "Source32:       source-license-set-proof.json",
         "Source33:       opencode-1.18.5-source-materialization.json",
+        "%global node_modules_materializer_sha256 d49cdf57f7c2b86103e63d829f00eebbb3d72c5ec985b12186b54ed188d55668",
+        "Source35:       materialize-opencode-node-modules",
+        "--closure %{SOURCE3}",
         "Patch1:         opencode-zig-fedora-lib64.patch",
         "BuildRequires:  clang20-devel",
         "BuildRequires:  lld20-devel",
         "BuildRequires:  llvm20-devel",
+        "export OPENCODE_VERSION=\"%{version}\"",
+        "export OPENCODE_CHANNEL=prod",
         "\"$opentui_zig\" build",
         "-Dtarget=x86_64-linux-gnu.2.17",
         "strip --strip-unneeded \"$opentui_lib\"",
         "rm -f \"$opentui_platform/libopentui.so\"",
         "install -pm0755 \"$opentui_lib\" \"$opentui_platform/libopentui.so\"",
+        "export PATH=\"$PWD/.build-tools/emscripten:$PATH\"",
+        "export EM_CONFIG=\"$PWD/.build-tools/emscripten-config.py\"",
+        "(\n  unset CFLAGS CXXFLAGS FFLAGS FCFLAGS CPPFLAGS LDFLAGS",
+        "bash scripts/build.sh\n  popd >/dev/null\n)",
         "echo \"%{shiki_rebuilt_wasm_sha256}  .shiki-vscode-oniguruma/out/onig.wasm\" | sha256sum -c -",
         "install -pm0644 .shiki-vscode-oniguruma/out/onig.wasm \"$shiki_root/dist/onig.wasm\"",
+        "import { codeToTokens } from \"shiki\"",
+        "Shiki token smoke mismatch",
+        "process.stdout.write(dirname(fileURLToPath(import.meta.resolve(\"@opentui/core\"))))",
         "opentui-uucode-LICENSE.md",
         "opentui-yoga-LICENSE",
         "bun -e '",
         "resolveRenderLib"
       ].each do |snippet|
         errors << "#{prefix} spec is missing OpenTUI build requirement #{snippet}" unless opencode_spec.include?(snippet)
+      end
+
+      shiki_root_resolution = %q|shiki_root="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(dirname(fileURLToPath(import.meta.resolve("shiki")))))')"|
+      unless opencode_spec.scan(shiki_root_resolution).length == 3
+        errors << "#{prefix} spec must resolve the Shiki package root separately in prep, build, and check"
       end
 
       expected_tree_sitter_builds = {

@@ -1,5 +1,7 @@
 # Disabled by package.yml until Bun and the audited npm source closure are
 # available. Do not replace these inputs with upstream platform binaries.
+%global debug_package %{nil}
+%global __strip /bin/true
 %global source_sha256 eb3daee12da937a36c3276efda2ce1253d3c8fbe2828ebd581a39a2c2d3efdab
 %global bun_pty_commit 41dd5b887f3f47d7c307fd93f828a75dbee97d5a
 %global bun_pty_source_sha256 d4731314a00c46d3810fa08b94ee0bcddb7a5026e47dbca88c83449d351bff9e
@@ -51,14 +53,14 @@
 %global models_dev_zod_sha256 f365a049bd1fcc3079e91d9cbcf968b7adce705662bfb3ca1ab3930c03b2ede3
 %global models_dev_snapshot_sha256 8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287
 %global models_dev_proof_sha256 3b54b21170b3901f3614284ad301ceb1706e310cda027849a55f234bcc6ca1aa
-%global source_license_set_proof_sha256 0d3a4c00971ed5a21f99ea0710d7fde7d045ab93f2be922087b8b4af27ed2247
-%global source_materialization_sha256 dd8beedf7a3ceac79cb18cbad3dc97149072bc360b6ea76f8cd18b2cdd6f0b46
-%global source_audit_sha256 619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc
-%global node_modules_materializer_sha256 2d81ab9b4809d50ff49dc0552539fdea86c504a976065785660b17c749915802
+%global source_license_set_proof_sha256 c2ca7620638b482b83f8f952a7bc19ad696c954e51d9c2766eaedfa4f6093c6f
+%global source_materialization_sha256 518e0b781a8e1ed5a1683fcf7095be1b22360e8d6a7ef101a131d64cbdc13719
+%global source_audit_sha256 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
+%global node_modules_materializer_sha256 d49cdf57f7c2b86103e63d829f00eebbb3d72c5ec985b12186b54ed188d55668
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.10%{?dist}
+Release:        0.11%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -227,6 +229,7 @@ tar --extract --zstd --file %{SOURCE1}
 mkdir -p .build-tools
 ruby %{SOURCE35} \
   --source-audit %{SOURCE34} \
+  --closure %{SOURCE3} \
   --bundle-root "$PWD/opencode-%{version}-nm-prod-build/npm" \
   --source-root "$PWD" \
   --receipt "$PWD/.build-tools/node-modules-materialization.json"
@@ -364,6 +367,8 @@ popd >/dev/null
 %build
 export CI=1
 export OPENCODE_DISABLE_AUTOUPDATE=1
+export OPENCODE_VERSION="%{version}"
+export OPENCODE_CHANNEL=prod
 export BUN_INSTALL_CACHE_DIR="$PWD/.bun-cache"
 export HOME="$PWD/.build-home"
 export XDG_CACHE_HOME="$PWD/.build-cache"
@@ -407,17 +412,24 @@ EM_CONFIG="$PWD/.build-tools/emscripten-config.py" \
   --source "$PWD/.build-tools/tree-sitter"
 
 # Rebuild Shiki's Oniguruma WASM from the exact vscode-oniguruma and Oniguruma
-# sources using the same private Emscripten/Binaryen toolchain.
+# sources using the same private Emscripten/Binaryen toolchain. Keep Fedora's
+# native compiler flags out of the wasm-only configure and compiler commands.
 export PATH="$PWD/.build-tools/emscripten:$PATH"
 export EM_CONFIG="$PWD/.build-tools/emscripten-config.py"
-pushd .shiki-vscode-oniguruma/deps/oniguruma >/dev/null
-autoreconf -vfi
-emconfigure ./configure
-make clean
-emmake make -j4
-popd >/dev/null
-pushd .shiki-vscode-oniguruma >/dev/null
-bash scripts/build.sh
+(
+  unset CFLAGS CXXFLAGS FFLAGS FCFLAGS CPPFLAGS LDFLAGS
+  pushd .shiki-vscode-oniguruma/deps/oniguruma >/dev/null
+  autoreconf -vfi
+  emconfigure ./configure
+  make clean
+  emmake make -j4
+  popd >/dev/null
+  pushd .shiki-vscode-oniguruma >/dev/null
+  bash scripts/build.sh
+  popd >/dev/null
+)
+pushd packages/opencode >/dev/null
+shiki_root="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(dirname(fileURLToPath(import.meta.resolve("shiki")))))')"
 popd >/dev/null
 echo "%{shiki_rebuilt_wasm_sha256}  .shiki-vscode-oniguruma/out/onig.wasm" | sha256sum -c -
 install -pm0644 .shiki-vscode-oniguruma/out/onig.wasm "$shiki_root/dist/onig.wasm"
@@ -526,7 +538,7 @@ TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-t
 TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-tools/opentui-wasm/tree-sitter-markdown_inline.wasm .opentui-grammar-markdown/tree-sitter-markdown-inline
 TREE_SITTER_WASI_SDK_PATH="$wasi_sdk" tree-sitter build --wasm --output .build-tools/opentui-wasm/tree-sitter-zig.wasm .opentui-grammar-zig
 pushd packages/opencode >/dev/null
-opentui_core="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(fileURLToPath(import.meta.resolve("@opentui/core/package.json"))))')"
+opentui_core="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(fileURLToPath(import.meta.resolve("@opentui/core"))))')"
 popd >/dev/null
 for grammar in javascript typescript markdown markdown_inline zig; do install -pm0644 ".build-tools/opentui-wasm/tree-sitter-$grammar.wasm" "$opentui_core/assets/$grammar/tree-sitter-$grammar.wasm"; done
 cp -p "$bash_parser/LICENSE" tree-sitter-bash-LICENSE
@@ -646,15 +658,17 @@ node-24 %{SOURCE21} \
   "$web_tree_sitter" \
   "$bash_parser/tree-sitter-bash.wasm" \
   "$powershell_parser/tree-sitter-powershell.wasm"
+pushd packages/opencode >/dev/null
+shiki_root="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(dirname(fileURLToPath(import.meta.resolve("shiki")))))')"
+popd >/dev/null
 echo "%{shiki_rebuilt_wasm_sha256}  $shiki_root/dist/onig.wasm" | sha256sum -c -
 pushd packages/opencode >/dev/null
-node-24 --input-type=module - "$shiki_root/dist/onig.wasm" <<'JS'
-import { readFileSync } from "node:fs"
-import { loadWASM, OnigScanner, OnigString } from "vscode-oniguruma"
-const bytes = readFileSync(process.argv[2])
-await loadWASM(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength))
-const match = new OnigScanner(["\\b(agentlab)\\b"]).findNextMatchSync(new OnigString("x agentlab y"), 0)
-if (!match || match.captureIndices[0].start !== 2 || match.captureIndices[0].end !== 10) throw new Error("Shiki Oniguruma smoke failed")
+node-24 --input-type=module <<'JS'
+import { codeToTokens } from "shiki"
+const source = "const agentlab = 1"
+const result = await codeToTokens(source, { lang: "javascript", theme: "nord" })
+const text = result.tokens.flat().map((token) => token.content).join("")
+if (text !== source) throw new Error(`Shiki token smoke mismatch: ${JSON.stringify(text)}`)
 JS
 popd >/dev/null
 while IFS= read -r root; do
@@ -686,6 +700,14 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.11
+- Isolate Emscripten builds from Fedora's native compiler and linker flags.
+- Materialize the selected source workspaces without package-manager execution.
+- Supply upstream's deterministic production release identity during the build.
+- Exercise the rebuilt Shiki WASM through the selected runtime API.
+- Disable empty debug packages for the standalone binary without debug sections.
+- Preserve Bun's embedded standalone payload from automatic RPM stripping.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.10
 - Materialize the checked npm dependency tree without package-manager execution.
 - Correct the OpenTUI published-payload checksum exposed by full materialization.

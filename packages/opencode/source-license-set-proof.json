@@ -6,16 +6,16 @@
   "receipts": {
     "source_audit": {
       "path": "opencode-1.18.5-source-audit.json",
-      "sha256": "619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc"
+      "sha256": "59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5"
     },
     "license_review": {
       "path": "license-review.yml",
-      "sha256": "a8f1126ff872131998217137da6f65b380f3f579556737310242aa3666294197"
+      "sha256": "0eef45440b344d39ff39881824b5eab58d8b51a91d56b81459ea02322153c888"
     }
   },
   "scope": {
-    "unique_source_archives": 828,
-    "selected_package_records": 1018,
+    "unique_source_archives": 829,
+    "selected_package_records": 1019,
     "final_binary_inclusion_verified": false
   },
   "normalizations": [
@@ -36,7 +36,7 @@
     "CC-BY-4.0": 1,
     "CC0-1.0": 1,
     "ISC": 83,
-    "MIT": 552
+    "MIT": 553
   },
   "fedora_license_data": {
     "path": "/usr/share/fedora-license-data/licenses/fedora-licenses.json",

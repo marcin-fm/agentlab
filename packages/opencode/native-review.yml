@@ -1,13 +1,13 @@
 schema: opencode-native-review/v1
 release: 1.18.5
-checked: "2026-07-25"
+checked: "2026-07-26"
 receipts:
   selected_lock_audit:
     path: opencode-1.18.5-selected-lock-audit.json
-    sha256: 8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1
+    sha256: e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8
   source_audit:
     path: opencode-1.18.5-source-audit.json
-    sha256: 619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc
+    sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
 scope:
   feature_surface: terminal_cli_without_embedded_web_ui
   target: linux-x86_64-glibc

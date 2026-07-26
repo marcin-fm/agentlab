@@ -1,14 +1,16 @@
 # OpenCode Packaging Status
 
-OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; final binary inclusion, generated bundled Provides, aggregate licensing, the remaining native and WASM rebuilds, and a complete offline build remain unverified.
+OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; a local network-isolated Fedora 44 x86_64 build now passes, while final binary license mapping, generated bundled Provides, clean Mock/COPR results, and target-matrix verification remain unverified.
 
-The 828 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the current selected audit classifies every selected package as runtime. Configured-SCM preparation regenerates those bundles plus the exact bun-pty Cargo vendor archive and includes all three in the source RPM. Offline dependency-tree assembly is now verified; the application build remains a separate gate.
+The 829 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the selected set has 1,018 runtime packages, one build-only Prettier package, and no test-only packages. Configured-SCM preparation regenerates those bundles plus the exact bun-pty Cargo vendor archive and includes all three in the source RPM. Offline dependency-tree assembly and the local application build are verified.
 
 The first complete repository-backed source job produces `opencode-1.18.5-0.9.fc44.src.rpm`, SHA-256 `476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992`, with all 38 declared source members and valid RPM digests. This proves source delivery only; no OpenCode binary was built or installed.
 
-The exact source audit now also drives direct dependency-tree assembly. All 828 checked archives materialize to 1,018 lock paths with target path-set SHA-256 `9ba7604dbfba348ee77626f535d24e06a78e7d591c341726465b3f43bf1ec0e7`; every extracted `package.json` matches the selected name/version. No package manager, dependency resolution, lifecycle hook, or network access runs.
+The exact source audit and closure now also drive direct dependency-tree assembly. All 829 checked archives materialize to 1,019 lock paths with target path-set SHA-256 `f6f13913497b2845a9eb23c0c21af014cc50c3ae868f5c9766e208896a9af602`; every extracted `package.json` matches the selected name/version. The 14 selected source workspaces are identity-checked and linked at deterministic root paths with link-set SHA-256 `be5f3c1b7dd0208eebee69a97ddd9ed330c74c5affc45e88e56fcd2edff6a2b8`. No package manager, dependency resolution, lifecycle hook, or network access runs.
 
 The resulting `opencode-1.18.5-0.10.fc44.src.rpm` has 39 members at SHA-256 `091eaf8919b915ddfeb381d154a2c503b5b8f313020db24b7c42ff2764c5985f`, passes RPM digest checks, and completes `%prep` under network isolation. This is source-preparation evidence only; no OpenCode binary was built or installed.
+
+Release `1.18.5-0.11` completes a local Fedora 44 x86_64 network-isolated `rpmbuild -bb`. The 39-member source RPM has SHA-256 `02b633badb43ba814133c9a5549e6625ed148621f8064df8dc37336bcfe2d96d`; the binary RPM has SHA-256 `d3b3b107e4e22450ffd527848c6704f512e656ea6e3bd55ca138b7b0e9991bc9`. Its preserved 127,035,136-byte standalone payload has SHA-256 `3b7b6622b2dc84d2579792569c3ebc8df12da062fdeafbf14d8a00f7a9dcd5b1` and reports `1.18.5` after extraction. All `%check` native/WASM/runtime smokes pass, RPM digests pass, and `rpmlint` reports zero errors with 14 expected generated-source, configure, standalone-strip, PIE, and missing-man-page warnings. No RPM was installed or submitted to COPR; clean Mock builds, final binary/license mapping, bundled Provides, and the target matrix remain open.
 
 The immutable `v1.18.5` tag resolves to commit
 `e5cc278dec9294a627a7b05f47ce6a564408c1a2`, and its source archive has
@@ -22,13 +24,13 @@ and not valid `bundled(nodejs-...)` input.
 `scripts/audit-opencode-lock-closure` now performs a source-only traversal of
 the released Bun lock for the Linux x86_64 glibc terminal CLI. The selected
 feature surface uses upstream's `--skip-embed-web-ui` build flag, excluding the
-app/Vite/Sentry path without patching product code. It selects 14 workspaces and
-1,018 runtime package records, all from the npm registry, while 36 non-target
-platform records are excluded.
+app/Vite/Sentry path without patching product code. It selects 14 workspaces,
+1,018 runtime package records, and the build-only Prettier `3.6.2` record, all
+from the npm registry, while 36 non-target platform records are excluded.
 
 The deterministic receipt is
 [`opencode-1.18.5-selected-lock-audit.json`](opencode-1.18.5-selected-lock-audit.json),
-SHA-256 `8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1`.
+SHA-256 `e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8`.
 It intentionally does not claim source archive verification, license review,
 binary inclusion, or final bundled Provides. Regenerate or verify it with:
 
@@ -51,14 +53,14 @@ a separate build-time gate.
 ## Source Acquisition Audit
 
 `scripts/acquire-opencode-sources` deduplicates the selected package paths to
-828 unique npm registry sources. Every archive passed its released SHA-512
+829 unique npm registry sources. Every archive passed its released SHA-512
 integrity check, every retained archive has a SHA-256 receipt, and archive
 path/type validation passed. The resumable cache is under
 `/srv/tmp/agentlab-opencode/source-acquisition-1.18.5`.
 
 The deterministic receipt is
 [`opencode-1.18.5-source-audit.json`](opencode-1.18.5-source-audit.json),
-SHA-256 `619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc`.
+SHA-256 `59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5`.
 It records these unresolved gates:
 
 - 3 raw source archives without declared license metadata; all three are
@@ -72,7 +74,7 @@ It records these unresolved gates:
 - Only 7 source archives with directly visible native source files.
 
 [`source-license-set-proof.json`](source-license-set-proof.json) classifies all
-828 selected source archives. Every declaration resolves to a Fedora
+829 selected source archives. Every declaration resolves to a Fedora
 allowed-software or allowed-content identifier, but this is not the final
 binary expression: 28 package-local text gaps, Photon correspondence, and
 actual standalone-binary inclusion remain open.

@@ -6,6 +6,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "optparse"
+require "pathname"
 
 module Agentlab
   Error = Class.new(StandardError) unless const_defined?(:Error)
@@ -23,14 +24,18 @@ module Agentlab
   module OpenCodeNodeModules
     module_function
 
-    def materialize!(source_audit_path:, bundle_root:, source_root:, receipt_path:)
+    def materialize!(source_audit_path:, closure_path:, bundle_root:, source_root:, receipt_path:)
       source_audit_path = File.expand_path(source_audit_path)
+      closure_path = File.expand_path(closure_path)
       bundle_root = File.realpath(bundle_root)
       source_root = File.realpath(source_root)
       receipt_path = File.expand_path(receipt_path)
       audit_bytes = File.binread(source_audit_path)
       audit = JSON.parse(audit_bytes)
       validate_audit!(audit)
+      closure_bytes = File.binread(closure_path)
+      closure = JSON.parse(closure_bytes)
+      validate_closure!(closure, audit, Digest::SHA256.hexdigest(audit_bytes))
       node_modules = File.join(source_root, "node_modules")
       if Dir.exist?(node_modules) && !Dir.empty?(node_modules)
         raise Agentlab::Error, "OpenCode node_modules target is not empty"
@@ -67,25 +72,34 @@ module Agentlab
           }
         end
       end
+      workspace_links = materialize_workspace_links!(source_root, closure.fetch("workspaces"))
 
       receipt = {
-        "schema" => "agentlab-opencode-node-modules-materialization/v1",
+        "schema" => "agentlab-opencode-node-modules-materialization/v2",
         "package" => "opencode",
         "release" => audit.fetch("release"),
         "source_audit" => {
           "filename" => File.basename(source_audit_path),
           "sha256" => Digest::SHA256.hexdigest(audit_bytes)
         },
+        "source_closure" => {
+          "filename" => File.basename(closure_path),
+          "sha256" => Digest::SHA256.hexdigest(closure_bytes)
+        },
         "scope" => {
           "source_archives" => audit.fetch("sources").length,
           "package_paths" => targets.length,
-          "target_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(targets.values.sort_by { |entry| entry.fetch("target") }) + "\n")
+          "target_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(targets.values.sort_by { |entry| entry.fetch("target") }) + "\n"),
+          "workspace_links" => workspace_links.length,
+          "workspace_link_path_set_sha256" => Digest::SHA256.hexdigest(JSON.generate(workspace_links) + "\n")
         },
         "validation" => {
           "archive_sizes_verified" => true,
           "archive_sha256_verified" => true,
           "package_identities_verified" => true,
           "package_paths_verified" => true,
+          "workspace_identities_verified" => true,
+          "workspace_links_verified" => true,
           "network_access_performed" => false,
           "package_manager_executed" => false,
           "dependency_resolution_performed" => false,
@@ -122,6 +136,67 @@ module Agentlab
       raise Agentlab::Error, "duplicate OpenCode package path" unless paths.uniq.length == paths.length
     end
 
+    def validate_closure!(closure, audit, audit_sha256)
+      raise Agentlab::Error, "OpenCode closure schema mismatch" unless closure["schema"] == "agentlab-opencode-source-closure/v1"
+      raise Agentlab::Error, "OpenCode closure package mismatch" unless closure["package"] == "opencode"
+      raise Agentlab::Error, "OpenCode closure release mismatch" unless closure["release"].to_s == audit["release"].to_s
+      unless closure.dig("receipts", "source_audit", "sha256") == audit_sha256
+        raise Agentlab::Error, "OpenCode closure source-audit mismatch"
+      end
+      workspaces = closure.fetch("workspaces")
+      raise Agentlab::Error, "OpenCode closure workspaces are empty" if workspaces.empty?
+      names = workspaces.map { |workspace| workspace.fetch("name") }
+      paths = workspaces.map { |workspace| workspace.fetch("path") }
+      raise Agentlab::Error, "duplicate OpenCode workspace name" unless names.uniq.length == names.length
+      raise Agentlab::Error, "duplicate OpenCode workspace path" unless paths.uniq.length == paths.length
+    end
+
+    def materialize_workspace_links!(source_root, workspaces)
+      workspaces.sort_by { |workspace| [workspace.fetch("name"), workspace.fetch("path")] }.map do |workspace|
+        name = workspace.fetch("name")
+        unless name.match?(/\A(?:@[^\/]+\/)?[^\/]+\z/)
+          raise Agentlab::Error, "invalid OpenCode workspace name #{name}"
+        end
+        source = workspace_source(source_root, workspace.fetch("path"))
+        manifest_path = File.join(source, "package.json")
+        raise Agentlab::Error, "OpenCode workspace manifest is missing for #{name}" unless File.file?(manifest_path)
+        manifest = JSON.parse(File.read(manifest_path))
+        unless manifest["name"] == name && (workspace["version"].nil? || manifest["version"].to_s == workspace["version"].to_s)
+          raise Agentlab::Error, "OpenCode workspace identity mismatch for #{name}"
+        end
+        target = package_target(source_root, name)
+        if File.exist?(target) || File.symlink?(target)
+          raise Agentlab::Error, "OpenCode workspace target already exists #{target}"
+        end
+        FileUtils.mkdir_p(File.dirname(target))
+        link = Pathname.new(source).relative_path_from(Pathname.new(File.dirname(target))).to_s
+        File.symlink(link, target)
+        raise Agentlab::Error, "OpenCode workspace link mismatch for #{name}" unless File.realpath(target) == source
+        {
+          "name" => name,
+          "workspace_path" => workspace.fetch("path"),
+          "target" => target.delete_prefix("#{source_root}/"),
+          "link" => link
+        }
+      end
+    end
+
+    def workspace_source(source_root, workspace_path)
+      parts = workspace_path.split("/")
+      if parts.empty? || parts.any? { |part| part.empty? || part == "." || part == ".." }
+        raise Agentlab::Error, "invalid OpenCode workspace path #{workspace_path}"
+      end
+      path = File.expand_path(workspace_path, source_root)
+      unless path.start_with?("#{source_root}/") && Dir.exist?(path)
+        raise Agentlab::Error, "OpenCode workspace path is unavailable #{workspace_path}"
+      end
+      realpath = File.realpath(path)
+      unless realpath.start_with?("#{source_root}/")
+        raise Agentlab::Error, "OpenCode workspace path escapes source root #{workspace_path}"
+      end
+      realpath
+    end
+
     def verify_archive!(archive, source)
       raise Agentlab::Error, "missing OpenCode source archive #{archive}" unless File.file?(archive)
       raise Agentlab::Error, "OpenCode source archive size mismatch" unless File.size(archive) == source.fetch("size")
@@ -138,23 +213,26 @@ end
 
 if $PROGRAM_NAME == __FILE__
   source_audit = nil
+  closure = nil
   bundle_root = nil
   source_root = nil
   receipt = nil
   OptionParser.new do |parser|
-    parser.banner = "Usage: scripts/materialize-opencode-node-modules --source-audit PATH --bundle-root PATH --source-root PATH --receipt PATH"
+    parser.banner = "Usage: scripts/materialize-opencode-node-modules --source-audit PATH --closure PATH --bundle-root PATH --source-root PATH --receipt PATH"
     parser.on("--source-audit PATH") { |path| source_audit = path }
+    parser.on("--closure PATH") { |path| closure = path }
     parser.on("--bundle-root PATH") { |path| bundle_root = path }
     parser.on("--source-root PATH") { |path| source_root = path }
     parser.on("--receipt PATH") { |path| receipt = path }
   end.parse!
-  abort("error: all options are required") unless source_audit && bundle_root && source_root && receipt
+  abort("error: all options are required") unless source_audit && closure && bundle_root && source_root && receipt
 
   result = Agentlab::OpenCodeNodeModules.materialize!(
     source_audit_path: source_audit,
+    closure_path: closure,
     bundle_root: bundle_root,
     source_root: source_root,
     receipt_path: receipt
   )
-  puts "Materialized #{result.dig('scope', 'package_paths')} OpenCode package paths from #{result.dig('scope', 'source_archives')} archives."
+  puts "Materialized #{result.dig('scope', 'package_paths')} OpenCode package paths and #{result.dig('scope', 'workspace_links')} workspace links from #{result.dig('scope', 'source_archives')} archives."
 end

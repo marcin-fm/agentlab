@@ -12,7 +12,7 @@ class PrepareOpenCodeClosureEvidenceTest < Minitest::Test
       receipts = Agentlab::OpenCodeClosureEvidence.prepare!(package_dir: package_dir, output_dir: output_dir)
       closure = JSON.parse(File.read(File.join(output_dir, "opencode-1.18.5-closure.json")))
 
-      assert_equal(1_018, closure.fetch("packages").length)
+      assert_equal(1_019, closure.fetch("packages").length)
       assert(closure.fetch("packages").none? { |record| record.fetch("included_in_binary") })
       refute(closure.dig("validation", "bundled_provides_verified"))
       refute(closure.dig("validation", "offline_build_verified"))

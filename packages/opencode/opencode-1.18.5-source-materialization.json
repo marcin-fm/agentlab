@@ -4,8 +4,8 @@
   "release": "1.18.5",
   "source_audit": {
     "filename": "opencode-1.18.5-source-audit.json",
-    "sha256": "619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc",
-    "selected_lock_receipt_sha256": "8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1"
+    "sha256": "59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5",
+    "selected_lock_receipt_sha256": "e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8"
   },
   "selected_archive_roles": [
     "production_build",
@@ -18,11 +18,11 @@
       "compression": "zstd-10-single-thread",
       "filename": "opencode-1.18.5-nm-prod-build.tar.zst",
       "archive_root": "opencode-1.18.5-nm-prod-build",
-      "member_count": 828,
-      "input_bytes": 89240042,
-      "member_manifest_sha256": "3a017be8bd3588fd35521d87d8f54c40db4acc71328a31fdb5764944b0c9542b",
-      "size_bytes": 89163404,
-      "sha256": "b580feac741af6272c3695da39883fd72499f04b3f3f91ecc7cfad73ac639260"
+      "member_count": 829,
+      "input_bytes": 91392674,
+      "member_manifest_sha256": "c6501b5f95f4384caf2d31a7ae91e4c02c970fd3ca0e268305bc1b4dc8570545",
+      "size_bytes": 91290378,
+      "sha256": "1086f1cb467c94c1becc92e13596ab4adac8be40e24d0a259f7713efedc70652"
     },
     "test": {
       "role": "test-capable-npm-source-bundle",
@@ -30,11 +30,11 @@
       "compression": "zstd-10-single-thread",
       "filename": "opencode-1.18.5-nm-dev-test.tar.zst",
       "archive_root": "opencode-1.18.5-nm-dev-test",
-      "member_count": 828,
-      "input_bytes": 89240042,
-      "member_manifest_sha256": "3a017be8bd3588fd35521d87d8f54c40db4acc71328a31fdb5764944b0c9542b",
-      "size_bytes": 89155039,
-      "sha256": "f755107a94b6ef40bcdc089223ea6cb01253f5729517d77a9b4ea39b9837a3e6"
+      "member_count": 829,
+      "input_bytes": 91392674,
+      "member_manifest_sha256": "c6501b5f95f4384caf2d31a7ae91e4c02c970fd3ca0e268305bc1b4dc8570545",
+      "size_bytes": 91290824,
+      "sha256": "5dea7b5009479adfd8bb4075464af5895255c5f38d74a4c1ae91f22b52bf9667"
     }
   },
   "validation": {

@@ -12,7 +12,7 @@
     "package_records": 3221
   },
   "selection": {
-    "config_sha256": "29667a1e02f0eb5ca312b8919415259fd79cf2150a206b321c8ff2f4dbcb81eb",
+    "config_sha256": "0e5f6e4787bfa5aaf50645308380a6a633ab3f12d7e37b53416f5adfd273978a",
     "target": {
       "os": "linux",
       "cpu": "x64",
@@ -24,14 +24,14 @@
       "upstream_build_flag": "--skip-embed-web-ui"
     },
     "selected_workspaces": 14,
-    "selected_packages": 1018,
+    "selected_packages": 1019,
     "roles": {
-      "build": 0,
+      "build": 1,
       "runtime": 1018
     },
     "origins": {
       "github": 0,
-      "registry": 1018
+      "registry": 1019
     },
     "platform_excluded": 36
   },
@@ -9568,6 +9568,17 @@
       "integrity": "sha512-zlaRVLR6vuxBIYUkZoTIVo3f8h3qd27gv9Ms+kmGiYEiiV4TdccddTdNcGyI0DnuJ9tVi+5LP3Bvzez59IFbjw==",
       "platform": {},
       "source_url": "https://registry.npmjs.org/poe-oauth/-/poe-oauth-0.0.8.tgz"
+    },
+    {
+      "package_path": "prettier",
+      "npm_name": "prettier",
+      "version": "3.6.2",
+      "origin": "registry",
+      "role": "build",
+      "candidate_for_binary": false,
+      "integrity": "sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==",
+      "platform": {},
+      "source_url": "https://registry.npmjs.org/prettier/-/prettier-3.6.2.tgz"
     },
     {
       "package_path": "proc-log",

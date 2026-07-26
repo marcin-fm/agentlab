@@ -4,13 +4,13 @@
   "release": "1.18.5",
   "source_tag": "v1.18.5",
   "source_commit": "e5cc278dec9294a627a7b05f47ce6a564408c1a2",
-  "selected_lock_receipt_sha256": "8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1",
+  "selected_lock_receipt_sha256": "e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8",
   "summary": {
-    "selected_package_records": 1018,
-    "unique_sources": 828,
+    "selected_package_records": 1019,
+    "unique_sources": 829,
     "origins": {
       "github": 0,
-      "registry": 828
+      "registry": 829
     },
     "sources_without_declared_license": 3,
     "sources_without_license_files": 28,
@@ -27310,6 +27310,44 @@
       "hardlinks": [],
       "file_count": 36,
       "unpacked_size": 187489
+    },
+    {
+      "npm_name": "prettier",
+      "version": "3.6.2",
+      "origin": "registry",
+      "source_url": "https://registry.npmjs.org/prettier/-/prettier-3.6.2.tgz",
+      "source_commit": null,
+      "integrity": "sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==",
+      "sha256": "bc81ab83674f175a8601b7d013786f48ec2507dd4a5fcf3415831ff13a875bdf",
+      "size": 2152632,
+      "archive": "sha512-23b0088396e802be51d0516d27aac27c3f8b16c587a7cd5da25ac50fc4bbf54f6d6fc033da71ab2677273129f2b3e6e94097d1533aacf619c0f35380037842b9.tgz",
+      "package_paths": [
+        "prettier"
+      ],
+      "roles": [
+        "build"
+      ],
+      "candidate_for_binary": false,
+      "package_json": "package/package.json",
+      "declared_license": "MIT",
+      "repository": "prettier/prettier",
+      "homepage": "https://prettier.io",
+      "license_files": [
+        {
+          "path": "package/LICENSE",
+          "sha256": "b0f2417199889f1c0d28ec4e0244eacf1a15de5819d61f641dd7d8f45153ac9c",
+          "size": 1065
+        }
+      ],
+      "lifecycle_scripts": {},
+      "native_payloads": [],
+      "wasm_payloads": [],
+      "executable_payloads": [],
+      "native_source_paths": [],
+      "symlinks": [],
+      "hardlinks": [],
+      "file_count": 56,
+      "unpacked_size": 8458264
     },
     {
       "npm_name": "proc-log",

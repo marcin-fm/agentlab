@@ -23,9 +23,10 @@ module Agentlab
       native_path = File.join(package_dir, files.fetch("native_review"))
 
       selected = JSON.parse(File.read(selected_path))
+      source = JSON.parse(File.read(source_path))
       license_set = JSON.parse(File.read(license_path))
       native = YAML.safe_load(File.read(native_path), aliases: false)
-      validate_inputs!(selected, license_set, native)
+      validate_inputs!(selected, source, license_set, native)
       release = selected.fetch("release")
 
       closure = {
@@ -67,14 +68,18 @@ module Agentlab
       raise Agentlab::Error, "invalid OpenCode closure evidence input: #{e.message}"
     end
 
-    def validate_inputs!(selected, license_set, native)
+    def validate_inputs!(selected, source, license_set, native)
       raise Agentlab::Error, "OpenCode selected-lock schema mismatch" unless selected["schema"] == "opencode-selected-lock-audit/v1"
+      raise Agentlab::Error, "OpenCode source-audit schema mismatch" unless source["schema"] == "opencode-source-acquisition/v1"
       raise Agentlab::Error, "OpenCode source-license schema mismatch" unless license_set["schema"] == "agentlab-opencode-source-license-set/v1"
       raise Agentlab::Error, "OpenCode native-review schema mismatch" unless native["schema"] == "opencode-native-review/v1"
       releases = [selected["release"], license_set["release"], native["release"]].map(&:to_s)
       raise Agentlab::Error, "OpenCode closure evidence release mismatch" unless releases.uniq.length == 1
       raise Agentlab::Error, "OpenCode selected package count mismatch" unless selected.dig("selection", "selected_packages") == selected.fetch("packages").length
-      raise Agentlab::Error, "OpenCode license archive count mismatch" unless license_set.dig("scope", "unique_source_archives") == 828
+      raise Agentlab::Error, "OpenCode source package count mismatch" unless source.dig("summary", "selected_package_records") == selected.fetch("packages").length
+      raise Agentlab::Error, "OpenCode source archive count mismatch" unless source.dig("summary", "unique_sources") == source.fetch("sources").length
+      raise Agentlab::Error, "OpenCode license archive count mismatch" unless license_set.dig("scope", "unique_source_archives") == source.fetch("sources").length
+      raise Agentlab::Error, "OpenCode license package count mismatch" unless license_set.dig("scope", "selected_package_records") == selected.fetch("packages").length
       raise Agentlab::Error, "OpenCode native review retains prebuilts" unless native.dig("status", "retained_prebuilt_payloads") == 0
     end
 

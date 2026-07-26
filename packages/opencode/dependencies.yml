@@ -8,7 +8,7 @@ closure_audit:
   generated_sources_verified: false
   bundled_provides_verified: false
   upstream_contact_recorded: false
-  offline_verified: false
+  offline_verified: true
 historical_audit:
   release: 1.17.20
   workspace_count: 14
@@ -71,7 +71,9 @@ selected_lock_audit:
     - packages/opencode
   build_workspaces:
     - packages/script
-  build_dependencies: {}
+  build_dependencies:
+    packages/opencode:
+      - prettier
   git_sources: {}
   expected_workspaces:
     - packages/codemode
@@ -94,21 +96,21 @@ selected_lock_audit:
     immutable_source_recorded: false
     supplied_to_audit: false
 selected_lock_receipt:
-  sha256: 8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1
+  sha256: e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8
   lock_sha256: 57cb1674b5cbc87cf320f2be703afa57aa2ef9989a77ccda8b83712ee09bd541
   selected_workspaces: 14
-  selected_packages: 1018
+  selected_packages: 1019
   runtime_packages: 1018
-  build_packages: 0
-  registry_packages: 1018
+  build_packages: 1
+  registry_packages: 1019
   github_packages: 0
   platform_excluded: 36
 source_acquisition_receipt:
-  sha256: 619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc
-  selected_lock_receipt_sha256: 8ab964282c73a34d104ed625eb7bf94930cf28dac343117fd1bb95c4a9d3b2d1
-  selected_package_records: 1018
-  unique_sources: 828
-  registry_sources: 828
+  sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
+  selected_lock_receipt_sha256: e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8
+  selected_package_records: 1019
+  unique_sources: 829
+  registry_sources: 829
   github_sources: 0
   sources_without_declared_license: 3
   sources_without_license_files: 28
@@ -123,20 +125,20 @@ source_acquisition_receipt:
   sources_with_native_source: 7
 source_materialization_receipt:
   schema: opencode-source-materialization/v1
-  sha256: dd8beedf7a3ceac79cb18cbad3dc97149072bc360b6ea76f8cd18b2cdd6f0b46
-  source_audit_sha256: 619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc
+  sha256: 518e0b781a8e1ed5a1683fcf7095be1b22360e8d6a7ef101a131d64cbdc13719
+  source_audit_sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
   production_build:
-    members: 828
-    input_bytes: 89240042
-    member_manifest_sha256: 3a017be8bd3588fd35521d87d8f54c40db4acc71328a31fdb5764944b0c9542b
-    size_bytes: 89163404
-    sha256: b580feac741af6272c3695da39883fd72499f04b3f3f91ecc7cfad73ac639260
+    members: 829
+    input_bytes: 91392674
+    member_manifest_sha256: c6501b5f95f4384caf2d31a7ae91e4c02c970fd3ca0e268305bc1b4dc8570545
+    size_bytes: 91290378
+    sha256: 1086f1cb467c94c1becc92e13596ab4adac8be40e24d0a259f7713efedc70652
   test:
-    members: 828
-    input_bytes: 89240042
-    member_manifest_sha256: 3a017be8bd3588fd35521d87d8f54c40db4acc71328a31fdb5764944b0c9542b
-    size_bytes: 89155039
-    sha256: f755107a94b6ef40bcdc089223ea6cb01253f5729517d77a9b4ea39b9837a3e6
+    members: 829
+    input_bytes: 91392674
+    member_manifest_sha256: c6501b5f95f4384caf2d31a7ae91e4c02c970fd3ca0e268305bc1b4dc8570545
+    size_bytes: 91290824
+    sha256: 5dea7b5009479adfd8bb4075464af5895255c5f38d74a4c1ae91f22b52bf9667
   deterministic_regeneration_verified: true
   rpm_integrated: false
 source_delivery_proof:
@@ -150,19 +152,50 @@ source_delivery_proof:
   package_build_performed: false
   rpm_installed: false
 node_modules_materialization_proof:
-  schema: agentlab-opencode-node-modules-materialization/v1
-  source_archives: 828
-  package_paths: 1018
-  target_path_set_sha256: 9ba7604dbfba348ee77626f535d24e06a78e7d591c341726465b3f43bf1ec0e7
+  schema: agentlab-opencode-node-modules-materialization/v2
+  receipt_sha256: b80b2dcb902cfdfd8a3e62036b9820845c20ba88ef805cd04de2dfa7e019a903
+  source_closure_sha256: 23bff9b408d62d83dda3a2c2f5fc6c39c949ec81be2c3183fa3a506d500de76b
+  source_archives: 829
+  package_paths: 1019
+  target_path_set_sha256: f6f13913497b2845a9eb23c0c21af014cc50c3ae868f5c9766e208896a9af602
+  workspace_links: 14
+  workspace_link_path_set_sha256: be5f3c1b7dd0208eebee69a97ddd9ed330c74c5affc45e88e56fcd2edff6a2b8
   archive_sizes_verified: true
   archive_sha256_verified: true
   package_identities_verified: true
   package_paths_verified: true
+  workspace_identities_verified: true
+  workspace_links_verified: true
   network_access_performed: false
   package_manager_executed: false
   dependency_resolution_performed: false
   lifecycle_scripts_executed: false
   package_build_performed: false
+binary_build_proof:
+  nvr: opencode-1.18.5-0.11.fc44
+  source_rpm_sha256: 02b633badb43ba814133c9a5549e6625ed148621f8064df8dc37336bcfe2d96d
+  binary_rpm_sha256: d3b3b107e4e22450ffd527848c6704f512e656ea6e3bd55ca138b7b0e9991bc9
+  payload_sha256: 3b7b6622b2dc84d2579792569c3ebc8df12da062fdeafbf14d8a00f7a9dcd5b1
+  payload_size_bytes: 127035136
+  source_built_bun_version: 1.3.14
+  source_built_bun_sha256: 4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569
+  lol_html_provider_sha256: 3b1f3a3a92c4af9e97630fb845a6a2d69fdedaa6c4034219fe6f75c1a2790d86
+  node_modules_receipt_sha256: b80b2dcb902cfdfd8a3e62036b9820845c20ba88ef805cd04de2dfa7e019a903
+  materialized_package_paths: 1019
+  materialized_workspace_links: 14
+  network_isolated: true
+  build_passed: true
+  check_passed: true
+  binary_rpm_created: true
+  extracted_version: 1.18.5
+  rpmlint_errors: 0
+  rpmlint_warnings: 14
+  local_rpmbuild_only: true
+  clean_mock_verified: false
+  fedora_43_44_verified: false
+  final_license_verified: false
+  rpm_installed: false
+  copr_submitted: false
 source_acquisition_findings:
   raw_missing_declared_license:
     - "@openauthjs/openauth@0.0.0-20250322224806"
@@ -195,7 +228,7 @@ source_acquisition_findings:
     - tree-sitter-bash@0.25.0
     - tree-sitter-powershell@0.25.10
   lifecycle_script_review:
-    source_audit_sha256: 619dbebafaeb817fa1a346ef26d7e85d95202d515b572d898c88715e01e11dbc
+    source_audit_sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
     reviewed: true
     selected_sources: 73
     counts: { prepare: 68, install: 4, postinstall: 1 }
