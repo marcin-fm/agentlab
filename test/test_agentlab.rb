@@ -2428,7 +2428,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.29", "--rpm-release 0.0.28")
+        spec.sub("--rpm-release 0.0.30", "--rpm-release 0.0.29")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2513,6 +2513,8 @@ class AgentlabTest < Minitest::Test
       receipt.fetch("validation")["final_license_expression_verified"] = true
       receipt.fetch("webkit")["archive_member_count"] -= 1
       receipt.fetch("validation")["webkit_member_source_mapping_verified"] = false
+      receipt.dig("webkit", "transitive_dependencies")["unique_dependency_count"] -= 1
+      receipt.fetch("validation")["webkit_transitive_dependency_mapping_verified"] = false
       receipt.dig("unresolved", "native_license_selections") << "libarchive"
       receipt.dig("unresolved", "native_license_details") << { "name" => "drifted" }
       File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
@@ -2531,6 +2533,7 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: final linked-license component counts mismatch")
       assert_includes(errors, "bun: final linked-license unresolved native details mismatch")
       assert_includes(errors, "bun: final linked-license WebKit mapping totals mismatch")
+      assert_includes(errors, "bun: final linked-license WebKit transitive counts mismatch")
       assert_includes(errors, "bun: final linked-license mapping validation is incomplete")
       assert_includes(errors, "bun: final linked-license closure overclaims completion")
     end

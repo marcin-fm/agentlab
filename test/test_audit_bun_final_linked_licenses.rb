@@ -30,6 +30,7 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
   def test_checked_receipt_maps_every_input_without_legal_overclaim
     receipt = JSON.parse(File.read(File.expand_path("../packages/bun/bun-1.3.14-final-linked-license-closure.json", __dir__)))
 
+    assert_equal("bun-final-linked-license-closure/v3", receipt.fetch("schema"))
     assert_equal(1165, receipt.dig("final_link", "linked_input_count"))
     assert_equal(19, receipt.fetch("components").length)
     assert_equal(18, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" })
@@ -40,6 +41,13 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
     assert_equal(true, receipt.dig("validation", "webkit_license_marker_inventory_verified"))
     assert_equal(531, receipt.dig("webkit", "archive_member_count"))
     assert_equal(1601, receipt.dig("webkit", "resolved_source_count"))
+    assert_equal(5098, receipt.dig("webkit", "transitive_dependencies", "unique_dependency_count"))
+    assert_equal(4196, receipt.dig("webkit", "transitive_dependencies", "source_dependency_count"))
+    assert_equal(902, receipt.dig("webkit", "transitive_dependencies", "generated_dependency_count"))
+    assert_equal(3, receipt.dig("webkit", "transitive_dependencies", "resolved_headerless_source_code_count"))
+    assert_equal(6, receipt.dig("webkit", "transitive_dependencies", "unresolved_headerless_source_code_count"))
+    assert_equal(true, receipt.dig("validation", "webkit_transitive_dependency_mapping_verified"))
+    assert_equal(true, receipt.dig("validation", "webkit_headerless_dependency_review_verified"))
     assert_equal({ "JavaScriptCore" => 191, "WTF" => 173, "bmalloc" => 167 }, receipt.dig("webkit", "archives").to_h { |archive| [archive.fetch("name"), archive.fetch("member_count")] })
     assert_equal({ "JavaScriptCore" => 1261, "WTF" => 173, "bmalloc" => 167 }, receipt.dig("webkit", "archives").to_h { |archive| [archive.fetch("name"), archive.fetch("source_count")] })
     assert_equal(18, receipt.fetch("components").count { |component| component.fetch("kind") == "bundled_native_source" && component.fetch("license_selection_verified") })

@@ -3285,7 +3285,7 @@ module Agentlab
 
     errors = []
     receipt = JSON.parse(File.read(receipt_path))
-    errors << "bun: unsupported final linked-license closure schema" unless receipt["schema"] == "bun-final-linked-license-closure/v2"
+    errors << "bun: unsupported final linked-license closure schema" unless receipt["schema"] == "bun-final-linked-license-closure/v3"
     errors << "bun: final linked-license closure package mismatch" unless receipt["package"] == "bun"
     errors << "bun: final linked-license closure release mismatch" unless receipt["version"] == version
     errors << "bun: final linked-license closure target mismatch" unless receipt["target"] == "fedora-44-x86_64-glibc-system-lolhtml"
@@ -3394,6 +3394,30 @@ module Agentlab
     end
     errors << "bun: final linked-license WebKit proof records mismatch" unless webkit_proof_records_valid && webkit["member_source_mapping_verified"] == true && webkit["license_marker_inventory_verified"] == true
 
+    transitive = webkit["transitive_dependencies"] || {}
+    dependency_archives = Array(transitive["archive_dependencies"])
+    dependency_counts = dependency_archives.to_h { |archive| [archive["name"], archive["dependency_count"]] }
+    errors << "bun: final linked-license WebKit transitive counts mismatch" unless transitive["object_count"] == metadata["webkit_archive_member_count"] && transitive["archive_dependency_counts"] == metadata["webkit_archive_dependency_counts"] && dependency_counts == metadata["webkit_archive_dependency_counts"] && transitive["unique_dependency_count"] == metadata["webkit_transitive_dependency_count"] && transitive["source_dependency_count"] == metadata["webkit_transitive_source_dependency_count"] && transitive["generated_dependency_count"] == metadata["webkit_transitive_generated_dependency_count"]
+    dependency_records = dependency_archives.flat_map do |archive|
+      records = Array(archive["dependencies"])
+      valid = archive["dependency_count"] == records.length && archive["dependency_path_set_sha256"] == path_set_digest.call(records.map { |record| record["path"] }) && records.all? { |record| record["path"].to_s.match?(%r{\A(?:source|generated)/}) && record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && record["size_bytes"].is_a?(Integer) }
+      errors << "bun: final linked-license WebKit transitive archive mismatch" unless valid
+      records
+    end
+    unique_dependencies = dependency_records.uniq { |record| record["path"] }
+    errors << "bun: final linked-license WebKit transitive path set mismatch" unless transitive["unique_dependency_count"] == unique_dependencies.length && transitive["dependency_path_set_sha256"] == path_set_digest.call(unique_dependencies.map { |record| record["path"] }) && transitive["source_dependency_count"].to_i + transitive["generated_dependency_count"].to_i == unique_dependencies.length
+
+    headerless = Array(transitive["headerless_source_code"])
+    resolved_headerless = headerless.select { |record| record["status"].to_s.start_with?("resolved_") }
+    unresolved_headerless = headerless.select { |record| record["status"].to_s.start_with?("unresolved_") }
+    unresolved_paths = unresolved_headerless.map { |record| record["path"] }
+    unresolved_commits = unresolved_headerless.to_h { |record| [record["path"], record["introducing_commit"]] }
+    errors << "bun: final linked-license WebKit headerless counts mismatch" unless transitive["headerless_source_code_count"] == metadata["webkit_headerless_source_code_count"] && transitive["headerless_source_code_count"] == headerless.length && transitive["resolved_headerless_source_code_count"] == metadata["webkit_resolved_headerless_source_code_count"] && transitive["resolved_headerless_source_code_count"] == resolved_headerless.length && transitive["unresolved_headerless_source_code_count"] == metadata["webkit_unresolved_headerless_source_code_count"] && transitive["unresolved_headerless_source_code_count"] == unresolved_headerless.length
+    errors << "bun: final linked-license WebKit unresolved headerless set mismatch" unless unresolved_paths == metadata["webkit_unresolved_headerless_files"] && unresolved_commits == metadata["webkit_unresolved_headerless_commits"] && receipt.dig("unresolved", "webkit_headerless_files") == unresolved_paths
+    resolved_valid = resolved_headerless.all? { |record| record["selected_expression"] == "MIT" && record["license_evidence"].is_a?(Hash) && record.dig("license_evidence", "sha256").to_s.match?(/\A[0-9a-f]{64}\z/) }
+    unresolved_valid = unresolved_headerless.all? { |record| record["selected_expression"].nil? && record["introducing_commit"].to_s.match?(/\A[0-9a-f]{40}\z/) && record["introducing_author"].to_s.include?("<") && record["introducing_date"].to_s.match?(/\A\d{4}-\d{2}-\d{2}T/) && record["introducing_subject"].to_s != "" && record["upstream_repository"] == "https://github.com/oven-sh/WebKit" && record["upstream_issue_tracker_enabled"] == false }
+    errors << "bun: final linked-license WebKit headerless review mismatch" unless resolved_valid && unresolved_valid && transitive["mapping_verified"] == true && transitive["headerless_review_verified"] == true && transitive["semantic_license_selection_verified"] == false
+
     lolhtml_data = YAML.safe_load(File.read(File.join(ROOT, "packages", "lol-html", "package.yml")), aliases: false)
     provider = receipt["external_lolhtml_provider"] || {}
     expected_provider = self_receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider") || {}
@@ -3401,13 +3425,13 @@ module Agentlab
     errors << "bun: final linked-license lol-html provider mismatch" unless provider["package"] == expected_provider["package"] && provider["version"] == expected_provider["version"] && provider["c_api_version"] == expected_provider["c_api_version"] && provider["soname"] == expected_provider["soname"] && provider["link_flag"] == "-llolhtml"
     errors << "bun: final linked-license lol-html license boundary mismatch" unless provider["aggregate_expression"] == provider_license["aggregate_expression"] && provider["linked_license_entries"] == provider_license["linked_license_entries"] && provider["license_dependencies_sha256"] == provider_license["license_dependencies_sha256"] && provider["fedora_spdx_review_complete"] == true && provider["excluded_from_bun_bundled_aggregate"] == true
 
-    true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified native_license_selection_review_verified native_license_selections_verified webkit_member_source_mapping_verified webkit_license_marker_inventory_verified]
+    true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified native_license_selection_review_verified native_license_selections_verified webkit_member_source_mapping_verified webkit_license_marker_inventory_verified webkit_transitive_dependency_mapping_verified webkit_headerless_dependency_review_verified]
     false_validation = %w[network_used webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified final_license_expression_verified rpm_payload_license_verified]
     errors << "bun: final linked-license mapping validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
     errors << "bun: final linked-license closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
     metadata_false = %w[webkit_semantic_license_selection_verified final_npm_codegen_closure_verified final_license_expression_verified required_license_texts_verified rpm_payload_license_verified]
     errors << "bun: final linked-license native review counts mismatch" unless metadata["selected_native_license_components"] == components.count { |component| component["name"] != "bun" && component["license_selection_verified"] == true } && metadata["unresolved_native_license_components"] == unresolved_native.length && metadata["unresolved_native_license_component_names"] == unresolved_native
-    errors << "bun: final linked-license metadata overclaims completion" unless metadata["all_link_inputs_mapped"] == true && metadata["system_lolhtml_provider_external"] == true && metadata["native_license_selection_review_verified"] == true && metadata["native_license_selections_verified"] == true && metadata["webkit_archive_member_source_mapping_verified"] == true && metadata["webkit_license_marker_inventory_verified"] == true && metadata_false.all? { |key| metadata[key] == false }
+    errors << "bun: final linked-license metadata overclaims completion" unless metadata["all_link_inputs_mapped"] == true && metadata["system_lolhtml_provider_external"] == true && metadata["native_license_selection_review_verified"] == true && metadata["native_license_selections_verified"] == true && metadata["webkit_archive_member_source_mapping_verified"] == true && metadata["webkit_license_marker_inventory_verified"] == true && metadata["webkit_transitive_dependency_mapping_verified"] == true && metadata["webkit_headerless_dependency_review_verified"] == true && metadata_false.all? { |key| metadata[key] == false }
 
     required_spec_fragments = [
       "%global final_linked_license_closure_sha256 #{expected_sha256}",

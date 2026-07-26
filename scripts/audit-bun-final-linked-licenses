@@ -17,6 +17,26 @@ module BunFinalLinkedLicenseAudit
   REPO_ROOT = File.expand_path("..", __dir__)
   BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
   UNRESOLVED_NATIVE_REASONS = {}.freeze
+  WEBKIT_LICENSE_HEADER_PATTERN = /SPDX-License-Identifier|Copyright|Redistribution and use|Permission is hereby granted|GNU (?:LIBRARY|LESSER|GENERAL) PUBLIC LICENSE|Mozilla Public License|This source code is licensed/
+  WEBKIT_HEADERLESS_PATHS = %w[
+    source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp
+    source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.h
+    source/Source/JavaScriptCore/runtime/InternalFieldTuple.cpp
+    source/Source/JavaScriptCore/runtime/InternalFieldTuple.h
+    source/Source/WTF/wtf/ForkExtras.h
+    source/Source/WTF/wtf/bun/RunLoopBun.cpp
+    source/Source/WTF/wtf/simdutf/simdutf_impl.cpp.h
+    source/Source/WTF/wtf/simdutf/simdutf_impl.h
+    source/Source/WTF/wtf/uv_get_constrained_memory.h
+  ].freeze
+  WEBKIT_UNRESOLVED_HEADERLESS_PROVENANCE = {
+    "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp" => ["d6c9c0a555252e0dc26810e4bfaf6a55e1047059", "Jarred Sumner <jarred@jarredsumner.com>", "2025-01-02T01:20:21-08:00", "Implement initial V8 Heap Snapshot support"],
+    "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.h" => ["d6c9c0a555252e0dc26810e4bfaf6a55e1047059", "Jarred Sumner <jarred@jarredsumner.com>", "2025-01-02T01:20:21-08:00", "Implement initial V8 Heap Snapshot support"],
+    "source/Source/JavaScriptCore/runtime/InternalFieldTuple.cpp" => ["5e65b9ae7756b6353cfeac5206f7076b00e9ecf5", "dave caruso <me@paperdave.net>", "2023-07-18T15:43:37-07:00", "Implement AsyncLocalStorage context tracking."],
+    "source/Source/JavaScriptCore/runtime/InternalFieldTuple.h" => ["5e65b9ae7756b6353cfeac5206f7076b00e9ecf5", "dave caruso <me@paperdave.net>", "2023-07-18T15:43:37-07:00", "Implement AsyncLocalStorage context tracking."],
+    "source/Source/WTF/wtf/ForkExtras.h" => ["32c485648ec871d9543e2073c73e664149c11c07", "Jarred Sumner <709451+Jarred-Sumner@users.noreply.github.com>", "2022-05-31T02:21:55-07:00", "Rope String iterator"],
+    "source/Source/WTF/wtf/bun/RunLoopBun.cpp" => ["53f934f0e93f499b35fd05d3c1416394e20f41d1", "Ben Grant <ben@bun.sh>", "2024-11-26T14:13:10-08:00", "Initial Bun-specific run loop"]
+  }.freeze
 
   module_function
 
@@ -161,6 +181,113 @@ module BunFinalLinkedLicenseAudit
     end
   end
 
+  def webkit_transitive_dependency_mapping(archives:, source_inventory:, source_root:, build_root:)
+    object_archives = {}
+    archives.each do |archive|
+      archive.fetch("members").each do |member|
+        object_path = member.fetch("object_path")
+        raise Error, "duplicate WebKit dependency object #{object_path}" if object_archives.key?(object_path)
+
+        object_archives[object_path] = archive.fetch("name")
+      end
+    end
+
+    dependencies = Hash.new { |hash, key| hash[key] = {} }
+    seen_objects = {}
+    current_archive = nil
+    Open3.popen2e("ninja", "-C", build_root, "-t", "deps") do |_stdin, output, wait|
+      output.each_line do |line|
+        if line.start_with?("    ")
+          next unless current_archive
+
+          path = line.strip
+          next unless path.start_with?(source_root, build_root)
+
+          record = webkit_file_record(path, source_root, build_root)
+          dependencies[current_archive][record.fetch("path")] = record
+        else
+          object_path = line.split(": #deps ", 2).first
+          current_archive = object_archives[object_path]
+          seen_objects[object_path] = true if current_archive
+        end
+      end
+      raise Error, "cannot read retained WebKit dependency database" unless wait.value.success?
+    end
+    raise Error, "WebKit dependency database object set mismatch" unless seen_objects.keys.sort == object_archives.keys.sort
+
+    archive_records = archives.map do |archive|
+      records = dependencies.fetch(archive.fetch("name")).values.sort_by { |record| record.fetch("path") }
+      {
+        "name" => archive.fetch("name"),
+        "dependency_count" => records.length,
+        "dependency_path_set_sha256" => path_set_digest(records.map { |record| record.fetch("path") }),
+        "dependencies" => records
+      }
+    end
+    all_records = archive_records.flat_map { |archive| archive.fetch("dependencies") }.uniq { |record| record.fetch("path") }.sort_by { |record| record.fetch("path") }
+    source_records, generated_records = all_records.partition { |record| record.fetch("path").start_with?("source/") }
+    code_extensions = %w[.c .cc .cpp .h .hh .hpp .inc .inl .m .mm .s .S .asm]
+    headerless = source_records.select do |record|
+      next false unless code_extensions.include?(File.extname(record.fetch("path")))
+
+      path = File.join(source_root, record.fetch("path").delete_prefix("source/"))
+      !File.binread(path, 8192).match?(WEBKIT_LICENSE_HEADER_PATTERN)
+    end
+    raise Error, "WebKit headerless dependency set drifted" unless headerless.map { |record| record.fetch("path") } == WEBKIT_HEADERLESS_PATHS
+
+    candidate_markers = source_inventory.dig("webkit", "candidate_license_files").to_h { |record| [record.fetch("path"), record] }
+    simdutf_marker = candidate_markers.fetch("vendor/WebKit/Source/WTF/wtf/simdutf/LICENSE-simdutf.txt")
+    uv_implementation = webkit_file_record(File.join(source_root, "Source/WTF/wtf/uv_get_constrained_memory.cpp"), source_root, build_root)
+    uv_text = File.binread(File.join(source_root, "Source/WTF/wtf/uv_get_constrained_memory.cpp"), 4096)
+    raise Error, "libuv-derived WebKit implementation lost its MIT terms" unless uv_text.match?(/Copyright Joyent/) && uv_text.match?(/Permission is hereby granted/)
+
+    headerless_reviews = headerless.map do |record|
+      path = record.fetch("path")
+      if path.start_with?("source/Source/WTF/wtf/simdutf/")
+        record.merge(
+          "status" => "resolved_generated_subordinate",
+          "selected_expression" => "MIT",
+          "license_evidence" => simdutf_marker
+        )
+      elsif path == "source/Source/WTF/wtf/uv_get_constrained_memory.h"
+        record.merge(
+          "status" => "resolved_companion_implementation",
+          "selected_expression" => "MIT",
+          "license_evidence" => uv_implementation
+        )
+      else
+        commit, author, date, subject = WEBKIT_UNRESOLVED_HEADERLESS_PROVENANCE.fetch(path)
+        record.merge(
+          "status" => "unresolved_upstream_license_clarification",
+          "introducing_commit" => commit,
+          "introducing_author" => author,
+          "introducing_date" => date,
+          "introducing_subject" => subject,
+          "upstream_repository" => "https://github.com/oven-sh/WebKit",
+          "upstream_issue_tracker_enabled" => false,
+          "selected_expression" => nil
+        )
+      end
+    end
+
+    {
+      "object_count" => object_archives.length,
+      "archive_dependency_counts" => archive_records.to_h { |archive| [archive.fetch("name"), archive.fetch("dependency_count")] },
+      "archive_dependencies" => archive_records,
+      "unique_dependency_count" => all_records.length,
+      "dependency_path_set_sha256" => path_set_digest(all_records.map { |record| record.fetch("path") }),
+      "source_dependency_count" => source_records.length,
+      "generated_dependency_count" => generated_records.length,
+      "headerless_source_code_count" => headerless_reviews.length,
+      "resolved_headerless_source_code_count" => headerless_reviews.count { |record| record.fetch("status").start_with?("resolved_") },
+      "unresolved_headerless_source_code_count" => headerless_reviews.count { |record| record.fetch("status").start_with?("unresolved_") },
+      "headerless_source_code" => headerless_reviews,
+      "mapping_verified" => true,
+      "headerless_review_verified" => true,
+      "semantic_license_selection_verified" => false
+    }
+  end
+
   def webkit_archive_mapping(proof_root:, archive_records:, source_inventory:, self_build:)
     build_root = File.join(proof_root, "build", "release-local", "deps", "WebKit")
     commit = self_build.dig("inputs", "webkit", "commit")
@@ -256,6 +383,13 @@ module BunFinalLinkedLicenseAudit
       }
     end
 
+    transitive_dependencies = webkit_transitive_dependency_mapping(
+      archives: archives,
+      source_inventory: source_inventory,
+      source_root: source_root,
+      build_root: build_root
+    )
+
     {
       "build_ninja" => webkit_file_record(ninja_path, source_root, build_root),
       "compile_commands" => webkit_file_record(compile_commands_path, source_root, build_root),
@@ -263,6 +397,7 @@ module BunFinalLinkedLicenseAudit
       "archive_member_count" => archives.sum { |archive| archive.fetch("member_count") },
       "resolved_source_count" => archives.sum { |archive| archive.fetch("source_count") },
       "archives" => archives,
+      "transitive_dependencies" => transitive_dependencies,
       "member_source_mapping_verified" => true,
       "license_marker_inventory_verified" => true,
       "semantic_license_selection_verified" => false
@@ -341,7 +476,7 @@ module BunFinalLinkedLicenseAudit
     )
 
     {
-      "schema" => "bun-final-linked-license-closure/v2",
+      "schema" => "bun-final-linked-license-closure/v3",
       "package" => "bun",
       "version" => "1.3.14",
       "target" => "fedora-44-x86_64-glibc-system-lolhtml",
@@ -386,6 +521,7 @@ module BunFinalLinkedLicenseAudit
       "unresolved" => {
         "native_license_selections" => unresolved_native.sort,
         "native_license_details" => unresolved_native_details,
+        "webkit_headerless_files" => webkit_mapping.dig("transitive_dependencies", "headerless_source_code").select { |record| record.fetch("status").start_with?("unresolved_") }.map { |record| record.fetch("path") },
         "webkit_semantic_license_selection" => true,
         "npm_and_codegen_final_payload_provenance" => true,
         "required_license_text_payload" => true,
@@ -403,6 +539,8 @@ module BunFinalLinkedLicenseAudit
         "native_license_selections_verified" => true,
         "webkit_member_source_mapping_verified" => true,
         "webkit_license_marker_inventory_verified" => true,
+        "webkit_transitive_dependency_mapping_verified" => true,
+        "webkit_headerless_dependency_review_verified" => true,
         "webkit_linked_file_semantic_review_verified" => false,
         "final_npm_codegen_closure_verified" => false,
         "fedora_allowed_spdx_verified" => false,
@@ -410,7 +548,7 @@ module BunFinalLinkedLicenseAudit
         "final_license_expression_verified" => false,
         "rpm_payload_license_verified" => false
       },
-      "scope" => "current final-link mapping with all 18 native source-subset selections and exact WebKit archive-member source mapping; WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+      "scope" => "current final-link mapping with all 18 native source-subset selections, exact WebKit archive-member sources, and the complete retained WebKit-local transitive dependency graph; six fork-authored headerless files, WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
     }
   end
 
