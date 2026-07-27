@@ -18,6 +18,8 @@ source_path = nil
 diagnostic_patches = []
 jobs = Etc.nprocessors
 force = false
+resume = false
+proof_platform = build_plan.dig("stages", "zig_source_bootstrap", "proof_platform")
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prove-bun-zig-bootstrap [options]"
@@ -25,6 +27,8 @@ OptionParser.new do |parser|
   parser.on("--extra-patch PATH", "Apply an additional diagnostic patch (repeatable)") { |path| diagnostic_patches << path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--jobs COUNT", Integer, "Parallel build jobs") { |count| jobs = count }
+  parser.on("--proof-platform PLATFORM", "Recorded Fedora proof platform") { |platform| proof_platform = platform }
+  parser.on("--resume", "Resume an existing marked proof directory") { resume = true }
   parser.on("--force", "Replace an existing proof directory") { force = true }
 end.parse!
 
@@ -35,6 +39,18 @@ unless workdir.start_with?("/srv/tmp/")
   raise Agentlab::Error, "proof workdir must be below /srv/tmp"
 end
 raise Agentlab::Error, "jobs must be positive" unless jobs.positive?
+platform_base = proof_platform.to_s.sub(/-(?:x86_64|aarch64)\z/, "")
+allowed_proof_platforms = %w[x86_64 aarch64].map { |arch| "#{platform_base}-#{arch}" }
+unless proof_platform && allowed_proof_platforms.include?(proof_platform)
+  raise Agentlab::Error, "unsupported proof platform #{proof_platform.inspect}"
+end
+runtime_arch, runtime_arch_stderr, runtime_arch_status = Open3.capture3("uname", "-m")
+unless runtime_arch_status.success?
+  raise Agentlab::Error, "cannot determine runtime architecture: #{runtime_arch_stderr.strip}"
+end
+unless proof_platform.end_with?("-#{runtime_arch.strip}")
+  raise Agentlab::Error, "proof platform #{proof_platform} does not match runtime architecture #{runtime_arch.strip}"
+end
 expected_release_pin = "bun-v#{package.upstream.fetch('current_version')}"
 unless build_plan["source_inputs_reconciled"] == true && zig["release_pin"] == expected_release_pin
   raise Agentlab::Error, "Bun subordinate source inputs are not reconciled for #{expected_release_pin}"
@@ -42,9 +58,15 @@ end
 
 marker = File.join(workdir, ".agentlab-bun-zig-proof")
 if Dir.exist?(workdir)
-  raise Agentlab::Error, "proof directory exists; pass --force to replace it" unless force
   raise Agentlab::Error, "refusing to replace unmarked proof directory #{workdir}" unless File.file?(marker)
+  unless force || resume
+    raise Agentlab::Error, "proof directory exists; pass --resume to continue or --force to replace it"
+  end
+elsif resume
+  raise Agentlab::Error, "cannot resume missing proof directory #{workdir}"
 end
+raise Agentlab::Error, "--resume and --force are mutually exclusive" if resume && force
+raise Agentlab::Error, "diagnostic patches cannot be added while resuming" if resume && diagnostic_patches.any?
 if force
   [source_path, *diagnostic_patches].compact.each do |path|
     raise Agentlab::Error, "proof input must be outside the replaced proof directory: #{path}" if path.start_with?("#{workdir}/")
@@ -56,7 +78,7 @@ end
 
 FileUtils.rm_rf(workdir) if force
 FileUtils.mkdir_p(workdir)
-File.write(marker, "agentlab bun zig proof\n")
+File.write(marker, "agentlab bun zig proof\n") unless File.file?(marker)
 
 source_path ||= File.join(workdir, "zig-#{zig.fetch('commit')}.tar.gz")
 unless File.file?(source_path)
@@ -77,7 +99,7 @@ end
 
 source_parent = File.join(workdir, "source")
 FileUtils.mkdir_p(source_parent)
-run!({}, ["tar", "-xf", File.expand_path(source_path), "-C", source_parent], chdir: Agentlab::ROOT)
+run!({}, ["tar", "-xf", File.expand_path(source_path), "-C", source_parent], chdir: Agentlab::ROOT) unless resume
 source_root = Dir.glob(File.join(source_parent, "zig-*")).select { |path| File.directory?(path) }
 raise Agentlab::Error, "expected one extracted Zig source directory" unless source_root.length == 1
 
@@ -88,13 +110,16 @@ apply_patch = lambda do |path|
   run!({}, arguments.dup.insert(3, "--dry-run"), chdir: Agentlab::ROOT)
   run!({}, arguments, chdir: Agentlab::ROOT)
 end
-apply_patch.call(patch_path)
-diagnostic_patch_receipts = diagnostic_patches.map do |path|
-  apply_patch.call(path)
-  {
-    "path" => path,
-    "sha256" => Digest::SHA256.file(path).hexdigest
-  }
+diagnostic_patch_receipts = []
+unless resume
+  apply_patch.call(patch_path)
+  diagnostic_patch_receipts = diagnostic_patches.map do |path|
+    apply_patch.call(path)
+    {
+      "path" => path,
+      "sha256" => Digest::SHA256.file(path).hexdigest
+    }
+  end
 end
 
 build = File.join(workdir, "build")
@@ -156,7 +181,7 @@ end
 receipt = {
   "schema" => 1,
   "package_release" => expected_release_pin,
-  "proof_platform" => package.data.dig("build_plan", "stages", "zig_source_bootstrap", "proof_platform"),
+  "proof_platform" => proof_platform,
   "proof_date" => Time.now.utc.strftime("%Y-%m-%d"),
   "source" => {
     "commit" => zig.fetch("commit"),

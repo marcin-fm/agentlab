@@ -30,11 +30,11 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 60417852910639a43311773c3499fc55b4e68778bf059fbac984697bd99a3b26
+%global source_license_inventory_sha256 4cf25aebaf275c91ec2a9f639a1c3d1cae52f961fd63300dd96e9510d437fcad
 %global source_license_audit_script_sha256 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
-%global final_linked_license_closure_sha256 ec778f52cdff7e855999459633632ae6b120944b022742d77dbd8c9fdb39f577
+%global final_linked_license_closure_sha256 e261e07787fbd24117ab05681702dcb4b661923c24fa006cd6d9e9ced74039f6
 %global final_linked_license_audit_script_sha256 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
-%global npm_code_generation_closure_sha256 4a2ad4bb6e1b357e21046c113432fc35c227c5b39464d1e0128e46de775593f2
+%global npm_code_generation_closure_sha256 0d6b82862ec1d0b21f83d3d6a0e759110c8a74dbfc64a6dab7da92faa7c50412
 %global npm_code_generation_audit_script_sha256 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
@@ -44,7 +44,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.34%{?dist}
+Release:        0.0.35%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -239,7 +239,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.34 \
+  --rpm-release 0.0.35 \
   --date 2026-07-27 \
   --check \
   --receipt "%{SOURCE25}"
@@ -289,8 +289,10 @@ cmake -S vendor/WebKit -B .build-tools/webkit-build -G Ninja \
   -DCMAKE_RANLIB=/usr/bin/llvm-ranlib-21 \
   -DCMAKE_EXE_LINKER_FLAGS=--ld-path=/usr/bin/ld.lld-21 \
   -DCMAKE_SHARED_LINKER_FLAGS=--ld-path=/usr/bin/ld.lld-21 \
+%ifarch x86_64
   -DCMAKE_C_FLAGS=-march=haswell \
   -DCMAKE_CXX_FLAGS=-march=haswell \
+%endif
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   -DBUILD_SHARED_LIBS=OFF \
   -DPORT=JSCOnly \
@@ -382,6 +384,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.35
+- Prove the minimized WebKit/JSC source build on Fedora 44 aarch64.
+
 * Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.34
 - Prove the arm64 source closure and network-isolated npm bootstrap inputs.
 

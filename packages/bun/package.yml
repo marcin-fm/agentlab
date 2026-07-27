@@ -5,7 +5,7 @@ blockers:
   - The external lol-html 3.0.0 package and Bun system-link patch require target Mock proof.
   - The complete LGPL relink kit is proven locally but lacks approved immutable delivery and final RPM integration.
   - Six Bun WebKit fork files lack explicit terms, and peechy 0.4.34 omits the required MIT text from its exact npm archive. constants-browserify 1.0.0 carries the complete notice in its exact release README.
-  - Final bundled-license accounting, aarch64 build proof, RPM acceptance, and COPR acceptance are incomplete.
+  - Final bundled-license accounting, the aarch64 Zig/Bun build chain, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
   provider: github
   repository: oven-sh/bun
@@ -145,7 +145,7 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: 60417852910639a43311773c3499fc55b4e68778bf059fbac984697bd99a3b26
+      sha256: 4cf25aebaf275c91ec2a9f639a1c3d1cae52f961fd63300dd96e9510d437fcad
       audit_script: scripts/audit-bun-source-licenses
       audit_script_sha256: 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
       audit_script_source: audit-bun-source-licenses
@@ -168,7 +168,7 @@ build_plan:
     npm_code_generation_closure:
       relationship: current_codegen_package_linked_output_and_side_effect_mapping
       source: bun-1.3.14-npm-code-generation-closure.json
-      sha256: 4a2ad4bb6e1b357e21046c113432fc35c227c5b39464d1e0128e46de775593f2
+      sha256: 0d6b82862ec1d0b21f83d3d6a0e759110c8a74dbfc64a6dab7da92faa7c50412
       audit_script: scripts/audit-bun-npm-code-generation
       audit_script_sha256: 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
       audit_script_source: audit-bun-npm-code-generation
@@ -191,7 +191,7 @@ build_plan:
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: ec778f52cdff7e855999459633632ae6b120944b022742d77dbd8c9fdb39f577
+      sha256: e261e07787fbd24117ab05681702dcb4b661923c24fa006cd6d9e9ced74039f6
       audit_script: scripts/audit-bun-final-linked-licenses
       audit_script_sha256: 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
       audit_script_source: audit-bun-final-linked-licenses
@@ -298,7 +298,7 @@ build_plan:
       first_source_build_proof_only: true
     aarch64_preflight:
       relationship: target_specific_local_bootstrap_and_npm_proof
-      state: npm_offline_install_verified
+      state: webkit_source_build_verified
       target:
         os: linux
         cpu: arm64
@@ -352,6 +352,19 @@ build_plan:
         ignore_scripts: true
         source_files_unchanged: true
         seed_absent_from_node_modules: true
+      webkit_source_build:
+        state: verified
+        receipt: webkit-minimized-source-build-proof-arm64.json
+        receipt_sha256: ba05b7789d31035472c3bc09567c02b3d052a2867c53c44a6baf980d31f77987
+        proof_helper: scripts/prove-bun-webkit-source-build
+        proof_helper_sha256: 1f9b8286d69091f399894f0ca2cdcc34997064e0ef7974da271b0f3549efc717
+        toolchain:
+          cmake: 4.3.0
+          clang: 21.1.8
+          llvm: 21.1.8
+          ninja: 1.13.2
+          jobs: 4
+          cpu: fedora-default
   stages:
     zig_source_bootstrap:
       state: verified
@@ -411,7 +424,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: 0ed369da3e1392d052dff0ac423faa55a90240951ae906fa3e6f01e7c3d137ac
+      proof_receipt_sha256: 876eb7cb38030e3c78814e521293ca684ca9092e8d63522154567efc41dc00e0
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -445,7 +458,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: 0418f6b33d54ab613c55b74f1823d873f1eb60844253f2a24c8859c9e896a4fe
+      proof_receipt_sha256: f31d6382aa41114a1d91e1a5ed4a0098f317792e8966b3acbbda2449bb215047
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true

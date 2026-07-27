@@ -19,6 +19,8 @@ source_receipt_path = nil
 jobs = [Etc.nprocessors, 4].min
 force = false
 resume = false
+isolated_buildroot = false
+proof_platform = build_plan.dig("stages", "webkit_source_build", "proof_platform")
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prove-bun-webkit-source-build [options]"
@@ -26,6 +28,8 @@ OptionParser.new do |parser|
   parser.on("--source-receipt PATH", "Identity receipt for a minimized WebKit archive") { |path| source_receipt_path = path }
   parser.on("--workdir PATH", "Proof directory below /srv/tmp") { |path| workdir = path }
   parser.on("--jobs COUNT", Integer, "Parallel build jobs, maximum 4") { |count| jobs = count }
+  parser.on("--proof-platform PLATFORM", "Recorded Fedora proof platform") { |platform| proof_platform = platform }
+  parser.on("--isolated-buildroot", "Record execution inside an isolated buildroot") { isolated_buildroot = true }
   parser.on("--resume", "Resume an existing marked proof directory") { resume = true }
   parser.on("--force", "Replace an existing proof directory") { force = true }
 end.parse!
@@ -37,6 +41,19 @@ raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.sta
 raise Agentlab::Error, "jobs must be between 1 and 4" unless jobs.between?(1, 4)
 raise Agentlab::Error, "missing WebKit source archive #{source_path}" unless File.file?(source_path)
 raise Agentlab::Error, "--resume and --force are mutually exclusive" if resume && force
+platform_base = proof_platform.to_s.sub(/-(?:x86_64|aarch64)\z/, "")
+allowed_proof_platforms = %w[x86_64 aarch64].map { |arch| "#{platform_base}-#{arch}" }
+unless proof_platform && allowed_proof_platforms.include?(proof_platform)
+  raise Agentlab::Error, "unsupported proof platform #{proof_platform.inspect}"
+end
+runtime_arch, runtime_arch_stderr, runtime_arch_status = Open3.capture3("uname", "-m")
+unless runtime_arch_status.success?
+  raise Agentlab::Error, "cannot determine runtime architecture: #{runtime_arch_stderr.strip}"
+end
+target_arch = runtime_arch.strip
+unless proof_platform.end_with?("-#{target_arch}")
+  raise Agentlab::Error, "proof platform #{proof_platform} does not match runtime architecture #{target_arch}"
+end
 
 expected_release_pin = "bun-v#{package.upstream.fetch('current_version')}"
 unless build_plan["source_inputs_reconciled"] == true && webkit["release_pin"] == expected_release_pin
@@ -161,9 +178,13 @@ cmake_options = {
   "CMAKE_AR" => llvm_ar,
   "CMAKE_RANLIB" => llvm_ranlib,
   "CMAKE_EXE_LINKER_FLAGS" => "--ld-path=#{lld}",
-  "CMAKE_SHARED_LINKER_FLAGS" => "--ld-path=#{lld}",
-  "CMAKE_C_FLAGS" => "-march=haswell",
-  "CMAKE_CXX_FLAGS" => "-march=haswell",
+  "CMAKE_SHARED_LINKER_FLAGS" => "--ld-path=#{lld}"
+}
+if target_arch == "x86_64"
+  cmake_options["CMAKE_C_FLAGS"] = "-march=haswell"
+  cmake_options["CMAKE_CXX_FLAGS"] = "-march=haswell"
+end
+cmake_options.merge!({
   "CMAKE_EXPORT_COMPILE_COMMANDS" => "ON",
   "BUILD_SHARED_LIBS" => "OFF",
   "PORT" => "JSCOnly",
@@ -178,7 +199,7 @@ cmake_options = {
   "ENABLE_MEDIA_SOURCE" => "OFF",
   "ENABLE_MEDIA_STREAM" => "OFF",
   "ENABLE_WEB_RTC" => "OFF"
-}
+})
 configure = ["cmake", "-S", source_root, "-B", build, "-G", "Ninja"]
 cmake_options.each { |key, value| configure << "-D#{key}=#{value}" }
 run!(environment, configure, chdir: Agentlab::ROOT)
@@ -217,9 +238,9 @@ end
 receipt = {
   "schema" => 1,
   "package_release" => expected_release_pin,
-  "proof_platform" => "fedora-44-x86_64",
+  "proof_platform" => proof_platform,
   "proof_date" => Time.now.strftime("%Y-%m-%d"),
-  "isolated_buildroot" => false,
+  "isolated_buildroot" => isolated_buildroot,
   "source" => {
     "commit" => webkit.fetch("commit"),
     "archive_filename" => File.basename(source_path),
@@ -243,7 +264,7 @@ receipt = {
     "llvm" => tool_version(environment, [llvm_config, "--version"], chdir: workdir),
     "ninja" => tool_version(environment, ["ninja", "--version"], chdir: workdir),
     "jobs" => jobs,
-    "cpu" => "haswell"
+    "cpu" => target_arch == "x86_64" ? "haswell" : "fedora-default"
   },
   "cmake_options" => cmake_options,
   "output" => {

@@ -2,13 +2,13 @@
   "schema": "bun-release-local-source-staging-proof/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.34",
+  "rpm_release": "0.0.35",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-27",
   "proof_mode": "two network-isolated rpmbuild prep runs from the complete checked SRPM",
   "production_spec": {
-    "size_bytes": 25151,
-    "sha256": "17a76d97a19dfc901ffc7d4a640ce59909bdc56fde013718b165fc7390082cd2"
+    "size_bytes": 25303,
+    "sha256": "0f5cc3cfdf1435993543da82c32e4e735b5f3d9d552fc75a0d7e0baeecb33b14"
   },
   "inputs": {
     "closure": {
@@ -28,16 +28,16 @@
     }
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.34.fc44.src.rpm",
-    "size_bytes": 318184775,
-    "sha256": "dd01481b7e1c3165ccde0278f66a7d46e1fcb8f853149b71f632bcae055735cf",
+    "filename": "bun-1.3.14-0.0.35.fc44.src.rpm",
+    "size_bytes": 318186571,
+    "sha256": "eee4cf8cd1b71144b5f6abf2b3383e58864316cc88a7cbe1117e613ebb455dc4",
     "digest_check": "ok",
     "inventory_members": 39
   },
   "prep": {
     "network_namespace": true,
-    "log_size_bytes": 11610,
-    "log_sha256": "ce3d0fa3efc060ce51cb964b1ae5f3eae095362ffa29b72059a7de16c40b7ed0",
+    "log_size_bytes": 12234,
+    "log_sha256": "2398a9099d407ac42f8c8481aa0522777f0b9030b16cab74587b0965ae38fd83",
     "staging_receipt": {
       "path": ".build-tools/release-local-source-staging.json",
       "size_bytes": 3897,
@@ -78,7 +78,7 @@
     "final_linked_license_closure_check": true
   },
   "reproduction": {
-    "second_network_isolated_prep_log_sha256": "ea02bd477b59f456d74774a2731bdd794c67f477e63c1964678a0bb5d0d254c3",
+    "second_network_isolated_prep_log_sha256": "4d903e3fb4a92ccc7727bccb023842f6b33efbd183c4b7a541cbd3c36f2735aa",
     "staging_receipt_byte_identical": true,
     "npm_cache_manifest_byte_identical": true
   },

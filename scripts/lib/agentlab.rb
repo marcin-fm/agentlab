@@ -4329,7 +4329,7 @@ module Agentlab
 
     errors = []
     target = { "os" => "linux", "cpu" => "arm64", "libc" => "glibc" }
-    errors << "bun: aarch64 preflight state mismatch" unless preflight["state"] == "npm_offline_install_verified"
+    errors << "bun: aarch64 preflight state mismatch" unless preflight["state"] == "webkit_source_build_verified"
     errors << "bun: aarch64 preflight target mismatch" unless preflight["target"] == target
 
     repo_root = File.expand_path("../..", package.directory)
@@ -4401,6 +4401,60 @@ module Agentlab
       errors << "bun: aarch64 npm proof validation is incomplete" unless %w[source_files_unchanged seed_absent_from_node_modules npm_cache_materialization_verified npm_offline_install_verified].all? { |key| validation[key] == true }
       errors << "bun: aarch64 npm proof overclaims later stages" unless validation["dependency_resolution_performed"] == false && validation["full_bun_build_performed"] == false
     end
+
+    webkit_metadata = package.data.dig("build_plan", "source_inputs", "webkit") || {}
+    minimized_source = webkit_metadata["jsc_only"] || {}
+    webkit_build = preflight["webkit_source_build"]
+    errors << "bun: aarch64 WebKit proof state mismatch" unless webkit_build.is_a?(Hash) && webkit_build["state"] == "verified"
+    webkit_receipt_path = verify_file.call(package.directory, webkit_build, "receipt", "receipt_sha256", "WebKit proof")
+    verify_file.call(repo_root, webkit_build, "proof_helper", "proof_helper_sha256", "WebKit proof helper")
+    if webkit_receipt_path
+      build = JSON.parse(File.read(webkit_receipt_path))
+      errors << "bun: aarch64 WebKit proof schema mismatch" unless build["schema"] == 1
+      errors << "bun: aarch64 WebKit proof identity mismatch" unless build["package_release"] == "bun-v#{version}" && build["proof_platform"] == "fedora-44-aarch64" && build["isolated_buildroot"] == true
+      expected_source = {
+        "commit" => webkit_metadata["commit"],
+        "archive_filename" => minimized_source["archive_filename"],
+        "sha256" => minimized_source["sha256"],
+        "source_tree_complete" => false,
+        "minimized_jsc_only_source" => true,
+        "source_receipt_sha256" => minimized_source["proof_receipt_sha256"],
+        "tree_sha256" => minimized_source["tree_sha256"],
+        "gitlink_count" => webkit_metadata["gitlink_count"],
+        "embedded_gitmodules_count" => webkit_metadata["embedded_gitmodules_count"]
+      }
+      errors << "bun: aarch64 WebKit proof source mismatch" unless build["source"] == expected_source
+      errors << "bun: aarch64 WebKit proof patch mismatch" unless build.dig("patch", "path") == webkit_metadata["patch"] && build.dig("patch", "sha256") == webkit_metadata["patch_sha256"]
+      errors << "bun: aarch64 WebKit proof toolchain mismatch" unless build["toolchain"] == webkit_build["toolchain"]
+      cmake_options = build["cmake_options"] || {}
+      errors << "bun: aarch64 WebKit proof uses an x86 CPU override" if cmake_options.key?("CMAKE_C_FLAGS") || cmake_options.key?("CMAKE_CXX_FLAGS")
+      errors << "bun: aarch64 WebKit proof configuration mismatch" unless cmake_options["PORT"] == "JSCOnly" && cmake_options["ENABLE_STATIC_JSC"] == "ON" && cmake_options["USE_BUN_JSC_ADDITIONS"] == "ON" && cmake_options["USE_BUN_EVENT_LOOP"] == "ON"
+
+      valid_file = lambda do |entry|
+        entry.is_a?(Hash) && entry["path"].is_a?(String) && !entry["path"].empty? &&
+          !Pathname.new(entry["path"]).absolute? && !Pathname.new(entry["path"]).each_filename.include?("..") &&
+          entry["size_bytes"].is_a?(Integer) && entry["size_bytes"].positive? &&
+          entry["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+      end
+      static_archives = build.dig("output", "static_archives")
+      errors << "bun: aarch64 WebKit static-archive proof is invalid" unless static_archives.is_a?(Hash) && static_archives.keys.sort == %w[libJavaScriptCore.a libWTF.a libbmalloc.a] && static_archives.values.all? { |entry| valid_file.call(entry) }
+      jsc = build.dig("output", "jsc")
+      errors << "bun: aarch64 WebKit runtime proof is invalid" unless valid_file.call(jsc) && jsc["runtime_probe_verified"] == true
+      retained_metadata = build.dig("output", "metadata")
+      errors << "bun: aarch64 WebKit retained metadata is invalid" unless retained_metadata.is_a?(Hash) && retained_metadata.keys.sort == %w[CMakeCache.txt compile_commands.json] && retained_metadata.values.all? { |entry| valid_file.call(entry) }
+      expected_headers = {
+        "JavaScriptCore/Headers" => 9,
+        "JavaScriptCore/PrivateHeaders" => 1415,
+        "WTF/Headers" => 510,
+        "bmalloc/Headers" => 360
+      }
+      errors << "bun: aarch64 WebKit generated-header proof mismatch" unless build.dig("output", "generated_header_counts") == expected_headers
+      errors << "bun: aarch64 WebKit relink evidence is incomplete" unless %w[webkit_static_archives_verified generated_headers_retained compile_commands_retained].all? { |key| build.dig("relink_materials", key) == true }
+      errors << "bun: aarch64 WebKit proof overclaims complete relink materials" unless build.dig("relink_materials", "complete_bun_relink_materials_verified") == false
+    end
+
+    webkit_flags = "%ifarch x86_64\n  -DCMAKE_C_FLAGS=-march=haswell \\\n  -DCMAKE_CXX_FLAGS=-march=haswell \\\n%endif"
+    errors << "bun: WebKit x86 CPU flags are not architecture-conditional" unless spec.include?(webkit_flags)
 
     errors
   rescue JSON::ParserError, KeyError, TypeError => e
@@ -5694,7 +5748,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.18%{?dist}",
+            "Release:        0.19%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -5980,7 +6034,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.18%{?dist}",
+        "Release:        0.19%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6523,8 +6577,8 @@ module Agentlab
           "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
-          "source_rpm_nvr" => "opencode-1.18.5-0.18.fc44",
-          "source_rpm_sha256" => "1ec37fcf8d8f946d0d572712a38c2f9865bd6f3a2d02487b6b67c08dd38ead09",
+          "source_rpm_nvr" => "opencode-1.18.5-0.19.fc44",
+          "source_rpm_sha256" => "482b74712f6e8d74b05926c3f5e68f5376e831162f9e5ab753f062d81eec9042",
           "source_members" => 57,
           "configured_scm_generation_verified" => true,
           "binary_build_performed" => false,
@@ -6551,7 +6605,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.18%{?dist}",
+          "Release:        0.19%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

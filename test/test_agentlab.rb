@@ -31,7 +31,7 @@ class AgentlabTest < Minitest::Test
     FileUtils.cp_r("#{source_package.directory}/.", package_directory) if copy_package
 
     source_repository = File.expand_path("../..", source_package.directory)
-    %w[acquire-bun-release-local-sources prove-bun-npm-offline-install].each do |name|
+    %w[acquire-bun-release-local-sources prove-bun-npm-offline-install prove-bun-webkit-source-build].each do |name|
       FileUtils.cp(File.join(source_repository, "scripts", name), File.join(scripts_directory, name))
     end
     package_directory
@@ -2139,6 +2139,16 @@ class AgentlabTest < Minitest::Test
     assert_includes(errors, "bun: aarch64 preflight target mismatch")
     preflight.fetch("target")["cpu"] = "arm64"
 
+    preflight.fetch("webkit_source_build")["receipt_sha256"] = "0" * 64
+    errors = Agentlab.validate_bun_aarch64_preflight(package, preflight, npm_lock, "1.3.14", spec)
+    assert_includes(errors, "bun: aarch64 WebKit proof is missing or has wrong SHA-256")
+    preflight.fetch("webkit_source_build")["receipt_sha256"] = "ba05b7789d31035472c3bc09567c02b3d052a2867c53c44a6baf980d31f77987"
+
+    preflight.dig("webkit_source_build", "toolchain")["cpu"] = "haswell"
+    errors = Agentlab.validate_bun_aarch64_preflight(package, preflight, npm_lock, "1.3.14", spec)
+    assert_includes(errors, "bun: aarch64 WebKit proof toolchain mismatch")
+    preflight.dig("webkit_source_build", "toolchain")["cpu"] = "fedora-default"
+
     preflight.fetch("npm_offline_install")["receipt_sha256"] = "0" * 64
     errors = Agentlab.validate_bun_aarch64_preflight(package, preflight, npm_lock, "1.3.14", spec)
     assert_includes(errors, "bun: aarch64 npm proof is missing or has wrong SHA-256")
@@ -2519,7 +2529,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.34", "--rpm-release 0.0.33")
+        spec.sub("--rpm-release 0.0.35", "--rpm-release 0.0.34")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2808,7 +2818,7 @@ class AgentlabTest < Minitest::Test
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json].each do |name|
+      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json webkit-minimized-source-build-proof-arm64.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -2863,7 +2873,7 @@ class AgentlabTest < Minitest::Test
         name = webkit.fetch(key)
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
-      %w[bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json].each do |name|
+      %w[bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-build-proof-arm64.json].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
