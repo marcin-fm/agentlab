@@ -53,12 +53,12 @@
 %global models_dev_zod_sha256 f365a049bd1fcc3079e91d9cbcf968b7adce705662bfb3ca1ab3930c03b2ede3
 %global models_dev_snapshot_sha256 8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287
 %global models_dev_proof_sha256 3b54b21170b3901f3614284ad301ceb1706e310cda027849a55f234bcc6ca1aa
-%global source_license_set_proof_sha256 f17bd033f7067c729b8f0c32d299581a73cca60ca2bc178cac87a470c8b358c8
+%global source_license_set_proof_sha256 62fc352dd22085a2375c06a3cd6a996ac01534fd27132ab49464d47c540854ef
 %global source_materialization_sha256 518e0b781a8e1ed5a1683fcf7095be1b22360e8d6a7ef101a131d64cbdc13719
 %global source_audit_sha256 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
 %global node_modules_materializer_sha256 d49cdf57f7c2b86103e63d829f00eebbb3d72c5ec985b12186b54ed188d55668
-%global binary_embedding_auditor_sha256 a7093d83a5906f5ad13cf836e4ee438b4f9fcc97a01789fc56f0097b9f38a9ad
-%global binary_embedding_receipt_sha256 63e40ebebba95d0e790b08808905a5acb73ff3e50563fdd1064716d2763674ec
+%global binary_embedding_auditor_sha256 9f77823c4ef29d38bb1a09f0a322d337765de9b3e284e5b6d370fea3d0ff8451
+%global binary_embedding_receipt_sha256 496be59e95b845de847bced424c0e48a340969568eacea7f01fa0b12ae2a0f14
 %global bundle_metafile_patch_sha256 1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4
 %global license_review_sha256 4248cf9d4e78236ad4b30f403137ff33f8b300b9fbd9cbf7f55a9599cc149848
 %global aws_sdk_license_sha256 edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
@@ -67,10 +67,26 @@
 %global poe_platform_license_sha256 0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13
 %global remeda_license_sha256 acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535
 %global spdx_exceptions_readme_sha256 554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513
+%global photon_source_version 0.3.3
+%global photon_source_sha256 06e9b6d764d6656aba14f5ae43fbf48ce98ff1b1a6beb4d2e801eb0729f88773
+%global photon_cargo_lock_sha256 aa3e9c86b0380b8cd5cb768985f7e270aab01a5b35c24cbfa8533fa74343318f
+%global photon_vendor_sha256 d0199923d17ae664abecc7f9e8edab1e25f42467ac33c616079e72e14072f00a
+%global photon_vendor_manifest_sha256 f2eb6e04b6ef90b192bbbac4f7555c3cfb7803391a04256f48c09f111cf82159
+%global photon_vendor_source_date_epoch 1746901403
+%global photon_published_wasm_sha256 10468181565c56004c867f3a4af96f89a0ef5a63a72f2b5fb12c1f1992a3615c
+%global photon_raw_wasm_sha256 d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d
+%global photon_rebuilt_wasm_sha256 be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783
+%global photon_license_sha256 c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7
+%global wasm_bindgen_cli_source_version 0.2.95
+%global wasm_bindgen_cli_source_sha256 9380d84c4d0563c54a8177ad3fe14b12f673beb699e50c01fb4703fca68c7cd4
+%global wasm_bindgen_cli_cargo_lock_sha256 ac1c77d9c5db87f99edf1373891e5d937819578f493e81b3de095434dcb0534e
+%global wasm_bindgen_cli_vendor_sha256 338fa52c864c963db1d283a6082203029418541d1b3ff10bef38a3356c85c2f3
+%global wasm_bindgen_cli_vendor_manifest_sha256 d274e859ec2dd094ad7fa8090e3b66852323c9e8eb2c5d8de84093ff038956be
+%global wasm_bindgen_cli_vendor_source_date_epoch 1728598471
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.13%{?dist}
+Release:        0.14%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -122,6 +138,12 @@ Source41:       https://raw.githubusercontent.com/drizzle-team/drizzle-orm/eec72
 Source42:       https://raw.githubusercontent.com/poe-platform/poe-code/0a8922656d075ddcd43ae9abb6de8aaf28fdf73a/packages/poe-oauth/LICENSE#/%{name}-%{version}-poe-platform-LICENSE
 Source43:       https://raw.githubusercontent.com/remeda/remeda/0fde627fc4ca8a19ab93f000fe931f22d4472338/LICENSE#/%{name}-%{version}-remeda-LICENSE
 Source44:       https://raw.githubusercontent.com/kemitchell/spdx-exceptions.json/3aa64bec339abc6a3eca00c3436aaa7e154b8799/README.md#/%{name}-%{version}-spdx-exceptions-README.md
+Source45:       https://static.crates.io/crates/photon-rs/photon-rs-%{photon_source_version}.crate
+Source46:       %{name}-%{version}-photon-cargo-vendor.tar.zst
+Source47:       %{name}-%{version}-photon-cargo-vendor.txt
+Source48:       https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-%{wasm_bindgen_cli_source_version}.crate
+Source49:       %{name}-%{version}-wasm-bindgen-cli-cargo-vendor.tar.zst
+Source50:       %{name}-%{version}-wasm-bindgen-cli-cargo-vendor.txt
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -171,6 +193,7 @@ BuildRequires:  patch
 BuildRequires:  pkgconfig
 BuildRequires:  python3
 BuildRequires:  ruby
+BuildRequires:  rust-std-static-wasm32-unknown-unknown
 BuildRequires:  coreutils
 BuildRequires:  tar
 BuildRequires:  tree-sitter-cli >= 0.26.9
@@ -720,6 +743,12 @@ echo "%{drizzle_orm_license_sha256}  %{SOURCE41}" | sha256sum -c -
 echo "%{poe_platform_license_sha256}  %{SOURCE42}" | sha256sum -c -
 echo "%{remeda_license_sha256}  %{SOURCE43}" | sha256sum -c -
 echo "%{spdx_exceptions_readme_sha256}  %{SOURCE44}" | sha256sum -c -
+echo "%{photon_source_sha256}  %{SOURCE45}" | sha256sum -c -
+echo "%{photon_vendor_sha256}  %{SOURCE46}" | sha256sum -c -
+echo "%{photon_vendor_manifest_sha256}  %{SOURCE47}" | sha256sum -c -
+echo "%{wasm_bindgen_cli_source_sha256}  %{SOURCE48}" | sha256sum -c -
+echo "%{wasm_bindgen_cli_vendor_sha256}  %{SOURCE49}" | sha256sum -c -
+echo "%{wasm_bindgen_cli_vendor_manifest_sha256}  %{SOURCE50}" | sha256sum -c -
 echo "%{bundle_metafile_patch_sha256}  %{PATCH2}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
@@ -754,6 +783,12 @@ test -f %{SOURCE41}
 test -f %{SOURCE42}
 test -f %{SOURCE43}
 test -f %{SOURCE44}
+test -f %{SOURCE45}
+test -f %{SOURCE46}
+test -f %{SOURCE47}
+test -f %{SOURCE48}
+test -f %{SOURCE49}
+test -f %{SOURCE50}
 echo "%{bun_pty_source_sha256}  %{SOURCE6}" | sha256sum -c -
 echo "%{bun_pty_vendor_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{bun_pty_vendor_manifest_sha256}  %{SOURCE8}" | sha256sum -c -
@@ -844,6 +879,23 @@ tar --extract --gzip --file %{SOURCE27} --strip-components=1 --directory .shiki-
 tar --extract --gzip --file %{SOURCE28} --strip-components=1 --directory .undici-llhttp
 tar --extract --gzip --file %{SOURCE29} --strip-components=1 --directory .models-dev
 tar --extract --gzip --file %{SOURCE30} --strip-components=1 --directory .models-dev/node_modules/zod
+mkdir -p .photon-source .wasm-bindgen-cli-source
+tar --extract --file %{SOURCE45} --strip-components=1 --directory .photon-source
+tar --extract --zstd --file %{SOURCE46} --directory .photon-source
+tar --extract --file %{SOURCE48} --strip-components=1 --directory .wasm-bindgen-cli-source
+tar --extract --zstd --file %{SOURCE49} --directory .wasm-bindgen-cli-source
+echo "%{photon_cargo_lock_sha256}  .photon-source/Cargo.lock" | sha256sum -c -
+echo "%{wasm_bindgen_cli_cargo_lock_sha256}  .wasm-bindgen-cli-source/Cargo.lock" | sha256sum -c -
+pushd .photon-source >/dev/null
+%cargo_prep -v cargo-vendor
+%cargo_vendor_manifest
+cmp cargo-vendor.txt %{SOURCE47}
+popd >/dev/null
+pushd .wasm-bindgen-cli-source >/dev/null
+%cargo_prep -v cargo-vendor
+%cargo_vendor_manifest
+cmp cargo-vendor.txt %{SOURCE50}
+popd >/dev/null
 test ! -e .opentui-source/packages/core/src/zig/lib/x86_64-linux/libopentui.so
 
 mkdir -p \
@@ -871,6 +923,12 @@ opentui_platform="$(node-24 --input-type=module -e 'import { dirname } from "nod
 popd >/dev/null
 echo "%{opentui_published_sha256}  $opentui_platform/libopentui.so" | sha256sum -c -
 rm -f "$opentui_platform/libopentui.so"
+pushd packages/opencode >/dev/null
+photon_root="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("@silvia-odwyer/photon-node/package.json")))')"
+popd >/dev/null
+echo "%{photon_published_wasm_sha256}  $photon_root/photon_rs_bg.wasm" | sha256sum -c -
+printf '%s\n' "$photon_root" > .build-tools/photon-root
+rm -f "$photon_root/photon_rs_bg.wasm"
 pushd packages/opencode >/dev/null
 shiki_root="$(node-24 --input-type=module -e 'import { dirname } from "node:path"; import { fileURLToPath } from "node:url"; process.stdout.write(dirname(dirname(fileURLToPath(import.meta.resolve("shiki")))))')"
 popd >/dev/null
@@ -922,6 +980,37 @@ CGO_ENABLED=0 GOPROXY=off GOSUMDB=off \
   -o "$OLDPWD/.build-tools/esbuild-bin" ./cmd/esbuild
 popd >/dev/null
 test "$(.build-tools/esbuild-bin --version)" = "%{esbuild_version}"
+
+# Build the exact wasm-bindgen CLI release from its vendored source. It is a
+# private build tool and is not installed in the resulting RPM.
+pushd .wasm-bindgen-cli-source >/dev/null
+CARGO_HOME=.cargo RUSTC_BOOTSTRAP=1 RUSTFLAGS='%{build_rustflags}' \
+  cargo build -j4 -Z avoid-dev-deps --profile rpm --frozen --bin wasm-bindgen
+popd >/dev/null
+
+# Rebuild Photon's functional WASM from the crates.io source published from the
+# npm package's exact gitHead. Keep the readable upstream JavaScript glue, whose
+# historical generation is source-proven, and replace only the opaque payload.
+(
+  unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS
+  pushd .photon-source >/dev/null
+  CARGO_HOME=.cargo CARGO_NET_OFFLINE=true \
+    RUSTFLAGS="--remap-path-prefix=$PWD=/usr/src/debug/%{name}-%{version}/.photon-source" \
+    cargo build -j4 --release --frozen --target wasm32-unknown-unknown --lib
+  echo "%{photon_raw_wasm_sha256}  target/wasm32-unknown-unknown/release/photon_rs.wasm" | sha256sum -c -
+  popd >/dev/null
+)
+mkdir -p .build-tools/photon
+.wasm-bindgen-cli-source/target/release/wasm-bindgen \
+  --target nodejs \
+  --out-dir .build-tools/photon \
+  --out-name photon_rs \
+  .photon-source/target/wasm32-unknown-unknown/release/photon_rs.wasm
+echo "%{photon_rebuilt_wasm_sha256}  .build-tools/photon/photon_rs_bg.wasm" | sha256sum -c -
+photon_root="$(cat .build-tools/photon-root)"
+install -pm0644 .build-tools/photon/photon_rs_bg.wasm "$photon_root/photon_rs_bg.wasm"
+echo "%{photon_license_sha256}  .photon-source/LICENSE.md" | sha256sum -c -
+cp -p .photon-source/LICENSE.md photon-rs-LICENSE.md
 
 # Emscripten 4.0.4 requires Binaryen 121. Build the exact release privately
 # with Fedora clang and expose only the installed tools to Emscripten.
@@ -1199,6 +1288,29 @@ pushd packages/opencode >/dev/null
 bash_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-bash/package.json")))')"
 powershell_parser="$(node-24 -e 'process.stdout.write(require("path").dirname(require.resolve("tree-sitter-powershell/package.json")))')"
 popd >/dev/null
+photon_root="$(cat .build-tools/photon-root)"
+test -f "$photon_root/photon_rs_bg.wasm"
+echo "%{photon_rebuilt_wasm_sha256}  $photon_root/photon_rs_bg.wasm" | sha256sum -c -
+node-24 - "$photon_root" <<'JS'
+const crypto = require("node:crypto")
+const path = require("node:path")
+const photon = require(path.join(process.argv[2], "photon_rs.js"))
+const raw = Uint8Array.from([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255])
+const source = new photon.PhotonImage(raw, 2, 2)
+const png = Buffer.from(source.get_bytes())
+const decoded = photon.PhotonImage.new_from_byteslice(png)
+const resized = photon.resize(decoded, 1, 1, photon.SamplingFilter.Lanczos3)
+const jpeg = Buffer.from(resized.get_bytes_jpeg(80))
+const digest = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex")
+if (source.get_width() !== 2 || source.get_height() !== 2) throw new Error("Photon source dimensions mismatch")
+if (decoded.get_width() !== 2 || decoded.get_height() !== 2) throw new Error("Photon decode dimensions mismatch")
+if (resized.get_width() !== 1 || resized.get_height() !== 1) throw new Error("Photon resize dimensions mismatch")
+if (digest(png) !== "4d01524111816b3318a093b852f8da4b823b092462d290cc15e0ad401573cd9e") throw new Error("Photon PNG smoke mismatch")
+if (digest(jpeg) !== "e1327581cb0c70b6658d6ce024165f880bfc484f68473b8d97f5adf6d4488108") throw new Error("Photon JPEG smoke mismatch")
+resized.free()
+decoded.free()
+source.free()
+JS
 web_tree_sitter="$(cat .build-tools/web-tree-sitter-root)"
 test ! -e "$bash_parser/prebuilds"
 test -f "$bash_parser/tree-sitter-bash.wasm"
@@ -1250,6 +1362,7 @@ install -Dpm0755 \
 %license bun-pty-LICENSE.dependencies bun-pty-cargo-vendor.txt
 %license opentui-LICENSE opentui-uucode-LICENSE.md opentui-yoga-LICENSE
 %license web-tree-sitter-LICENSE tree-sitter-bash-LICENSE tree-sitter-powershell-LICENSE
+%license photon-rs-LICENSE.md
 %license %{name}-%{version}-aws-sdk-js-v3-LICENSE %{name}-%{version}-sigstore-verify-LICENSE
 %license %{name}-%{version}-drizzle-orm-LICENSE %{name}-%{version}-poe-platform-LICENSE
 %license %{name}-%{version}-remeda-LICENSE %{name}-%{version}-spdx-exceptions-README.md
@@ -1257,6 +1370,10 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.14
+- Rebuild Photon WASM from the authenticated Rust source and vendored Cargo inputs.
+- Verify the source-built payload through OpenCode's decode, resize, and encode operations.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.13
 - Add exact upstream license texts for ten embedded npm package identities.
 - Preserve the three unresolved package notices as explicit publication blockers.

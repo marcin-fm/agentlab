@@ -12,7 +12,7 @@
     "metafile_environment": "OPENCODE_BUILD_METAFILE",
     "auditor": {
       "filename": "audit-opencode-binary-embedding",
-      "sha256": "a7093d83a5906f5ad13cf836e4ee438b4f9fcc97a01789fc56f0097b9f38a9ad"
+      "sha256": "9f77823c4ef29d38bb1a09f0a322d337765de9b3e284e5b6d370fea3d0ff8451"
     },
     "build_patch": {
       "filename": "opencode-record-bundle-metafile.patch",
@@ -22,7 +22,7 @@
   "receipts": {
     "source_closure": {
       "filename": "opencode-1.18.5-closure.json",
-      "sha256": "23bff9b408d62d83dda3a2c2f5fc6c39c949ec81be2c3183fa3a506d500de76b"
+      "sha256": "e70da6097331d8f7ce0dfd23b41f0f0ef45d95c474fc8629bfd4e10109aa8547"
     },
     "source_audit": {
       "filename": "opencode-1.18.5-source-audit.json",
@@ -30,7 +30,7 @@
     },
     "source_license_set": {
       "filename": "source-license-set-proof.json",
-      "sha256": "f17bd033f7067c729b8f0c32d299581a73cca60ca2bc178cac87a470c8b358c8"
+      "sha256": "62fc352dd22085a2375c06a3cd6a996ac01534fd27132ab49464d47c540854ef"
     },
     "license_review": {
       "filename": "license-review.yml",
@@ -38,7 +38,7 @@
     },
     "node_modules_materialization": {
       "filename": "node-modules-materialization.json",
-      "sha256": "b80b2dcb902cfdfd8a3e62036b9820845c20ba88ef805cd04de2dfa7e019a903"
+      "sha256": "486c8dd7a77734062f59afe5813298abc9ceec6ddec6a3c6fed6ec7bb15ad7f8"
     }
   },
   "metafile": {
@@ -55,10 +55,9 @@
   },
   "binary": {
     "path": "packages/opencode/dist/opencode-linux-x64/bin/opencode",
-    "size_bytes": 127035136,
     "reported_version": "1.18.5",
     "sha256_in_canonical_receipt": false,
-    "sha256_omission_reason": "Bun standalone bytes are build-root-sensitive; the normalized compiler input graph is compared instead."
+    "sha256_omission_reason": "Bun standalone bytes and size are build-root-sensitive; the normalized compiler input graph is compared instead."
   },
   "supplemental_embedded_inputs": [
     {
@@ -16191,7 +16190,7 @@
     "rpm_license_payload_complete": false
   },
   "unresolved": {
-    "photon_source_mapping": true,
+    "photon_source_mapping": false,
     "bun_runtime_final_license_map": true,
     "included_package_local_texts": 3,
     "final_aggregate_license_expression": true,

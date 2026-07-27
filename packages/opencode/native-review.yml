@@ -23,10 +23,10 @@ status:
   wasm_sources_classified: 7
   wasm_payloads_classified: 14
   retained_prebuilt_payloads: 0
-  source_mappings_verified: 13
-  source_mappings_unresolved: 1
+  source_mappings_verified: 14
+  source_mappings_unresolved: 0
   native_sources_verified: false
-  wasm_sources_verified: false
+  wasm_sources_verified: true
   reproducible_builds_verified: false
 components:
   - package: "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
@@ -478,12 +478,70 @@ components:
         generated_js_sha256_matches: false
         generated_declarations_sha256_matches: false
         exact_local_ref_found: false
+      source_build:
+        source_crate: photon-rs-0.3.3.crate
+        source_url: https://static.crates.io/crates/photon-rs/photon-rs-0.3.3.crate
+        source_sha256: 06e9b6d764d6656aba14f5ae43fbf48ce98ff1b1a6beb4d2e801eb0729f88773
+        source_package_version: "0.3.3"
+        source_commit: 685f5b155b36c5611c08ca678bb78ddbab3edbac
+        cargo_lock_sha256: aa3e9c86b0380b8cd5cb768985f7e270aab01a5b35c24cbfa8533fa74343318f
+        cargo_vendor_archive: opencode-1.18.5-photon-cargo-vendor.tar.zst
+        cargo_vendor_sha256: d0199923d17ae664abecc7f9e8edab1e25f42467ac33c616079e72e14072f00a
+        cargo_vendor_crates: 138
+        cargo_vendor_manifest: opencode-1.18.5-photon-cargo-vendor.txt
+        cargo_vendor_manifest_sha256: f2eb6e04b6ef90b192bbbac4f7555c3cfb7803391a04256f48c09f111cf82159
+        cargo_vendor_source_date_epoch: 1746901403
+        wasm_bindgen_cli:
+          version: 0.2.95
+          source_crate: wasm-bindgen-cli-0.2.95.crate
+          source_url: https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-0.2.95.crate
+          source_sha256: 9380d84c4d0563c54a8177ad3fe14b12f673beb699e50c01fb4703fca68c7cd4
+          source_commit: 3a8da7cb8842d4cb9918871179b6b7d3c77df5a0
+          cargo_lock_sha256: ac1c77d9c5db87f99edf1373891e5d937819578f493e81b3de095434dcb0534e
+          cargo_vendor_archive: opencode-1.18.5-wasm-bindgen-cli-cargo-vendor.tar.zst
+          cargo_vendor_sha256: 338fa52c864c963db1d283a6082203029418541d1b3ff10bef38a3356c85c2f3
+          cargo_vendor_crates: 185
+          cargo_vendor_manifest: opencode-1.18.5-wasm-bindgen-cli-cargo-vendor.txt
+          cargo_vendor_manifest_sha256: d274e859ec2dd094ad7fa8090e3b66852323c9e8eb2c5d8de84093ff038956be
+          cargo_vendor_source_date_epoch: 1728598471
+        historical_correspondence_proof:
+          rustc: 1.86.0-nightly (3f43b1a63 2025-01-03)
+          wasm_bindgen: 0.2.95 (3a8da7cb8)
+          walrus: 0.22.0
+          generated_javascript_sha256: d60656705f0d59baa79e36b0381eb023f1864eeb57e92956cf21dcd9fb8f879f
+          generated_declarations_sha256: b3f7efb72280d1c32cf17dbe436fb783e3f04dc0da56e8c4eaa0ccab3da43d23
+          generated_glue_byte_identical_to_npm: true
+          historical_wasm_byte_identical_to_npm: false
+        fedora_source_build:
+          rustc: 1.97.1
+          rust_std_target: rust-std-static-wasm32-unknown-unknown-1.97.1
+          cargo_profile: release
+          path_remap: "--remap-path-prefix=$PWD=/usr/src/debug/opencode-1.18.5/.photon-source"
+          wasm_bindgen_cli_built_from_source: true
+          raw_output_sha256: d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d
+          raw_output_bytes: 2541956
+          local_output_sha256: be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783
+          output_bytes: 1861027
+          generated_javascript_sha256: 902925782b9728db0ab7a868f8a5268d7def877525dc6c256ab71c9a88eb4a28
+          generated_declarations_sha256: fdb8f94706efcc46aa0381b7e1eb12c7967c3dce46d3a8bb21c578d36e22cf55
+          local_rebuilds: 2
+          path_distinct_rebuilds: true
+          local_rebuilds_byte_identical: true
+          network_isolated: true
+          published_javascript_abi_verified: true
+          png_smoke_sha256: 4d01524111816b3318a093b852f8da4b823b092462d290cc15e0ad401573cd9e
+          jpeg_smoke_sha256: e1327581cb0c70b6658d6ce024165f880bfc484f68473b8d97f5adf6d4488108
+          decode_resize_encode_verified: true
+          local_proof_only: true
+        linked_source_license: photon-rs-LICENSE.md
+        linked_source_license_sha256: c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7
+        published_payload_discarded: true
     decision:
       action: rebuild
       retain_prebuilt_payloads: false
-      source_mapping_verified: false
-      reproducible_build_verified: false
-      reason: Obtain exact corresponding v0.3.4 Rust/wasm-bindgen sources and a reproducible build; the registry gitHead and nearest generated branch artifact both mismatch the published payload.
+      source_mapping_verified: true
+      reproducible_build_verified: true
+      reason: Build the crates.io photon-rs 0.3.3 source published from npm's exact gitHead with source-built wasm-bindgen CLI and Fedora's wasm target; the published readable glue is source-proven, accepts the rebuilt payload, and produces byte-identical decode, resize, PNG, and JPEG results.
   - package: "shiki@4.2.0"
     npm_name: shiki
     version: "4.2.0"

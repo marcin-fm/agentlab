@@ -2,7 +2,7 @@
 
 OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; a local network-isolated Fedora 44 x86_64 build, exact compiler-input map, and generated bundled Provides now pass. Final aggregate licensing, clean Mock/COPR results, and target-matrix verification remain unverified.
 
-The 829 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the selected set has 1,018 runtime packages, one build-only Prettier package, and no test-only packages. Configured-SCM preparation regenerates those bundles plus the exact bun-pty Cargo vendor archive and includes all three in the source RPM. Offline dependency-tree assembly and the local application build are verified.
+The 829 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the selected set has 1,018 runtime packages, one build-only Prettier package, and no test-only packages. Configured-SCM preparation regenerates those bundles plus the exact bun-pty, Photon, and wasm-bindgen CLI Cargo vendor archives. Offline dependency-tree assembly and the local application build are verified.
 
 The first complete repository-backed source job produces `opencode-1.18.5-0.9.fc44.src.rpm`, SHA-256 `476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992`, with all 38 declared source members and valid RPM digests. This proves source delivery only; no OpenCode binary was built or installed.
 
@@ -19,6 +19,10 @@ The final `0.12` 43-member source RPM has SHA-256 `8310a97cf2f1cec3a84f7f4da5d63
 Release `1.18.5-0.13` resolves ten of those embedded text gaps from exact upstream provenance. The three AWS packages share the license at release commit `4b035429227c5be4093e5b3898a4eb5dc70824b0`; Drizzle's npm SLSA attestation binds its exact release commit; Sigstore Verify and Remeda use exact `gitHead` texts; Poe's upstream clarification covers both selected packages; the SPDX exception attribution is installed; and CC0 requires no additional full-text payload. The regenerated 622,252-byte binary receipt has SHA-256 `63e40ebebba95d0e790b08808905a5acb73ff3e50563fdd1064716d2763674ec` and leaves only `@npmcli/agent@4.0.2`, `abstract-logging@2.0.1`, and `opentui-spinner@0.0.7` unresolved. Upstream issue creation for all three failed before mutation because the current GitHub token cannot create issues, so no notice was manufactured.
 
 The final `0.13` 49-member source RPM has SHA-256 `b8fcc1a9e27dd3257c59554051d2955d28bf34451df36b42ec20175bb7c75355`; the binary RPM has SHA-256 `352bbe6d64c3c15de9ef67a26e0919cd390df140adb809033aca38e7324bb58c`. Its extracted 127,035,136-byte payload has SHA-256 `e2a6a3f12eb7a8c81e7e5b4dde01c6774438621d91a9c021a90b994cea9443db` and reports `1.18.5` under network isolation. The RPM installs all six resolved license/attribution payload files, preserves exactly 491 bundled Node capabilities with no `npm(opencode)`, passes digest checks, and has zero `rpmlint` errors with 14 expected warnings. No RPM was installed or submitted to COPR.
+
+Release `1.18.5-0.14` replaces Photon's last opaque WASM. The npm `0.3.4` artifact and crates.io `photon-rs 0.3.3` source both bind commit `685f5b155b36c5611c08ca678bb78ddbab3edbac`; the crate supplies the exact Cargo lock omitted from Git. Historical reconstruction reproduces the published readable JavaScript and declarations byte-for-byte. Two path-distinct, network-isolated Fedora Rust `1.97.1` builds use a targeted source-path remap and source-built `wasm-bindgen-cli 0.2.95`; they produce the same 2,541,956-byte raw WASM at SHA-256 `d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d` and the same 1,861,027-byte Node payload at SHA-256 `be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783`. The published glue loads that replacement and produces byte-identical PNG and JPEG results through OpenCode's constructor, decode, Lanczos resize, and encode operations.
+
+The final `0.14` 55-member source RPM has SHA-256 `fe1e85046718ed02d52cc901361781591cf675d64a7b11657b880de49d7f689f`; the binary RPM has SHA-256 `42b9961f164eeda11aa6928ec3e56e65eff41721ae40962793de26c8d6869423`. Its extracted 126,748,416-byte payload has SHA-256 `df7d2f0f551cb64e36a0b9bc4f76d22bc49cec5d47cb64e4515dd68c9491ea39` and reports `1.18.5` under network isolation. RPM digests pass, the installed Photon source license is SHA-256 `c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7`, and `rpmlint` reports zero errors with 20 expected warnings. No RPM was installed or submitted to COPR.
 
 The immutable `v1.18.5` tag resolves to commit
 `e5cc278dec9294a627a7b05f47ce6a564408c1a2`, and its source archive has
@@ -144,9 +148,9 @@ expected system libraries, and retain a `GLIBC_2.17` floor. Their differing
 bytes are recorded honestly; exact local compiler-input inclusion now passes,
 while clean Fedora 43/44 package builds and aggregate licensing remain unverified.
 
-Functional WASM remains fail-closed as a whole. Exact corresponding sources are now
-mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, and Undici's llhttp
-assets, including immutable source archives and byte-level asset correspondence.
+Functional WASM now has complete source mapping. Exact corresponding sources are
+mapped for OpenTUI's five grammars, Shiki's Oniguruma asset, Undici's llhttp
+assets, and Photon, including immutable source archives and source-build evidence.
 OpenTUI's five grammars now rebuild twice byte-identically with Fedora
 tree-sitter CLI `0.26.9`, Clang 20, and the Bun Zig WASI headers; JavaScript,
 TypeScript, Markdown, Markdown-inline, and Zig parse smokes pass through
@@ -157,12 +161,12 @@ published WASM is replaced. Undici remains unproven because its historical
 Undici's scalar and SIMD llhttp modules also rebuild twice byte-identically from
 the exact generated llhttp `8.1.0` C release with the same Emscripten/Binaryen
 toolchain; both instantiate with the expected callbacks and allocator/parser
-exports. Photon is the
-only unresolved WASM source mapping: its authenticated npm 0.3.4 tarball differs
-from both the registry `gitHead` and the nearest generated `compiled-wasm`
-commit in WASM bytes, JavaScript, declarations, package identity, version, and
-filenames. No exact generated package exists in the checked immutable refs, so
-the prebuilt payload remains unusable.
+exports. Photon's npm `0.3.4` payload remains byte-different from the historical
+Git branch artifacts, but the crates.io `0.3.3` source was published from npm's
+exact `gitHead` and includes the matching lock. The draft builds that source and
+wasm-bindgen CLI from vendored Cargo inputs, discards the published WASM, retains
+the source-proven readable glue, and verifies the replacement through the image
+operations selected by OpenCode.
 
 Tree-sitter Bash, PowerShell, and web-tree-sitter now have a complete offline
 replacement recipe. The spec removes the published WASMs and Bash Node
@@ -183,8 +187,8 @@ scripts/acquire-opencode-sources --jobs 4 --check
 The npm `opencode-ai` package and existing binary-oriented COPR/AUR/Homebrew recipes are intentionally not used. They select or install upstream platform executables instead of rebuilding from source.
 
 The draft remains blocked until the source-built Bun package is available to a
-clean buildroot, Photon corresponding source is resolved, the 3 remaining npm
-notice holds and complete Bun/native/WASM payload produce a final aggregate SPDX
+clean buildroot, the 3 remaining npm notice holds and complete Bun/native/WASM
+payload accounting produce a final aggregate SPDX
 expression and `%license` payload, the blocked upstream requests can be sent, and
 the configured Fedora 43, Fedora 44, and Rawhide matrix passes.
 

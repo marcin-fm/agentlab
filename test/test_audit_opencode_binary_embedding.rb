@@ -127,7 +127,7 @@ class AuditOpenCodeBinaryEmbeddingTest < Minitest::Test
       })
       output_path = File.join(directory, "embedding.json")
 
-      result = Agentlab::OpenCodeBinaryEmbedding.generate!(
+      generate_options = {
         source_root: source_root,
         metafile_path: metafile_path,
         closure_path: closure_path,
@@ -140,11 +140,17 @@ class AuditOpenCodeBinaryEmbeddingTest < Minitest::Test
         models_snapshot_path: File.join(source_root, ".build-tools", "models.json"),
         parser_worker_path: File.join(runtime_dir, "parser.worker.js"),
         binary_path: binary,
-        expected_version: "1.0.0",
-        output_path: output_path
-      )
+        expected_version: "1.0.0"
+      }
+      result = Agentlab::OpenCodeBinaryEmbedding.generate!(**generate_options, output_path: output_path)
       receipt = result.fetch("receipt")
 
+      assert_equal({
+        "path" => "packages/opencode/opencode",
+        "reported_version" => "1.0.0",
+        "sha256_in_canonical_receipt" => false,
+        "sha256_omission_reason" => "Bun standalone bytes and size are build-root-sensitive; the normalized compiler input graph is compared instead."
+      }, receipt.fetch("binary"))
       assert_equal(2, receipt.dig("scope", "embedded_package_paths"))
       assert_equal(2, receipt.dig("scope", "embedded_public_name_versions"))
       assert_equal(1, receipt.dig("scope", "embedded_workspace_paths"))
@@ -166,6 +172,12 @@ class AuditOpenCodeBinaryEmbeddingTest < Minitest::Test
       assert_equal("build-pkg-LICENSE", build_record.dig("license_text_resolution", "payload_file"))
       assert(receipt.dig("validation", "final_npm_binary_inclusion_verified"))
       assert_equal(result.fetch("sha256"), Digest::SHA256.file(output_path).hexdigest)
+
+      File.open(binary, "ab") { |file| file.write("# size-only padding\n") }
+      second_output_path = File.join(directory, "embedding-second.json")
+      second_result = Agentlab::OpenCodeBinaryEmbedding.generate!(**generate_options, output_path: second_output_path)
+      assert_equal(receipt, second_result.fetch("receipt"))
+      assert_equal(result.fetch("sha256"), second_result.fetch("sha256"))
     end
   end
 

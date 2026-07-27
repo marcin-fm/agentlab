@@ -47,7 +47,7 @@
   "candidate_source_expression": "(AFL-2.1 OR BSD-3-Clause) AND (MIT OR CC0-1.0) AND (MPL-2.0 OR Apache-2.0) AND 0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT",
   "unresolved": {
     "package_local_text_gaps": 28,
-    "photon_source_mapping": true,
+    "photon_source_mapping": false,
     "final_binary_inclusion": true
   },
   "validation": {

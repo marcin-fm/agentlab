@@ -960,6 +960,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "scripts/acquire-opencode-sources")
     assert_includes(makefile, "scripts/materialize-opencode-sources")
     assert_includes(makefile, "scripts/prepare-opencode-bun-pty-sources")
+    assert_includes(makefile, "scripts/prepare-opencode-photon-sources")
     assert_includes(makefile, "scripts/prepare-opencode-closure-evidence")
     assert_includes(makefile, "scripts/materialize-opencode-node-modules")
     assert_includes(makefile, 'cmp "$$tempdir/source-audit.json"')
@@ -967,6 +968,8 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "opencode-$$version-nm-prod-build.tar.zst")
     assert_includes(makefile, "opencode-$$version-nm-dev-test.tar.zst")
     assert_includes(makefile, "opencode-$$version-bun-pty-cargo-vendor.tar.zst")
+    assert_includes(makefile, "for suffix in photon-cargo-vendor.tar.zst wasm-bindgen-cli-cargo-vendor.tar.zst")
+    assert_includes(makefile, '"$$specdir/opencode-$$version-$$suffix"')
     assert_includes(makefile, "closure.json bundled-licenses.txt native.json")
   end
 
@@ -2895,6 +2898,12 @@ class AgentlabTest < Minitest::Test
       )
 
       assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
+
+      spec_path = File.join(directory, "opencode.spec")
+      remap = 'RUSTFLAGS="--remap-path-prefix=$PWD=/usr/src/debug/%{name}-%{version}/.photon-source"'
+      File.write(spec_path, File.read(spec_path).sub(remap, 'RUSTFLAGS=""'))
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+      assert(errors.any? { |error| error.include?("spec is missing Photon build requirement #{remap}") })
     end
   end
 

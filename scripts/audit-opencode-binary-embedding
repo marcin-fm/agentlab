@@ -250,10 +250,9 @@ module Agentlab
         },
         "binary" => {
           "path" => relative_path(paths.fetch("binary"), source_root),
-          "size_bytes" => File.size(paths.fetch("binary")),
           "reported_version" => binary_version,
           "sha256_in_canonical_receipt" => false,
-          "sha256_omission_reason" => "Bun standalone bytes are build-root-sensitive; the normalized compiler input graph is compared instead."
+          "sha256_omission_reason" => "Bun standalone bytes and size are build-root-sensitive; the normalized compiler input graph is compared instead."
         },
         "supplemental_embedded_inputs" => [
           supplemental_input("models_dev_snapshot", paths.fetch("models_snapshot"), source_root,
@@ -294,7 +293,7 @@ module Agentlab
           "rpm_license_payload_complete" => false
         },
         "unresolved" => {
-          "photon_source_mapping" => true,
+          "photon_source_mapping" => false,
           "bun_runtime_final_license_map" => true,
           "included_package_local_texts" => license_text_gaps.length,
           "final_aggregate_license_expression" => true,

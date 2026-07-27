@@ -88,6 +88,10 @@ srpm:
 				--spec "$(spec)" \
 				--workdir "$$tempdir/bun-pty" \
 				--output "$$tempdir/output/opencode-$$version-bun-pty-cargo-vendor.tar.zst"; \
+			ruby "$(repo_root)/scripts/prepare-opencode-photon-sources" \
+				--spec "$(spec)" \
+				--workdir "$$tempdir/photon" \
+				--output-dir "$$tempdir/output"; \
 			ruby "$(repo_root)/scripts/prepare-opencode-closure-evidence" \
 				--package-dir "$$specdir" \
 				--output-dir "$$tempdir/output"; \
@@ -105,6 +109,10 @@ srpm:
 				"$$specdir/opencode-$$version-nm-dev-test.tar.zst"; \
 			install -pm0644 "$$tempdir/output/opencode-$$version-bun-pty-cargo-vendor.tar.zst" \
 				"$$specdir/opencode-$$version-bun-pty-cargo-vendor.tar.zst"; \
+			for suffix in photon-cargo-vendor.tar.zst wasm-bindgen-cli-cargo-vendor.tar.zst; do \
+				install -pm0644 "$$tempdir/output/opencode-$$version-$$suffix" \
+					"$$specdir/opencode-$$version-$$suffix"; \
+			done; \
 			;; \
 		kreuzberg.spec) \
 			set -eu; \

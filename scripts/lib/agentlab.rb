@@ -5205,8 +5205,8 @@ module Agentlab
 
       expected_node_modules = {
         "schema" => "agentlab-opencode-node-modules-materialization/v2",
-        "receipt_sha256" => "b80b2dcb902cfdfd8a3e62036b9820845c20ba88ef805cd04de2dfa7e019a903",
-        "source_closure_sha256" => "23bff9b408d62d83dda3a2c2f5fc6c39c949ec81be2c3183fa3a506d500de76b",
+        "receipt_sha256" => "486c8dd7a77734062f59afe5813298abc9ceec6ddec6a3c6fed6ec7bb15ad7f8",
+        "source_closure_sha256" => "e70da6097331d8f7ce0dfd23b41f0f0ef45d95c474fc8629bfd4e10109aa8547",
         "source_archives" => 829,
         "package_paths" => 1_019,
         "target_path_set_sha256" => "f6f13913497b2845a9eb23c0c21af014cc50c3ae868f5c9766e208896a9af602",
@@ -5227,16 +5227,16 @@ module Agentlab
       errors << "#{prefix} node_modules materialization proof does not match" unless dependencies["node_modules_materialization_proof"] == expected_node_modules
 
       expected_binary_build = {
-        "nvr" => "opencode-1.18.5-0.13.fc44",
-        "source_rpm_sha256" => "b8fcc1a9e27dd3257c59554051d2955d28bf34451df36b42ec20175bb7c75355",
-        "source_members" => 49,
-        "binary_rpm_sha256" => "352bbe6d64c3c15de9ef67a26e0919cd390df140adb809033aca38e7324bb58c",
-        "payload_sha256" => "e2a6a3f12eb7a8c81e7e5b4dde01c6774438621d91a9c021a90b994cea9443db",
-        "payload_size_bytes" => 127_035_136,
+        "nvr" => "opencode-1.18.5-0.14.fc44",
+        "source_rpm_sha256" => "fe1e85046718ed02d52cc901361781591cf675d64a7b11657b880de49d7f689f",
+        "source_members" => 55,
+        "binary_rpm_sha256" => "42b9961f164eeda11aa6928ec3e56e65eff41721ae40962793de26c8d6869423",
+        "payload_sha256" => "df7d2f0f551cb64e36a0b9bc4f76d22bc49cec5d47cb64e4515dd68c9491ea39",
+        "payload_size_bytes" => 126_748_416,
         "source_built_bun_version" => "1.3.14",
         "source_built_bun_sha256" => "4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569",
         "lol_html_provider_sha256" => "3b1f3a3a92c4af9e97630fb845a6a2d69fdedaa6c4034219fe6f75c1a2790d86",
-        "node_modules_receipt_sha256" => "b80b2dcb902cfdfd8a3e62036b9820845c20ba88ef805cd04de2dfa7e019a903",
+        "node_modules_receipt_sha256" => "486c8dd7a77734062f59afe5813298abc9ceec6ddec6a3c6fed6ec7bb15ad7f8",
         "materialized_package_paths" => 1_019,
         "materialized_workspace_links" => 14,
         "network_isolated" => true,
@@ -5245,7 +5245,7 @@ module Agentlab
         "binary_rpm_created" => true,
         "extracted_version" => "1.18.5",
         "rpmlint_errors" => 0,
-        "rpmlint_warnings" => 14,
+        "rpmlint_warnings" => 20,
         "local_rpmbuild_only" => true,
         "clean_mock_verified" => false,
         "fedora_43_44_verified" => false,
@@ -5264,7 +5264,7 @@ module Agentlab
         embedding_metadata = dependencies.fetch("binary_embedding_proof", {})
         expected_embedding_metadata = {
           "schema" => "agentlab-opencode-binary-embedding/v1",
-          "receipt_sha256" => "63e40ebebba95d0e790b08808905a5acb73ff3e50563fdd1064716d2763674ec",
+          "receipt_sha256" => "496be59e95b845de847bced424c0e48a340969568eacea7f01fa0b12ae2a0f14",
           "metafile_input_records" => 4_038,
           "positive_input_records" => 3_895,
           "zero_contribution_input_records" => 143,
@@ -5350,10 +5350,9 @@ module Agentlab
         errors << "#{prefix} binary embedding metafile evidence does not match" unless embedding["metafile"] == expected_metafile
         errors << "#{prefix} binary embedding payload evidence does not match" unless embedding["binary"] == {
           "path" => "packages/opencode/dist/opencode-linux-x64/bin/opencode",
-          "size_bytes" => 127_035_136,
           "reported_version" => "1.18.5",
           "sha256_in_canonical_receipt" => false,
-          "sha256_omission_reason" => "Bun standalone bytes are build-root-sensitive; the normalized compiler input graph is compared instead."
+          "sha256_omission_reason" => "Bun standalone bytes and size are build-root-sensitive; the normalized compiler input graph is compared instead."
         }
         errors << "#{prefix} binary embedding supplemental inputs do not match" unless embedding["supplemental_embedded_inputs"] == [
           {
@@ -5447,7 +5446,7 @@ module Agentlab
         }
         errors << "#{prefix} binary embedding validation flags do not match" unless embedding["validation"] == expected_validation
         errors << "#{prefix} binary embedding overclaims final completion" unless embedding["unresolved"] == {
-          "photon_source_mapping" => true,
+          "photon_source_mapping" => false,
           "bun_runtime_final_license_map" => true,
           "included_package_local_texts" => 3,
           "final_aggregate_license_expression" => true,
@@ -5459,7 +5458,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.13%{?dist}",
+            "Release:        0.14%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -5745,7 +5744,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.13%{?dist}",
+        "Release:        0.14%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6103,7 +6102,102 @@ module Agentlab
           errors << "#{prefix} Photon #{kind} mismatch evidence has equal hashes"
         end
       end
-      errors << "#{prefix} Photon source mapping must remain unresolved" unless photon&.dig("decision", "source_mapping_verified") == false
+      expected_photon_build = {
+        "source_crate" => "photon-rs-0.3.3.crate",
+        "source_url" => "https://static.crates.io/crates/photon-rs/photon-rs-0.3.3.crate",
+        "source_sha256" => "06e9b6d764d6656aba14f5ae43fbf48ce98ff1b1a6beb4d2e801eb0729f88773",
+        "source_package_version" => "0.3.3",
+        "source_commit" => "685f5b155b36c5611c08ca678bb78ddbab3edbac",
+        "cargo_lock_sha256" => "aa3e9c86b0380b8cd5cb768985f7e270aab01a5b35c24cbfa8533fa74343318f",
+        "cargo_vendor_archive" => "opencode-#{release}-photon-cargo-vendor.tar.zst",
+        "cargo_vendor_sha256" => "d0199923d17ae664abecc7f9e8edab1e25f42467ac33c616079e72e14072f00a",
+        "cargo_vendor_crates" => 138,
+        "cargo_vendor_manifest" => "opencode-#{release}-photon-cargo-vendor.txt",
+        "cargo_vendor_manifest_sha256" => "f2eb6e04b6ef90b192bbbac4f7555c3cfb7803391a04256f48c09f111cf82159",
+        "cargo_vendor_source_date_epoch" => 1_746_901_403,
+        "wasm_bindgen_cli" => {
+          "version" => "0.2.95",
+          "source_crate" => "wasm-bindgen-cli-0.2.95.crate",
+          "source_url" => "https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-0.2.95.crate",
+          "source_sha256" => "9380d84c4d0563c54a8177ad3fe14b12f673beb699e50c01fb4703fca68c7cd4",
+          "source_commit" => "3a8da7cb8842d4cb9918871179b6b7d3c77df5a0",
+          "cargo_lock_sha256" => "ac1c77d9c5db87f99edf1373891e5d937819578f493e81b3de095434dcb0534e",
+          "cargo_vendor_archive" => "opencode-#{release}-wasm-bindgen-cli-cargo-vendor.tar.zst",
+          "cargo_vendor_sha256" => "338fa52c864c963db1d283a6082203029418541d1b3ff10bef38a3356c85c2f3",
+          "cargo_vendor_crates" => 185,
+          "cargo_vendor_manifest" => "opencode-#{release}-wasm-bindgen-cli-cargo-vendor.txt",
+          "cargo_vendor_manifest_sha256" => "d274e859ec2dd094ad7fa8090e3b66852323c9e8eb2c5d8de84093ff038956be",
+          "cargo_vendor_source_date_epoch" => 1_728_598_471
+        },
+        "historical_correspondence_proof" => {
+          "rustc" => "1.86.0-nightly (3f43b1a63 2025-01-03)",
+          "wasm_bindgen" => "0.2.95 (3a8da7cb8)",
+          "walrus" => "0.22.0",
+          "generated_javascript_sha256" => "d60656705f0d59baa79e36b0381eb023f1864eeb57e92956cf21dcd9fb8f879f",
+          "generated_declarations_sha256" => "b3f7efb72280d1c32cf17dbe436fb783e3f04dc0da56e8c4eaa0ccab3da43d23",
+          "generated_glue_byte_identical_to_npm" => true,
+          "historical_wasm_byte_identical_to_npm" => false
+        },
+        "fedora_source_build" => {
+          "rustc" => "1.97.1",
+          "rust_std_target" => "rust-std-static-wasm32-unknown-unknown-1.97.1",
+          "cargo_profile" => "release",
+          "path_remap" => "--remap-path-prefix=$PWD=/usr/src/debug/opencode-1.18.5/.photon-source",
+          "wasm_bindgen_cli_built_from_source" => true,
+          "raw_output_sha256" => "d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d",
+          "raw_output_bytes" => 2_541_956,
+          "local_output_sha256" => "be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783",
+          "output_bytes" => 1_861_027,
+          "generated_javascript_sha256" => "902925782b9728db0ab7a868f8a5268d7def877525dc6c256ab71c9a88eb4a28",
+          "generated_declarations_sha256" => "fdb8f94706efcc46aa0381b7e1eb12c7967c3dce46d3a8bb21c578d36e22cf55",
+          "local_rebuilds" => 2,
+          "path_distinct_rebuilds" => true,
+          "local_rebuilds_byte_identical" => true,
+          "network_isolated" => true,
+          "published_javascript_abi_verified" => true,
+          "png_smoke_sha256" => "4d01524111816b3318a093b852f8da4b823b092462d290cc15e0ad401573cd9e",
+          "jpeg_smoke_sha256" => "e1327581cb0c70b6658d6ce024165f880bfc484f68473b8d97f5adf6d4488108",
+          "decode_resize_encode_verified" => true,
+          "local_proof_only" => true
+        },
+        "linked_source_license" => "photon-rs-LICENSE.md",
+        "linked_source_license_sha256" => "c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7",
+        "published_payload_discarded" => true
+      }
+      errors << "#{prefix} Photon source-build evidence does not match" unless photon&.dig("provenance", "source_build") == expected_photon_build
+      errors << "#{prefix} Photon must be rebuilt" unless photon&.dig("decision", "action") == "rebuild"
+      errors << "#{prefix} Photon source mapping is not verified" unless photon&.dig("decision", "source_mapping_verified") == true
+      errors << "#{prefix} Photon reproducible build is not verified" unless photon&.dig("decision", "reproducible_build_verified") == true
+      photon_manifest = File.join(package.directory, expected_photon_build.fetch("cargo_vendor_manifest"))
+      wasm_bindgen_manifest = File.join(package.directory, expected_photon_build.dig("wasm_bindgen_cli", "cargo_vendor_manifest"))
+      errors << "#{prefix} Photon Cargo vendor manifest is missing" unless File.file?(photon_manifest)
+      errors << "#{prefix} wasm-bindgen CLI Cargo vendor manifest is missing" unless File.file?(wasm_bindgen_manifest)
+      if File.file?(photon_manifest)
+        errors << "#{prefix} Photon Cargo vendor manifest SHA-256 does not match" unless Digest::SHA256.file(photon_manifest).hexdigest == expected_photon_build.fetch("cargo_vendor_manifest_sha256")
+        errors << "#{prefix} Photon Cargo vendor manifest count does not match" unless File.readlines(photon_manifest, chomp: true).length == expected_photon_build.fetch("cargo_vendor_crates")
+      end
+      if File.file?(wasm_bindgen_manifest)
+        errors << "#{prefix} wasm-bindgen CLI Cargo vendor manifest SHA-256 does not match" unless Digest::SHA256.file(wasm_bindgen_manifest).hexdigest == expected_photon_build.dig("wasm_bindgen_cli", "cargo_vendor_manifest_sha256")
+        errors << "#{prefix} wasm-bindgen CLI Cargo vendor manifest count does not match" unless File.readlines(wasm_bindgen_manifest, chomp: true).length == expected_photon_build.dig("wasm_bindgen_cli", "cargo_vendor_crates")
+      end
+      [
+        "Source45:       https://static.crates.io/crates/photon-rs/photon-rs-%{photon_source_version}.crate",
+        "Source46:       %{name}-%{version}-photon-cargo-vendor.tar.zst",
+        "Source47:       %{name}-%{version}-photon-cargo-vendor.txt",
+        "Source48:       https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-%{wasm_bindgen_cli_source_version}.crate",
+        "Source49:       %{name}-%{version}-wasm-bindgen-cli-cargo-vendor.tar.zst",
+        "Source50:       %{name}-%{version}-wasm-bindgen-cli-cargo-vendor.txt",
+        "BuildRequires:  rust-std-static-wasm32-unknown-unknown",
+        'RUSTFLAGS="--remap-path-prefix=$PWD=/usr/src/debug/%{name}-%{version}/.photon-source"',
+        "cargo build -j4 --release --frozen --target wasm32-unknown-unknown --lib",
+        'echo "%{photon_raw_wasm_sha256}  target/wasm32-unknown-unknown/release/photon_rs.wasm" | sha256sum -c -',
+        ".wasm-bindgen-cli-source/target/release/wasm-bindgen",
+        'echo "%{photon_rebuilt_wasm_sha256}  .build-tools/photon/photon_rs_bg.wasm" | sha256sum -c -',
+        "Photon PNG smoke mismatch",
+        "photon-rs-LICENSE.md"
+      ].each do |snippet|
+        errors << "#{prefix} spec is missing Photon build requirement #{snippet}" unless opencode_spec.include?(snippet)
+      end
 
       expected_counts = {
         "component_identities" => reviewed_sources.length,
@@ -6129,8 +6223,13 @@ module Agentlab
         errors << "#{prefix} native review status #{key} does not match" unless native_review.dig("status", key) == value
         errors << "#{prefix} dependency native review #{key} does not match" unless native_finding[key] == value
       end
-      %w[native_sources_verified wasm_sources_verified reproducible_builds_verified].each do |flag|
-        errors << "#{prefix} native review must remain fail-closed for #{flag}" unless native_review.dig("status", flag) == false
+      expected_status_flags = {
+        "native_sources_verified" => false,
+        "wasm_sources_verified" => true,
+        "reproducible_builds_verified" => false
+      }
+      expected_status_flags.each do |flag, value|
+        errors << "#{prefix} native review status #{flag} does not match" unless native_review.dig("status", flag) == value
       end
       %w[exact_native_wasm_source_coverage registry_git_heads_checked local_git_refs_checked raw_source_audit_unchanged].each do |flag|
         errors << "#{prefix} native review validation flag #{flag} is not true" unless native_review.dig("validation", flag) == true

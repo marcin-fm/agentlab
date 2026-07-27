@@ -1,0 +1,216 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "open3"
+require "optparse"
+require "pathname"
+require_relative "lib/agentlab"
+
+module Agentlab
+  module OpenCodePhotonSources
+    SHA256 = /\A[0-9a-f]{64}\z/
+
+    module_function
+
+    def prepare!(spec_path:, workdir:, output_dir:)
+      spec_path = File.expand_path(spec_path)
+      workdir = File.expand_path(workdir)
+      output_dir = File.expand_path(output_dir)
+      raise Agentlab::Error, "OpenCode Photon workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
+
+      spec = File.read(spec_path)
+      release = spec_field(spec, "Version")
+      components = [
+        component(spec, release, "photon", "photon-rs"),
+        component(spec, release, "wasm_bindgen_cli", "wasm-bindgen-cli")
+      ]
+
+      FileUtils.rm_rf(workdir)
+      FileUtils.mkdir_p(workdir)
+      components.map do |entry|
+        prepare_component!(entry, File.dirname(spec_path), workdir, output_dir)
+      end
+    end
+
+    def component(spec, release, prefix, crate_name)
+      version = spec_global(spec, "#{prefix}_source_version")
+      {
+        "label" => prefix.tr("_", "-"),
+        "source_filename" => "#{crate_name}-#{version}.crate",
+        "source_sha256" => spec_global(spec, "#{prefix}_source_sha256"),
+        "vendor_root" => "agentlab-#{crate_name}-#{version}-vendor",
+        "vendor_filename" => "opencode-#{release}-#{prefix.tr('_', '-')}-cargo-vendor.tar.zst",
+        "vendor_sha256" => spec_global(spec, "#{prefix}_vendor_sha256"),
+        "manifest_filename" => "opencode-#{release}-#{prefix.tr('_', '-')}-cargo-vendor.txt",
+        "manifest_sha256" => spec_global(spec, "#{prefix}_vendor_manifest_sha256"),
+        "source_date_epoch" => Integer(spec_global(spec, "#{prefix}_vendor_source_date_epoch"), 10)
+      }
+    end
+
+    def prepare_component!(entry, specdir, workdir, output_dir)
+      label = entry.fetch("label")
+      source_path = File.join(specdir, entry.fetch("source_filename"))
+      manifest_path = File.join(specdir, entry.fetch("manifest_filename"))
+      verify_sha256!(entry.fetch("source_sha256"), "#{label} source")
+      verify_sha256!(entry.fetch("vendor_sha256"), "#{label} vendor")
+      verify_sha256!(entry.fetch("manifest_sha256"), "#{label} vendor manifest")
+      verify_file!(source_path, entry.fetch("source_sha256"), "#{label} source archive")
+      verify_file!(manifest_path, entry.fetch("manifest_sha256"), "#{label} vendor manifest")
+
+      component_workdir = File.join(workdir, label)
+      extract_dir = File.join(component_workdir, "source")
+      cargo_home = File.join(component_workdir, "cargo-home")
+      vendor_root = entry.fetch("vendor_root")
+      vendor_dir = File.join(component_workdir, vendor_root)
+      generated_dir = File.join(component_workdir, "generated")
+      comparison_dir = File.join(component_workdir, "comparison")
+      [extract_dir, cargo_home, generated_dir, comparison_dir].each { |path| FileUtils.mkdir_p(path) }
+
+      members = safe_archive_members(source_path, label)
+      roots = members.map { |path| path.split("/", 2).first }.uniq
+      raise Agentlab::Error, "OpenCode #{label} archive must contain one source root" unless roots.length == 1
+
+      run!("tar", "-xf", source_path, "-C", extract_dir)
+      source_root = File.join(extract_dir, roots.fetch(0))
+      cargo_manifest = File.join(source_root, "Cargo.toml")
+      cargo_lock = File.join(source_root, "Cargo.lock")
+      raise Agentlab::Error, "OpenCode #{label} Cargo manifest is missing" unless File.file?(cargo_manifest)
+      raise Agentlab::Error, "OpenCode #{label} Cargo lock is missing" unless File.file?(cargo_lock)
+
+      run!(
+        { "CARGO_HOME" => cargo_home },
+        "cargo", "vendor", "--locked", "--versioned-dirs",
+        "--manifest-path", cargo_manifest, vendor_dir
+      )
+      generated_manifest = manifest_bytes(vendor_dir)
+      unless generated_manifest == File.binread(manifest_path)
+        raise Agentlab::Error, "OpenCode #{label} generated vendor manifest does not match the checked manifest"
+      end
+
+      first = File.join(generated_dir, entry.fetch("vendor_filename"))
+      second = File.join(comparison_dir, entry.fetch("vendor_filename"))
+      create_archive!(component_workdir, vendor_root, first, entry.fetch("source_date_epoch"))
+      create_archive!(component_workdir, vendor_root, second, entry.fetch("source_date_epoch"))
+      raise Agentlab::Error, "OpenCode #{label} vendor archive is not deterministic" unless FileUtils.compare_file(first, second)
+      verify_file!(first, entry.fetch("vendor_sha256"), "#{label} vendor archive")
+
+      FileUtils.mkdir_p(output_dir)
+      output_path = File.join(output_dir, entry.fetch("vendor_filename"))
+      temporary = "#{output_path}.tmp-#{Process.pid}"
+      FileUtils.copy_file(first, temporary)
+      File.chmod(0o644, temporary)
+      File.rename(temporary, output_path)
+      {
+        "path" => output_path,
+        "size_bytes" => File.size(output_path),
+        "sha256" => entry.fetch("vendor_sha256")
+      }
+    ensure
+      FileUtils.rm_f(temporary) if defined?(temporary) && temporary
+    end
+
+    def manifest_bytes(vendor_dir)
+      records = Dir.children(vendor_dir).sort.map do |directory|
+        manifest = File.join(vendor_dir, directory, "Cargo.toml")
+        raise Agentlab::Error, "missing vendored Cargo manifest #{manifest}" unless File.file?(manifest)
+        package = package_identity(File.read(manifest))
+        [package.fetch("name"), package.fetch("version")]
+      end
+      raise Agentlab::Error, "duplicate OpenCode Photon vendor package identity" unless records.uniq.length == records.length
+
+      records.sort.map { |name, version| "#{name} v#{version}\n" }.join
+    end
+
+    def package_identity(manifest)
+      section = nil
+      values = {}
+      manifest.each_line do |line|
+        stripped = line.strip
+        if (section_match = stripped.match(/\A\[\[?([^\]]+)\]\]?\z/))
+          section = section_match[1]
+          next
+        end
+        next unless section == "package"
+        next unless (match = stripped.match(/\A(name|version)\s*=\s*"([^"]+)"\z/))
+
+        values[match[1]] = match[2]
+      end
+      unless values.keys.sort == %w[name version]
+        raise Agentlab::Error, "vendored Cargo package identity is incomplete"
+      end
+      values
+    end
+
+    def safe_archive_members(path, label)
+      output, error, status = Open3.capture3("tar", "-tf", path)
+      raise Agentlab::Error, "failed to list OpenCode #{label} source archive: #{error}" unless status.success?
+      members = output.lines.map(&:chomp).reject(&:empty?)
+      raise Agentlab::Error, "OpenCode #{label} source archive is empty" if members.empty?
+      members.each do |member|
+        pathname = Pathname.new(member)
+        if pathname.absolute? || pathname.each_filename.any? { |part| part == ".." }
+          raise Agentlab::Error, "unsafe OpenCode #{label} source archive path #{member.inspect}"
+        end
+      end
+      members
+    end
+
+    def create_archive!(workdir, vendor_root, output, source_date_epoch)
+      run!(
+        "tar", "--create", "--zstd", "--file", output,
+        "--sort=name", "--mtime=@#{source_date_epoch}", "--owner=0", "--group=0", "--numeric-owner",
+        "--pax-option=delete=atime,delete=ctime", "--transform=s,^#{vendor_root},cargo-vendor,",
+        "--directory", workdir, vendor_root
+      )
+    end
+
+    def verify_file!(path, expected_sha256, description)
+      raise Agentlab::Error, "missing OpenCode #{description} #{path}" unless File.file?(path)
+      actual = Digest::SHA256.file(path).hexdigest
+      raise Agentlab::Error, "OpenCode #{description} SHA-256 mismatch" unless actual == expected_sha256
+    end
+
+    def verify_sha256!(sha256, description)
+      raise Agentlab::Error, "invalid OpenCode #{description} SHA-256" unless sha256.match?(SHA256)
+    end
+
+    def spec_global(spec, name)
+      match = spec.match(/^%global\s+#{Regexp.escape(name)}\s+(\S+)\s*$/)
+      raise Agentlab::Error, "OpenCode spec is missing %global #{name}" unless match
+      match[1]
+    end
+
+    def spec_field(spec, name)
+      match = spec.match(/^#{Regexp.escape(name)}:\s+(\S+)\s*$/)
+      raise Agentlab::Error, "OpenCode spec is missing #{name}" unless match
+      match[1]
+    end
+
+    def run!(*command)
+      environment = command.first.is_a?(Hash) ? command.shift : {}
+      output, error, status = Open3.capture3(environment, *command)
+      return output if status.success?
+
+      raise Agentlab::Error, "command failed: #{command.join(' ')}\n#{error}#{output}"
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  spec = nil
+  workdir = nil
+  output_dir = nil
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/prepare-opencode-photon-sources --spec PATH --workdir PATH --output-dir PATH"
+    parser.on("--spec PATH", "OpenCode spec") { |path| spec = path }
+    parser.on("--workdir PATH", "Scratch directory below /srv/tmp") { |path| workdir = path }
+    parser.on("--output-dir PATH", "Generated Cargo vendor archive directory") { |path| output_dir = path }
+  end.parse!
+  abort("error: --spec, --workdir, and --output-dir are required") unless spec && workdir && output_dir
+
+  Agentlab::OpenCodePhotonSources.prepare!(spec_path: spec, workdir: workdir, output_dir: output_dir).each do |receipt|
+    puts "Wrote #{receipt.fetch('path')} (#{receipt.fetch('size_bytes')} bytes, #{receipt.fetch('sha256')})"
+  end
+end
