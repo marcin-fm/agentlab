@@ -30,11 +30,11 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 81b146ea3fae68c207d3b08ae47b3218ecf4796a59cea1f36db65f9c7468943d
+%global source_license_inventory_sha256 60417852910639a43311773c3499fc55b4e68778bf059fbac984697bd99a3b26
 %global source_license_audit_script_sha256 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
-%global final_linked_license_closure_sha256 9b648f9b459657473aec6d8a749a37ce434544c6113bac6cd7de66c8c90b0190
+%global final_linked_license_closure_sha256 ec778f52cdff7e855999459633632ae6b120944b022742d77dbd8c9fdb39f577
 %global final_linked_license_audit_script_sha256 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
-%global npm_code_generation_closure_sha256 9c8d3befc878e49a4a5cc5660dd9f7418d8348940ccbd82ec5f9d5dbb3e01d9c
+%global npm_code_generation_closure_sha256 4a2ad4bb6e1b357e21046c113432fc35c227c5b39464d1e0128e46de775593f2
 %global npm_code_generation_audit_script_sha256 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
@@ -44,7 +44,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.33%{?dist}
+Release:        0.0.34%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -112,6 +112,10 @@ Patch4:         bun-zig-build-cwd.patch
 # Use Fedora's shared C++ runtime instead of requiring unavailable static
 # libstdc++ and libgcc archives in the final Bun link.
 Patch5:         bun-fedora-shared-cxx-runtime.patch
+# Apply the same glibc-only Lightning CSS selection to arm64 without changing
+# the retained x86_64 patched lock or source-build evidence.
+# Fedora-specific; not submitted upstream because Bun 1.3.14 ignores libc selectors.
+Patch6:         bun-lightningcss-fedora-glibc-arm64-lock.patch
 
 ExclusiveArch:  x86_64
 
@@ -200,6 +204,9 @@ echo "%{npm_code_generation_audit_script_sha256}  %{SOURCE30}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
+%ifarch aarch64
+patch -p1 < %{PATCH6}
+%endif
 patch -p1 < %{PATCH4}
 patch -p1 < %{PATCH5}
 
@@ -232,7 +239,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.33 \
+  --rpm-release 0.0.34 \
   --date 2026-07-27 \
   --check \
   --receipt "%{SOURCE25}"
@@ -338,6 +345,14 @@ grep -Fq '"lightningcss-linux-x64-musl": ["lightningcss-linux-x64-musl@1.30.2", 
   bun.lock
 ! grep -Fq '"lightningcss-linux-x64-musl": ["lightningcss-linux-x64-musl@1.30.2", "", { "os": "linux", "cpu": "x64" }' \
   bun.lock
+%ifarch aarch64
+grep -Fq '"lightningcss-linux-arm64-gnu": ["lightningcss-linux-arm64-gnu@1.30.2", "", { "os": "linux", "cpu": "arm64" }' \
+  bun.lock
+grep -Fq '"lightningcss-linux-arm64-musl": ["lightningcss-linux-arm64-musl@1.30.2", "", { "os": "none", "cpu": "arm64" }' \
+  bun.lock
+! grep -Fq '"lightningcss-linux-arm64-musl": ["lightningcss-linux-arm64-musl@1.30.2", "", { "os": "linux", "cpu": "arm64" }' \
+  bun.lock
+%endif
 
 grep -Fq 'return static_cast<Type>(toInt32(value));' \
   vendor/WebKit/Source/JavaScriptCore/runtime/TypedArrayAdaptors.h
@@ -367,6 +382,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.34
+- Prove the arm64 source closure and network-isolated npm bootstrap inputs.
+
 * Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.33
 - Bind constants-browserify's exact package-local MIT notice to its release source.
 

@@ -2,13 +2,13 @@
   "schema": "bun-release-local-source-staging-proof/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.33",
+  "rpm_release": "0.0.34",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-27",
   "proof_mode": "two network-isolated rpmbuild prep runs from the complete checked SRPM",
   "production_spec": {
-    "size_bytes": 24251,
-    "sha256": "e2ff111689bdf9030a60a1686d0c022641f3ecb11e67d254bcb4d96742c4b556"
+    "size_bytes": 25151,
+    "sha256": "17a76d97a19dfc901ffc7d4a640ce59909bdc56fde013718b165fc7390082cd2"
   },
   "inputs": {
     "closure": {
@@ -28,16 +28,16 @@
     }
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.33.fc44.src.rpm",
-    "size_bytes": 318183751,
-    "sha256": "2364a13700c847eb4ef56f0822d43d14807ca4178ac57f636fe2e05d74cad11c",
+    "filename": "bun-1.3.14-0.0.34.fc44.src.rpm",
+    "size_bytes": 318184775,
+    "sha256": "dd01481b7e1c3165ccde0278f66a7d46e1fcb8f853149b71f632bcae055735cf",
     "digest_check": "ok",
-    "inventory_members": 38
+    "inventory_members": 39
   },
   "prep": {
     "network_namespace": true,
     "log_size_bytes": 11610,
-    "log_sha256": "20ff69560025acbf0c70ad1e7c1769594efa7f5500db7cdd483dacd9a73266e2",
+    "log_sha256": "ce3d0fa3efc060ce51cb964b1ae5f3eae095362ffa29b72059a7de16c40b7ed0",
     "staging_receipt": {
       "path": ".build-tools/release-local-source-staging.json",
       "size_bytes": 3897,
@@ -78,7 +78,7 @@
     "final_linked_license_closure_check": true
   },
   "reproduction": {
-    "second_network_isolated_prep_log_sha256": "34cf52823e2fcc73a27727a34525804c37b7b6ca40221248826374fb02b12247",
+    "second_network_isolated_prep_log_sha256": "ea02bd477b59f456d74774a2731bdd794c67f477e63c1964678a0bb5d0d254c3",
     "staging_receipt_byte_identical": true,
     "npm_cache_manifest_byte_identical": true
   },
@@ -100,5 +100,5 @@
     "rpm_build_executed": false,
     "rpm_installed": false
   },
-  "scope": "Two network-isolated production %prep proofs for the 18 native sources, Node.js headers, npm cache, current source-license inventory, final-link map, and npm code-generation evidence; not the frozen installs, final Bun build, relink payload, final license accounting, aarch64 proof, RPM payload, or COPR acceptance"
+  "scope": "Two network-isolated production %prep proofs for the 18 native sources, Node.js headers, npm cache, current source-license inventory, final-link map, and npm code-generation evidence; not the final Bun build, relink payload, final license accounting, aarch64 build, RPM payload, or COPR acceptance"
 }

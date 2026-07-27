@@ -2952,7 +2952,7 @@ module Agentlab
       "generated_sources" => 1,
       "packaging_sources" => 8,
       "declared_sources" => 31,
-      "patches" => 6
+      "patches" => spec.scan(/^Patch\d+:\s+/).length
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
     errors << "bun: source-delivery closure count mismatch" unless generation["canonical_closure_inputs"] == 255
@@ -3010,7 +3010,8 @@ module Agentlab
     errors << "bun: source-delivery SRPM size is invalid" unless srpm["size_bytes"].is_a?(Integer) && srpm["size_bytes"].positive?
     errors << "bun: source-delivery SRPM SHA-256 is invalid" unless srpm["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     errors << "bun: source-delivery SRPM digest check failed" unless srpm["digest_check"] == "ok"
-    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == 38
+    expected_inventory_members = generation["declared_sources"].to_i + generation["patches"].to_i + 1
+    errors << "bun: source-delivery SRPM inventory mismatch" unless srpm["inventory_members"] == expected_inventory_members
     %w[inventory_sha256 member_manifest_sha256].each do |key|
       errors << "bun: source-delivery #{key} is invalid" unless srpm[key].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
@@ -4323,6 +4324,89 @@ module Agentlab
     ["bun: invalid current seed-build proof receipt: #{e.message}"]
   end
 
+  def validate_bun_aarch64_preflight(package, preflight, npm_lock, version, spec)
+    return ["bun: aarch64 preflight metadata is missing"] unless preflight.is_a?(Hash)
+
+    errors = []
+    target = { "os" => "linux", "cpu" => "arm64", "libc" => "glibc" }
+    errors << "bun: aarch64 preflight state mismatch" unless preflight["state"] == "npm_offline_install_verified"
+    errors << "bun: aarch64 preflight target mismatch" unless preflight["target"] == target
+
+    repo_root = File.expand_path("../..", package.directory)
+    verify_file = lambda do |base, metadata, path_key, sha_key, label|
+      name = metadata.is_a?(Hash) && metadata[path_key]
+      path = name.is_a?(String) && File.join(base, name)
+      expected = metadata.is_a?(Hash) && metadata[sha_key]
+      valid = path && File.file?(path) && expected.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(path).hexdigest == expected
+      errors << "bun: aarch64 #{label} is missing or has wrong SHA-256" unless valid
+      path if valid
+    end
+
+    closure_metadata = preflight["source_closure"]
+    closure_path = verify_file.call(package.directory, closure_metadata, "source", "sha256", "source closure")
+    verify_file.call(repo_root, closure_metadata, "acquisition_helper", "acquisition_helper_sha256", "source acquisition helper")
+    if closure_path
+      closure = JSON.parse(File.read(closure_path))
+      errors << "bun: aarch64 source closure schema mismatch" unless closure["schema"] == "bun-release-local-source-closure/v3"
+      errors << "bun: aarch64 source closure identity mismatch" unless closure["package"] == "bun" && closure["release"] == version
+      errors << "bun: aarch64 source closure target mismatch" unless closure["target"] == target
+      summary = closure.dig("npm", "summary") || {}
+      errors << "bun: aarch64 source closure selected-count mismatch" unless summary["target_selected_sources"] == closure_metadata["selected_npm_source_records"]
+      errors << "bun: aarch64 source closure unique-count mismatch" unless summary["unique_sources"] == closure_metadata["unique_npm_source_archives"]
+      errors << "bun: aarch64 source closure archive count mismatch" unless Array(closure.dig("npm", "source_archives")).length == closure_metadata["unique_npm_source_archives"]
+    end
+
+    arm64_patch_path = verify_file.call(package.directory, npm_lock, "arm64_patch", "arm64_patch_sha256", "lock patch")
+    errors << "bun: aarch64 lock patch is not declared in the spec" unless spec.include?("Patch6:         #{npm_lock['arm64_patch']}")
+    errors << "bun: aarch64 lock patch is not architecture-conditional" unless spec.include?("%ifarch aarch64\npatch -p1 < %{PATCH6}\n%endif")
+
+    seed = preflight["bootstrap_seed"] || {}
+    errors << "bun: aarch64 seed release mismatch" unless seed["release_pin"] == "bun-v#{version}"
+    errors << "bun: aarch64 seed architecture mismatch" unless seed["architecture"] == "aarch64"
+    errors << "bun: aarch64 seed identity is incomplete" unless %w[sha256 binary_sha256].all? { |key| seed[key].to_s.match?(/\A[0-9a-f]{64}\z/) } && seed["binary_size_bytes"].is_a?(Integer) && seed["binary_size_bytes"].positive?
+    errors << "bun: aarch64 seed policy boundary mismatch" unless seed["bootstrap_only"] == true && seed["final_payload_allowed"] == false && seed["final_runtime_dependency_allowed"] == false
+    begin
+      errors << "bun: aarch64 seed URL must use HTTPS" unless URI(seed["url"]).is_a?(URI::HTTPS)
+    rescue URI::InvalidURIError, TypeError
+      errors << "bun: invalid aarch64 seed URL"
+    end
+
+    mock = preflight["mock"] || {}
+    errors << "bun: aarch64 Mock preflight mismatch" unless mock["config"] == "fedora-44-aarch64" && mock["forcearch"] == "aarch64" && mock["uname_machine"] == "aarch64"
+    errors << "bun: aarch64 lol-html preflight mismatch" unless mock["lolhtml_nevra"] == "lol-html-3.0.0-0.10.fc44.aarch64" && mock["lolhtml_devel_nevra"] == "lol-html-devel-3.0.0-0.10.fc44.aarch64" && mock["lolhtml_pkgconfig_version"] == "1.4.0"
+
+    npm = preflight["npm_offline_install"]
+    errors << "bun: aarch64 npm proof state mismatch" unless npm.is_a?(Hash) && npm["state"] == "verified"
+    receipt_path = verify_file.call(package.directory, npm, "receipt", "receipt_sha256", "npm proof")
+    verify_file.call(repo_root, npm, "proof_helper", "proof_helper_sha256", "npm proof helper")
+    if receipt_path
+      receipt = JSON.parse(File.read(receipt_path))
+      errors << "bun: aarch64 npm proof schema mismatch" unless receipt["schema"] == "bun-npm-offline-install-proof/v1"
+      errors << "bun: aarch64 npm proof identity mismatch" unless receipt["package"] == "bun" && receipt["release"] == version && receipt["target"] == target
+      errors << "bun: aarch64 npm proof closure mismatch" unless receipt.dig("source_closure", "path") == closure_metadata["source"] && receipt.dig("source_closure", "sha256") == closure_metadata["sha256"]
+      errors << "bun: aarch64 npm proof seed mismatch" unless receipt.dig("bootstrap_seed", "archive_sha256") == seed["sha256"] && receipt.dig("bootstrap_seed", "binary_sha256") == seed["binary_sha256"] && receipt.dig("bootstrap_seed", "binary_size_bytes") == seed["binary_size_bytes"]
+      errors << "bun: aarch64 npm proof lock patch mismatch" unless arm64_patch_path && receipt.dig("source_closure", "root_lock", "fedora_arm64_patch") == npm_lock["arm64_patch"] && receipt.dig("source_closure", "root_lock", "fedora_arm64_patch_sha256") == npm_lock["arm64_patch_sha256"]
+      cache = receipt["cache"] || {}
+      errors << "bun: aarch64 npm proof cache mismatch" unless cache["source_archives"] == npm["cache_entries"] && cache["materialized_entries"] == npm["cache_entries"] && cache.dig("tree", "sha256") == npm["cache_tree_sha256"]
+      roots = Array(receipt.dig("install", "install_roots")).to_h { |root| [root["path"], root.dig("node_modules", "sha256")] }
+      expected_roots = {
+        "." => npm["root_node_modules_sha256"],
+        "packages/bun-error" => npm["bun_error_node_modules_sha256"],
+        "src/node-fallbacks" => npm["node_fallbacks_node_modules_sha256"]
+      }
+      errors << "bun: aarch64 npm proof install roots mismatch" unless roots == expected_roots
+      controls = receipt["install"] || {}
+      errors << "bun: aarch64 npm proof controls are incomplete" unless %w[network_namespace frozen_lockfile ignore_scripts serialized].all? { |key| controls[key] == true }
+      validation = receipt["validation"] || {}
+      errors << "bun: aarch64 npm proof validation is incomplete" unless %w[source_files_unchanged seed_absent_from_node_modules npm_cache_materialization_verified npm_offline_install_verified].all? { |key| validation[key] == true }
+      errors << "bun: aarch64 npm proof overclaims later stages" unless validation["dependency_resolution_performed"] == false && validation["full_bun_build_performed"] == false
+    end
+
+    errors
+  rescue JSON::ParserError, KeyError, TypeError => e
+    errors << "bun: invalid aarch64 preflight evidence: #{e.message}"
+  end
+
   def validate_bun_build_plan(package, spec)
     return [] unless package.name == "bun"
 
@@ -4384,6 +4468,7 @@ module Agentlab
     final_linked_license_closure = source_inputs.is_a?(Hash) && source_inputs["final_linked_license_closure"]
     build_graph = source_inputs.is_a?(Hash) && source_inputs["build_graph"]
     seed = source_inputs.is_a?(Hash) && source_inputs["bootstrap_seed"]
+    aarch64_preflight = source_inputs.is_a?(Hash) && source_inputs["aarch64_preflight"]
 
     if webkit.is_a?(Hash)
       errors << "bun: WebKit source must be pinned by the Bun release" unless webkit["release_pin"] == "bun-v#{version}"
@@ -4406,6 +4491,9 @@ module Agentlab
 
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
     errors.concat(validate_bun_npm_offline_install(package, stages["dependency_closure"], version))
+    if plan["aarch64_preflight_required"] == true || aarch64_preflight.is_a?(Hash)
+      errors.concat(validate_bun_aarch64_preflight(package, aarch64_preflight, npm_lock, version, spec))
+    end
     errors.concat(validate_bun_system_lolhtml(package, lolhtml, stages, version, spec))
     errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
     errors.concat(validate_bun_lolhtml_rpm_cargo(package, stages["lolhtml_rpm_cargo"], stages["dependency_closure"], lolhtml, version, spec))
@@ -5606,7 +5694,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.17%{?dist}",
+            "Release:        0.18%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -5892,7 +5980,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.17%{?dist}",
+        "Release:        0.18%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6435,8 +6523,8 @@ module Agentlab
           "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
-          "source_rpm_nvr" => "opencode-1.18.5-0.17.fc44",
-          "source_rpm_sha256" => "fb96760573f03915f5109df8e925f3f3bc55838a3e58c1d3abf5ac31c64bc71c",
+          "source_rpm_nvr" => "opencode-1.18.5-0.18.fc44",
+          "source_rpm_sha256" => "1ec37fcf8d8f946d0d572712a38c2f9865bd6f3a2d02487b6b67c08dd38ead09",
           "source_members" => 57,
           "configured_scm_generation_verified" => true,
           "binary_build_performed" => false,
@@ -6463,7 +6551,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.17%{?dist}",
+          "Release:        0.18%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

@@ -20,6 +20,7 @@ version = package.upstream.fetch("current_version").to_s
 source_commit = package.upstream.fetch("source_commit").to_s
 closure_path = File.join(package.directory, "bun-#{version}-release-local-source-closure.json")
 lock_patch = File.join(package.directory, "bun-lightningcss-fedora-glibc-lock.patch")
+arm64_lock_patch = File.join(package.directory, "bun-lightningcss-fedora-glibc-arm64-lock.patch")
 cache_dir = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
 bun_source_archive = "/srv/tmp/agentlab-bun/bun-v#{version}.tar.gz"
 seed_archive = "/srv/tmp/agentlab-bun/bun-seed-#{version}-linux-x64.zip"
@@ -33,6 +34,7 @@ check = false
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prove-bun-npm-offline-install [options]"
+  parser.on("--closure PATH", "Checked target-specific source-closure receipt") { |path| closure_path = path }
   parser.on("--cache-dir PATH", "Checked Bun dependency-source cache") { |path| cache_dir = path }
   parser.on("--bun-source-archive PATH", "Checked Bun release source archive") { |path| bun_source_archive = path }
   parser.on("--seed-archive PATH", "Checked bootstrap-only Bun seed archive") { |path| seed_archive = path; seed_archive_explicit = true }
@@ -51,6 +53,7 @@ raise Agentlab::Error, "--driver-receipt requires --source-built-driver" if !sou
 output ||= File.join(package.directory, source_driver_mode ? "source-built-npm-install-proof.json" : "npm-offline-install-proof.json")
 
 cache_dir = File.realpath(cache_dir)
+closure_path = File.expand_path(closure_path)
 bun_source_archive = File.expand_path(bun_source_archive)
 seed_archive = File.expand_path(seed_archive)
 source_built_driver = File.expand_path(source_built_driver) if source_built_driver
@@ -479,18 +482,26 @@ rescue JSON::ParserError, KeyError => e
 end
 
 metadata = package.data.fetch("build_plan")
-seed = metadata.fetch("source_inputs").fetch("bootstrap_seed")
-raise Agentlab::Error, "Bun seed is not bootstrap-only" unless seed.fetch("bootstrap_only") == true
-raise Agentlab::Error, "Bun seed is permitted in final payload" unless seed.fetch("final_payload_allowed") == false
-raise Agentlab::Error, "Bun seed is permitted as final runtime dependency" unless seed.fetch("final_runtime_dependency_allowed") == false
+source_inputs = metadata.fetch("source_inputs")
 
 closure_bytes = File.binread(closure_path)
-expected_closure_sha = metadata.fetch("stages").fetch("dependency_closure").fetch("proof_receipt_sha256")
-raise Agentlab::Error, "source-closure receipt checksum mismatch" unless Digest::SHA256.hexdigest(closure_bytes) == expected_closure_sha
 closure = JSON.parse(closure_bytes)
 raise Agentlab::Error, "unsupported source-closure schema" unless closure["schema"] == "bun-release-local-source-closure/v3"
 raise Agentlab::Error, "source closure is not Bun #{version}" unless closure["package"] == "bun" && closure["release"] == version
-raise Agentlab::Error, "source closure target changed" unless closure["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+target = closure.fetch("target")
+unless target["os"] == "linux" && %w[x64 arm64].include?(target["cpu"]) && target["libc"] == "glibc"
+  raise Agentlab::Error, "unsupported source closure target #{target.inspect}"
+end
+arm64 = target.fetch("cpu") == "arm64"
+target_evidence = arm64 ? source_inputs.fetch("aarch64_preflight") : metadata.fetch("stages").fetch("dependency_closure")
+expected_closure_sha = arm64 ? target_evidence.dig("source_closure", "sha256") : target_evidence.fetch("proof_receipt_sha256")
+raise Agentlab::Error, "source-closure receipt checksum mismatch" unless Digest::SHA256.hexdigest(closure_bytes) == expected_closure_sha
+seed = arm64 ? target_evidence.fetch("bootstrap_seed") : source_inputs.fetch("bootstrap_seed")
+raise Agentlab::Error, "source-built arm64 npm proof is not implemented" if arm64 && source_driver_mode
+raise Agentlab::Error, "missing Fedora arm64 glibc lock patch #{arm64_lock_patch}" if arm64 && !File.file?(arm64_lock_patch)
+raise Agentlab::Error, "Bun seed is not bootstrap-only" unless seed.fetch("bootstrap_only") == true
+raise Agentlab::Error, "Bun seed is permitted in final payload" unless seed.fetch("final_payload_allowed") == false
+raise Agentlab::Error, "Bun seed is permitted as final runtime dependency" unless seed.fetch("final_runtime_dependency_allowed") == false
 
 npm = closure.fetch("npm")
 sources = npm.fetch("source_archives")
@@ -540,7 +551,7 @@ else
   zip_entries.each do |entry|
     raise Agentlab::Error, "unsafe Bun seed ZIP entry: #{entry}" unless safe_relative_path(entry)
   end
-  seed_member = "bun-linux-x64/bun"
+  seed_member = seed.fetch("member", "bun-linux-#{target.fetch('cpu')}/bun")
   raise Agentlab::Error, "Bun seed ZIP lacks #{seed_member}" unless zip_entries.include?(seed_member)
   install_driver = File.join(workdir, "bun-seed")
   extract_zip_member!(seed_archive, seed_member, install_driver, workdir)
@@ -614,14 +625,19 @@ source_files.each do |relative, expected_sha256|
 end
 upstream_root_lock_sha = Digest::SHA256.file(File.join(proof_source, "bun.lock")).hexdigest
 lock_patch_sha = Digest::SHA256.file(lock_patch).hexdigest
-run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", lock_patch], chdir: proof_source)
-run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", lock_patch], chdir: proof_source)
+lock_patches = [lock_patch]
+lock_patches << arm64_lock_patch if arm64
+lock_patches.each do |path|
+  run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", path], chdir: proof_source)
+  run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", path], chdir: proof_source)
+end
 patched_root_lock = File.join(proof_source, "bun.lock")
 patched_root_lock_sha = Digest::SHA256.file(patched_root_lock).hexdigest
 raise Agentlab::Error, "Fedora lock patch did not change the root lock" if patched_root_lock_sha == upstream_root_lock_sha
 patched_lock_text = File.read(patched_root_lock)
-unless patched_lock_text.include?('"lightningcss-linux-x64-gnu": ["lightningcss-linux-x64-gnu@1.30.2", "", { "os": "linux", "cpu": "x64" }') &&
-       patched_lock_text.include?('"lightningcss-linux-x64-musl": ["lightningcss-linux-x64-musl@1.30.2", "", { "os": "none", "cpu": "x64" }')
+target_cpu = target.fetch("cpu")
+unless patched_lock_text.include?(%Q{"lightningcss-linux-#{target_cpu}-gnu": ["lightningcss-linux-#{target_cpu}-gnu@1.30.2", "", { "os": "linux", "cpu": "#{target_cpu}" }}) &&
+       patched_lock_text.include?(%Q{"lightningcss-linux-#{target_cpu}-musl": ["lightningcss-linux-#{target_cpu}-musl@1.30.2", "", { "os": "none", "cpu": "#{target_cpu}" }})
   raise Agentlab::Error, "Fedora lock patch does not preserve GNU and exclude musl Lightning CSS"
 end
 install_roots.each_key { |relative| FileUtils.rm_rf(File.join(proof_source, relative, "node_modules")) }
@@ -759,6 +775,19 @@ if source_driver_mode
   }.merge(validation_receipt)
 end
 
+root_lock_receipt = {
+  "upstream_sha256" => upstream_root_lock_sha,
+  "fedora_patch" => File.basename(lock_patch),
+  "fedora_patch_sha256" => lock_patch_sha,
+  "patched_sha256" => patched_root_lock_sha,
+  "lightningcss_gnu_enabled" => true,
+  "lightningcss_musl_enabled" => false
+}
+if arm64
+  root_lock_receipt["fedora_arm64_patch"] = File.basename(arm64_lock_patch)
+  root_lock_receipt["fedora_arm64_patch_sha256"] = Digest::SHA256.file(arm64_lock_patch).hexdigest
+end
+
 receipt = {
   "schema" => source_driver_mode ? "bun-npm-offline-install-proof/v2" : "bun-npm-offline-install-proof/v1",
   "package" => "bun",
@@ -768,14 +797,7 @@ receipt = {
     "path" => File.basename(closure_path),
     "sha256" => expected_closure_sha,
     "bun_source_archive_sha256" => closure.dig("source_tree", "source_sha256"),
-    "root_lock" => {
-      "upstream_sha256" => upstream_root_lock_sha,
-      "fedora_patch" => File.basename(lock_patch),
-      "fedora_patch_sha256" => lock_patch_sha,
-      "patched_sha256" => patched_root_lock_sha,
-      "lightningcss_gnu_enabled" => true,
-      "lightningcss_musl_enabled" => false
-    }
+    "root_lock" => root_lock_receipt
   },
 }.merge(driver_evidence).merge(
   "cache" => {
@@ -792,7 +814,7 @@ receipt = {
   "validation" => validation_receipt,
   "scope" => source_driver_mode ?
     "network-isolated source-built-driver frozen installs for Bun 1.3.14's three codegen npm roots; final graph, relink payload, license review, aarch64, and RPM remain blocked" :
-    "network-isolated frozen installs for Bun 1.3.14's three codegen npm roots; native integration, the first source build, self-rebuild, final payload, and RPM remain blocked"
+    "network-isolated #{target_cpu} frozen installs for Bun 1.3.14's three codegen npm roots; native integration, the first source build, self-rebuild, final payload, and RPM remain blocked"
 )
 canonical = JSON.pretty_generate(receipt) + "\n"
 if check

@@ -13,7 +13,7 @@
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
       "size_bytes": 126685,
-      "sha256": "81b146ea3fae68c207d3b08ae47b3218ecf4796a59cea1f36db65f9c7468943d"
+      "sha256": "60417852910639a43311773c3499fc55b4e68778bf059fbac984697bd99a3b26"
     },
     "relink_audit": {
       "path": "packages/bun/relink-materials-proof.json",

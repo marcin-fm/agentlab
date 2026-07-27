@@ -14,7 +14,7 @@ require "thread"
 require "zlib"
 require_relative "lib/agentlab"
 
-TARGET = { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }.freeze
+TARGET_CPUS = %w[x64 arm64].freeze
 CAPTURE_SUFFIXES = %w[
   Cargo.lock
   c-api/Cargo.toml
@@ -357,12 +357,12 @@ def allowed_selector?(selector, target)
   included.empty? || included.include?(target)
 end
 
-def platform_allowed?(package_key, identifier, metadata)
-  return false unless allowed_selector?(metadata["os"], TARGET.fetch("os"))
-  return false unless allowed_selector?(metadata["cpu"], TARGET.fetch("cpu"))
+def platform_allowed?(package_key, identifier, metadata, target)
+  return false unless allowed_selector?(metadata["os"], target.fetch("os"))
+  return false unless allowed_selector?(metadata["cpu"], target.fetch("cpu"))
 
   libc = metadata["libc"]
-  return false if libc && !allowed_selector?(libc, TARGET.fetch("libc")) && !allowed_selector?(libc, "gnu")
+  return false if libc && !allowed_selector?(libc, target.fetch("libc")) && !allowed_selector?(libc, "gnu")
   return false if [package_key, identifier].any? { |value| value.match?(/(?:\A|[-_\/])musl(?:\z|[-_\/])/) }
 
   true
@@ -395,7 +395,7 @@ def registry_source(name, resolution)
   }
 end
 
-def npm_lock_receipt(source_dir, relative_dir)
+def npm_lock_receipt(source_dir, relative_dir, target)
   root = File.join(source_dir, relative_dir)
   package_path = File.join(root, "package.json")
   lock_path = File.join(root, "bun.lock")
@@ -416,7 +416,7 @@ def npm_lock_receipt(source_dir, relative_dir)
     next if resolution.start_with?("workspace:")
 
     metadata = tuple.find { |entry| entry.is_a?(Hash) } || {}
-    unless platform_allowed?(package_key, identifier, metadata)
+    unless platform_allowed?(package_key, identifier, metadata, target)
       excluded << package_key
       next
     end
@@ -660,8 +660,9 @@ end
 package = Agentlab.package_named("bun")
 version = package.upstream.fetch("current_version").to_s
 source_dir = nil
-workdir = "/srv/tmp/agentlab-bun/release-local-sources-#{version}"
-output = File.join(package.directory, "bun-#{version}-release-local-source-closure.json")
+target_cpu = "x64"
+workdir = nil
+output = nil
 jobs = 4
 plan = false
 check = false
@@ -669,6 +670,7 @@ check = false
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/acquire-bun-release-local-sources --source-dir PATH [options]"
   parser.on("--source-dir PATH", "Extracted Bun release source") { |path| source_dir = path }
+  parser.on("--target-cpu CPU", TARGET_CPUS, "Linux target CPU (x64 or arm64)") { |value| target_cpu = value }
   parser.on("--workdir PATH", "Marked resumable work directory below /srv/tmp") { |path| workdir = path }
   parser.on("--output PATH", "Canonical source-closure receipt") { |path| output = path }
   parser.on("--jobs N", Integer, "Concurrent downloads (1-4)") { |value| jobs = value }
@@ -678,6 +680,10 @@ end.parse!
 
 raise Agentlab::Error, "--source-dir is required" unless source_dir
 raise Agentlab::Error, "--jobs must be between 1 and 4" unless (1..4).cover?(jobs)
+target = { "os" => "linux", "cpu" => target_cpu, "libc" => "glibc" }.freeze
+target_suffix = target_cpu == "x64" ? "" : "-#{target_cpu}"
+workdir ||= "/srv/tmp/agentlab-bun/release-local-sources-#{version}#{target_suffix}"
+output ||= File.join(package.directory, "bun-#{version}-release-local-source-closure#{target_suffix}.json")
 
 source_dir = File.realpath(source_dir)
 package_json_path = File.join(source_dir, "package.json")
@@ -705,7 +711,7 @@ if plan
     "package" => "bun",
     "release" => version,
     "profile" => "release-local",
-    "target" => TARGET,
+    "target" => target,
     "all_dependencies" => dependencies.length,
     "selected_github_archives" => github_sources.length,
     "selected_node_header_archives" => 1,
@@ -764,7 +770,7 @@ sqlite_file = File.join(sqlite_dir, "sqlite3.c")
 raise Agentlab::Error, "missing selected in-tree SQLite source #{sqlite_file}" unless File.file?(sqlite_file)
 
 npm_roots = ["", "packages/bun-error", "src/node-fallbacks"].map do |relative|
-  npm_lock_receipt(source_dir, relative)
+  npm_lock_receipt(source_dir, relative, target)
 end
 npm_sources = deduplicate_npm_sources(npm_roots)
 
@@ -822,7 +828,7 @@ receipt = {
   "package" => package.name,
   "release" => version,
   "profile" => "release-local",
-  "target" => TARGET,
+  "target" => target,
   "source_tree" => {
     "source_sha256" => package.upstream.fetch("source_sha256"),
     "package_json_sha256" => Digest::SHA256.file(package_json_path).hexdigest,
@@ -879,7 +885,7 @@ receipt = {
     "dependency_resolution_performed" => false,
     "build_executed" => false
   },
-  "scope" => "checksummed local acquisition of selected Linux x86_64 glibc release-local native, Node.js header, and npm archives; Fedora's external lol-html provider is excluded from the Bun source closure, while immutable hosting and complete offline materialization remain blocked"
+  "scope" => "checksummed local acquisition of selected Linux #{target_cpu == 'x64' ? 'x86_64' : target_cpu} glibc release-local native, Node.js header, and npm archives; Fedora's external lol-html provider is excluded from the Bun source closure, while immutable hosting and complete offline materialization remain blocked"
 }
 content = JSON.pretty_generate(receipt) + "\n"
 
