@@ -1,0 +1,203 @@
+{
+  "schema": "agentlab-opencode-final-license-closure/v1",
+  "package": "opencode",
+  "release": "1.18.5",
+  "audit_date": "2026-07-27",
+  "auditor": {
+    "path": "scripts/audit-opencode-final-licenses",
+    "size_bytes": 15548,
+    "sha256": "8e8f8033df0e0770263112fa0a8feb563a67f0cf3c05a7b009ad28d3508d9c9f"
+  },
+  "inputs": {
+    "binary_embedding": {
+      "path": "packages/opencode/opencode-1.18.5-binary-embedding.json",
+      "size_bytes": 622233,
+      "sha256": "496be59e95b845de847bced424c0e48a340969568eacea7f01fa0b12ae2a0f14"
+    },
+    "source_license_set": {
+      "path": "packages/opencode/source-license-set-proof.json",
+      "size_bytes": 2354,
+      "sha256": "62fc352dd22085a2375c06a3cd6a996ac01534fd27132ab49464d47c540854ef"
+    },
+    "license_review": {
+      "path": "packages/opencode/license-review.yml",
+      "size_bytes": 8907,
+      "sha256": "4248cf9d4e78236ad4b30f403137ff33f8b300b9fbd9cbf7f55a9599cc149848"
+    },
+    "native_review": {
+      "path": "packages/opencode/native-review.yml",
+      "size_bytes": 42555,
+      "sha256": "ae3ee5750c2f727b5895cd89c1c9b0d45a2f668f1943d6654f16d0be46b3a006"
+    },
+    "bun_final_linked_license_closure": {
+      "path": "packages/bun/bun-1.3.14-final-linked-license-closure.json",
+      "size_bytes": 1978162,
+      "sha256": "185013a147abf5bbc8e8035fbdce3ed9e26fed848d6772c507fff084d78aaf61"
+    }
+  },
+  "candidate_expressions": {
+    "selected_source_set": "(AFL-2.1 OR BSD-3-Clause) AND (MIT OR CC0-1.0) AND (MPL-2.0 OR Apache-2.0) AND 0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT",
+    "embedded_npm": "0BSD AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND BlueOak-1.0.0 AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND ISC AND MIT",
+    "final_aggregate": null
+  },
+  "opencode_npm": {
+    "embedded_package_paths": 531,
+    "embedded_public_name_versions": 491,
+    "resolved_license_text_packages": [
+      "@aws-sdk/credential-provider-http@3.972.43",
+      "@aws-sdk/credential-provider-login@3.972.45",
+      "@aws-sdk/nested-clients@3.997.13",
+      "@sigstore/verify@3.1.1",
+      "drizzle-orm@1.0.0-rc.2",
+      "opencode-poe-auth@0.0.1",
+      "poe-oauth@0.0.8",
+      "remeda@2.26.0",
+      "spdx-exceptions@2.5.0",
+      "spdx-license-ids@3.0.23"
+    ],
+    "license_text_payloads": [
+      {
+        "filename": "opencode-1.18.5-aws-sdk-js-v3-LICENSE",
+        "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+        "packages": [
+          "@aws-sdk/credential-provider-http@3.972.43",
+          "@aws-sdk/credential-provider-login@3.972.45",
+          "@aws-sdk/nested-clients@3.997.13"
+        ]
+      },
+      {
+        "filename": "opencode-1.18.5-drizzle-orm-LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "packages": [
+          "drizzle-orm@1.0.0-rc.2"
+        ]
+      },
+      {
+        "filename": "opencode-1.18.5-poe-platform-LICENSE",
+        "sha256": "0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13",
+        "packages": [
+          "opencode-poe-auth@0.0.1",
+          "poe-oauth@0.0.8"
+        ]
+      },
+      {
+        "filename": "opencode-1.18.5-remeda-LICENSE",
+        "sha256": "acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535",
+        "packages": [
+          "remeda@2.26.0"
+        ]
+      },
+      {
+        "filename": "opencode-1.18.5-sigstore-verify-LICENSE",
+        "sha256": "364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0",
+        "packages": [
+          "@sigstore/verify@3.1.1"
+        ]
+      },
+      {
+        "filename": "opencode-1.18.5-spdx-exceptions-README.md",
+        "sha256": "554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513",
+        "packages": [
+          "spdx-exceptions@2.5.0"
+        ]
+      }
+    ],
+    "no_additional_license_text_required": [
+      "spdx-license-ids@3.0.23"
+    ],
+    "notice_holds": [
+      {
+        "package": "@npmcli/agent@4.0.2",
+        "license": "ISC",
+        "reason": "The exact npm archive and v4.0.2 source omit the applicable copyright and permission notice."
+      },
+      {
+        "package": "abstract-logging@2.0.1",
+        "license": "MIT",
+        "reason": "The exact npm archive and v2.0.1 source omit a stable package-specific full notice."
+      },
+      {
+        "package": "opentui-spinner@0.0.7",
+        "license": "MIT",
+        "reason": "The exact npm archive and v0.0.7 source contain only the MIT identifier."
+      }
+    ],
+    "final_binary_inclusion_verified": true,
+    "bundled_provides_generated": true
+  },
+  "native_and_wasm": {
+    "component_identities_classified": 14,
+    "native_payloads_classified": 22,
+    "wasm_payloads_classified": 14,
+    "retained_prebuilt_payloads": 0,
+    "source_mappings_verified": 14,
+    "source_mappings_unresolved": 0,
+    "native_sources_verified": false,
+    "wasm_sources_verified": true,
+    "reproducible_builds_verified": false
+  },
+  "bun_runtime": {
+    "version": "1.3.14",
+    "target": "fedora-44-x86_64-glibc-system-lolhtml",
+    "linked_input_count": 1165,
+    "native_license_selections_verified": true,
+    "webkit_transitive_dependency_count": 5098,
+    "unresolved_webkit_headerless_files": [
+      "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp",
+      "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.h",
+      "source/Source/JavaScriptCore/runtime/InternalFieldTuple.cpp",
+      "source/Source/JavaScriptCore/runtime/InternalFieldTuple.h",
+      "source/Source/WTF/wtf/ForkExtras.h",
+      "source/Source/WTF/wtf/bun/RunLoopBun.cpp"
+    ],
+    "external_lolhtml_provider": {
+      "package": "lol-html",
+      "version": "3.0.0",
+      "c_api_version": "1.4.0",
+      "soname": "liblolhtml.so.1",
+      "link_flag": "-llolhtml",
+      "aggregate_expression": "BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib",
+      "linked_license_entries": 29,
+      "license_dependencies_sha256": "4e32b2460074c0364c17f7f2e4eeb12a52f81bd581d4b7e04f111cd22826f541",
+      "fedora_spdx_review_complete": true,
+      "excluded_from_bun_bundled_aggregate": true
+    },
+    "webkit_linked_file_semantic_review_verified": false,
+    "final_npm_codegen_closure_verified": false
+  },
+  "unresolved": {
+    "opencode_notice_holds": [
+      "@npmcli/agent@4.0.2",
+      "abstract-logging@2.0.1",
+      "opentui-spinner@0.0.7"
+    ],
+    "bun_webkit_headerless_files": [
+      "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp",
+      "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.h",
+      "source/Source/JavaScriptCore/runtime/InternalFieldTuple.cpp",
+      "source/Source/JavaScriptCore/runtime/InternalFieldTuple.h",
+      "source/Source/WTF/wtf/ForkExtras.h",
+      "source/Source/WTF/wtf/bun/RunLoopBun.cpp"
+    ],
+    "bun_npm_and_codegen_final_payload_provenance": true,
+    "bun_required_license_text_payload": true,
+    "final_aggregate_spdx_expression": true,
+    "rpm_license_payload": true,
+    "source_built_bun_clean_buildroot_availability": true,
+    "clean_fedora_build_matrix": true
+  },
+  "validation": {
+    "input_receipts_verified": true,
+    "source_set_expression_verified": true,
+    "npm_binary_inclusion_verified": true,
+    "resolved_opencode_license_text_payloads_verified": true,
+    "native_wasm_source_mapping_verified": true,
+    "bun_final_link_mapping_verified": true,
+    "all_required_license_texts_verified": false,
+    "final_aggregate_license_expression_verified": false,
+    "rpm_license_payload_complete": false,
+    "clean_fedora_build_matrix_verified": false,
+    "copr_submission_verified": false
+  },
+  "scope": "fail-closed final-license preflight for the exact OpenCode compiler graph, resolved native/WASM source mappings, and Bun runtime final-link evidence; three OpenCode notices, six Bun WebKit fork files, Bun npm/code-generation provenance, aggregate SPDX, required texts, RPM payload, clean target builds, and COPR remain unresolved"
+}

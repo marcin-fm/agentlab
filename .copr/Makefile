@@ -95,10 +95,21 @@ srpm:
 			ruby "$(repo_root)/scripts/prepare-opencode-closure-evidence" \
 				--package-dir "$$specdir" \
 				--output-dir "$$tempdir/output"; \
+			ruby "$(repo_root)/scripts/audit-opencode-final-licenses" \
+				--binary-embedding "$$specdir/opencode-$$version-binary-embedding.json" \
+				--source-license-set "$$specdir/source-license-set-proof.json" \
+				--license-review "$$specdir/license-review.yml" \
+				--native-review "$$specdir/native-review.yml" \
+				--bun-final-license "$(repo_root)/packages/bun/bun-1.3.14-final-linked-license-closure.json" \
+				--date 2026-07-27 \
+				--check \
+				--receipt "$$specdir/opencode-$$version-final-license-closure.json"; \
 			install -pm0755 "$(repo_root)/scripts/materialize-opencode-node-modules" \
 				"$$specdir/materialize-opencode-node-modules"; \
 			install -pm0755 "$(repo_root)/scripts/audit-opencode-binary-embedding" \
 				"$$specdir/audit-opencode-binary-embedding"; \
+			install -pm0755 "$(repo_root)/scripts/audit-opencode-final-licenses" \
+				"$$specdir/audit-opencode-final-licenses"; \
 			for suffix in closure.json bundled-licenses.txt native.json; do \
 				install -pm0644 "$$tempdir/output/opencode-$$version-$$suffix" \
 					"$$specdir/opencode-$$version-$$suffix"; \

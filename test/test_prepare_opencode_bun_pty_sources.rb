@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "json"
 require "minitest/autorun"
 require "tmpdir"
 load File.expand_path("../scripts/prepare-opencode-bun-pty-sources", __dir__)
@@ -28,6 +29,23 @@ class PrepareOpenCodeBunPtySourcesTest < Minitest::Test
         Agentlab::OpenCodeBunPtySources.manifest_bytes(directory)
       end
       assert_match(/identity is incomplete/, error.message)
+    end
+  end
+
+  def test_normalizes_cargo_checksum_comments
+    Dir.mktmpdir do |directory|
+      crate = File.join(directory, "anyhow-1.0.98")
+      FileUtils.mkdir_p(crate)
+      checksum_path = File.join(crate, ".cargo-checksum.json")
+      File.binwrite(checksum_path, JSON.generate({ "$comment" => "Cargo metadata", "files" => { "src/lib.rs" => "a" * 64 }, "package" => "b" * 64 }))
+
+      assert_equal(1, Agentlab::OpenCodeBunPtySources.normalize_vendor_checksums!(directory))
+      assert_equal(
+        { "files" => { "src/lib.rs" => "a" * 64 }, "package" => "b" * 64 },
+        JSON.parse(File.binread(checksum_path))
+      )
+      refute_includes(File.binread(checksum_path), "$comment")
+      refute(File.binread(checksum_path).end_with?("\n"))
     end
   end
 

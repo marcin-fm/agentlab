@@ -1,6 +1,6 @@
 # OpenCode Packaging Status
 
-OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; a local network-isolated Fedora 44 x86_64 build, exact compiler-input map, and generated bundled Provides now pass. Final aggregate licensing, clean Mock/COPR results, and target-matrix verification remain unverified.
+OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; a local network-isolated Fedora 44 x86_64 build, exact compiler-input map, generated bundled Provides, complete functional-WASM source mappings, and a fail-closed final-license preflight now pass. Final aggregate licensing, clean Mock/COPR results, and target-matrix verification remain unverified.
 
 The 829 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the selected set has 1,018 runtime packages, one build-only Prettier package, and no test-only packages. Configured-SCM preparation regenerates those bundles plus the exact bun-pty, Photon, and wasm-bindgen CLI Cargo vendor archives. Offline dependency-tree assembly and the local application build are verified.
 
@@ -23,6 +23,8 @@ The final `0.13` 49-member source RPM has SHA-256 `b8fcc1a9e27dd3257c59554051d29
 Release `1.18.5-0.14` replaces Photon's last opaque WASM. The npm `0.3.4` artifact and crates.io `photon-rs 0.3.3` source both bind commit `685f5b155b36c5611c08ca678bb78ddbab3edbac`; the crate supplies the exact Cargo lock omitted from Git. Historical reconstruction reproduces the published readable JavaScript and declarations byte-for-byte. Two path-distinct, network-isolated Fedora Rust `1.97.1` builds use a targeted source-path remap and source-built `wasm-bindgen-cli 0.2.95`; they produce the same 2,541,956-byte raw WASM at SHA-256 `d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d` and the same 1,861,027-byte Node payload at SHA-256 `be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783`. The published glue loads that replacement and produces byte-identical PNG and JPEG results through OpenCode's constructor, decode, Lanczos resize, and encode operations.
 
 The final `0.14` 55-member source RPM has SHA-256 `fe1e85046718ed02d52cc901361781591cf675d64a7b11657b880de49d7f689f`; the binary RPM has SHA-256 `42b9961f164eeda11aa6928ec3e56e65eff41721ae40962793de26c8d6869423`. Its extracted 126,748,416-byte payload has SHA-256 `df7d2f0f551cb64e36a0b9bc4f76d22bc49cec5d47cb64e4515dd68c9491ea39` and reports `1.18.5` under network isolation. RPM digests pass, the installed Photon source license is SHA-256 `c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7`, and `rpmlint` reports zero errors with 20 expected warnings. No RPM was installed or submitted to COPR.
+
+Release `1.18.5-0.15` adds `opencode-1.18.5-final-license-closure.json`, a compact deterministic preflight over the exact binary-embedding, source-license, npm notice, native/WASM, and Bun `1.3.14` final-link receipts. It verifies the 491 embedded npm identities, ten resolved text cases, all 14 native/WASM source mappings, Bun's 1,165 mapped direct link inputs, and all 18 Bun native license selections. Cargo `1.97.1` checksum comments are normalized so configured-SCM continues reproducing the established bun-pty vendor archive. The resulting 57-member source RPM has SHA-256 `55ce5427abb10daf4ba18a3deafc90334d14609e555555404e2110f0fec40bab` and valid header/payload digests. The preflight deliberately emits no final aggregate expression: the three OpenCode notice holds, six Bun WebKit fork files, incomplete Bun npm/code-generation provenance, required-text payload, clean target matrix, and COPR gates remain explicit and false. No binary RPM was built or installed, and no COPR build was submitted.
 
 The immutable `v1.18.5` tag resolves to commit
 `e5cc278dec9294a627a7b05f47ce6a564408c1a2`, and its source archive has
@@ -91,8 +93,8 @@ It records these unresolved gates:
 allowed-software or allowed-content identifier, but this is not the final
 binary expression: the compiler map narrows 28 package-local text gaps to 13
 embedded identities. Release `0.13` resolves and installs applicable evidence
-for ten of them, leaving three exact upstream notice holds plus Photon
-correspondence and aggregate payload accounting open.
+for ten of them, leaving three exact upstream notice holds and aggregate payload
+accounting open. Photon correspondence is closed by release `0.14`.
 
 No lifecycle script was executed. The lifecycle review now requires dependency
 reconstruction by direct extraction of the reviewed registry archives and
@@ -157,8 +159,8 @@ TypeScript, Markdown, Markdown-inline, and Zig parse smokes pass through
 web-tree-sitter `0.25.10`. Shiki's pinned vscode-oniguruma and Oniguruma sources
 now rebuild twice byte-identically with the package's Emscripten `4.0.4`,
 Binaryen `121`, and Clang 20 toolchain; the exact wrapper scan passes after the
-published WASM is replaced. Undici remains unproven because its historical
-Undici's scalar and SIMD llhttp modules also rebuild twice byte-identically from
+published WASM is replaced. Undici's scalar and SIMD llhttp modules also rebuild
+twice byte-identically from
 the exact generated llhttp `8.1.0` C release with the same Emscripten/Binaryen
 toolchain; both instantiate with the expected callbacks and allocator/parser
 exports. Photon's npm `0.3.4` payload remains byte-different from the historical
@@ -187,8 +189,8 @@ scripts/acquire-opencode-sources --jobs 4 --check
 The npm `opencode-ai` package and existing binary-oriented COPR/AUR/Homebrew recipes are intentionally not used. They select or install upstream platform executables instead of rebuilding from source.
 
 The draft remains blocked until the source-built Bun package is available to a
-clean buildroot, the 3 remaining npm notice holds and complete Bun/native/WASM
-payload accounting produce a final aggregate SPDX
+clean buildroot, the 3 remaining npm notice holds and complete Bun runtime and
+native/WASM payload accounting produce a final aggregate SPDX
 expression and `%license` payload, the blocked upstream requests can be sent, and
 the configured Fedora 43, Fedora 44, and Rawhide matrix passes.
 

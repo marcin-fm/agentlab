@@ -59,6 +59,8 @@
 %global node_modules_materializer_sha256 d49cdf57f7c2b86103e63d829f00eebbb3d72c5ec985b12186b54ed188d55668
 %global binary_embedding_auditor_sha256 9f77823c4ef29d38bb1a09f0a322d337765de9b3e284e5b6d370fea3d0ff8451
 %global binary_embedding_receipt_sha256 496be59e95b845de847bced424c0e48a340969568eacea7f01fa0b12ae2a0f14
+%global final_license_auditor_sha256 8e8f8033df0e0770263112fa0a8feb563a67f0cf3c05a7b009ad28d3508d9c9f
+%global final_license_receipt_sha256 638f4fd5ef940b3a3dff0e41f8434e2b137684f08c94a8777258410011107702
 %global bundle_metafile_patch_sha256 1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4
 %global license_review_sha256 4248cf9d4e78236ad4b30f403137ff33f8b300b9fbd9cbf7f55a9599cc149848
 %global aws_sdk_license_sha256 edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
@@ -86,7 +88,7 @@
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.14%{?dist}
+Release:        0.15%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -144,6 +146,10 @@ Source47:       %{name}-%{version}-photon-cargo-vendor.txt
 Source48:       https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-%{wasm_bindgen_cli_source_version}.crate
 Source49:       %{name}-%{version}-wasm-bindgen-cli-cargo-vendor.tar.zst
 Source50:       %{name}-%{version}-wasm-bindgen-cli-cargo-vendor.txt
+# Repository-side preflight binds this package's compiler/native evidence to
+# Bun's current final-linked-license closure without duplicating it in the SRPM.
+Source51:       audit-opencode-final-licenses
+Source52:       %{name}-%{version}-final-license-closure.json
 
 # Fedora omits the optional prebuilt FFF accelerator and selects OpenCode's
 # existing system-ripgrep fallback instead.
@@ -749,6 +755,8 @@ echo "%{photon_vendor_manifest_sha256}  %{SOURCE47}" | sha256sum -c -
 echo "%{wasm_bindgen_cli_source_sha256}  %{SOURCE48}" | sha256sum -c -
 echo "%{wasm_bindgen_cli_vendor_sha256}  %{SOURCE49}" | sha256sum -c -
 echo "%{wasm_bindgen_cli_vendor_manifest_sha256}  %{SOURCE50}" | sha256sum -c -
+echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -
+echo "%{final_license_receipt_sha256}  %{SOURCE52}" | sha256sum -c -
 echo "%{bundle_metafile_patch_sha256}  %{PATCH2}" | sha256sum -c -
 %autosetup -n opencode-%{version} -N
 patch -p1 < %{PATCH0}
@@ -789,6 +797,8 @@ test -f %{SOURCE47}
 test -f %{SOURCE48}
 test -f %{SOURCE49}
 test -f %{SOURCE50}
+test -f %{SOURCE51}
+test -f %{SOURCE52}
 echo "%{bun_pty_source_sha256}  %{SOURCE6}" | sha256sum -c -
 echo "%{bun_pty_vendor_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{bun_pty_vendor_manifest_sha256}  %{SOURCE8}" | sha256sum -c -
@@ -1366,10 +1376,14 @@ install -Dpm0755 \
 %license %{name}-%{version}-aws-sdk-js-v3-LICENSE %{name}-%{version}-sigstore-verify-LICENSE
 %license %{name}-%{version}-drizzle-orm-LICENSE %{name}-%{version}-poe-platform-LICENSE
 %license %{name}-%{version}-remeda-LICENSE %{name}-%{version}-spdx-exceptions-README.md
-%doc README.md %{name}-%{version}-binary-embedding.json
+%doc README.md %{name}-%{version}-binary-embedding.json %{name}-%{version}-final-license-closure.json
 %{_bindir}/opencode
 
 %changelog
+* Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.15
+- Add a fail-closed final-license preflight across OpenCode and Bun evidence.
+- Preserve all unresolved notice, aggregate-license, payload, and target-build gates.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.14
 - Rebuild Photon WASM from the authenticated Rust source and vendored Cargo inputs.
 - Verify the source-built payload through OpenCode's decode, resize, and encode operations.

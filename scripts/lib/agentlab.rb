@@ -12,6 +12,7 @@ require "tempfile"
 require "uri"
 require "yaml"
 require_relative "openchamber_licenses"
+load File.expand_path("../audit-opencode-final-licenses", __dir__) unless defined?(OpenCodeFinalLicenseAudit)
 
 module Agentlab
   ROOT = File.expand_path("../..", __dir__)
@@ -5458,7 +5459,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.14%{?dist}",
+            "Release:        0.15%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -5744,7 +5745,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.14%{?dist}",
+        "Release:        0.15%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6236,6 +6237,99 @@ module Agentlab
       end
     else
       errors << "#{prefix} native review is missing"
+    end
+
+    final_license_filename = source_files["final_license_closure"]
+    final_license_path = final_license_filename.is_a?(String) && File.join(package.directory, final_license_filename)
+    final_license_metadata = dependencies.fetch("final_license_preflight", {})
+    final_license_auditor_path = File.join(ROOT, "scripts", "audit-opencode-final-licenses")
+    bun_final_license_path = File.join(ROOT, "packages", "bun", "bun-1.3.14-final-linked-license-closure.json")
+    if final_license_path && File.file?(final_license_path) && license_set_path && File.file?(license_set_path) &&
+       license_path && File.file?(license_path) && native_path && File.file?(native_path) &&
+       embedding_path && File.file?(embedding_path) && File.file?(final_license_auditor_path) &&
+       File.file?(bun_final_license_path)
+      begin
+        final_license = JSON.parse(File.read(final_license_path))
+        input_records = final_license.fetch("inputs")
+        actual_inputs = {
+          "binary_embedding" => [embedding_path, "packages/opencode/opencode-1.18.5-binary-embedding.json"],
+          "source_license_set" => [license_set_path, "packages/opencode/source-license-set-proof.json"],
+          "license_review" => [license_path, "packages/opencode/license-review.yml"],
+          "native_review" => [native_path, "packages/opencode/native-review.yml"],
+          "bun_final_linked_license_closure" => [bun_final_license_path, "packages/bun/bun-1.3.14-final-linked-license-closure.json"]
+        }
+        actual_inputs.each do |key, (path, expected_path)|
+          record = input_records.fetch(key)
+          errors << "#{prefix} final-license preflight input path #{key} does not match" unless record["path"] == expected_path
+          errors << "#{prefix} final-license preflight input size #{key} does not match" unless record["size_bytes"] == File.size(path)
+          errors << "#{prefix} final-license preflight input SHA-256 #{key} does not match" unless record["sha256"] == Digest::SHA256.file(path).hexdigest
+        end
+        auditor_record = OpenCodeFinalLicenseAudit.repo_record(final_license_auditor_path)
+        errors << "#{prefix} final-license preflight auditor does not match" unless final_license["auditor"] == auditor_record
+        expected_final_license = OpenCodeFinalLicenseAudit.build(
+          binary_embedding: JSON.parse(File.read(embedding_path)),
+          source_license_set: JSON.parse(File.read(license_set_path)),
+          license_review: OpenCodeFinalLicenseAudit.load_yaml(license_path, "opencode-license-review/v1"),
+          native_review: OpenCodeFinalLicenseAudit.load_yaml(native_path, "opencode-native-review/v1"),
+          bun_final_license: JSON.parse(File.read(bun_final_license_path)),
+          input_records: input_records,
+          auditor_record: auditor_record,
+          audit_date: final_license.fetch("audit_date")
+        )
+        errors << "#{prefix} final-license preflight receipt does not match live evidence" unless final_license == expected_final_license
+        expected_final_license_metadata = {
+          "schema" => final_license["schema"],
+          "audit_date" => final_license["audit_date"],
+          "receipt_sha256" => Digest::SHA256.file(final_license_path).hexdigest,
+          "auditor_sha256" => Digest::SHA256.file(final_license_auditor_path).hexdigest,
+          "bun_final_linked_license_sha256" => Digest::SHA256.file(bun_final_license_path).hexdigest,
+          "opencode_notice_holds" => Array(final_license.dig("unresolved", "opencode_notice_holds")).length,
+          "bun_webkit_headerless_holds" => Array(final_license.dig("unresolved", "bun_webkit_headerless_files")).length,
+          "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
+          "final_aggregate_license_expression_verified" => false,
+          "rpm_license_payload_complete" => false,
+          "source_rpm_nvr" => "opencode-1.18.5-0.15.fc44",
+          "source_rpm_sha256" => "55ce5427abb10daf4ba18a3deafc90334d14609e555555404e2110f0fec40bab",
+          "source_members" => 57,
+          "configured_scm_generation_verified" => true,
+          "binary_build_performed" => false,
+          "rpm_installed" => false,
+          "copr_submitted" => false
+        }
+        errors << "#{prefix} final-license preflight metadata does not match" unless final_license_metadata == expected_final_license_metadata
+        if package.data["artifacts"].is_a?(Hash)
+          errors << "#{prefix} final-license artifact path does not match" unless package.data.dig("artifacts", "final_license_closure") == final_license_filename
+        end
+        expected_final_validation = {
+          "input_receipts_verified" => true,
+          "source_set_expression_verified" => true,
+          "npm_binary_inclusion_verified" => true,
+          "resolved_opencode_license_text_payloads_verified" => true,
+          "native_wasm_source_mapping_verified" => true,
+          "bun_final_link_mapping_verified" => true,
+          "all_required_license_texts_verified" => false,
+          "final_aggregate_license_expression_verified" => false,
+          "rpm_license_payload_complete" => false,
+          "clean_fedora_build_matrix_verified" => false,
+          "copr_submission_verified" => false
+        }
+        errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
+        opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
+        [
+          "Release:        0.15%{?dist}",
+          "Source51:       audit-opencode-final-licenses",
+          "Source52:       %{name}-%{version}-final-license-closure.json",
+          'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',
+          'echo "%{final_license_receipt_sha256}  %{SOURCE52}" | sha256sum -c -',
+          "%doc README.md %{name}-%{version}-binary-embedding.json %{name}-%{version}-final-license-closure.json"
+        ].each do |snippet|
+          errors << "#{prefix} spec is missing final-license preflight requirement #{snippet}" unless opencode_spec.include?(snippet)
+        end
+      rescue JSON::ParserError, KeyError, OpenCodeFinalLicenseAudit::Error => e
+        errors << "#{prefix} invalid final-license preflight: #{e.message}"
+      end
+    else
+      errors << "#{prefix} final-license preflight inputs are missing"
     end
 
     errors

@@ -247,6 +247,24 @@ binary_embedding_proof:
   bundled_provides_generated: true
   final_aggregate_license_expression_verified: false
   rpm_license_payload_complete: false
+final_license_preflight:
+  schema: agentlab-opencode-final-license-closure/v1
+  audit_date: "2026-07-27"
+  receipt_sha256: 638f4fd5ef940b3a3dff0e41f8434e2b137684f08c94a8777258410011107702
+  auditor_sha256: 8e8f8033df0e0770263112fa0a8feb563a67f0cf3c05a7b009ad28d3508d9c9f
+  bun_final_linked_license_sha256: 185013a147abf5bbc8e8035fbdce3ed9e26fed848d6772c507fff084d78aaf61
+  opencode_notice_holds: 3
+  bun_webkit_headerless_holds: 6
+  native_wasm_source_mappings_verified: 14
+  final_aggregate_license_expression_verified: false
+  rpm_license_payload_complete: false
+  source_rpm_nvr: opencode-1.18.5-0.15.fc44
+  source_rpm_sha256: 55ce5427abb10daf4ba18a3deafc90334d14609e555555404e2110f0fec40bab
+  source_members: 57
+  configured_scm_generation_verified: true
+  binary_build_performed: false
+  rpm_installed: false
+  copr_submitted: false
 source_acquisition_findings:
   raw_missing_declared_license:
     - "@openauthjs/openauth@0.0.0-20250322224806"
@@ -343,6 +361,7 @@ source_closure_files:
   test_archive: opencode-1.18.5-nm-dev-test.tar.zst
   closure_manifest: opencode-1.18.5-closure.json
   bundled_provides_manifest: opencode-1.18.5-binary-embedding.json
+  final_license_closure: opencode-1.18.5-final-license-closure.json
   bundled_licenses: opencode-1.18.5-bundled-licenses.txt
   native_manifest: opencode-1.18.5-native.json
   photon_cargo_vendor_manifest: opencode-1.18.5-photon-cargo-vendor.txt

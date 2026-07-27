@@ -962,6 +962,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "scripts/prepare-opencode-bun-pty-sources")
     assert_includes(makefile, "scripts/prepare-opencode-photon-sources")
     assert_includes(makefile, "scripts/prepare-opencode-closure-evidence")
+    assert_includes(makefile, "scripts/audit-opencode-final-licenses")
     assert_includes(makefile, "scripts/materialize-opencode-node-modules")
     assert_includes(makefile, 'cmp "$$tempdir/source-audit.json"')
     assert_includes(makefile, 'cmp "$$tempdir/source-materialization.json"')
@@ -971,6 +972,8 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "for suffix in photon-cargo-vendor.tar.zst wasm-bindgen-cli-cargo-vendor.tar.zst")
     assert_includes(makefile, '"$$specdir/opencode-$$version-$$suffix"')
     assert_includes(makefile, "closure.json bundled-licenses.txt native.json")
+    assert_includes(makefile, "packages/bun/bun-1.3.14-final-linked-license-closure.json")
+    assert_includes(makefile, 'opencode-$$version-final-license-closure.json')
   end
 
   def test_copr_makefile_materializes_the_tree_sitter_parser_subset
@@ -2925,6 +2928,16 @@ class AgentlabTest < Minitest::Test
     errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
     assert_includes(errors, "opencode: node_modules materialization proof does not match")
+  end
+
+  def test_rejects_incomplete_opencode_final_license_preflight
+    package = Agentlab.package_named("opencode")
+    dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
+    dependencies.fetch("final_license_preflight")["opencode_notice_holds"] -= 1
+
+    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+
+    assert_includes(errors, "opencode: final-license preflight metadata does not match")
   end
 
   def test_rejects_inconsistent_opencode_models_snapshot_evidence

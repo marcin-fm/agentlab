@@ -3,6 +3,7 @@
 
 require "digest"
 require "fileutils"
+require "json"
 require "open3"
 require "optparse"
 require "pathname"
@@ -61,7 +62,11 @@ module Agentlab
         "cargo", "vendor", "--locked", "--versioned-dirs",
         "--manifest-path", manifest, vendor_dir
       )
+      checksum_count = normalize_vendor_checksums!(vendor_dir)
       generated_manifest = manifest_bytes(vendor_dir)
+      unless checksum_count == generated_manifest.lines.length
+        raise Agentlab::Error, "OpenCode bun-pty vendor checksum count does not match the checked manifest"
+      end
       unless generated_manifest == File.binread(manifest_path)
         raise Agentlab::Error, "OpenCode bun-pty generated vendor manifest does not match the checked manifest"
       end
@@ -94,6 +99,20 @@ module Agentlab
 
       records.sort_by { |name, version| [name, version] }
         .map { |name, version| "#{name} v#{version}\n" }.join
+    end
+
+    def normalize_vendor_checksums!(vendor_dir)
+      paths = Dir.glob(File.join(vendor_dir, "*", ".cargo-checksum.json")).sort
+      raise Agentlab::Error, "OpenCode bun-pty vendor checksums are missing" if paths.empty?
+
+      paths.each do |path|
+        checksum = JSON.parse(File.binread(path))
+        checksum.delete("$comment")
+        File.binwrite(path, JSON.generate(checksum))
+      end
+      paths.length
+    rescue JSON::ParserError => e
+      raise Agentlab::Error, "invalid OpenCode bun-pty vendor checksum: #{e.message}"
     end
 
     def package_identity(manifest)

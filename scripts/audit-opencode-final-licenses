@@ -1,0 +1,279 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "json"
+require "optparse"
+require "tempfile"
+require "yaml"
+
+module OpenCodeFinalLicenseAudit
+  class Error < StandardError; end
+
+  REPO_ROOT = File.expand_path("..", __dir__)
+  FINAL_FALSE_FLAGS = %w[
+    fedora_allowed_spdx_verified
+    required_license_texts_verified
+    final_license_expression_verified
+    rpm_payload_license_verified
+  ].freeze
+
+  module_function
+
+  def ensure!(condition, message)
+    raise Error, message unless condition
+  end
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def repo_record(path, repo_root: REPO_ROOT)
+    real = File.realpath(path)
+    root = File.realpath(repo_root)
+    ensure!(real.start_with?("#{root}/"), "input is outside the repository: #{path}")
+
+    {
+      "path" => real.delete_prefix("#{root}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def load_json(path, schema)
+    receipt = JSON.parse(File.read(path))
+    ensure!(receipt["schema"] == schema, "unexpected schema in #{path}")
+    receipt
+  end
+
+  def load_yaml(path, schema)
+    receipt = YAML.safe_load(File.read(path), aliases: false)
+    ensure!(receipt["schema"] == schema, "unexpected schema in #{path}")
+    receipt
+  end
+
+  def build(binary_embedding:, source_license_set:, license_review:, native_review:, bun_final_license:, input_records:, auditor_record:, audit_date:)
+    release = binary_embedding.fetch("release").to_s
+    ensure!(binary_embedding.fetch("package") == "opencode" && release == "1.18.5", "OpenCode release mismatch")
+    ensure!(source_license_set.fetch("package") == "opencode" && source_license_set.fetch("release").to_s == release, "source license-set release mismatch")
+    ensure!(license_review.fetch("release").to_s == release, "license review release mismatch")
+    ensure!(native_review.fetch("release").to_s == release, "native review release mismatch")
+    ensure!(bun_final_license.fetch("package") == "bun" && bun_final_license.fetch("version") == "1.3.14", "Bun final-license release mismatch")
+
+    ensure!(binary_embedding.dig("receipts", "source_license_set") == {
+      "filename" => File.basename(input_records.fetch("source_license_set").fetch("path")),
+      "sha256" => input_records.fetch("source_license_set").fetch("sha256")
+    }, "binary embedding does not bind the source license set")
+    ensure!(binary_embedding.dig("receipts", "license_review") == {
+      "filename" => File.basename(input_records.fetch("license_review").fetch("path")),
+      "sha256" => input_records.fetch("license_review").fetch("sha256")
+    }, "binary embedding does not bind the license review")
+    ensure!(source_license_set.dig("receipts", "license_review", "sha256") == input_records.fetch("license_review").fetch("sha256"), "source license set does not bind the license review")
+
+    source_validation = source_license_set.fetch("validation")
+    ensure!(source_validation["source_set_expression_verified"] == true, "source-set expression is not verified")
+    ensure!(source_validation["final_binary_license_expression_verified"] == false, "source-set receipt overclaims the final binary expression")
+    ensure!(source_validation["rpm_license_payload_complete"] == false, "source-set receipt overclaims the RPM payload")
+
+    hold_records = license_review.dig("embedded_package_local_text_holds", "packages") || []
+    hold_packages = hold_records.map { |record| record.fetch("package") }.sort
+    ensure!(license_review.dig("embedded_package_local_text_holds", "count") == hold_packages.length, "OpenCode notice-hold count mismatch")
+    ensure!(license_review.dig("status", "embedded_package_local_text_holds") == hold_packages.length, "OpenCode notice-hold status mismatch")
+    ensure!(binary_embedding.fetch("included_license_text_gaps").sort == hold_packages, "OpenCode binary notice holds do not match the license review")
+    ensure!(hold_packages == %w[@npmcli/agent@4.0.2 abstract-logging@2.0.1 opentui-spinner@0.0.7], "unexpected OpenCode notice-hold set")
+
+    license_payloads = binary_embedding.fetch("license_text_payloads")
+    no_additional_text = binary_embedding.fetch("no_additional_license_text_required")
+    resolved_packages = license_payloads.flat_map { |record| record.fetch("packages") } + no_additional_text
+    ensure!(resolved_packages.uniq.length == license_review.dig("status", "embedded_package_local_text_resolutions"), "OpenCode resolved license-text count mismatch")
+
+    embedding_validation = binary_embedding.fetch("validation")
+    %w[final_npm_binary_inclusion_verified bundled_provides_generated resolved_license_text_payloads_verified].each do |flag|
+      ensure!(embedding_validation[flag] == true, "OpenCode binary embedding flag #{flag} is not verified")
+    end
+    ensure!(embedding_validation["final_aggregate_license_expression_verified"] == false, "OpenCode binary embedding overclaims the final aggregate")
+    ensure!(embedding_validation["rpm_license_payload_complete"] == false, "OpenCode binary embedding overclaims the RPM payload")
+    ensure!(binary_embedding.dig("unresolved", "bun_runtime_final_license_map") == true, "OpenCode binary embedding does not retain the Bun license gate")
+
+    native_status = native_review.fetch("status")
+    ensure!(native_status["retained_prebuilt_payloads"] == 0, "OpenCode retains a reviewed prebuilt payload")
+    ensure!(native_status["source_mappings_verified"] == 14 && native_status["source_mappings_unresolved"] == 0, "OpenCode native/WASM source mappings are incomplete")
+    ensure!(native_status["wasm_sources_verified"] == true, "OpenCode functional WASM source replacements are incomplete")
+    ensure!(native_status["native_sources_verified"] == false, "OpenCode native review unexpectedly claims final verification")
+    ensure!(native_status["reproducible_builds_verified"] == false, "OpenCode native review unexpectedly claims reproducibility")
+
+    bun_validation = bun_final_license.fetch("validation")
+    %w[
+      input_receipts_verified final_link_inputs_mapped native_license_selections_verified
+      webkit_member_source_mapping_verified webkit_transitive_dependency_mapping_verified
+      system_lolhtml_provider_verified
+    ].each do |flag|
+      ensure!(bun_validation[flag] == true, "Bun final-license flag #{flag} is not verified")
+    end
+    FINAL_FALSE_FLAGS.each do |flag|
+      ensure!(bun_validation[flag] == false, "Bun final-license receipt overclaims #{flag}")
+    end
+    ensure!(bun_validation["webkit_linked_file_semantic_review_verified"] == false, "Bun WebKit semantic review unexpectedly passed")
+    ensure!(bun_validation["final_npm_codegen_closure_verified"] == false, "Bun npm/code-generation closure unexpectedly passed")
+
+    bun_unresolved = bun_final_license.fetch("unresolved")
+    webkit_holds = bun_unresolved.fetch("webkit_headerless_files")
+    ensure!(webkit_holds.length == 6, "unexpected Bun WebKit notice-hold count")
+    ensure!(bun_unresolved["webkit_semantic_license_selection"] == true, "Bun WebKit semantic gate is not retained")
+    ensure!(bun_unresolved["npm_and_codegen_final_payload_provenance"] == true, "Bun npm/code-generation gate is not retained")
+    ensure!(bun_unresolved["required_license_text_payload"] == true, "Bun required-text gate is not retained")
+    ensure!(bun_unresolved["aggregate_spdx_expression"] == true, "Bun aggregate SPDX gate is not retained")
+    ensure!(bun_unresolved["rpm_payload_validation"] == true, "Bun RPM payload gate is not retained")
+
+    {
+      "schema" => "agentlab-opencode-final-license-closure/v1",
+      "package" => "opencode",
+      "release" => release,
+      "audit_date" => audit_date,
+      "auditor" => auditor_record,
+      "inputs" => input_records,
+      "candidate_expressions" => {
+        "selected_source_set" => source_license_set.fetch("candidate_source_expression"),
+        "embedded_npm" => binary_embedding.fetch("candidate_npm_license_expression"),
+        "final_aggregate" => nil
+      },
+      "opencode_npm" => {
+        "embedded_package_paths" => binary_embedding.dig("scope", "embedded_package_paths"),
+        "embedded_public_name_versions" => binary_embedding.dig("scope", "embedded_public_name_versions"),
+        "resolved_license_text_packages" => resolved_packages.sort,
+        "license_text_payloads" => license_payloads,
+        "no_additional_license_text_required" => no_additional_text,
+        "notice_holds" => hold_records.map do |record|
+          {
+            "package" => record.fetch("package"),
+            "license" => record.fetch("license"),
+            "reason" => record.fetch("reason")
+          }
+        end,
+        "final_binary_inclusion_verified" => true,
+        "bundled_provides_generated" => true
+      },
+      "native_and_wasm" => {
+        "component_identities_classified" => native_status.fetch("component_identities_classified"),
+        "native_payloads_classified" => native_status.fetch("native_payloads_classified"),
+        "wasm_payloads_classified" => native_status.fetch("wasm_payloads_classified"),
+        "retained_prebuilt_payloads" => native_status.fetch("retained_prebuilt_payloads"),
+        "source_mappings_verified" => native_status.fetch("source_mappings_verified"),
+        "source_mappings_unresolved" => native_status.fetch("source_mappings_unresolved"),
+        "native_sources_verified" => native_status.fetch("native_sources_verified"),
+        "wasm_sources_verified" => native_status.fetch("wasm_sources_verified"),
+        "reproducible_builds_verified" => native_status.fetch("reproducible_builds_verified")
+      },
+      "bun_runtime" => {
+        "version" => bun_final_license.fetch("version"),
+        "target" => bun_final_license.fetch("target"),
+        "linked_input_count" => bun_final_license.dig("final_link", "linked_input_count"),
+        "native_license_selections_verified" => true,
+        "webkit_transitive_dependency_count" => bun_final_license.dig("webkit", "transitive_dependencies", "unique_dependency_count"),
+        "unresolved_webkit_headerless_files" => webkit_holds,
+        "external_lolhtml_provider" => bun_final_license.fetch("external_lolhtml_provider"),
+        "webkit_linked_file_semantic_review_verified" => false,
+        "final_npm_codegen_closure_verified" => false
+      },
+      "unresolved" => {
+        "opencode_notice_holds" => hold_packages,
+        "bun_webkit_headerless_files" => webkit_holds,
+        "bun_npm_and_codegen_final_payload_provenance" => true,
+        "bun_required_license_text_payload" => true,
+        "final_aggregate_spdx_expression" => true,
+        "rpm_license_payload" => true,
+        "source_built_bun_clean_buildroot_availability" => true,
+        "clean_fedora_build_matrix" => true
+      },
+      "validation" => {
+        "input_receipts_verified" => true,
+        "source_set_expression_verified" => true,
+        "npm_binary_inclusion_verified" => true,
+        "resolved_opencode_license_text_payloads_verified" => true,
+        "native_wasm_source_mapping_verified" => true,
+        "bun_final_link_mapping_verified" => true,
+        "all_required_license_texts_verified" => false,
+        "final_aggregate_license_expression_verified" => false,
+        "rpm_license_payload_complete" => false,
+        "clean_fedora_build_matrix_verified" => false,
+        "copr_submission_verified" => false
+      },
+      "scope" => "fail-closed final-license preflight for the exact OpenCode compiler graph, resolved native/WASM source mappings, and Bun runtime final-link evidence; three OpenCode notices, six Bun WebKit fork files, Bun npm/code-generation provenance, aggregate SPDX, required texts, RPM payload, clean target builds, and COPR remain unresolved"
+    }
+  end
+
+  def generate(binary_embedding_path:, source_license_set_path:, license_review_path:, native_review_path:, bun_final_license_path:, audit_date:, repo_root: REPO_ROOT, auditor_path: __FILE__)
+    paths = {
+      "binary_embedding" => binary_embedding_path,
+      "source_license_set" => source_license_set_path,
+      "license_review" => license_review_path,
+      "native_review" => native_review_path,
+      "bun_final_linked_license_closure" => bun_final_license_path
+    }
+    records = paths.transform_values { |path| repo_record(path, repo_root: repo_root) }
+    build(
+      binary_embedding: load_json(binary_embedding_path, "agentlab-opencode-binary-embedding/v1"),
+      source_license_set: load_json(source_license_set_path, "agentlab-opencode-source-license-set/v1"),
+      license_review: load_yaml(license_review_path, "opencode-license-review/v1"),
+      native_review: load_yaml(native_review_path, "opencode-native-review/v1"),
+      bun_final_license: load_json(bun_final_license_path, "bun-final-linked-license-closure/v3"),
+      input_records: records,
+      auditor_record: repo_record(auditor_path, repo_root: repo_root),
+      audit_date: audit_date
+    )
+  end
+
+  def write_json(path, data)
+    Tempfile.create([".opencode-final-licenses-", ".json"], File.dirname(path)) do |file|
+      file.write(JSON.pretty_generate(data) + "\n")
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+
+  def main(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.on("--binary-embedding PATH") { |value| options[:binary_embedding] = value }
+      parser.on("--source-license-set PATH") { |value| options[:source_license_set] = value }
+      parser.on("--license-review PATH") { |value| options[:license_review] = value }
+      parser.on("--native-review PATH") { |value| options[:native_review] = value }
+      parser.on("--bun-final-license PATH") { |value| options[:bun_final_license] = value }
+      parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
+      parser.on("--output PATH") { |value| options[:output] = value }
+      parser.on("--check") { options[:check] = true }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+    end.parse!(argv)
+    %i[binary_embedding source_license_set license_review native_review bun_final_license audit_date].each do |key|
+      raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key]
+    end
+    Date.iso8601(options.fetch(:audit_date))
+    raise Error, "--output is required unless --check" unless options[:output] || options[:check]
+    raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
+
+    result = generate(
+      binary_embedding_path: options.fetch(:binary_embedding),
+      source_license_set_path: options.fetch(:source_license_set),
+      license_review_path: options.fetch(:license_review),
+      native_review_path: options.fetch(:native_review),
+      bun_final_license_path: options.fetch(:bun_final_license),
+      audit_date: options.fetch(:audit_date)
+    )
+    serialized = JSON.pretty_generate(result) + "\n"
+    if options[:check]
+      raise Error, "OpenCode final-license closure differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized
+      puts "Verified OpenCode final-license closure #{options.fetch(:receipt)}."
+    else
+      write_json(options.fetch(:output), result)
+      puts "Wrote OpenCode final-license closure to #{options.fetch(:output)}."
+    end
+  rescue Date::Error, JSON::ParserError, Psych::SyntaxError, KeyError, Errno::ENOENT, Error => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end
+
+OpenCodeFinalLicenseAudit.main(ARGV) if $PROGRAM_NAME == __FILE__
