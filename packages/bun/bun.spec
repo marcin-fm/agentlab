@@ -30,12 +30,12 @@
 %global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 dabeb596638c1733a47072b4bbb7b08230d6461732cb4c5073082b232d45ddc0
-%global source_license_audit_script_sha256 7662654a42483ff93c81f33aec6268e63608ee4075f1bb716e877204bf183c8c
-%global final_linked_license_closure_sha256 613fe66e6465f4c0a5927b2dbd0f73e9e693c3772129868d6cf9fddb43761565
+%global source_license_inventory_sha256 81b146ea3fae68c207d3b08ae47b3218ecf4796a59cea1f36db65f9c7468943d
+%global source_license_audit_script_sha256 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
+%global final_linked_license_closure_sha256 9b648f9b459657473aec6d8a749a37ce434544c6113bac6cd7de66c8c90b0190
 %global final_linked_license_audit_script_sha256 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
-%global npm_code_generation_closure_sha256 ec15bd7fa7b890fc04f01817381cc117b96e3264a3c24932e955eec754f47c6c
-%global npm_code_generation_audit_script_sha256 a1f9982d14cbb2acbd880d27ba1717bd23c79bd0ea7dcd67e983382417d243c5
+%global npm_code_generation_closure_sha256 9c8d3befc878e49a4a5cc5660dd9f7418d8348940ccbd82ec5f9d5dbb3e01d9c
+%global npm_code_generation_audit_script_sha256 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -44,7 +44,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.32%{?dist}
+Release:        0.0.33%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -232,7 +232,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.32 \
+  --rpm-release 0.0.33 \
   --date 2026-07-27 \
   --check \
   --receipt "%{SOURCE25}"
@@ -367,6 +367,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.33
+- Bind constants-browserify's exact package-local MIT notice to its release source.
+
 * Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.32
 - Bind generated-header side effects to their exact upstream producers.
 

@@ -3,6 +3,7 @@
 
 require "date"
 require "digest"
+require "cgi"
 require "json"
 require "open3"
 require "optparse"
@@ -16,19 +17,28 @@ module BunNpmCodeGenerationAudit
   NPM_PACKAGE_JSON_PATTERN = %r{\.\./\.\./source/(?:node_modules|packages/bun-error/node_modules|src/node-fallbacks/node_modules)/[^\s:|]+/package\.json}
   LICENSE_PATTERN = /\A(?:licen[cs]e|copying|notice|copyright)(?:[-._].*)?\z/i
   MISSING_TEXT_EVIDENCE = {
-    ["constants-browserify", "1.0.0"] => {
-      "repository" => "https://github.com/juliangruber/constants-browserify",
-      "commit" => "49d435dd53bcf66d337dba96f979b6141582646b",
-      "path" => "LICENSE.md",
-      "sha256" => "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
-      "exact_release_source_correspondence_verified" => false
-    },
     ["peechy", "0.4.34"] => {
       "repository" => "https://github.com/jarred-sumner/peechy",
       "commit" => "11a618c2fb2d0e05bb0edf1a871d131dedc779ee",
       "path" => "LICENSE.md",
       "sha256" => "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
       "exact_release_source_correspondence_verified" => false
+    }
+  }.freeze
+  PACKAGE_TEXT_RESOLUTIONS = {
+    ["constants-browserify", "1.0.0"] => {
+      "package_text_path" => "README.md",
+      "package_text_sha256" => "b06569bf170a015c56cbad9b45756519d0b8a682770fe30d66bc1e235e26196a",
+      "source_archive_sha256" => "ea9307fd609ddce9497e3ca6b49e6102d7326bd337f66c10143b7b326f931f59",
+      "repository" => "https://github.com/juliangruber/constants-browserify",
+      "registry_git_head" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "release_tag" => "v1.0.0",
+      "release_commit" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "repository_license_commit" => "49d435dd53bcf66d337dba96f979b6141582646b",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+      "normalized_text_sha256" => "8e18f8b0cece5054ff7fa4f523523733d0b21b1a0774d8d67d2ff1a2a8310ce1",
+      "exact_release_source_correspondence_verified" => true
     }
   }.freeze
   SIDE_EFFECT_PRODUCERS = [
@@ -236,6 +246,14 @@ module BunNpmCodeGenerationAudit
     nil
   end
 
+  def normalized_license_text(path)
+    text = File.read(path)
+    start = text.index("Copyright")
+    raise Error, "license text has no copyright marker: #{path}" unless start
+
+    CGI.unescapeHTML(text[start..]).gsub(/\s+/, " ").strip
+  end
+
   def package_records(source_root, manifest_paths)
     records = manifest_paths.map do |manifest_path|
       package_root = File.dirname(manifest_path)
@@ -243,6 +261,17 @@ module BunNpmCodeGenerationAudit
       name = package_json.fetch("name")
       version = package_json["version"]
       license_paths = Dir.children(package_root).grep(LICENSE_PATTERN).map { |entry| File.join(package_root, entry) }.select { |path| File.file?(path) }.sort
+      resolution = PACKAGE_TEXT_RESOLUTIONS[[name, version]]
+      if resolution
+        text_path = File.join(package_root, resolution.fetch("package_text_path"))
+        raise Error, "package-local license text is missing: #{name}@#{version}" unless File.file?(text_path)
+        raise Error, "package-local license text drifted: #{name}@#{version}" unless sha256(text_path) == resolution.fetch("package_text_sha256")
+        unless Digest::SHA256.hexdigest(normalized_license_text(text_path)) == resolution.fetch("normalized_text_sha256")
+          raise Error, "normalized package-local license text drifted: #{name}@#{version}"
+        end
+        license_paths << text_path
+        license_paths.sort!
+      end
       expression = selected_expression(package_json, license_paths)
       raise Error, "npm package has no selected license expression: #{name}@#{version}" unless expression
 
@@ -256,6 +285,11 @@ module BunNpmCodeGenerationAudit
       }
       evidence = MISSING_TEXT_EVIDENCE[[name, version]]
       record["missing_text_evidence"] = evidence if evidence
+      if resolution
+        record["license_text_resolution"] = resolution.reject { |key, _value| key == "package_text_path" || key == "package_text_sha256" }.merge(
+          "package_text" => file_record(File.join(package_root, resolution.fetch("package_text_path")), source_root)
+        )
+      end
       record
     end
     identities = records.map { |record| [record["name"], record["version"], record.dig("manifest", "path")] }
@@ -297,7 +331,7 @@ module BunNpmCodeGenerationAudit
     package_manifests = selected_package_manifests(source_root, ninja)
     packages = package_records(source_root, package_manifests)
     missing_texts = packages.reject { |record| record["required_text_present"] }
-    expected_missing = [["constants-browserify", "1.0.0"], ["peechy", "0.4.34"]]
+    expected_missing = [["peechy", "0.4.34"]]
     actual_missing = missing_texts.map { |record| [record["name"], record["version"]] }.sort
     raise Error, "unexpected npm license-text gaps: #{actual_missing.inspect}" unless actual_missing == expected_missing
     raise Error, "npm license-text gap lacks exact repository evidence" unless missing_texts.all? { |record| record.dig("missing_text_evidence", "sha256").to_s.match?(/\A[0-9a-f]{64}\z/) }

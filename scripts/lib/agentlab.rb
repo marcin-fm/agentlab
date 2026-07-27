@@ -3349,6 +3349,29 @@ module Agentlab
     errors << "bun: source-license npm identities do not match the source closure" unless actual_npm_identities == expected_npm_identities
     npm_file_records = npm_records.flat_map { |record| Array(record["license_files"]) }
     errors << "bun: source-license npm file record is invalid" unless npm_file_records.all? { |record| valid_file_record.call(record) && record["path"].start_with?(".build-tools/bun-install-cache/") }
+    constants_text = {
+      "source_archive_sha256" => "ea9307fd609ddce9497e3ca6b49e6102d7326bd337f66c10143b7b326f931f59",
+      "repository" => "https://github.com/juliangruber/constants-browserify",
+      "registry_git_head" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "release_tag" => "v1.0.0",
+      "release_commit" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "repository_license_commit" => "49d435dd53bcf66d337dba96f979b6141582646b",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+      "normalized_text_sha256" => "8e18f8b0cece5054ff7fa4f523523733d0b21b1a0774d8d67d2ff1a2a8310ce1",
+      "exact_release_source_correspondence_verified" => true,
+      "package_text" => {
+        "path" => ".build-tools/bun-install-cache/constants-browserify@1.0.0@@@1/README.md",
+        "size_bytes" => 1_668,
+        "sha256" => "b06569bf170a015c56cbad9b45756519d0b8a682770fe30d66bc1e235e26196a"
+      }
+    }
+    constants = npm_records.find { |record| record["name"] == "constants-browserify" && record["version"] == "1.0.0" }
+    valid_constants_text = constants && constants["license"] == "MIT" && constants["license_files"] == [constants_text.fetch("package_text")] &&
+                           constants["license_text_resolution"] == constants_text
+    errors << "bun: source-license constants-browserify license text resolution mismatch" unless valid_constants_text
+    peechy = npm_records.find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
+    errors << "bun: source-license peechy text hold mismatch" unless peechy && peechy["license"] == "MIT" && Array(peechy["license_files"]).empty? && peechy["license_text_resolution"].nil?
     errors << "bun: source-license npm declaration-gap count mismatch" unless Array(npm["missing_license_field"]).length == inventory["npm_missing_license_fields"]
     errors << "bun: source-license npm declaration gaps lack supplied texts" unless Array(npm["missing_license_field"]).all? { |record| Array(record["license_files"]).any? }
     errors << "bun: source-license npm declaration gaps mismatch" unless Array(npm["missing_license_field"]).map { |record| record["name"] }.sort == %w[bun-tracestrings console-browserify]
@@ -3590,7 +3613,7 @@ module Agentlab
     end
     errors << "bun: npm code-generation package records mismatch" unless valid_packages
     missing_texts = Array(npm["packages_missing_required_text"])
-    expected_missing = [["constants-browserify", "1.0.0"], ["peechy", "0.4.34"]]
+    expected_missing = [["peechy", "0.4.34"]]
     actual_missing = missing_texts.map { |record| [record["name"], record["version"]] }.sort
     errors << "bun: npm code-generation missing-text inventory mismatch" unless actual_missing == expected_missing
     valid_missing = missing_texts.all? do |record|
@@ -3599,6 +3622,28 @@ module Agentlab
         evidence["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && evidence["exact_release_source_correspondence_verified"] == false
     end
     errors << "bun: npm code-generation missing-text evidence mismatch" unless valid_missing
+    constants_text = {
+      "source_archive_sha256" => "ea9307fd609ddce9497e3ca6b49e6102d7326bd337f66c10143b7b326f931f59",
+      "repository" => "https://github.com/juliangruber/constants-browserify",
+      "registry_git_head" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "release_tag" => "v1.0.0",
+      "release_commit" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "repository_license_commit" => "49d435dd53bcf66d337dba96f979b6141582646b",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+      "normalized_text_sha256" => "8e18f8b0cece5054ff7fa4f523523733d0b21b1a0774d8d67d2ff1a2a8310ce1",
+      "exact_release_source_correspondence_verified" => true,
+      "package_text" => {
+        "path" => "src/node-fallbacks/node_modules/constants-browserify/README.md",
+        "size_bytes" => 1_668,
+        "sha256" => "b06569bf170a015c56cbad9b45756519d0b8a682770fe30d66bc1e235e26196a"
+      }
+    }
+    constants = package_records.find { |record| record["name"] == "constants-browserify" && record["version"] == "1.0.0" }
+    valid_constants_text = constants && constants["selected_expression"] == "MIT" && constants["required_text_present"] == true &&
+                           constants["license_files"] == [constants_text.fetch("package_text")] && constants["license_text_resolution"] == constants_text &&
+                           constants["missing_text_evidence"].nil?
+    errors << "bun: npm code-generation constants-browserify license text resolution mismatch" unless valid_constants_text
 
     true_validation = %w[
       source_built_npm_receipts_verified
@@ -5561,7 +5606,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.16%{?dist}",
+            "Release:        0.17%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -5847,7 +5892,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.16%{?dist}",
+        "Release:        0.17%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6390,8 +6435,8 @@ module Agentlab
           "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
-          "source_rpm_nvr" => "opencode-1.18.5-0.16.fc44",
-          "source_rpm_sha256" => "19887f7ce4df719d9f1727dd89ac79fc5d0b0b6968c8be7a53c32380cf4dd625",
+          "source_rpm_nvr" => "opencode-1.18.5-0.17.fc44",
+          "source_rpm_sha256" => "fb96760573f03915f5109df8e925f3f3bc55838a3e58c1d3abf5ac31c64bc71c",
           "source_members" => 57,
           "configured_scm_generation_verified" => true,
           "binary_build_performed" => false,
@@ -6418,7 +6463,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.16%{?dist}",
+          "Release:        0.17%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

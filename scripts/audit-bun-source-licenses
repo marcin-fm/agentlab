@@ -3,6 +3,7 @@
 
 require "date"
 require "digest"
+require "cgi"
 require "fileutils"
 require "json"
 require "optparse"
@@ -86,6 +87,22 @@ module BunSourceLicenseAudit
     "MPL-2.0" => 2
   }.freeze
   LICENSE_BASENAME = /\A(?:licen[cs]e|copying|copyright|notice)(?:[._-].*)?\z/i
+  NPM_LICENSE_TEXT_RESOLUTIONS = {
+    ["constants-browserify", "1.0.0"] => {
+      "package_text_path" => "README.md",
+      "package_text_sha256" => "b06569bf170a015c56cbad9b45756519d0b8a682770fe30d66bc1e235e26196a",
+      "source_archive_sha256" => "ea9307fd609ddce9497e3ca6b49e6102d7326bd337f66c10143b7b326f931f59",
+      "repository" => "https://github.com/juliangruber/constants-browserify",
+      "registry_git_head" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "release_tag" => "v1.0.0",
+      "release_commit" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "repository_license_commit" => "49d435dd53bcf66d337dba96f979b6141582646b",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+      "normalized_text_sha256" => "8e18f8b0cece5054ff7fa4f523523733d0b21b1a0774d8d67d2ff1a2a8310ce1",
+      "exact_release_source_correspondence_verified" => true
+    }
+  }.freeze
 
   module_function
 
@@ -184,6 +201,40 @@ module BunSourceLicenseAudit
     end.sort_by { |record| record.fetch("path") }
   end
 
+  def normalized_license_text(path)
+    text = File.read(path)
+    start = text.index("Copyright")
+    raise Error, "license text has no copyright marker: #{path}" unless start
+
+    CGI.unescapeHTML(text[start..]).gsub(/\s+/, " ").strip
+  end
+
+  def npm_license_text_resolution(source, manifest, package_root, source_root, recorded_root)
+    evidence = NPM_LICENSE_TEXT_RESOLUTIONS[[manifest.fetch("name"), manifest["version"]]]
+    return unless evidence
+
+    unless source.fetch("sha256") == evidence.fetch("source_archive_sha256")
+      raise Error, "npm license-text source archive drifted: #{manifest.fetch('name')}@#{manifest['version']}"
+    end
+    text_path = File.join(package_root, evidence.fetch("package_text_path"))
+    text_record = file_record(
+      text_path,
+      recorded_root ? package_root : source_root,
+      recorded_path: recorded_root && File.join(recorded_root, evidence.fetch("package_text_path"))
+    )
+    unless text_record.fetch("sha256") == evidence.fetch("package_text_sha256")
+      raise Error, "npm package-local license text drifted: #{manifest.fetch('name')}@#{manifest['version']}"
+    end
+    normalized_sha256 = Digest::SHA256.hexdigest(normalized_license_text(text_path))
+    unless normalized_sha256 == evidence.fetch("normalized_text_sha256")
+      raise Error, "npm normalized license text drifted: #{manifest.fetch('name')}@#{manifest['version']}"
+    end
+
+    evidence.reject { |key, _value| key == "package_text_path" || key == "package_text_sha256" }.merge(
+      "package_text" => text_record
+    )
+  end
+
   def npm_inventory(closure, cache_root, source_root, external_cache: false)
     cache_names = source_cache_names(closure)
     records = closure.dig("npm", "source_archives").map do |source|
@@ -195,14 +246,18 @@ module BunSourceLicenseAudit
       manifest = JSON.parse(File.read(manifest_path))
       recorded_root = external_cache ? File.join(".build-tools", "bun-install-cache", cache_name) : nil
       license_files = license_file_records(package_root, source_root, recorded_root: recorded_root)
-      {
+      resolution = npm_license_text_resolution(source, manifest, package_root, source_root, recorded_root)
+      license_files << resolution.fetch("package_text") if resolution
+      record = {
         "cache_name" => cache_name,
         "name" => manifest.fetch("name"),
         "version" => manifest["version"],
         "license" => manifest["license"],
         "legacy_licenses" => manifest["licenses"],
-        "license_files" => license_files
+        "license_files" => license_files.sort_by { |file| file.fetch("path") }
       }
+      record["license_text_resolution"] = resolution if resolution
+      record
     end.sort_by { |record| [record.fetch("name"), record["version"].to_s, record.fetch("cache_name")] }
     raise Error, "expected 236 npm cache entries" unless records.length == 236
 
