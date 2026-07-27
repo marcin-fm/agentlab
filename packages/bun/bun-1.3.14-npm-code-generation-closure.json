@@ -1,14 +1,14 @@
 {
-  "schema": "bun-npm-code-generation-closure/v1",
+  "schema": "bun-npm-code-generation-closure/v2",
   "package": "bun",
   "version": "1.3.14",
-  "rpm_release": "0.0.31",
-  "audit_date": "2026-07-26",
+  "rpm_release": "0.0.32",
+  "audit_date": "2026-07-27",
   "inputs": {
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
       "size_bytes": 125358,
-      "sha256": "b9a2c9d6770daf67405ced2c609ae67d024e905ea5110e68ce2796b0fb888617"
+      "sha256": "dabeb596638c1733a47072b4bbb7b08230d6461732cb4c5073082b232d45ddc0"
     },
     "first_source_built_npm": {
       "path": "packages/bun/source-built-npm-install-proof.json",
@@ -44,6 +44,232 @@
       "codegen/GeneratedSocketConfigHandlers.h",
       "codegen/GeneratedSocketConfigTLS.h"
     ],
+    "undeclared_header_side_effects": {
+      "schema": "bun-codegen-side-effect-provenance/v1",
+      "orchestrator": {
+        "path": "scripts/build/codegen.ts",
+        "size_bytes": 35191,
+        "sha256": "5e16f9d003e2de68e26658a8f863547aed618e9b18712959c666faf70b97880f"
+      },
+      "write_helper": {
+        "path": "src/codegen/helpers.ts",
+        "size_bytes": 4464,
+        "sha256": "41e8323f21f2aa8834e75a78b354b949fe2d27d9c63e5b08b20470537fce5811"
+      },
+      "header_count": 9,
+      "header_paths_sha256": "3425f9a8c6b16d4e45cefc3cbc1b73e63c5c768513aec0919e6d4b6b9379397b",
+      "ninja_output_edges_declared": false,
+      "generator_execution_reproduced": false,
+      "producers": [
+        {
+          "name": "bindgen",
+          "ninja_rule": "codegen",
+          "ninja_declared_outputs": [
+            "codegen/GeneratedBindings.cpp",
+            "../../source/src/jsc/bindings/GeneratedBindings.zig"
+          ],
+          "ninja_declared_output_paths_sha256": "3fc2117f015896c949c125a4f1547d08da3bf72a64c2a3ec4e8803ef95ef3ec7",
+          "ninja_explicit_inputs": [
+            {
+              "path": "src/bake/DevServer.bind.ts",
+              "size_bytes": 124,
+              "sha256": "176fea477d164b38e2c335031430a0efb01f3f1e99266d8ce14e4d0ed780af69"
+            },
+            {
+              "path": "src/bake/bake.bind.ts",
+              "size_bytes": 256,
+              "sha256": "b4bffed49c785afe874d852d4400c77eece95d99568dd28eac71edbd5fe15c35"
+            },
+            {
+              "path": "src/codegen/bindgen.ts",
+              "size_bytes": 53468,
+              "sha256": "c68d3a466b34629f24fc0bc66c298a6c6aa639b5dc672f8bbc49021b9b21752c"
+            },
+            {
+              "path": "src/jsc/NodeModuleModule.bind.ts",
+              "size_bytes": 116,
+              "sha256": "5607adb06c516230a661adcfe80e0039c3cfd58cd43f145ce484cde85ddc2661"
+            },
+            {
+              "path": "src/jsc/bindgen_test.bind.ts",
+              "size_bytes": 348,
+              "sha256": "0de7d717e64ab124e2c08a1dd231e6f70607457f484797cd60dd043bd5042528"
+            },
+            {
+              "path": "src/jsc/fmt_jsc.bind.ts",
+              "size_bytes": 321,
+              "sha256": "abf7b11f87a34ee10aad62d459895add0e1985831ed5f72ad776d55013a7d07e"
+            },
+            {
+              "path": "src/runtime/api/BunObject.bind.ts",
+              "size_bytes": 433,
+              "sha256": "d2aa4f667da2323ba2dc352845d30b7dc28a05703e9ed8d5e5c5e82bbb856d5d"
+            },
+            {
+              "path": "src/runtime/node/node_os.bind.ts",
+              "size_bytes": 1705,
+              "sha256": "70fa82fef11a7d207d2285573338e24b850e0cd6a28287c12e576aca8539adb6"
+            }
+          ],
+          "ninja_explicit_input_paths_sha256": "de6bdbaebcf8a589b8b69ac179d5b2536dbfde331386c20ceea2207e9f4008eb",
+          "generator": {
+            "path": "src/codegen/bindgen.ts",
+            "size_bytes": 53468,
+            "sha256": "c68d3a466b34629f24fc0bc66c298a6c6aa639b5dc672f8bbc49021b9b21752c"
+          },
+          "definition_sources": [
+            {
+              "path": "src/jsc/NodeModuleModule.bind.ts",
+              "size_bytes": 116,
+              "sha256": "5607adb06c516230a661adcfe80e0039c3cfd58cd43f145ce484cde85ddc2661"
+            },
+            {
+              "path": "src/runtime/api/BunObject.bind.ts",
+              "size_bytes": 433,
+              "sha256": "d2aa4f667da2323ba2dc352845d30b7dc28a05703e9ed8d5e5c5e82bbb856d5d"
+            }
+          ],
+          "definition_source_paths_sha256": "ed9c51e5c6ed81f5f4e0afe8c53061e492aabe22347e698bf0e545b02bc84845",
+          "side_effect_outputs": [
+            "codegen/GeneratedBunObject.h",
+            "codegen/GeneratedNodeModuleModule.h"
+          ],
+          "side_effect_output_paths_sha256": "43709d293bc0498aa78d1db016503bfd38b57a2437e610487befddeb82c18239",
+          "ninja_edge_declares_side_effect_outputs": false,
+          "producer_provenance_verified": true
+        },
+        {
+          "name": "bindgenv2",
+          "ninja_rule": "codegen",
+          "ninja_declared_outputs": [
+            "codegen/bindgen_generated.zig",
+            "codegen/GeneratedSocketConfigBinaryType.cpp",
+            "codegen/bindgen_generated/socket_config_binary_type.zig",
+            "codegen/GeneratedSocketConfigHandlers.cpp",
+            "codegen/bindgen_generated/socket_config_handlers.zig",
+            "codegen/GeneratedSocketConfig.cpp",
+            "codegen/bindgen_generated/socket_config.zig",
+            "codegen/bindgen_generated/socket_config_tls.zig",
+            "codegen/bindgen_generated/alpn_protocols.zig",
+            "codegen/GeneratedSSLConfig.cpp",
+            "codegen/bindgen_generated/ssl_config.zig",
+            "codegen/bindgen_generated/ssl_config_file.zig",
+            "codegen/bindgen_generated/ssl_config_single_file.zig",
+            "codegen/GeneratedFakeTimersConfig.cpp",
+            "codegen/bindgen_generated/fake_timers_config.zig"
+          ],
+          "ninja_declared_output_paths_sha256": "9b4321f0cecb4024ce8bcbe6381ec0a412601bd76b877135a2d81b3575e315be",
+          "ninja_explicit_inputs": [
+            {
+              "path": "src/codegen/bindgenv2/internal/any.ts",
+              "size_bytes": 1038,
+              "sha256": "df5d86f53c6bed8d0e2c119ed1e74d1128988d200869be5b4087147db20c3ecf"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/array.ts",
+              "size_bytes": 993,
+              "sha256": "e4363a67ab788dbbfef0eacb0de395a6729e19e0d91d3bf2846ef7fba3098119"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/base.ts",
+              "size_bytes": 4102,
+              "sha256": "dead88451cad34f593aa330ab24a46becc7cecc2b8f98d3874db0cd20bc78fc1"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/dictionary.ts",
+              "size_bytes": 14140,
+              "sha256": "b144730e8e8be5953e62349bac743489f02277d205ae8a7fd9057d1f360cdb91"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/enumeration.ts",
+              "size_bytes": 6135,
+              "sha256": "97a2a624389535fb8d516b046b3bfed0a439e3033a0566c0751c1fd46a012565"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/interfaces.ts",
+              "size_bytes": 1033,
+              "sha256": "a47f951396b4fa37da97dede15fb57e9df231f59afb0b72c1580db17c716ed94"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/optional.ts",
+              "size_bytes": 3058,
+              "sha256": "c05e1fb7bbfc441556b6e592e71feda7c0dd3ca24e8c8fea920ddb53c4292513"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/primitives.ts",
+              "size_bytes": 6186,
+              "sha256": "b4d5cc8cab0d82b5b7a6ed2dcc8f525985a9fb5aa111818db1a722266cc20784"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/string.ts",
+              "size_bytes": 1036,
+              "sha256": "6c486171e6e3307810eea7b843148bd30df19852ea9b1f69b67753316aa710db"
+            },
+            {
+              "path": "src/codegen/bindgenv2/internal/union.ts",
+              "size_bytes": 5708,
+              "sha256": "187d76ab6500268e3c8c1cfe057066473c23bc80a861a65f7e0a23cdfece60f8"
+            },
+            {
+              "path": "src/codegen/bindgenv2/lib.ts",
+              "size_bytes": 536,
+              "sha256": "973d30e172411ad473296373b113609a4d7532bd7a9e661cea81b6c5d0f08ed6"
+            },
+            {
+              "path": "src/codegen/bindgenv2/script.ts",
+              "size_bytes": 5175,
+              "sha256": "b513437ab3f82b6ae178eab6bc8b5f0b34345994c163e8b867b0df23f40a91e3"
+            },
+            {
+              "path": "src/runtime/socket/SSLConfig.bindv2.ts",
+              "size_bytes": 2002,
+              "sha256": "f6cff7bf5471b16ea0198f25299cbb5135abd7702d1313a3b8bdd71f3647d376"
+            },
+            {
+              "path": "src/runtime/socket/SocketConfig.bindv2.ts",
+              "size_bytes": 2072,
+              "sha256": "89c9f5a15a997e6e665f9e173579e29547bcf35fd38c3b1d6087c707134a6213"
+            },
+            {
+              "path": "src/test_runner/timers/FakeTimersConfig.bindv2.ts",
+              "size_bytes": 276,
+              "sha256": "436afc423006276a159318c4ecfd8c701e0480ed5ee036d5cf04d068f1f8abcd"
+            }
+          ],
+          "ninja_explicit_input_paths_sha256": "78a9c2793aa968d6c18e0c5092d232d5ffe8701861259f035e82b8b2ad8c926f",
+          "generator": {
+            "path": "src/codegen/bindgenv2/script.ts",
+            "size_bytes": 5175,
+            "sha256": "b513437ab3f82b6ae178eab6bc8b5f0b34345994c163e8b867b0df23f40a91e3"
+          },
+          "definition_sources": [
+            {
+              "path": "src/runtime/socket/SSLConfig.bindv2.ts",
+              "size_bytes": 2002,
+              "sha256": "f6cff7bf5471b16ea0198f25299cbb5135abd7702d1313a3b8bdd71f3647d376"
+            },
+            {
+              "path": "src/runtime/socket/SocketConfig.bindv2.ts",
+              "size_bytes": 2072,
+              "sha256": "89c9f5a15a997e6e665f9e173579e29547bcf35fd38c3b1d6087c707134a6213"
+            }
+          ],
+          "definition_source_paths_sha256": "4272023d443df010604589cc82e907f6cd405907ae41a330ecf41fb3dd0dea81",
+          "side_effect_outputs": [
+            "codegen/GeneratedALPNProtocols.h",
+            "codegen/GeneratedSSLConfig.h",
+            "codegen/GeneratedSSLConfigFile.h",
+            "codegen/GeneratedSSLConfigSingleFile.h",
+            "codegen/GeneratedSocketConfigBinaryType.h",
+            "codegen/GeneratedSocketConfigHandlers.h",
+            "codegen/GeneratedSocketConfigTLS.h"
+          ],
+          "side_effect_output_paths_sha256": "d649faa9e8ff8fdd522790a58f8f7b66933e0e3d143c0aa2c257f086250fb957",
+          "ninja_edge_declares_side_effect_outputs": false,
+          "producer_provenance_verified": true
+        }
+      ]
+    },
     "generated_outputs": [
       {
         "path": "codegen/BunObject.lut.h",
@@ -1047,6 +1273,7 @@
     "source_built_npm_receipts_verified": true,
     "declared_codegen_package_manifest_mapping_verified": true,
     "linked_generated_output_mapping_verified": true,
+    "undeclared_header_generator_side_effects_verified": true,
     "generated_output_producer_edges_verified": false,
     "selected_package_license_expressions_verified": true,
     "all_selected_package_license_texts_verified": false,
@@ -1055,7 +1282,7 @@
     "rpm_payload_license_verified": false
   },
   "scope": {
-    "included": "NPM package manifests declared by current code-generation install edges and generated outputs consumed by direct final-link objects",
-    "excluded": "unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
+    "included": "NPM package manifests declared by current code-generation install edges, generated outputs consumed by direct final-link objects, and exact upstream producer provenance for undeclared generated-header side effects",
+    "excluded": "distinct Ninja output edges for the nine headers, clean generator re-execution, unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
   }
 }

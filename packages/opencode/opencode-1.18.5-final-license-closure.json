@@ -32,7 +32,7 @@
     "bun_final_linked_license_closure": {
       "path": "packages/bun/bun-1.3.14-final-linked-license-closure.json",
       "size_bytes": 1978162,
-      "sha256": "185013a147abf5bbc8e8035fbdce3ed9e26fed848d6772c507fff084d78aaf61"
+      "sha256": "613fe66e6465f4c0a5927b2dbd0f73e9e693c3772129868d6cf9fddb43761565"
     }
   },
   "candidate_expressions": {

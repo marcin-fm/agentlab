@@ -142,7 +142,7 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: b9a2c9d6770daf67405ced2c609ae67d024e905ea5110e68ce2796b0fb888617
+      sha256: dabeb596638c1733a47072b4bbb7b08230d6461732cb4c5073082b232d45ddc0
       audit_script: scripts/audit-bun-source-licenses
       audit_script_sha256: 7662654a42483ff93c81f33aec6268e63608ee4075f1bb716e877204bf183c8c
       audit_script_source: audit-bun-source-licenses
@@ -163,12 +163,14 @@ build_plan:
       final_license_expression_verified: false
       required_license_texts_verified: false
     npm_code_generation_closure:
-      relationship: current_codegen_package_and_linked_output_mapping
+      relationship: current_codegen_package_linked_output_and_side_effect_mapping
       source: bun-1.3.14-npm-code-generation-closure.json
-      sha256: b13e6f12b2fccd8bee8be7afb104e1f5b91e641645dc1a3617c70b22053d7ae5
+      sha256: ec15bd7fa7b890fc04f01817381cc117b96e3264a3c24932e955eec754f47c6c
       audit_script: scripts/audit-bun-npm-code-generation
-      audit_script_sha256: 880e4f2e4e7aadb36787a6716c2b146d816d3d34ba9d013ad9b5901166e51466
+      audit_script_sha256: a1f9982d14cbb2acbd880d27ba1717bd23c79bd0ea7dcd67e983382417d243c5
       audit_script_source: audit-bun-npm-code-generation
+      build_ninja_size_bytes: 2469137
+      build_ninja_sha256: 9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3
       direct_object_count: 1162
       objects_consuming_generated_code: 37
       generated_output_count: 30
@@ -179,12 +181,15 @@ build_plan:
         - peechy@0.4.34
       declared_codegen_package_manifest_mapping_verified: true
       linked_generated_output_mapping_verified: true
+      undeclared_header_generator_side_effects_verified: true
+      generated_output_producer_edges_verified: false
+      generator_execution_reproduced: false
       all_selected_package_license_texts_verified: false
       final_npm_codegen_closure_verified: false
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: 185013a147abf5bbc8e8035fbdce3ed9e26fed848d6772c507fff084d78aaf61
+      sha256: 613fe66e6465f4c0a5927b2dbd0f73e9e693c3772129868d6cf9fddb43761565
       audit_script: scripts/audit-bun-final-linked-licenses
       audit_script_sha256: 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
       audit_script_source: audit-bun-final-linked-licenses
@@ -348,7 +353,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: bbf1d77a6736d72eb4d3853ceae0280a725980e733b03ccdf30495105f69f59c
+      proof_receipt_sha256: 657e2e86fc97d9da77a64ffd16a5d670ca97d40cde5307d85bd13ef83d45be2f
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -382,7 +387,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: c2dcdecf028e845f8ce43a17e80c97b0dfd9320d8ae4e42e2ad961d264ebd222
+      proof_receipt_sha256: 9f322d6e46158fe88ae2a7a6f8f10e8631fabd83762da62fae5f5ca9bb188e76
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true

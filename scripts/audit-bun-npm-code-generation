@@ -31,6 +31,39 @@ module BunNpmCodeGenerationAudit
       "exact_release_source_correspondence_verified" => false
     }
   }.freeze
+  SIDE_EFFECT_PRODUCERS = [
+    {
+      "name" => "bindgen",
+      "edge_anchor" => "codegen/GeneratedBindings.cpp",
+      "generator" => "src/codegen/bindgen.ts",
+      "definition_sources" => %w[
+        src/jsc/NodeModuleModule.bind.ts
+        src/runtime/api/BunObject.bind.ts
+      ],
+      "side_effect_outputs" => %w[
+        codegen/GeneratedBunObject.h
+        codegen/GeneratedNodeModuleModule.h
+      ]
+    },
+    {
+      "name" => "bindgenv2",
+      "edge_anchor" => "codegen/bindgen_generated.zig",
+      "generator" => "src/codegen/bindgenv2/script.ts",
+      "definition_sources" => %w[
+        src/runtime/socket/SSLConfig.bindv2.ts
+        src/runtime/socket/SocketConfig.bindv2.ts
+      ],
+      "side_effect_outputs" => %w[
+        codegen/GeneratedALPNProtocols.h
+        codegen/GeneratedSSLConfig.h
+        codegen/GeneratedSSLConfigFile.h
+        codegen/GeneratedSSLConfigSingleFile.h
+        codegen/GeneratedSocketConfigBinaryType.h
+        codegen/GeneratedSocketConfigHandlers.h
+        codegen/GeneratedSocketConfigTLS.h
+      ]
+    }
+  ].freeze
 
   module_function
 
@@ -85,13 +118,69 @@ module BunNpmCodeGenerationAudit
 
       rule, inputs = rule_and_inputs.split(" ", 2)
       explicit = inputs.to_s.split(/ \|\|? /, 2).first.to_s.split
-      outputs.split.reject { |output| output == "|" }.each do |output|
+      declared_outputs = outputs.split.reject { |output| output == "|" }
+      declared_outputs.each do |output|
         raise Error, "duplicate Ninja output #{output}" if edges.key?(output)
 
-        edges[output] = { "rule" => rule, "inputs" => explicit }
+        edges[output] = { "rule" => rule, "inputs" => explicit, "outputs" => declared_outputs }
       end
     end
     edges
+  end
+
+  def source_input_records(inputs, source_root, build_root)
+    inputs.uniq.map do |input|
+      path = File.expand_path(input, build_root)
+      raise Error, "code-generation input is not a retained source file: #{input}" unless File.file?(path)
+
+      file_record(path, source_root)
+    end.sort_by { |record| record.fetch("path") }
+  end
+
+  def side_effect_provenance(source_root, build_root, edges, undeclared_outputs)
+    expected_outputs = SIDE_EFFECT_PRODUCERS.flat_map { |producer| producer.fetch("side_effect_outputs") }.sort
+    actual_outputs = undeclared_outputs.map { |record| record.fetch("path") }.sort
+    raise Error, "unexpected undeclared code-generation outputs: #{actual_outputs.inspect}" unless actual_outputs == expected_outputs
+
+    producers = SIDE_EFFECT_PRODUCERS.map do |definition|
+      edge = edges.fetch(definition.fetch("edge_anchor"))
+      input_records = source_input_records(edge.fetch("inputs"), source_root, build_root)
+      input_paths = input_records.map { |record| record.fetch("path") }
+      definition_sources = definition.fetch("definition_sources").map do |path|
+        raise Error, "code-generation definition is not a Ninja input: #{path}" unless input_paths.include?(path)
+
+        file_record(File.join(source_root, path), source_root)
+      end
+      generator = file_record(File.join(source_root, definition.fetch("generator")), source_root)
+      raise Error, "code-generation generator is not a Ninja input: #{generator.fetch('path')}" unless input_paths.include?(generator.fetch("path"))
+
+      {
+        "name" => definition.fetch("name"),
+        "ninja_rule" => edge.fetch("rule"),
+        "ninja_declared_outputs" => edge.fetch("outputs"),
+        "ninja_declared_output_paths_sha256" => path_set_digest(edge.fetch("outputs")),
+        "ninja_explicit_inputs" => input_records,
+        "ninja_explicit_input_paths_sha256" => path_set_digest(input_paths),
+        "generator" => generator,
+        "definition_sources" => definition_sources,
+        "definition_source_paths_sha256" => path_set_digest(definition_sources.map { |record| record.fetch("path") }),
+        "side_effect_outputs" => definition.fetch("side_effect_outputs"),
+        "side_effect_output_paths_sha256" => path_set_digest(definition.fetch("side_effect_outputs")),
+        "ninja_edge_declares_side_effect_outputs" => false,
+        "producer_provenance_verified" => true
+      }
+    end
+
+    {
+      "schema" => "bun-codegen-side-effect-provenance/v1",
+      "orchestrator" => file_record(File.join(source_root, "scripts/build/codegen.ts"), source_root),
+      "write_helper" => file_record(File.join(source_root, "src/codegen/helpers.ts"), source_root),
+      "header_count" => expected_outputs.length,
+      "header_paths_sha256" => path_set_digest(expected_outputs),
+      "ninja_output_edges_declared" => false,
+      "generator_execution_reproduced" => false,
+      "producers" => producers
+    }
   end
 
   def linked_codegen_dependencies(build_root, direct_objects)
@@ -204,6 +293,7 @@ module BunNpmCodeGenerationAudit
       )
     end
     undeclared_outputs = generated_outputs.reject { |record| record["producer_edge_declared"] }
+    producer_provenance = side_effect_provenance(source_root, build_root, edges, undeclared_outputs)
     package_manifests = selected_package_manifests(source_root, ninja)
     packages = package_records(source_root, package_manifests)
     missing_texts = packages.reject { |record| record["required_text_present"] }
@@ -213,7 +303,7 @@ module BunNpmCodeGenerationAudit
     raise Error, "npm license-text gap lacks exact repository evidence" unless missing_texts.all? { |record| record.dig("missing_text_evidence", "sha256").to_s.match?(/\A[0-9a-f]{64}\z/) }
 
     {
-      "schema" => "bun-npm-code-generation-closure/v1",
+      "schema" => "bun-npm-code-generation-closure/v2",
       "package" => "bun",
       "version" => inventory.fetch("release"),
       "rpm_release" => inventory.fetch("rpm_release"),
@@ -232,6 +322,7 @@ module BunNpmCodeGenerationAudit
         "generated_output_paths_sha256" => path_set_digest(generated_outputs.map { |record| record.fetch("path") }),
         "undeclared_producer_output_count" => undeclared_outputs.length,
         "undeclared_producer_output_paths" => undeclared_outputs.map { |record| record.fetch("path") },
+        "undeclared_header_side_effects" => producer_provenance,
         "generated_outputs" => generated_outputs
       },
       "npm" => {
@@ -249,6 +340,7 @@ module BunNpmCodeGenerationAudit
         "source_built_npm_receipts_verified" => true,
         "declared_codegen_package_manifest_mapping_verified" => true,
         "linked_generated_output_mapping_verified" => true,
+        "undeclared_header_generator_side_effects_verified" => true,
         "generated_output_producer_edges_verified" => undeclared_outputs.empty?,
         "selected_package_license_expressions_verified" => true,
         "all_selected_package_license_texts_verified" => false,
@@ -257,8 +349,8 @@ module BunNpmCodeGenerationAudit
         "rpm_payload_license_verified" => false
       },
       "scope" => {
-        "included" => "NPM package manifests declared by current code-generation install edges and generated outputs consumed by direct final-link objects",
-        "excluded" => "unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
+        "included" => "NPM package manifests declared by current code-generation install edges, generated outputs consumed by direct final-link objects, and exact upstream producer provenance for undeclared generated-header side effects",
+        "excluded" => "distinct Ninja output edges for the nine headers, clean generator re-execution, unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
       }
     }
   end

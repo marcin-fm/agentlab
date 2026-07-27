@@ -3427,7 +3427,7 @@ module Agentlab
 
     errors = []
     receipt = JSON.parse(File.read(receipt_path))
-    errors << "bun: unsupported npm code-generation closure schema" unless receipt["schema"] == "bun-npm-code-generation-closure/v1"
+    errors << "bun: unsupported npm code-generation closure schema" unless receipt["schema"] == "bun-npm-code-generation-closure/v2"
     errors << "bun: npm code-generation closure package mismatch" unless receipt["package"] == "bun"
     errors << "bun: npm code-generation closure release mismatch" unless receipt["version"].to_s == version
     spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
@@ -3447,6 +3447,16 @@ module Agentlab
     expected_inputs.each do |key, (filename, sha256)|
       record = receipt.dig("inputs", key) || {}
       errors << "bun: npm code-generation #{key.tr('_', ' ')} mismatch" unless record["path"] == "packages/bun/#{filename}" && record["sha256"] == sha256
+    end
+    expected_build_ninja = {
+      "path" => "build/release-local/build.ninja",
+      "size_bytes" => 2_469_137,
+      "sha256" => "9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3"
+    }
+    errors << "bun: npm code-generation build graph mismatch" unless receipt.dig("inputs", "build_ninja") == expected_build_ninja
+    unless metadata["build_ninja_size_bytes"] == expected_build_ninja["size_bytes"] &&
+           metadata["build_ninja_sha256"] == expected_build_ninja["sha256"]
+      errors << "bun: npm code-generation build graph metadata mismatch"
     end
 
     final_link = receipt["final_link"] || {}
@@ -3475,6 +3485,92 @@ module Agentlab
         record["consumer_object_count"].positive? && record["consumer_objects_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
     errors << "bun: npm code-generation generated-output records mismatch" unless valid_generated_outputs
+
+    provenance = final_link["undeclared_header_side_effects"] || {}
+    expected_source_records = {
+      "scripts/build/codegen.ts" => [35_191, "5e16f9d003e2de68e26658a8f863547aed618e9b18712959c666faf70b97880f"],
+      "src/codegen/helpers.ts" => [4_464, "41e8323f21f2aa8834e75a78b354b949fe2d27d9c63e5b08b20470537fce5811"],
+      "src/codegen/bindgen.ts" => [53_468, "c68d3a466b34629f24fc0bc66c298a6c6aa639b5dc672f8bbc49021b9b21752c"],
+      "src/codegen/bindgenv2/script.ts" => [5_175, "b513437ab3f82b6ae178eab6bc8b5f0b34345994c163e8b867b0df23f40a91e3"],
+      "src/jsc/NodeModuleModule.bind.ts" => [116, "5607adb06c516230a661adcfe80e0039c3cfd58cd43f145ce484cde85ddc2661"],
+      "src/runtime/api/BunObject.bind.ts" => [433, "d2aa4f667da2323ba2dc352845d30b7dc28a05703e9ed8d5e5c5e82bbb856d5d"],
+      "src/runtime/socket/SocketConfig.bindv2.ts" => [2_072, "89c9f5a15a997e6e665f9e173579e29547bcf35fd38c3b1d6087c707134a6213"],
+      "src/runtime/socket/SSLConfig.bindv2.ts" => [2_002, "f6cff7bf5471b16ea0198f25299cbb5135abd7702d1313a3b8bdd71f3647d376"]
+    }
+    valid_source_record = lambda do |record, path|
+      size, sha256 = expected_source_records[path]
+      next false unless size && sha256
+
+      record == { "path" => path, "size_bytes" => size, "sha256" => sha256 }
+    end
+    expected_producers = {
+      "bindgen" => {
+        "generator" => "src/codegen/bindgen.ts",
+        "definitions" => %w[src/jsc/NodeModuleModule.bind.ts src/runtime/api/BunObject.bind.ts],
+        "outputs" => %w[codegen/GeneratedBunObject.h codegen/GeneratedNodeModuleModule.h],
+        "declared_outputs_sha256" => "3fc2117f015896c949c125a4f1547d08da3bf72a64c2a3ec4e8803ef95ef3ec7",
+        "explicit_inputs_sha256" => "de6bdbaebcf8a589b8b69ac179d5b2536dbfde331386c20ceea2207e9f4008eb"
+      },
+      "bindgenv2" => {
+        "generator" => "src/codegen/bindgenv2/script.ts",
+        "definitions" => %w[src/runtime/socket/SSLConfig.bindv2.ts src/runtime/socket/SocketConfig.bindv2.ts],
+        "outputs" => %w[
+          codegen/GeneratedALPNProtocols.h
+          codegen/GeneratedSSLConfig.h
+          codegen/GeneratedSSLConfigFile.h
+          codegen/GeneratedSSLConfigSingleFile.h
+          codegen/GeneratedSocketConfigBinaryType.h
+          codegen/GeneratedSocketConfigHandlers.h
+          codegen/GeneratedSocketConfigTLS.h
+        ],
+        "declared_outputs_sha256" => "9b4321f0cecb4024ce8bcbe6381ec0a412601bd76b877135a2d81b3575e315be",
+        "explicit_inputs_sha256" => "78a9c2793aa968d6c18e0c5092d232d5ffe8701861259f035e82b8b2ad8c926f"
+      }
+    }
+    provenance_outputs = Array(provenance["producers"]).flat_map { |producer| Array(producer["side_effect_outputs"]) }.sort
+    valid_provenance = provenance["schema"] == "bun-codegen-side-effect-provenance/v1" &&
+                       provenance["header_count"] == expected_undeclared.length &&
+                       provenance["header_paths_sha256"] == Digest::SHA256.hexdigest(expected_undeclared.sort.join("\n") + "\n") &&
+                       provenance["ninja_output_edges_declared"] == false &&
+                       provenance["generator_execution_reproduced"] == false &&
+                       valid_source_record.call(provenance["orchestrator"], "scripts/build/codegen.ts") &&
+                       valid_source_record.call(provenance["write_helper"], "src/codegen/helpers.ts") &&
+                       provenance_outputs == expected_undeclared
+    producers = Array(provenance["producers"])
+    valid_provenance &&= producers.length == expected_producers.length && producers.all? do |producer|
+      expected = expected_producers[producer["name"]]
+      next false unless expected
+
+      definitions = Array(producer["definition_sources"])
+      input_records = Array(producer["ninja_explicit_inputs"])
+      input_paths = input_records.map { |record| record["path"] }
+      valid_input_records = input_paths.uniq.length == input_paths.length && input_records.all? do |record|
+        record["path"].is_a?(String) && record["size_bytes"].is_a?(Integer) && record["size_bytes"].positive? &&
+          record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+      end
+      producer["ninja_rule"] == "codegen" &&
+        Array(producer["ninja_declared_outputs"]).none? { |path| expected["outputs"].include?(path) } &&
+        producer["ninja_declared_output_paths_sha256"] == expected["declared_outputs_sha256"] &&
+        producer["ninja_declared_output_paths_sha256"] == Digest::SHA256.hexdigest(Array(producer["ninja_declared_outputs"]).sort.join("\n") + "\n") &&
+        valid_input_records &&
+        producer["ninja_explicit_input_paths_sha256"] == expected["explicit_inputs_sha256"] &&
+        producer["ninja_explicit_input_paths_sha256"] == Digest::SHA256.hexdigest(input_paths.sort.join("\n") + "\n") &&
+        valid_source_record.call(producer["generator"], expected["generator"]) &&
+        definitions.map { |record| record["path"] } == expected["definitions"] &&
+        definitions.all? { |record| valid_source_record.call(record, record["path"]) } &&
+        expected["definitions"].all? { |path| input_paths.include?(path) } && input_paths.include?(expected["generator"]) &&
+        producer["definition_source_paths_sha256"] == Digest::SHA256.hexdigest(expected["definitions"].sort.join("\n") + "\n") &&
+        producer["side_effect_outputs"] == expected["outputs"] &&
+        producer["side_effect_output_paths_sha256"] == Digest::SHA256.hexdigest(expected["outputs"].sort.join("\n") + "\n") &&
+        producer["ninja_edge_declares_side_effect_outputs"] == false && producer["producer_provenance_verified"] == true
+    end
+    errors << "bun: npm code-generation side-effect provenance mismatch" unless valid_provenance
+
+    undeclared_records = generated_outputs.select { |record| expected_undeclared.include?(record["path"]) }
+    valid_undeclared_records = undeclared_records.length == expected_undeclared.length && undeclared_records.all? do |record|
+      record["producer_edge_declared"] == false && record["rule"].nil?
+    end
+    errors << "bun: npm code-generation undeclared output semantics mismatch" unless valid_undeclared_records
 
     npm = receipt["npm"] || {}
     expected_expressions = { "Apache-2.0" => 1, "Artistic-2.0" => 1, "BSD-3-Clause" => 1, "MIT" => 35 }
@@ -3508,6 +3604,7 @@ module Agentlab
       source_built_npm_receipts_verified
       declared_codegen_package_manifest_mapping_verified
       linked_generated_output_mapping_verified
+      undeclared_header_generator_side_effects_verified
       selected_package_license_expressions_verified
     ]
     false_validation = %w[
@@ -3522,7 +3619,12 @@ module Agentlab
     ]
     errors << "bun: npm code-generation mapping validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
     errors << "bun: npm code-generation closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
-    errors << "bun: npm code-generation metadata overclaims completion" unless metadata["final_npm_codegen_closure_verified"] == false && metadata["all_selected_package_license_texts_verified"] == false
+    valid_metadata = metadata["undeclared_header_generator_side_effects_verified"] == true &&
+                     metadata["generated_output_producer_edges_verified"] == false &&
+                     metadata["generator_execution_reproduced"] == false &&
+                     metadata["final_npm_codegen_closure_verified"] == false &&
+                     metadata["all_selected_package_license_texts_verified"] == false
+    errors << "bun: npm code-generation metadata overclaims completion" unless valid_metadata
 
     required_spec_fragments = [
       "%global npm_code_generation_closure_sha256 #{expected_sha256}",
@@ -5459,7 +5561,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.15%{?dist}",
+            "Release:        0.16%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -5745,7 +5847,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.15%{?dist}",
+        "Release:        0.16%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6288,8 +6390,8 @@ module Agentlab
           "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
-          "source_rpm_nvr" => "opencode-1.18.5-0.15.fc44",
-          "source_rpm_sha256" => "55ce5427abb10daf4ba18a3deafc90334d14609e555555404e2110f0fec40bab",
+          "source_rpm_nvr" => "opencode-1.18.5-0.16.fc44",
+          "source_rpm_sha256" => "19887f7ce4df719d9f1727dd89ac79fc5d0b0b6968c8be7a53c32380cf4dd625",
           "source_members" => 57,
           "configured_scm_generation_verified" => true,
           "binary_build_performed" => false,
@@ -6316,7 +6418,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.15%{?dist}",
+          "Release:        0.16%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

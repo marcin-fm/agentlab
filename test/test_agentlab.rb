@@ -2474,7 +2474,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.31", "--rpm-release 0.0.30")
+        spec.sub("--rpm-release 0.0.32", "--rpm-release 0.0.31")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2484,7 +2484,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--date 2026-07-26", "--date 2026-07-25")
+        spec.sub("--date 2026-07-27", "--date 2026-07-26")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2616,7 +2616,14 @@ class AgentlabTest < Minitest::Test
       receipt_path = File.join(directory, copied_metadata.fetch("source"))
       receipt = JSON.parse(File.read(receipt_path))
       receipt.fetch("final_link")["generated_output_count"] -= 1
+      receipt.dig("inputs", "build_ninja")["sha256"] = "0" * 64
+      receipt.dig("final_link", "undeclared_header_side_effects", "orchestrator")["sha256"] = "0" * 64
+      receipt.dig("final_link", "undeclared_header_side_effects", "producers", 0)["side_effect_outputs"].reverse!
+      undeclared = receipt.fetch("final_link").fetch("generated_outputs").find { |record| record["producer_edge_declared"] == false }
+      undeclared["producer_edge_declared"] = true
+      undeclared["rule"] = "codegen"
       receipt.fetch("npm")["packages_with_required_text"] -= 1
+      receipt.fetch("validation")["undeclared_header_generator_side_effects_verified"] = false
       receipt.fetch("validation")["final_npm_codegen_closure_verified"] = true
       File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
       copied_metadata["sha256"] = Digest::SHA256.file(receipt_path).hexdigest
@@ -2631,7 +2638,11 @@ class AgentlabTest < Minitest::Test
         spec
       )
       assert_includes(errors, "bun: npm code-generation final-link counts mismatch")
+      assert_includes(errors, "bun: npm code-generation build graph mismatch")
+      assert_includes(errors, "bun: npm code-generation side-effect provenance mismatch")
+      assert_includes(errors, "bun: npm code-generation undeclared output semantics mismatch")
       assert_includes(errors, "bun: npm code-generation package counts mismatch")
+      assert_includes(errors, "bun: npm code-generation mapping validation is incomplete")
       assert_includes(errors, "bun: npm code-generation closure overclaims completion")
     end
   end
