@@ -5,7 +5,7 @@ blockers:
   - The external lol-html 3.0.0 package and Bun system-link patch require target Mock proof.
   - The complete LGPL relink kit is proven locally but lacks approved immutable delivery and final RPM integration.
   - Six Bun WebKit fork files lack explicit terms, and peechy 0.4.34 omits the required MIT text from its exact npm archive. constants-browserify 1.0.0 carries the complete notice in its exact release README.
-  - Final bundled-license accounting, the aarch64 Zig/Bun build chain, RPM acceptance, and COPR acceptance are incomplete.
+  - Final bundled-license accounting, the aarch64 Bun build chain, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
   provider: github
   repository: oven-sh/bun
@@ -145,7 +145,7 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: 4cf25aebaf275c91ec2a9f639a1c3d1cae52f961fd63300dd96e9510d437fcad
+      sha256: 9913956eddb2a07eb386b3d717b0e601db987d904bd7a163053a0f57fdbc4dfc
       audit_script: scripts/audit-bun-source-licenses
       audit_script_sha256: 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
       audit_script_source: audit-bun-source-licenses
@@ -168,7 +168,7 @@ build_plan:
     npm_code_generation_closure:
       relationship: current_codegen_package_linked_output_and_side_effect_mapping
       source: bun-1.3.14-npm-code-generation-closure.json
-      sha256: 0d6b82862ec1d0b21f83d3d6a0e759110c8a74dbfc64a6dab7da92faa7c50412
+      sha256: bdcddc787e13d8c6e9579417010ce7db2cbf7b432b63116bd7ec548e5bae135e
       audit_script: scripts/audit-bun-npm-code-generation
       audit_script_sha256: 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
       audit_script_source: audit-bun-npm-code-generation
@@ -191,7 +191,7 @@ build_plan:
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: e261e07787fbd24117ab05681702dcb4b661923c24fa006cd6d9e9ced74039f6
+      sha256: 7b71f7bc189a717879656d15eda72f47b9287d4c63017907c66395721d0e25aa
       audit_script: scripts/audit-bun-final-linked-licenses
       audit_script_sha256: 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
       audit_script_source: audit-bun-final-linked-licenses
@@ -298,7 +298,7 @@ build_plan:
       first_source_build_proof_only: true
     aarch64_preflight:
       relationship: target_specific_local_bootstrap_and_npm_proof
-      state: webkit_source_build_verified
+      state: zig_source_bootstrap_verified
       target:
         os: linux
         cpu: arm64
@@ -331,6 +331,8 @@ build_plan:
         forcearch: aarch64
         qemu_user_static_version: 10.2.2
         binfmt_interpreter: /usr/bin/qemu-aarch64-static
+        qemu_default_guest_stack_size_bytes: 8388608
+        qemu_proof_guest_stack_size_bytes: 67108864
         uname_machine: aarch64
         agentlab_repository: https://download.copr.fedorainfracloud.org/results/marcin/agentlab/fedora-44-aarch64/
         lolhtml_nevra: lol-html-3.0.0-0.10.fc44.aarch64
@@ -352,6 +354,25 @@ build_plan:
         ignore_scripts: true
         source_files_unchanged: true
         seed_absent_from_node_modules: true
+      zig_source_bootstrap:
+        state: verified
+        receipt: zig-bootstrap-proof-arm64.json
+        receipt_sha256: c045c2d6eb2bc5079bb48697dca3a4f8db57c22ba361998b591d4330e5d97e1e
+        proof_helper: scripts/prove-bun-zig-bootstrap
+        proof_helper_sha256: 472579c1ad13ca0926bf478974cc72cd226051203fb51959a8d3b1cce61b2331
+        toolchain:
+          cmake: 4.3.0
+          clang: 20.1.8
+          llvm: 20.1.8
+          target: native
+          cpu: baseline
+          shared_llvm: true
+        output:
+          version: 0.15.2
+          executable_sha256: d4a3a638c38e4f2aa0df623461efb2b9613157628b6d2f8cb07d4f7a5eb83382
+        emulation:
+          qemu_user: true
+          guest_stack_size_bytes: 67108864
       webkit_source_build:
         state: verified
         receipt: webkit-minimized-source-build-proof-arm64.json
@@ -424,7 +445,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: 876eb7cb38030e3c78814e521293ca684ca9092e8d63522154567efc41dc00e0
+      proof_receipt_sha256: 35c5692c97ccfce5528e4f3397fdf4809b1d6ba9db29800ceb21979906a60c17
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -458,7 +479,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: f31d6382aa41114a1d91e1a5ed4a0098f317792e8966b3acbbda2449bb215047
+      proof_receipt_sha256: 38d708012669c3920a3e5084d46318f3457887c421a0723830753f8560026c65
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true

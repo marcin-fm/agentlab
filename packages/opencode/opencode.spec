@@ -60,7 +60,7 @@
 %global binary_embedding_auditor_sha256 9f77823c4ef29d38bb1a09f0a322d337765de9b3e284e5b6d370fea3d0ff8451
 %global binary_embedding_receipt_sha256 496be59e95b845de847bced424c0e48a340969568eacea7f01fa0b12ae2a0f14
 %global final_license_auditor_sha256 8e8f8033df0e0770263112fa0a8feb563a67f0cf3c05a7b009ad28d3508d9c9f
-%global final_license_receipt_sha256 5d7bcc7547b05c330e96fa5a5d24bafef178f2cf3c0c1b01b6701b229aa582f7
+%global final_license_receipt_sha256 0ab45dbc1e6bd11776a137633ce4cfa0b71e8d3f40564135b2f209a0cdead805
 %global bundle_metafile_patch_sha256 1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4
 %global license_review_sha256 4248cf9d4e78236ad4b30f403137ff33f8b300b9fbd9cbf7f55a9599cc149848
 %global aws_sdk_license_sha256 edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
@@ -88,7 +88,7 @@
 
 Name:           opencode
 Version:        1.18.5
-Release:        0.19%{?dist}
+Release:        0.20%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -1380,6 +1380,9 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.20
+- Refresh the final-license preflight for Bun's aarch64 Zig source bootstrap.
+
 * Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.19
 - Refresh the final-license preflight for Bun's aarch64 WebKit/JSC proof.
 

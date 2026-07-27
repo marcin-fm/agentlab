@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.35",
+  "rpm_release": "0.0.36",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-07-27",
   "source_generation": {
@@ -23,7 +23,7 @@
     "source_license_inventory": {
       "filename": "bun-1.3.14-source-license-inventory.json",
       "size_bytes": 126685,
-      "sha256": "4cf25aebaf275c91ec2a9f639a1c3d1cae52f961fd63300dd96e9510d437fcad"
+      "sha256": "9913956eddb2a07eb386b3d717b0e601db987d904bd7a163053a0f57fdbc4dfc"
     },
     "source_license_audit_script": {
       "filename": "audit-bun-source-licenses",
@@ -33,7 +33,7 @@
     "final_linked_license_closure": {
       "filename": "bun-1.3.14-final-linked-license-closure.json",
       "size_bytes": 1978162,
-      "sha256": "e261e07787fbd24117ab05681702dcb4b661923c24fa006cd6d9e9ced74039f6"
+      "sha256": "7b71f7bc189a717879656d15eda72f47b9287d4c63017907c66395721d0e25aa"
     },
     "final_linked_license_audit_script": {
       "filename": "audit-bun-final-linked-licenses",
@@ -43,7 +43,7 @@
     "npm_code_generation_closure": {
       "filename": "bun-1.3.14-npm-code-generation-closure.json",
       "size_bytes": 51582,
-      "sha256": "0d6b82862ec1d0b21f83d3d6a0e759110c8a74dbfc64a6dab7da92faa7c50412"
+      "sha256": "bdcddc787e13d8c6e9579417010ce7db2cbf7b432b63116bd7ec548e5bae135e"
     },
     "npm_code_generation_audit_script": {
       "filename": "audit-bun-npm-code-generation",
@@ -54,18 +54,18 @@
   },
   "spec": {
     "filename": "bun.spec",
-    "size_bytes": 25303,
-    "sha256": "0f5cc3cfdf1435993543da82c32e4e735b5f3d9d552fc75a0d7e0baeecb33b14"
+    "size_bytes": 25428,
+    "sha256": "e4ff9b25959262e0d279251c89c17704d07ec6ec4e3815e27aa10aa492defc9f"
   },
   "srpm": {
-    "filename": "bun-1.3.14-0.0.35.fc44.src.rpm",
-    "size_bytes": 318186571,
-    "sha256": "eee4cf8cd1b71144b5f6abf2b3383e58864316cc88a7cbe1117e613ebb455dc4",
+    "filename": "bun-1.3.14-0.0.36.fc44.src.rpm",
+    "size_bytes": 318185293,
+    "sha256": "63b3ae1c42baf1a9fcd3f7e3dcaa21945f189d48213023fcd2570cc4dc5d58ce",
     "digest_check": "ok",
     "inventory_members": 39,
     "inventory_sha256": "0135711dbf5006df484704858c5a29ce6222e2135459b6f13ac08d6e17822a30",
-    "member_manifest_sha256": "762e77afc72b2237fd43ccfc3181fa124ab28ad744bc29cad691b5ab0ed1e35f",
-    "uncompressed_member_bytes": 324172728
+    "member_manifest_sha256": "9cd875966ef3149b7b8d91edd788b5c5c9f532a559c41e024b266abe7a1e6a00",
+    "uncompressed_member_bytes": 324172853
   },
   "validation": {
     "direct_source_checksums_verified": true,

@@ -4329,7 +4329,7 @@ module Agentlab
 
     errors = []
     target = { "os" => "linux", "cpu" => "arm64", "libc" => "glibc" }
-    errors << "bun: aarch64 preflight state mismatch" unless preflight["state"] == "webkit_source_build_verified"
+    errors << "bun: aarch64 preflight state mismatch" unless preflight["state"] == "zig_source_bootstrap_verified"
     errors << "bun: aarch64 preflight target mismatch" unless preflight["target"] == target
 
     repo_root = File.expand_path("../..", package.directory)
@@ -4373,6 +4373,7 @@ module Agentlab
 
     mock = preflight["mock"] || {}
     errors << "bun: aarch64 Mock preflight mismatch" unless mock["config"] == "fedora-44-aarch64" && mock["forcearch"] == "aarch64" && mock["uname_machine"] == "aarch64"
+    errors << "bun: aarch64 QEMU preflight mismatch" unless mock["qemu_user_static_version"] == "10.2.2" && mock["binfmt_interpreter"] == "/usr/bin/qemu-aarch64-static" && mock["qemu_default_guest_stack_size_bytes"] == 8_388_608 && mock["qemu_proof_guest_stack_size_bytes"] == 67_108_864
     errors << "bun: aarch64 lol-html preflight mismatch" unless mock["lolhtml_nevra"] == "lol-html-3.0.0-0.10.fc44.aarch64" && mock["lolhtml_devel_nevra"] == "lol-html-devel-3.0.0-0.10.fc44.aarch64" && mock["lolhtml_pkgconfig_version"] == "1.4.0"
 
     npm = preflight["npm_offline_install"]
@@ -4400,6 +4401,29 @@ module Agentlab
       validation = receipt["validation"] || {}
       errors << "bun: aarch64 npm proof validation is incomplete" unless %w[source_files_unchanged seed_absent_from_node_modules npm_cache_materialization_verified npm_offline_install_verified].all? { |key| validation[key] == true }
       errors << "bun: aarch64 npm proof overclaims later stages" unless validation["dependency_resolution_performed"] == false && validation["full_bun_build_performed"] == false
+    end
+
+    zig_metadata = package.data.dig("build_plan", "source_inputs", "zig") || {}
+    zig_build = preflight["zig_source_bootstrap"]
+    errors << "bun: aarch64 Zig proof state mismatch" unless zig_build.is_a?(Hash) && zig_build["state"] == "verified"
+    zig_receipt_path = verify_file.call(package.directory, zig_build, "receipt", "receipt_sha256", "Zig proof")
+    verify_file.call(repo_root, zig_build, "proof_helper", "proof_helper_sha256", "Zig proof helper")
+    if zig_receipt_path
+      zig_receipt = JSON.parse(File.read(zig_receipt_path))
+      errors << "bun: aarch64 Zig proof schema mismatch" unless zig_receipt["schema"] == 1
+      errors << "bun: aarch64 Zig proof identity mismatch" unless zig_receipt["package_release"] == "bun-v#{version}" && zig_receipt["proof_platform"] == "fedora-44-aarch64" && zig_receipt["proof_date"] == "2026-07-27"
+      errors << "bun: aarch64 Zig proof source mismatch" unless zig_receipt["source"] == zig_metadata.slice("commit", "sha256")
+      zig_patch_path = File.join(package.directory, zig_metadata.fetch("patch"))
+      if File.file?(zig_patch_path)
+        expected_patch = { "path" => zig_metadata["patch"], "sha256" => Digest::SHA256.file(zig_patch_path).hexdigest }
+        errors << "bun: aarch64 Zig proof patch mismatch" unless zig_receipt["patch"] == expected_patch
+      else
+        errors << "bun: aarch64 Zig proof patch is missing"
+      end
+      errors << "bun: aarch64 Zig proof toolchain mismatch" unless zig_receipt["toolchain"] == zig_build["toolchain"]
+      errors << "bun: aarch64 Zig proof emulation mismatch" unless zig_receipt["emulation"] == zig_build["emulation"] && zig_receipt.dig("emulation", "guest_stack_size_bytes") == mock["qemu_proof_guest_stack_size_bytes"]
+      output = zig_receipt["output"] || {}
+      errors << "bun: aarch64 Zig proof output mismatch" unless output["version"] == zig_build.dig("output", "version") && output["executable_sha256"] == zig_build.dig("output", "executable_sha256") && output["bun_layout_verified"] == true && output["source_execution_verified"] == true && output["external_zig_binary_used"] == false
     end
 
     webkit_metadata = package.data.dig("build_plan", "source_inputs", "webkit") || {}
@@ -5748,7 +5772,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.19%{?dist}",
+            "Release:        0.20%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -6034,7 +6058,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.19%{?dist}",
+        "Release:        0.20%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6577,8 +6601,8 @@ module Agentlab
           "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
-          "source_rpm_nvr" => "opencode-1.18.5-0.19.fc44",
-          "source_rpm_sha256" => "482b74712f6e8d74b05926c3f5e68f5376e831162f9e5ab753f062d81eec9042",
+          "source_rpm_nvr" => "opencode-1.18.5-0.20.fc44",
+          "source_rpm_sha256" => "22e3fa69cce80ebe283d47ae704b0d164014cc9279d29ababb67a07903d647ce",
           "source_members" => 57,
           "configured_scm_generation_verified" => true,
           "binary_build_performed" => false,
@@ -6605,7 +6629,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.19%{?dist}",
+          "Release:        0.20%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',
