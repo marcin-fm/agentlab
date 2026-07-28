@@ -1,14 +1,14 @@
 %bcond check 1
 %global source_sha256 313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022
 %global cargo_closure_sha256 1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6
-%global cargo_vendor_receipt_sha256 5ad99b32aedb5744ade04726aa09ad760b1e68d0faa4acef4d3d9a8c45f06138
+%global cargo_vendor_receipt_sha256 64007acb028f36b99d30795bc19309055a1d926ba9c88ab848032a39f14321b2
 %global cargo_license_audit_sha256 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
-%global cargo_vendor_manifest_sha256 be6d14be1b89eed71091e1184a9ba69d9477d21a9668747effb5689ba2ec9be8
-%global cargo_auditor_sha256 2705c8e05455e594350a751fb9ce59a5ad52ce5f53f2eb8e7925c3b2d692877a
+%global cargo_vendor_manifest_sha256 ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0
+%global cargo_auditor_sha256 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.8%{?dist}
+Release:        0.9%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # Apache-2.0 is the project source license. This disabled proof spec does not
@@ -98,6 +98,9 @@ exit 1
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.9
+- Generate the Cargo vendor manifest with Fedora cargo2rpm.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.8
 - Require JSON support for the Cargo vendor verifier.
 

@@ -29,7 +29,6 @@ byteorder-lite v0.1.0
 bytes v1.11.1
 cc v1.2.56
 cfg-if v1.0.4
-cfg_aliases v0.2.1
 chrono v0.4.44
 cipher v0.4.4
 color_quant v1.1.0
@@ -61,7 +60,6 @@ fax_derive v0.2.0
 fdeflate v0.3.7
 find-msvc-tools v0.1.9
 flate2 v1.1.9
-foldhash v0.1.5
 form_urlencoded v1.2.2
 futures-channel v0.3.32
 futures-core v0.3.32
@@ -77,9 +75,7 @@ getrandom v0.4.1
 ghash v0.5.1
 gif v0.14.1
 half v2.7.1
-hashbrown v0.15.5
 hashbrown v0.16.1
-heck v0.5.0
 hex v0.4.3
 hmac v0.12.1
 http v1.4.0
@@ -98,7 +94,6 @@ icu_normalizer_data v2.1.1
 icu_properties v2.1.2
 icu_properties_data v2.1.2
 icu_provider v2.1.1
-id-arena v2.3.0
 idna v1.1.0
 idna_adapter v1.2.1
 image v0.25.9
@@ -113,7 +108,6 @@ itertools v0.14.0
 itoa v1.0.17
 jobserver v0.1.34
 js-sys v0.3.91
-leb128fmt v0.1.0
 lebe v0.5.3
 libc v0.2.180
 libfuzzer-sys v0.4.12
@@ -122,7 +116,6 @@ linux-raw-sys v0.11.0
 litemap v0.8.1
 log v0.4.29
 loop9 v0.1.5
-lru-slab v0.1.2
 maybe-rayon v0.1.1
 memchr v2.7.6
 miniz_oxide v0.8.9
@@ -150,16 +143,12 @@ polyval v0.6.2
 potential_utf v0.1.4
 powerfmt v0.2.0
 ppv-lite86 v0.2.21
-prettyplease v0.2.37
 proc-macro2 v1.0.105
 profiling v1.0.17
 profiling-procmacros v1.0.17
 pxfm v0.1.28
 qoi v0.4.1
 quick-error v2.0.1
-quinn v0.11.9
-quinn-proto v0.11.13
-quinn-udp v0.5.14
 quote v1.0.43
 r-efi v5.3.0
 rand v0.8.5
@@ -179,7 +168,6 @@ ring v0.17.14
 rust-embed v8.11.0
 rust-embed-impl v8.11.0
 rust-embed-utils v8.11.0
-rustc-hash v2.1.1
 rustix v1.1.3
 rustls v0.23.37
 rustls-pki-types v1.14.0
@@ -187,7 +175,6 @@ rustls-webpki v0.103.9
 rustversion v1.0.22
 ryu v1.0.23
 same-file v1.0.6
-semver v1.0.27
 serde v1.0.228
 serde_core v1.0.228
 serde_derive v1.0.228
@@ -216,10 +203,7 @@ thiserror-impl v2.0.18
 tiff v0.10.3
 time v0.3.47
 time-core v0.1.8
-time-macros v0.2.27
 tinystr v0.8.2
-tinyvec v1.10.0
-tinyvec_macros v0.1.1
 tokio v1.49.0
 tokio-macros v2.6.1
 tokio-rustls v0.26.4
@@ -236,7 +220,6 @@ tungstenite v0.24.0
 typed-path v0.12.3
 typenum v1.19.0
 unicode-ident v1.0.22
-unicode-xid v0.2.6
 universal-hash v0.5.1
 untrusted v0.9.0
 url v2.5.8
@@ -256,12 +239,8 @@ wasm-bindgen-futures v0.4.64
 wasm-bindgen-macro v0.2.114
 wasm-bindgen-macro-support v0.2.114
 wasm-bindgen-shared v0.2.114
-wasm-encoder v0.244.0
-wasm-metadata v0.244.0
 wasm-streams v0.4.2
-wasmparser v0.244.0
 web-sys v0.3.91
-web-time v1.1.0
 webpki-roots v0.26.11
 webpki-roots v1.0.5
 weezl v0.1.12
@@ -303,11 +282,6 @@ windows_x86_64_msvc v0.48.5
 windows_x86_64_msvc v0.52.6
 windows_x86_64_msvc v0.53.1
 wit-bindgen v0.51.0
-wit-bindgen-core v0.51.0
-wit-bindgen-rust v0.51.0
-wit-bindgen-rust-macro v0.51.0
-wit-component v0.244.0
-wit-parser v0.244.0
 writeable v0.6.2
 y4m v0.8.0
 yoke v0.8.1

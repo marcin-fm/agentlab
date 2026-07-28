@@ -1091,6 +1091,11 @@ class AgentlabTest < Minitest::Test
     assert_includes(makefile, "/^Source0:\\s+(\\S+)/")
     refute_includes(makefile, "--output-dir \"$$specdir\"")
     refute_includes(makefile, "v0.33.1.tar.gz")
+    assert_includes(makefile, "cargo-rpm-macros")
+    auditor = File.read(File.expand_path("../scripts/audit-agent-browser-cargo-closure", __dir__))
+    assert_includes(auditor, "cargo2rpm")
+    assert_includes(auditor, "write-vendor-manifest")
+    refute_includes(auditor, "write-vendor-manifest --path")
     expansion, _error, status = Agentlab.capture(["rpmspec", "-P", File.join(package.directory, "agent-browser.spec")])
     assert(status.success?)
     source0 = expansion.lines.filter_map { |line| line[/^Source0:\s+(\S+)/, 1] }

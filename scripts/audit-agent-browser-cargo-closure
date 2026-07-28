@@ -219,6 +219,28 @@ module AgentBrowserCargoClosure
     run!("tar", "--create", "--zstd", "--file", output, "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--pax-option=delete=atime,delete=ctime", "--directory", File.dirname(vendor), File.basename(vendor))
   end
 
+  def cargo_vendor_manifest!(source, vendor, workdir)
+    raise Error, "cargo2rpm write-vendor-manifest is unavailable" unless system("command -v cargo2rpm >/dev/null 2>&1")
+    cli = File.join(source, "cli")
+    lock = File.join(cli, "Cargo.lock")
+    manifest = File.join(cli, "Cargo.toml")
+    output = File.join(cli, "cargo-vendor.txt")
+    before = [sha256(manifest), sha256(lock), tree_receipt(vendor)]
+    config_dir = File.join(cli, ".cargo")
+    raise Error, "source unexpectedly has a Cargo config directory" if File.exist?(config_dir)
+    FileUtils.mkdir_p(config_dir)
+    File.write(File.join(config_dir, "config.toml"), "[source.crates-io]\nreplace-with = \"vendored-sources\"\n[source.vendored-sources]\ndirectory = #{vendor.dump}\n[net]\noffline = true\n")
+    FileUtils.rm_f(output)
+    run!("cargo2rpm", "write-vendor-manifest", chdir: cli)
+    raise Error, "cargo2rpm did not write cargo-vendor.txt" unless File.file?(output)
+    after = [sha256(manifest), sha256(lock), tree_receipt(vendor)]
+    raise Error, "cargo2rpm changed critical source inputs" unless before == after
+
+    File.binread(output)
+  ensure
+    FileUtils.rm_rf(config_dir) if defined?(config_dir) && config_dir
+  end
+
   def license_files(root)
     Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) && File.basename(path).match?(LICENSE) }.sort.map do |path|
       { "path" => path.delete_prefix("#{root}/"), "sha256" => sha256(path), "size_bytes" => File.size(path) }
@@ -255,7 +277,7 @@ module AgentBrowserCargoClosure
     vendor_name = "cargo-vendor"
     archive_path = File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.tar.zst")
     archive!(vendor, archive_path)
-    manifest = (packages + []).map { |package| "#{package.fetch('name')} v#{package.fetch('version')}" }.join("\n") + "\n"
+    manifest = cargo_vendor_manifest!(source, vendor, workdir)
     File.write(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt"), manifest)
     closure = {
       "schema" => "agentlab-agent-browser-cargo-closure/v1",

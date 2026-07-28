@@ -51,7 +51,7 @@ srpm:
 		agent-browser.spec) \
 			set -eu; \
 			specdir="$$(dirname "$(spec)")"; \
-			dnf -y install cargo ruby ruby-default-gems rubygem-json tar zstd; \
+			dnf -y install cargo cargo-rpm-macros ruby ruby-default-gems rubygem-json tar zstd; \
 			install -d -m0755 /srv/tmp; \
 			tempdir="$$(mktemp -d /srv/tmp/agentlab-agent-browser-srpm.XXXXXX)"; \
 			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \

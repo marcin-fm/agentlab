@@ -19,7 +19,7 @@
   },
   "cargo_vendor_manifest": {
     "name": "agent-browser-0.33.1-cargo-vendor.txt",
-    "sha256": "be6d14be1b89eed71091e1184a9ba69d9477d21a9668747effb5689ba2ec9be8"
+    "sha256": "ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0"
   },
   "inputs": {
     "closure_sha256": "1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6",

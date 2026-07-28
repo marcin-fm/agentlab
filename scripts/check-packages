@@ -388,6 +388,9 @@ packages.each do |package|
       errors << "agent-browser: SCM rule overwrites tracked output" if makefile.include?("--output-dir \"$$specdir\"")
       errors << "agent-browser: SCM rule hardcodes source archive version" if makefile.include?("v0.33.1.tar.gz")
       errors << "agent-browser: SCM rule lacks temporary evidence comparison" unless ["--output-dir \"$$tempdir/output\"", "cmp \"$$tempdir/output/agent-browser-$$version-$$suffix\"", "source_file=\"$$(rpmspec -P"].all? { |fragment| makefile.include?(fragment) }
+      auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-agent-browser-cargo-closure"))
+      errors << "agent-browser: auditor does not use Fedora cargo2rpm manifest generation" unless auditor.include?("cargo2rpm") && auditor.include?("write-vendor-manifest") && !auditor.include?("write-vendor-manifest --path")
+      errors << "agent-browser: SCM rule lacks cargo-rpm-macros" unless makefile.include?("cargo-rpm-macros")
     end
   end
 
