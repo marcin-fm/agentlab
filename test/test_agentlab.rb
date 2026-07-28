@@ -1083,8 +1083,14 @@ class AgentlabTest < Minitest::Test
     makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
     assert_includes(makefile, "--output-dir \"$$tempdir/output\"")
     assert_includes(makefile, "cmp \"$$tempdir/output/agent-browser-$$version-$$suffix\"")
+    assert_includes(makefile, "expected exactly one Source0: record")
+    assert_includes(makefile, "/^Source0:\\s+(\\S+)/")
     refute_includes(makefile, "--output-dir \"$$specdir\"")
     refute_includes(makefile, "v0.33.1.tar.gz")
+    expansion, _error, status = Agentlab.capture(["rpmspec", "-P", File.join(package.directory, "agent-browser.spec")])
+    assert(status.success?)
+    source0 = expansion.lines.filter_map { |line| line[/^Source0:\s+(\S+)/, 1] }
+    assert_equal(["https://github.com/vercel-labs/agent-browser/archive/refs/tags/v0.33.1.tar.gz"], source0)
   end
 
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions

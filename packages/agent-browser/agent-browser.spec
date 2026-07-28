@@ -8,7 +8,7 @@
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # Apache-2.0 is the project source license. This disabled proof spec does not
@@ -95,6 +95,9 @@ exit 1
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.5
+- Fix configured-SCM Source0 archive discovery.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.4
 - Verify the generated Cargo vendor tree without archive-byte identity.
 

@@ -56,7 +56,7 @@ srpm:
 			tempdir="$$(mktemp -d /srv/tmp/agentlab-agent-browser-srpm.XXXXXX)"; \
 			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
 			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
-			source_file="$$(rpmspec -P "$(spec)" | ruby -e 'ARGF.each_line { |line| if line =~ /^Source:\s+(\S+)/ then puts File.basename($$1); exit end }; exit 1')"; \
+			source_file="$$(rpmspec -P "$(spec)" | ruby -e 'matches = ARGF.each_line.filter_map { |line| line[/^Source0:\s+(\S+)/, 1] }; abort("expected exactly one Source0: record, found #{matches.length}") unless matches.one?; puts File.basename(matches.first.split("#", 2).first)')"; \
 			install -pm0755 "$(repo_root)/scripts/audit-agent-browser-cargo-closure" "$$specdir/audit-agent-browser-cargo-closure"; \
 			ruby "$$specdir/audit-agent-browser-cargo-closure" \
 				--source "$$specdir/$$source_file" \
