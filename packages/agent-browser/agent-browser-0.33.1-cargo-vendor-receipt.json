@@ -7,14 +7,13 @@
     "source_sha256": "313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022",
     "cargo_lock_sha256": "afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb"
   },
-  "archive": {
+  "vendor_archive": {
     "name": "agent-browser-0.33.1-cargo-vendor.tar.zst",
-    "sha256": "7f9a5bcf4e13800d784c49ac0d5ea5ac5ce3b4b44e1667f588fdde5fb7e66731",
-    "size_bytes": 52213349,
     "root": "cargo-vendor"
   },
   "vendor_tree": {
-    "sha256": "6e08d1b43fcff1a8daf53cef4771e136e2cecd2383022955a6d560c6ad9730b0",
+    "algorithm": "sha256(sorted type,path,mode,link-target,size,content-sha256 records)",
+    "sha256": "c49a41413694d8ba6aab286cce72736cf1d04fe77645dd44929b1d982ec84a47",
     "files": 15672,
     "file_bytes": 397920004
   },
@@ -24,7 +23,7 @@
   },
   "inputs": {
     "closure_sha256": "1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6",
-    "license_audit_sha256": "3df2186713bdcc0c642008e3c0a5ecc935247abd953c3fdaed05db8d72babb51"
+    "license_audit_sha256": "68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778"
   },
   "validation": {
     "lock_reachability_used_as_selection": false,

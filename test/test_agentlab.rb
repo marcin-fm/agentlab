@@ -1068,11 +1068,23 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "%cargo_build_crate")
     assert_includes(spec, "BuildRequires:  zstd")
     assert_includes(spec, "agent-browser proof intentionally fails after compile/tests")
+    assert_includes(spec, "--verify --vendor-dir cli/cargo-vendor --receipt %{SOURCE2}")
     assert_includes(spec, "%{_libexecdir}/agent-browser/bin/agent-browser")
     assert_includes(spec, "React-DevTools-MIT-notice.js")
     audit = JSON.parse(File.read(File.join(package.directory, "agent-browser-0.33.1-license-audit.json")))
     assert(audit.fetch("candidate_selected_source_expression").start_with?("("))
     assert_includes(audit.fetch("candidate_selected_source_expression"), ") AND (")
+    assert_equal([], audit.fetch("missing_selected_normal_link_license_metadata"))
+    assert_equal(true, audit.dig("validation", "selected_normal_link_license_metadata_complete"))
+    receipt = JSON.parse(File.read(File.join(package.directory, "agent-browser-0.33.1-cargo-vendor-receipt.json")))
+    assert_equal(%w[name root], receipt.fetch("vendor_archive").keys.sort)
+    refute_includes(receipt.fetch("vendor_archive").keys, "sha256")
+    assert_equal("sha256(sorted type,path,mode,link-target,size,content-sha256 records)", receipt.dig("vendor_tree", "algorithm"))
+    makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
+    assert_includes(makefile, "--output-dir \"$$tempdir/output\"")
+    assert_includes(makefile, "cmp \"$$tempdir/output/agent-browser-$$version-$$suffix\"")
+    refute_includes(makefile, "--output-dir \"$$specdir\"")
+    refute_includes(makefile, "v0.33.1.tar.gz")
   end
 
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions

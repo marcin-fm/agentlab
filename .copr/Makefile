@@ -55,11 +55,17 @@ srpm:
 			install -d -m0755 /srv/tmp; \
 			tempdir="$$(mktemp -d /srv/tmp/agentlab-agent-browser-srpm.XXXXXX)"; \
 			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
+			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
+			source_file="$$(rpmspec -P "$(spec)" | ruby -e 'ARGF.each_line { |line| if line =~ /^Source:\s+(\S+)/ then puts File.basename($$1); exit end }; exit 1')"; \
 			install -pm0755 "$(repo_root)/scripts/audit-agent-browser-cargo-closure" "$$specdir/audit-agent-browser-cargo-closure"; \
 			ruby "$$specdir/audit-agent-browser-cargo-closure" \
-				--source "$$specdir/v0.33.1.tar.gz" \
+				--source "$$specdir/$$source_file" \
 				--workdir "$$tempdir/materialization" \
-				--output-dir "$$specdir"; \
+				--output-dir "$$tempdir/output"; \
+			for suffix in cargo-closure.json cargo-vendor-receipt.json license-audit.json cargo-vendor.txt; do \
+				cmp "$$tempdir/output/agent-browser-$$version-$$suffix" "$$specdir/agent-browser-$$version-$$suffix"; \
+			done; \
+			install -pm0644 "$$tempdir/output/agent-browser-$$version-cargo-vendor.tar.zst" "$$specdir/agent-browser-$$version-cargo-vendor.tar.zst"; \
 			;; \
 		mermaid-cli.spec) \
 			set -eu; \

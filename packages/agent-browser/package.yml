@@ -36,9 +36,9 @@ dependency_status:
     vendor_archive: agent-browser-0.33.1-cargo-vendor.tar.zst
     vendor_archive_tracked: false
     closure_sha256: 1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6
-    vendor_receipt_sha256: 10f740a8bf51fb382f1313b95ac79fb6d29499afd8f5745f03caee33b8be91ec
-    license_audit_sha256: 3df2186713bdcc0c642008e3c0a5ecc935247abd953c3fdaed05db8d72babb51
-    auditor_sha256: 6cdb85a610bff99ac7699b8716fd7ea3e750cfe0d4d69443400920a06d5d6a16
+    vendor_receipt_sha256: 5ad99b32aedb5744ade04726aa09ad760b1e68d0faa4acef4d3d9a8c45f06138
+    license_audit_sha256: 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
+    auditor_sha256: 2705c8e05455e594350a751fb9ce59a5ad52ce5f53f2eb8e7925c3b2d692877a
     remote_proof: compile_and_test_then_fail_closed
   browser:
     package: chromium

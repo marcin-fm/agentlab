@@ -186,13 +186,32 @@ module AgentBrowserCargoClosure
     digest, files, bytes = Digest::SHA256.new, 0, 0
     Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
       next if [".", ".."].include?(File.basename(path))
-      raise Error, "unsafe vendor entry #{path}" unless File.file?(path) || File.directory?(path)
-      next if File.directory?(path)
-      files += 1
-      bytes += File.size(path)
-      digest.update([path.delete_prefix("#{root}/"), File.size(path), sha256(path)].join("\0") + "\0")
+      relative, stat = path.delete_prefix("#{root}/"), File.lstat(path)
+      mode = format("%04o", stat.mode & 0o777)
+      if stat.directory?
+        digest.update(["directory", relative, mode].join("\0") + "\0")
+      elsif stat.file?
+        files += 1
+        bytes += stat.size
+        digest.update(["file", relative, mode, stat.size, sha256(path)].join("\0") + "\0")
+      elsif stat.symlink?
+        target = File.readlink(path)
+        raise Error, "unsafe vendor symlink #{relative}" if Pathname.new(target).absolute? || Pathname.new(File.join(File.dirname(relative), target)).cleanpath.to_s.start_with?("../")
+        digest.update(["symlink", relative, mode, target].join("\0") + "\0")
+      else
+        raise Error, "unsafe vendor entry #{path}"
+      end
     end
-    { "sha256" => digest.hexdigest, "files" => files, "file_bytes" => bytes }
+    { "algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)", "sha256" => digest.hexdigest, "files" => files, "file_bytes" => bytes }
+  end
+
+  def verify_vendor!(vendor:, receipt_path:)
+    receipt = JSON.parse(File.read(receipt_path))
+    raise Error, "unsupported vendor receipt schema" unless receipt.fetch("schema") == "agentlab-agent-browser-cargo-vendor/v1"
+    expected = receipt.fetch("vendor_tree")
+    actual = tree_receipt(vendor)
+    raise Error, "vendor tree identity mismatch" unless actual == expected
+    puts "Verified agent-browser vendor tree #{actual.fetch('sha256')}."
   end
 
   def archive!(vendor, output)
@@ -249,34 +268,50 @@ module AgentBrowserCargoClosure
     declaration = packages.map do |package|
       root = File.join(vendor, "#{package.fetch('name')}-#{package.fetch('version')}")
       manifest_path = File.join(root, "Cargo.toml")
-      license = File.read(manifest_path)[/^license\s*=\s*"([^"]+)"\s*$/, 1]
-      { "name" => package.fetch("name"), "version" => package.fetch("version"), "declared_license" => license, "license_files" => license_files(root) }
+      manifest = File.read(manifest_path)
+      license = manifest[/^license\s*=\s*"([^"]+)"\s*$/, 1]
+      license_file = manifest[/^license-file\s*=\s*"([^"]+)"\s*$/, 1]
+      explicit = license_file && File.join(root, license_file)
+      { "name" => package.fetch("name"), "version" => package.fetch("version"), "declared_license" => license, "license_file" => license_file, "license_file_evidence" => explicit && File.file?(explicit) && File.size(explicit).positive? ? { "path" => license_file, "sha256" => sha256(explicit), "size_bytes" => File.size(explicit) } : nil, "license_files" => license_files(root) }
     end
     upstream = ["LICENSE", "cli/src/native/a11y/LICENSE-axe-core.txt", "cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt", "cli/src/native/react/installHook.js"]
     local = upstream.map { |path| File.join(source, path) }.map do |path|
       raise Error, "required local license text missing: #{path}" unless File.file?(path)
       { "path" => path.delete_prefix("#{source}/"), "sha256" => sha256(path), "size_bytes" => File.size(path) }
     end
+    selected_normal = selected.select { |item| item["normal_candidate"] && item["name"] != NAME }.map { |item| item.values_at("name", "version") }.to_set
+    selected_license = declaration.select { |item| selected_normal.include?(item.values_at("name", "version")) }
+    missing_license = selected_license.reject { |item| item["declared_license"].to_s.strip != "" || item["license_file_evidence"] }
+    raise Error, "selected normal/link Cargo license metadata is missing: #{missing_license.map { |item| "#{item['name']} #{item['version']}" }.join(', ')}" unless missing_license.empty?
     audit = {
       "schema" => "agentlab-agent-browser-license-audit/v1",
       "release" => closure.fetch("release"), "inputs" => { "cargo_closure_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json")), "vendor_tree" => tree_receipt(vendor) },
-      "source_license_texts" => local, "cargo_declarations" => declaration,
+      "source_license_texts" => local, "cargo_declarations" => declaration, "selected_normal_link_license_metadata" => selected_license,
+      "missing_selected_normal_link_license_metadata" => missing_license,
       "candidate_selected_source_expression" => declaration.map { |item| item["declared_license"] }.compact.uniq.sort.map { |expression| "(#{expression})" }.join(" AND "),
       "embedded" => { "project" => "Apache-2.0", "axe_core" => "MPL-2.0", "axe_core_notices" => "MIT AND ISC", "react_devtools" => "MIT" },
-      "validation" => { "declarations_and_local_texts_inventory_verified" => true, "final_linked_license_verified" => false, "final_payload_license_verified" => false }
+      "validation" => { "declarations_and_local_texts_inventory_verified" => true, "selected_normal_link_license_metadata_complete" => true, "final_linked_license_verified" => false, "final_payload_license_verified" => false }
     }
     write_json(File.join(output_dir, "#{NAME}-#{VERSION}-license-audit.json"), audit)
-    receipt = { "schema" => "agentlab-agent-browser-cargo-vendor/v1", "release" => closure.fetch("release"), "archive" => { "name" => File.basename(archive_path), "sha256" => sha256(archive_path), "size_bytes" => File.size(archive_path), "root" => vendor_name }, "vendor_tree" => tree_receipt(vendor), "cargo_vendor_manifest" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.txt", "sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt")) }, "inputs" => { "closure_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json")), "license_audit_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-license-audit.json")) }, "validation" => closure.fetch("validation") }
+    receipt = { "schema" => "agentlab-agent-browser-cargo-vendor/v1", "release" => closure.fetch("release"), "vendor_archive" => { "name" => File.basename(archive_path), "root" => vendor_name }, "vendor_tree" => tree_receipt(vendor), "cargo_vendor_manifest" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.txt", "sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt")) }, "inputs" => { "closure_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json")), "license_audit_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-license-audit.json")) }, "validation" => closure.fetch("validation") }
     write_json(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor-receipt.json"), receipt)
   end
 end
 
 options = {}
 OptionParser.new do |parser|
+  parser.on("--verify") { options[:verify] = true }
+  parser.on("--vendor-dir PATH") { |value| options[:vendor_dir] = value }
+  parser.on("--receipt PATH") { |value| options[:receipt] = value }
   parser.on("--source PATH") { |value| options[:source] = value }
   parser.on("--workdir PATH") { |value| options[:workdir] = value }
   parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
 end.parse!
-abort("error: --source, --workdir, and --output-dir are required") unless options.values_at(:source, :workdir, :output_dir).all?
-abort("error: workdir must be below /srv/tmp") unless File.expand_path(options[:workdir]).start_with?("/srv/tmp/")
-AgentBrowserCargoClosure.generate!(source_archive: File.expand_path(options[:source]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]))
+if options[:verify]
+  abort("error: --vendor-dir and --receipt are required with --verify") unless options.values_at(:vendor_dir, :receipt).all?
+  AgentBrowserCargoClosure.verify_vendor!(vendor: File.expand_path(options[:vendor_dir]), receipt_path: File.expand_path(options[:receipt]))
+else
+  abort("error: --source, --workdir, and --output-dir are required") unless options.values_at(:source, :workdir, :output_dir).all?
+  abort("error: workdir must be below /srv/tmp") unless File.expand_path(options[:workdir]).start_with?("/srv/tmp/")
+  AgentBrowserCargoClosure.generate!(source_archive: File.expand_path(options[:source]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]))
+end
