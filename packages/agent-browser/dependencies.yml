@@ -1,0 +1,35 @@
+target_release: 0.33.1
+selected_scope:
+  manifest: cli/Cargo.toml
+  cargo_package: agent-browser
+  binary: agent-browser
+  runtime_surface: native browser automation CLI and upstream skill data
+  excluded_surfaces:
+  - npm postinstall binary download
+  - Chrome for Testing download
+  - install --with-deps package-manager mutation
+cargo:
+  lockfile: cli/Cargo.lock
+  lockfile_sha256: afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb
+  offline_verified: false
+  fedora_provider_mapping: false
+  generated_closure: not generated
+browser:
+  system_package: chromium
+  autodetected_executable: /usr/bin/chromium-browser
+  headless_executable: /usr/lib64/chromium-browser/headless_shell
+  source_downloads: forbidden
+  fedora_43_44_rawhide_metadata: verified
+  runtime_smoke: false
+skills:
+  source_directories:
+  - skills
+  - skill-data
+  intended_install_root: '%{_libexecdir}/agent-browser'
+  runtime_layout_verified: false
+license:
+  upstream: Apache-2.0
+  embedded_axe_core: MPL-2.0
+  embedded_axe_third_party: MIT AND ISC
+  cargo_expression: pending
+  complete: false

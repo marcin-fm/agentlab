@@ -1,0 +1,61 @@
+---
+name: agent-browser
+status: blocked
+blockers:
+- The Fedora Cargo dependency closure and offline source build are not verified.
+- The final aggregate SPDX expression for the statically linked Rust binary is not verified.
+- Fedora Chromium runtime integration is source-evidenced but not package-built or smoke-tested.
+- RPM Fusion metadata was unavailable for the duplicate check.
+source_policy:
+  selected_package: cli/Cargo.toml
+  binary: agent-browser
+  source_build: Fedora Rust/Cargo macros from released source
+  npm_postinstall_prebuilt_downloads: forbidden
+  chrome_for_testing_downloads: forbidden
+  package_manager_mutation: forbidden
+  skill_directories:
+  - skills
+  - skill-data
+  intended_install_root: '%{_libexecdir}/agent-browser'
+  intended_binary_path: '%{_libexecdir}/agent-browser/bin/agent-browser'
+  intended_command_path: '%{_bindir}/agent-browser'
+  intended_system_browser: chromium
+  intended_system_browser_path: /usr/bin/chromium-browser
+  headless_browser_alternative: /usr/lib64/chromium-browser/headless_shell
+dependency_status:
+  cargo:
+    manifest: cli/Cargo.toml
+    lockfile: cli/Cargo.lock
+    lockfile_sha256: afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb
+    package: agent-browser
+    version: 0.33.1
+    closure_verified: false
+  browser:
+    package: chromium
+    executable: /usr/bin/chromium-browser
+    fedora_43_44_rawhide_verified: true
+    runtime_smoke_verified: false
+license_audit:
+  upstream: Apache-2.0
+  embedded_axe_core: MPL-2.0
+  embedded_axe_third_party: MIT AND ISC
+  aggregate_binary_expression: pending
+  complete: false
+duplicate_check:
+  checked: '2026-07-28'
+  fedora_43_44_rawhide: absent
+  rpm_fusion_43_44: unavailable
+upstream:
+  provider: github
+  repository: vercel-labs/agent-browser
+  tag_prefix: v
+  current_version: 0.33.1
+  source_url_template: https://github.com/vercel-labs/agent-browser/archive/refs/tags/v{version}.tar.gz
+  source_sha256: 313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022
+  source_tag: v0.33.1
+  source_commit: 6dcea79b4b567a5671f1e1164807204f69542a5c
+  license: Apache-2.0
+copr:
+  enabled: false
+  subdir: packages/agent-browser
+  spec: agent-browser.spec
