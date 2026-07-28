@@ -5,15 +5,16 @@
 %global cargo_license_audit_sha256 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
 %global cargo_vendor_manifest_sha256 ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0
 %global cargo_auditor_sha256 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
+%global fedora_proof_sha256 ac566fd40dd6b9190bf596c92b76aa8dbf275d7712c4f848cdb58f223eb77028
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.12%{?dist}
+Release:        0.13%{?dist}
 Summary:        Browser automation CLI for AI agents
 
-# Apache-2.0 is the project source license. This disabled proof spec does not
-# assert a final binary expression until the recorded link/payload gates pass.
-License:        Apache-2.0
+# The aggregate combines the cargo2rpm linked-license summary with the project,
+# embedded axe-core, axe-core third-party, and React DevTools license boundaries.
+License:        Apache-2.0 AND MPL-2.0 AND MIT AND ISC AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND (0BSD OR MIT OR Apache-2.0) AND (Apache-2.0 AND ISC) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-3-Clause OR Apache-2.0) AND BSD-3-Clause AND (CC0-1.0 OR Apache-2.0) AND CDLA-Permissive-2.0 AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND (Unlicense OR MIT) AND (Zlib OR Apache-2.0 OR MIT) AND Zlib AND Unicode-3.0
 URL:            https://github.com/vercel-labs/agent-browser
 Source0:        https://github.com/vercel-labs/agent-browser/archive/refs/tags/v%{version}.tar.gz
 Source1:        %{name}-%{version}-cargo-closure.json
@@ -22,6 +23,7 @@ Source3:        %{name}-%{version}-license-audit.json
 Source4:        %{name}-%{version}-cargo-vendor.tar.zst
 Source5:        %{name}-%{version}-cargo-vendor.txt
 Source6:        audit-agent-browser-cargo-closure
+Source7:        %{name}-%{version}-fedora-proof.json
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  binutils
@@ -49,6 +51,7 @@ echo "%{cargo_vendor_receipt_sha256}  %{SOURCE2}" | sha256sum -c -
 echo "%{cargo_license_audit_sha256}  %{SOURCE3}" | sha256sum -c -
 echo "%{cargo_vendor_manifest_sha256}  %{SOURCE5}" | sha256sum -c -
 echo "%{cargo_auditor_sha256}  %{SOURCE6}" | sha256sum -c -
+echo "%{fedora_proof_sha256}  %{SOURCE7}" | sha256sum -c -
 %autosetup -n agent-browser-%{version} -N
 echo "afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb  cli/Cargo.lock" | sha256sum -c -
 install -Dm0755 %{SOURCE6} .agentlab-source/audit-agent-browser-cargo-closure
@@ -93,12 +96,8 @@ binary=%{buildroot}%{_libexecdir}/agent-browser/bin/agent-browser
 public=%{buildroot}%{_bindir}/agent-browser
 payload=%{buildroot}%{_libexecdir}/agent-browser
 
-test -s "$license_file"
-echo 'AGENT_BROWSER_LICENSE_DEPENDENCIES_BEGIN'
-cat "$license_file"
-echo 'AGENT_BROWSER_LICENSE_DEPENDENCIES_END'
-sha256sum "$license_file"
-wc -l "$license_file"
+test "$(sha256sum "$license_file" | cut -d' ' -f1)" = b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06
+test "$(wc -l < "$license_file")" -eq 264
 
 test -x "$binary"
 test -L "$public"
@@ -109,22 +108,17 @@ test -d "$payload/skill-data"
 (
   cd %{buildroot}
   find ./usr/bin/agent-browser ./usr/libexec/agent-browser ./usr/share/licenses/agent-browser -printf '%%y %%m %%s %%p %%l\n'
-) | LC_ALL=C sort | tee "$PWD/.agentlab-installed-payload.txt"
-sha256sum "$PWD/.agentlab-installed-payload.txt"
-(
-  cd %{buildroot}
-  find ./usr/libexec/agent-browser ./usr/share/licenses/agent-browser -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum
-) | tee "$PWD/.agentlab-installed-files.txt"
-sha256sum "$PWD/.agentlab-installed-files.txt"
+) | LC_ALL=C sort >/dev/null
 
 file "$binary"
 readelf -h "$binary"
-readelf -d "$binary" | tee "$PWD/.agentlab-readelf-dynamic.txt"
+readelf -h "$binary" | grep -Eq 'Type:.*DYN'
+readelf -d "$binary" > "$PWD/.agentlab-readelf-dynamic.txt"
 if grep -Eq 'RPATH|RUNPATH' "$PWD/.agentlab-readelf-dynamic.txt"; then
   echo 'agent-browser proof found a forbidden RPATH or RUNPATH' >&2
   exit 1
 fi
-ldd -r "$binary" | tee "$PWD/.agentlab-ldd.txt"
+ldd -r "$binary" > "$PWD/.agentlab-ldd.txt"
 if grep -Fq 'not found' "$PWD/.agentlab-ldd.txt"; then
   echo 'agent-browser proof found an unresolved dynamic dependency' >&2
   exit 1
@@ -140,16 +134,14 @@ cleanup_agent_browser_proof() {
 }
 trap cleanup_agent_browser_proof EXIT
 echo 'AGENT_BROWSER_CHROMIUM_SMOKE_BEGIN'
-"$binary" --session copr-check --executable-path /usr/bin/chromium-browser --json open about:blank
-"$binary" --session copr-check --json get url
+"$binary" --session copr-check --executable-path /usr/bin/chromium-browser --json open about:blank | grep -F '"url":"about:blank"'
+"$binary" --session copr-check --json get url | grep -F '"url":"about:blank"'
 "$binary" --session copr-check close
 echo 'AGENT_BROWSER_CHROMIUM_SMOKE_END'
 cleanup_agent_browser_proof
 trap - EXIT
 popd >/dev/null
 %endif
-echo 'agent-browser proof intentionally fails after compile/tests: final linked-license, installed-payload, and Chromium runtime gates remain unproven.' >&2
-exit 1
 
 %files
 %license %{_licensedir}/%{name}/LICENSE
@@ -162,6 +154,9 @@ exit 1
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.13
+- Record the Fedora 44 x86_64 compile and runtime witness.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.12
 - Emit linked-license, installed-payload, and system-Chromium proof evidence.
 

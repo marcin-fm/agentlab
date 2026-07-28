@@ -20,8 +20,10 @@ The deterministic vendor archive is generated at configured-SCM/SRPM time and
 is deliberately untracked. The checked closure, vendor receipt, license audit,
 and `cargo-vendor.txt` are tracked inputs; no bundled Provides, Fedora provider
 mapping, or final aggregate SPDX expression is claimed. Fedora 44 x86_64 COPR
-build `10784730` completes the production build, install, 1,028 main tests, two
-doctor tests, and CLI help before the intentional final evidence gate.
+build `10785021` is a checked release-0.12 witness for production compilation,
+install layout, 1,028 main tests, two doctor tests, ELF structure, and Chromium
+`about:blank`. It does not prove a successful current 0.13 RPM or the remaining
+target matrix.
 
 The intended Fedora layout is a private package root at
 `%{_libexecdir}/agent-browser`, containing `bin/agent-browser`, `skills/`,

@@ -39,13 +39,16 @@ dependency_status:
     vendor_receipt_sha256: 64007acb028f36b99d30795bc19309055a1d926ba9c88ab848032a39f14321b2
     license_audit_sha256: 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
     auditor_sha256: 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
-    remote_proof: compile_and_test_then_fail_closed
-    remote_proof_build: 10784730
+    fedora_proof_sha256: ac566fd40dd6b9190bf596c92b76aa8dbf275d7712c4f848cdb58f223eb77028
+    remote_proof: fedora_44_x86_64_compile_test_runtime_witness
+    remote_proof_build: 10785021
     remote_proof_target: fedora-44-x86_64
     production_compile_verified: true
     main_tests_passed: 1028
     doctor_tests_passed: 2
-    intentional_final_gate_reached: true
+    chromium_smoke_verified: true
+    final_aggregate_license_reviewed: true
+    current_binary_build_success: false
   browser:
     package: chromium
     executable: /usr/bin/chromium-browser
@@ -57,7 +60,7 @@ license_audit:
   embedded_axe_third_party: MIT AND ISC
   embedded_react_devtools: MIT
   selected_source_candidate_expression: parenthesized_raw_declarations_in_agent-browser-0.33.1-license-audit.json
-  aggregate_binary_expression: pending_final_link_proof
+  aggregate_binary_expression: reviewed_fedora_44_x86_64_witness
   complete: false
 duplicate_check:
   checked: '2026-07-28'

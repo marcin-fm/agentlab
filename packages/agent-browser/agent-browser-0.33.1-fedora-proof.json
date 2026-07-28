@@ -1,0 +1,55 @@
+{
+  "schema": "agentlab-agent-browser-fedora-proof/v1",
+  "scope": "Fedora 44 x86_64 source, compile, test, installed-layout, ELF, and Chromium witness from a deliberately gated release; not a successful 0.13 RPM or complete target matrix.",
+  "release": {
+    "name": "agent-browser",
+    "version": "0.33.1",
+    "release": "0.12",
+    "source_nvr": "agent-browser-0.33.1-0.12.fc44.src.rpm"
+  },
+  "copr": {
+    "build_id": 10785021,
+    "target": "fedora-44-x86_64",
+    "builder_log": "agent-browser-build-10785021-builder-live.log.gz",
+    "builder_log_sha256": "099b955ea96de0e52caad8c14e11033f65dc734769923b45fe3f9edf9711957d"
+  },
+  "counts": {
+    "compile_records": 246,
+    "main_tests": 1028,
+    "doctor_tests": 2,
+    "license_dependencies_lines": 264
+  },
+  "hashes": {
+    "license_dependencies_sha256": "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06",
+    "payload_manifest_sha256": "d9b3bc73386498cae6ae8152c7756b84972c2ac73933c9a78eeac45bd63ed742",
+    "installed_files_manifest_sha256": "f992b13fbe5cc74e9599461c0a2d4023be342d7ba9944a0c19274f44579f026e"
+  },
+  "license": {
+    "aggregate_spdx": "Apache-2.0 AND MPL-2.0 AND MIT AND ISC AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND (0BSD OR MIT OR Apache-2.0) AND (Apache-2.0 AND ISC) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-3-Clause OR Apache-2.0) AND BSD-3-Clause AND (CC0-1.0 OR Apache-2.0) AND CDLA-Permissive-2.0 AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND (Unlicense OR MIT) AND (Zlib OR Apache-2.0 OR MIT) AND Zlib AND Unicode-3.0",
+    "cargo2rpm_summary_expressions": 26,
+    "embedded_sources": ["project", "axe-core", "axe-core-third-party", "react-devtools"]
+  },
+  "elf": {
+    "pie": true,
+    "dynamic_dependencies": ["libgcc_s.so.1", "libm.so.6", "libc.so.6"],
+    "rpath_or_runpath": false,
+    "unresolved_dependencies": false
+  },
+  "chromium": {
+    "open_get_url_close": true,
+    "url": "about:blank"
+  },
+  "validation": {
+    "source_srpm_generated": true,
+    "production_compile": true,
+    "install_layout": true,
+    "tests": true,
+    "license_dependencies": true,
+    "elf": true,
+    "chromium": true,
+    "final_aggregate_license_reviewed": true,
+    "current_binary_build_success": false,
+    "target_matrix_complete": false,
+    "rpm_fusion_availability_complete": false
+  }
+}
