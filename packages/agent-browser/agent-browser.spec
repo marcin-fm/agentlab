@@ -1,14 +1,14 @@
 %bcond check 1
 %global source_sha256 313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022
 %global cargo_closure_sha256 1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6
-%global cargo_vendor_receipt_sha256 3a5bda63fc0943a02681bdbd4ca8035c119705eb06dc59e7a344a9de8851c573
-%global cargo_license_audit_sha256 f7a0e1224515028964a5bf69dbc1a416aeffdf5d94ecb0b54103d9fb6fa213f9
+%global cargo_vendor_receipt_sha256 10f740a8bf51fb382f1313b95ac79fb6d29499afd8f5745f03caee33b8be91ec
+%global cargo_license_audit_sha256 3df2186713bdcc0c642008e3c0a5ecc935247abd953c3fdaed05db8d72babb51
 %global cargo_vendor_manifest_sha256 be6d14be1b89eed71091e1184a9ba69d9477d21a9668747effb5689ba2ec9be8
-%global cargo_auditor_sha256 c244b43983d8daddf76dafd92a6101936811165b59cdba238b65873d8a6bda8b
+%global cargo_auditor_sha256 6cdb85a610bff99ac7699b8716fd7ea3e750cfe0d4d69443400920a06d5d6a16
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # Apache-2.0 is the project source license. This disabled proof spec does not
@@ -24,6 +24,7 @@ Source5:        %{name}-%{version}-cargo-vendor.txt
 Source6:        audit-agent-browser-cargo-closure
 
 BuildRequires:  cargo-rpm-macros >= 24
+BuildRequires:  zstd
 Requires:       chromium
 
 %description
@@ -54,19 +55,21 @@ popd >/dev/null
 
 %build
 pushd cli >/dev/null
-%cargo_build
+%cargo_build_crate
 popd >/dev/null
 
 %install
 install -Dpm0755 cli/target/rpm/agent-browser %{buildroot}%{_libexecdir}/agent-browser/bin/agent-browser
 install -d -m0755 %{buildroot}%{_libexecdir}/agent-browser
 cp -a skills skill-data %{buildroot}%{_libexecdir}/agent-browser/
+install -d -m0755 %{buildroot}%{_bindir}
 ln -s %{_libexecdir}/agent-browser/bin/agent-browser %{buildroot}%{_bindir}/agent-browser
 install -Dpm0644 LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE
 install -Dpm0644 cli/src/native/a11y/LICENSE-axe-core.txt %{buildroot}%{_licensedir}/%{name}/LICENSE-axe-core.txt
 install -Dpm0644 cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt %{buildroot}%{_licensedir}/%{name}/LICENSE-axe-core-THIRD-PARTY.txt
 install -Dpm0644 cli/src/native/react/installHook.js %{buildroot}%{_licensedir}/%{name}/React-DevTools-MIT-notice.js
 install -Dpm0644 cli/cargo-vendor.txt %{buildroot}%{_licensedir}/%{name}/cargo-vendor.txt
+install -Dpm0644 cli/LICENSE.dependencies %{buildroot}%{_licensedir}/%{name}/LICENSE.dependencies
 
 %check
 %if %{with check}
@@ -77,6 +80,8 @@ pushd cli >/dev/null
 target/rpm/agent-browser --help >/dev/null
 popd >/dev/null
 %endif
+echo 'agent-browser proof intentionally fails after compile/tests: final linked-license, installed-payload, and Chromium runtime gates remain unproven.' >&2
+exit 1
 
 %files
 %license %{_licensedir}/%{name}/LICENSE
@@ -84,10 +89,14 @@ popd >/dev/null
 %license %{_licensedir}/%{name}/LICENSE-axe-core-THIRD-PARTY.txt
 %license %{_licensedir}/%{name}/React-DevTools-MIT-notice.js
 %license %{_licensedir}/%{name}/cargo-vendor.txt
+%license %{_licensedir}/%{name}/LICENSE.dependencies
 %{_bindir}/agent-browser
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.3
+- Make the blocked remote Cargo proof fail closed after checks.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.2
 - Add reproducible Cargo source closure and source-build proof recipe.
 

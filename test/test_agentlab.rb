@@ -1065,8 +1065,14 @@ class AgentlabTest < Minitest::Test
     end
     assert_includes(spec, "%cargo_prep -v cargo-vendor")
     assert_includes(spec, "%cargo_vendor_manifest")
+    assert_includes(spec, "%cargo_build_crate")
+    assert_includes(spec, "BuildRequires:  zstd")
+    assert_includes(spec, "agent-browser proof intentionally fails after compile/tests")
     assert_includes(spec, "%{_libexecdir}/agent-browser/bin/agent-browser")
     assert_includes(spec, "React-DevTools-MIT-notice.js")
+    audit = JSON.parse(File.read(File.join(package.directory, "agent-browser-0.33.1-license-audit.json")))
+    assert(audit.fetch("candidate_selected_source_expression").start_with?("("))
+    assert_includes(audit.fetch("candidate_selected_source_expression"), ") AND (")
   end
 
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions

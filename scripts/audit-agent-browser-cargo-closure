@@ -261,7 +261,7 @@ module AgentBrowserCargoClosure
       "schema" => "agentlab-agent-browser-license-audit/v1",
       "release" => closure.fetch("release"), "inputs" => { "cargo_closure_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json")), "vendor_tree" => tree_receipt(vendor) },
       "source_license_texts" => local, "cargo_declarations" => declaration,
-      "candidate_selected_source_expression" => declaration.map { |item| item["declared_license"] }.compact.uniq.sort.join(" AND "),
+      "candidate_selected_source_expression" => declaration.map { |item| item["declared_license"] }.compact.uniq.sort.map { |expression| "(#{expression})" }.join(" AND "),
       "embedded" => { "project" => "Apache-2.0", "axe_core" => "MPL-2.0", "axe_core_notices" => "MIT AND ISC", "react_devtools" => "MIT" },
       "validation" => { "declarations_and_local_texts_inventory_verified" => true, "final_linked_license_verified" => false, "final_payload_license_verified" => false }
     }

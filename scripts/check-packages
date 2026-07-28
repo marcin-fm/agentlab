@@ -378,7 +378,7 @@ packages.each do |package|
         errors << "agent-browser: stale #{item.fetch('file')}" if File.file?(path) && Digest::SHA256.file(path).hexdigest != item.fetch("sha256")
       end
       errors << "agent-browser: source closure must retain final link gate" unless cargo["final_linked_payload_verified"] == false
-      errors << "agent-browser: spec lacks generated Cargo vendor contract" unless ["%cargo_prep -v cargo-vendor", "%cargo_vendor_manifest", "%{_libexecdir}/agent-browser"].all? { |fragment| spec.include?(fragment) }
+      errors << "agent-browser: spec lacks generated Cargo vendor contract" unless ["%cargo_prep -v cargo-vendor", "%cargo_vendor_manifest", "%cargo_build_crate", "BuildRequires:  zstd", "exit 1", "%{_libexecdir}/agent-browser"].all? { |fragment| spec.include?(fragment) }
     end
   end
 

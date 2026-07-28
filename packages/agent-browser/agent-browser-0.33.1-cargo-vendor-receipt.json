@@ -24,7 +24,7 @@
   },
   "inputs": {
     "closure_sha256": "1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6",
-    "license_audit_sha256": "f7a0e1224515028964a5bf69dbc1a416aeffdf5d94ecb0b54103d9fb6fa213f9"
+    "license_audit_sha256": "3df2186713bdcc0c642008e3c0a5ecc935247abd953c3fdaed05db8d72babb51"
   },
   "validation": {
     "lock_reachability_used_as_selection": false,
