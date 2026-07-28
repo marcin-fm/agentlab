@@ -16,3 +16,13 @@ Xberg evidence. A complete literal copy of the former package is retained at
 
 The exact dependency overlap, version comparison, and any retirement of former
 Kreuzberg-only dependency packages are a separate follow-up audit.
+
+## Duplicate Checks
+
+Read-only DNF5 queries found no Fedora package named `xberg` and no provider for
+`/usr/bin/xberg` in Fedora 43, Fedora 44, or Rawhide. The complete query output
+is retained under `/srv/tmp/agentlab-xberg-fedora*-query.txt`.
+
+RPM Fusion could not be queried: no RPM Fusion repository or repository package
+is configured in this environment. The package remains blocked until that
+duplicate check is available and complete.

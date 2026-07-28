@@ -4,6 +4,7 @@ blockers:
   - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora dependency closure.
   - No Fedora source-build, license, native-binding, or runtime integration proof exists for Xberg v1.0.1.
   - The historical Kreuzberg 4.10.2 patch and receipt set is not applicable to Xberg v1.0.1.
+  - RPM Fusion duplicate checks were unavailable because no RPM Fusion repository is configured in the query environment.
 source_policy:
   source: published Xberg v1.0.1 GitHub tag archive
   build: blocked before unpacking until a fresh source and dependency audit is complete
@@ -18,8 +19,19 @@ upstream:
   source_sha256: a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6
 duplicate_check:
   checked: "2026-07-28"
-  fedora_43_44_rawhide: not_checked
-  rpm_fusion_43_44: not_checked
+  fedora_43_44_rawhide: absent
+  fedora_evidence:
+    package_name: no matching xberg package records
+    executable: no provider for /usr/bin/xberg
+    query_artifacts:
+      - /srv/tmp/agentlab-xberg-fedora43-package-query.txt
+      - /srv/tmp/agentlab-xberg-fedora43-file-query.txt
+      - /srv/tmp/agentlab-xberg-fedora44-package-query.txt
+      - /srv/tmp/agentlab-xberg-fedora44-file-query.txt
+      - /srv/tmp/agentlab-xberg-rawhide-package-query.txt
+      - /srv/tmp/agentlab-xberg-rawhide-file-query.txt
+  rpm_fusion_43_44_rawhide: unavailable
+  rpm_fusion_evidence: No RPM Fusion repository or installed RPM Fusion repository package was available; configured repositories are recorded in /srv/tmp/agentlab-xberg-repolist-all.txt.
 copr:
   enabled: false
   subdir: packages/xberg
