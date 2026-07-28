@@ -8,7 +8,7 @@
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.9%{?dist}
+Release:        0.10%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # Apache-2.0 is the project source license. This disabled proof spec does not
@@ -80,7 +80,8 @@ install -Dpm0644 cli/LICENSE.dependencies %{buildroot}%{_licensedir}/%{name}/LIC
 # Browser-required tests must be identified from a COPR proof before excluding
 # them; do not preemptively skip the ordinary locked Cargo test suite.
 pushd cli >/dev/null
-%cargo_test
+install -d -m0700 .test-home
+HOME="$PWD/.test-home" %cargo_test
 target/rpm/agent-browser --help >/dev/null
 popd >/dev/null
 %endif
@@ -98,6 +99,9 @@ exit 1
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.10
+- Use an isolated home directory for the Cargo test environment.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.9
 - Generate the Cargo vendor manifest with Fedora cargo2rpm.
 
