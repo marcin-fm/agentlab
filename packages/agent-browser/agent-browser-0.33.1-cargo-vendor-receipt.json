@@ -1,0 +1,34 @@
+{
+  "schema": "agentlab-agent-browser-cargo-vendor/v1",
+  "release": {
+    "name": "agent-browser",
+    "version": "0.33.1",
+    "source_commit": "6dcea79b4b567a5671f1e1164807204f69542a5c",
+    "source_sha256": "313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022",
+    "cargo_lock_sha256": "afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb"
+  },
+  "archive": {
+    "name": "agent-browser-0.33.1-cargo-vendor.tar.zst",
+    "sha256": "7f9a5bcf4e13800d784c49ac0d5ea5ac5ce3b4b44e1667f588fdde5fb7e66731",
+    "size_bytes": 52213349,
+    "root": "cargo-vendor"
+  },
+  "vendor_tree": {
+    "sha256": "6e08d1b43fcff1a8daf53cef4771e136e2cecd2383022955a6d560c6ad9730b0",
+    "files": 15672,
+    "file_bytes": 397920004
+  },
+  "cargo_vendor_manifest": {
+    "name": "agent-browser-0.33.1-cargo-vendor.txt",
+    "sha256": "be6d14be1b89eed71091e1184a9ba69d9477d21a9668747effb5689ba2ec9be8"
+  },
+  "inputs": {
+    "closure_sha256": "1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6",
+    "license_audit_sha256": "f7a0e1224515028964a5bf69dbc1a416aeffdf5d94ecb0b54103d9fb6fa213f9"
+  },
+  "validation": {
+    "lock_reachability_used_as_selection": false,
+    "offline_locked_metadata_verified": true,
+    "final_linked_payload_verified": false
+  }
+}

@@ -1,0 +1,282 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "set"
+require "tmpdir"
+require "zlib"
+
+module AgentBrowserCargoClosure
+  class Error < StandardError; end
+  module_function
+
+  NAME = "agent-browser"
+  VERSION = "0.33.1"
+  COMMIT = "6dcea79b4b567a5671f1e1164807204f69542a5c"
+  SOURCE_SHA256 = "313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022"
+  LOCK_SHA256 = "afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb"
+  TARGET = "x86_64-unknown-linux-gnu"
+  REGISTRY = "registry+https://github.com/rust-lang/crates.io-index"
+  LICENSE = /\A(?:licen[cs]e|copying|notice|authors)(?:[._-].*)?\z/i
+
+  def run!(*command, env: {}, chdir: nil)
+    options = {}
+    options[:chdir] = chdir if chdir
+    output, error, status = Open3.capture3(env, *command, **options)
+    return output if status.success?
+
+    raise Error, "command failed: #{command.join(' ')}\n#{error.lines.last(20).join}#{output.lines.last(20).join}"
+  end
+
+  def sha256(path) = Digest::SHA256.file(path).hexdigest
+
+  def safe_path(path)
+    candidate = Pathname.new(path).cleanpath.to_s
+    raise Error, "unsafe archive path #{path.inspect}" if Pathname.new(path).absolute? || candidate == ".." || candidate.start_with?("../")
+
+    candidate
+  end
+
+  def extract_gzip!(archive, destination, root: nil)
+    seen = Set.new
+    roots = Set.new
+    Zlib::GzipReader.open(archive) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          # PAX/global metadata names are not payload paths. This materializer
+          # accepts no links and applies no metadata beyond safe regular files.
+          if %w[g x L K].include?(entry.header.typeflag)
+            entry.read
+            next
+          end
+          path = safe_path(entry.full_name)
+          raise Error, "duplicate archive path #{path}" unless seen.add?(path)
+          first = path.split("/", 2).first
+          roots << first unless first.empty? || first == "."
+          raise Error, "unexpected archive root #{first}" if root && first != root
+          target = File.join(destination, path)
+          if entry.directory?
+            FileUtils.mkdir_p(target)
+          elsif entry.file?
+            FileUtils.mkdir_p(File.dirname(target))
+            File.open(target, "wb", entry.header.mode & 0o777) { |file| IO.copy_stream(entry, file) }
+          else
+            raise Error, "unsafe archive entry #{path}"
+          end
+        end
+      end
+    end
+    raise Error, "archive root mismatch" if root && roots != Set[root]
+  rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+    raise Error, "cannot safely extract #{archive}: #{e.message}"
+  end
+
+  def lock_packages(lock)
+    lock.split(/(?=^\[\[package\]\]$)/).filter_map do |block|
+      next unless block.start_with?("[[package]]\n")
+
+      fields = block.each_line.each_with_object({}) do |line, values|
+        match = line.chomp.match(/\A(name|version|source|checksum) = "([^"]+)"\z/)
+        values[match[1]] = match[2] if match
+      end
+      raise Error, "incomplete Cargo.lock package record" unless fields.key?("name") && fields.key?("version")
+      fields
+    end
+  end
+
+  def registry_packages(lock)
+    packages = lock_packages(lock)
+    roots = packages.select { |package| !package.key?("source") }
+    raise Error, "unexpected root path package" unless roots == [{ "name" => NAME, "version" => VERSION }]
+    registry = packages - roots
+    registry.each do |package|
+      unless package["source"] == REGISTRY && package["checksum"]&.match?(/\A[0-9a-f]{64}\z/)
+        raise Error, "only crates.io registry records are accepted: #{package['name']} #{package['version']}"
+      end
+    end
+    raise Error, "duplicate registry package identity" unless registry.map { |item| item.values_at("name", "version") }.uniq.length == registry.length
+    registry.sort_by { |item| item.values_at("name", "version") }
+  end
+
+  def acquire!(package, cache)
+    filename = "#{package.fetch('name')}-#{package.fetch('version')}.crate"
+    path = File.join(cache, filename)
+    unless File.file?(path)
+      temporary = "#{path}.tmp-#{Process.pid}"
+      run!("curl", "--fail", "--location", "--retry", "3", "--output", temporary,
+           "https://static.crates.io/crates/#{package.fetch('name')}/#{filename}")
+      File.rename(temporary, path)
+    end
+    raise Error, "crate checksum mismatch: #{filename}" unless sha256(path) == package.fetch("checksum")
+
+    path
+  ensure
+    FileUtils.rm_f(temporary) if defined?(temporary) && temporary
+  end
+
+  def cargo_checksum!(root, package_checksum)
+    files = Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.sort.to_h do |path|
+      [path.delete_prefix("#{root}/"), sha256(path)]
+    end
+    File.write(File.join(root, ".cargo-checksum.json"), JSON.generate("files" => files, "package" => package_checksum))
+  end
+
+  def materialize_vendor!(packages, cache, vendor)
+    FileUtils.rm_rf(vendor)
+    FileUtils.mkdir_p(vendor)
+    packages.each do |package|
+      directory = "#{package.fetch('name')}-#{package.fetch('version')}"
+      extract_gzip!(acquire!(package, cache), vendor, root: directory)
+      cargo_checksum!(File.join(vendor, directory), package.fetch("checksum"))
+    end
+  end
+
+  def cargo_metadata!(source, vendor, filter_platform: nil)
+    cargo_home = File.join(Dir.mktmpdir("agentlab-agent-browser-cargo-home-", "/srv/tmp"), "home")
+    FileUtils.mkdir_p(cargo_home)
+    File.write(File.join(cargo_home, "config.toml"), <<~TOML)
+      [source.crates-io]
+      replace-with = "vendored-sources"
+      [source.vendored-sources]
+      directory = #{vendor.dump}
+      [net]
+      offline = true
+    TOML
+    command = ["cargo", "metadata", "--offline", "--locked", "--format-version", "1", "--manifest-path", File.join(source, "cli", "Cargo.toml")]
+    command += ["--filter-platform", filter_platform] if filter_platform
+    JSON.parse(run!(*command, env: { "CARGO_HOME" => cargo_home }))
+  ensure
+    FileUtils.rm_rf(File.dirname(cargo_home)) if defined?(cargo_home) && cargo_home
+  end
+
+  def package_key(package) = "#{package.fetch('name')} #{package.fetch('version')}"
+
+  def selected_packages(metadata)
+    root = metadata.fetch("resolve").fetch("root")
+    nodes = metadata.fetch("resolve").fetch("nodes").to_h { |node| [node.fetch("id"), node] }
+    packages = metadata.fetch("packages").to_h { |package| [package.fetch("id"), package] }
+    seen, normal, build = Set.new, Set.new, Set.new
+    visit = lambda do |id, role|
+      return if seen.include?([id, role])
+      seen << [id, role]
+      role == :normal ? normal << id : build << id
+      nodes.fetch(id).fetch("deps").each do |dependency|
+        kinds = dependency.fetch("dep_kinds")
+        next if kinds.empty?
+        kinds.each do |kind|
+          next unless [nil, "build"].include?(kind["kind"])
+          visit.call(dependency.fetch("pkg"), kind["kind"] == "build" ? :build : role)
+        end
+      end
+    end
+    visit.call(root, :normal)
+    (normal | build).map do |id|
+      package = packages.fetch(id)
+      { "name" => package.fetch("name"), "version" => package.fetch("version"), "normal_candidate" => normal.include?(id), "build_candidate" => build.include?(id) }
+    end.sort_by { |item| item.values_at("name", "version") }
+  end
+
+  def tree_receipt(root)
+    digest, files, bytes = Digest::SHA256.new, 0, 0
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      next if [".", ".."].include?(File.basename(path))
+      raise Error, "unsafe vendor entry #{path}" unless File.file?(path) || File.directory?(path)
+      next if File.directory?(path)
+      files += 1
+      bytes += File.size(path)
+      digest.update([path.delete_prefix("#{root}/"), File.size(path), sha256(path)].join("\0") + "\0")
+    end
+    { "sha256" => digest.hexdigest, "files" => files, "file_bytes" => bytes }
+  end
+
+  def archive!(vendor, output)
+    FileUtils.mkdir_p(File.dirname(output))
+    run!("tar", "--create", "--zstd", "--file", output, "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--pax-option=delete=atime,delete=ctime", "--directory", File.dirname(vendor), File.basename(vendor))
+  end
+
+  def license_files(root)
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) && File.basename(path).match?(LICENSE) }.sort.map do |path|
+      { "path" => path.delete_prefix("#{root}/"), "sha256" => sha256(path), "size_bytes" => File.size(path) }
+    end
+  end
+
+  def write_json(path, value)
+    File.write(path, JSON.pretty_generate(value) + "\n")
+  end
+
+  def generate!(source_archive:, workdir:, output_dir:)
+    raise Error, "source archive SHA-256 mismatch" unless sha256(source_archive) == SOURCE_SHA256
+    FileUtils.rm_rf(workdir)
+    FileUtils.mkdir_p([workdir, output_dir])
+    source_parent = File.join(workdir, "source")
+    FileUtils.mkdir_p(source_parent)
+    source_root = "agent-browser-#{VERSION}"
+    extract_gzip!(source_archive, source_parent, root: source_root)
+    source = File.join(source_parent, source_root)
+    lock = File.join(source, "cli", "Cargo.lock")
+    raise Error, "Cargo.lock SHA-256 mismatch" unless sha256(lock) == LOCK_SHA256
+    packages = registry_packages(File.read(lock))
+    cache = File.join(workdir, "crates")
+    vendor = File.join(workdir, "cargo-vendor")
+    FileUtils.mkdir_p(cache)
+    materialize_vendor!(packages, cache, vendor)
+    filtered = cargo_metadata!(source, vendor, filter_platform: TARGET)
+    all = cargo_metadata!(source, vendor)
+    selected = selected_packages(filtered)
+    all_packages = all.fetch("packages").map { |package| package.slice("name", "version") }.sort_by { |item| item.values_at("name", "version") }
+    selected_keys = selected.map { |package| package.values_at("name", "version") }.to_set
+    resolver_only = all_packages.reject { |package| selected_keys.include?(package.values_at("name", "version")) }
+    raise Error, "Cargo metadata omitted lock packages" unless (packages.map { |p| p.slice("name", "version") } - all_packages).empty?
+    vendor_name = "cargo-vendor"
+    archive_path = File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.tar.zst")
+    archive!(vendor, archive_path)
+    manifest = (packages + []).map { |package| "#{package.fetch('name')} v#{package.fetch('version')}" }.join("\n") + "\n"
+    File.write(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt"), manifest)
+    closure = {
+      "schema" => "agentlab-agent-browser-cargo-closure/v1",
+      "release" => { "name" => NAME, "version" => VERSION, "source_commit" => COMMIT, "source_sha256" => SOURCE_SHA256, "cargo_lock_sha256" => LOCK_SHA256 },
+      "selection" => { "target_triple" => TARGET, "metadata_command" => "cargo metadata --offline --locked --filter-platform #{TARGET}", "normal_build_packages" => selected, "resolver_only_packages" => resolver_only },
+      "counts" => { "registry_records" => packages.length, "selected_normal_or_build_records" => selected.length, "normal_link_candidates" => selected.count { |p| p["normal_candidate"] }, "build_only_candidates" => selected.count { |p| p["build_candidate"] && !p["normal_candidate"] }, "resolver_only_records" => resolver_only.length },
+      "validation" => { "lock_reachability_used_as_selection" => false, "offline_locked_metadata_verified" => true, "final_linked_payload_verified" => false }
+    }
+    write_json(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json"), closure)
+    declaration = packages.map do |package|
+      root = File.join(vendor, "#{package.fetch('name')}-#{package.fetch('version')}")
+      manifest_path = File.join(root, "Cargo.toml")
+      license = File.read(manifest_path)[/^license\s*=\s*"([^"]+)"\s*$/, 1]
+      { "name" => package.fetch("name"), "version" => package.fetch("version"), "declared_license" => license, "license_files" => license_files(root) }
+    end
+    upstream = ["LICENSE", "cli/src/native/a11y/LICENSE-axe-core.txt", "cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt", "cli/src/native/react/installHook.js"]
+    local = upstream.map { |path| File.join(source, path) }.map do |path|
+      raise Error, "required local license text missing: #{path}" unless File.file?(path)
+      { "path" => path.delete_prefix("#{source}/"), "sha256" => sha256(path), "size_bytes" => File.size(path) }
+    end
+    audit = {
+      "schema" => "agentlab-agent-browser-license-audit/v1",
+      "release" => closure.fetch("release"), "inputs" => { "cargo_closure_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json")), "vendor_tree" => tree_receipt(vendor) },
+      "source_license_texts" => local, "cargo_declarations" => declaration,
+      "candidate_selected_source_expression" => declaration.map { |item| item["declared_license"] }.compact.uniq.sort.join(" AND "),
+      "embedded" => { "project" => "Apache-2.0", "axe_core" => "MPL-2.0", "axe_core_notices" => "MIT AND ISC", "react_devtools" => "MIT" },
+      "validation" => { "declarations_and_local_texts_inventory_verified" => true, "final_linked_license_verified" => false, "final_payload_license_verified" => false }
+    }
+    write_json(File.join(output_dir, "#{NAME}-#{VERSION}-license-audit.json"), audit)
+    receipt = { "schema" => "agentlab-agent-browser-cargo-vendor/v1", "release" => closure.fetch("release"), "archive" => { "name" => File.basename(archive_path), "sha256" => sha256(archive_path), "size_bytes" => File.size(archive_path), "root" => vendor_name }, "vendor_tree" => tree_receipt(vendor), "cargo_vendor_manifest" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.txt", "sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt")) }, "inputs" => { "closure_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json")), "license_audit_sha256" => sha256(File.join(output_dir, "#{NAME}-#{VERSION}-license-audit.json")) }, "validation" => closure.fetch("validation") }
+    write_json(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor-receipt.json"), receipt)
+  end
+end
+
+options = {}
+OptionParser.new do |parser|
+  parser.on("--source PATH") { |value| options[:source] = value }
+  parser.on("--workdir PATH") { |value| options[:workdir] = value }
+  parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
+end.parse!
+abort("error: --source, --workdir, and --output-dir are required") unless options.values_at(:source, :workdir, :output_dir).all?
+abort("error: workdir must be below /srv/tmp") unless File.expand_path(options[:workdir]).start_with?("/srv/tmp/")
+AgentBrowserCargoClosure.generate!(source_archive: File.expand_path(options[:source]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]))

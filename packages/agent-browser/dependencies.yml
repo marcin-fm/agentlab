@@ -11,9 +11,32 @@ selected_scope:
 cargo:
   lockfile: cli/Cargo.lock
   lockfile_sha256: afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb
-  offline_verified: false
+  offline_verified: true
   fedora_provider_mapping: false
-  generated_closure: not generated
+  generated_closure: agent-browser-0.33.1-cargo-closure.json
+  cargo_vendor_receipt: agent-browser-0.33.1-cargo-vendor-receipt.json
+  cargo_license_audit: agent-browser-0.33.1-license-audit.json
+  cargo_vendor_manifest: agent-browser-0.33.1-cargo-vendor.txt
+  source_closure_records: 331
+  linux_x86_64_normal_build_candidates: 256
+  resolver_only_records: 76
+  final_linked_payload_verified: false
+  source_evidence:
+    closure:
+      file: agent-browser-0.33.1-cargo-closure.json
+      sha256: 1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6
+    vendor_receipt:
+      file: agent-browser-0.33.1-cargo-vendor-receipt.json
+      sha256: 3a5bda63fc0943a02681bdbd4ca8035c119705eb06dc59e7a344a9de8851c573
+    license_audit:
+      file: agent-browser-0.33.1-license-audit.json
+      sha256: f7a0e1224515028964a5bf69dbc1a416aeffdf5d94ecb0b54103d9fb6fa213f9
+    vendor_manifest:
+      file: agent-browser-0.33.1-cargo-vendor.txt
+      sha256: be6d14be1b89eed71091e1184a9ba69d9477d21a9668747effb5689ba2ec9be8
+    auditor:
+      file: scripts/audit-agent-browser-cargo-closure
+      sha256: c244b43983d8daddf76dafd92a6101936811165b59cdba238b65873d8a6bda8b
 browser:
   system_package: chromium
   autodetected_executable: /usr/bin/chromium-browser
@@ -31,5 +54,7 @@ license:
   upstream: Apache-2.0
   embedded_axe_core: MPL-2.0
   embedded_axe_third_party: MIT AND ISC
-  cargo_expression: pending
+  cargo_expression: selected_source_candidate_tracked_separately
+  final_linked_license_verified: false
+  final_payload_license_verified: false
   complete: false

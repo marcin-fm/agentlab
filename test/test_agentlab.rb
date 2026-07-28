@@ -1040,7 +1040,7 @@ class AgentlabTest < Minitest::Test
     assert_equal("kreuzberg", retirement.fetch("name"))
   end
 
-  def test_agent_browser_is_a_fail_closed_source_build_draft
+  def test_agent_browser_has_checked_blocked_cargo_source_closure
     package = Agentlab.package_named("agent-browser")
     spec = File.read(File.join(package.directory, "agent-browser.spec"))
 
@@ -1049,11 +1049,24 @@ class AgentlabTest < Minitest::Test
     assert_equal("0.33.1", package.upstream.fetch("current_version"))
     assert_includes(spec, "Version:        0.33.1")
     assert_includes(spec, "%global source_sha256 313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022")
-    assert_match(/%prep.*exit 1/m, spec)
+    dependencies = YAML.safe_load_file(File.join(package.directory, "dependencies.yml"))
     assert_includes(spec, "npm postinstall prebuilt downloads")
     assert_includes(spec, "Chrome for Testing")
     assert_equal("forbidden", package.data.dig("source_policy", "npm_postinstall_prebuilt_downloads"))
     assert_equal("forbidden", package.data.dig("source_policy", "chrome_for_testing_downloads"))
+    assert_equal(false, package.data.dig("copr", "enabled"))
+    assert_equal(331, dependencies.dig("cargo", "source_closure_records"))
+    assert_equal(256, dependencies.dig("cargo", "linux_x86_64_normal_build_candidates"))
+    assert_equal(76, dependencies.dig("cargo", "resolver_only_records"))
+    assert_equal(false, dependencies.dig("cargo", "final_linked_payload_verified"))
+    dependencies.dig("cargo", "source_evidence").each_value do |item|
+      path = item.fetch("file").start_with?("scripts/") ? File.expand_path("../#{item.fetch('file')}", __dir__) : File.join(package.directory, item.fetch("file"))
+      assert_equal(item.fetch("sha256"), Digest::SHA256.file(path).hexdigest)
+    end
+    assert_includes(spec, "%cargo_prep -v cargo-vendor")
+    assert_includes(spec, "%cargo_vendor_manifest")
+    assert_includes(spec, "%{_libexecdir}/agent-browser/bin/agent-browser")
+    assert_includes(spec, "React-DevTools-MIT-notice.js")
   end
 
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions

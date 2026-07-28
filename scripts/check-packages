@@ -366,6 +366,22 @@ packages.each do |package|
 
   errors.concat(Agentlab.validate_pdfium_source(package, spec))
 
+  if package.name == "agent-browser"
+    cargo = dependencies && dependencies["cargo"]
+    evidence = cargo && cargo["source_evidence"]
+    if !evidence.is_a?(Hash)
+      errors << "agent-browser: checked Cargo source evidence is missing"
+    else
+      evidence.each_value do |item|
+        path = item.fetch("file").start_with?("scripts/") ? File.join(Agentlab::ROOT, item.fetch("file")) : File.join(package.directory, item.fetch("file"))
+        errors << "agent-browser: missing #{item.fetch('file')}" unless File.file?(path)
+        errors << "agent-browser: stale #{item.fetch('file')}" if File.file?(path) && Digest::SHA256.file(path).hexdigest != item.fetch("sha256")
+      end
+      errors << "agent-browser: source closure must retain final link gate" unless cargo["final_linked_payload_verified"] == false
+      errors << "agent-browser: spec lacks generated Cargo vendor contract" unless ["%cargo_prep -v cargo-vendor", "%cargo_vendor_manifest", "%{_libexecdir}/agent-browser"].all? { |fragment| spec.include?(fragment) }
+    end
+  end
+
   next unless Agentlab.command_available?("rpmspec")
 
   _stdout, stderr, status = Agentlab.capture(["rpmspec", "-P", package.spec_path])

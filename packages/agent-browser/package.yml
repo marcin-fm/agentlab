@@ -2,7 +2,7 @@
 name: agent-browser
 status: blocked
 blockers:
-- The Fedora Cargo dependency closure and offline source build are not verified.
+- The exact Cargo vendor closure is source-audited, but no Fedora/COPR compilation proof exists.
 - The final aggregate SPDX expression for the statically linked Rust binary is not verified.
 - Fedora Chromium runtime integration is source-evidenced but not package-built or smoke-tested.
 - RPM Fusion metadata was unavailable for the duplicate check.
@@ -30,6 +30,11 @@ dependency_status:
     package: agent-browser
     version: 0.33.1
     closure_verified: false
+    source_closure_records: 331
+    linux_x86_64_normal_build_candidates: 256
+    resolver_only_records: 76
+    vendor_archive: agent-browser-0.33.1-cargo-vendor.tar.zst
+    vendor_archive_tracked: false
   browser:
     package: chromium
     executable: /usr/bin/chromium-browser
@@ -39,7 +44,9 @@ license_audit:
   upstream: Apache-2.0
   embedded_axe_core: MPL-2.0
   embedded_axe_third_party: MIT AND ISC
-  aggregate_binary_expression: pending
+  embedded_react_devtools: MIT
+  selected_source_candidate_expression: tracked_in_agent-browser-0.33.1-license-audit.json
+  aggregate_binary_expression: pending_final_link_proof
   complete: false
 duplicate_check:
   checked: '2026-07-28'

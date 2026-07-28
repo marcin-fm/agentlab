@@ -12,8 +12,14 @@ top-level directory is `agent-browser-0.33.1/`.
 The upstream Cargo package is `agent-browser` version `0.33.1` and produces
 the `agent-browser` executable. Its Cargo lockfile SHA-256 is
 `afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb`.
-No Cargo closure, Fedora provider mapping, bundled Provides, build receipt,
-or final aggregate SPDX expression is recorded here.
+The checked source closure has 331 crates.io registry records. Offline locked
+Cargo metadata selects 256 normal/build candidates for Linux x86_64 (247 normal
+link candidates and 9 build-only candidates); 76 resolver-only records remain
+in the vendor source because Cargo requires them for offline locked resolution.
+The deterministic vendor archive is generated at configured-SCM/SRPM time and
+is deliberately untracked. The checked closure, vendor receipt, license audit,
+and `cargo-vendor.txt` are tracked inputs; no bundled Provides, Fedora provider
+mapping, compilation receipt, or final aggregate SPDX expression is claimed.
 
 The intended Fedora layout is a private package root at
 `%{_libexecdir}/agent-browser`, containing `bin/agent-browser`, `skills/`,
@@ -34,18 +40,23 @@ is `chromium` because upstream autodetects `chromium-browser`; the headless
 path remains an explicit-path alternative. Runtime browser smokes remain
 unverified.
 
-The upstream project is Apache-2.0. The binary also contains axe-core under
-MPL-2.0 and its retained third-party MIT/ISC notice boundary. The applicable
-texts are present in the release source at
+The upstream project is Apache-2.0. Embedded axe-core is MPL-2.0 with retained
+MIT/ISC third-party notices, and embedded React DevTools has an MIT notice.
+The exact applicable source texts are
 `cli/src/native/a11y/LICENSE-axe-core.txt` and
-`cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt`. Final linked Cargo
-license accounting is intentionally pending.
+`cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt`, plus
+`cli/src/native/react/installHook.js`. The source candidate expression is kept
+in the generated license audit. Final linked Cargo and installed-payload license
+flags remain false until a compilation proof exists.
 
 Fedora exact-name and `/usr/bin/agent-browser` capability queries found no
 provider for Fedora 43, Fedora 44, or Rawhide. RPM Fusion repositories were
 not configured in the research environment, so the RPM Fusion result is
 unavailable rather than an asserted absence.
 
-The spec verifies the immutable source checksum and exits before unpacking
-or building until the Cargo closure, licensing, installed skill layout, and
-Chromium runtime checks are complete.
+The still-blocked spec verifies the immutable source, lock, closure receipt,
+license audit, vendor manifest, and source auditor before using Fedora Cargo
+macros with the generated directory source. It installs only the application,
+skills, skill data, and executable-relative public command, never a crate-devel
+interface. The remaining gates are a Fedora/COPR compilation proof, final link
+and payload accounting, installed skill-layout proof, and Chromium runtime smoke.

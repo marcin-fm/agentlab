@@ -48,6 +48,19 @@ srpm:
 			ruby "$(repo_root)/scripts/prepare-codex-cargo-srpm-sources" --spec "$(spec)"; \
 			ruby "$(repo_root)/scripts/prepare-codex-cargo-license-sources" --spec "$(spec)"; \
 			;; \
+		agent-browser.spec) \
+			set -eu; \
+			specdir="$$(dirname "$(spec)")"; \
+			dnf -y install cargo ruby ruby-default-gems rubygem-json tar zstd; \
+			install -d -m0755 /srv/tmp; \
+			tempdir="$$(mktemp -d /srv/tmp/agentlab-agent-browser-srpm.XXXXXX)"; \
+			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
+			install -pm0755 "$(repo_root)/scripts/audit-agent-browser-cargo-closure" "$$specdir/audit-agent-browser-cargo-closure"; \
+			ruby "$$specdir/audit-agent-browser-cargo-closure" \
+				--source "$$specdir/v0.33.1.tar.gz" \
+				--workdir "$$tempdir/materialization" \
+				--output-dir "$$specdir"; \
+			;; \
 		mermaid-cli.spec) \
 			set -eu; \
 			specdir="$$(dirname "$(spec)")"; \
