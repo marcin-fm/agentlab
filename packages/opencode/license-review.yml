@@ -1,13 +1,13 @@
 schema: opencode-license-review/v1
-release: 1.18.5
-checked: "2026-07-26"
+release: 1.18.8
+checked: "2026-07-28"
 receipts:
   selected_lock_audit:
-    path: opencode-1.18.5-selected-lock-audit.json
-    sha256: e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8
+    path: opencode-1.18.8-selected-lock-audit.json
+    sha256: 358aee997de614d3950b929a9c7b33c1aa03ce6e0542d178d6f52edca214e097
   source_audit:
-    path: opencode-1.18.5-source-audit.json
-    sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
+    path: opencode-1.18.8-source-audit.json
+    sha256: de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f
 scope:
   feature_surface: terminal_cli_without_embedded_web_ui
   upstream_build_flag: --skip-embed-web-ui
@@ -15,7 +15,7 @@ scope:
   final_source_payload_verified: false
 status:
   absent_declarations_resolved: 3
-  package_local_text_gaps_classified: 28
+  package_local_text_gaps_classified: 27
   embedded_package_local_text_resolutions: 10
   embedded_package_local_text_holds: 3
   final_license_expression_verified: false
@@ -67,7 +67,7 @@ package_local_text_resolutions:
     source_commit: 4b035429227c5be4093e5b3898a4eb5dc70824b0
     package_versions_verified_at_commit: true
     source_path: LICENSE
-    payload_file: opencode-1.18.5-aws-sdk-js-v3-LICENSE
+    payload_file: opencode-1.18.8-aws-sdk-js-v3-LICENSE
     license_sha256: edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
   - packages:
       - "@sigstore/verify@3.1.1"
@@ -77,7 +77,7 @@ package_local_text_resolutions:
     source_repository: https://github.com/sigstore/sigstore-js
     source_commit: c1dc7d4778a450787fc72b083f2490ad02b714c6
     source_path: LICENSE
-    payload_file: opencode-1.18.5-sigstore-verify-LICENSE
+    payload_file: opencode-1.18.8-sigstore-verify-LICENSE
     license_sha256: 364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0
   - packages:
       - drizzle-orm@1.0.0-rc.2
@@ -88,7 +88,7 @@ package_local_text_resolutions:
     source_commit: eec7260841c468ab4c2f2dc9d8ebb69105da0c34
     provenance_invocation: https://github.com/drizzle-team/drizzle-orm/actions/runs/25394468879/attempts/1
     source_path: LICENSE
-    payload_file: opencode-1.18.5-drizzle-orm-LICENSE
+    payload_file: opencode-1.18.8-drizzle-orm-LICENSE
     license_sha256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
   - packages:
       - opencode-poe-auth@0.0.1
@@ -103,7 +103,7 @@ package_local_text_resolutions:
     clarification_commit: 0a8922656d075ddcd43ae9abb6de8aaf28fdf73a
     clarification_message: "fix(packages): publish MIT license metadata (#493)"
     source_path: packages/poe-oauth/LICENSE
-    payload_file: opencode-1.18.5-poe-platform-LICENSE
+    payload_file: opencode-1.18.8-poe-platform-LICENSE
     license_sha256: 0f5d2ae231c0461da14b21ac8594071bb51be33e6a3dcc2b105813c69e7f4a13
   - packages:
       - remeda@2.26.0
@@ -113,7 +113,7 @@ package_local_text_resolutions:
     source_repository: https://github.com/remeda/remeda
     source_commit: 0fde627fc4ca8a19ab93f000fe931f22d4472338
     source_path: LICENSE
-    payload_file: opencode-1.18.5-remeda-LICENSE
+    payload_file: opencode-1.18.8-remeda-LICENSE
     license_sha256: acf30083045d768ce20640237313ee31a45d548d66ef76df5bb5fb0745479535
   - packages:
       - spdx-exceptions@2.5.0
@@ -123,7 +123,7 @@ package_local_text_resolutions:
     source_repository: https://github.com/kemitchell/spdx-exceptions.json
     source_commit: 3aa64bec339abc6a3eca00c3436aaa7e154b8799
     source_path: README.md
-    payload_file: opencode-1.18.5-spdx-exceptions-README.md
+    payload_file: opencode-1.18.8-spdx-exceptions-README.md
     license_sha256: 554b19eee11d2964e9f7b244e47944c08d52ca75539260a04f3227e6c0144513
   - packages:
       - spdx-license-ids@3.0.23
@@ -153,7 +153,7 @@ missing_package_local_texts:
   obligation: Collect an upstream notice or canonical text only for source or binary content retained in the final RPM payload.
   software:
     MIT:
-      count: 18
+      count: 17
       packages:
         - "@anycable/core@0.9.2"
         - "@ff-labs/fff-bin-linux-x64-gnu@0.9.4"
@@ -163,7 +163,6 @@ missing_package_local_texts:
         - "@openauthjs/openauth@0.0.0-20250322224806"
         - "@solidjs/meta@0.29.4"
         - abstract-logging@2.0.1
-        - cookie-signature@1.0.7
         - data-uri-to-buffer@4.0.1
         - lru_map@0.4.1
         - marked-shiki@1.2.1

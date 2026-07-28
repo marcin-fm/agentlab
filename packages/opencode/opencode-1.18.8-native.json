@@ -1,0 +1,1047 @@
+{
+  "schema": "opencode-native-review/v1",
+  "release": "1.18.8",
+  "checked": "2026-07-26",
+  "receipts": {
+    "selected_lock_audit": {
+      "path": "opencode-1.18.8-selected-lock-audit.json",
+      "sha256": "358aee997de614d3950b929a9c7b33c1aa03ce6e0542d178d6f52edca214e097"
+    },
+    "source_audit": {
+      "path": "opencode-1.18.8-source-audit.json",
+      "sha256": "de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f"
+    }
+  },
+  "scope": {
+    "feature_surface": "terminal_cli_without_embedded_web_ui",
+    "target": "linux-x86_64-glibc",
+    "component_identities": 14,
+    "native_sources": 8,
+    "native_payloads": 22,
+    "wasm_sources": 7,
+    "wasm_payloads": 14
+  },
+  "status": {
+    "component_identities_classified": 14,
+    "native_sources_classified": 8,
+    "native_payloads_classified": 22,
+    "wasm_sources_classified": 7,
+    "wasm_payloads_classified": 14,
+    "retained_prebuilt_payloads": 0,
+    "source_mappings_verified": 14,
+    "source_mappings_unresolved": 0,
+    "native_sources_verified": false,
+    "wasm_sources_verified": true,
+    "reproducible_builds_verified": false
+  },
+  "components": [
+    {
+      "package": "@ff-labs/fff-bin-linux-x64-gnu@0.9.4",
+      "npm_name": "@ff-labs/fff-bin-linux-x64-gnu",
+      "version": "0.9.4",
+      "roles": [
+        "native"
+      ],
+      "payloads": {
+        "native": 1,
+        "wasm": 0
+      },
+      "provenance": {
+        "source_repository": "https://github.com/dmtrKovalenko/fff",
+        "registry_git_head": "7d7910b6ba78ea8406671eaac8cdb5eb9850d9d1",
+        "source_tag": "v0.9.4",
+        "tag_object": "7d7910b6ba78ea8406671eaac8cdb5eb9850d9d1",
+        "peeled_commit": "7d7910b6ba78ea8406671eaac8cdb5eb9850d9d1",
+        "package_version_at_source": "0.0.0",
+        "correspondence": "The registry gitHead and release tag agree; the platform workspace keeps a placeholder package version.",
+        "supported_disable": {
+          "adapter": "packages/core/src/filesystem/fff.node.ts",
+          "selector": "packages/core/src/filesystem/search.ts",
+          "build_patch": "opencode-disable-fff.patch",
+          "patch_sha256": "47b06ecf7652b4be11c194c96e81fcbddd1669f5e802d91dfc80228f989e5013",
+          "system_binary": "/usr/bin/rg",
+          "runtime_requirement": "ripgrep",
+          "upstream_fallback_pr": "https://github.com/anomalyco/opencode/pull/31566",
+          "upstream_disable_commit": "e4300e9b7433e068c3d57ac41fcb39bc5de3d32e",
+          "native_payload_omitted": true,
+          "selected_cli_behavior_preserved": true
+        }
+      },
+      "decision": {
+        "action": "omit",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Apply the Fedora patch to select OpenCode's existing no-FFF adapter; the search service then uses required system ripgrep for find, glob, and grep without embedding libfff_c.so."
+      }
+    },
+    {
+      "package": "@lydell/node-pty-linux-x64@1.2.0-beta.12",
+      "npm_name": "@lydell/node-pty-linux-x64",
+      "version": "1.2.0-beta.12",
+      "roles": [
+        "native"
+      ],
+      "payloads": {
+        "native": 1,
+        "wasm": 0
+      },
+      "provenance": {
+        "source_repository": "https://github.com/lydell/node-pty",
+        "registry_git_head": "9ef881c5f15e1a56531e4e687c4984ca74e7f70b",
+        "source_tag": "v1.2.0-beta.12",
+        "tag_object": "1d8def2f44e573f1f9e8faca013a2e25662d1994",
+        "peeled_commit": "9ef881c5f15e1a56531e4e687c4984ca74e7f70b",
+        "package_version_at_source": "1.2.0-beta.12",
+        "correspondence": "The annotated release tag peels to the registry gitHead."
+      },
+      "decision": {
+        "action": "omit",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "This Node-only platform leaf is not used by the selected Bun terminal runtime."
+      }
+    },
+    {
+      "package": "@msgpackr-extract/msgpackr-extract-linux-x64@3.0.4",
+      "npm_name": "@msgpackr-extract/msgpackr-extract-linux-x64",
+      "version": "3.0.4",
+      "roles": [
+        "native"
+      ],
+      "payloads": {
+        "native": 4,
+        "wasm": 0
+      },
+      "provenance": {
+        "source_repository": "https://github.com/kriszyp/msgpackr-extract",
+        "registry_git_head": "71def7bd969e5c88d2c918e0d81ee2ba3155d19c",
+        "source_tag": "v3.0.4",
+        "tag_object": "fff769f9b841342c62720489de7a72727f18d1db",
+        "peeled_commit": "fff769f9b841342c62720489de7a72727f18d1db",
+        "package_version_at_source": "3.0.4",
+        "correspondence": "The later registry gitHead changes publication metadata and optional platform declarations, not native source."
+      },
+      "decision": {
+        "action": "omit",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "The addon is optional acceleration; retain the supported JavaScript fallback."
+      }
+    },
+    {
+      "package": "@opentui/core-linux-x64@0.4.5",
+      "npm_name": "@opentui/core-linux-x64",
+      "version": "0.4.5",
+      "roles": [
+        "native"
+      ],
+      "payloads": {
+        "native": 1,
+        "wasm": 0
+      },
+      "provenance": {
+        "source_repository": "https://github.com/anomalyco/opentui",
+        "registry_git_head": "0c8c4f7cff2927e3df63a9757a45eff9a343611c",
+        "source_tag": "v0.4.5",
+        "tag_object": "6c046e563c09cc7663edef036a396b9b799dc115",
+        "peeled_commit": "0c8c4f7cff2927e3df63a9757a45eff9a343611c",
+        "package_version_at_source": "0.4.5",
+        "correspondence": "The annotated release tag peels to the registry gitHead for both core packages.",
+        "source_build": {
+          "source_url": "https://github.com/anomalyco/opentui/archive/refs/tags/v0.4.5.tar.gz",
+          "source_sha256": "a87acc1af6d5f62ee48905176965514b06c7b6e8f9c1fe869604e5933825ca50",
+          "source_commit": "0c8c4f7cff2927e3df63a9757a45eff9a343611c",
+          "zig": {
+            "release_pin": "bun-v1.3.14",
+            "source_url": "https://codeload.github.com/oven-sh/zig/tar.gz/04e7f6ac1e009525bc00934f20199c68f04e0a24",
+            "source_commit": "04e7f6ac1e009525bc00934f20199c68f04e0a24",
+            "source_sha256": "b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d",
+            "version": "0.15.2",
+            "fedora_patch": "opencode-zig-fedora-lib64.patch",
+            "fedora_patch_sha256": "77be015e0b2a83e6d287cfa832fa190dcfe7296320d111e0b129e11a418161fc",
+            "external_zig_binary_used": false
+          },
+          "uucode": {
+            "source_url": "https://github.com/jacobsandlund/uucode/archive/84ceda8561a17ba4a9b96ac5c583f779660bbd4e.tar.gz",
+            "source_commit": "84ceda8561a17ba4a9b96ac5c583f779660bbd4e",
+            "source_sha256": "4a7f194ad1f583ffae00bf625986527df89ddd55309ff30314d2d17539a7b011",
+            "zig_package_hash": "uucode-0.1.0-ZZjBPtA_TQCWp5PIKmfm5tu1WOkKWFmBGFEMxircPfkA"
+          },
+          "yoga": {
+            "source_url": "https://github.com/facebook/yoga/archive/refs/tags/v3.2.1.tar.gz",
+            "source_tag": "v3.2.1",
+            "source_commit": "042f5013152eb81c1552dec945b88f7b95ca350f",
+            "source_sha256": "86b399ac31fd820d8ffa823c3fae31bb690b6fc45301b2a8a966c09b5a088b55",
+            "zig_package_hash": "N-V-__8AAOYl0gAU76B1VRPFD9AWvy2VkOef2jN0B3sISTeO"
+          },
+          "target": "x86_64-linux-gnu.2.17",
+          "optimize": "ReleaseFast",
+          "command": ".build-tools/bun-zig/zig build --seed 0 --build-id=sha1 -fno-incremental -Dtarget=x86_64-linux-gnu.2.17 -Doptimize=ReleaseFast -j1",
+          "strip_command": "strip --strip-unneeded lib/x86_64-linux/libopentui.so",
+          "output": "packages/core/src/zig/lib/x86_64-linux/libopentui.so",
+          "platform_package": "@opentui/core-linux-x64@0.4.5",
+          "platform_payload": "libopentui.so",
+          "published_payload_sha256": "ce73133a58d35e35610ef53353ddeeeb93fb29505dde0cf1854ce25facee241d",
+          "previous_release_proof": {
+            "release": "0.4.3",
+            "local_recipe_output_sha256": "1ce4b92b1a075602837c361c6423b7b54298d0c402e3801cbeb27e4e7d935baa",
+            "ffi_exports": [
+              "bufferDrawBox",
+              "createRenderer",
+              "destroyRenderer",
+              "render",
+              "yogaNodeCreate"
+            ],
+            "dynamic_libraries": [
+              "libm.so.6",
+              "libpthread.so.0",
+              "libc.so.6",
+              "libdl.so.2",
+              "ld-linux-x86-64.so.2"
+            ],
+            "max_glibc": "GLIBC_2.17",
+            "offline_build_verified": true,
+            "ctypes_dlopen_verified": true
+          },
+          "current_release_proof": {
+            "release": "0.4.5",
+            "local_recipe_output_sha256": [
+              "e24478d37ba1ed3aa3c93ce5265d3bbfc396297c6a1e838f4a42341562ae04e3",
+              "02b53e7539b785366cd3f01d11f04eedcd9f866c224d8cfd39b759be7fe70a6a"
+            ],
+            "output_bytes": 3708104,
+            "local_rebuilds": 2,
+            "local_rebuilds_byte_identical": false,
+            "ffi_exports": [
+              "bufferDrawBox",
+              "createRenderer",
+              "destroyRenderer",
+              "render",
+              "yogaNodeCreate"
+            ],
+            "dynamic_libraries": [
+              "libm.so.6",
+              "libpthread.so.0",
+              "libc.so.6",
+              "libdl.so.2",
+              "ld-linux-x86-64.so.2"
+            ],
+            "max_glibc": "GLIBC_2.17",
+            "offline_build_verified": true,
+            "ctypes_dlopen_verified": true
+          },
+          "byte_reproducible": false,
+          "reproducibility_required_by_fedora": false,
+          "linked_source_licenses": [
+            "opentui-LICENSE",
+            "opentui-uucode-LICENSE.md",
+            "opentui-yoga-LICENSE"
+          ],
+          "offline_build_verified": true,
+          "ctypes_dlopen_verified": true,
+          "bun_ffi_smoke_in_spec": true,
+          "published_payload_discarded": true,
+          "final_bun_embedding_verified": false,
+          "f43_f44_builds_verified": false,
+          "local_proof_only": true
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Replace the published platform payload with the twice-built current source output; byte reproducibility is not required, while final Bun embedding and Fedora 43/44 package builds remain separate gates."
+      }
+    },
+    {
+      "package": "@parcel/watcher-linux-x64-glibc@2.5.1",
+      "npm_name": "@parcel/watcher-linux-x64-glibc",
+      "version": "2.5.1",
+      "roles": [
+        "native"
+      ],
+      "payloads": {
+        "native": 1,
+        "wasm": 0
+      },
+      "provenance": {
+        "source_repository": "https://github.com/parcel-bundler/watcher",
+        "registry_git_head": "119f1ff04bb41c2369929e37274900c61b0a9f49",
+        "source_tag": "v2.5.1",
+        "tag_object": "664695dbb2488d53f782c3e2b8791c4c114731fb",
+        "peeled_commit": "664695dbb2488d53f782c3e2b8791c4c114731fb",
+        "package_version_at_source": "2.5.1",
+        "correspondence": "The registry gitHead differs only by a Windows C++17 binding option; Linux source is unchanged.",
+        "source_build": {
+          "source_package": "@parcel/watcher@2.5.1",
+          "source_url": "https://registry.npmjs.org/@parcel/watcher/-/watcher-2.5.1.tgz",
+          "source_sha256": "bf7a6b5577a287153c9a6bf7be953556b998f2a57706eb7a5371ec7eb0088d41",
+          "source_commit": "119f1ff04bb41c2369929e37274900c61b0a9f49",
+          "node_addon_api_package": "node-addon-api@7.1.1",
+          "node_addon_api_sha256": "b10455d15a977c0cd17a1cb0eb679e03d939f8ef8d4302eb33e1f78dacc71f82",
+          "command": "node-24 /usr/lib/node_modules_24/npm/node_modules/node-gyp/bin/node-gyp.js rebuild --nodedir=/usr",
+          "output": "build/Release/watcher.node",
+          "platform_package": "@parcel/watcher-linux-x64-glibc@2.5.1",
+          "platform_payload": "watcher.node",
+          "published_payload_sha256": "e58979069d4f71d2e36f7dc130d6dbc671e63666fe3943fd2ed481519cbf374c",
+          "local_output_sha256": "35cfe2dd72ae617c39054653dcda7fd830485f193d01d20120b2897f8488c589",
+          "local_rebuilds": 2,
+          "local_rebuilds_byte_identical": true,
+          "napi_exports": [
+            "getEventsSince",
+            "subscribe",
+            "unsubscribe",
+            "writeSnapshot"
+          ],
+          "dynamic_libraries": [
+            "libstdc++.so.6",
+            "libm.so.6",
+            "libgcc_s.so.1",
+            "libc.so.6"
+          ],
+          "inotify_smoke_verified": true,
+          "platform_package_load_verified": true,
+          "final_bun_embedding_verified": false,
+          "local_proof_only": true
+        },
+        "disable_assessment": {
+          "flag": "OPENCODE_EXPERIMENTAL_DISABLE_FILEWATCHER",
+          "watcher_service_when_disabled": "empty",
+          "git_head_subscription_disabled": true,
+          "branch_update_events_preserved": false
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Rebuild watcher.node from the authenticated main package sources and replace the platform payload before Bun compilation; disabling the watcher removes Git HEAD subscriptions and branch-update events."
+      }
+    },
+    {
+      "package": "bun-pty@0.4.8",
+      "npm_name": "bun-pty",
+      "version": "0.4.8",
+      "roles": [
+        "native"
+      ],
+      "payloads": {
+        "native": 5,
+        "wasm": 0
+      },
+      "provenance": {
+        "source_repository": "https://github.com/sursaone/bun-pty",
+        "registry_git_head": "41dd5b887f3f47d7c307fd93f828a75dbee97d5a",
+        "source_tag": "v0.4.8",
+        "tag_object": "41dd5b887f3f47d7c307fd93f828a75dbee97d5a",
+        "peeled_commit": "41dd5b887f3f47d7c307fd93f828a75dbee97d5a",
+        "package_version_at_source": "0.4.8",
+        "correspondence": "The registry gitHead and release tag agree.",
+        "source_build": {
+          "npm_source_url": "https://registry.npmjs.org/bun-pty/-/bun-pty-0.4.8.tgz",
+          "npm_source_sha256": "0d222ae7cab5b2a3e158cdda0461534f44edf08e5c5a72adb1c0b9144e21cedc",
+          "npm_contains_rust_source": false,
+          "git_source_url": "https://github.com/sursaone/bun-pty/archive/41dd5b887f3f47d7c307fd93f828a75dbee97d5a/bun-pty-41dd5b887f3f47d7c307fd93f828a75dbee97d5a.tar.gz",
+          "git_source_sha256": "d4731314a00c46d3810fa08b94ee0bcddb7a5026e47dbca88c83449d351bff9e",
+          "git_source_contains_prebuilt_payloads": false,
+          "npm_git_package_json_sha256": "df55f9b3f2559b66321021f8566b88d940b6ea300072dbb07898f0f957fa1ab9",
+          "npm_git_terminal_ts_sha256": "0c6cdf358568816ec96aef9b320239ef6f9552e9298f8609f0c94cfb12ad51f9",
+          "npm_git_wrapper_byte_identical": true,
+          "cargo_vendor_archive": "opencode-1.18.8-bun-pty-cargo-vendor.tar.zst",
+          "cargo_vendor_sha256": "5c22d4bd79109a3460f3a3d3840d2541da9a6c4c91513c39065a1f4611b7ec5e",
+          "cargo_vendor_crates": 43,
+          "cargo_vendor_manifest": "opencode-1.18.8-bun-pty-cargo-vendor.txt",
+          "cargo_vendor_manifest_sha256": "d57a66c2a1e90516e0b103b3074001f96cefcb4adb4ecc8c3a5532a2c884e500",
+          "cargo_vendor_archive_reproducible": true,
+          "cargo_vendor_command": "cargo vendor --locked --versioned-dirs",
+          "cargo_vendor_archive_root": "cargo-vendor",
+          "cargo_vendor_source_date_epoch": 1768507021,
+          "cargo_vendor_archive_rebuilds": 2,
+          "immutable_public_hosting_verified": false,
+          "active_linux_registry_crates": 37,
+          "exact_fedora_provider_closure": false,
+          "macro_build": "%cargo_prep -v cargo-vendor and %cargo_build",
+          "output": "rust-pty/target/release/librust_pty.so",
+          "published_payloads": {
+            "rust-pty/target/release/librust_pty.so": "a135c3d9f41d09a555e3e4609e0c80fa0ba035736c56791b9df3b55e6376438d",
+            "rust-pty/target/release/librust_pty_arm64.so": "c920f230370d0ea9393ac1311bda45db4c785fd92249b10ff8af67dc3d4b1bc5",
+            "rust-pty/target/release/librust_pty.dylib": "b8a27c3106b164f57472edc9266acc80c11c1b837dba5c397689d63a86e96b7c",
+            "rust-pty/target/release/librust_pty_arm64.dylib": "d61d60ed8348eadfb396418f85ff8dcee7428fe94feb1395c0ae9f68eba3868f",
+            "rust-pty/target/release/rust_pty.dll": "6a653ea742db3dfe37b27bfabcd905800d0bfce57dd60efcbf5a6b032ff5ad77"
+          },
+          "local_release_sha256": "f0fb41201158d23541d858cf5d4df2697ebdfbe17f30b645ee1be4a51457ef2a",
+          "local_fedora_profile_sha256": "d389cec65b9d6f74135ebb2d449afabb97c65eb1cd7781ca40b78ab2ad5654de",
+          "local_rebuilds": 2,
+          "local_rebuilds_byte_identical": true,
+          "ffi_exports": [
+            "bun_pty_close",
+            "bun_pty_get_exit_code",
+            "bun_pty_get_pid",
+            "bun_pty_kill",
+            "bun_pty_read",
+            "bun_pty_resize",
+            "bun_pty_spawn",
+            "bun_pty_write"
+          ],
+          "dynamic_libraries": [
+            "libc.so.6",
+            "ld-linux-x86-64.so.2",
+            "libgcc_s.so.1"
+          ],
+          "final_bun_embedding_verified": false,
+          "f43_f44_macro_builds_verified": false,
+          "root_cargo_license_declared": false,
+          "authoritative_parent_license": "MIT"
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Replace npm's prebuilt-only rust-pty directory with the exact Git source, build the Linux x86_64 library through Fedora's vendored Cargo macros, and discard every published cross-platform output."
+      }
+    },
+    {
+      "package": "clipboardy@4.0.0",
+      "npm_name": "clipboardy",
+      "version": "4.0.0",
+      "roles": [
+        "native"
+      ],
+      "payloads": {
+        "native": 3,
+        "wasm": 0
+      },
+      "provenance": {
+        "source_repository": "https://github.com/sindresorhus/clipboardy",
+        "registry_git_head": "06110f3e1a0cbf66dc86c87cf87d28fba772b7a1",
+        "source_tag": "v4.0.0",
+        "tag_object": "582aaadb12d5c31c0c61b1240736e7db356ded55",
+        "peeled_commit": "582aaadb12d5c31c0c61b1240736e7db356ded55",
+        "package_version_at_source": "4.0.0",
+        "correspondence": "The release tag and registry gitHead have identical tracked content."
+      },
+      "decision": {
+        "action": "replace_with_system",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Remove the bundled xsel and Windows executables; use Fedora xsel through Clipboardy's normal command path."
+      }
+    },
+    {
+      "package": "tree-sitter-bash@0.25.0",
+      "npm_name": "tree-sitter-bash",
+      "version": "0.25.0",
+      "roles": [
+        "native",
+        "wasm"
+      ],
+      "payloads": {
+        "native": 6,
+        "wasm": 1
+      },
+      "provenance": {
+        "source_repository": "https://github.com/tree-sitter/tree-sitter-bash",
+        "registry_git_head": "20f885f1f510eb458412d39ab920b5ace98f2f9a",
+        "source_tag": "v0.25.0",
+        "tag_object": "56b54c61fb48bce0c63e3dfa2240b5d274384763",
+        "peeled_commit": "56b54c61fb48bce0c63e3dfa2240b5d274384763",
+        "package_version_at_source": "0.25.0",
+        "correspondence": "Use the exact registry gitHead; its generated parser metadata differs from the release tag.",
+        "source_build": {
+          "source_package": "tree-sitter-bash@0.25.0",
+          "source_url": "https://registry.npmjs.org/tree-sitter-bash/-/tree-sitter-bash-0.25.0.tgz",
+          "source_sha256": "9c9460cebe00ec6859f9ba710f7c0bf00ad4fbd7ab72d74e666341491ae2b93d",
+          "compiler": "tree-sitter-cli-0.26.9",
+          "wasi_headers": "Bun-pinned Zig 0.15.2 source build",
+          "command": "TREE_SITTER_WASI_SDK_PATH=.build-tools/tree-sitter-wasi-sdk tree-sitter build --wasm",
+          "published_payload_sha256": "364f0a2cd385c792239423026ef442dbd073d34c396b7bc9e5932426b8e4aa5d",
+          "local_recipe_output_sha256": [
+            "1e50bfe57d9480c218bb67356faeb1cbbc9358b6918c411a50e76e1d386687c6",
+            "4aa19addda7141b77caaa3465a74c1f5f7f9479f15d16dedfb1957a147321907"
+          ],
+          "local_rebuilds": 2,
+          "local_rebuilds_byte_identical": false,
+          "offline_build_verified": true,
+          "parser_smoke_verified": true,
+          "published_payload_discarded": true,
+          "local_proof_only": true
+        }
+      },
+      "decision": {
+        "action": "omit_native_rebuild_wasm",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Omit all Node prebuilds and rebuild the functional grammar WASM offline from the included C sources; representative parsing passes, while repeated outputs are not byte-identical."
+      }
+    },
+    {
+      "package": "@opentui/core@0.4.5",
+      "npm_name": "@opentui/core",
+      "version": "0.4.5",
+      "roles": [
+        "wasm"
+      ],
+      "payloads": {
+        "native": 0,
+        "wasm": 5
+      },
+      "provenance": {
+        "source_repository": "https://github.com/anomalyco/opentui",
+        "registry_git_head": "0c8c4f7cff2927e3df63a9757a45eff9a343611c",
+        "source_tag": "v0.4.5",
+        "tag_object": "6c046e563c09cc7663edef036a396b9b799dc115",
+        "peeled_commit": "0c8c4f7cff2927e3df63a9757a45eff9a343611c",
+        "package_version_at_source": "0.4.5",
+        "correspondence": "All five npm assets byte-match the named official grammar release assets; exact release commits and source archives are pinned below.",
+        "subordinate_sources": [
+          {
+            "id": "tree-sitter-javascript-0.25.0",
+            "source_repository": "https://github.com/tree-sitter/tree-sitter-javascript",
+            "source_tag": "v0.25.0",
+            "tag_object": "f76aea6aa47322ea5c208c9c2e67f4a350d554f3",
+            "peeled_commit": "44c892e0be055ac465d5eeddae6d3e194424e7de",
+            "source_url": "https://codeload.github.com/tree-sitter/tree-sitter-javascript/tar.gz/44c892e0be055ac465d5eeddae6d3e194424e7de",
+            "source_sha256": "a13fa28148e41bb939b2c2b8cd73c4b4295273b70cbac55a7a589020f52b9611",
+            "grammar_paths": [
+              "."
+            ],
+            "generator": {
+              "tool": "tree-sitter-cli",
+              "version": "0.25.8",
+              "command": "tree-sitter build --wasm",
+              "workflow_pinned": false
+            }
+          },
+          {
+            "id": "tree-sitter-typescript-0.23.2",
+            "source_repository": "https://github.com/tree-sitter/tree-sitter-typescript",
+            "source_tag": "v0.23.2",
+            "tag_object": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+            "peeled_commit": "f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+            "source_url": "https://codeload.github.com/tree-sitter/tree-sitter-typescript/tar.gz/f975a621f4e7f532fe322e13c4f79495e0a7b2e7",
+            "source_sha256": "4de2e82e557810eecb93cb3b31fbb3bd28ba4c91ba9a6c6164bcaa074125b7b5",
+            "grammar_paths": [
+              "typescript"
+            ],
+            "generator": {
+              "tool": "tree-sitter-cli",
+              "version": "0.24.4",
+              "command": "tree-sitter build --wasm",
+              "workflow_pinned": false
+            }
+          },
+          {
+            "id": "tree-sitter-markdown-0.5.1",
+            "source_repository": "https://github.com/tree-sitter-grammars/tree-sitter-markdown",
+            "source_tag": "v0.5.1",
+            "tag_object": "2dfd57f547f06ca5631a80f601e129d73fc8e9f0",
+            "peeled_commit": "2dfd57f547f06ca5631a80f601e129d73fc8e9f0",
+            "source_url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-markdown/tar.gz/2dfd57f547f06ca5631a80f601e129d73fc8e9f0",
+            "source_sha256": "74138adf4535291593560d401bf0a6f0b3cc8a0c43d0912f462e5590f7e8fbb9",
+            "grammar_paths": [
+              "tree-sitter-markdown",
+              "tree-sitter-markdown-inline"
+            ],
+            "generator": {
+              "tool": "tree-sitter-cli",
+              "version": "0.24.3",
+              "command": "tree-sitter build --wasm",
+              "workflow_pinned": false
+            }
+          },
+          {
+            "id": "tree-sitter-zig-1.1.2",
+            "source_repository": "https://github.com/tree-sitter-grammars/tree-sitter-zig",
+            "source_tag": "v1.1.2",
+            "tag_object": "b670c8df85a1568f498aa5c8cae42f51a90473c0",
+            "peeled_commit": "b670c8df85a1568f498aa5c8cae42f51a90473c0",
+            "source_url": "https://codeload.github.com/tree-sitter-grammars/tree-sitter-zig/tar.gz/b670c8df85a1568f498aa5c8cae42f51a90473c0",
+            "source_sha256": "c7af5b1a992fcaffdf50a11a9974fbf8f09d20c4d9ef42245ac90c152dd3a85a",
+            "grammar_paths": [
+              "."
+            ],
+            "generator": {
+              "tool": "tree-sitter-cli",
+              "version": "0.24.5",
+              "command": "tree-sitter build --wasm",
+              "workflow_pinned": false
+            }
+          }
+        ],
+        "asset_correspondence": [
+          {
+            "path": "package/assets/javascript/tree-sitter-javascript.wasm",
+            "upstream_url": "https://github.com/tree-sitter/tree-sitter-javascript/releases/download/v0.25.0/tree-sitter-javascript.wasm",
+            "sha256": "5fb488d0cabb4775a594bab85682de5ad6ce83c0d6ac997a9f82dd084d571240",
+            "verified": true
+          },
+          {
+            "path": "package/assets/typescript/tree-sitter-typescript.wasm",
+            "upstream_url": "https://github.com/tree-sitter/tree-sitter-typescript/releases/download/v0.23.2/tree-sitter-typescript.wasm",
+            "sha256": "778025db5a8be0e70f8ccc3671e486dfeddd048c25d9e8a70c26de2e1bf6f97d",
+            "verified": true
+          },
+          {
+            "path": "package/assets/markdown/tree-sitter-markdown.wasm",
+            "upstream_url": "https://github.com/tree-sitter-grammars/tree-sitter-markdown/releases/download/v0.5.1/tree-sitter-markdown.wasm",
+            "sha256": "3e13182f21373634c40653f170e6f2d2790914eb2c243927086d79023c534f7a",
+            "verified": true
+          },
+          {
+            "path": "package/assets/markdown_inline/tree-sitter-markdown_inline.wasm",
+            "upstream_url": "https://github.com/tree-sitter-grammars/tree-sitter-markdown/releases/download/v0.5.1/tree-sitter-markdown_inline.wasm",
+            "sha256": "9bbd71a70a23f6d0193bb162a72eecf2a2bd9ce76910d7ad3da9c5f80f122671",
+            "verified": true
+          },
+          {
+            "path": "package/assets/zig/tree-sitter-zig.wasm",
+            "upstream_url": "https://github.com/tree-sitter-grammars/tree-sitter-zig/releases/download/v1.1.2/tree-sitter-zig.wasm",
+            "sha256": "54b3b83dd9c62da5815f06132bc3fc914d9dcc780370b32416446a0b7969e8c6",
+            "verified": true
+          }
+        ],
+        "current_rebuild": {
+          "tool": "tree-sitter-cli",
+          "version": "0.26.9",
+          "compiler": "clang-20 with Bun Zig 0.15.2 WASI headers",
+          "network_isolated": true,
+          "local_rebuilds": 2,
+          "local_rebuilds_byte_identical": true,
+          "output_sha256": {
+            "javascript": "ff37e071b8eefdc7264ce811ac6614c5ac3bcadb65a802e6dccb6a61c8d71abf",
+            "typescript": "66bc1049d9b2357a064846e0c3e5f6cdd7dcf3d45c37211649a746890e1e1e70",
+            "markdown": "1e2773b667adcdef6bc6473a3c436feb7ef9c65d42f2ab2bf07f9771836d7b44",
+            "markdown_inline": "7bea52c1bc24c9265cd668a522484f7c401867651b62714f81fe84386e7f5225",
+            "zig": "167220cdb1e80e73109b833eaa491537bb7078d9d572ee3c702b86e2c3b5b2f3"
+          },
+          "runtime": "web-tree-sitter 0.25.10",
+          "parse_smokes": [
+            "javascript",
+            "typescript",
+            "markdown",
+            "markdown_inline",
+            "zig"
+          ],
+          "runtime_parse_verified": true
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": true,
+        "reason": "Replace every published grammar asset with twice-built byte-identical offline outputs from the pinned sources; all five pass web-tree-sitter runtime parsing."
+      }
+    },
+    {
+      "package": "@silvia-odwyer/photon-node@0.3.4",
+      "npm_name": "@silvia-odwyer/photon-node",
+      "version": "0.3.4",
+      "roles": [
+        "wasm"
+      ],
+      "payloads": {
+        "native": 0,
+        "wasm": 1
+      },
+      "provenance": {
+        "source_repository": "https://github.com/silvia-odwyer/photon",
+        "registry_git_head": "685f5b155b36c5611c08ca678bb78ddbab3edbac",
+        "source_tag": null,
+        "tag_object": null,
+        "peeled_commit": "685f5b155b36c5611c08ca678bb78ddbab3edbac",
+        "package_version_at_source": "0.3.3",
+        "correspondence": "The authenticated npm artifact does not correspond to the registry gitHead or the nearest generated compiled-wasm commit; no exact v0.3.4 package output exists in local immutable refs.",
+        "published_artifact": {
+          "published_at": "2025-05-10T18:44:21.604Z",
+          "source_url": "https://registry.npmjs.org/@silvia-odwyer/photon-node/-/photon-node-0.3.4.tgz",
+          "integrity": "sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA==",
+          "sha256": "5a23015c1cd2c38e3c492dd96929985247b92f52d2ff0fb948d29edca52bc50a",
+          "package_name": "@silvia-odwyer/photon-node",
+          "package_version": "0.3.4",
+          "files": {
+            "package/photon_rs_bg.wasm": "10468181565c56004c867f3a4af96f89a0ef5a63a72f2b5fb12c1f1992a3615c",
+            "package/photon_rs.js": "d60656705f0d59baa79e36b0381eb023f1864eeb57e92956cf21dcd9fb8f879f",
+            "package/photon_rs_bg.js": "02d724f9efb4c4b9a5f49dd83ff7ba0d83af14428059ba21372bad43cc8b2253",
+            "package/photon_rs.d.ts": "b3f7efb72280d1c32cf17dbe436fb783e3f04dc0da56e8c4eaa0ccab3da43d23"
+          }
+        },
+        "closest_generated_candidate": {
+          "commit": "232df2fe11218cac0856a56d94ab560b22d5b414",
+          "generated_from_commit": "8591d316252ede15d9f3ed5d3646c4c0c4a215fc",
+          "committed_at": "2025-05-10T18:20:50Z",
+          "package_name": "photon-rs",
+          "package_version": "0.3.2",
+          "files": {
+            "package.json": "eaef1dedeb5187129e7044889eadf83322b0cd378be5747b76673bd200087d6a",
+            "photon-node_bg.wasm": "651870eb6466366b89ad46429aaba97e7cfc32992045cc97b9e54a2e63d4e980",
+            "photon-node.js": "c6d3594ee7f96c04417e809ed63b546f8a8a3f77bd307986bc2caf3c5688696b",
+            "photon-node.d.ts": "f672376bf32dba6b98ddc6259779e8f800aa1f01c63845176ff2a72c865a8fe2",
+            "photon-node_bg.wasm.d.ts": "36ea91bf5bf0874e40e842d018a7a062a8ae36a04a37152c71e36e28dd4c913e"
+          }
+        },
+        "correspondence_checks": {
+          "source_package_version_matches": false,
+          "generated_package_identity_matches": false,
+          "generated_package_version_matches": false,
+          "generated_filenames_match": false,
+          "generated_wasm_sha256_matches": false,
+          "generated_js_sha256_matches": false,
+          "generated_declarations_sha256_matches": false,
+          "exact_local_ref_found": false
+        },
+        "source_build": {
+          "source_crate": "photon-rs-0.3.3.crate",
+          "source_url": "https://static.crates.io/crates/photon-rs/photon-rs-0.3.3.crate",
+          "source_sha256": "06e9b6d764d6656aba14f5ae43fbf48ce98ff1b1a6beb4d2e801eb0729f88773",
+          "source_package_version": "0.3.3",
+          "source_commit": "685f5b155b36c5611c08ca678bb78ddbab3edbac",
+          "cargo_lock_sha256": "aa3e9c86b0380b8cd5cb768985f7e270aab01a5b35c24cbfa8533fa74343318f",
+          "cargo_vendor_archive": "opencode-1.18.8-photon-cargo-vendor.tar.zst",
+          "cargo_vendor_sha256": "d0199923d17ae664abecc7f9e8edab1e25f42467ac33c616079e72e14072f00a",
+          "cargo_vendor_crates": 138,
+          "cargo_vendor_manifest": "opencode-1.18.8-photon-cargo-vendor.txt",
+          "cargo_vendor_manifest_sha256": "f2eb6e04b6ef90b192bbbac4f7555c3cfb7803391a04256f48c09f111cf82159",
+          "cargo_vendor_source_date_epoch": 1746901403,
+          "wasm_bindgen_cli": {
+            "version": "0.2.95",
+            "source_crate": "wasm-bindgen-cli-0.2.95.crate",
+            "source_url": "https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-0.2.95.crate",
+            "source_sha256": "9380d84c4d0563c54a8177ad3fe14b12f673beb699e50c01fb4703fca68c7cd4",
+            "source_commit": "3a8da7cb8842d4cb9918871179b6b7d3c77df5a0",
+            "cargo_lock_sha256": "ac1c77d9c5db87f99edf1373891e5d937819578f493e81b3de095434dcb0534e",
+            "cargo_vendor_archive": "opencode-1.18.8-wasm-bindgen-cli-cargo-vendor.tar.zst",
+            "cargo_vendor_sha256": "338fa52c864c963db1d283a6082203029418541d1b3ff10bef38a3356c85c2f3",
+            "cargo_vendor_crates": 185,
+            "cargo_vendor_manifest": "opencode-1.18.8-wasm-bindgen-cli-cargo-vendor.txt",
+            "cargo_vendor_manifest_sha256": "d274e859ec2dd094ad7fa8090e3b66852323c9e8eb2c5d8de84093ff038956be",
+            "cargo_vendor_source_date_epoch": 1728598471
+          },
+          "historical_correspondence_proof": {
+            "rustc": "1.86.0-nightly (3f43b1a63 2025-01-03)",
+            "wasm_bindgen": "0.2.95 (3a8da7cb8)",
+            "walrus": "0.22.0",
+            "generated_javascript_sha256": "d60656705f0d59baa79e36b0381eb023f1864eeb57e92956cf21dcd9fb8f879f",
+            "generated_declarations_sha256": "b3f7efb72280d1c32cf17dbe436fb783e3f04dc0da56e8c4eaa0ccab3da43d23",
+            "generated_glue_byte_identical_to_npm": true,
+            "historical_wasm_byte_identical_to_npm": false
+          },
+          "fedora_source_build": {
+            "rustc": "1.97.1",
+            "rust_std_target": "rust-std-static-wasm32-unknown-unknown-1.97.1",
+            "cargo_profile": "release",
+            "path_remap": "--remap-path-prefix=$PWD=/usr/src/debug/opencode-1.18.8/.photon-source",
+            "wasm_bindgen_cli_built_from_source": true,
+            "raw_output_sha256": "8408d5559283e8d78147de07c2b6c89423a5ca24c9e90ed6c3672b5132b082eb",
+            "raw_output_bytes": 2541959,
+            "local_output_sha256": "a7b94ff8edff710e528a82855bb51a0abac63ff49f44e0afebcc816d92b4bbb0",
+            "output_bytes": 1861027,
+            "generated_javascript_sha256": "902925782b9728db0ab7a868f8a5268d7def877525dc6c256ab71c9a88eb4a28",
+            "generated_declarations_sha256": "fdb8f94706efcc46aa0381b7e1eb12c7967c3dce46d3a8bb21c578d36e22cf55",
+            "local_rebuilds": 2,
+            "path_distinct_rebuilds": true,
+            "local_rebuilds_byte_identical": true,
+            "network_isolated": true,
+            "published_javascript_abi_verified": true,
+            "png_smoke_sha256": "4d01524111816b3318a093b852f8da4b823b092462d290cc15e0ad401573cd9e",
+            "jpeg_smoke_sha256": "e1327581cb0c70b6658d6ce024165f880bfc484f68473b8d97f5adf6d4488108",
+            "decode_resize_encode_verified": true,
+            "local_proof_only": true
+          },
+          "linked_source_license": "photon-rs-LICENSE.md",
+          "linked_source_license_sha256": "c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7",
+          "published_payload_discarded": true
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": true,
+        "reason": "Build the crates.io photon-rs 0.3.3 source published from npm's exact gitHead with source-built wasm-bindgen CLI and Fedora's wasm target; the published readable glue is source-proven, accepts the rebuilt payload, and produces byte-identical decode, resize, PNG, and JPEG results."
+      }
+    },
+    {
+      "package": "shiki@4.2.0",
+      "npm_name": "shiki",
+      "version": "4.2.0",
+      "roles": [
+        "wasm"
+      ],
+      "payloads": {
+        "native": 0,
+        "wasm": 1
+      },
+      "provenance": {
+        "source_repository": "https://github.com/shikijs/shiki",
+        "registry_git_head": null,
+        "source_tag": "v4.2.0",
+        "tag_object": "eaa5cab56b535370c1b7fc1c27d6d01bad05666b",
+        "peeled_commit": "1d56dae84801bad3a48dc7104437fbc21819ee4c",
+        "package_version_at_source": "4.2.0",
+        "correspondence": "Shiki copies vscode-oniguruma 1.7.0 release/onig.wasm verbatim; the npm asset, source tag, and Oniguruma submodule are pinned below.",
+        "subordinate_sources": [
+          {
+            "id": "vscode-oniguruma-1.7.0",
+            "source_repository": "https://github.com/microsoft/vscode-oniguruma",
+            "source_tag": "v1.7.0",
+            "tag_object": "716aeaa229e4ae2e3b0057377b55743e9a3e995b",
+            "peeled_commit": "716aeaa229e4ae2e3b0057377b55743e9a3e995b",
+            "source_url": "https://codeload.github.com/microsoft/vscode-oniguruma/tar.gz/716aeaa229e4ae2e3b0057377b55743e9a3e995b",
+            "source_sha256": "7b3616492af2d012bdb8904e35c6a5584f8d4326bfe013ebbda079330cf3c1ed",
+            "npm_tarball": "https://registry.npmjs.org/vscode-oniguruma/-/vscode-oniguruma-1.7.0.tgz",
+            "npm_integrity": "sha512-L9WMGRfrjOhgHSdOYgCt/yRMsXzLDJSL7BPrOZt73gU0iWO4mpqzqQzOz5srxqTvMBaR0XZTSrVWo4j55Rc6cA==",
+            "npm_sha256": "830c8de8fd475455d8c161ca3c1f5f3c935fad8327ee548dec38c8985097657f",
+            "generator": {
+              "tool": "emscripten",
+              "version": null,
+              "command": "npm run build-onig && npm run build-wasm",
+              "workflow_pinned": false
+            }
+          },
+          {
+            "id": "oniguruma-08d36110",
+            "source_repository": "https://github.com/kkos/oniguruma",
+            "source_tag": null,
+            "tag_object": null,
+            "peeled_commit": "08d36110c5670c815ad6d6f969e578049d209080",
+            "source_url": "https://codeload.github.com/kkos/oniguruma/tar.gz/08d36110c5670c815ad6d6f969e578049d209080",
+            "source_sha256": "197bdc01b6e71245ca95e652827fe53c4b1532a4175870f62157b5f909fa0e6f"
+          }
+        ],
+        "asset_correspondence": [
+          {
+            "path": "package/dist/onig.wasm",
+            "upstream_url": "https://registry.npmjs.org/vscode-oniguruma/-/vscode-oniguruma-1.7.0.tgz",
+            "upstream_path": "package/release/onig.wasm",
+            "sha256": "fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9",
+            "verified": true
+          }
+        ],
+        "current_rebuild": {
+          "toolchain": "emscripten-4.0.4-binaryen-121-clang20",
+          "source_date_epoch": 1668779661,
+          "network_isolated": true,
+          "local_rebuilds": 2,
+          "local_rebuilds_byte_identical": true,
+          "output_size": 464708,
+          "output_sha256": "1ef5a51b6e7d2d2b9caeb0563368a8e8807699aab50f3ff9bc0fa480564212d0",
+          "published_output_sha256": "fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9",
+          "published_output_matches": false,
+          "runtime": "vscode-oniguruma-1.7.0",
+          "wrapper_smoke_verified": true,
+          "published_payload_discarded": true
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": true,
+        "reason": "Replace the published payload with the byte-identical two-build current Fedora toolchain output and verify it through the exact vscode-oniguruma wrapper."
+      }
+    },
+    {
+      "package": "tree-sitter-powershell@0.25.10",
+      "npm_name": "tree-sitter-powershell",
+      "version": "0.25.10",
+      "roles": [
+        "wasm"
+      ],
+      "payloads": {
+        "native": 0,
+        "wasm": 1
+      },
+      "provenance": {
+        "source_repository": "https://github.com/airbus-cert/tree-sitter-powershell",
+        "registry_git_head": "9d1509db4b486aba3f790692e837b730c665f603",
+        "source_tag": "v0.25.10",
+        "tag_object": "7212f47716ced384ac012b2cc428fd9f52f7c5d4",
+        "peeled_commit": "7212f47716ced384ac012b2cc428fd9f52f7c5d4",
+        "package_version_at_source": "0.25.10",
+        "correspondence": "The registry gitHead differs from the tag only in Cargo and npm metadata; parser sources are unchanged.",
+        "source_build": {
+          "source_package": "tree-sitter-powershell@0.25.10",
+          "source_url": "https://registry.npmjs.org/tree-sitter-powershell/-/tree-sitter-powershell-0.25.10.tgz",
+          "source_sha256": "feb79f695aeda8e1835cac98e0b2eed76e2874b6ef1ea197f7cba4c535a6976f",
+          "compiler": "tree-sitter-cli-0.26.9",
+          "wasi_headers": "Bun-pinned Zig 0.15.2 source build",
+          "command": "TREE_SITTER_WASI_SDK_PATH=.build-tools/tree-sitter-wasi-sdk tree-sitter build --wasm",
+          "published_payload_sha256": "1d30b5a21866354aa2eb94845556f1e19126ff00e3335048719a0e6435b1c154",
+          "local_recipe_output_sha256": [
+            "00eb80611bfadcd9c617d79f581bad39f7594d7550210a50d1fddcfe73fa1a14",
+            "2be91a5244d44b52616ca0810cfc98efe5e128fa4c9d2b98f412cde7760fe938"
+          ],
+          "local_rebuilds": 2,
+          "local_rebuilds_byte_identical": false,
+          "offline_build_verified": true,
+          "parser_smoke_verified": true,
+          "published_payload_discarded": true,
+          "local_proof_only": true
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Rebuild the grammar WASM offline from the included parser and scanner sources; representative parsing passes, while repeated outputs are not byte-identical."
+      }
+    },
+    {
+      "package": "undici@5.29.0",
+      "npm_name": "undici",
+      "version": "5.29.0",
+      "roles": [
+        "wasm"
+      ],
+      "payloads": {
+        "native": 0,
+        "wasm": 2
+      },
+      "provenance": {
+        "source_repository": "https://github.com/nodejs/undici",
+        "registry_git_head": "9528f6853a72a637823e863f1dd12ec47a3fc9e7",
+        "source_tag": "v5.29.0",
+        "tag_object": "9528f6853a72a637823e863f1dd12ec47a3fc9e7",
+        "peeled_commit": "9528f6853a72a637823e863f1dd12ec47a3fc9e7",
+        "package_version_at_source": "5.29.0",
+        "correspondence": "The registry gitHead and release tag agree; all vendored llhttp inputs byte-match the generated llhttp 8.1.0 release tree pinned below.",
+        "subordinate_sources": [
+          {
+            "id": "llhttp-generator-8.1.0",
+            "source_repository": "https://github.com/nodejs/llhttp",
+            "source_tag": "v8.1.0",
+            "tag_object": "4f4a2ae3a3bbfbece269adf2905f797588a597df",
+            "peeled_commit": "85dd446419966cafb5a7fdd5031e3113a0768e65",
+            "source_url": "https://codeload.github.com/nodejs/llhttp/tar.gz/85dd446419966cafb5a7fdd5031e3113a0768e65",
+            "source_sha256": "27064e854a76feec38a13f57be14d33900b108f1b62cf0a09d6cdf085348edd7"
+          },
+          {
+            "id": "llhttp-generated-release-8.1.0",
+            "source_repository": "https://github.com/nodejs/llhttp",
+            "source_tag": "release/v8.1.0",
+            "tag_object": "a294239338eff8bffd4c709265ab8f5a11e57e41",
+            "peeled_commit": "a294239338eff8bffd4c709265ab8f5a11e57e41",
+            "source_url": "https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41",
+            "source_sha256": "ca8b68d982b1c2a7aa28599fe46596738f17fffd05d2ad27d7ffc3e7fca43591",
+            "correspondence_files": {
+              "include/llhttp.h": "d10cbae21267c5d08e0dac01c8584c799b50be7dddd0a0f3193d110922981c38",
+              "src/llhttp.c": "af384dc4a9e83b4b2ef8a658117a42afa1ee1585344563818ac730604e150f5f",
+              "src/api.c": "6e5a4528cd67bb79c3b1c1e08bb8b4d9beeac4775877098d28be0a8f0d000897",
+              "src/http.c": "c55eda50972fb150c093d54ba4a92921906f1f51ee60a6b1e0d13f5b9877f539"
+            },
+            "generator": {
+              "command": "node build/wasm.js",
+              "base_image": "node:20-alpine@sha256:4559bc033338938e54d0a3c2f0d7c3ad7d1d13c28c4c405b85c6b3a26f4ce5f7",
+              "recorded_toolchain": "clang-15.0.7-r0, lld-15.0.7-r0, wasi-sdk-16-r0",
+              "toolchain_pinned": false
+            }
+          }
+        ],
+        "asset_correspondence": [
+          {
+            "path": "package/lib/llhttp/llhttp.wasm",
+            "upstream_url": "https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41",
+            "sha256": "ee82b848a5ca8e9f99fda109e59bbc20193d049a7f6bff93f4130cba5b68261c",
+            "verified": true
+          },
+          {
+            "path": "package/lib/llhttp/llhttp_simd.wasm",
+            "upstream_url": "https://codeload.github.com/nodejs/llhttp/tar.gz/a294239338eff8bffd4c709265ab8f5a11e57e41",
+            "sha256": "cd48aefa974e9fc21adec14ef0c73f0ad501b598078b12568ed129c320318154",
+            "verified": true
+          }
+        ],
+        "current_rebuild": {
+          "toolchain": "emscripten-4.0.4-binaryen-121-clang20",
+          "network_isolated": true,
+          "local_rebuilds": 2,
+          "local_rebuilds_byte_identical": true,
+          "scalar": {
+            "size": 47692,
+            "sha256": "58fe510f2f5dbb5f79bc2ab0d108ebe7d0ee49f2938bc82d737e82809cab3dcb"
+          },
+          "simd": {
+            "size": 47926,
+            "sha256": "276a49065fdce6e19c2083fb0dea3b53c390f382c0e6dd3370dbc7fa19f48a57"
+          },
+          "callback_imports_verified": true,
+          "allocator_parser_smoke_verified": true,
+          "published_payloads_discarded": true
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": true,
+        "reason": "Replace both published payloads with byte-identical current-toolchain builds and verify the callback, allocator, and parser ABI."
+      }
+    },
+    {
+      "package": "web-tree-sitter@0.25.10",
+      "npm_name": "web-tree-sitter",
+      "version": "0.25.10",
+      "roles": [
+        "wasm"
+      ],
+      "payloads": {
+        "native": 0,
+        "wasm": 3
+      },
+      "provenance": {
+        "source_repository": "https://github.com/tree-sitter/tree-sitter",
+        "registry_git_head": "da6fe9beb4f7f67beb75914ca8e0d48ae48d6406",
+        "source_tag": "v0.25.10",
+        "tag_object": "208c6cac1453315e979f05ab34b6d4f7cd0340be",
+        "peeled_commit": "da6fe9beb4f7f67beb75914ca8e0d48ae48d6406",
+        "package_version_at_source": "0.25.10",
+        "correspondence": "The annotated release tag peels to the registry gitHead and the npm source contains the C runtime sources.",
+        "source_build": {
+          "runtime_source_url": "https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v0.25.10.tar.gz",
+          "runtime_source_sha256": "ad5040537537012b16ef6e1210a572b927c7cdc2b99d1ee88d44a7dcdc3ff44c",
+          "emscripten_source_url": "https://github.com/emscripten-core/emscripten/archive/refs/tags/4.0.4.tar.gz",
+          "emscripten_source_sha256": "02214fec16769fd5761585baf0038d08c3c1f33d2b7b179953c6fb7e4e04470e",
+          "binaryen_source_url": "https://github.com/WebAssembly/binaryen/archive/refs/tags/version_121.tar.gz",
+          "binaryen_source_sha256": "93f3b3d62def4aee6d09b11e6de75b955d29bc37878117e4ed30c3057a2ca4b4",
+          "esbuild_source_url": "https://github.com/evanw/esbuild/archive/refs/tags/v0.24.2.tar.gz",
+          "esbuild_source_sha256": "171e1b0cd4c64222a1953203f6b3dab3c7a3f95b8939a72b4ebbd024302513b4",
+          "esbuild_x_sys_source_sha256": "3b180937216e93559f16b6076d09baf54a5707378f11b867b6eb914c56b09b91",
+          "acorn_source_sha256": "04c1f5545e4e9140e288bb56b4cbbc4ffd730213e6331330e2bcefc649462104",
+          "esbuild_npm_source_sha256": "873e6170dc7f8bdd0e7a84daf2dfcec4744831271929bca044d6b7216ff86b47",
+          "helper_sha256": "2e143b7c1a115e2effef7d6fc3f282023b8e25fda8fe2a0cd947ffe14e5c952a",
+          "validator_sha256": "57a6b7e6c3b2e2322baf037369fb38012a76c47d3f251187678b13da05eccefc",
+          "published_payload_sha256": "f38dcc4b43b818f9a0785bc1c6d5611a75ac4cdd428ff3f02757c34ca4e46d7f",
+          "local_recipe_output_sha256": "d649036ed74633a1995b9409cb060aa3255a399b96085bfcc465dc8d5e8d8e31",
+          "offline_build_verified": true,
+          "bash_and_powershell_parser_smoke_verified": true,
+          "published_payload_discarded": true,
+          "local_proof_only": true
+        }
+      },
+      "decision": {
+        "action": "rebuild",
+        "retain_prebuilt_payloads": false,
+        "source_mapping_verified": true,
+        "reproducible_build_verified": false,
+        "reason": "Rebuild the runtime WASM offline with pinned Emscripten, Binaryen, and source-built esbuild inputs; representative Bash and PowerShell parsing passes, but independent byte reproducibility is not claimed."
+      }
+    }
+  ],
+  "validation": {
+    "exact_native_wasm_source_coverage": true,
+    "registry_git_heads_checked": true,
+    "local_git_refs_checked": true,
+    "raw_source_audit_unchanged": true
+  }
+}

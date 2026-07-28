@@ -55,7 +55,7 @@ module OpenCodeFinalLicenseAudit
 
   def build(binary_embedding:, source_license_set:, license_review:, native_review:, bun_final_license:, input_records:, auditor_record:, audit_date:)
     release = binary_embedding.fetch("release").to_s
-    ensure!(binary_embedding.fetch("package") == "opencode" && release == "1.18.5", "OpenCode release mismatch")
+    ensure!(binary_embedding.fetch("package") == "opencode" && release == "1.18.8", "OpenCode release mismatch")
     ensure!(source_license_set.fetch("package") == "opencode" && source_license_set.fetch("release").to_s == release, "source license-set release mismatch")
     ensure!(license_review.fetch("release").to_s == release, "license review release mismatch")
     ensure!(native_review.fetch("release").to_s == release, "native review release mismatch")

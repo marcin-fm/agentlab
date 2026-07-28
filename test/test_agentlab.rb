@@ -3007,7 +3007,7 @@ class AgentlabTest < Minitest::Test
     assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
   end
 
-  def test_validates_opencode_review_without_generated_source_closure
+  def test_rejects_opencode_review_without_generated_source_closure
     source_package = Agentlab.package_named("opencode")
     dependencies = Agentlab.load_yaml(File.join(source_package.directory, "dependencies.yml"))
     Dir.mktmpdir do |directory|
@@ -3024,7 +3024,7 @@ class AgentlabTest < Minitest::Test
         opencode-zig-fedora-lib64.patch
         opencode-build-web-tree-sitter-runtime.py
         opencode-validate-tree-sitter.mjs
-        opencode-1.18.5-bun-pty-cargo-vendor.txt
+         opencode-1.18.8-bun-pty-cargo-vendor.txt
       ].each do |filename|
         FileUtils.cp(File.join(source_package.directory, filename), File.join(directory, filename))
       end
@@ -3034,6 +3034,11 @@ class AgentlabTest < Minitest::Test
         data: source_package.data
       )
 
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+      assert_includes(errors, "opencode: generated source closure is missing")
+
+      closure_filename = dependencies.dig("source_closure_files", "closure_manifest")
+      FileUtils.cp(File.join(source_package.directory, closure_filename), File.join(directory, closure_filename))
       assert_empty(Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release")))
 
       spec_path = File.join(directory, "opencode.spec")
@@ -3100,6 +3105,16 @@ class AgentlabTest < Minitest::Test
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: { "name" => "opencode" })
       errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
       assert(errors.any? { |error| error.include?("models snapshot proof does not match") })
+
+      FileUtils.cp(File.join(source_package.directory, "opencode.spec"), File.join(directory, "opencode.spec"))
+      spec_path = File.join(directory, "opencode.spec")
+      spec = File.read(spec_path).sub(
+        /%global models_dev_proof_sha256 \S+/,
+        "%global models_dev_proof_sha256 #{'0' * 64}"
+      )
+      File.write(spec_path, spec)
+      errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+      assert(errors.any? { |error| error.include?("spec models snapshot proof SHA-256 does not match") })
     end
   end
 

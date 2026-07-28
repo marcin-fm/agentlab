@@ -1,0 +1,57 @@
+{
+  "schema": "opencode-source-materialization/v1",
+  "package": "opencode",
+  "release": "1.18.8",
+  "source_audit": {
+    "filename": "opencode-1.18.8-source-audit.json",
+    "sha256": "de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f",
+    "selected_lock_receipt_sha256": "358aee997de614d3950b929a9c7b33c1aa03ce6e0542d178d6f52edca214e097"
+  },
+  "selected_archive_roles": [
+    "production_build",
+    "test"
+  ],
+  "archives": {
+    "production_build": {
+      "role": "production-build-npm-source-bundle",
+      "recipe": "deterministic-archive-bundle/v1",
+      "compression": "zstd-10-single-thread",
+      "filename": "opencode-1.18.8-nm-prod-build.tar.zst",
+      "archive_root": "opencode-1.18.8-nm-prod-build",
+      "member_count": 745,
+      "input_bytes": 91288949,
+      "member_manifest_sha256": "971b7859da2359a5bdccb423ce0dac0e7bb3aa98b4e2600900939a036ea27dcc",
+      "size_bytes": 91226721,
+      "sha256": "218b6f0e2b85849d3902a3d1e13777c645eecb7a3021f4334203b1a033e8cea4"
+    },
+    "test": {
+      "role": "test-capable-npm-source-bundle",
+      "recipe": "deterministic-archive-bundle/v1",
+      "compression": "zstd-10-single-thread",
+      "filename": "opencode-1.18.8-nm-dev-test.tar.zst",
+      "archive_root": "opencode-1.18.8-nm-dev-test",
+      "member_count": 745,
+      "input_bytes": 91288949,
+      "member_manifest_sha256": "971b7859da2359a5bdccb423ce0dac0e7bb3aa98b4e2600900939a036ea27dcc",
+      "size_bytes": 91211164,
+      "sha256": "42198ce376f6d47ff711c3588d7d25f54c8f83bf856bd8ed0578bc6a9fd92a63"
+    }
+  },
+  "validation": {
+    "source_audit_verified": true,
+    "cached_member_sizes_verified": true,
+    "cached_member_sha256_verified": true,
+    "safe_archive_paths_verified": true,
+    "archive_roots_verified": true,
+    "production_role_selection_verified": true,
+    "test_superset_verified": true,
+    "deterministic_regeneration_verified": true,
+    "network_access_performed": false,
+    "node_modules_materialized": false,
+    "dependency_resolution_performed": false,
+    "patches_applied": false,
+    "lifecycle_scripts_executed": false,
+    "package_build_performed": false,
+    "rpm_integrated": false
+  }
+}

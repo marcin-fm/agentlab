@@ -2,7 +2,7 @@
 # available. Do not replace these inputs with upstream platform binaries.
 %global debug_package %{nil}
 %global __strip /bin/true
-%global source_sha256 eb3daee12da937a36c3276efda2ce1253d3c8fbe2828ebd581a39a2c2d3efdab
+%global source_sha256 1a998288639d9e8d5df4b6ad37762b9ccacac9f18d95651071e51fa97c76c720
 %global bun_pty_commit 41dd5b887f3f47d7c307fd93f828a75dbee97d5a
 %global bun_pty_source_sha256 d4731314a00c46d3810fa08b94ee0bcddb7a5026e47dbca88c83449d351bff9e
 %global bun_pty_vendor_sha256 5c22d4bd79109a3460f3a3d3840d2541da9a6c4c91513c39065a1f4611b7ec5e
@@ -52,17 +52,17 @@
 %global models_dev_source_sha256 d620cc51536d56d8d8d1a84f1de444d91f7afd116fe5e3e0c08e1a13011df905
 %global models_dev_zod_sha256 f365a049bd1fcc3079e91d9cbcf968b7adce705662bfb3ca1ab3930c03b2ede3
 %global models_dev_snapshot_sha256 8b78d7b16423318fb59e61c22118638952b76fc892b315c002dc3854c8618287
-%global models_dev_proof_sha256 3b54b21170b3901f3614284ad301ceb1706e310cda027849a55f234bcc6ca1aa
-%global source_license_set_proof_sha256 62fc352dd22085a2375c06a3cd6a996ac01534fd27132ab49464d47c540854ef
-%global source_materialization_sha256 518e0b781a8e1ed5a1683fcf7095be1b22360e8d6a7ef101a131d64cbdc13719
-%global source_audit_sha256 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
+%global models_dev_proof_sha256 59546387d0368f702fdcd3f830ba934dce83003c7912b4e7e7c9ad72b664e179
+%global source_license_set_proof_sha256 f637edc9c47f43d4b90a01c3f83f87a61f06827db9cdd025510051de89b0c3ca
+%global source_materialization_sha256 d09d6bd17c43f232ec1d7842cbd8731b7e2b0e1b2c42304579906d1fc8590326
+%global source_audit_sha256 de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f
 %global node_modules_materializer_sha256 d49cdf57f7c2b86103e63d829f00eebbb3d72c5ec985b12186b54ed188d55668
 %global binary_embedding_auditor_sha256 9f77823c4ef29d38bb1a09f0a322d337765de9b3e284e5b6d370fea3d0ff8451
-%global binary_embedding_receipt_sha256 496be59e95b845de847bced424c0e48a340969568eacea7f01fa0b12ae2a0f14
-%global final_license_auditor_sha256 8e8f8033df0e0770263112fa0a8feb563a67f0cf3c05a7b009ad28d3508d9c9f
-%global final_license_receipt_sha256 017d2fe95697746f357645155c83e3e258eb1bd63ad80380565d964f53ffb40b
+%global binary_embedding_receipt_sha256 b04eb9b2c13eff831d49786f6615480573f52a18b9f6e1880338bb9090431451
+%global final_license_auditor_sha256 7819935eba043fb30ff261ced64b7bf5b60c01021f881eedd632cbc61bdfdc20
+%global final_license_receipt_sha256 0bbd4941e700d0e94833c8c6174e01fd624b8e3834dedcf805e6c511332e60dc
 %global bundle_metafile_patch_sha256 1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4
-%global license_review_sha256 4248cf9d4e78236ad4b30f403137ff33f8b300b9fbd9cbf7f55a9599cc149848
+%global license_review_sha256 55e27e81cd0811723c42631f0c72c753b54c158f97b02d06740e816242f36868
 %global aws_sdk_license_sha256 edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
 %global sigstore_verify_license_sha256 364a130d2ca340bd56eb1e6d045fc6929bb0f9d0aa018f2c1949b29517e1cdd0
 %global drizzle_orm_license_sha256 c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
@@ -76,8 +76,8 @@
 %global photon_vendor_manifest_sha256 f2eb6e04b6ef90b192bbbac4f7555c3cfb7803391a04256f48c09f111cf82159
 %global photon_vendor_source_date_epoch 1746901403
 %global photon_published_wasm_sha256 10468181565c56004c867f3a4af96f89a0ef5a63a72f2b5fb12c1f1992a3615c
-%global photon_raw_wasm_sha256 d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d
-%global photon_rebuilt_wasm_sha256 be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783
+%global photon_raw_wasm_sha256 8408d5559283e8d78147de07c2b6c89423a5ca24c9e90ed6c3672b5132b082eb
+%global photon_rebuilt_wasm_sha256 a7b94ff8edff710e528a82855bb51a0abac63ff49f44e0afebcc816d92b4bbb0
 %global photon_license_sha256 c984c291167af70cc5fb7c7f4cec9b4560565110b766a718b3e12aba650327a7
 %global wasm_bindgen_cli_source_version 0.2.95
 %global wasm_bindgen_cli_source_sha256 9380d84c4d0563c54a8177ad3fe14b12f673beb699e50c01fb4703fca68c7cd4
@@ -87,8 +87,8 @@
 %global wasm_bindgen_cli_vendor_source_date_epoch 1728598471
 
 Name:           opencode
-Version:        1.18.5
-Release:        0.21%{?dist}
+Version:        1.18.8
+Release:        0.1%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -128,11 +128,11 @@ Source29:       https://codeload.github.com/anomalyco/models.dev/tar.gz/1eb0b8c8
 Source30:       https://registry.npmjs.org/zod/-/zod-3.24.2.tgz#/%{name}-%{version}-zod-3.24.2.tgz
 Source31:       models-snapshot-proof.json
 Source32:       source-license-set-proof.json
-Source33:       opencode-1.18.5-source-materialization.json
-Source34:       opencode-1.18.5-source-audit.json
+Source33:       %{name}-%{version}-source-materialization.json
+Source34:       %{name}-%{version}-source-audit.json
 Source35:       materialize-opencode-node-modules
 Source36:       audit-opencode-binary-embedding
-Source37:       opencode-1.18.5-binary-embedding.json
+Source37:       %{name}-%{version}-binary-embedding.json
 Source38:       license-review.yml
 Source39:       https://raw.githubusercontent.com/aws/aws-sdk-js-v3/4b035429227c5be4093e5b3898a4eb5dc70824b0/LICENSE#/%{name}-%{version}-aws-sdk-js-v3-LICENSE
 Source40:       https://raw.githubusercontent.com/sigstore/sigstore-js/c1dc7d4778a450787fc72b083f2490ad02b714c6/LICENSE#/%{name}-%{version}-sigstore-verify-LICENSE
@@ -326,7 +326,8 @@ Provides:       bundled(nodejs-@jridgewell/trace-mapping) = 0.3.31
 Provides:       bundled(nodejs-@leichtgewicht/ip-codec) = 2.0.5
 Provides:       bundled(nodejs-@lukeed/ms) = 2.0.2
 Provides:       bundled(nodejs-@mixmark-io/domino) = 2.2.0
-Provides:       bundled(nodejs-@modelcontextprotocol/sdk) = 1.29.0
+Provides:       bundled(nodejs-@modelcontextprotocol/client) = 2.0.0~beta.5
+Provides:       bundled(nodejs-@modelcontextprotocol/core) = 2.0.0~beta.5
 Provides:       bundled(nodejs-@npmcli/agent) = 4.0.2
 Provides:       bundled(nodejs-@npmcli/arborist) = 9.4.0
 Provides:       bundled(nodejs-@npmcli/config) = 10.8.1
@@ -500,7 +501,7 @@ Provides:       bundled(nodejs-gensync) = 1.0.0~beta.2
 Provides:       bundled(nodejs-get-caller-file) = 2.0.5
 Provides:       bundled(nodejs-get-east-asian-width) = 1.6.0
 Provides:       bundled(nodejs-get-stream) = 8.0.1
-Provides:       bundled(nodejs-gitlab-ai-provider) = 6.11.1
+Provides:       bundled(nodejs-gitlab-ai-provider) = 6.12.0
 Provides:       bundled(nodejs-glob) = 13.0.5
 Provides:       bundled(nodejs-glob) = 9.3.5
 Provides:       bundled(nodejs-google-auth-library) = 10.5.0
@@ -534,6 +535,7 @@ Provides:       bundled(nodejs-is-wsl) = 3.1.1
 Provides:       bundled(nodejs-is64bit) = 2.0.0
 Provides:       bundled(nodejs-isexe) = 2.0.0
 Provides:       bundled(nodejs-isexe) = 4.0.0
+Provides:       bundled(nodejs-jose) = 6.2.3
 Provides:       bundled(nodejs-js-tokens) = 4.0.0
 Provides:       bundled(nodejs-js-yaml) = 3.14.2
 Provides:       bundled(nodejs-jsesc) = 3.1.0
@@ -701,7 +703,6 @@ Provides:       bundled(nodejs-yargs-parser) = 22.0.0
 Provides:       bundled(nodejs-zod) = 3.25.76
 Provides:       bundled(nodejs-zod) = 4.1.8
 Provides:       bundled(nodejs-zod) = 4.4.3
-Provides:       bundled(nodejs-zod-to-json-schema) = 3.25.2
 # END GENERATED BUNDLED NODE PROVIDES
 
 %description
@@ -1380,6 +1381,10 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 1.18.8-0.1
+- Refresh the exact released source graph and source-side evidence.
+- Preserve blocked status and all unresolved binary, license, and publication holds.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 1.18.5-0.21
 - Refresh the final-license preflight for Bun's multi-architecture source bundle.
 

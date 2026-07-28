@@ -18,7 +18,7 @@ class MaterializeOpenCodeSourcesTest < Minitest::Test
       File.write(audit, JSON.pretty_generate({
         "schema" => "opencode-source-acquisition/v1",
         "package" => "opencode",
-        "release" => "1.18.5",
+         "release" => "1.18.8",
         "selected_lock_receipt_sha256" => "a" * 64,
         "sources" => records,
         "validation" => {
@@ -37,8 +37,8 @@ class MaterializeOpenCodeSourcesTest < Minitest::Test
         receipt_path: File.join(temporary, "receipt.json"),
         workdir: File.join(temporary, "work"),
         expected_filenames: {
-          "production_build" => "opencode-1.18.5-nm-prod-build.tar.zst",
-          "test" => "opencode-1.18.5-nm-dev-test.tar.zst"
+           "production_build" => "opencode-1.18.8-nm-prod-build.tar.zst",
+           "test" => "opencode-1.18.8-nm-dev-test.tar.zst"
         },
         check: false
       }

@@ -1,13 +1,13 @@
 schema: opencode-native-review/v1
-release: 1.18.5
+release: 1.18.8
 checked: "2026-07-26"
 receipts:
   selected_lock_audit:
-    path: opencode-1.18.5-selected-lock-audit.json
-    sha256: e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8
+    path: opencode-1.18.8-selected-lock-audit.json
+    sha256: 358aee997de614d3950b929a9c7b33c1aa03ce6e0542d178d6f52edca214e097
   source_audit:
-    path: opencode-1.18.5-source-audit.json
-    sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
+    path: opencode-1.18.8-source-audit.json
+    sha256: de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f
 scope:
   feature_surface: terminal_cli_without_embedded_web_ui
   target: linux-x86_64-glibc
@@ -247,10 +247,10 @@ components:
         npm_git_package_json_sha256: df55f9b3f2559b66321021f8566b88d940b6ea300072dbb07898f0f957fa1ab9
         npm_git_terminal_ts_sha256: 0c6cdf358568816ec96aef9b320239ef6f9552e9298f8609f0c94cfb12ad51f9
         npm_git_wrapper_byte_identical: true
-        cargo_vendor_archive: opencode-1.18.5-bun-pty-cargo-vendor.tar.zst
+        cargo_vendor_archive: opencode-1.18.8-bun-pty-cargo-vendor.tar.zst
         cargo_vendor_sha256: 5c22d4bd79109a3460f3a3d3840d2541da9a6c4c91513c39065a1f4611b7ec5e
         cargo_vendor_crates: 43
-        cargo_vendor_manifest: opencode-1.18.5-bun-pty-cargo-vendor.txt
+        cargo_vendor_manifest: opencode-1.18.8-bun-pty-cargo-vendor.txt
         cargo_vendor_manifest_sha256: d57a66c2a1e90516e0b103b3074001f96cefcb4adb4ecc8c3a5532a2c884e500
         cargo_vendor_archive_reproducible: true
         cargo_vendor_command: cargo vendor --locked --versioned-dirs
@@ -485,10 +485,10 @@ components:
         source_package_version: "0.3.3"
         source_commit: 685f5b155b36c5611c08ca678bb78ddbab3edbac
         cargo_lock_sha256: aa3e9c86b0380b8cd5cb768985f7e270aab01a5b35c24cbfa8533fa74343318f
-        cargo_vendor_archive: opencode-1.18.5-photon-cargo-vendor.tar.zst
+        cargo_vendor_archive: opencode-1.18.8-photon-cargo-vendor.tar.zst
         cargo_vendor_sha256: d0199923d17ae664abecc7f9e8edab1e25f42467ac33c616079e72e14072f00a
         cargo_vendor_crates: 138
-        cargo_vendor_manifest: opencode-1.18.5-photon-cargo-vendor.txt
+        cargo_vendor_manifest: opencode-1.18.8-photon-cargo-vendor.txt
         cargo_vendor_manifest_sha256: f2eb6e04b6ef90b192bbbac4f7555c3cfb7803391a04256f48c09f111cf82159
         cargo_vendor_source_date_epoch: 1746901403
         wasm_bindgen_cli:
@@ -498,10 +498,10 @@ components:
           source_sha256: 9380d84c4d0563c54a8177ad3fe14b12f673beb699e50c01fb4703fca68c7cd4
           source_commit: 3a8da7cb8842d4cb9918871179b6b7d3c77df5a0
           cargo_lock_sha256: ac1c77d9c5db87f99edf1373891e5d937819578f493e81b3de095434dcb0534e
-          cargo_vendor_archive: opencode-1.18.5-wasm-bindgen-cli-cargo-vendor.tar.zst
+          cargo_vendor_archive: opencode-1.18.8-wasm-bindgen-cli-cargo-vendor.tar.zst
           cargo_vendor_sha256: 338fa52c864c963db1d283a6082203029418541d1b3ff10bef38a3356c85c2f3
           cargo_vendor_crates: 185
-          cargo_vendor_manifest: opencode-1.18.5-wasm-bindgen-cli-cargo-vendor.txt
+          cargo_vendor_manifest: opencode-1.18.8-wasm-bindgen-cli-cargo-vendor.txt
           cargo_vendor_manifest_sha256: d274e859ec2dd094ad7fa8090e3b66852323c9e8eb2c5d8de84093ff038956be
           cargo_vendor_source_date_epoch: 1728598471
         historical_correspondence_proof:
@@ -516,11 +516,11 @@ components:
           rustc: 1.97.1
           rust_std_target: rust-std-static-wasm32-unknown-unknown-1.97.1
           cargo_profile: release
-          path_remap: "--remap-path-prefix=$PWD=/usr/src/debug/opencode-1.18.5/.photon-source"
+          path_remap: "--remap-path-prefix=$PWD=/usr/src/debug/opencode-1.18.8/.photon-source"
           wasm_bindgen_cli_built_from_source: true
-          raw_output_sha256: d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d
-          raw_output_bytes: 2541956
-          local_output_sha256: be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783
+          raw_output_sha256: 8408d5559283e8d78147de07c2b6c89423a5ca24c9e90ed6c3672b5132b082eb
+          raw_output_bytes: 2541959
+          local_output_sha256: a7b94ff8edff710e528a82855bb51a0abac63ff49f44e0afebcc816d92b4bbb0
           output_bytes: 1861027
           generated_javascript_sha256: 902925782b9728db0ab7a868f8a5268d7def877525dc6c256ab71c9a88eb4a28
           generated_declarations_sha256: fdb8f94706efcc46aa0381b7e1eb12c7967c3dce46d3a8bb21c578d36e22cf55

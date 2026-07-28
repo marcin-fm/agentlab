@@ -1,8 +1,14 @@
 # OpenCode Packaging Status
 
-OpenCode `1.18.5` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.5`; a local network-isolated Fedora 44 x86_64 build, exact compiler-input map, generated bundled Provides, complete functional-WASM source mappings, and a fail-closed final-license preflight now pass. Final aggregate licensing, clean Mock/COPR results, and target-matrix verification remain unverified.
+## Current 1.18.8 Evidence
 
-The 829 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the selected set has 1,018 runtime packages, one build-only Prettier package, and no test-only packages. Configured-SCM preparation regenerates those bundles plus the exact bun-pty, Photon, and wasm-bindgen CLI Cargo vendor archives. Offline dependency-tree assembly and the local application build are verified.
+OpenCode `1.18.8` is not enabled for COPR. The released GitHub tag is valid source, but the project builds with Bun and has a large CLI source closure that is not present in the release archive. Fedora's Node.js application guidance permits this private application closure to remain bundled; it does not require one RPM per ordinary npm dependency. The current selected-lock and source-acquisition audits cover `1.18.8`; the exact compiler-input map, generated bundled Provides, complete functional-WASM source mappings, and fail-closed final-license preflight now pass. Final aggregate licensing, clean Mock/COPR results, and target-matrix verification remain unverified.
+
+The 745 integrity-checked registry archives now reproduce deterministic production/build and test-capable raw-source bundles. Both contain the same members because the selected set has 921 runtime packages and one build-only Prettier package. Configured-SCM preparation regenerates those bundles plus the exact bun-pty, Photon, and wasm-bindgen CLI Cargo vendor archives. Offline dependency-tree assembly and compiler-input mapping are verified.
+
+A network-isolated standalone build reports `1.18.8` and produces the checked 492-identity compiler map. The later full local rpmbuild was interrupted during Binaryen compilation and produced no source or binary RPM. Current configured-SCM source delivery, clean buildroot availability, RPM payload validation, and COPR proof therefore remain false.
+
+## Historical 1.18.5 Evidence
 
 The first complete repository-backed source job produces `opencode-1.18.5-0.9.fc44.src.rpm`, SHA-256 `476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992`, with all 38 declared source members and valid RPM digests. This proves source delivery only; no OpenCode binary was built or installed.
 
@@ -33,7 +39,7 @@ The root lock contains 37 workspace records and 3,221 package records. Those
 are lockfile-wide inventory counts, not the standalone Linux binary closure
 and not valid `bundled(nodejs-...)` input.
 
-## Selected Lock Audit
+### Selected Lock Audit
 
 `scripts/audit-opencode-lock-closure` now performs a source-only traversal of
 the released Bun lock for the Linux x86_64 glibc terminal CLI. The selected
@@ -65,7 +71,7 @@ twice byte-identically from the exact source plus `zod 3.24.2` and injects the
 JSON through the supported override. The `0.12` compiler map verifies that exact
 snapshot as a supplemental standalone input.
 
-## Source Acquisition Audit
+### Source Acquisition Audit
 
 `scripts/acquire-opencode-sources` deduplicates the selected package paths to
 829 unique npm registry sources. Every archive passed its released SHA-512
@@ -112,7 +118,7 @@ bundled fallback executables in `clipboardy` and compiled artifacts in
 closure is usable. The excluded embedded-web build path also removes the
 FSL-licensed Sentry CLI from the selected source closure.
 
-## Native And WASM Review
+### Native And WASM Review
 
 [`native-review.yml`](native-review.yml) classifies all 14 unique source
 identities that contain the 22 native and 14 WASM payloads. It records exact npm

@@ -12,7 +12,7 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
 
   def paths
     {
-      binary_embedding_path: File.join(OPENCODE, "opencode-1.18.5-binary-embedding.json"),
+       binary_embedding_path: File.join(OPENCODE, "opencode-1.18.8-binary-embedding.json"),
       source_license_set_path: File.join(OPENCODE, "source-license-set-proof.json"),
       license_review_path: File.join(OPENCODE, "license-review.yml"),
       native_review_path: File.join(OPENCODE, "native-review.yml"),
@@ -45,13 +45,13 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
       **inputs,
       input_records: records,
       auditor_record: OpenCodeFinalLicenseAudit.repo_record(File.join(ROOT, "scripts", "audit-opencode-final-licenses")),
-      audit_date: "2026-07-27"
+       audit_date: "2026-07-28"
     )
   end
 
   def test_checked_receipt_matches_live_inputs_without_legal_overclaim
-    actual = OpenCodeFinalLicenseAudit.generate(**paths, audit_date: "2026-07-27")
-    checked = JSON.parse(File.read(File.join(OPENCODE, "opencode-1.18.5-final-license-closure.json")))
+     actual = OpenCodeFinalLicenseAudit.generate(**paths, audit_date: "2026-07-28")
+     checked = JSON.parse(File.read(File.join(OPENCODE, "opencode-1.18.8-final-license-closure.json")))
 
     assert_equal(checked, actual)
     assert_equal(3, actual.dig("unresolved", "opencode_notice_holds").length)

@@ -1,6 +1,6 @@
-target_release: 1.18.5
+target_release: 1.18.8
 closure_audit:
-  audited_release: 1.18.5
+  audited_release: 1.18.8
   production_build_sources_verified: true
   test_sources_verified: true
   licenses_verified: false
@@ -16,12 +16,12 @@ historical_audit:
   licenses_resolved: 807
   licenses_missing: 2
 current_lock_snapshot:
-  release: 1.18.5
+  release: 1.18.8
   bun: 1.3.14
   workspace_records: 37
-  package_records: 3221
+  package_records: 3196
   selected_production_closure: true
-  note: Lockfile-wide counts include unrelated inputs; the normalized Bun compiler graph proves 531 embedded package paths across 491 public name/version identities, while final aggregate licensing remains unverified.
+  note: Lockfile-wide counts include unrelated inputs; the normalized Bun compiler graph proves 532 embedded package paths across 492 public name/version identities, while final aggregate licensing remains unverified.
 rpm_subpackages: []
 closure_entry_schema:
   required:
@@ -96,26 +96,26 @@ selected_lock_audit:
     immutable_source_recorded: false
     supplied_to_audit: false
 selected_lock_receipt:
-  sha256: e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8
-  lock_sha256: 57cb1674b5cbc87cf320f2be703afa57aa2ef9989a77ccda8b83712ee09bd541
+  sha256: 358aee997de614d3950b929a9c7b33c1aa03ce6e0542d178d6f52edca214e097
+  lock_sha256: b5e84988481f131973e4884c7cd4506415aa20448fa87ca2e3b5854ff40bb47f
   selected_workspaces: 14
-  selected_packages: 1019
-  runtime_packages: 1018
+  selected_packages: 922
+  runtime_packages: 921
   build_packages: 1
-  registry_packages: 1019
+  registry_packages: 922
   github_packages: 0
   platform_excluded: 36
 source_acquisition_receipt:
-  sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
-  selected_lock_receipt_sha256: e89d4cee8dd4cd5145589679c2a0053352c53f44d5b8a72fdc26807e01e059f8
-  selected_package_records: 1019
-  unique_sources: 829
-  registry_sources: 829
+  sha256: de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f
+  selected_lock_receipt_sha256: 358aee997de614d3950b929a9c7b33c1aa03ce6e0542d178d6f52edca214e097
+  selected_package_records: 922
+  unique_sources: 745
+  registry_sources: 745
   github_sources: 0
   sources_without_declared_license: 3
-  sources_without_license_files: 28
-  sources_with_lifecycle_scripts: 73
-  lifecycle_script_count: 73
+  sources_without_license_files: 27
+  sources_with_lifecycle_scripts: 70
+  lifecycle_script_count: 70
   sources_with_native_payloads: 8
   native_payload_count: 22
   sources_with_wasm_payloads: 7
@@ -125,27 +125,27 @@ source_acquisition_receipt:
   sources_with_native_source: 7
 source_materialization_receipt:
   schema: opencode-source-materialization/v1
-  sha256: 518e0b781a8e1ed5a1683fcf7095be1b22360e8d6a7ef101a131d64cbdc13719
-  source_audit_sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
+  sha256: d09d6bd17c43f232ec1d7842cbd8731b7e2b0e1b2c42304579906d1fc8590326
+  source_audit_sha256: de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f
   production_build:
-    members: 829
-    input_bytes: 91392674
-    member_manifest_sha256: c6501b5f95f4384caf2d31a7ae91e4c02c970fd3ca0e268305bc1b4dc8570545
-    size_bytes: 91290378
-    sha256: 1086f1cb467c94c1becc92e13596ab4adac8be40e24d0a259f7713efedc70652
+    members: 745
+    input_bytes: 91288949
+    member_manifest_sha256: 971b7859da2359a5bdccb423ce0dac0e7bb3aa98b4e2600900939a036ea27dcc
+    size_bytes: 91226721
+    sha256: 218b6f0e2b85849d3902a3d1e13777c645eecb7a3021f4334203b1a033e8cea4
   test:
-    members: 829
-    input_bytes: 91392674
-    member_manifest_sha256: c6501b5f95f4384caf2d31a7ae91e4c02c970fd3ca0e268305bc1b4dc8570545
-    size_bytes: 91290824
-    sha256: 5dea7b5009479adfd8bb4075464af5895255c5f38d74a4c1ae91f22b52bf9667
+    members: 745
+    input_bytes: 91288949
+    member_manifest_sha256: 971b7859da2359a5bdccb423ce0dac0e7bb3aa98b4e2600900939a036ea27dcc
+    size_bytes: 91211164
+    sha256: 42198ce376f6d47ff711c3588d7d25f54c8f83bf856bd8ed0578bc6a9fd92a63
   deterministic_regeneration_verified: true
   rpm_integrated: false
 source_delivery_proof:
-  nvr: opencode-1.18.5-0.9.fc44
-  srpm_sha256: 476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992
-  source_members: 38
-  configured_scm_generation_verified: true
+  nvr: opencode-1.18.8-0.1.fc44
+  srpm_sha256:
+  source_members: 53
+  configured_scm_generation_verified: false
   npm_bundles_integrated: true
   bun_pty_vendor_integrated: true
   closure_evidence_integrated: true
@@ -168,10 +168,10 @@ photon_source_build_proof:
   wasm_bindgen_cli_vendor_manifest_sha256: d274e859ec2dd094ad7fa8090e3b66852323c9e8eb2c5d8de84093ff038956be
   wasm_bindgen_cli_vendor_crates: 185
   fedora_rust_version: 1.97.1
-  path_remap: "--remap-path-prefix=$PWD=/usr/src/debug/opencode-1.18.5/.photon-source"
-  raw_wasm_sha256: d4fd63da1fbfdb7d88f0800547efaba1a01173b59df080fc6b0383074da7418d
-  raw_wasm_size_bytes: 2541956
-  local_wasm_sha256: be53f0a699e3e5d9fd59b7108dc888fe95e4b85839c2e91c3af3a199e5a0e783
+  path_remap: "--remap-path-prefix=$PWD=/usr/src/debug/opencode-1.18.8/.photon-source"
+  raw_wasm_sha256: 8408d5559283e8d78147de07c2b6c89423a5ca24c9e90ed6c3672b5132b082eb
+  raw_wasm_size_bytes: 2541959
+  local_wasm_sha256: a7b94ff8edff710e528a82855bb51a0abac63ff49f44e0afebcc816d92b4bbb0
   local_wasm_size_bytes: 1861027
   local_rebuilds: 2
   path_distinct_rebuilds: true
@@ -183,11 +183,11 @@ photon_source_build_proof:
   clean_mock_verified: false
 node_modules_materialization_proof:
   schema: agentlab-opencode-node-modules-materialization/v2
-  receipt_sha256: 486c8dd7a77734062f59afe5813298abc9ceec6ddec6a3c6fed6ec7bb15ad7f8
-  source_closure_sha256: e70da6097331d8f7ce0dfd23b41f0f0ef45d95c474fc8629bfd4e10109aa8547
-  source_archives: 829
-  package_paths: 1019
-  target_path_set_sha256: f6f13913497b2845a9eb23c0c21af014cc50c3ae868f5c9766e208896a9af602
+  receipt_sha256: 6058d34f96ec0d7a30bdf8e9d0e62be97c0ff22623012d012c12f91c2daf0e98
+  source_closure_sha256: 4709c021bbdfcc8307c84cd8846787a7bc1fa00c29f4b6ebe484f51e2ba416be
+  source_archives: 745
+  package_paths: 922
+  target_path_set_sha256: a64ebaee3a18749f1bc257d63f7addfb81efeaeca571c498f34f1bb38e6b5082
   workspace_links: 14
   workspace_link_path_set_sha256: be5f3c1b7dd0208eebee69a97ddd9ed330c74c5affc45e88e56fcd2edff6a2b8
   archive_sizes_verified: true
@@ -202,26 +202,28 @@ node_modules_materialization_proof:
   lifecycle_scripts_executed: false
   package_build_performed: false
 binary_build_proof:
-  nvr: opencode-1.18.5-0.14.fc44
-  source_rpm_sha256: fe1e85046718ed02d52cc901361781591cf675d64a7b11657b880de49d7f689f
-  source_members: 55
-  binary_rpm_sha256: 42b9961f164eeda11aa6928ec3e56e65eff41721ae40962793de26c8d6869423
-  payload_sha256: df7d2f0f551cb64e36a0b9bc4f76d22bc49cec5d47cb64e4515dd68c9491ea39
-  payload_size_bytes: 126748416
+  nvr: opencode-1.18.8-0.1.fc44
+  source_rpm_sha256:
+  source_members: 53
+  binary_rpm_sha256:
+  payload_sha256:
+  payload_size_bytes:
   source_built_bun_version: 1.3.14
   source_built_bun_sha256: 4aab1b53a367f0ec3f4cd3c05c94cbc0f1f0721cbefbda3dd5389e1ec937e569
   lol_html_provider_sha256: 3b1f3a3a92c4af9e97630fb845a6a2d69fdedaa6c4034219fe6f75c1a2790d86
-  node_modules_receipt_sha256: 486c8dd7a77734062f59afe5813298abc9ceec6ddec6a3c6fed6ec7bb15ad7f8
-  materialized_package_paths: 1019
+  node_modules_receipt_sha256: 6058d34f96ec0d7a30bdf8e9d0e62be97c0ff22623012d012c12f91c2daf0e98
+  materialized_package_paths: 922
   materialized_workspace_links: 14
   network_isolated: true
-  build_passed: true
-  check_passed: true
-  binary_rpm_created: true
-  extracted_version: 1.18.5
-  rpmlint_errors: 0
-  rpmlint_warnings: 20
-  local_rpmbuild_only: true
+  standalone_build_passed: true
+  compiler_map_generated: true
+  build_passed: false
+  check_passed: false
+  binary_rpm_created: false
+  standalone_version: 1.18.8
+  rpmlint_errors:
+  rpmlint_warnings:
+  local_proof_only: true
   clean_mock_verified: false
   fedora_43_44_verified: false
   final_license_verified: false
@@ -229,16 +231,16 @@ binary_build_proof:
   copr_submitted: false
 binary_embedding_proof:
   schema: agentlab-opencode-binary-embedding/v1
-  receipt_sha256: 496be59e95b845de847bced424c0e48a340969568eacea7f01fa0b12ae2a0f14
-  metafile_input_records: 4038
-  positive_input_records: 3895
-  zero_contribution_input_records: 143
-  metafile_output_records: 324
-  metafile_input_path_set_sha256: 33fae5a36023aa788df23ebcc86bcab7caee5d7ffb2326fede5ad2a308199e91
-  positive_input_path_set_sha256: 87e4f2cd404a478215dfeccf5e0f26381c3071db7db4ad6d996ee4ab68f55895
-  embedded_package_paths: 531
-  embedded_unique_registry_sources: 491
-  embedded_public_name_versions: 491
+  receipt_sha256: b04eb9b2c13eff831d49786f6615480573f52a18b9f6e1880338bb9090431451
+  metafile_input_records: 4062
+  positive_input_records: 3954
+  zero_contribution_input_records: 108
+  metafile_output_records: 325
+  metafile_input_path_set_sha256: 82ba95e63dfbcf8dd9541e0ef0b187b79ef6019abb5a9a6fbfaa50fb1f260d19
+  positive_input_path_set_sha256: 3e044084b1bce270b469dbb6a7b47fa765ea6f7bd5a36a4b0b4c245ad3d01fcd
+  embedded_package_paths: 532
+  embedded_unique_registry_sources: 492
+  embedded_public_name_versions: 492
   embedded_workspace_paths: 12
   resolved_license_text_gaps: 10
   included_license_text_gaps: 3
@@ -250,18 +252,18 @@ binary_embedding_proof:
 final_license_preflight:
   schema: agentlab-opencode-final-license-closure/v1
   audit_date: "2026-07-28"
-  receipt_sha256: 017d2fe95697746f357645155c83e3e258eb1bd63ad80380565d964f53ffb40b
-  auditor_sha256: 8e8f8033df0e0770263112fa0a8feb563a67f0cf3c05a7b009ad28d3508d9c9f
+  receipt_sha256: 0bbd4941e700d0e94833c8c6174e01fd624b8e3834dedcf805e6c511332e60dc
+  auditor_sha256: 7819935eba043fb30ff261ced64b7bf5b60c01021f881eedd632cbc61bdfdc20
   bun_final_linked_license_sha256: b2236a6aefbc898f1e3f32ae3db56aa498c4e8e8f82f98f59149643629f9f1db
   opencode_notice_holds: 3
   bun_webkit_headerless_holds: 6
   native_wasm_source_mappings_verified: 14
   final_aggregate_license_expression_verified: false
   rpm_license_payload_complete: false
-  source_rpm_nvr: opencode-1.18.5-0.21.fc44
-  source_rpm_sha256: fbafdd959e1328aa1b485db2c75dbd2a75fd16d7a46a77c919c1151b7d4b069a
-  source_members: 57
-  configured_scm_generation_verified: true
+  source_rpm_nvr: opencode-1.18.8-0.1.fc44
+  source_rpm_sha256:
+  source_members: 53
+  configured_scm_generation_verified: false
   binary_build_performed: false
   rpm_installed: false
   copr_submitted: false
@@ -273,7 +275,7 @@ source_acquisition_findings:
   license_review:
     path: license-review.yml
     absent_declarations_resolved: 3
-    package_local_text_gaps_classified: 28
+    package_local_text_gaps_classified: 27
     embedded_package_local_text_resolutions: 10
     embedded_package_local_text_holds: 3
     final_payload_license_set_verified: false
@@ -300,10 +302,10 @@ source_acquisition_findings:
     - tree-sitter-bash@0.25.0
     - tree-sitter-powershell@0.25.10
   lifecycle_script_review:
-    source_audit_sha256: 59f91dcb3be45a1b3b95a1428dd7a9ef656548e0acacd4e74b7e4ccd65b734f5
+    source_audit_sha256: de95183b0aa75516cc7ed668140d33997ebaf0340fab55f8e52d308bdae4d94f
     reviewed: true
-    selected_sources: 73
-    counts: { prepare: 68, install: 4, postinstall: 1 }
+    selected_sources: 70
+    counts: { prepare: 65, install: 4, postinstall: 1 }
     dependency_reconstruction:
       method: extract_reviewed_registry_archives
       lifecycle_scripts_executed: false
@@ -357,22 +359,22 @@ source_acquisition_findings:
     - undici@5.29.0
     - web-tree-sitter@0.25.10
 source_closure_files:
-  production_build_archive: opencode-1.18.5-nm-prod-build.tar.zst
-  test_archive: opencode-1.18.5-nm-dev-test.tar.zst
-  closure_manifest: opencode-1.18.5-closure.json
-  bundled_provides_manifest: opencode-1.18.5-binary-embedding.json
-  final_license_closure: opencode-1.18.5-final-license-closure.json
-  bundled_licenses: opencode-1.18.5-bundled-licenses.txt
-  native_manifest: opencode-1.18.5-native.json
-  photon_cargo_vendor_manifest: opencode-1.18.5-photon-cargo-vendor.txt
-  wasm_bindgen_cli_cargo_vendor_manifest: opencode-1.18.5-wasm-bindgen-cli-cargo-vendor.txt
-  selected_lock_audit: opencode-1.18.5-selected-lock-audit.json
-  source_audit: opencode-1.18.5-source-audit.json
+  production_build_archive: opencode-1.18.8-nm-prod-build.tar.zst
+  test_archive: opencode-1.18.8-nm-dev-test.tar.zst
+  closure_manifest: opencode-1.18.8-closure.json
+  bundled_provides_manifest: opencode-1.18.8-binary-embedding.json
+  final_license_closure: opencode-1.18.8-final-license-closure.json
+  bundled_licenses: opencode-1.18.8-bundled-licenses.txt
+  native_manifest: opencode-1.18.8-native.json
+  photon_cargo_vendor_manifest: opencode-1.18.8-photon-cargo-vendor.txt
+  wasm_bindgen_cli_cargo_vendor_manifest: opencode-1.18.8-wasm-bindgen-cli-cargo-vendor.txt
+  selected_lock_audit: opencode-1.18.8-selected-lock-audit.json
+  source_audit: opencode-1.18.8-source-audit.json
   license_review: license-review.yml
   native_review: native-review.yml
   models_snapshot_proof: models-snapshot-proof.json
   source_license_set_proof: source-license-set-proof.json
-  source_materialization: opencode-1.18.5-source-materialization.json
+  source_materialization: opencode-1.18.8-source-materialization.json
 gates:
   - Recompute the complete closure and all counts for target_release before enabling.
   - Parse the tagged release bun.lock without resolving new versions.
