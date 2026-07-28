@@ -1067,6 +1067,8 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "%cargo_vendor_manifest")
     assert_includes(spec, "%cargo_build_crate")
     assert_includes(spec, "BuildRequires:  zstd")
+    assert_includes(spec, "BuildRequires:  ruby")
+    assert_includes(spec, "ruby .agentlab-source/audit-agent-browser-cargo-closure")
     assert_includes(spec, "agent-browser proof intentionally fails after compile/tests")
     assert_includes(spec, "--verify --vendor-dir cli/cargo-vendor --receipt %{SOURCE2}")
     assert_includes(spec, "%{_libexecdir}/agent-browser/bin/agent-browser")
