@@ -42,6 +42,7 @@ force = false
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prove-bun-first-source-build [options]"
+  parser.on("--closure PATH", "Checked target-specific source closure") { |path| closure_path = path }
   parser.on("--source-archive PATH", "Checked Bun release source archive") { |path| source_archive = path }
   parser.on("--seed-archive PATH", "Checked bootstrap-only Bun seed archive") { |path| seed_archive = path }
   parser.on("--source-cache PATH", "Checked native, Node, and npm source cache") { |path| source_cache = path }
@@ -71,6 +72,7 @@ output ||= self_rebuild ? File.join(package_dir, "self-rebuild-proof.json") : fi
 driver_receipt_path ||= first_receipt_path if self_rebuild
 
 source_archive = File.expand_path(source_archive)
+closure_path = File.expand_path(closure_path)
 seed_archive = File.expand_path(seed_archive)
 source_cache = File.expand_path(source_cache)
 npm_proof = File.expand_path(npm_proof)
@@ -86,7 +88,7 @@ workdir = File.expand_path(workdir)
 output = File.expand_path(output)
 
 raise Agentlab::Error, "proof workdir must be below /srv/tmp" unless workdir.start_with?("/srv/tmp/")
-[source_archive, seed_archive, source_cache, npm_proof, npm_receipt_path, zig_root, zig_receipt_path, webkit_archive, webkit_source_receipt_path, lolhtml_provider_root, self_rebuild_from, driver_receipt_path].compact.each do |path|
+[closure_path, source_archive, seed_archive, source_cache, npm_proof, npm_receipt_path, zig_root, zig_receipt_path, webkit_archive, webkit_source_receipt_path, lolhtml_provider_root, self_rebuild_from, driver_receipt_path].compact.each do |path|
   if force && (path == workdir || path.start_with?("#{workdir}/"))
     raise Agentlab::Error, "proof input must be outside the replaced workdir: #{path}"
   end
@@ -469,7 +471,7 @@ def replace_bun_install_rule!(ninja_path, build_driver, receipt_path)
   receipt
 end
 
-def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir, webkit_dir, zig_dir, build_driver, install_roots, native_sources, node_headers, driver_kind:, forbidden_patterns:)
+def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir, webkit_dir, zig_dir, build_driver, install_roots, native_sources, node_headers, target:, driver_kind:, forbidden_patterns:)
   raise Agentlab::Error, "missing generated Ninja graph #{ninja_path}" unless File.file?(ninja_path)
   raise Agentlab::Error, "missing configure record #{configure_path}" unless File.file?(configure_path)
   ninja = File.read(ninja_path)
@@ -500,13 +502,19 @@ def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir,
     raise Agentlab::Error, "build-driver command is not attached to a named Ninja rule" unless current_rule
     driver_rules << current_rule
   end
-  expected_driver_rules = %w[codegen dep_build dep_cargo dep_cargo_cross dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+  expected_driver_rules = %w[codegen dep_build dep_codegen dep_configure dep_fetch dep_fetch_prebuilt dep_prebuild dep_subst link regen smoke_test zig_build zig_check zig_fetch]
+  expected_driver_rules.concat(%w[dep_cargo dep_cargo_cross]) if target.fetch("cpu") == "x64"
   raise Agentlab::Error, "build-driver Ninja rule scope changed: #{driver_rules.sort.join(', ')}" unless driver_rules.sort == expected_driver_rules.sort
   raise Agentlab::Error, "build driver appears in a Ninja build edge" if logical_lines.any? { |line| line.start_with?("build ") && line.include?(build_driver) }
   forbidden_patterns.each do |pattern|
     raise Agentlab::Error, "generated graph contains forbidden bootstrap-seed identity #{pattern}" if ninja.include?(pattern) || File.read(configure_path).include?(pattern)
   end
   raise Agentlab::Error, "generated graph activates the cross-target rustup Cargo rule" if logical_lines.any? { |line| line.match?(/: dep_cargo_cross(?:\s|$)/) }
+  if target.fetch("cpu") == "arm64"
+    raise Agentlab::Error, "aarch64 graph unexpectedly defines a Cargo dependency rule" if ninja.match?(/^rule dep_cargo(?:_cross)?$/)
+    raise Agentlab::Error, "aarch64 graph does not select the native target" unless ninja.include?("-Dtarget=aarch64-linux-gnu")
+    raise Agentlab::Error, "aarch64 graph retains an x64 Zig target" if ninja.include?("-Dtarget=x86_64-linux-gnu")
+  end
   expected_stamps = install_roots.map { |root| stamp_path(build_dir, File.join(source_dir, root.fetch("path"))) }.sort
   unless expected_stamps.all? { |stamp| File.file?(stamp) }
     raise Agentlab::Error, "one or more prevalidated npm install stamps are missing"
@@ -560,7 +568,7 @@ def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir,
                    }
                  end
 
-  {
+  receipt = {
     "profile" => "release-local",
     "configure_json_sha256" => sha256(configure_path),
     "build_ninja_sha256" => sha256(ninja_path),
@@ -577,6 +585,8 @@ def inspect_graph!(ninja_path, configure_path, source_dir, build_dir, cache_dir,
     "system_lolhtml_provider_verified" => true,
     "unexpected_urls_absent" => true
   )
+  receipt["target"] = target if target.fetch("cpu") == "arm64"
+  receipt
 end
 
 def scan_seed_contamination!(roots, seed_path, seed_sha256, seed_size, workdir)
@@ -636,7 +646,31 @@ end
 
 metadata = package.data.fetch("build_plan")
 source_inputs = metadata.fetch("source_inputs")
-seed_metadata = source_inputs.fetch("bootstrap_seed")
+closure_bytes = File.binread(closure_path)
+closure_sha256 = Digest::SHA256.hexdigest(closure_bytes)
+closure = JSON.parse(closure_bytes)
+raise Agentlab::Error, "unsupported source-closure schema" unless closure["schema"] == "bun-release-local-source-closure/v3"
+raise Agentlab::Error, "source closure is not Bun #{version}" unless closure["package"] == "bun" && closure["release"] == version
+target = closure.fetch("target")
+unless target["os"] == "linux" && %w[x64 arm64].include?(target["cpu"]) && target["libc"] == "glibc"
+  raise Agentlab::Error, "unsupported source closure target"
+end
+arm64 = target.fetch("cpu") == "arm64"
+target_metadata = arm64 ? source_inputs.fetch("aarch64_preflight") : nil
+if arm64
+  raise Agentlab::Error, "source closure target does not match aarch64 preflight metadata" unless target == target_metadata.fetch("target")
+  if workdir == "/srv/tmp/agentlab-bun-first-source-build-proof" || output == first_receipt_path
+    raise Agentlab::Error, "aarch64 first-build proof requires explicit --workdir and --output paths"
+  end
+end
+expected_closure_sha256 = if arm64
+                            target_metadata.fetch("source_closure").fetch("sha256")
+                          else
+                            metadata.fetch("stages").fetch("dependency_closure").fetch("proof_receipt_sha256")
+                          end
+raise Agentlab::Error, "source-closure receipt checksum mismatch" unless closure_sha256 == expected_closure_sha256
+
+seed_metadata = arm64 ? target_metadata.fetch("bootstrap_seed") : source_inputs.fetch("bootstrap_seed")
 zig_metadata = source_inputs.fetch("zig")
 webkit_metadata = source_inputs.fetch("webkit")
 build_graph_metadata = source_inputs.fetch("build_graph")
@@ -654,15 +688,6 @@ webkit_archive_sha256 = webkit_source_receipt&.dig("archive", "sha256") || webki
 raise Agentlab::Error, "Bun seed is not bootstrap-only" unless seed_metadata.fetch("bootstrap_only") == true
 raise Agentlab::Error, "Bun seed is allowed in the final payload" unless seed_metadata.fetch("final_payload_allowed") == false
 raise Agentlab::Error, "Bun seed is allowed as a final runtime dependency" unless seed_metadata.fetch("final_runtime_dependency_allowed") == false
-
-closure_bytes = File.binread(closure_path)
-closure_sha256 = Digest::SHA256.hexdigest(closure_bytes)
-expected_closure_sha256 = metadata.fetch("stages").fetch("dependency_closure").fetch("proof_receipt_sha256")
-raise Agentlab::Error, "source-closure receipt checksum mismatch" unless closure_sha256 == expected_closure_sha256
-closure = JSON.parse(closure_bytes)
-raise Agentlab::Error, "unsupported source-closure schema" unless closure["schema"] == "bun-release-local-source-closure/v3"
-raise Agentlab::Error, "source closure is not Bun #{version}" unless closure["package"] == "bun" && closure["release"] == version
-raise Agentlab::Error, "source closure target changed" unless closure["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
 lolhtml_exclusion = closure.dig("selection", "excluded")&.find { |record| record["name"] == "lolhtml" }
 unless lolhtml_exclusion == {
   "symbol" => "lolhtml",
@@ -686,13 +711,42 @@ end
 npm_receipt_bytes = File.binread(npm_receipt_path)
 npm_receipt_sha256 = Digest::SHA256.hexdigest(npm_receipt_bytes)
 npm_receipt = JSON.parse(npm_receipt_bytes)
+expected_npm_receipt_sha256 = if self_rebuild
+                                nil
+                              elsif arm64
+                                target_metadata.fetch("npm_offline_install").fetch("receipt_sha256")
+                              else
+                                metadata.fetch("stages").fetch("dependency_closure").fetch("historical_lolhtml_graph").fetch("npm_install_proof_receipt_sha256")
+                              end
+if expected_npm_receipt_sha256 && npm_receipt_sha256 != expected_npm_receipt_sha256
+  raise Agentlab::Error, "npm install proof receipt checksum mismatch"
+end
+npm_root_lock = npm_receipt.fetch("source_closure").fetch("root_lock")
+npm_lock_metadata = source_inputs.fetch("npm_lock")
+unless npm_root_lock.fetch("fedora_patch") == npm_lock_metadata.fetch("patch") &&
+       npm_root_lock.fetch("fedora_patch_sha256") == npm_lock_metadata.fetch("patch_sha256")
+  raise Agentlab::Error, "npm install proof does not match the Fedora glibc lock patch"
+end
+lock_patches = [npm_lock_metadata.slice("patch", "patch_sha256")]
+if arm64
+  arm64_lock_patch = {
+    "patch" => npm_root_lock.fetch("fedora_arm64_patch"),
+    "patch_sha256" => npm_root_lock.fetch("fedora_arm64_patch_sha256")
+  }
+  raise Agentlab::Error, "aarch64 npm install proof retains the x64 lock hash" if npm_root_lock.fetch("patched_sha256") == npm_lock_metadata.fetch("patched_lock_sha256")
+  lock_patches << arm64_lock_patch
+elsif npm_root_lock.key?("fedora_arm64_patch") || npm_root_lock.key?("fedora_arm64_patch_sha256")
+  raise Agentlab::Error, "x64 npm install proof unexpectedly contains an aarch64 lock patch"
+end
+expected_patched_lock_sha256 = npm_root_lock.fetch("patched_sha256")
+expected_npm_cache_tree_sha256 = arm64 ? target_metadata.fetch("npm_offline_install").fetch("cache_tree_sha256") : metadata.dig("source_inputs", "release_local_staging", "npm_cache_tree_sha256")
 common_npm_proof_valid = npm_receipt["package"] == "bun" && npm_receipt["release"] == version &&
-                         npm_receipt["target"] == closure["target"] &&
-                         npm_receipt.dig("source_closure", "bun_source_archive_sha256") == closure.dig("source_tree", "source_sha256") &&
-                         npm_receipt.dig("source_closure", "root_lock", "patched_sha256") == source_inputs.fetch("npm_lock").fetch("patched_lock_sha256") &&
-                         npm_receipt.dig("cache", "source_archives") == closure.dig("npm", "summary", "unique_sources") &&
-                         npm_receipt.dig("cache", "tree", "sha256") == metadata.dig("source_inputs", "release_local_staging", "npm_cache_tree_sha256") &&
-                         npm_receipt.dig("validation", "npm_offline_install_verified") == true
+                          npm_receipt["target"] == closure["target"] &&
+                          npm_receipt.dig("source_closure", "bun_source_archive_sha256") == closure.dig("source_tree", "source_sha256") &&
+                          npm_receipt.dig("source_closure", "root_lock", "patched_sha256") == expected_patched_lock_sha256 &&
+                          npm_receipt.dig("cache", "source_archives") == closure.dig("npm", "summary", "unique_sources") &&
+                          npm_receipt.dig("cache", "tree", "sha256") == expected_npm_cache_tree_sha256 &&
+                          npm_receipt.dig("validation", "npm_offline_install_verified") == true
 if self_rebuild
   raise Agentlab::Error, "source-built npm proof requires a driver receipt" unless File.file?(driver_receipt_path)
 
@@ -715,9 +769,7 @@ if self_rebuild
   end
   npm_proof_mode = "source_built"
 else
-  expected_npm_receipt_sha256 = metadata.fetch("stages").fetch("dependency_closure").fetch("historical_lolhtml_graph").fetch("npm_install_proof_receipt_sha256")
-  unless npm_receipt_sha256 == expected_npm_receipt_sha256 && common_npm_proof_valid &&
-         npm_receipt["schema"] == "bun-npm-offline-install-proof/v1"
+  unless common_npm_proof_valid && npm_receipt["schema"] == "bun-npm-offline-install-proof/v1"
     raise Agentlab::Error, "historical npm install proof does not match the current Bun source/cache inputs"
   end
   npm_proof_mode = "historical_seed"
@@ -725,6 +777,16 @@ end
 
 zig_canonical_receipt = JSON.parse(File.read(zig_canonical_receipt_path))
 zig_receipt = JSON.parse(File.read(zig_receipt_path))
+if arm64
+  arm64_zig_metadata = target_metadata.fetch("zig_source_bootstrap")
+  unless Digest::SHA256.hexdigest(File.binread(zig_receipt_path)) == arm64_zig_metadata.fetch("receipt_sha256") &&
+         zig_receipt.fetch("proof_platform") == "fedora-44-aarch64" &&
+         zig_receipt.dig("output", "executable_sha256") == arm64_zig_metadata.dig("output", "executable_sha256") &&
+         zig_receipt.dig("emulation", "qemu_user") == true &&
+         zig_receipt.dig("emulation", "guest_stack_size_bytes") == target_metadata.dig("mock", "qemu_proof_guest_stack_size_bytes")
+    raise Agentlab::Error, "supplied Zig proof does not match the aarch64 preflight"
+  end
+end
 unless zig_receipt.fetch("package_release") == "bun-v#{version}" &&
        zig_receipt.dig("source", "commit") == zig_metadata.fetch("commit") &&
        zig_receipt.dig("source", "sha256") == zig_metadata.fetch("sha256") &&
@@ -829,8 +891,8 @@ seed_identity_path = if self_rebuild
                       end
 webkit_patch = File.join(package_dir, webkit_metadata.fetch("patch"))
 verify_file!(webkit_patch, webkit_metadata.fetch("patch_sha256"), "WebKit patch")
+webkit_expected_root = "WebKit-#{webkit_metadata.fetch('commit')}"
 prepare_webkit = lambda do
-  webkit_expected_root = "WebKit-#{webkit_metadata.fetch('commit')}"
   if webkit_source_receipt
     Agentlab::BunWebKitSource.extract_verified_tree!(
       archive_path: webkit_archive,
@@ -843,6 +905,23 @@ prepare_webkit = lambda do
   run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
   run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: webkit_root)
 end
+verify_prepared_webkit = lambda do
+  validation_parent = File.join(workdir, "resume-webkit-validation")
+  validation_root = File.join(validation_parent, webkit_expected_root)
+  FileUtils.rm_rf(validation_parent)
+  Agentlab::BunWebKitSource.extract_verified_tree!(
+    archive_path: webkit_archive,
+    staging: validation_parent,
+    receipt: webkit_source_receipt
+  )
+  run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: validation_root)
+  run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", webkit_patch], chdir: validation_root)
+  expected = Agentlab::BunWebKitSource.tree_manifest(validation_parent, webkit_expected_root)
+  actual = Agentlab::BunWebKitSource.tree_manifest(webkit_parent, webkit_expected_root)
+  raise Agentlab::Error, "prepared WebKit source differs from the checked patched tree" unless actual == expected
+ensure
+  FileUtils.rm_rf(validation_parent) if validation_parent
+end
 
 unless resume
   proof_directories = [build_dir, cache_dir, prefetch_dir, home_dir, tmp_dir]
@@ -852,7 +931,7 @@ unless resume
   unless self_rebuild
     zip_entries = capture!({}, ["unzip", "-Z1", seed_archive], chdir: workdir).lines.map(&:strip).reject(&:empty?)
     zip_entries.each { |entry| raise Agentlab::Error, "unsafe seed ZIP entry #{entry}" unless safe_relative_path(entry) }
-    seed_member = "bun-linux-x64/bun"
+    seed_member = seed_metadata["member"] || "bun-linux-#{target.fetch('cpu')}/bun"
     raise Agentlab::Error, "seed archive lacks #{seed_member}" unless zip_entries.include?(seed_member)
     extract_zip_member!(seed_archive, seed_member, seed_binary, workdir)
     File.chmod(0o755, seed_binary)
@@ -868,12 +947,16 @@ unless resume
   source_files.each { |relative, expected| verify_file!(File.join(source_dir, relative), expected, "Bun release file #{relative}") }
 
   lolhtml_patch = File.join(package_dir, source_inputs.fetch("lolhtml").fetch("patch"))
-  lock_patch = File.join(package_dir, source_inputs.fetch("npm_lock").fetch("patch"))
-  [lolhtml_patch, lock_patch, zig_cwd_patch, cxx_runtime_patch].each do |patch|
+  lock_patch_paths = lock_patches.map do |record|
+    path = File.join(package_dir, record.fetch("patch"))
+    verify_file!(path, record.fetch("patch_sha256"), "Bun target lock patch")
+    path
+  end
+  [lolhtml_patch, *lock_patch_paths, zig_cwd_patch, cxx_runtime_patch].each do |patch|
     run!({}, ["patch", "--dry-run", "--fuzz=0", "--batch", "-p1", "-i", patch], chdir: source_dir)
     run!({}, ["patch", "--fuzz=0", "--batch", "-p1", "-i", patch], chdir: source_dir)
   end
-  verify_file!(File.join(source_dir, "bun.lock"), source_inputs.fetch("npm_lock").fetch("patched_lock_sha256"), "patched Bun root lock")
+  verify_file!(File.join(source_dir, "bun.lock"), expected_patched_lock_sha256, "patched Bun root lock")
   verify_system_lolhtml_patch!(source_dir)
 
   prepare_webkit.call
@@ -925,7 +1008,7 @@ unless resume
   FileUtils.cp(node_archive, node_prefetch, preserve: true)
   verify_file!(node_prefetch, node_headers.fetch("sha256"), "prefetched Node headers archive")
 end
-prepare_webkit.call if resume && webkit_source_receipt
+verify_prepared_webkit.call if resume && webkit_source_receipt
 
 npm_install_roots = npm_receipt.dig("install", "install_roots")
 raise Agentlab::Error, "expected three npm install roots" unless npm_install_roots.length == 3
@@ -982,7 +1065,7 @@ raise Agentlab::Error, "resume tree lacks prepared Bun source" unless File.file?
   "package.json" => closure.dig("source_tree", "package_json_sha256"),
   "scripts/build/codegen.ts" => closure.dig("source_tree", "codegen_definition_sha256")
 }.each { |relative, expected| verify_file!(File.join(source_dir, relative), expected, "prepared Bun source file #{relative}") }
-verify_file!(File.join(source_dir, "bun.lock"), source_inputs.fetch("npm_lock").fetch("patched_lock_sha256"), "prepared patched Bun root lock")
+verify_file!(File.join(source_dir, "bun.lock"), expected_patched_lock_sha256, "prepared patched Bun root lock")
 verify_system_lolhtml_patch!(source_dir)
 zig_build_source = File.join(source_dir, "scripts", "build", "zig.ts")
 unless File.read(zig_build_source).include?('const cwd = `--cwd=${q(cfg.cwd)}`;')
@@ -1057,6 +1140,7 @@ environment = {
   "XDG_CONFIG_HOME" => File.join(home_dir, ".config"),
   "XDG_DATA_HOME" => File.join(home_dir, ".local", "share")
 }
+environment["QEMU_STACK_SIZE"] = target_metadata.dig("mock", "qemu_proof_guest_stack_size_bytes").to_s if arm64
 
 ninja_path = File.join(build_dir, "build.ninja")
 configure_path = File.join(build_dir, "configure.json")
@@ -1120,6 +1204,7 @@ graph_receipt = inspect_graph!(
   npm_install_roots,
   closure.fetch("native_github_sources"),
   closure.fetch("node_headers"),
+  target: target,
   driver_kind: self_rebuild ? :source_built : :seed,
   forbidden_patterns: self_rebuild ? [seed_identity_path, "bun-seed", seed_metadata.fetch("binary_sha256")] : []
 )
@@ -1131,8 +1216,8 @@ end
 run!(environment, ["unshare", "--net", "--", "ninja", "-C", build_dir, *install_targets], chdir: source_dir, log: File.join(workdir, "install-bypass.log"))
 npm_install_roots.each do |root|
   stamp = stamp_path(build_dir, File.expand_path(root.fetch("path"), source_dir))
-  target = Pathname(stamp).relative_path_from(Pathname(build_dir)).to_s
-  dry_run = capture!(environment, ["ninja", "-C", build_dir, "-n", target], chdir: source_dir)
+  stamp_target = Pathname(stamp).relative_path_from(Pathname(build_dir)).to_s
+  dry_run = capture!(environment, ["ninja", "-C", build_dir, "-n", stamp_target], chdir: source_dir)
   raise Agentlab::Error, "prevalidated npm install stamp is still dirty: #{stamp}" unless dry_run.include?("no work to do")
 end
 
@@ -1215,6 +1300,7 @@ configure_receipt = {
   "jobs" => jobs,
   "source_build_performed" => false
 )
+configure_receipt["target"] = target if arm64
 Agentlab.atomic_write(File.join(workdir, "configure-proof.json"), JSON.pretty_generate(configure_receipt) + "\n")
 
 if configure_only
@@ -1450,6 +1536,7 @@ if self_rebuild
     },
     "scope" => "immediate network-isolated source-built Bun self-rebuild and explicit first-build comparison only; immutable hosting, complete LGPL relink materials, final license review, and RPM remain blocked"
   }
+  receipt["target"] = target if arm64
 else
   receipt = {
   "schema" => "bun-first-source-build-proof/v2",
@@ -1504,6 +1591,7 @@ else
   },
   "scope" => "first network-isolated seed-driven Bun source build only; immediate source-built self-rebuild, reproducibility, complete LGPL relink materials, immutable hosting, final license review, and RPM remain blocked"
   }
+  receipt["target"] = target if arm64
 end
 Agentlab.atomic_write(output, JSON.pretty_generate(receipt) + "\n")
 puts "Verified Bun #{version}'s #{self_rebuild ? 'network-isolated source-built self-rebuild' : 'first network-isolated seed-driven source build'}."

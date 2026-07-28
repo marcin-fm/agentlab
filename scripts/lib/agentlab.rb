@@ -2696,6 +2696,48 @@ module Agentlab
     errors << "bun: invalid dependency-closure proof receipt: #{e.message}"
   end
 
+  def validate_bun_multi_arch_source_delivery(package, staging, version, spec)
+    return [] unless package.name == "bun" && staging.is_a?(Hash)
+
+    errors = []
+    union = staging["npm_union"] || {}
+    expected_union = {
+      "filename" => "bun-#{version}-npm-sources.tar.gz",
+      "size_bytes" => 41_222_363,
+      "sha256" => "c8f251509523fe27a648e496df9d5a7ee564c07a8afc5d67c712489df2fee7b4",
+      "member_count" => 239,
+      "input_bytes" => 41_234_414,
+      "member_manifest_sha256" => "9af8edcbeb8a83527fc005c0a74c8c71a1147afcaa55e2c97ba04e26e15b74a2",
+      "receipt_sha256" => "51818335f99656fdf315ef8c454fae0119af2ab46d3d9e21e4900435ab031884",
+      "x64_selected_archives" => 236,
+      "arm64_selected_archives" => 236
+    }
+    errors << "bun: multi-architecture npm union metadata mismatch" unless union == expected_union
+
+    arm64 = package.data.dig("build_plan", "source_inputs", "aarch64_preflight", "source_closure") || {}
+    arm64_name = arm64["source"]
+    arm64_path = arm64_name.is_a?(String) && File.join(package.directory, arm64_name)
+    errors << "bun: arm64 source closure is missing or has wrong SHA-256" unless arm64_path && File.file?(arm64_path) && Digest::SHA256.file(arm64_path).hexdigest == "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a"
+
+    helper = staging["helper_source"]
+    helper_path = helper.is_a?(String) && File.join(package.directory, helper)
+    helper_sha256 = staging["helper_sha256"]
+    errors << "bun: release-local staging helper is missing or has wrong SHA-256" unless helper_path && File.file?(helper_path) && helper_sha256 == Digest::SHA256.file(helper_path).hexdigest
+
+    expected_sources = [
+      "Source22:       bun-%{version}-npm-sources.tar.gz",
+      "Source23:       bun-%{version}-release-local-source-closure.json",
+      "Source24:       bun-stage-release-local-sources",
+      "Source31:       bun-%{version}-release-local-source-closure-arm64.json",
+      "%global npm_sources_sha256 #{expected_union.fetch('sha256')}",
+      "%global source_staging_helper_sha256 #{helper_sha256}",
+      "%global arm64_release_local_closure_sha256 d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a",
+      "--closure \"%{SOURCE23}\""
+    ]
+    errors << "bun: spec does not declare the checked multi-architecture source delivery" unless expected_sources.all? { |fragment| spec.include?(fragment) }
+    errors
+  end
+
   def validate_bun_npm_offline_install(package, dependency_stage, version)
     return [] unless package.name == "bun" && dependency_stage.is_a?(Hash)
     return [] if dependency_stage["historical_only"] == true
@@ -2950,19 +2992,29 @@ module Agentlab
     expected_counts = {
       "direct_sources" => 22,
       "generated_sources" => 1,
-      "packaging_sources" => 8,
-      "declared_sources" => 31,
+      "packaging_sources" => 9,
+      "declared_sources" => 32,
       "patches" => spec.scan(/^Patch\d+:\s+/).length
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
-    errors << "bun: source-delivery closure count mismatch" unless generation["canonical_closure_inputs"] == 255
-    errors << "bun: source-delivery closure SHA-256 mismatch" unless generation["canonical_closure_sha256"] == dependency_stage["proof_receipt_sha256"]
-    expected_npm = {
-      "filename" => dependency_stage["npm_source_archive_filename"],
-      "size_bytes" => dependency_stage["npm_source_archive_bytes"],
-      "sha256" => dependency_stage["npm_source_archive_sha256"]
-    }
-    errors << "bun: source-delivery npm archive mismatch" unless generation["npm_archive"] == expected_npm
+    expected_closures = [
+      {
+        "filename" => dependency_stage["proof_receipt"],
+        "sha256" => dependency_stage["proof_receipt_sha256"],
+        "target" => { "os" => "linux", "cpu" => "x64", "libc" => "glibc" },
+        "input_count" => 255
+      },
+      {
+        "filename" => "bun-#{version}-release-local-source-closure-arm64.json",
+        "sha256" => "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a",
+        "target" => { "os" => "linux", "cpu" => "arm64", "libc" => "glibc" },
+        "input_count" => 255
+      }
+    ]
+    errors << "bun: source-delivery closure records mismatch" unless generation["source_closures"] == expected_closures
+    errors << "bun: source-delivery unique closure input count mismatch" unless generation["unique_closure_inputs"] == 258
+    staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
+    errors << "bun: source-delivery npm union mismatch" unless generation["npm_union"] == staging["npm_union"]
     errors << "bun: source-delivery proof retains a Cargo archive" if generation.key?("cargo_archive")
     errors << "bun: source-delivery proof retains retired lol-html inputs" unless generation["retired_lolhtml_inputs_absent"] == true
     license_inventory = package.data.dig("build_plan", "source_inputs", "source_license_inventory") || {}
@@ -3018,8 +3070,8 @@ module Agentlab
 
     required_validation = %w[
       direct_source_checksums_verified
-      canonical_closure_regenerated_verified
-      canonical_closure_byte_identity_verified
+      source_closures_regenerated_byte_identically
+      npm_union_deterministic
       generated_source_checksums_verified
       packaging_source_checksums_verified
       deterministic_materialization_verified
@@ -3033,8 +3085,8 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source30 layout" unless source_indexes == (0..30).to_a
-    npm_spec_filename = expected_npm["filename"].sub(version, "%{version}")
+    errors << "bun: spec does not declare the complete Source0-Source31 layout" unless source_indexes == (0..31).to_a
+    npm_spec_filename = staging.dig("npm_union", "filename").to_s.sub(version, "%{version}")
     errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source22:\s+#{Regexp.escape(npm_spec_filename)}$/)
     staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
     errors << "bun: spec closure source filename mismatch" unless spec.match?(/^Source23:\s+#{Regexp.escape(staging["closure_source"].to_s.gsub(version, "%{version}"))}$/)
@@ -3045,6 +3097,7 @@ module Agentlab
     errors << "bun: spec final linked-license audit script mismatch" unless spec.match?(/^Source28:\s+#{Regexp.escape(final_license["audit_script_source"].to_s)}$/)
     errors << "bun: spec npm code-generation closure filename mismatch" unless spec.match?(/^Source29:\s+#{Regexp.escape(npm_codegen["source"].to_s.gsub(version, "%{version}"))}$/)
     errors << "bun: spec npm code-generation audit script mismatch" unless spec.match?(/^Source30:\s+#{Regexp.escape(npm_codegen["audit_script_source"].to_s)}$/)
+    errors << "bun: spec arm64 closure source mismatch" unless spec.match?(/^Source31:\s+bun-%\{version\}-release-local-source-closure-arm64\.json$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -3169,9 +3222,13 @@ module Agentlab
     errors << "bun: dependency-staging helper SHA-256 mismatch" unless helper["sha256"] == staging["helper_sha256"]
     errors << "bun: dependency-staging helper size is invalid" unless helper["size_bytes"].is_a?(Integer) && helper["size_bytes"].positive?
     npm_bundle = receipt.dig("inputs", "npm_bundle") || {}
-    errors << "bun: dependency-staging npm filename mismatch" unless npm_bundle["filename"] == dependency_stage["npm_source_archive_filename"]
-    errors << "bun: dependency-staging npm size mismatch" unless npm_bundle["size_bytes"] == dependency_stage["npm_source_archive_bytes"]
-    errors << "bun: dependency-staging npm SHA-256 mismatch" unless npm_bundle["sha256"] == dependency_stage["npm_source_archive_sha256"]
+    arm64_closure = receipt.dig("inputs", "arm64_closure") || {}
+    errors << "bun: dependency-staging arm64 closure mismatch" unless arm64_closure == {
+      "filename" => "bun-#{version}-release-local-source-closure-arm64.json",
+      "sha256" => "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a"
+    }
+    expected_union = staging["npm_union"] || {}
+    errors << "bun: dependency-staging npm union mismatch" unless npm_bundle == expected_union
 
     source_delivery_name = source_delivery_stage["proof_receipt"]
     source_delivery_path = source_delivery_name.is_a?(String) && File.join(package.directory, source_delivery_name)
@@ -4568,6 +4625,7 @@ module Agentlab
     errors.concat(validate_bun_minimized_webkit_source(package, webkit, version, spec))
 
     errors.concat(validate_bun_dependency_closure(package, stages["dependency_closure"], webkit, version))
+    errors.concat(validate_bun_multi_arch_source_delivery(package, release_local_staging, version, spec))
     errors.concat(validate_bun_npm_offline_install(package, stages["dependency_closure"], version))
     if plan["aarch64_preflight_required"] == true || aarch64_preflight.is_a?(Hash)
       errors.concat(validate_bun_aarch64_preflight(package, aarch64_preflight, npm_lock, version, spec))
@@ -5772,7 +5830,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.20%{?dist}",
+            "Release:        0.21%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       opencode-1.18.5-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -6058,7 +6116,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.20%{?dist}",
+        "Release:        0.21%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -6601,8 +6659,8 @@ module Agentlab
           "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
-          "source_rpm_nvr" => "opencode-1.18.5-0.20.fc44",
-          "source_rpm_sha256" => "22e3fa69cce80ebe283d47ae704b0d164014cc9279d29ababb67a07903d647ce",
+          "source_rpm_nvr" => "opencode-1.18.5-0.21.fc44",
+          "source_rpm_sha256" => "fbafdd959e1328aa1b485db2c75dbd2a75fd16d7a46a77c919c1151b7d4b069a",
           "source_members" => 57,
           "configured_scm_generation_verified" => true,
           "binary_build_performed" => false,
@@ -6629,7 +6687,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.20%{?dist}",
+          "Release:        0.21%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

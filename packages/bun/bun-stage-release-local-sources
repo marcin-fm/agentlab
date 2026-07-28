@@ -389,6 +389,7 @@ module BunReleaseLocalStaging
     FileUtils.mkdir_p(cache_root)
     Dir.mktmpdir("bun-npm-sources-", work_root) do |temporary|
       verify_archive_root!(bundle, "bun-#{closure.fetch('release')}-npm-sources", chdir: work_root)
+      verify_npm_bundle_superset!(bundle, closure, chdir: work_root)
       run!("tar", "--extract", "--gzip", "--file", bundle, "--directory", temporary, "--no-same-owner", chdir: work_root)
       archive_root = File.join(temporary, "bun-#{closure.fetch('release')}-npm-sources", "npm")
       raise Error, "npm source bundle lacks npm archive directory" unless Dir.exist?(archive_root)
@@ -431,6 +432,19 @@ module BunReleaseLocalStaging
     receipt.merge("cache_entries" => expected_count, "semver_hashes" => semver_hashes)
   end
 
+  def verify_npm_bundle_superset!(bundle, closure, chdir:)
+    root = "bun-#{closure.fetch('release')}-npm-sources/npm/"
+    members = archive_entries(bundle, chdir: chdir).filter_map do |entry|
+      relative = entry.delete_prefix(root)
+      next if relative == entry || relative.empty? || entry.end_with?("/")
+
+      safe_relative_path(relative)
+    end.to_set
+    selected = closure.dig("npm", "source_archives").map { |source| source.fetch("archive") }.to_set
+    missing = selected - members
+    raise Error, "npm source bundle is missing selected archives: #{missing.to_a.sort.join(', ')}" unless missing.empty?
+  end
+
   def main(argv)
     options = {}
     OptionParser.new do |parser|
@@ -461,7 +475,8 @@ module BunReleaseLocalStaging
     unless closure.fetch("schema") == "bun-release-local-source-closure/v3" && closure.fetch("package") == "bun"
       raise Error, "unsupported Bun release-local source closure"
     end
-    unless closure.fetch("target") == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+    unless ["x64", "arm64"].include?(closure.dig("target", "cpu")) &&
+           closure.fetch("target").slice("os", "libc") == { "os" => "linux", "libc" => "glibc" }
       raise Error, "Bun release-local source closure target mismatch"
     end
 

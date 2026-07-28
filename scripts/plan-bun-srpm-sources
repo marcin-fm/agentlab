@@ -111,6 +111,29 @@ end.sort_by { |record| [record.fetch("npm_name"), record["source_version"].to_s,
   raise Agentlab::Error, "Bun source plan contains duplicate archive filenames" unless archives.uniq.length == archives.length
 end
 
+arm64_closure_metadata = package.data.dig("build_plan", "source_inputs", "aarch64_preflight", "source_closure")
+arm64_closure_path = File.join(package.directory, arm64_closure_metadata.fetch("source"))
+arm64_closure_bytes = File.binread(arm64_closure_path)
+unless Digest::SHA256.hexdigest(arm64_closure_bytes) == arm64_closure_metadata.fetch("sha256")
+  raise Agentlab::Error, "checked arm64 Bun source closure does not match package metadata"
+end
+arm64_closure = JSON.parse(arm64_closure_bytes)
+arm64_members = Array(arm64_closure.dig("npm", "source_archives")).map do |source|
+  source_member(source, label: "arm64 npm source #{source['npm_name']}", url_key: "source_url").merge(
+    "origin" => source.fetch("origin"),
+    "npm_name" => source.fetch("npm_name"),
+    "source_name" => source["source_name"],
+    "source_version" => source["source_version"],
+    "source_commit" => source["source_commit"],
+    "integrity" => source["integrity"]
+  )
+end
+union_npm_members = (npm_members + arm64_members).group_by { |record| record.fetch("archive") }.map do |archive, records|
+  raise Agentlab::Error, "Bun source closures conflict for archive #{archive}" unless records.uniq.length == 1
+
+  records.first
+end.sort_by { |record| record.fetch("archive") }
+
 source_inputs = package.data.dig("build_plan", "source_inputs")
 raise Agentlab::Error, "Bun source input metadata is missing" unless source_inputs.is_a?(Hash)
 webkit = source_inputs.fetch("webkit")
@@ -211,7 +234,7 @@ generated_sources << {
   "recipe" => "deterministic-archive-bundle/v1",
   "compression" => "gzip-n",
   "closure_receipt_sha256" => expected_receipt_sha256
-}.merge(manifest_summary(npm_members))
+}.merge(manifest_summary(union_npm_members))
 
 plan = {
   "schema" => "bun-srpm-source-plan/v1",
@@ -230,7 +253,7 @@ plan = {
     "fedora_submission_storage" => "lookaside-cache",
     "source_layout" => {
       "native_node" => "direct-upstream-source-tags",
-      "npm" => "generated-original-archive-bundle",
+      "npm" => "generated-multi-target-original-archive-bundle",
       "lolhtml" => "fedora-system-provider",
       "relink" => "generated-build-output-payload"
     },
@@ -241,7 +264,8 @@ plan = {
   },
   "input_summary" => actual_counts.merge(
     "native_node_manifest" => manifest_summary(native_members + node_members),
-    "npm_manifest" => manifest_summary(npm_members)
+    "npm_manifest" => manifest_summary(npm_members),
+    "npm_union_manifest" => manifest_summary(union_npm_members)
   ),
   "direct_sources" => direct_sources.sort_by { |source| [source.fetch("role"), source.fetch("source_id", "")] },
   "generated_sources" => generated_sources.sort_by { |source| source.fetch("role") },
@@ -270,7 +294,8 @@ end.parse!
 content = JSON.pretty_generate(plan) + "\n"
 Agentlab.atomic_write(File.expand_path(output), content) if output
 if check
-  puts "Verified Bun #{version} SRPM source plan: #{direct_sources.length} direct sources, #{generated_sources.length} generated sources, #{actual_counts.values.sum} checked closure inputs."
+  union_input_count = actual_counts.fetch("native") + actual_counts.fetch("node") + union_npm_members.length + actual_counts.fetch("cargo")
+  puts "Verified Bun #{version} SRPM source plan: #{direct_sources.length} direct sources, #{generated_sources.length} generated sources, #{union_input_count} checked closure inputs."
 else
   puts content
 end

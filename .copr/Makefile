@@ -101,7 +101,7 @@ srpm:
 				--license-review "$$specdir/license-review.yml" \
 				--native-review "$$specdir/native-review.yml" \
 				--bun-final-license "$(repo_root)/packages/bun/bun-1.3.14-final-linked-license-closure.json" \
-				--date 2026-07-27 \
+				--date 2026-07-28 \
 				--check \
 				--receipt "$$specdir/opencode-$$version-final-license-closure.json"; \
 			install -pm0755 "$(repo_root)/scripts/materialize-opencode-node-modules" \

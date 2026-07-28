@@ -391,11 +391,15 @@ def verify_source_built_driver!(driver_path, receipt_path, version, source_commi
   unless receipt["package"] == "bun" && receipt["release"] == version && receipt["profile"] == "release-local"
     raise Agentlab::Error, "source-built driver receipt is not for Bun #{version} release-local"
   end
-  unless receipt.dig("source_closure", "path") == "bun-#{version}-release-local-source-closure.json" &&
+  expected_closure_path = "bun-#{version}-release-local-source-closure#{closure.dig('target', 'cpu') == 'arm64' ? '-arm64' : ''}.json"
+  unless receipt.dig("source_closure", "path") == expected_closure_path &&
          receipt.dig("source_closure", "sha256") == closure_sha256 &&
          receipt.dig("source_closure", "source_archive_sha256") == closure.dig("source_tree", "source_sha256") &&
          receipt.dig("source_closure", "source_commit") == source_commit
     raise Agentlab::Error, "source-built driver receipt does not match the current source graph"
+  end
+  if closure.dig("target", "cpu") == "arm64" && receipt["target"] != closure["target"]
+    raise Agentlab::Error, "source-built driver receipt does not prove the aarch64 target"
   end
   unless receipt.dig("seed_contamination", "payload_absent_verified") == true &&
          receipt.dig("seed_contamination", "runtime_dependency_absent_verified") == true &&
@@ -497,7 +501,6 @@ target_evidence = arm64 ? source_inputs.fetch("aarch64_preflight") : metadata.fe
 expected_closure_sha = arm64 ? target_evidence.dig("source_closure", "sha256") : target_evidence.fetch("proof_receipt_sha256")
 raise Agentlab::Error, "source-closure receipt checksum mismatch" unless Digest::SHA256.hexdigest(closure_bytes) == expected_closure_sha
 seed = arm64 ? target_evidence.fetch("bootstrap_seed") : source_inputs.fetch("bootstrap_seed")
-raise Agentlab::Error, "source-built arm64 npm proof is not implemented" if arm64 && source_driver_mode
 raise Agentlab::Error, "missing Fedora arm64 glibc lock patch #{arm64_lock_patch}" if arm64 && !File.file?(arm64_lock_patch)
 raise Agentlab::Error, "Bun seed is not bootstrap-only" unless seed.fetch("bootstrap_only") == true
 raise Agentlab::Error, "Bun seed is permitted in final payload" unless seed.fetch("final_payload_allowed") == false
@@ -813,7 +816,9 @@ receipt = {
   "install" => install_receipt,
   "validation" => validation_receipt,
   "scope" => source_driver_mode ?
-    "network-isolated source-built-driver frozen installs for Bun 1.3.14's three codegen npm roots; final graph, relink payload, license review, aarch64, and RPM remain blocked" :
+    (arm64 ?
+      "network-isolated aarch64 source-built-driver frozen installs for Bun 1.3.14's three codegen npm roots; self-rebuild, relink payload, license review, and RPM remain blocked" :
+      "network-isolated source-built-driver frozen installs for Bun 1.3.14's three codegen npm roots; final graph, relink payload, license review, aarch64, and RPM remain blocked") :
     "network-isolated #{target_cpu} frozen installs for Bun 1.3.14's three codegen npm roots; native integration, the first source build, self-rebuild, final payload, and RPM remain blocked"
 )
 canonical = JSON.pretty_generate(receipt) + "\n"

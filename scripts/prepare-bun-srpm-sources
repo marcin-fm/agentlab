@@ -70,17 +70,29 @@ end
 begin
 package = Agentlab.package_named("bun")
 version = package.upstream.fetch("current_version").to_s
-spec = nil
-jobs = 4
+  spec = nil
+  jobs = 4
+  union_output = nil
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/prepare-bun-srpm-sources --spec PATH [options]"
   parser.on("--spec PATH", "Expanded Bun spec source directory") { |path| spec = path }
-  parser.on("--jobs N", Integer, "Concurrent npm downloads (1-4)") { |value| jobs = value }
+    parser.on("--jobs N", Integer, "Concurrent npm downloads (1-4)") { |value| jobs = value }
+    parser.on("--union-output PATH", "Create the multi-target npm union bundle at PATH") { |path| union_output = path }
 end.parse!
 
-raise Agentlab::Error, "--spec is required" unless spec
-raise Agentlab::Error, "--jobs must be between 1 and 4" unless (1..4).cover?(jobs)
+  raise Agentlab::Error, "--spec is required" unless spec
+  raise Agentlab::Error, "--jobs must be between 1 and 4" unless (1..4).cover?(jobs)
+  if union_output
+    union_output = File.expand_path(union_output)
+    raise Agentlab::Error, "union output must be below /srv/tmp" unless union_output.start_with?("/srv/tmp/")
+    raise Agentlab::Error, "refusing symlinked union output #{union_output}" if File.symlink?(union_output)
+    resolved_parent = File.realpath(File.dirname(union_output))
+    unless resolved_parent == "/srv/tmp" || resolved_parent.start_with?("/srv/tmp/")
+      raise Agentlab::Error, "union output parent must resolve below /srv/tmp"
+    end
+    union_output = File.join(resolved_parent, File.basename(union_output))
+  end
 
 spec = File.realpath(spec)
 raise Agentlab::Error, "Bun source preparer requires bun.spec" unless File.basename(spec) == "bun.spec"
@@ -91,6 +103,7 @@ staging = source_inputs.fetch("release_local_staging")
 license_inventory = source_inputs.fetch("source_license_inventory")
 final_linked_license = source_inputs.fetch("final_linked_license_closure")
 npm_code_generation = source_inputs.fetch("npm_code_generation_closure")
+arm64_closure_metadata = source_inputs.fetch("aarch64_preflight").fetch("source_closure")
 closure_path = File.join(package.directory, dependency_stage.fetch("proof_receipt"))
 closure_bytes = File.binread(closure_path)
 unless Digest::SHA256.hexdigest(closure_bytes) == dependency_stage.fetch("proof_receipt_sha256")
@@ -123,6 +136,7 @@ expected_sources[27] = final_linked_license.fetch("source")
 expected_sources[28] = final_linked_license.fetch("audit_script_source")
 expected_sources[29] = npm_code_generation.fetch("source")
 expected_sources[30] = npm_code_generation.fetch("audit_script_source")
+expected_sources[31] = arm64_closure_metadata.fetch("source")
 actual_sources = expanded_sources(spec)
 unless actual_sources == expected_sources
   raise Agentlab::Error, "bun.spec Source declarations do not match the checked SRPM source layout"
@@ -144,6 +158,7 @@ direct_identities << [27, final_linked_license.fetch("sha256"), nil]
 direct_identities << [28, final_linked_license.fetch("audit_script_sha256"), nil]
 direct_identities << [29, npm_code_generation.fetch("sha256"), nil]
 direct_identities << [30, npm_code_generation.fetch("audit_script_sha256"), nil]
+direct_identities << [31, arm64_closure_metadata.fetch("sha256"), nil]
 direct_identities.each do |index, sha256, size_bytes|
   verify_file!(
     File.join(specdir, source_filename(actual_sources.fetch(index))),
@@ -185,7 +200,9 @@ Dir.mktmpdir("agentlab-bun-srpm-preparation-", "/srv/tmp") do |temporary|
 
   output_dir = File.join(temporary, "output")
   receipt_path = File.join(temporary, "bun-srpm-source-bundles.json")
-  run!(
+  union = staging.fetch("npm_union")
+  union_destination = union_output || File.join(specdir, union.fetch("filename"))
+  materialize_arguments = [
     RbConfig.ruby,
     File.join(File.dirname(__FILE__), "materialize-bun-srpm-sources"),
     "--cache-dir", cache_dir,
@@ -193,19 +210,30 @@ Dir.mktmpdir("agentlab-bun-srpm-preparation-", "/srv/tmp") do |temporary|
     "--receipt", receipt_path,
     "--workdir", File.join(temporary, "materializer"),
     "--roles", "npm"
+  ]
+  arm64_closure = File.join(package.directory, arm64_closure_metadata.fetch("source"))
+  generated_arm64_closure = File.join(temporary, "release-local-source-closure-arm64.json")
+  run!(
+    RbConfig.ruby,
+    File.join(File.dirname(__FILE__), "acquire-bun-release-local-sources"),
+    "--source-dir", source_dir,
+    "--workdir", cache_dir,
+    "--output", generated_arm64_closure,
+    "--target-cpu", "arm64",
+    "--jobs", jobs.to_s
   )
-
-  generated_identities = {
-    npm_filename => {
-      sha256: dependency_stage.fetch("npm_source_archive_sha256"),
-      size_bytes: dependency_stage.fetch("npm_source_archive_bytes")
-    }
-  }
-  generated_identities.each do |filename, identity|
-    source = File.join(output_dir, filename)
-    verify_file!(source, **identity)
-    atomic_copy(source, File.join(specdir, filename))
+  unless File.binread(generated_arm64_closure) == File.binread(arm64_closure)
+    raise Agentlab::Error, "regenerated arm64 Bun source closure differs from the checked receipt"
   end
+  materialize_arguments.concat([
+    "--closure", closure_path,
+    "--closure", arm64_closure
+  ])
+  run!(*materialize_arguments)
+
+  source = File.join(output_dir, npm_filename)
+  verify_file!(source, sha256: union.fetch("sha256"), size_bytes: union.fetch("size_bytes"))
+  atomic_copy(source, union_destination)
 end
 
 puts "Prepared and verified Bun #{version} npm SRPM sources in #{specdir}."

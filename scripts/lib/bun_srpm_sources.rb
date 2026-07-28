@@ -17,14 +17,46 @@ module Agentlab
     CLOSURE_SCHEMA = "bun-release-local-source-closure/v3"
     SHA256 = /\A[0-9a-f]{64}\z/
     ARCHIVE_ROLES = %w[native_node npm].freeze
+    MULTI_ARCHITECTURE_TARGETS = [
+      { "os" => "linux", "cpu" => "arm64", "libc" => "glibc" },
+      { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+    ].freeze
+    COMPLETE_MULTI_ARCHITECTURE_CLOSURES = {
+      "1.3.14" => [
+        {
+          "filename" => "bun-1.3.14-release-local-source-closure-arm64.json",
+          "sha256" => "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a",
+          "source_sha256" => "112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e",
+          "target" => { "os" => "linux", "cpu" => "arm64", "libc" => "glibc" }
+        },
+        {
+          "filename" => "bun-1.3.14-release-local-source-closure.json",
+          "sha256" => "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080",
+          "source_sha256" => "112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e",
+          "target" => { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+        }
+      ].freeze
+    }.freeze
 
     module_function
 
     def materialize!(closure_path:, expected_closure_sha256:, expected_source_sha256:, expected_counts:,
                       cache_dir:, output_dir:, receipt_path:, workdir:, roles: ARCHIVE_ROLES,
-                      expected_npm_archive: nil, check: false)
-      closure_path = File.expand_path(closure_path)
-      cache_dir = File.realpath(cache_dir)
+                      expected_npm_archive: nil, check: false, closure_set: nil, cache_dirs: nil)
+      closure_set ||= [{
+        path: closure_path,
+        expected_sha256: expected_closure_sha256,
+        expected_counts: expected_counts
+      }]
+      closure_set = closure_set.map do |entry|
+        {
+          path: File.expand_path(entry.fetch(:path)),
+          expected_sha256: entry.fetch(:expected_sha256),
+          expected_counts: entry.fetch(:expected_counts)
+        }
+      end
+      cache_dirs = Array(cache_dirs || cache_dir).map { |path| File.realpath(path) }
+      raise Agentlab::Error, "Bun source materializer needs at least one checked cache" if cache_dirs.empty?
       output_dir = File.expand_path(output_dir)
       receipt_path = File.expand_path(receipt_path)
       workdir = File.expand_path(workdir)
@@ -33,19 +65,23 @@ module Agentlab
         raise Agentlab::Error, "Bun source archive roles are invalid"
       end
 
-      closure_bytes = File.binread(closure_path)
-      closure_sha256 = Digest::SHA256.hexdigest(closure_bytes)
-      unless expected_closure_sha256.to_s.match?(SHA256) && closure_sha256 == expected_closure_sha256
-        raise Agentlab::Error, "Bun source-closure receipt SHA-256 does not match package metadata"
-      end
+      closures = closure_set.map do |entry|
+        bytes = File.binread(entry.fetch(:path))
+        sha256 = Digest::SHA256.hexdigest(bytes)
+        unless entry.fetch(:expected_sha256).to_s.match?(SHA256) && sha256 == entry.fetch(:expected_sha256)
+          raise Agentlab::Error, "Bun source-closure receipt SHA-256 does not match package metadata"
+        end
 
-      closure = JSON.parse(closure_bytes)
-      validate_closure!(
-        closure,
-        expected_source_sha256: expected_source_sha256,
-        expected_counts: expected_counts
-      )
-      records = source_records(closure)
+        closure = JSON.parse(bytes)
+        validate_closure!(
+          closure,
+          expected_source_sha256: expected_source_sha256,
+          expected_counts: entry.fetch(:expected_counts)
+        )
+        { path: entry.fetch(:path), sha256: sha256, closure: closure, records: source_records(closure) }
+      end
+      closure = closures.first.fetch(:closure)
+      records = closure_set.length == 1 ? closures.first.fetch(:records) : merge_source_records!(closures.map { |entry| entry.fetch(:records) })
       reject_duplicate_archives!(records)
       reject_bootstrap_seed!(records)
 
@@ -65,7 +101,7 @@ module Agentlab
 
       if roles.include?("native_node")
         stage_raw_bundle!(
-          cache_dir: cache_dir,
+          cache_dirs: cache_dirs,
           cache_subdir: "archives",
           destination: File.join(staging_dir, native_root, "archives"),
           records: records.fetch("native") + records.fetch("node")
@@ -73,7 +109,7 @@ module Agentlab
       end
       if roles.include?("npm")
         stage_raw_bundle!(
-          cache_dir: cache_dir,
+          cache_dirs: cache_dirs,
           cache_subdir: "npm",
           destination: File.join(staging_dir, npm_root, "npm"),
           records: records.fetch("npm")
@@ -120,17 +156,17 @@ module Agentlab
         "schema" => SCHEMA,
         "package" => "bun",
         "release" => version,
-        "source_closure" => {
-          "filename" => File.basename(closure_path),
-          "sha256" => closure_sha256,
+        "source_closure" => closure_set.length == 1 ? {
+          "filename" => File.basename(closures.first.fetch(:path)),
+          "sha256" => closures.first.fetch(:sha256),
           "source_sha256" => closure.dig("source_tree", "source_sha256"),
           "target" => closure.fetch("target")
-        },
+        } : nil,
         "selected_archive_roles" => roles,
         "archives" => archives,
         "scope" => {
           "archive_generation_architecture_independent" => true,
-          "closure_target" => closure.fetch("target"),
+          "closure_target" => closure_set.length == 1 ? closure.fetch("target") : nil,
           "complete_multi_architecture_closure_verified" => false,
           "aarch64_build_verified" => false
         },
@@ -149,6 +185,22 @@ module Agentlab
           "srpm_built" => false
         }
       }
+      if closure_set.length > 1
+        receipt.delete("source_closure")
+        source_closures = closures.sort_by { |entry| File.basename(entry.fetch(:path)) }.map do |entry|
+          closure = entry.fetch(:closure)
+          {
+            "filename" => File.basename(entry.fetch(:path)),
+            "sha256" => entry.fetch(:sha256),
+            "source_sha256" => closure.dig("source_tree", "source_sha256"),
+            "target" => closure.fetch("target")
+          }
+        end
+        receipt["source_closures"] = source_closures
+        receipt.fetch("scope")["closure_targets"] = source_closures.map { |entry| entry.fetch("target") }
+        receipt.fetch("scope")["complete_multi_architecture_closure_verified"] =
+          complete_multi_architecture_closures?(closure.fetch("release"), source_closures)
+      end
       content = JSON.pretty_generate(receipt) + "\n"
 
       output_paths = generated_archives.to_h do |role, _path|
@@ -244,6 +296,25 @@ module Agentlab
       { "native" => native, "node" => node, "npm" => npm }
     end
 
+    def merge_source_records!(record_sets)
+      %w[native node npm].to_h do |kind|
+        records = record_sets.flat_map { |set| set.fetch(kind) }
+        grouped = records.group_by { |record| record.fetch("archive") }
+        merged = grouped.map do |archive, candidates|
+          canonical = candidates.first
+          unless candidates.all? { |candidate| candidate == canonical }
+            raise Agentlab::Error, "Bun source closures conflict for archive #{archive}"
+          end
+          canonical
+        end
+        [kind, merged.sort_by { |record| record.fetch("archive") }]
+      end
+    end
+
+    def complete_multi_architecture_closures?(release, source_closures)
+      source_closures == COMPLETE_MULTI_ARCHITECTURE_CLOSURES.fetch(release.to_s, [])
+    end
+
     def source_member(record, label:, url_key:)
       archive = record["archive"]
       sha256 = record["sha256"]
@@ -301,11 +372,11 @@ module Agentlab
       }
     end
 
-    def stage_raw_bundle!(cache_dir:, cache_subdir:, destination:, records:)
+    def stage_raw_bundle!(cache_dirs:, cache_subdir:, destination:, records:)
       FileUtils.mkdir_p(destination)
       File.chmod(0o755, destination)
       records.each do |record|
-        source = checked_cache_file!(cache_dir, cache_subdir, record)
+        source = checked_cache_file!(cache_dirs, cache_subdir, record)
         target = File.join(destination, record.fetch("archive"))
         FileUtils.copy_file(source, target)
         File.chmod(0o644, target)
@@ -359,9 +430,12 @@ module Agentlab
       }
     end
 
-    def checked_cache_file!(cache_dir, subdir, record)
-      path = File.join(cache_dir, subdir, record.fetch("archive"))
-      raise Agentlab::Error, "missing cached Bun source #{path}" unless File.file?(path)
+    def checked_cache_file!(cache_dirs, subdir, record)
+      paths = cache_dirs.map { |cache_dir| File.join(cache_dir, subdir, record.fetch("archive")) }
+      path = paths.find { |candidate| File.file?(candidate) }
+      raise Agentlab::Error, "missing cached Bun source #{paths.first}" unless path
+      cache_dir = cache_dirs.find { |candidate| path.start_with?("#{candidate}/") }
+      raise Agentlab::Error, "cached Bun source is outside the checked caches: #{path}" unless cache_dir
       raise Agentlab::Error, "refusing symlinked cached Bun source #{path}" if File.symlink?(path)
       resolved = File.realpath(path)
       unless resolved.start_with?("#{cache_dir}/")

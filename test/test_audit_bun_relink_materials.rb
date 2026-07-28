@@ -22,7 +22,7 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
     stdout
   end
 
-  def build_fixture(root)
+  def build_fixture(root, target_cpu: "x64")
     build_root = File.join(root, "build", "release-local")
     zig_objects = 32.times.map { |index| "bun-zig.#{index}.o" }
     tinycc_objects = 10.times.map { |index| "obj/vendor/tinycc/tinycc-#{index}.o" }
@@ -84,9 +84,10 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
     inputs
   end
 
-  def build_receipt(root)
+  def build_receipt(root, target_cpu: "x64")
     package_dir = File.join(File.expand_path("..", __dir__), "packages", "bun")
-    closure_path = File.join(package_dir, "bun-1.3.14-release-local-source-closure.json")
+    closure_name = target_cpu == "arm64" ? "bun-1.3.14-release-local-source-closure-arm64.json" : "bun-1.3.14-release-local-source-closure.json"
+    closure_path = File.join(package_dir, closure_name)
     closure = JSON.parse(File.read(closure_path))
     provider_root = File.join(root, "provider")
     library = File.join(provider_root, "usr", "lib64", "liblolhtml.so.1.4.0")
@@ -143,6 +144,8 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
       },
       "validation" => { "source_build_verified" => true }
     }
+    receipt["target"] = { "os" => "linux", "cpu" => target_cpu, "libc" => "glibc" } if target_cpu == "arm64"
+    receipt["build"]["strip_verification"] = { "bun_file" => "ELF 64-bit LSB executable, ARM aarch64" } if target_cpu == "arm64"
     path = File.join(root, "first-build-proof.json")
     write(path, JSON.pretty_generate(receipt) + "\n")
     path
@@ -177,6 +180,7 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
 
       audit = JSON.parse(File.read(audit_path))
       assert_equal("bun-relink-materials-audit/v3", audit.fetch("schema"))
+      refute(audit.key?("target"))
       assert_equal("first_build", audit.dig("source_build", "proof_kind"))
       assert_equal("liblolhtml.so.1", audit.dig("system_lolhtml_provider", "soname"))
       refute(audit.dig("final_link", "direct_archives").any? { |record| record.fetch("path").include?("/lolhtml/") })
@@ -276,6 +280,56 @@ class AuditBunRelinkMaterialsTest < Minitest::Test
       assert_equal("bun-relink-materials-audit/v2", historical_audit.fetch("schema"))
       refute(historical_audit.key?("source_build"))
       refute(historical_audit.key?("system_lolhtml_provider"))
+    end
+  end
+
+  def test_accepts_arm64_closure_and_rejects_target_mismatch
+    Dir.mktmpdir("agentlab-bun-arm64-relink-", "/srv/tmp") do |temporary|
+      root = File.join(temporary, "proof")
+      build_fixture(root, target_cpu: "arm64")
+      build_receipt_path = build_receipt(root, target_cpu: "arm64")
+      closure_path = File.expand_path("../packages/bun/bun-1.3.14-release-local-source-closure-arm64.json", __dir__)
+      output_dir = File.join(temporary, "output")
+      audit_path = File.join(output_dir, "relink-materials-proof-arm64.json")
+      kit_dir = File.join(temporary, "kit")
+      arguments = [
+        "--root", root,
+        "--build-receipt", build_receipt_path,
+        "--closure", closure_path,
+        "--target", "arm64",
+        "--date", "2026-07-28",
+        "--output", audit_path,
+        "--kit-output-dir", kit_dir
+      ]
+
+      run_script(*arguments)
+      audit = JSON.parse(File.read(audit_path))
+      assert_equal({ "os" => "linux", "cpu" => "arm64", "libc" => "glibc" }, audit.fetch("target"))
+      command = JSON.parse(File.read(File.join(kit_dir, "bun-1.3.14-relink-kit", "relink", "link-command.json")))
+      refute(command.fetch("argv").any? { |token| token.match?(/x86_64|x86-64|x64|haswell/) })
+
+      mismatched_receipt = JSON.parse(File.read(build_receipt_path))
+      mismatched_receipt["target"]["cpu"] = "x64"
+      File.write(build_receipt_path, JSON.pretty_generate(mismatched_receipt) + "\n")
+      _stdout, stderr, status = Open3.capture3(SCRIPT, *arguments, "--output", File.join(output_dir, "mismatch.json"))
+      refute(status.success?)
+      assert_includes(stderr, "arm64 build receipt target does not match the closure")
+
+      mismatched_receipt["target"]["cpu"] = "arm64"
+      File.write(build_receipt_path, JSON.pretty_generate(mismatched_receipt) + "\n")
+      package_dir = File.expand_path("../packages/bun", __dir__)
+      _stdout, stderr, status = Open3.capture3(
+        SCRIPT,
+        "--root", root,
+        "--build-receipt", build_receipt_path,
+        "--closure", closure_path,
+        "--target", "arm64",
+        "--date", "2026-07-28",
+        "--output", File.join(package_dir, "arm64-audit.json"),
+        "--kit-output-dir", kit_dir
+      )
+      refute(status.success?)
+      assert_includes(stderr, "arm64 output paths must be outside the canonical Bun package directory")
     end
   end
 end

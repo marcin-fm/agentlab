@@ -22,6 +22,8 @@ kit_output_dir = nil
 force = false
 validate_link = false
 build_receipt_path = nil
+closure_path = nil
+target_cpu = nil
 
 OptionParser.new do |parser|
   parser.banner = "Usage: scripts/audit-bun-relink-materials --root PATH --date YYYY-MM-DD [--output PATH | --check --receipt PATH] [--kit-output-dir PATH [--validate-link] [--force]]"
@@ -34,6 +36,8 @@ OptionParser.new do |parser|
   parser.on("--kit-output-dir PATH", "Materialize the deterministic relink kit below PATH") { |path| kit_output_dir = path }
   parser.on("--validate-link", "Run the kit's direct final link in a network namespace") { validate_link = true }
   parser.on("--force", "Replace only previously marked kit outputs") { force = true }
+  parser.on("--closure PATH", "Target-specific Bun source closure receipt") { |path| closure_path = path }
+  parser.on("--target CPU", %w[x64 arm64], "Linux glibc target CPU") { |cpu| target_cpu = cpu }
 end.parse!
 
 raise "--root is required" unless root
@@ -44,6 +48,9 @@ raise "--receipt is only valid with --check" if receipt && !check
 raise "--kit-output-dir is not valid with --check" if check && kit_output_dir
 raise "--validate-link requires --kit-output-dir" if validate_link && !kit_output_dir
 raise "--force requires --kit-output-dir" if force && !kit_output_dir
+raise "--closure requires --target" if closure_path && !target_cpu
+raise "--target requires --build-receipt" if target_cpu && !build_receipt_path
+raise "--target arm64 requires --closure" if target_cpu == "arm64" && !closure_path
 begin
   parsed_date = Date.strptime(audit_date, "%Y-%m-%d")
   raise unless parsed_date.strftime("%Y-%m-%d") == audit_date
@@ -53,6 +60,7 @@ end
 
 root = File.realpath(root)
 build_receipt_path = File.expand_path(build_receipt_path) if build_receipt_path
+closure_path = File.expand_path(closure_path) if closure_path
 build_root = File.join(root, "build", "release-local")
 build_ninja_path = File.join(build_root, "build.ninja")
 raise "missing proof build root #{build_root}" unless Dir.exist?(build_root)
@@ -121,7 +129,7 @@ def safe_relative_path(path)
   clean
 end
 
-def verify_current_build_receipt!(receipt_path, root, version)
+def verify_current_build_receipt!(receipt_path, root, version, closure_path: nil, target_cpu: nil)
   raise "--build-receipt is required for the system lol-html graph" unless receipt_path
   raise "missing build receipt #{receipt_path}" unless File.file?(receipt_path)
   receipt_bytes = File.binread(receipt_path)
@@ -144,14 +152,30 @@ def verify_current_build_receipt!(receipt_path, root, version)
 
   package = Agentlab.package_named("bun")
   dependency_stage = package.data.fetch("build_plan").fetch("stages").fetch("dependency_closure")
-  closure_path = File.join(package.directory, dependency_stage.fetch("proof_receipt"))
+  if target_cpu == "arm64"
+    raise "arm64 build receipt target is required" unless receipt["target"]
+    raise "arm64 closure input is required" unless closure_path
+  end
+  closure_path ||= File.join(package.directory, dependency_stage.fetch("proof_receipt"))
   closure_bytes = File.binread(closure_path)
   closure_sha256 = Digest::SHA256.hexdigest(closure_bytes)
-  raise "current Bun closure checksum mismatch" unless closure_sha256 == dependency_stage.fetch("proof_receipt_sha256")
+  expected_closure_sha256 = if target_cpu == "arm64"
+                             package.data.fetch("build_plan").fetch("source_inputs").fetch("aarch64_preflight").fetch("source_closure").fetch("sha256")
+                           else
+                             dependency_stage.fetch("proof_receipt_sha256")
+                           end
+  raise "current Bun closure checksum mismatch" unless closure_sha256 == expected_closure_sha256
   closure = JSON.parse(closure_bytes)
+  expected_target = { "os" => "linux", "cpu" => (target_cpu || "x64"), "libc" => "glibc" }
   unless closure["schema"] == "bun-release-local-source-closure/v3" && closure["package"] == "bun" &&
-         closure["release"] == version && closure["target"] == { "os" => "linux", "cpu" => "x64", "libc" => "glibc" }
+         closure["release"] == version && closure["target"] == expected_target
     raise "unsupported current Bun source closure"
+  end
+  if target_cpu == "arm64" && receipt["target"] != closure["target"]
+    raise "arm64 build receipt target does not match the closure"
+  end
+  if target_cpu == "arm64" && !receipt.dig("build", "strip_verification", "bun_file").to_s.include?("ARM aarch64")
+    raise "arm64 build receipt does not prove an aarch64 Bun binary"
   end
   unless receipt.dig("source_closure", "path") == File.basename(closure_path) &&
          receipt.dig("source_closure", "sha256") == closure_sha256 &&
@@ -193,7 +217,7 @@ def verify_current_build_receipt!(receipt_path, root, version)
 
   seed = receipt.fetch("bootstrap_seed")
   driver_path = proof_kind == "first_build" ? File.join(root, "seed", "bun") : receipt.fetch("first_build").fetch("path")
-  {
+  result = {
     "proof_kind" => proof_kind,
     "receipt" => File.basename(receipt_path),
     "receipt_sha256" => Digest::SHA256.hexdigest(receipt_bytes),
@@ -206,6 +230,8 @@ def verify_current_build_receipt!(receipt_path, root, version)
     },
     "provider" => provider
   }
+  result["target"] = closure["target"] if target_cpu == "arm64"
+  result
 rescue JSON::ParserError, KeyError, TypeError => e
   raise "invalid current build receipt: #{e.message}"
 end
@@ -313,6 +339,17 @@ def resolved_output_candidate(path, seen = {})
   File.join(File.realpath(ancestor), *suffix)
 end
 
+def require_arm64_outputs!(output, kit_output_dir, package_dir)
+  raise "arm64 requires an explicit --output path" unless output
+  raise "arm64 requires an explicit --kit-output-dir path" unless kit_output_dir
+
+  canonical = File.realpath(package_dir)
+  [output, kit_output_dir].each do |path|
+    resolved = resolved_output_candidate(path)
+    raise "arm64 output paths must be outside the canonical Bun package directory" if inside_root?(resolved, canonical)
+  end
+end
+
 def prepare_kit_outputs(output_dir, kit_name, force)
   output_dir = safe_output_path(output_dir)
   FileUtils.mkdir_p(output_dir)
@@ -352,7 +389,7 @@ def rewritten_ldflags(ldflags, root)
   rewritten
 end
 
-def direct_link_argv(command_line, ldflags, root, expected_driver)
+def direct_link_argv(command_line, ldflags, root, expected_driver, target_cpu: "x64")
   command = command_line.sub(/\A\s*command\s*=\s*/, "").strip
   tokens = Shellwords.split(command)
   console = tokens.index("--console")
@@ -360,6 +397,9 @@ def direct_link_argv(command_line, ldflags, root, expected_driver)
   raise "link rule does not invoke the receipt-bound build driver" unless tokens.fetch(0) == expected_driver
   raise "link rule does not invoke stream.ts" unless tokens.fetch(console - 2) == File.join(root, "source", "scripts", "build", "stream.ts")
   raise "link rule is not the expected stream link mode" unless tokens.fetch(console - 1) == "link"
+  if target_cpu == "arm64" && tokens.any? { |token| token.match?(/x86_64|x86-64|x64|haswell/) }
+    raise "arm64 link rule contains an x86-specific argument"
+  end
 
   wrapped = tokens[(console + 1)..]
   raise "link rule does not contain the expected response-file placeholder" unless wrapped.include?("@$out.rsp")
@@ -687,10 +727,13 @@ parsed_ldflags = Shellwords.split(ldflags_line.sub(/\A\s*ldflags\s*=\s*/, "").st
 system_lolhtml_link = parsed_ldflags.include?("-llolhtml")
 if system_lolhtml_link
   raise "current Bun graph still links a private lol-html archive" if archives.any? { |record| record.fetch("path").include?("/lolhtml/") }
-  build_proof = verify_current_build_receipt!(build_receipt_path, root, version)
+  build_proof = verify_current_build_receipt!(build_receipt_path, root, version, closure_path: closure_path, target_cpu: target_cpu)
 else
   raise "--build-receipt is only valid for the current system lol-html graph" if build_receipt_path
   build_proof = nil
+end
+if target_cpu == "arm64"
+  require_arm64_outputs!(output, kit_output_dir, Agentlab.package_named("bun").directory)
 end
 rspfile_declared = rule_lines.any? { |line| line.start_with?("  rspfile =") }
 bootstrap_seed_wrapper_invoked = canonical_command.match?(%r{(?:^|/)seed/bun(?:\s|$)})
@@ -757,6 +800,7 @@ receipt_data = {
 if build_proof
   receipt_data["source_build"] = build_proof.slice("proof_kind", "receipt", "receipt_sha256", "source_closure_sha256")
   receipt_data["system_lolhtml_provider"] = build_proof.fetch("provider")
+  receipt_data["target"] = build_proof.fetch("target") if build_proof.key?("target")
 end
 
 content = JSON.pretty_generate(receipt_data) + "\n"
@@ -826,7 +870,7 @@ if kit_output_dir
   rsp_path = File.join(kit_root, "relink", "bun-profile.rsp")
   rsp_record = write_payload_file(rsp_path, rsp_content, kit_root, kind: "response-file")
   expected_driver = build_proof ? build_proof.fetch("driver_path") : File.join(root, "seed", "bun")
-  link_argv = direct_link_argv(command_line, parsed_ldflags, root, expected_driver)
+  link_argv = direct_link_argv(command_line, parsed_ldflags, root, expected_driver, target_cpu: build_proof&.dig("target", "cpu") || "x64")
   system_library_requirements = %w[libatomic.a libdl.so libgcc_s.so.1 libicudata.so libicui18n.so libicuuc.so libc.so libpthread.so libstdc++.so.6]
   system_library_requirements << build_proof.fetch("provider").fetch("soname") if build_proof
   link_command = {
@@ -890,12 +934,13 @@ if kit_output_dir
   write_json(manifest_path, payload_manifest)
   manifest_record = file_record(manifest_path, kit_root).merge("kind" => "payload-manifest", "mode" => "0644")
 
+  proof_platform = build_proof&.dig("target", "cpu") == "arm64" ? "Fedora 44 aarch64" : "Fedora 44 x86_64"
   readme = <<~TEXT
     Bun #{version} LGPL relink kit
 
     This archive contains the exact final-link object files, static archives, linker scripts,
     generated WebKit headers and their symlink targets, and the LGPL marker files retained by
-    the Fedora 44 x86_64 source-build proof. It does not contain the bootstrap Bun executable.
+    the #{proof_platform} source-build proof. It does not contain the bootstrap Bun executable.
 
     Run ./relink/relink.sh from an extracted kit on the matching Fedora toolchain. The command
     uses /usr/lib64/llvm21/bin/clang++ and Fedora's system libc, libpthread, libdl, libatomic,

@@ -29,7 +29,7 @@ class PlanBunSrpmSourcesTest < Minitest::Test
     assert_equal(
       {
         "native_node" => "direct-upstream-source-tags",
-        "npm" => "generated-original-archive-bundle",
+        "npm" => "generated-multi-target-original-archive-bundle",
         "lolhtml" => "fedora-system-provider",
         "relink" => "generated-build-output-payload"
       },
@@ -38,6 +38,7 @@ class PlanBunSrpmSourcesTest < Minitest::Test
     assert(plan.dig("delivery", "make_srpm_materializer_integrated"))
     assert(plan.dig("delivery", "make_srpm_checksum_verification_integrated"))
     assert_equal({ "native" => 18, "node" => 1, "npm" => 236, "cargo" => 0 }, plan.fetch("input_summary").slice("native", "node", "npm", "cargo"))
+    assert_equal(239, plan.dig("input_summary", "npm_union_manifest", "member_count"))
     assert_equal(22, plan.fetch("direct_sources").length)
     assert_equal(18, plan.fetch("direct_sources").count { |source| source.fetch("role") == "native-source" })
     assert_equal(1, plan.fetch("direct_sources").count { |source| source.fetch("role") == "node-headers" })
@@ -83,6 +84,6 @@ class PlanBunSrpmSourcesTest < Minitest::Test
     assert_includes(output, "Verified Bun 1.3.14 SRPM source plan")
     assert_includes(output, "22 direct sources")
     assert_includes(output, "1 generated sources")
-    assert_includes(output, "255 checked closure inputs")
+    assert_includes(output, "258 checked closure inputs")
   end
 end

@@ -27,14 +27,15 @@
 %global zlib_sha256 a0d2a5d122c84b56a793a1553a9c3327fb2eb7469bf7a86b79e3c7be5d92e8d6
 %global zstd_sha256 4b0bd1f0cfb25e61b9103c35f27395530ff5b4c0d2513a00fd745849e85ea52c
 %global node_headers_sha256 045e9bf477cd5db0ec67f8c1a63ba7f784dedfe2c581e3d0ed09b88e9115dd07
-%global npm_sources_sha256 38abcf51050008cb80a3b543d56aea0dd65e454b2bca25f85e782f5fe751d95f
+%global npm_sources_sha256 c8f251509523fe27a648e496df9d5a7ee564c07a8afc5d67c712489df2fee7b4
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
-%global source_staging_helper_sha256 77aa1f4c2cc929dd58bfef2a26d6480d3bd4f874c64ada0f9ed38541fea3dd67
-%global source_license_inventory_sha256 9913956eddb2a07eb386b3d717b0e601db987d904bd7a163053a0f57fdbc4dfc
+%global source_staging_helper_sha256 06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a
+%global arm64_release_local_closure_sha256 d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a
+%global source_license_inventory_sha256 6459ca6a7f0bc1aa26afdba27010cea6c191ab8183b4024a06499c0177116210
 %global source_license_audit_script_sha256 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
-%global final_linked_license_closure_sha256 7b71f7bc189a717879656d15eda72f47b9287d4c63017907c66395721d0e25aa
+%global final_linked_license_closure_sha256 b2236a6aefbc898f1e3f32ae3db56aa498c4e8e8f82f98f59149643629f9f1db
 %global final_linked_license_audit_script_sha256 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
-%global npm_code_generation_closure_sha256 bdcddc787e13d8c6e9579417010ce7db2cbf7b432b63116bd7ec548e5bae135e
+%global npm_code_generation_closure_sha256 4046d67c4ca5d3dbc3cfd9c80258bb3168cb20d3cb3d9274b01b1b54e928b9cc
 %global npm_code_generation_audit_script_sha256 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
@@ -44,7 +45,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.36%{?dist}
+Release:        0.0.37%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -75,7 +76,7 @@ Source18:       https://github.com/oven-sh/tinycc/archive/12882eee073cfe5c7621bc
 Source19:       https://github.com/zlib-ng/zlib-ng/archive/12731092979c6d07f42da27da673a9f6c7b13586.tar.gz#/zlib-655c6ecdb6fc9cd5.tar.gz
 Source20:       https://github.com/facebook/zstd/archive/f8745da6ff1ad1e7bab384bd1f9d742439278e99.tar.gz#/zstd-e010993a24072468.tar.gz
 Source21:       https://nodejs.org/dist/v24.3.0/node-v24.3.0-headers.tar.gz#/nodejs-d79d5920ee9b0fc1.tar.gz
-# Generated during repository-backed SRPM construction from the checked Bun lock closure.
+# Generated during repository-backed SRPM construction from the checked x64 and arm64 lock closures.
 Source22:       bun-%{version}-npm-sources.tar.gz
 # Checked machine-readable contract for the direct and bundled dependency sources.
 Source23:       bun-%{version}-release-local-source-closure.json
@@ -93,6 +94,8 @@ Source28:       audit-bun-final-linked-licenses
 Source29:       bun-%{version}-npm-code-generation-closure.json
 # Reproduces and verifies Source29 from the retained current source build.
 Source30:       audit-bun-npm-code-generation
+# Checked arm64 closure for deterministic Source22 union generation. %prep remains x64-only.
+Source31:       bun-%{version}-release-local-source-closure-arm64.json
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -201,6 +204,7 @@ echo "%{final_linked_license_closure_sha256}  %{SOURCE27}" | sha256sum -c -
 echo "%{final_linked_license_audit_script_sha256}  %{SOURCE28}" | sha256sum -c -
 echo "%{npm_code_generation_closure_sha256}  %{SOURCE29}" | sha256sum -c -
 echo "%{npm_code_generation_audit_script_sha256}  %{SOURCE30}" | sha256sum -c -
+echo "%{arm64_release_local_closure_sha256}  %{SOURCE31}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -239,8 +243,8 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.36 \
-  --date 2026-07-27 \
+  --rpm-release 0.0.37 \
+  --date 2026-07-28 \
   --check \
   --receipt "%{SOURCE25}"
 
@@ -384,6 +388,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.37
+- Generate the checked x64 and arm64 source union during configured-SCM SRPM delivery.
+
 * Mon Jul 27 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.36
 - Prove the private Zig source bootstrap on Fedora 44 aarch64.
 

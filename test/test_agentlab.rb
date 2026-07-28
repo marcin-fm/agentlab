@@ -2431,6 +2431,12 @@ class AgentlabTest < Minitest::Test
       ["bun: source-delivery proof receipt is missing or has wrong SHA-256"],
       Agentlab.validate_bun_source_delivery(package, invalid_stage, stages.fetch("dependency_closure"), "1.3.14", spec)
     )
+
+    data = Marshal.load(Marshal.dump(package.data))
+    data.dig("build_plan", "source_inputs", "release_local_staging", "npm_union")["member_count"] = 238
+    invalid_package = Agentlab::Package.new(directory: package.directory, manifest_path: "unused", data: data)
+    errors = Agentlab.validate_bun_source_delivery(invalid_package, data.dig("build_plan", "stages", "source_delivery"), data.dig("build_plan", "stages", "dependency_closure"), "1.3.14", spec)
+    assert_includes(errors, "bun: source-delivery npm union mismatch")
   end
 
   def test_validates_bun_lolhtml_rpm_cargo_receipt
@@ -2494,6 +2500,11 @@ class AgentlabTest < Minitest::Test
         spec
       )
     )
+
+    staging = Marshal.load(Marshal.dump(plan.fetch("source_inputs").fetch("release_local_staging")))
+    staging.fetch("npm_union")["member_count"] = 238
+    errors = Agentlab.validate_bun_dependency_staging(package, stages.fetch("dependency_staging"), stages.fetch("source_delivery"), stages.fetch("dependency_closure"), staging, "1.3.14", spec)
+    assert_includes(errors, "bun: dependency-staging npm union mismatch")
   end
 
   def test_validates_bun_source_license_inventory
@@ -2539,7 +2550,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.36", "--rpm-release 0.0.35")
+        spec.sub("--rpm-release 0.0.37", "--rpm-release 0.0.36")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2549,7 +2560,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--date 2026-07-27", "--date 2026-07-26")
+        spec.sub("--date 2026-07-28", "--date 2026-07-27")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -2820,6 +2831,22 @@ class AgentlabTest < Minitest::Test
     )
   end
 
+  def test_validates_bun_multi_architecture_source_delivery
+    source_package = Agentlab.package_named("bun")
+    spec = File.read(File.join(source_package.directory, "bun.spec"))
+    staging = source_package.data.dig("build_plan", "source_inputs", "release_local_staging")
+
+    assert_empty(Agentlab.validate_bun_multi_arch_source_delivery(source_package, staging, "1.3.14", spec))
+
+    mutated = Marshal.load(Marshal.dump(staging))
+    mutated.fetch("npm_union")["member_count"] = 238
+    errors = Agentlab.validate_bun_multi_arch_source_delivery(source_package, mutated, "1.3.14", spec)
+    assert_includes(errors, "bun: multi-architecture npm union metadata mismatch")
+
+    errors = Agentlab.validate_bun_multi_arch_source_delivery(source_package, staging, "1.3.14", spec.sub("Source31:       bun", "Source32:       bun"))
+    assert_includes(errors, "bun: spec does not declare the checked multi-architecture source delivery")
+  end
+
   def test_validates_bun_self_rebuild_receipts
     source_package = Agentlab.package_named("bun")
     Dir.mktmpdir do |directory|
@@ -2828,7 +2855,7 @@ class AgentlabTest < Minitest::Test
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
+      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -2883,7 +2910,7 @@ class AgentlabTest < Minitest::Test
         name = webkit.fetch(key)
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
-      %w[bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
+      %w[bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
