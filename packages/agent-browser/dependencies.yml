@@ -21,6 +21,14 @@ cargo:
   linux_x86_64_normal_build_candidates: 256
   resolver_only_records: 76
   final_linked_payload_verified: false
+  fedora_44_x86_64_proof:
+    build_id: 10784730
+    source_nvr: agent-browser-0.33.1-0.11.fc44.src.rpm
+    production_compile_verified: true
+    main_tests_passed: 1028
+    doctor_tests_passed: 2
+    cli_help_verified: true
+    intentional_final_gate_reached: true
   source_evidence:
     closure:
       file: agent-browser-0.33.1-cargo-closure.json

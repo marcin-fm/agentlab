@@ -19,7 +19,9 @@ in the vendor source because Cargo requires them for offline locked resolution.
 The deterministic vendor archive is generated at configured-SCM/SRPM time and
 is deliberately untracked. The checked closure, vendor receipt, license audit,
 and `cargo-vendor.txt` are tracked inputs; no bundled Provides, Fedora provider
-mapping, compilation receipt, or final aggregate SPDX expression is claimed.
+mapping, or final aggregate SPDX expression is claimed. Fedora 44 x86_64 COPR
+build `10784730` completes the production build, install, 1,028 main tests, two
+doctor tests, and CLI help before the intentional final evidence gate.
 
 The intended Fedora layout is a private package root at
 `%{_libexecdir}/agent-browser`, containing `bin/agent-browser`, `skills/`,
@@ -47,7 +49,8 @@ The exact applicable source texts are
 `cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt`, plus
 `cli/src/native/react/installHook.js`. The source candidate expression is kept
 in the generated license audit. Final linked Cargo and installed-payload license
-flags remain false until a compilation proof exists.
+flags remain false until the current build output is captured in a checked
+receipt and the aggregate expression is reviewed.
 
 Fedora exact-name and `/usr/bin/agent-browser` capability queries found no
 provider for Fedora 43, Fedora 44, or Rawhide. RPM Fusion repositories were
@@ -58,5 +61,6 @@ The still-blocked spec verifies the immutable source, lock, closure receipt,
 license audit, vendor manifest, and source auditor before using Fedora Cargo
 macros with the generated directory source. It installs only the application,
 skills, skill data, and executable-relative public command, never a crate-devel
-interface. The remaining gates are a Fedora/COPR compilation proof, final link
-and payload accounting, installed skill-layout proof, and Chromium runtime smoke.
+interface. The remaining gates are checked final link and payload accounting,
+the remaining target matrix, installed skill-layout proof, and Chromium runtime
+smoke.

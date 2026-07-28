@@ -2,7 +2,7 @@
 name: agent-browser
 status: blocked
 blockers:
-- The exact Cargo vendor closure is source-audited, but no Fedora/COPR compilation proof exists.
+- Fedora 44 x86_64 compiles and passes the full test suite, but the checked final evidence receipt and remaining target matrix do not yet exist.
 - The final aggregate SPDX expression for the statically linked Rust binary is not verified.
 - Fedora Chromium runtime integration is source-evidenced but not package-built or smoke-tested.
 - RPM Fusion metadata was unavailable for the duplicate check.
@@ -29,7 +29,7 @@ dependency_status:
     lockfile_sha256: afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb
     package: agent-browser
     version: 0.33.1
-    closure_verified: false
+    closure_verified: true
     source_closure_records: 331
     linux_x86_64_normal_build_candidates: 256
     resolver_only_records: 76
@@ -40,6 +40,12 @@ dependency_status:
     license_audit_sha256: 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
     auditor_sha256: 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
     remote_proof: compile_and_test_then_fail_closed
+    remote_proof_build: 10784730
+    remote_proof_target: fedora-44-x86_64
+    production_compile_verified: true
+    main_tests_passed: 1028
+    doctor_tests_passed: 2
+    intentional_final_gate_reached: true
   browser:
     package: chromium
     executable: /usr/bin/chromium-browser

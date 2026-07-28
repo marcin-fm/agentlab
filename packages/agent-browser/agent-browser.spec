@@ -8,7 +8,7 @@
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.11%{?dist}
+Release:        0.12%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # Apache-2.0 is the project source license. This disabled proof spec does not
@@ -24,6 +24,9 @@ Source5:        %{name}-%{version}-cargo-vendor.txt
 Source6:        audit-agent-browser-cargo-closure
 
 BuildRequires:  cargo-rpm-macros >= 24
+BuildRequires:  binutils
+BuildRequires:  chromium
+BuildRequires:  file
 BuildRequires:  ruby
 BuildRequires:  rubypick
 BuildRequires:  rubygem-json
@@ -84,6 +87,65 @@ install -d -m0700 .test-home
 export HOME="$PWD/.test-home"
 %cargo_test
 target/rpm/agent-browser --help >/dev/null
+
+license_file="$PWD/LICENSE.dependencies"
+binary=%{buildroot}%{_libexecdir}/agent-browser/bin/agent-browser
+public=%{buildroot}%{_bindir}/agent-browser
+payload=%{buildroot}%{_libexecdir}/agent-browser
+
+test -s "$license_file"
+echo 'AGENT_BROWSER_LICENSE_DEPENDENCIES_BEGIN'
+cat "$license_file"
+echo 'AGENT_BROWSER_LICENSE_DEPENDENCIES_END'
+sha256sum "$license_file"
+wc -l "$license_file"
+
+test -x "$binary"
+test -L "$public"
+test "$(readlink "$public")" = "%{_libexecdir}/agent-browser/bin/agent-browser"
+test -x "%{buildroot}$(readlink "$public")"
+test -d "$payload/skills"
+test -d "$payload/skill-data"
+(
+  cd %{buildroot}
+  find ./usr/bin/agent-browser ./usr/libexec/agent-browser ./usr/share/licenses/agent-browser -printf '%%y %%m %%s %%p %%l\n'
+) | LC_ALL=C sort | tee "$PWD/.agentlab-installed-payload.txt"
+sha256sum "$PWD/.agentlab-installed-payload.txt"
+(
+  cd %{buildroot}
+  find ./usr/libexec/agent-browser ./usr/share/licenses/agent-browser -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum
+) | tee "$PWD/.agentlab-installed-files.txt"
+sha256sum "$PWD/.agentlab-installed-files.txt"
+
+file "$binary"
+readelf -h "$binary"
+readelf -d "$binary" | tee "$PWD/.agentlab-readelf-dynamic.txt"
+if grep -Eq 'RPATH|RUNPATH' "$PWD/.agentlab-readelf-dynamic.txt"; then
+  echo 'agent-browser proof found a forbidden RPATH or RUNPATH' >&2
+  exit 1
+fi
+ldd -r "$binary" | tee "$PWD/.agentlab-ldd.txt"
+if grep -Fq 'not found' "$PWD/.agentlab-ldd.txt"; then
+  echo 'agent-browser proof found an unresolved dynamic dependency' >&2
+  exit 1
+fi
+
+runtime_home=$(mktemp -d /tmp/agent-browser-copr-check.XXXXXX)
+export HOME="$runtime_home"
+export AGENT_BROWSER_SOCKET_DIR="$runtime_home/sockets"
+install -d -m0700 "$AGENT_BROWSER_SOCKET_DIR"
+cleanup_agent_browser_proof() {
+  "$binary" --session copr-check close >/dev/null 2>&1 || :
+  rm -rf "$runtime_home"
+}
+trap cleanup_agent_browser_proof EXIT
+echo 'AGENT_BROWSER_CHROMIUM_SMOKE_BEGIN'
+"$binary" --session copr-check --executable-path /usr/bin/chromium-browser --json open about:blank
+"$binary" --session copr-check --json get url
+"$binary" --session copr-check close
+echo 'AGENT_BROWSER_CHROMIUM_SMOKE_END'
+cleanup_agent_browser_proof
+trap - EXIT
 popd >/dev/null
 %endif
 echo 'agent-browser proof intentionally fails after compile/tests: final linked-license, installed-payload, and Chromium runtime gates remain unproven.' >&2
@@ -100,6 +162,9 @@ exit 1
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.12
+- Emit linked-license, installed-payload, and system-Chromium proof evidence.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.11
 - Export the isolated home directory for Cargo tests.
 
