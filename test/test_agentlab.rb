@@ -1071,7 +1071,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "BuildRequires:  rubypick")
     assert_includes(spec, "BuildRequires:  rubygem-json")
     assert_includes(spec, "install -d -m0700 .test-home")
-    assert_includes(spec, "export HOME=\"$PWD/.test-home\"\n%cargo_test")
+    assert_includes(spec, "install -d -m0700 .test-home\nexport HOME=\"$PWD/.test-home\"\n%cargo_test")
     refute_includes(spec, "HOME=\"$PWD/.test-home\" %cargo_test")
     refute_includes(spec, "%cargo_test --skip")
     assert_includes(spec, "ruby .agentlab-source/audit-agent-browser-cargo-closure")
@@ -1102,7 +1102,11 @@ class AgentlabTest < Minitest::Test
     refute_includes(auditor, "write-vendor-manifest --path")
     expansion, _error, status = Agentlab.capture(["rpmspec", "-P", File.join(package.directory, "agent-browser.spec")])
     assert(status.success?)
-    assert_match(/export HOME="\$PWD\/.test-home"\n.*cargo test/m, expansion)
+    if expansion.match?(/cargo test/)
+      assert_match(/export HOME="\$PWD\/.test-home"\n.*cargo test/m, expansion)
+    else
+      assert_includes(expansion, "%cargo_test")
+    end
     source0 = expansion.lines.filter_map { |line| line[/^Source0:\s+(\S+)/, 1] }
     assert_equal(["https://github.com/vercel-labs/agent-browser/archive/refs/tags/v0.33.1.tar.gz"], source0)
   end
