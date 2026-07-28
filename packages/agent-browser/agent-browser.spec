@@ -8,7 +8,7 @@
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.7%{?dist}
+Release:        0.8%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # Apache-2.0 is the project source license. This disabled proof spec does not
@@ -26,6 +26,7 @@ Source6:        audit-agent-browser-cargo-closure
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  ruby
 BuildRequires:  rubypick
+BuildRequires:  rubygem-json
 BuildRequires:  zstd
 Requires:       chromium
 
@@ -97,6 +98,9 @@ exit 1
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.8
+- Require JSON support for the Cargo vendor verifier.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.7
 - Require the Ruby command selector for the Cargo vendor verifier.
 
