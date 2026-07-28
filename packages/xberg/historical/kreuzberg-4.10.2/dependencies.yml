@@ -1,0 +1,107 @@
+target_release: 4.10.2
+package_outputs:
+  - kreuzberg
+  - nodejs-kreuzberg
+source_inputs:
+  source_archive:
+    url: https://github.com/kreuzberg-dev/kreuzberg-lts/archive/refs/tags/v4.10.2.tar.gz
+    sha256: 2bd9c13744a8105b469c7b0d68d6574e9d29ccd8fa08f2bb93261aa058f17108
+  node_types:
+    url: https://registry.npmjs.org/@types/node/-/node-26.1.1.tgz
+    sha256: cb0bc3624d2e6bc233ec332a3aea6ac317c0aadb3301bfb797a34864546c1401
+  undici_types:
+    url: https://registry.npmjs.org/undici-types/-/undici-types-8.3.0.tgz
+    sha256: 07a721cb2cd0dd798c24757de34d14e8b640ff8fddef85d662e00b392562a1f2
+  node_native_loader:
+    url: https://raw.githubusercontent.com/kreuzberg-dev/kreuzberg-lts/228f6842ea56de911b0035c55fc878e18863ec14/crates/kreuzberg-node/index.js
+    commit: 228f6842ea56de911b0035c55fc878e18863ec14
+    sha256: 69ade1c16be8b5860bfd65726606ba8ad03869c104038ce1496f5c511529db41
+    role: exact upstream-generated NAPI-RS loader for the adjacent local addon
+  calamine_date_fixture:
+    path: kreuzberg-date-xlsx-fixture
+    role: deterministic local XLSX smoke fixture generator
+system_dependencies:
+  nodejs:
+    minimum: "22"
+    state: available
+  onnxruntime:
+    state: available
+    fedora_43: 1.20.1
+    fedora_44: 1.22.2
+    integration: ort load-dynamic and ORT_DYLIB_PATH discovery
+  tesseract:
+    state: available
+  pdfium:
+    state: available
+    required_capability: pkgconfig(pdfium) >= 5.0
+    incompatible_fedora_package: deepin-pdfium
+    reason: deepin-pdfium exports libdeepin-pdfium and a wrapper API, not libpdfium and the FPDF API.
+    validated_release: 146.0.7678.0
+    copr_build: 10751847
+    copr_matrix: fedora_43_fedora_44_rawhide_x86_64_aarch64_succeeded
+    x86_64_rpm_sha256: b5c7dc1e180c385e6929d8597eab1275e3bf607cb2e6735e7da8f31717158772
+    source_path: /srv/tmp/agentlab-kreuzberg/repos/f44
+node_runtime_dependencies:
+  state: none
+  rationale: The native N-API loader does not import @emnapi/runtime, and the generated CLI is patched to execute the RPM-owned /usr/bin/kreuzberg directly.
+rust_workspace:
+  edition: "2024"
+  minimum_rust: "1.91"
+  selected_members:
+    - crates/kreuzberg
+    - crates/kreuzberg-cli
+    - crates/kreuzberg-ffi
+    - crates/kreuzberg-node
+    - crates/kreuzberg-paddle-ocr
+    - crates/kreuzberg-pdfium-render
+    - crates/kreuzberg-tesseract
+  excluded_surfaces:
+    - Python
+    - PHP
+    - WASM
+    - Elixir
+    - repository e2e harnesses
+build_adjustments:
+  pdfium: Replace bundled-pdfium with system-pdfium for the CLI, Node binding, and FFI crate.
+  onnxruntime: Replace download-binaries feature edges with load-dynamic.
+  tesseract: Disable the default source-download feature and link dynamically to Fedora Tesseract and Leptonica.
+  feature_scope: Preserve documented Node extraction, OCR, PaddleOCR, layout, embeddings, and tree-sitter functionality while omitting API, MCP, OpenTelemetry, and Liter LLM server-only surfaces.
+  target_scope: Remove wasm32-only dependency blocks from the selected native Linux crates before Fedora Cargo dependency generation.
+  node_native_loader: Install the Fedora-built N-API addon beside the exact upstream-generated loader and generated TypeScript outputs.
+  cli: Install the source-built Rust CLI as /usr/bin/kreuzberg and patch the npm CLI proxy to execute it directly.
+closure_audit:
+  audited_release: 4.10.2
+  production_build_sources_verified: true
+  test_sources_verified: true
+  cargo_sources_verified: true
+  node_sources_verified: true
+  system_pdfium_verified: true
+  system_onnxruntime_verified: true
+  licenses_verified: true
+  native_sources_verified: true
+  generated_sources_verified: true
+  bundled_provides_verified: true
+  upstream_contact_recorded: true
+  upstream_contact: https://github.com/kreuzberg-dev/kreuzberg-lts/commit/228f6842ea56de911b0035c55fc878e18863ec14
+  offline_verified: true
+  retained_0_0_5_fedora_43_application: build_10739044_succeeded_x86_64_and_aarch64
+  retained_0_0_5_fedora_44_application: build_10739040_succeeded_x86_64_and_aarch64
+  retained_0_0_5_dependency_receipts: exact_252_of_252_package_chroot_pairs_succeeded
+  retained_0_0_5_node_buildrequires_correction: proven_in_all_four_application_chroots
+  aarch64_application: native_checks_and_node_napi_smokes_succeeded_on_f43_and_f44
+  inspected_payloads: representative_x86_64_and_aarch64_cli_node_pairs_have_expected_architecture_and_no_rpath_or_runpath
+  license_accounting: aggregate_spdx_and_exact_build_generated_394_row_inventories
+  package_rpmlint: pending_current_0_0_8_artifacts
+  forensic_license_collector: removed
+  application_patch_stack: 20_single_concern_patches_zero_fuzz_equivalent
+  imported_dependency_records: 63
+  imported_dependency_patch_members_verified: 40
+  imported_dependency_matrix: dependency-finalization.yml
+  parser_subset_verified: true
+  parser_archive_records: 293
+  parser_excluded_records: 13
+  parser_provider_build: 10768304
+  parser_language_count_documented_upstream: 248
+  receipt: reproducibility.yml
+gates:
+  - Complete the current 0.0.8 six-cell build and retain binary payload and package-level rpmlint evidence.

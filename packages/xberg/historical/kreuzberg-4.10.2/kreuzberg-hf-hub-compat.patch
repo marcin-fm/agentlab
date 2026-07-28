@@ -1,0 +1,106 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Adapt model downloads to Fedora hf-hub
+Original-upstream-author: Na'aman Hirschfeld <nhirschfeld@gmail.com>
+Upstream-commit: https://github.com/kreuzberg-dev/kreuzberg/commit/8fa32df7d7960652a0cd3d9bbee9915c047e5125
+
+Adapt the v4.10.2 hf-hub 1.0 calls to Fedora's 0.4.3 API and feature names.
+The ApiBuilder::from_env() behavior is derived from the later upstream commit
+above; the API downgrade and error mapping are Fedora-specific and are not an
+exact backport. Retain the release's required-file errors and optional-file
+fallbacks.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -311 +311 @@
+-hf-hub = { version = "1.0", default-features = false, features = ["blocking", "rustls-tls"], optional = true }
++hf-hub = { version = "0.4.3", default-features = false, features = ["ureq", "rustls-tls"], optional = true }
+@@ -319 +319 @@
+-hf-hub = { version = "1.0", default-features = false, features = ["blocking", "rustls-tls"], optional = true }
++hf-hub = { version = "0.4.3", default-features = false, features = ["ureq", "rustls-tls"], optional = true }
+diff --git a/crates/kreuzberg/src/embeddings/mod.rs b/crates/kreuzberg/src/embeddings/mod.rs
+--- a/crates/kreuzberg/src/embeddings/mod.rs
++++ b/crates/kreuzberg/src/embeddings/mod.rs
+@@ -398,8 +398,5 @@ fn download_model_files(
+-    let client = hf_hub::HFClient::builder()
+-        .cache_dir(cache_directory.to_path_buf())
++    let api = hf_hub::api::sync::ApiBuilder::from_env()
++        .with_cache_dir(cache_directory.to_path_buf())
+         .build()
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let api = hf_hub::HFClientSync::from_inner(client)
+-        .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let (owner, name) = hf_hub::split_id(repo_name);
+-    let repo = api.model(owner, name);
++    let repo = api.model(repo_name.to_string());
+@@ -420,8 +413,4 @@ fn download_model_files(
+-    let model_path = repo
+-        .download_file()
+-        .filename(model_file.to_string())
+-        .send()
+-        .map_err(|e| {
+-            let hint = if matches!(e, hf_hub::HFError::CacheLockTimeout { .. }) {
++    let model_path = repo.get(model_file).map_err(|e| {
++            let hint = if matches!(e, hf_hub::api::sync::ApiError::LockAcquisition(_)) {
+                 lock_acquisition_hint(cache_directory, repo_name)
+             } else {
+@@ -448,23 +429,11 @@ fn download_model_files(
+-    let tokenizer_path = repo
+-        .download_file()
+-        .filename("tokenizer.json".to_string())
+-        .send()
++    let tokenizer_path = repo.get("tokenizer.json")
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to download tokenizer.json: {e}")))?;
+ 
+-    let config_path = repo
+-        .download_file()
+-        .filename("config.json".to_string())
+-        .send()
++    let config_path = repo.get("config.json")
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to download config.json: {e}")))?;
+ 
+-    let special_tokens_path = repo
+-        .download_file()
+-        .filename("special_tokens_map.json".to_string())
+-        .send()
++    let special_tokens_path = repo.get("special_tokens_map.json")
+         .unwrap_or_else(|_| std::path::PathBuf::new());
+ 
+-    let tokenizer_config_path = repo
+-        .download_file()
+-        .filename("tokenizer_config.json".to_string())
+-        .send()
++    let tokenizer_config_path = repo.get("tokenizer_config.json")
+         .unwrap_or_else(|_| std::path::PathBuf::new());
+@@ -626,8 +607,5 @@ pub fn download_model(
+-    let client = hf_hub::HFClient::builder()
+-        .cache_dir(cache_directory)
++    let api = hf_hub::api::sync::ApiBuilder::from_env()
++        .with_cache_dir(cache_directory)
+         .build()
+         .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let api = hf_hub::HFClientSync::from_inner(client)
+-        .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to create HF API client: {e}")))?;
+-    let (owner, name) = hf_hub::split_id(repo_name);
+-    let repo = api.model(owner, name);
++    let repo = api.model(repo_name.to_string());
+@@ -643 +621 @@ pub fn download_model(
+-        match repo.download_file().filename((*file).to_string()).send() {
++        match repo.get(file) {
+diff --git a/crates/kreuzberg/src/model_download.rs b/crates/kreuzberg/src/model_download.rs
+--- a/crates/kreuzberg/src/model_download.rs
++++ b/crates/kreuzberg/src/model_download.rs
+@@ -13,8 +13,6 @@ use sha2::{Digest, Sha256};
+-    let api = hf_hub::HFClientSync::new().map_err(|e| format!("Failed to initialize HuggingFace Hub API: {e}"))?;
++    let api = hf_hub::api::sync::ApiBuilder::from_env()
++        .build()
++        .map_err(|e| format!("Failed to initialize HuggingFace Hub API: {e}"))?;
+ 
+-    let (owner, name) = hf_hub::split_id(repo_id);
+-    let repo = api.model(owner, name);
+-    let cached_path = repo
+-        .download_file()
+-        .filename(remote_filename.to_string())
+-        .send()
++    let repo = api.model(repo_id.to_string());
++    let cached_path = repo.get(remote_filename)

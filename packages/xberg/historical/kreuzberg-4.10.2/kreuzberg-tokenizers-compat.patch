@@ -1,0 +1,46 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Adapt embeddings to Fedora tokenizers
+
+Use Fedora's tokenizers release and its infallible special-token API.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -286 +286 @@
+-tokenizers = { version = "0.23.1", optional = true, default-features = false, features = ["http", "fancy-regex"] }
++tokenizers = { version = "0.22.2", optional = true, default-features = false, features = ["http", "fancy-regex"] }
+diff --git a/crates/kreuzberg/src/embeddings/mod.rs b/crates/kreuzberg/src/embeddings/mod.rs
+--- a/crates/kreuzberg/src/embeddings/mod.rs
++++ b/crates/kreuzberg/src/embeddings/mod.rs
+@@ -267,7 +267,5 @@ fn create_tokenizer(
+-                tokenizer
+-                    .add_special_tokens([AddedToken {
+-                        content: content.to_string(),
+-                        special: true,
+-                        ..Default::default()
+-                    }])
+-                    .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to add special token: {e}")))?;
++                tokenizer.add_special_tokens(&[AddedToken {
++                    content: content.to_string(),
++                    special: true,
++                    ..Default::default()
++                }]);
+@@ -398,10 +397,8 @@ fn create_tokenizer(
+-                tokenizer
+-                    .add_special_tokens([AddedToken {
+-                        content: content.to_string(),
+-                        special: true,
+-                        single_word,
+-                        lstrip,
+-                        rstrip,
+-                        normalized,
+-                    }])
+-                    .map_err(|e| crate::KreuzbergError::embedding(format!("Failed to add special token: {e}")))?;
++                tokenizer.add_special_tokens(&[AddedToken {
++                    content: content.to_string(),
++                    special: true,
++                    single_word,
++                    lstrip,
++                    rstrip,
++                    normalized,
++                }]);

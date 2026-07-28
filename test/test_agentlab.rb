@@ -1023,14 +1023,21 @@ class AgentlabTest < Minitest::Test
     )
   end
 
-  def test_copr_makefile_exposes_agentlab_dependencies_to_kreuzberg_source_builds
+  def test_xberg_is_blocked_and_kreuzberg_is_not_wired_for_source_generation
     makefile = File.read(File.expand_path("../.copr/Makefile", __dir__))
+    package = Agentlab.package_named("xberg")
+    spec = File.read(File.join(package.directory, "xberg.spec"))
 
-    assert_includes(makefile, "kreuzberg.spec)")
-    assert_includes(makefile, ". /etc/os-release")
-    assert_includes(makefile, "fedora-$$fedora_release-$$arch/")
-    assert_includes(makefile, "/etc/yum.repos.d/agentlab-copr.repo")
-    assert_includes(makefile, "skip_if_unavailable=0")
+    refute_includes(makefile, "kreuzberg.spec)")
+    assert_equal("blocked", package.status)
+    assert_equal(false, package.data.dig("copr", "enabled"))
+    assert_includes(spec, "Name:           xberg")
+    assert_includes(spec, "Version:        1.0.1")
+    assert_includes(spec, "%global source_sha256 a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6")
+    assert_match(/%prep.*exit 1/m, spec)
+    refute_includes(spec, "%autosetup")
+    retirement = YAML.safe_load_file(File.expand_path("../archived/kreuzberg/retirement.yml", __dir__))
+    assert_equal("kreuzberg", retirement.fetch("name"))
   end
 
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions

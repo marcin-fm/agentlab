@@ -1,0 +1,14 @@
+--- a/crates/kreuzberg-ffi/build.rs
++++ b/crates/kreuzberg-ffi/build.rs
+@@ -10,6 +10,11 @@
+ }
+ 
+ fn run() -> Result<(), String> {
++    println!("cargo:rerun-if-env-changed=KREUZBERG_SKIP_FFI_ARTIFACTS");
++    if env::var_os("KREUZBERG_SKIP_FFI_ARTIFACTS").is_some() {
++        return Ok(());
++    }
++
+     let crate_dir = env::var("CARGO_MANIFEST_DIR").map_err(|_| "CARGO_MANIFEST_DIR not set".to_string())?;
+ 
+     let config =

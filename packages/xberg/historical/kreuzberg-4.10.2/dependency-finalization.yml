@@ -1,0 +1,139 @@
+schema: kreuzberg-dependency-finalization/v1
+generated: "2026-07-17"
+package_count: 63
+inventory_exclusions: [rust-hayro-jpeg2000, rust-fearless_simd]
+supplemental_f43_providers:
+  - {package: rust-fearless_simd, version_release: 0.4.0-1.fc43, x86_64_build: 10738548, aarch64_build: 10738498, state: succeeded}
+  - {package: rust-hayro-jpeg2000, version_release: 0.3.5-1.fc43, x86_64_build: 10738550, aarch64_build: 10738502, state: succeeded}
+evidence:
+  f43_source_manifest: {path: /srv/tmp/agentlab-kreuzberg/final-f43/source-manifest.tsv, sha256: 4a75226ee0a0187d12f7c5f5e2e3a4ae3ac7a634f3fe77d3eebbe19791a8a6d0}
+  f43_repo_manifest: {path: /srv/tmp/agentlab-kreuzberg/final-f43/repo-manifest.tsv, sha256: 9f058637d8362435a37d95ba8d79ae670ce8d003feec4960d3068dfebd33b13a}
+  f44_manifest: {path: /srv/tmp/agentlab-kreuzberg/final-f44/manifest.tsv, sha256: 57875ef73b20eee11166dab63a3db6d768c08a81c6703b73338fce109fb0986a}
+  current_srpm_manifest: {path: /srv/tmp/agentlab-kreuzberg/current-proof-srpms/manifest.tsv, records: 126, sha256: fb2c05b87255e450a523ba5ca63af99c5e4adfdb71e8cc08acdcf2a61d29ee5b}
+  current_srpm_aggregate_sha256: 3881074390d84906555428543ebdf08a232eb5425c46f63c341742ca5a989fd6
+  copr_project: marcin/agentlab-aarch64-proof-20260717-v1
+  copr_chroots: [fedora-43-x86_64, fedora-43-aarch64, fedora-44-x86_64, fedora-44-aarch64]
+  architecture: x86_64-and-aarch64
+current_application:
+  version_release: 4.10.2-0.0.8
+  status: enabled
+  copr: enabled
+  pdfium_provider: {build: 10751847, state: succeeded_all_six_chroots}
+  parser_provider: {build: 10768304, records: 293, exclusions: 13, state: succeeded_all_six_chroots}
+  node_loader: {upstream_commit: 228f6842ea56de911b0035c55fc878e18863ec14, sha256: 69ade1c16be8b5860bfd65726606ba8ad03869c104038ce1496f5c511529db41}
+  remaining_gate: current_six_cell_application_build_and_artifact_rpmlint
+defaults:
+  status: blocked
+  copr: disabled
+  retained_manifest_artifacts: [f43, f44]
+  current_exact_spec_clean_build: succeeded_in_all_four_copr_chroots
+  package_rpmlint: not_retained
+  aarch64: proven
+  source_status: retained_f43_f44_srpm_evidence
+  license_status: spec_declared_aggregate_reviewed_full_texts_missing
+  patch_status: exact_current_srpm_and_native_build_succeeded
+  current_spec_state: exact_current_copr_build_succeeded
+  blocker_codes: [RPMLINT_UNRETAINED]
+row_baseline:
+  state: historical_pre_proof_finalization_metadata
+  superseded_blocker_codes: [BUILD_NOT_RUN, AARCH64_UNPROVEN, F43_PATCH, LOPDF_REPAIRED, NAPI_UNBUILT, NAPI_CTOR, PRERELEASE_MAPPING]
+  note: Row blocker codes preserve the pre-proof audit. Current package manifests, published provider builds, and the current_application overlay are authoritative for publication gates.
+blocker_codes:
+  BUILD_NOT_RUN: current exact package specs were not clean-built in this pass
+  RPMLINT_UNRETAINED: package-level rpmlint evidence is not retained
+  AARCH64_UNPROVEN: retained evidence is x86_64 only
+  SOURCE_HOSTING: immutable public source hosting is unresolved
+  LICENSE_TEXT: full third-party license text evidence is not shipped
+  PARSER_HOSTING: immutable hosting for the 295-parser subset is unresolved
+  IMAGEPROC_FIXTURE: imageproc fixture/source evidence is unresolved
+  NAPI_LICENSE: supplemental MIT license source is pinned but not published in the normal crate source
+  NAPI_UNBUILT: NAPI package repair is recorded but unbuilt
+  CLIPPER_SYSTEM: system polyclipping provider and unbundled payload require final validation
+  ORT_OFFLINE: offline/system ONNX Runtime linkage requires final validation
+  PRERELEASE_MAPPING: ort prerelease crate-to-RPM mapping requires final validation
+  F43_PATCH: F43 compatibility patch is preserved but not rebuilt in this pass
+  NAPI_CTOR: NAPI backend ctor patch is preserved but unbuilt
+special:
+  parser: {package: rust-tree-sitter-language-pack1, licensed_records: 293, exclusions: 13, subset_sha256: 84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b, copr_build: 10768304, state: succeeded_all_six_chroots, blocker_codes: []}
+  published_napi_license_sources:
+    rust-napi-sys3: {commit: dea608eae7481a47d64aab563a2ab5cdd8eda03c, tag: napi-sys-v3.2.2, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740891, state: exact_release_source_verified_six_cell_copr_success}
+    rust-napi-derive-backend5: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, tag: napi-derive-backend-v5.1.1, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740892, state: exact_release_source_verified_six_cell_copr_success}
+    rust-napi3: {commit: 1ac467e06e71f78b983630926c7908894d08e496, tag: napi-v3.10.3, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740937, state: exact_release_source_verified_six_cell_copr_success}
+    rust-napi-derive3: {commit: 2785de583a97e49adea8194090fca2ee12f067c8, tag: napi-derive-v3.5.9, sha256: 3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215, copr_build: 10740942, state: exact_release_source_verified_six_cell_copr_success}
+validation:
+  package_records_verified: 63
+  declared_patch_members_checked: 40
+  retained_srpm_patch_bytes: all_match
+  repository_package_check: passed_120_packages
+  current_exact_specs_rebuilt: true
+  exact_package_target_pairs: 126
+  exact_package_chroot_pairs: 252
+  exact_package_chroot_pairs_succeeded: 252
+  supplemental_f43_provider_chroot_pairs_succeeded: 4
+  published_napi_chroot_pairs_succeeded: 24
+  published_napi_x86_64_artifacts_verified: 246
+  checked: "2026-07-18"
+rows:
+  - {package: rust-biblatex0.12, source_manifest_row: 2, crate_version: 0.12.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-biblib0.7, source_manifest_row: 3, crate_version: 0.7.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_biblib-rstest-0.26.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-bufrw0.2, source_manifest_row: 4, crate_version: 0.2.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_bufrw-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-caseless0.2, source_manifest_row: 5, crate_version: 0.2.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-cbc0.2, source_manifest_row: 6, crate_version: 0.2.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-cfb0.14, source_manifest_row: 7, crate_version: 0.14.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_cfb-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-cfb0.7, source_manifest_row: 8, crate_version: 0.7.3, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-clipper-sys, source_manifest_row: 9, crate_version: 0.8.0, source_status: exact_crates_io_release_system_polyclipping, license_status: isc_wrapper_and_fedora_bsl_provider_verified, patch_status: system_polyclipping_and_test_lifetimes_documented, current_spec_state: enabled_system_polyclipping_surface, blocker_codes: []}
+  - {package: rust-codepage-strings1, source_manifest_row: 10, crate_version: 1.0.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-compressed-rtf1, source_manifest_row: 11, crate_version: 1.0.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-comrak0.54, source_manifest_row: 12, crate_version: 0.54.0, source_status: retained_f43_f43_patched_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_and_f43_no_bon, current_spec_state: f43_compatibility_patch_not_rebuilt_in_this_pass, blocker_codes: [F43_PATCH, BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-convert_case0.11, source_manifest_row: 13, crate_version: 0.11.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_convert_case-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-dbase0.8, source_manifest_row: 14, crate_version: 0.8.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-ecb0.2, source_manifest_row: 15, crate_version: 0.2.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-entities1, source_manifest_row: 16, crate_version: 1.0.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-fast_image_resize6, source_manifest_row: 17, crate_version: 6.0.0, source_status: crates_io_release_archive, license_status: both_upstream_texts_verified, patch_status: declared_fast_image_resize-fix-metadata.diff, current_spec_state: fresh_f44_x86_64_fixture_free_build_passed, blocker_codes: []}
+  - {package: rust-finl_unicode1, source_manifest_row: 18, crate_version: 1.4.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_finl_unicode-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-fmt2io1, source_manifest_row: 19, crate_version: 1.0.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-geo-clipper0.9, source_manifest_row: 20, crate_version: 0.9.0, source_status: exact_crates_io_release, license_status: exact_isc_text, patch_status: none_declared, current_spec_state: enabled_system_clipper_consumer, blocker_codes: []}
+  - {package: rust-geo-types0.7, source_manifest_row: 21, crate_version: 0.7.19, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-hashify0.2, source_manifest_row: 22, crate_version: 0.2.9, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_hashify-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-hayro-ccitt0.3, source_manifest_row: 23, crate_version: 0.3.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-hayro-jbig2_0.3, source_manifest_row: 24, crate_version: 0.3.0, source_status: retained_f43_f43_patched_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_and_f43_no_fearless_simd, current_spec_state: f43_compatibility_patch_not_rebuilt_in_this_pass, blocker_codes: [F43_PATCH, BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-html-to-markdown-rs3, source_manifest_row: 27, crate_version: 3.8.3, source_status: exact_crates_io_release, license_status: exact_release_mit_text, patch_status: regex_minimum_and_missing_workspace_fixtures_documented, current_spec_state: enabled_default_metadata_plus_testkit_surface, blocker_codes: []}
+  - {package: rust-imageproc0.27, source_manifest_row: 28, crate_version: 0.27.0, source_status: immutable_external_fixture_input, license_status: spec_declared_aggregate_reviewed, patch_status: declared_imageproc-fix-metadata-auto.diff, current_spec_state: fixture_blocked_unbuilt, blocker_codes: [IMAGEPROC_FIXTURE, BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-infer0.19, source_manifest_row: 29, crate_version: 0.19.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_fedora_doctests, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-jetscii0.5, source_manifest_row: 30, crate_version: 0.5.3, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_jetscii-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-jotdown0.10, source_manifest_row: 31, crate_version: 0.10.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-lopdf0.44, source_manifest_row: 32, crate_version: 0.44.0, source_status: crates_io_release_archive, license_status: upstream_mit_text_verified, patch_status: declared_metadata_upstream_time_fix_and_fedora_grammar, current_spec_state: fresh_f44_x86_64_default_tuple_build_passed, blocker_codes: []}
+  - {package: rust-lru0.18, source_manifest_row: 33, crate_version: 0.18.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-mail-parser0.11, source_manifest_row: 34, crate_version: 0.11.5, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-maybe-owned0.3, source_manifest_row: 35, crate_version: 0.3.4, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-nalgebra0.35, source_manifest_row: 36, crate_version: 0.35.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_nalgebra-fix-metadata.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-napi-build2, source_manifest_row: 37, crate_version: 2.3.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-napi-derive-backend5, source_manifest_row: 38, crate_version: 5.1.1, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: private_semver_and_ctor_repairs_applied_fuzz_zero, current_spec_state: copr_build_10740892_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
+  - {package: rust-napi-derive3, source_manifest_row: 39, crate_version: 3.5.9, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: ctor_0_6_repair_applied_fuzz_zero, current_spec_state: copr_build_10740942_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
+  - {package: rust-napi-sys3, source_manifest_row: 40, crate_version: 3.2.2, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: none_declared, current_spec_state: copr_build_10740891_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
+  - {package: rust-napi3, source_manifest_row: 41, crate_version: 3.10.3, source_status: exact_static_registry_archive_verified, license_status: exact_release_supplemental_mit_verified, patch_status: split_ctor_and_wasm_metadata_repairs_applied_fuzz_zero, current_spec_state: copr_build_10740937_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
+  - {package: rust-oem_cp1, source_manifest_row: 42, crate_version: 1.3.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_oem_cp-fix-metadata-auto.diff, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-org0.3, source_manifest_row: 43, crate_version: 0.3.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-ort-sys, source_manifest_row: 44, crate_version: 2.0.0-rc.12, source_status: exact_static_registry_archive_verified, license_status: upstream_mit_or_apache_texts_verified, patch_status: none_declared, current_spec_state: copr_build_10748335_succeeded_all_six_chroots_with_artifact_rpmlint, blocker_codes: []}
+  - {package: rust-ort2, source_manifest_row: 45, crate_version: 2.0.0-rc.12, source_status: exact_static_registry_archive_verified, license_status: upstream_mit_or_apache_texts_verified, patch_status: fedora_ndarray_and_system_onnxruntime_applied_fuzz_zero, current_spec_state: fresh_f44_x86_64_system_onnxruntime_build_passed_with_artifact_rpmlint, blocker_codes: [AARCH64_UNPROVEN]}
+  - {package: rust-outlook-pst1, source_manifest_row: 46, crate_version: 1.2.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-percent-encoding-rfc3986_0.1, source_manifest_row: 47, crate_version: 0.1.3, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-phf0.14, source_manifest_row: 48, crate_version: 0.14.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-phf_generator0.14, source_manifest_row: 49, crate_version: 0.14.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_no_benchmarks, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-phf_macros0.14, source_manifest_row: 50, crate_version: 0.14.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-phf_shared0.14, source_manifest_row: 51, crate_version: 0.14.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-piston-float1, source_manifest_row: 52, crate_version: 1.0.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-rake0.3, source_manifest_row: 53, crate_version: 0.3.6, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-roman-numerals-rs3, source_manifest_row: 54, crate_version: 3.1.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-safe_arch1, source_manifest_row: 55, crate_version: 1.0.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-serde_toon_format0.1, source_manifest_row: 56, crate_version: 0.1.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-serde_yaml_ng0.10, source_manifest_row: 57, crate_version: 0.10.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-sevenz-rust2_0.20, source_manifest_row: 58, crate_version: 0.20.2, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-simba0.10, source_manifest_row: 59, crate_version: 0.10.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-text-splitter0.32, source_manifest_row: 60, crate_version: 0.32.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_fedora_tokenizers_and_tests, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-tree-sitter-language-pack1, source_manifest_row: 61, crate_version: 1.12.5, source_status: repository_generated_licensed_subset_archive, license_status: 293_parser_subset_reviewed, patch_status: declared_offline_relaxed_static_subset, current_spec_state: copr_build_10768304_succeeded_all_six_chroots, blocker_codes: []}
+  - {package: rust-utf16string0.2, source_manifest_row: 62, crate_version: 0.2.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-vecmath1, source_manifest_row: 63, crate_version: 1.0.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: none_declared, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-weezl0.2, source_manifest_row: 64, crate_version: 0.2.1, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-whatlang0.18, source_manifest_row: 65, crate_version: 0.18.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}
+  - {package: rust-wide1, source_manifest_row: 66, crate_version: 1.5.0, source_status: retained_f43_f44_srpm_evidence, license_status: spec_declared_aggregate_reviewed, patch_status: declared_metadata_fix, current_spec_state: exact_spec_not_rebuilt_in_this_pass, blocker_codes: [BUILD_NOT_RUN, RPMLINT_UNRETAINED, AARCH64_UNPROVEN]}

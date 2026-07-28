@@ -1,0 +1,29 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Adapt encoding detection to Fedora chardetng
+
+Use Fedora's chardetng API for UTF-8 detection.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -195 +195 @@ calamine = { version = "0.24.0", features = ["dates"], optional = true }
+-chardetng = { version = "1.0.0", optional = true }
++chardetng = { version = "0.1.17", optional = true }
+diff --git a/crates/kreuzberg/src/extraction/email.rs b/crates/kreuzberg/src/extraction/email.rs
+--- a/crates/kreuzberg/src/extraction/email.rs
++++ b/crates/kreuzberg/src/extraction/email.rs
+@@ -79,3 +79,3 @@ fn maybe_transcode_utf16(data: &[u8]) -> Option<Vec<u8>> {
+-            let mut detector = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Allow);
++            let mut detector = chardetng::EncodingDetector::new();
+             detector.feed(data, true);
+-            let guess = detector.guess(None, chardetng::Utf8Detection::Allow);
++            let guess = detector.guess(None, true);
+diff --git a/crates/kreuzberg/src/utils/string_utils.rs b/crates/kreuzberg/src/utils/string_utils.rs
+--- a/crates/kreuzberg/src/utils/string_utils.rs
++++ b/crates/kreuzberg/src/utils/string_utils.rs
+@@ -182,3 +182,3 @@ fn decode_and_fix_mojibake(byte_data: &[u8]) -> String {
+-    let mut detector = EncodingDetector::new(chardetng::Iso2022JpDetection::Allow);
++    let mut detector = EncodingDetector::new();
+     detector.feed(byte_data, true);
+-    let encoding = detector.guess(None, chardetng::Utf8Detection::Allow);
++    let encoding = detector.guess(None, true);

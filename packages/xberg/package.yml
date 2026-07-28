@@ -1,0 +1,26 @@
+name: xberg
+status: blocked
+blockers:
+  - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora dependency closure.
+  - No Fedora source-build, license, native-binding, or runtime integration proof exists for Xberg v1.0.1.
+  - The historical Kreuzberg 4.10.2 patch and receipt set is not applicable to Xberg v1.0.1.
+source_policy:
+  source: published Xberg v1.0.1 GitHub tag archive
+  build: blocked before unpacking until a fresh source and dependency audit is complete
+upstream:
+  provider: github
+  repository: xberg-io/xberg
+  tag_prefix: v
+  current_version: 1.0.1
+  source_tag: v1.0.1
+  source_commit: 19705db11615dd4d1722dec9224c3b752cd369af
+  source_url_template: https://github.com/xberg-io/xberg/archive/refs/tags/v{version}.tar.gz
+  source_sha256: a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6
+duplicate_check:
+  checked: "2026-07-28"
+  fedora_43_44_rawhide: not_checked
+  rpm_fusion_43_44: not_checked
+copr:
+  enabled: false
+  subdir: packages/xberg
+  spec: xberg.spec

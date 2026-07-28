@@ -1,0 +1,12 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Discover ONNX Runtime in Fedora lib64
+
+Search Fedora's architecture-specific ONNX Runtime installation path.
+
+diff --git a/crates/kreuzberg/src/ort_discovery.rs b/crates/kreuzberg/src/ort_discovery.rs
+--- a/crates/kreuzberg/src/ort_discovery.rs
++++ b/crates/kreuzberg/src/ort_discovery.rs
+@@ -68,2 +68,3 @@ fn platform_candidates() -> &'static [&'static str] {
+     &[
++        "/usr/lib64/libonnxruntime.so",
+         "/usr/lib/libonnxruntime.so",

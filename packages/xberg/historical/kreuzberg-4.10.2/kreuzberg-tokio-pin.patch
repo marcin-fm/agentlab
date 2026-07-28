@@ -1,0 +1,11 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Pin Tokio to Fedora's packaged version
+
+Use the compatible Fedora Tokio release required by the offline crate set.
+
+diff --git a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -65 +65 @@ serde_json = { version = "1.0.150" }
+-tokio = { version = "1.52.3", features = [
++tokio = { version = "1.52.2", features = [

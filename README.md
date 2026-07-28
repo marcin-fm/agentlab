@@ -54,7 +54,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | rubygem-ferrum | 0.17.2 | enabled | Pure-Ruby package; Fedora 43/44 clean builds and Chromium CDP smoke passed |
 | ast-grep | 0.44.1 | enabled | Clean F43/F44 mock builds, tests, CLI smoke, and aggregate linked-license audit passed |
 | mermaid-cli | 11.16.0 | blocked | F43/F44 builds pass; immutable generated-source hosting and upstream bundling record remain |
-| kreuzberg | 4.10.2 | blocked | System PDFium provider, Rust/Node closures, license audit, and clean builds remain |
+| xberg | 1.0.1 | blocked | Renamed upstream source requires a fresh Fedora dependency, license, native-binding, and offline-build audit |
 | pdfium | 146.0.7678.0 | enabled | Immutable Chromium-pinned source, private ABI, embedded ICU, and six-cell configured-SCM proof accepted |
 | python-docling-mcp | 2.1.0 | blocked | Downstream stdio and remote-conversion product profiles removed; an upstream-supported selected surface and complete dependency/transport review remain |
 | python-doclang | 0.7.3 | enabled | Reusable Docling prerequisite; clean F43/F44 builds and installed schema/CLI smokes passed |

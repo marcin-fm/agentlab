@@ -1,0 +1,32 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Drop WASM-only dependencies from the native RPM build
+
+The Fedora package builds only native Linux CLI and N-API artifacts. Remove
+the wasm32 dependency blocks from selected workspace crates so Fedora's Cargo
+dependency generator does not require WebAssembly-only crates.
+
+diff --git a/crates/kreuzberg/Cargo.toml b/crates/kreuzberg/Cargo.toml
+--- a/crates/kreuzberg/Cargo.toml
++++ b/crates/kreuzberg/Cargo.toml
+@@ -141 +141,0 @@
+-wasm-threads = ["dep:wasm-bindgen-rayon"]
+@@ -326,7 +326,0 @@
+-[target.'cfg(target_arch = "wasm32")'.dependencies]
+-# Override getrandom to enable js feature for WASM targets
+-# This is needed because ring/rustls (via ureq) depend on getrandom without js feature
+-getrandom = { workspace = true }
+-tree-sitter-language-pack = { workspace = true, default-features = false, features = ["serde"], optional = true }
+-wasm-bindgen-rayon = { version = "1.3", optional = true }
+-
+diff --git a/crates/kreuzberg-pdfium-render/Cargo.toml b/crates/kreuzberg-pdfium-render/Cargo.toml
+--- a/crates/kreuzberg-pdfium-render/Cargo.toml
++++ b/crates/kreuzberg-pdfium-render/Cargo.toml
+@@ -52,8 +52,0 @@
+-[target.'cfg(target_arch = "wasm32")'.dependencies]
+-console_error_panic_hook = { workspace = true }
+-console_log = "1"
+-js-sys = { workspace = true }
+-wasm-bindgen = { workspace = true }
+-wasm-bindgen-futures = { workspace = true }
+-web-sys = { workspace = true }
+-

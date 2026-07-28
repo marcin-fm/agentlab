@@ -1,0 +1,11 @@
+name: kreuzberg
+retired_on: "2026-07-28"
+reason: Replaced in active packaging by the blocked Xberg v1.0.1 historical migration; Kreuzberg 4.10.2 evidence is retained under archived/kreuzberg.
+copr_project: marcin/agentlab
+configured_chroots_at_retirement:
+  - fedora-43-x86_64
+  - fedora-43-aarch64
+  - fedora-44-x86_64
+  - fedora-44-aarch64
+  - fedora-rawhide-x86_64
+  - fedora-rawhide-aarch64

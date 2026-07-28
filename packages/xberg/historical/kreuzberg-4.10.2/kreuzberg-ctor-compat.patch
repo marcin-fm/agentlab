@@ -1,0 +1,35 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Adapt constructor registration to Fedora ctor
+
+Use Fedora's ctor 0.6 proc-macro feature and its unsafe registration syntax.
+
+diff --git a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -36 +36 @@
+-ctor = "1.0"
++ctor = { version = "0.6.3", default-features = false, features = ["proc_macro"] }
+diff --git a/crates/kreuzberg-ffi/src/lib.rs b/crates/kreuzberg-ffi/src/lib.rs
+--- a/crates/kreuzberg-ffi/src/lib.rs
++++ b/crates/kreuzberg-ffi/src/lib.rs
+@@ -107,7 +107,7 @@ pub use types::*;
+ pub use util::{kreuzberg_last_error, kreuzberg_last_error_code, kreuzberg_last_panic_context, kreuzberg_version};
+ pub use validation::*;
+ 
+-#[ctor::ctor(unsafe)]
++#[ctor::ctor]
+ fn setup_onnx_runtime_path() {
+     kreuzberg::ort_discovery::ensure_ort_available();
+ }
+diff --git a/crates/kreuzberg-node/src/lib.rs b/crates/kreuzberg-node/src/lib.rs
+--- a/crates/kreuzberg-node/src/lib.rs
++++ b/crates/kreuzberg-node/src/lib.rs
+@@ -68,7 +68,7 @@ use std::ffi::{CStr, c_char};
+ 
+ static KNOWN_FORMAT_FIELDS: Lazy<AHashSet<&'static str>> = Lazy::new(|| KNOWN_FORMATS.iter().copied().collect());
+ 
+-#[ctor::ctor(unsafe)]
++#[ctor::ctor]
+ fn setup_onnx_runtime_path() {
+     kreuzberg::ort_discovery::ensure_ort_available();
+ }
