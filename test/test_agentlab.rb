@@ -1040,6 +1040,22 @@ class AgentlabTest < Minitest::Test
     assert_equal("kreuzberg", retirement.fetch("name"))
   end
 
+  def test_agent_browser_is_a_fail_closed_source_build_draft
+    package = Agentlab.package_named("agent-browser")
+    spec = File.read(File.join(package.directory, "agent-browser.spec"))
+
+    assert_equal("blocked", package.status)
+    assert_equal(false, package.data.dig("copr", "enabled"))
+    assert_equal("0.33.1", package.upstream.fetch("current_version"))
+    assert_includes(spec, "Version:        0.33.1")
+    assert_includes(spec, "%global source_sha256 313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022")
+    assert_match(/%prep.*exit 1/m, spec)
+    assert_includes(spec, "npm postinstall prebuilt downloads")
+    assert_includes(spec, "Chrome for Testing")
+    assert_equal("forbidden", package.data.dig("source_policy", "npm_postinstall_prebuilt_downloads"))
+    assert_equal("forbidden", package.data.dig("source_policy", "chrome_for_testing_downloads"))
+  end
+
   def test_crates_io_version_selection_rejects_yanked_and_prerelease_versions
     response = JSON.dump(
       "versions" => [

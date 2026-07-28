@@ -45,7 +45,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 
 | Package | Version | State | Reason |
 |---|---:|---|---|
-| OpenCode | 1.18.3 | blocked | Requires a source-built Bun and an audited npm source closure |
+| OpenCode | 1.18.5 | blocked | Updating to 1.18.8 requires a release-matched standalone binary-embedding receipt and refreshed source closure |
 | OpenChamber | 1.16.1 | blocked | Web CLI draft requires Bun, an audited Node/native closure, and the OpenCode provider |
 | Bun | 1.3.14 | blocked | First isolated source build works; immutable RPM inputs, self-rebuild, relink, and final audits remain |
 | RTK | 0.43.0 | enabled | Release 0.6 uses Fedora dirs 6, passes all six COPR targets, 2,245 Fedora 44 tests, system-SQLite and directory-path smokes, and artifact review |
@@ -53,6 +53,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | rust-v8 | 149.2.0 | blocked | Exact recursive identities and stable-Rust patches are recorded; immutable submodule sources, licenses, and offline builds remain |
 | rubygem-ferrum | 0.17.2 | enabled | Pure-Ruby package; Fedora 43/44 clean builds and Chromium CDP smoke passed |
 | ast-grep | 0.44.1 | enabled | Clean F43/F44 mock builds, tests, CLI smoke, and aggregate linked-license audit passed |
+| agent-browser | 0.33.1 | blocked | Native Cargo closure, aggregate licensing, installed skill layout, and Fedora Chromium runtime smoke remain |
 | mermaid-cli | 11.16.0 | blocked | F43/F44 builds pass; immutable generated-source hosting and upstream bundling record remain |
 | xberg | 1.0.1 | blocked | Renamed upstream source requires a fresh Fedora dependency, license, native-binding, and offline-build audit |
 | pdfium | 146.0.7678.0 | enabled | Immutable Chromium-pinned source, private ABI, embedded ICU, and six-cell configured-SCM proof accepted |
