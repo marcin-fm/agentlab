@@ -1038,7 +1038,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Name:           xberg")
     assert_includes(spec, "Version:        1.0.1")
     assert_includes(spec, "%global source_sha256 a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6")
-    assert_includes(spec, "Release:        0.17%{?dist}")
+    assert_includes(spec, "Release:        0.18%{?dist}")
     assert_includes(spec, "# Select the six-member Fedora workspace")
     assert_includes(spec, "Source1:        %{name}-%{version}-source-audit.json")
     assert_includes(spec, "Source2:        %{name}-%{version}-system-ort-audit.json")
@@ -1050,7 +1050,13 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Source14:       audit-xberg-proof-receipts")
     assert_includes(spec, "%setup -q -n xberg-%{version}")
     assert_includes(spec, "--sanitize-only --source . --filter %{SOURCE9}")
+    dynamic_tesseract_check = 'echo "%{dynamic_tesseract_patch_sha256}  %{PATCH2}" | sha256sum -c -'
+    selected_workspace_check = 'echo "%{selected_workspace_patch_sha256}  %{PATCH3}" | sha256sum -c -'
+    assert_includes(spec, dynamic_tesseract_check)
+    assert_includes(spec, selected_workspace_check)
     assert_includes(spec, "%autopatch -p1")
+    assert_operator(spec.index(dynamic_tesseract_check), :<, spec.index("%autopatch -p1"))
+    assert_operator(spec.index(selected_workspace_check), :<, spec.index("%autopatch -p1"))
     assert_includes(spec, "BuildRequires:  pkgconfig(libonnxruntime) >= 1.18")
     refute_includes(spec, "Requires:       onnxruntime")
     contract = package.data.fetch("cargo_source_contract")

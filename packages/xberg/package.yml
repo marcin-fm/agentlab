@@ -8,7 +8,7 @@ blockers:
   - RPM Fusion duplicate checks were unavailable because no RPM Fusion repository is configured in the query environment.
 source_policy:
   source: published Xberg v1.0.1 GitHub tag archive
-  build: checked resolver-complete Cargo source and system-ORT patches; blocked before Cargo build pending provider, native, license, model, and target proof
+  build: checked resolver-complete Cargo source and Fedora provider patches; the compile-proof recipe ends at a deliberate post-build gate pending native, license, model, runtime, and target proof
 upstream:
   provider: github
   repository: xberg-io/xberg
