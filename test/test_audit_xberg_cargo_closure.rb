@@ -34,6 +34,37 @@ class XbergCargoClosureTest < Minitest::Test
     end
   end
 
+  def tar_header(name, typeflag:, size: 0, linkname: "")
+    Gem::Package::TarHeader.new(name: name, mode: 0o644, size: size, mtime: 0, checksum: "", typeflag: typeflag, linkname: linkname, magic: "ustar", version: "00", uname: "", gname: "", devmajor: 0, devminor: 0, prefix: "").to_s
+  end
+
+  def with_raw_archive(records)
+    Dir.mktmpdir do |directory|
+      archive = File.join(directory, "source.tar.gz")
+      Zlib::GzipWriter.open(archive) do |gzip|
+        records.each do |record|
+          gzip.write(tar_header(record.fetch(:name), typeflag: record.fetch(:type), size: record.fetch(:data, "").bytesize, linkname: record.fetch(:linkname, "")))
+          data = record.fetch(:data, "")
+          gzip.write(data)
+          gzip.write("\0" * ((512 - data.bytesize % 512) % 512))
+        end
+        gzip.write("\0" * 1024)
+      end
+      yield archive, directory
+    end
+  end
+
+  def pax_record(key, value)
+    record = "#{key}=#{value}\n"
+    length = record.bytesize + 3
+    loop do
+      candidate = "#{length} #{record}"
+      return candidate if candidate.bytesize == length
+
+      length = candidate.bytesize
+    end
+  end
+
   def test_exact_reviewed_absolute_symlink_is_omitted_and_safe_link_is_retained
     target = "/reviewed/developer/fixture"
     with_archive([
@@ -92,6 +123,84 @@ class XbergCargoClosureTest < Minitest::Test
       { type: :file, path: "xberg-1.0.1/duplicate", content: "second" }
     ], filter("xberg-1.0.1/e2e/reviewed", "/reviewed")) do |archive, receipt, directory|
       assert_raises(XbergCargoClosure::Error) { XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"), filter: receipt) }
+    end
+  end
+
+  def test_gnu_long_path_is_used_for_duplicate_detection_and_extraction
+    path = "xberg-1.0.1/" + ("a" * 120)
+    with_raw_archive([
+      { name: "././@LongLink", type: "L", data: "#{path}\0" },
+      { name: path[0, 100], type: "0", data: "one" }
+    ]) do |archive, directory|
+      root = XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"))
+      assert_equal("one", File.read(File.join(root, "a" * 120)))
+    end
+  end
+
+  def test_gnu_long_link_target_is_used
+    target = "../" + ("b" * 130)
+    with_raw_archive([
+      { name: "xberg-1.0.1/" + ("b" * 130), type: "0", data: "target" },
+      { name: "././@LongLink", type: "K", data: "#{target}\0" },
+      { name: "xberg-1.0.1/links/link", type: "2", linkname: target[0, 100] }
+    ]) do |archive, directory|
+      root = XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"))
+      assert_equal(target, File.readlink(File.join(root, "links/link")))
+    end
+  end
+
+  def test_pax_path_and_linkpath_override_headers
+    path = "xberg-1.0.1/" + ("p" * 120)
+    target = "../" + ("q" * 130)
+    with_raw_archive([
+      { name: "xberg-1.0.1/" + ("q" * 130), type: "0", data: "target" },
+      { name: "PaxHeader", type: "x", data: pax_record("path", path) },
+      { name: "ignored", type: "0", data: "file" },
+      { name: "PaxHeader", type: "x", data: pax_record("linkpath", target) },
+      { name: "xberg-1.0.1/links/link", type: "2", linkname: "ignored" }
+    ]) do |archive, directory|
+      root = XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"))
+      assert_equal("file", File.read(File.join(root, "p" * 120)))
+      assert_equal(target, File.readlink(File.join(root, "links/link")))
+    end
+  end
+
+  def test_global_pax_path_is_preserved_for_following_entries
+    path = "xberg-1.0.1/global"
+    with_raw_archive([
+      { name: "PaxHeader", type: "g", data: pax_record("path", path) },
+      { name: "ignored", type: "0", data: "global" }
+    ]) do |archive, directory|
+      root = XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"))
+      assert_equal("global", File.read(File.join(root, "global")))
+    end
+  end
+
+  def test_malformed_dangling_and_conflicting_extension_records_are_rejected
+    malformed = [{ name: "PaxHeader", type: "x", data: "12 path=bad\n" }]
+    dangling = [{ name: "././@LongLink", type: "L", data: "xberg-1.0.1/long\0" }]
+    conflicting = [
+      { name: "././@LongLink", type: "L", data: "xberg-1.0.1/one\0" },
+      { name: "PaxHeader", type: "x", data: pax_record("path", "xberg-1.0.1/two") },
+      { name: "ignored", type: "0", data: "file" }
+    ]
+    [malformed, dangling, conflicting].each do |records|
+      with_raw_archive(records) do |archive, directory|
+        assert_raises(XbergCargoClosure::Error) { XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out")) }
+      end
+    end
+  end
+
+  def test_duplicate_effective_pax_paths_are_rejected
+    path = "xberg-1.0.1/effective"
+    with_raw_archive([
+      { name: "PaxHeader", type: "x", data: pax_record("path", path) },
+      { name: "first", type: "0", data: "one" },
+      { name: "PaxHeader", type: "x", data: pax_record("path", path) },
+      { name: "second", type: "0", data: "two" }
+    ]) do |archive, directory|
+      error = assert_raises(XbergCargoClosure::Error) { XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out")) }
+      assert_includes(error.message, "duplicate archive entry #{path}")
     end
   end
 

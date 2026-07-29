@@ -112,16 +112,79 @@ module XbergCargoClosure
     end
   end
 
+  def gnu_extension_value!(data, type)
+    raise Error, "empty GNU #{type} record" if data.empty?
+
+    value = data.sub(/(?:\0\n?|\n\0?)\z/, "")
+    raise Error, "malformed GNU #{type} record" if value.empty? || value.include?("\0") || value.end_with?("\n")
+
+    value
+  end
+
+  def pax_records!(data, type)
+    records, offset = {}, 0
+    while offset < data.bytesize
+      separator = data.index(" ", offset)
+      raise Error, "malformed PAX #{type} record length" unless separator
+
+      length_text = data.byteslice(offset, separator - offset)
+      raise Error, "malformed PAX #{type} record length" unless length_text.match?(/\A[1-9][0-9]*\z/)
+
+      length = Integer(length_text, 10)
+      record = data.byteslice(offset, length)
+      raise Error, "truncated PAX #{type} record" unless record&.bytesize == length
+      raise Error, "malformed PAX #{type} record" unless record.start_with?("#{length} ") && record.end_with?("\n")
+
+      field = record.byteslice(length_text.bytesize + 1, length - length_text.bytesize - 2)
+      key, value = field.split("=", 2)
+      raise Error, "malformed PAX #{type} record" if key.nil? || key.empty? || value.nil? || key.include?("\0") || value.include?("\0")
+      raise Error, "conflicting PAX #{type} record #{key}" if records.key?(key)
+
+      records[key] = value
+      offset += length
+    end
+    records
+  end
+
+  def effective_value!(kind, header_value, pax, gnu_value)
+    values = [pax[kind], gnu_value].compact
+    raise Error, "conflicting extended #{kind}" if values.uniq.length > 1
+
+    values.first || header_value
+  end
+
   def extract_gzip!(archive, destination, filter: nil)
     roots, seen, links, unsafe = Set.new, Set.new, [], []
+    global_pax, per_entry_pax, gnu_path, gnu_linkpath = {}, nil, nil, nil
     Zlib::GzipReader.open(archive) do |gzip|
       Gem::Package::TarReader.new(gzip) do |tar|
         tar.each do |entry|
-          if %w[g x L K].include?(entry.header.typeflag)
-            entry.read
+          typeflag = entry.header.typeflag
+          case typeflag
+          when "g"
+            global_pax.merge!(pax_records!(entry.read, "global"))
+            next
+          when "x"
+            raise Error, "conflicting per-entry PAX record" if per_entry_pax
+
+            per_entry_pax = pax_records!(entry.read, "per-entry")
+            next
+          when "L"
+            raise Error, "conflicting GNU long pathname record" if gnu_path
+
+            gnu_path = gnu_extension_value!(entry.read, "long pathname")
+            next
+          when "K"
+            raise Error, "conflicting GNU long link target record" if gnu_linkpath
+
+            gnu_linkpath = gnu_extension_value!(entry.read, "long link target")
             next
           end
-          path = safe_path(entry.full_name)
+
+          pax = global_pax.merge(per_entry_pax || {})
+          path = safe_path(effective_value!("path", entry.full_name, pax, gnu_path))
+          linkname = effective_value!("linkpath", entry.header.linkname, pax, gnu_linkpath)
+          per_entry_pax, gnu_path, gnu_linkpath = nil, nil, nil
           raise Error, "duplicate archive entry #{path}" unless seen.add?(path)
 
           roots << path.split("/", 2).first
@@ -134,15 +197,16 @@ module XbergCargoClosure
           elsif entry.header.typeflag == "2" || entry.header.typeflag == "1"
             type = entry.header.typeflag == "2" ? :symlink : :hardlink
             mode = type == :symlink ? "120000" : format("%06o", 0o100000 | (entry.header.mode & 0o777))
-            resolved, reason = link_target(type, path, entry.header.linkname)
-            record = link_record(type, path, entry.header.linkname, mode)
-            reason ? unsafe << record.merge("reason" => reason) : links << [type, path, entry.header.linkname, resolved]
+            resolved, reason = link_target(type, path, linkname)
+            record = link_record(type, path, linkname, mode)
+            reason ? unsafe << record.merge("reason" => reason) : links << [type, path, linkname, resolved]
           else
             raise Error, "unsafe archive entry #{path}"
           end
         end
       end
     end
+    raise Error, "dangling per-entry archive extension record" if per_entry_pax || gnu_path || gnu_linkpath
     raise Error, "source archive must contain exactly one root" unless roots.length == 1
     verify_unsafe_links!(unsafe.sort_by { |link| [link["path"], link["type"], link["target"]] }, filter)
 

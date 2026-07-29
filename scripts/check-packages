@@ -525,7 +525,7 @@ packages.each do |package|
       errors << "xberg: SCM rule does not supply the checked closure and link filter" unless makefile.include?("--closure \"$$specdir/xberg-$$version-cargo-closure.json\"") && makefile.include?("--filter \"$$specdir/xberg-$$version-source-filter.json\"")
       errors << "xberg: SCM rule lacks the Ruby selector provider" unless makefile.include?("cargo-rpm-macros curl ruby rubypick")
       auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-cargo-closure"))
-      errors << "xberg: source extractor lacks receipt-driven safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "verify_unsafe_links!", "sanitize_tree!", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
+      errors << "xberg: source extractor lacks receipt-driven safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "verify_unsafe_links!", "sanitize_tree!", "gnu_extension_value!", "pax_records!", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
     end
   end
 

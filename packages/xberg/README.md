@@ -73,6 +73,11 @@ gaps remain publication blockers. Fedora's workspace-wide
 `%cargo_vendor_manifest` has different feature semantics, so `%prep` checks the
 root-lock manifest through the auditor rather than making a false comparison.
 
+The generic archive reader validates GNU long-name/link and POSIX PAX per-entry/global
+records before applying path, link, duplicate, root, and source-filter checks.
+Malformed, dangling, or conflicting extension records fail closed; no crate-specific
+extraction exception is used.
+
 ## Duplicate Checks
 
 Read-only DNF5 queries found no Fedora package named `xberg` and no provider for
