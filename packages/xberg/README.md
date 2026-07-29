@@ -81,6 +81,15 @@ records before applying path, link, duplicate, root, and source-filter checks.
 Malformed, dangling, or conflicting extension records fail closed; no crate-specific
 extraction exception is used.
 
+Configured-SCM COPR proof build `10786324` generated the 13-member
+`xberg-1.0.1-0.15.src.rpm`, 195,601,069 bytes at SHA-256
+`9da0f4b96a2c125cdc2ac83031b3776d26108c92e69e1e43e9361cc293168971`.
+Fedora 44 x86_64 `%prep` verified every source hash, the checked unsafe-link
+filter, both system-ORT patches, the complete vendor tree, and Cargo's offline
+directory-source configuration before reaching the intentional blocker. This is
+source-delivery proof only; no Cargo compilation or binary RPM was produced or
+installed. The temporary blocked proof package definition was deleted afterward.
+
 ## Duplicate Checks
 
 Read-only DNF5 queries found no Fedora package named `xberg` and no provider for

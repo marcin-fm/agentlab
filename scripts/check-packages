@@ -521,6 +521,24 @@ packages.each do |package|
       errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
       errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 1_043, "absent" => 90 } && license.dig("validation", "final_linked_license_complete") == false
       errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false
+      source_proof = package.data["source_delivery_proof"]
+      expected_source_proof = {
+        "copr_build_id" => 10_786_324,
+        "target" => "fedora-44-x86_64",
+        "source_nvr" => "xberg-1.0.1-0.15",
+        "srpm_sha256" => "9da0f4b96a2c125cdc2ac83031b3776d26108c92e69e1e43e9361cc293168971",
+        "srpm_size_bytes" => 195_601_069,
+        "srpm_members" => 13,
+        "configured_scm_source_generated" => true,
+        "source_hashes_and_patches_verified" => true,
+        "vendor_tree_verified" => true,
+        "cargo_offline_configuration_verified" => true,
+        "intentional_prep_blocker_reached" => true,
+        "cargo_compilation" => false,
+        "rpm_installed" => false,
+        "temporary_copr_definition_deleted" => true
+      }
+      errors << "xberg: configured-SCM source proof is incomplete" unless source_proof == expected_source_proof
       required = ["Source6:        %{name}-%{version}-cargo-vendor.tar.zst", "Source9:        %{name}-%{version}-source-filter.json", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "%cargo_prep -v cargo-vendor", "audit-xberg-cargo-closure --verify", "test \"$(wc -l < %{SOURCE7})\" -eq 1133", "exit 1"]
       errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
       sanitize_index = spec.index("--sanitize-only --source . --filter %{SOURCE9}")

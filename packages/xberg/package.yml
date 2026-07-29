@@ -3,7 +3,7 @@ status: blocked
 blockers:
   - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora provider or native-library closure.
   - "The checked 1,133-source resolver-complete Cargo delivery is not final linked-license completeness: 90 source text gaps remain blockers."
-  - No Fedora source-build, provider, native-binding, or runtime integration proof exists for Xberg v1.0.1.
+  - Configured-SCM source generation and the complete fail-closed `%prep` source contract pass, but no Cargo compilation, provider matrix, native-binding, model, linked-license, or runtime integration proof exists for Xberg v1.0.1.
   - The historical Kreuzberg 4.10.2 patch and receipt set is not applicable to Xberg v1.0.1.
   - RPM Fusion duplicate checks were unavailable because no RPM Fusion repository is configured in the query environment.
 source_policy:
@@ -61,6 +61,21 @@ cargo_source_contract:
   vendor_registry_identities: 1133
   resolver_only_registry_identities: 529
   license_text_presence: { present: 1043, absent: 90, final_linked_license_complete: false }
+source_delivery_proof:
+  copr_build_id: 10786324
+  target: fedora-44-x86_64
+  source_nvr: xberg-1.0.1-0.15
+  srpm_sha256: 9da0f4b96a2c125cdc2ac83031b3776d26108c92e69e1e43e9361cc293168971
+  srpm_size_bytes: 195601069
+  srpm_members: 13
+  configured_scm_source_generated: true
+  source_hashes_and_patches_verified: true
+  vendor_tree_verified: true
+  cargo_offline_configuration_verified: true
+  intentional_prep_blocker_reached: true
+  cargo_compilation: false
+  rpm_installed: false
+  temporary_copr_definition_deleted: true
 duplicate_check:
   checked: "2026-07-28"
   fedora_43_44_rawhide: absent

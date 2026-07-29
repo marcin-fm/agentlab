@@ -12,7 +12,7 @@
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.15%{?dist}
+Release:        0.16%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -79,6 +79,9 @@ echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, pr
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.16
+- Record the configured-SCM source and fail-closed prep proof.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.15
 - Prevent the explanatory vendor-manifest comment from expanding as an RPM macro.
 
