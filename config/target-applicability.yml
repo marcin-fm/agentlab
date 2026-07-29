@@ -9,6 +9,10 @@ roots:
     kind: application
     releases: ["43", "44", rawhide]
     reason: Selected native RTK CLI application.
+  agent-browser:
+    kind: application
+    releases: ["43", "44", rawhide]
+    reason: Selected native browser automation CLI requires the architecture-symmetric default matrix.
   rubygem-ferrum:
     kind: core
     releases: ["43", "44", rawhide]

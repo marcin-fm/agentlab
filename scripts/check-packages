@@ -377,18 +377,32 @@ packages.each do |package|
         errors << "agent-browser: missing #{item.fetch('file')}" unless File.file?(path)
         errors << "agent-browser: stale #{item.fetch('file')}" if File.file?(path) && Digest::SHA256.file(path).hexdigest != item.fetch("sha256")
       end
-      errors << "agent-browser: source closure must retain final link gate" unless cargo["final_linked_payload_verified"] == false
+      errors << "agent-browser: final linked payload is not verified" unless cargo["final_linked_payload_verified"] == true
+      errors << "agent-browser: provider mapping is not reviewed" unless cargo["fedora_provider_mapping"] == true
+      errors << "agent-browser: runtime layout is not verified" unless cargo["runtime_layout_verified"] == true
+      errors << "agent-browser: target matrix is not verified" unless cargo["target_matrix_verified"] == true
+      errors << "agent-browser: linked license is not verified" unless cargo["license_verified"] == true
       receipt = JSON.parse(File.read(File.join(package.directory, evidence.fetch("vendor_receipt").fetch("file"))))
       errors << "agent-browser: vendor receipt has archive-byte identity" if receipt.fetch("vendor_archive").keys != %w[name root]
       errors << "agent-browser: vendor tree identity lacks canonical algorithm" unless receipt.dig("vendor_tree", "algorithm") == "sha256(sorted type,path,mode,link-target,size,content-sha256 records)"
       audit = JSON.parse(File.read(File.join(package.directory, evidence.fetch("license_audit").fetch("file"))))
       proof = JSON.parse(File.read(File.join(package.directory, evidence.fetch("fedora_proof").fetch("file"))))
       aggregate_license = spec[/^License:\s+(.+)$/, 1]
-      errors << "agent-browser: Fedora proof witness is incomplete" unless proof.dig("copr", "build_id") == 10785021 && proof.dig("validation", "chromium") == true && proof.dig("validation", "current_binary_build_success") == false
+      expected_targets = %w[fedora-43-x86_64 fedora-43-aarch64 fedora-44-x86_64 fedora-44-aarch64 fedora-rawhide-x86_64 fedora-rawhide-aarch64]
+      expected_validations = %w[source_srpm_generated production_compile install_layout tests license elf headless_runtime current_binary_build_success target_matrix_complete duplicate_availability]
+      errors << "agent-browser: Fedora proof schema is not v2" unless proof["schema"] == "agentlab-agent-browser-fedora-proof/v2"
+      errors << "agent-browser: Fedora proof build IDs are incomplete" unless proof.fetch("builds", []).map { |build| build["id"] }.sort == [10_785_628, 10_785_764]
+      errors << "agent-browser: Fedora proof source NVR is incorrect" unless proof.dig("release", "source_nvr") == "agent-browser-0.33.1-0.14.src.rpm"
+      errors << "agent-browser: Fedora proof target matrix is incomplete" unless proof.fetch("target_matrix", []).map { |target| target["target"] }.sort == expected_targets.sort
+      errors << "agent-browser: Fedora proof target data is incomplete" unless proof.fetch("target_matrix", []).all? { |target| target["builder_log_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && target["chromium_headless_version"].to_s.start_with?("150.0.7871.") && target["user_agent"] == "HeadlessChrome/#{target['chromium_headless_version']}" }
+      errors << "agent-browser: Fedora proof runtime evidence is incomplete" unless proof.dig("runtime", "main_tests") == 1028 && proof.dig("runtime", "doctor_tests") == 2 && proof.dig("runtime", "ignored_tests") == 96 && proof.dig("runtime", "cdp_protocol_markers") == %w[navigation snapshot runtime-eval url] && proof.dig("runtime", "headless_default") == true && proof.dig("runtime", "wrapper_preserves_explicit_browser_and_external_engine_routing") == true
+      errors << "agent-browser: Fedora proof license inventory is incomplete" unless proof.dig("license", "license_dependencies_records") == 264 && proof.dig("license", "license_dependencies_sha256") == "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06"
+      errors << "agent-browser: Fedora proof RPM Fusion absence audit is incomplete" unless proof.dig("duplicate_audit", "fedora_and_rpm_fusion_free_nonfree") == true && proof.dig("duplicate_audit", "matches") == 0 && proof.dig("duplicate_audit", "targets").sort == expected_targets.sort && proof.dig("duplicate_audit", "queries").sort == ["agent-browser", "/usr/bin/agent-browser", "/usr/libexec/agent-browser/bin/agent-browser"].sort
+      errors << "agent-browser: Fedora proof validation is incomplete" unless proof.fetch("validation", {}).keys.sort == expected_validations.sort && proof.fetch("validation", {}).values.all? { |value| value == true }
       errors << "agent-browser: Fedora proof license does not match the spec" unless proof.dig("license", "aggregate_spdx") == aggregate_license
       errors << "agent-browser: selected normal/link license metadata is incomplete" unless audit.dig("validation", "selected_normal_link_license_metadata_complete") == true && audit.fetch("missing_selected_normal_link_license_metadata").empty?
       errors << "agent-browser: spec lacks generated Cargo vendor contract" unless ["%cargo_prep -v cargo-vendor", "ruby .agentlab-source/audit-agent-browser-cargo-closure", "--verify --vendor-dir cli/cargo-vendor --receipt %{SOURCE2}", "%cargo_vendor_manifest", "%cargo_build_crate", "BuildRequires:  ruby", "BuildRequires:  rubypick", "BuildRequires:  rubygem-json", "BuildRequires:  zstd", "install -d -m0700 .test-home", "export HOME=\"$PWD/.test-home\"\n%cargo_test", "%{_libexecdir}/agent-browser"].all? { |fragment| spec.include?(fragment) }
-      errors << "agent-browser: final recipe retains the intentional proof gate" if spec.include?("proof intentionally fails after compile/tests")
+      errors << "agent-browser: final recipe retains a blocked proof gate" if spec.include?("proof intentionally fails after compile/tests") || spec.include?("blocked source-build draft")
       errors << "agent-browser: default browser is not Fedora headless Chromium" unless ["BuildRequires:  chromium-headless", "Requires:       chromium-headless", "AGENT_BROWSER_EXECUTABLE_PATH=/usr/lib64/chromium-browser/headless_shell", "AGENT_BROWSER_HEADLESS_COMPATIBILITY_BEGIN"].all? { |fragment| spec.include?(fragment) }
       errors << "agent-browser: full Chromium remains a hard dependency" if spec.include?("BuildRequires:  chromium\n") || spec.include?("Requires:       chromium\n")
       errors << "agent-browser: test HOME is not exported" if spec.include?("HOME=\"$PWD/.test-home\" %cargo_test")

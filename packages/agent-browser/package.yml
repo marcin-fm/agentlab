@@ -1,10 +1,7 @@
 ---
 name: agent-browser
-status: blocked
-blockers:
-- Fedora 44 x86_64 compiles, passes the full test suite, and has a reviewed aggregate license, but the corrected headless-default recipe and remaining target matrix are not yet proven.
-- Fedora headless Chromium compatibility must pass navigation, snapshot, JavaScript, and URL checks on every configured target version.
-- RPM Fusion metadata was unavailable for the duplicate check.
+status: enabled
+blockers: []
 source_policy:
   selected_package: cli/Cargo.toml
   binary: agent-browser
@@ -12,9 +9,7 @@ source_policy:
   npm_postinstall_prebuilt_downloads: forbidden
   chrome_for_testing_downloads: forbidden
   package_manager_mutation: forbidden
-  skill_directories:
-  - skills
-  - skill-data
+  skill_directories: [skills, skill-data]
   intended_install_root: '%{_libexecdir}/agent-browser'
   intended_binary_path: '%{_libexecdir}/agent-browser/bin/agent-browser'
   intended_command_path: '%{_bindir}/agent-browser'
@@ -39,22 +34,22 @@ dependency_status:
     vendor_receipt_sha256: 64007acb028f36b99d30795bc19309055a1d926ba9c88ab848032a39f14321b2
     license_audit_sha256: 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
     auditor_sha256: 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
-    fedora_proof_sha256: ac566fd40dd6b9190bf596c92b76aa8dbf275d7712c4f848cdb58f223eb77028
-    remote_proof: fedora_44_x86_64_compile_test_runtime_witness
-    remote_proof_build: 10785021
-    remote_proof_target: fedora-44-x86_64
+    fedora_proof_sha256: 99394344316e435b898c35e3715189a427ed59bff7d8cabf1b362e528f406bca
+    remote_proof: fedora_43_44_rawhide_six_cell_compile_test_runtime_witness
+    remote_proof_builds: [10785628, 10785764]
     production_compile_verified: true
     main_tests_passed: 1028
     doctor_tests_passed: 2
+    ignored_tests: 96
     chromium_smoke_verified: true
     final_aggregate_license_reviewed: true
-    current_binary_build_success: false
+    current_binary_build_success: true
   browser:
     package: chromium-headless
     executable: /usr/lib64/chromium-browser/headless_shell
     fedora_43_44_rawhide_verified: true
-    runtime_smoke_verified: false
-    version_compatibility_matrix_verified: false
+    runtime_smoke_verified: true
+    version_compatibility_matrix_verified: true
 license_audit:
   upstream: Apache-2.0
   embedded_axe_core: MPL-2.0
@@ -62,11 +57,12 @@ license_audit:
   embedded_react_devtools: MIT
   selected_source_candidate_expression: parenthesized_raw_declarations_in_agent-browser-0.33.1-license-audit.json
   aggregate_binary_expression: bound_to_agent-browser-0.33.1-fedora-proof.json
-  complete: false
+  complete: true
 duplicate_check:
-  checked: '2026-07-28'
+  checked: '2026-07-29'
   fedora_43_44_rawhide: absent
-  rpm_fusion_43_44: unavailable
+  rpm_fusion_free_nonfree_43_44_rawhide: absent
+  queries: [agent-browser, /usr/bin/agent-browser, /usr/libexec/agent-browser/bin/agent-browser]
 upstream:
   provider: github
   repository: vercel-labs/agent-browser
@@ -78,6 +74,6 @@ upstream:
   source_commit: 6dcea79b4b567a5671f1e1164807204f69542a5c
   license: Apache-2.0
 copr:
-  enabled: false
+  enabled: true
   subdir: packages/agent-browser
   spec: agent-browser.spec

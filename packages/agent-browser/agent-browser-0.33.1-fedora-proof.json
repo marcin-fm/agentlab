@@ -1,55 +1,64 @@
 {
-  "schema": "agentlab-agent-browser-fedora-proof/v1",
-  "scope": "Fedora 44 x86_64 source, compile, test, installed-layout, ELF, and Chromium witness from a deliberately gated release; not a successful 0.13 RPM or complete target matrix.",
+  "schema": "agentlab-agent-browser-fedora-proof/v2",
   "release": {
     "name": "agent-browser",
     "version": "0.33.1",
-    "release": "0.12",
-    "source_nvr": "agent-browser-0.33.1-0.12.fc44.src.rpm"
+    "source_nvr": "agent-browser-0.33.1-0.14.src.rpm"
   },
-  "copr": {
-    "build_id": 10785021,
-    "target": "fedora-44-x86_64",
-    "builder_log": "agent-browser-build-10785021-builder-live.log.gz",
-    "builder_log_sha256": "099b955ea96de0e52caad8c14e11033f65dc734769923b45fe3f9edf9711957d"
-  },
-  "counts": {
-    "compile_records": 246,
-    "main_tests": 1028,
-    "doctor_tests": 2,
-    "license_dependencies_lines": 264
-  },
-  "hashes": {
-    "license_dependencies_sha256": "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06",
-    "payload_manifest_sha256": "d9b3bc73386498cae6ae8152c7756b84972c2ac73933c9a78eeac45bd63ed742",
-    "installed_files_manifest_sha256": "f992b13fbe5cc74e9599461c0a2d4023be342d7ba9944a0c19274f44579f026e"
+  "source_contract": {
+    "source_sha256": "313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022",
+    "cargo_lock_sha256": "afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb",
+    "cargo_closure_sha256": "1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6",
+    "vendor_receipt_sha256": "64007acb028f36b99d30795bc19309055a1d926ba9c88ab848032a39f14321b2",
+    "license_audit_sha256": "68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778",
+    "vendor_manifest_sha256": "ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0",
+    "auditor_sha256": "9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684"
   },
   "license": {
     "aggregate_spdx": "Apache-2.0 AND MPL-2.0 AND MIT AND ISC AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND (0BSD OR MIT OR Apache-2.0) AND (Apache-2.0 AND ISC) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-3-Clause OR Apache-2.0) AND BSD-3-Clause AND (CC0-1.0 OR Apache-2.0) AND CDLA-Permissive-2.0 AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND (Unlicense OR MIT) AND (Zlib OR Apache-2.0 OR MIT) AND Zlib AND Unicode-3.0",
-    "cargo2rpm_summary_expressions": 26,
-    "embedded_sources": ["project", "axe-core", "axe-core-third-party", "react-devtools"]
+    "license_dependencies_records": 264,
+    "license_dependencies_sha256": "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06"
   },
-  "elf": {
-    "pie": true,
-    "dynamic_dependencies": ["libgcc_s.so.1", "libm.so.6", "libc.so.6"],
-    "rpath_or_runpath": false,
-    "unresolved_dependencies": false
+  "builds": [
+    {"id": 10785628, "source_nvr": "agent-browser-0.33.1-0.14.src.rpm", "targets": ["fedora-44-x86_64"]},
+    {"id": 10785764, "source_nvr": "agent-browser-0.33.1-0.14.src.rpm", "targets": ["fedora-43-x86_64", "fedora-43-aarch64", "fedora-44-aarch64", "fedora-rawhide-x86_64", "fedora-rawhide-aarch64"]}
+  ],
+  "target_matrix": [
+    {"target": "fedora-43-x86_64", "build_id": 10785764, "builder_log_sha256": "0ce8a58bad3ebdc9c2d3658fa613c6ba403cf38b1a5de520066b4932f51ce148", "build_id_elf": "2b5da07f49a3247dc2402e71ae72568b75ad0580", "chromium_headless_version": "150.0.7871.186", "user_agent": "HeadlessChrome/150.0.7871.186"},
+    {"target": "fedora-43-aarch64", "build_id": 10785764, "builder_log_sha256": "a7b0911e113f108e0277847f9ee18147474feb34bbf8a787158d8ad49f2efa69", "build_id_elf": "3015a4b7accd583f466e9deefe47a781b98aa7d1", "chromium_headless_version": "150.0.7871.186", "user_agent": "HeadlessChrome/150.0.7871.186"},
+    {"target": "fedora-44-x86_64", "build_id": 10785628, "builder_log_sha256": "25370c3b86dc996155a45ae22ec07e8f93a172a6b8e865c5d32eb696012ff2d3", "chromium_headless_version": "150.0.7871.181", "user_agent": "HeadlessChrome/150.0.7871.181"},
+    {"target": "fedora-44-aarch64", "build_id": 10785764, "builder_log_sha256": "33f4d1ffd87ccafdfaa3db740c62d76963dd6e620a6450b68c7797eba90ca018", "build_id_elf": "c1e3e5fdaf254e7e94a23bbcfe9cb3c014cf2a5b", "chromium_headless_version": "150.0.7871.186", "user_agent": "HeadlessChrome/150.0.7871.186"},
+    {"target": "fedora-rawhide-x86_64", "build_id": 10785764, "builder_log_sha256": "c18ff648abad12301c9cf90d8288fdad808d9bc07dfc979e53412ed74434adc2", "build_id_elf": "7411cff6282db906efb08828fd936b070298071a", "chromium_headless_version": "150.0.7871.186", "user_agent": "HeadlessChrome/150.0.7871.186"},
+    {"target": "fedora-rawhide-aarch64", "build_id": 10785764, "builder_log_sha256": "fd43ca63713043b1fea5e3004cbc5e6034a9e7327dfd75400989b2882d702353", "build_id_elf": "d117b28206eb32a38dc073f9588ab856ad72baa9", "chromium_headless_version": "150.0.7871.186", "user_agent": "HeadlessChrome/150.0.7871.186"}
+  ],
+  "runtime": {
+    "main_tests": 1028,
+    "doctor_tests": 2,
+    "ignored_tests": 96,
+    "cdp_protocol_markers": ["navigation", "snapshot", "runtime-eval", "url"],
+    "headless_default": true,
+    "wrapper_preserves_explicit_browser_and_external_engine_routing": true,
+    "optional_headed_chromium": true
   },
-  "chromium": {
-    "open_get_url_close": true,
-    "url": "about:blank"
+  "artifacts": {"binary_rpm": true, "debuginfo_rpm": true, "debugsource_rpm": true, "pie": true, "rpath_or_runpath": false, "unresolved_dependencies": false},
+  "duplicate_audit": {
+    "checked_on": "2026-07-29",
+    "fedora_and_rpm_fusion_free_nonfree": true,
+    "targets": ["fedora-43-x86_64", "fedora-43-aarch64", "fedora-44-x86_64", "fedora-44-aarch64", "fedora-rawhide-x86_64", "fedora-rawhide-aarch64"],
+    "queries": ["agent-browser", "/usr/bin/agent-browser", "/usr/libexec/agent-browser/bin/agent-browser"],
+    "matches": 0,
+    "retained_summary": "/srv/tmp/agentlab-agent-browser-rpmfusion-20260729-v3-audit-summary.txt"
   },
   "validation": {
     "source_srpm_generated": true,
     "production_compile": true,
     "install_layout": true,
     "tests": true,
-    "license_dependencies": true,
+    "license": true,
     "elf": true,
-    "chromium": true,
-    "final_aggregate_license_reviewed": true,
-    "current_binary_build_success": false,
-    "target_matrix_complete": false,
-    "rpm_fusion_availability_complete": false
+    "headless_runtime": true,
+    "current_binary_build_success": true,
+    "target_matrix_complete": true,
+    "duplicate_availability": true
   }
 }

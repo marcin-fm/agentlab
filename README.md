@@ -53,7 +53,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | rust-v8 | 149.2.0 | blocked | Exact recursive identities and stable-Rust patches are recorded; immutable submodule sources, licenses, and offline builds remain |
 | rubygem-ferrum | 0.17.2 | enabled | Pure-Ruby package; Fedora 43/44 clean builds and Chromium CDP smoke passed |
 | ast-grep | 0.44.1 | enabled | Clean F43/F44 mock builds, tests, CLI smoke, and aggregate linked-license audit passed |
-| agent-browser | 0.33.1 | blocked | Native Cargo closure, aggregate licensing, installed skill layout, and Fedora Chromium runtime smoke remain |
+| agent-browser | 0.33.1 | enabled | Six-cell Fedora headless Chromium matrix, linked-license payload, wrapper routing, and Fedora/RPM Fusion duplicate audit pass; rebuild 0.15 after publication |
 | mermaid-cli | 11.16.0 | blocked | F43/F44 builds pass; immutable generated-source hosting and upstream bundling record remain |
 | xberg | 1.0.1 | blocked | Checked 604-crate SCM Cargo source contract exists; 23 source-text gaps plus provider, native, and target-build proof remain |
 | pdfium | 146.0.7678.0 | enabled | Immutable Chromium-pinned source, private ABI, embedded ICU, and six-cell configured-SCM proof accepted |

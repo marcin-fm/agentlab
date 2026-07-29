@@ -5,11 +5,11 @@
 %global cargo_license_audit_sha256 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
 %global cargo_vendor_manifest_sha256 ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0
 %global cargo_auditor_sha256 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
-%global fedora_proof_sha256 ac566fd40dd6b9190bf596c92b76aa8dbf275d7712c4f848cdb58f223eb77028
+%global fedora_proof_sha256 99394344316e435b898c35e3715189a427ed59bff7d8cabf1b362e528f406bca
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.14%{?dist}
+Release:        0.15%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # The aggregate combines the cargo2rpm linked-license summary with the project,
@@ -39,9 +39,9 @@ Suggests:       chromium
 %description
 Native Rust browser automation CLI for AI agents.
 
-This package is a blocked source-build draft. It is intended to install the
-source-built binary below %{_libexecdir}/agent-browser, the upstream skills/
-and skill-data/ directories, and a public %{_bindir}/agent-browser command.
+This package installs the source-built binary below %{_libexecdir}/agent-browser,
+the upstream skills/ and skill-data/ directories, and a public
+%{_bindir}/agent-browser command.
 It must not use npm postinstall prebuilt downloads, Chrome for Testing
 downloads, or package-manager mutation during RPM phases.
 
@@ -239,6 +239,9 @@ popd >/dev/null
 %{_libexecdir}/agent-browser
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.15
+- Enable after the complete Fedora headless Chromium target matrix and duplicate audit.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.14
 - Use Fedora headless Chromium by default and prove wrapper/CDP compatibility.
 

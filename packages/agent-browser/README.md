@@ -1,71 +1,47 @@
 # agent-browser Packaging Status
 
-`agent-browser` `0.33.1` is a blocked Fedora source-package draft for the
-native Rust browser automation CLI from `vercel-labs/agent-browser`.
+`agent-browser` `0.33.1` is an enabled Fedora source package for the native Rust
+browser automation CLI from `vercel-labs/agent-browser`.
 
 The immutable `v0.33.1` tag resolves to commit
-`6dcea79b4b567a5671f1e1164807204f69542a5c`. The official GitHub tag archive
-has SHA-256
-`313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022` and its
-top-level directory is `agent-browser-0.33.1/`.
-
-The upstream Cargo package is `agent-browser` version `0.33.1` and produces
-the `agent-browser` executable. Its Cargo lockfile SHA-256 is
+`6dcea79b4b567a5671f1e1164807204f69542a5c`. The official archive SHA-256 is
+`313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022`; the
+Cargo lockfile SHA-256 is
 `afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb`.
-The checked source closure has 331 crates.io registry records. Offline locked
-Cargo metadata selects 256 normal/build candidates for Linux x86_64 (247 normal
-link candidates and 9 build-only candidates); 76 resolver-only records remain
-in the vendor source because Cargo requires them for offline locked resolution.
-The deterministic vendor archive is generated at configured-SCM/SRPM time and
-is deliberately untracked. The checked closure, vendor receipt, license audit,
-and `cargo-vendor.txt` are tracked inputs; no Fedora provider mapping is claimed.
-The final aggregate SPDX expression is bound to the checked Fedora witness.
-Fedora 44 x86_64 COPR
-build `10785021` is a checked release-0.12 witness for production compilation,
-install layout, 1,028 main tests, two doctor tests, ELF structure, and Chromium
-`about:blank`. It does not prove a successful current 0.13 RPM or the remaining
-target matrix.
 
-The intended Fedora layout is a private package root at
-`%{_libexecdir}/agent-browser`, containing `bin/agent-browser`, `skills/`,
-and `skill-data/`, with `%{_bindir}/agent-browser` as the public command.
-This preserves upstream executable-relative skill discovery without putting
-private runtime data directly in `/usr/bin`.
+The checked Cargo closure has 331 crates.io records: 256 Linux x86_64
+normal/build candidates and 76 resolver-only records. The tracked closure,
+vendor receipt, license audit, vendor manifest, and auditor are source inputs;
+the generated vendor archive remains untracked. The final linked SPDX expression
+and 264-record `LICENSE.dependencies` inventory are bound to the schema-v2
+Fedora proof. Its SHA-256 is
+`b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06`.
 
-The package must build the Rust binary from source. It must not use the npm
-postinstall script or any upstream platform binary download, must not run
-`agent-browser install` to download Chrome for Testing, and must not run
-`agent-browser install --with-deps` or otherwise mutate packages during RPM
-phases.
+COPR builds `10785628` and `10785764` prove `agent-browser-0.33.1-0.14.src.rpm`
+on Fedora 43, Fedora 44, and Rawhide for x86_64 and aarch64. Every cell passes
+1,028 main tests and two doctor tests, retains 96 ignored tests, produces binary,
+debuginfo, and debugsource RPMs, and confirms PIE, no RPATH/RUNPATH, and no
+unresolved dependencies. The headless CDP checks cover navigation, snapshot,
+runtime evaluation, and URL retrieval. Fedora 44 x86_64 uses chromium-headless
+`150.0.7871.181`; the other five cells use `150.0.7871.186`, each matching its
+reported `HeadlessChrome` user agent.
 
-Fedora metadata for Fedora 43, Fedora 44, and Rawhide provides
-`chromium-headless` with `/usr/lib64/chromium-browser/headless_shell` on both
-architectures. The package wrapper selects that executable only when the user
-has not supplied another browser, CDP endpoint, provider, or non-Chromium engine.
-Full `chromium` remains an optional dependency selected automatically for
-`--headed` when installed; an explicit path still overrides either default.
-The target matrix must prove navigation, snapshot,
-JavaScript evaluation, and URL retrieval against Fedora's differing Chromium
-versions rather than pinning one browser build.
+The layout keeps the native executable, `skills/`, and `skill-data/` below
+`%{_libexecdir}/agent-browser`, with a public `%{_bindir}/agent-browser` wrapper.
+The wrapper defaults to Fedora `chromium-headless` at
+`/usr/lib64/chromium-browser/headless_shell`, preserves explicit browser/CDP/
+provider/external-engine routing, and uses optional full `chromium` only for
+`--headed` mode.
 
-The upstream project is Apache-2.0. Embedded axe-core is MPL-2.0 with retained
-MIT/ISC third-party notices, and embedded React DevTools has an MIT notice.
-The exact applicable source texts are
-`cli/src/native/a11y/LICENSE-axe-core.txt` and
-`cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt`, plus
-`cli/src/native/react/installHook.js`. The source candidate expression is kept
-in the generated license audit. The aggregate expression is checked, but the
-installed-payload witness predates the new public wrapper. The corrected payload,
-headless-default runtime, and remaining target matrix are still pending.
+The package builds only from source. It never uses npm postinstall binaries,
+Chrome for Testing downloads, `agent-browser install`, or package-manager
+mutation during RPM phases.
 
-Fedora exact-name and `/usr/bin/agent-browser` capability queries found no
-provider for Fedora 43, Fedora 44, or Rawhide. RPM Fusion repositories were
-not configured in the research environment, so the RPM Fusion result is
-unavailable rather than an asserted absence.
+The 2026-07-29 Fedora and RPM Fusion free/nonfree duplicate audit found zero
+matches for `agent-browser`, `/usr/bin/agent-browser`, and
+`/usr/libexec/agent-browser/bin/agent-browser` on all six targets. The retained
+audit summary is
+`/srv/tmp/agentlab-agent-browser-rpmfusion-20260729-v3-audit-summary.txt`.
 
-The still-blocked spec verifies the immutable source, lock, closure receipt,
-license audit, vendor manifest, and source auditor before using Fedora Cargo
-macros with the generated directory source. It installs only the application,
-skills, skill data, and executable-relative public command, never a crate-devel
-interface. The remaining gates are the headless-default runtime proof, Chromium
-version compatibility across the configured matrix, and RPM Fusion availability.
+The spec is now `0.15` solely because this final enablement changes the checked
+proof hash. A new complete target-matrix rebuild is required after publication.
