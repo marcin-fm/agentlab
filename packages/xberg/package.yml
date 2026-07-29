@@ -21,10 +21,7 @@ upstream:
 source_audit_receipt:
   file: xberg-1.0.1-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: 84c8ef0e116bb495791d46b9d2adb80060f556911197c351f3bb47296c2818d1
-  reusable_exact_identities: 45
-  version_update_identities: 5
-  conservative_retirement_candidates: 17
+  sha256: e6110883c400e12e859f04c0a2a1542746897be22493ddb2000f24edeac15e88
 duplicate_check:
   checked: "2026-07-28"
   fedora_43_44_rawhide: absent

@@ -417,9 +417,15 @@ packages.each do |package|
         errors << "xberg: source audit release does not match" unless audit["release"] == manifest_version
         errors << "xberg: source audit commit does not match" unless audit.dig("source", "commit") == package.upstream["source_commit"]
         errors << "xberg: source audit archive SHA-256 does not match" unless audit.dig("source", "archive_sha256") == manifest_sha256
-        errors << "xberg: source audit reusable identity count does not match" unless audit.dig("prior_audited_dependency_notes", "known_reusable_exact_identities", "count") == audit_config["reusable_exact_identities"]
-        errors << "xberg: source audit version-update identity count does not match" unless audit.dig("prior_audited_dependency_notes", "known_version_update_identities", "count") == audit_config["version_update_identities"]
-        errors << "xberg: source audit retirement candidate count does not match" unless audit.dig("prior_audited_dependency_notes", "conservative_retirement_candidates", "former_current_surface_edge_count") == audit_config["conservative_retirement_candidates"]
+        errors << "xberg: package metadata exposes prior audit counts as current evidence" unless audit_config.keys.sort == %w[file schema sha256]
+        prior_notes = audit["prior_audit_notes"] || {}
+        errors << "xberg: source audit prior reusable count is not clearly unrevalidated" unless prior_notes.dig("reusable_exact_identities") == { "prior_reported_count" => 45, "revalidated_for_xberg" => false }
+        errors << "xberg: source audit prior retirement count is not clearly unrevalidated" unless prior_notes.dig("conservative_retirement_candidates", "prior_reported_count") == 17 && prior_notes.dig("conservative_retirement_candidates", "revalidated_for_xberg") == false
+        root_lock = prior_notes["root_lock_presence_cross_check"]
+        errors << "xberg: source audit root lock cross-check is incomplete" unless root_lock && root_lock["historical_dependency_finalization"] == "historical/kreuzberg-4.10.2/dependency-finalization.yml" && root_lock["historical_package_rows"] == 63 && root_lock["exact_crate_name_version_pairs_present_in_xberg_root_lock"] == 42 && root_lock["scope"] == "lock presence only" && root_lock["retirements_authorized"] == false
+        errors << "xberg: source audit root lock exclusions are incomplete" unless root_lock && root_lock["inventory_exclusions"] == [{ "package" => "rust-hayro-jpeg2000", "old_version" => "0.3.5", "xberg_root_lock" => "present" }, { "package" => "rust-fearless_simd", "old_version" => "0.4.0", "xberg_root_lock" => "not exact; 0.4.1 present" }]
+        errors << "xberg: source audit version review notes are incomplete" unless prior_notes["version_review_notes"]&.length == 5
+        errors << "xberg: source audit new identity notes are incomplete" unless prior_notes["new_identity_notes"]&.map { |note| [note["crate"], note["version"]] } == [["auto_enums", "0.8.10"], ["calamine", "0.36.1"], ["crawlberg", "1.0.10"], ["hf-hub", "1.0.0"], ["icu family", "2.2"], ["liter-llm", "1.11.3"], ["pdf_oxide", "0.3.76"], ["reqwest", "0.13.4"], ["tokenizers", "0.23.1"], ["zip", "8.6.0"]]
         errors << "xberg: source audit does not select the required CLI workspace" unless audit.dig("selected_root_surface", "workspace_members") == %w[xberg xberg-cli]
         errors << "xberg: source audit does not exclude the Node binding" unless audit.dig("selected_root_surface", "node_binding", "selected") == false
         errors << "xberg: source audit CLI feature surface is incomplete" unless audit["default_cli_features"] == %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers tree-sitter]
@@ -433,7 +439,7 @@ packages.each do |package|
           "xberg_libwpd" => "unresolved static bundled libwpd, librevenge, Boost, and zlib",
           "runtime_models_and_tessdata" => "runtime cache behavior, not build sources"
         }
-        %w[complete_cargo_closure fedora_rpm_fusion_provider_parity native_integration aggregate_license offline_target_build target_matrix enablement copr_publication retirements].each do |flag|
+        %w[complete_cargo_closure fedora_rpm_fusion_provider_parity native_integration aggregate_license offline_target_build target_matrix enablement copr_publication retirements retirements_authorized].each do |flag|
           errors << "xberg: source audit validation #{flag} is not false" unless audit.dig("validation", flag) == false
         end
       rescue JSON::ParserError => e

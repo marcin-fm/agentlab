@@ -20,12 +20,15 @@ Kreuzberg-only dependency packages are a separate follow-up audit.
 ## Source Audit Receipt
 
 `xberg-1.0.1-source-audit.json` is a checked `Source1` receipt (SHA-256
-`84c8ef0e116bb495791d46b9d2adb80060f556911197c351f3bb47296c2818d1`). It records
+`e6110883c400e12e859f04c0a2a1542746897be22493ddb2000f24edeac15e88`). It records
 the selected Rust CLI workspace and default feature surface, excludes the Node
 binding and `xberg-gliner`, and keeps all closure, provider, native, license,
 build, matrix, enablement, publication, and retirement gates false. The prior
 offline metadata attempt stopped on missing `auto_enums 0.8.10`; this receipt is
 source-side scope evidence, not a completed Cargo closure or build result.
+The 45 reusable and 17 retirement-candidate values are unrevalidated prior-audit
+counts. Its 63-row/42-pair root-lock cross-check proves lock presence only, not
+selected Xberg consumption, and authorizes no retirement.
 
 ## Duplicate Checks
 

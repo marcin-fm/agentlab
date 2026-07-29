@@ -41,28 +41,90 @@
   "unselected_workspace_crates": [
     "xberg-gliner"
   ],
-  "prior_audited_dependency_notes": {
-    "known_reusable_exact_identities": {
-      "count": 45,
+  "prior_audit_notes": {
+    "reusable_exact_identities": {
+      "prior_reported_count": 45,
       "revalidated_for_xberg": false
     },
-    "known_version_update_identities": {
-      "count": 5,
-      "revalidated_for_xberg": false
+    "conservative_retirement_candidates": {
+      "prior_reported_count": 17,
+      "revalidated_for_xberg": false,
+      "retirement_action_taken": false,
+      "retirements_authorized": false,
+      "reason": "Prior Kreuzberg-surface candidates require a fresh selected-consumer and provider audit."
     },
-    "known_new_identities": [
-      "pdf_oxide",
-      "crawlberg",
+    "root_lock_presence_cross_check": {
+      "historical_dependency_finalization": "historical/kreuzberg-4.10.2/dependency-finalization.yml",
+      "historical_package_rows": 63,
+      "exact_crate_name_version_pairs_present_in_xberg_root_lock": 42,
+      "scope": "lock presence only",
+      "not_selection_reason": "The Xberg root Cargo.lock spans a broader workspace and target set than the selected surface.",
+      "retirements_authorized": false,
+      "inventory_exclusions": [
+        {
+          "package": "rust-hayro-jpeg2000",
+          "old_version": "0.3.5",
+          "xberg_root_lock": "present"
+        },
+        {
+          "package": "rust-fearless_simd",
+          "old_version": "0.4.0",
+          "xberg_root_lock": "not exact; 0.4.1 present"
+        }
+      ]
+    },
+    "version_review_notes": [
+      {
+        "crate": "fast_image_resize",
+        "prior_version": "6.0.0",
+        "xberg_lock_version": "6.1.0"
+      },
+      {
+        "crate": "html-to-markdown-rs",
+        "prior_version": "3.8.3",
+        "xberg_lock_version": "3.9.0"
+      },
+      {
+        "crate": "infer",
+        "prior_version": "0.19.0",
+        "xberg_lock_version": "0.22.0"
+      },
+      {
+        "crate": "tree-sitter-language-pack",
+        "prior_version": "1.12.5",
+        "xberg_lock_version": "1.13.5"
+      },
+      {
+        "crate": "lzma-rust2",
+        "status": "unresolved manifest/lock branch discrepancy",
+        "manifest_version": "0.18.0",
+        "earlier_audit_lock_versions": [
+          "0.15.8",
+          "0.16.5"
+        ]
+      }
+    ],
+    "new_identity_notes": [
+      { "crate": "auto_enums", "version": "0.8.10" },
+      { "crate": "calamine", "version": "0.36.1" },
+      { "crate": "crawlberg", "version": "1.0.10" },
+      { "crate": "hf-hub", "version": "1.0.0" },
+      { "crate": "icu family", "version": "2.2" },
+      { "crate": "liter-llm", "version": "1.11.3" },
+      { "crate": "pdf_oxide", "version": "0.3.76" },
+      { "crate": "reqwest", "version": "0.13.4" },
+      { "crate": "tokenizers", "version": "0.23.1" },
+      { "crate": "zip", "version": "8.6.0" }
+    ],
+    "selected_workspace_crate_notes": [
+      "xberg",
+      "xberg-cli",
       "xberg-libheif",
       "xberg-libwpd",
       "xberg-paddle-ocr",
       "xberg-tesseract"
     ],
-    "conservative_retirement_candidates": {
-      "former_current_surface_edge_count": 17,
-      "retirement_action_taken": false,
-      "reason": "Former Kreuzberg-only edges require a fresh selected-consumer and provider audit."
-    }
+    "complete_closure": false
   },
   "native_boundaries": {
     "onnx_runtime": "system/dynamic ORT",
@@ -84,6 +146,7 @@
     "target_matrix": false,
     "enablement": false,
     "copr_publication": false,
-    "retirements": false
+    "retirements": false,
+    "retirements_authorized": false
   }
 }
