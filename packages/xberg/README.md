@@ -64,8 +64,8 @@ The configured-SCM materializer checks the patched default `xberg-cli` Linux
 tracked receipts bind 604 selected registry identities, 529 resolver-only
 identities, the complete 1,133-record root-lock registry source, a 610 normal /
 629 normal-build-dev graph, no Git dependencies, the `-2` ORT downloader delta,
-and the canonical 56,653-file vendor tree SHA-256
-`ac80b58f273017594a7bef816568c73e6532db0e86003edd6d1046926c3a3c04`.
+and the canonical 57,079-file vendor tree SHA-256
+`b0d603d84a23e6f58590660220edf82bfc5152269419abb7084fd831bb4762f2`.
 The v2 closure hashes each selected graph as sorted unique UTF-8
 `name\tversion\n` identity lines, rather than environment-sensitive raw Cargo
 tree traversal text.

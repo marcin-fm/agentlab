@@ -53,11 +53,11 @@ cargo_source_contract:
   vendor_archive_tracked: false
   source_evidence:
     closure: { file: xberg-1.0.1-cargo-closure.json, sha256: 4c52a15a829e5a458f64b268ae0e5e0efafd113853eafd69a9937831376ca309 }
-    vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: 22a0d5a36391f340a83103163c8a7d4232e0083c3e79ffcf076b0866e2100c4a }
+    vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: 61d7a23f61632e103a8563aa706be2492244cd274fe608a9eb89582d2163b935 }
     license_text_presence: { file: xberg-1.0.1-license-text-presence.json, sha256: c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86 }
     vendor_manifest: { file: xberg-1.0.1-cargo-vendor.txt, sha256: 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983 }
     auditor: { file: scripts/audit-xberg-cargo-closure, sha256: bf32ba2a291dcbdf503036cd71eee50f8eb6ae6b61fcaddc5d3750995d849224 }
-  vendor_tree: { sha256: ac80b58f273017594a7bef816568c73e6532db0e86003edd6d1046926c3a3c04, files: 56653, directories: 10401, symlinks: 0, bytes: 1205044301 }
+  vendor_tree: { sha256: b0d603d84a23e6f58590660220edf82bfc5152269419abb7084fd831bb4762f2, files: 57079, directories: 10432, symlinks: 0, bytes: 1211004693 }
   vendor_registry_identities: 1133
   resolver_only_registry_identities: 529
   license_text_presence: { present: 1043, absent: 90, final_linked_license_complete: false }
