@@ -479,18 +479,22 @@ packages.each do |package|
         errors << "xberg: missing Cargo evidence #{evidence.fetch('file')}" unless File.file?(path)
         errors << "xberg: stale Cargo evidence #{evidence.fetch('file')}" if File.file?(path) && Digest::SHA256.file(path).hexdigest != evidence.fetch("sha256")
       end
+      closure = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "closure", "file"))))
       receipt = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "vendor_receipt", "file"))))
       license = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "license_text_presence", "file"))))
-      errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [604, 610, 629, 0, -2, 0]
+      errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["vendor_registry_identities"], cargo["resolver_only_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [604, 1_133, 529, 610, 629, 0, -2, 529]
+      errors << "xberg: Cargo resolver model is not root-lock complete" unless closure.dig("resolver_model", "kind") == "root-lock-registry-complete" && closure.dig("counts", "selected_registry_identities") == 604 && closure.dig("counts", "vendor_registry_identities") == 1_133 && closure.dig("counts", "resolver_only_registry_identities") == 529
       errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
-      errors << "xberg: retained closure report identity is not bound" unless receipt.dig("inputs", "closure_report_sha256") == "c38a83d8229f92e8590f8f2d3e678a06dfb9906dab66bbf1a0bbd40db9a65a9f"
-      errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 581, "absent" => 23 } && license.dig("validation", "final_linked_license_complete") == false
+      errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 1_043, "absent" => 90 } && license.dig("validation", "final_linked_license_complete") == false
       errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false
-      required = ["Source6:        %{name}-%{version}-cargo-vendor.tar.zst", "%cargo_prep -v cargo-vendor", "audit-xberg-cargo-closure --verify", "test \"$(wc -l < %{SOURCE7})\" -eq 604", "exit 1"]
+      required = ["Source6:        %{name}-%{version}-cargo-vendor.tar.zst", "%autosetup -p1 -n xberg-%{version}\n", "%cargo_prep -v cargo-vendor", "audit-xberg-cargo-closure --verify", "test \"$(wc -l < %{SOURCE7})\" -eq 1133", "exit 1"]
       errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
+      errors << "xberg: spec disables the checked patch application" if spec.match?(/^%autosetup .*\s-N(?:\s|$)/)
       makefile = File.read(File.join(Agentlab::ROOT, ".copr", "Makefile"))
       errors << "xberg: SCM rule overwrites tracked Cargo evidence" if makefile.include?("--output-dir \"$$specdir\"")
       errors << "xberg: SCM rule does not compare Xberg evidence" unless makefile.include?("cmp \"$$tempdir/output/xberg-$$version-$$suffix\"")
+      errors << "xberg: SCM rule does not supply the checked closure" unless makefile.include?("--closure \"$$specdir/xberg-$$version-cargo-closure.json\"")
+      errors << "xberg: SCM rule lacks the Ruby selector provider" unless makefile.include?("cargo-rpm-macros curl ruby rubypick")
     end
   end
 

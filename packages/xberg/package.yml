@@ -1,14 +1,14 @@
 name: xberg
 status: blocked
 blockers:
-  - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora dependency closure.
-  - "The checked 604-source Cargo delivery is not final linked-license completeness: 23 source text gaps remain blockers."
+  - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora provider or native-library closure.
+  - "The checked 1,133-source resolver-complete Cargo delivery is not final linked-license completeness: 90 source text gaps remain blockers."
   - No Fedora source-build, provider, native-binding, or runtime integration proof exists for Xberg v1.0.1.
   - The historical Kreuzberg 4.10.2 patch and receipt set is not applicable to Xberg v1.0.1.
   - RPM Fusion duplicate checks were unavailable because no RPM Fusion repository is configured in the query environment.
 source_policy:
   source: published Xberg v1.0.1 GitHub tag archive
-  build: blocked before unpacking until a fresh source and dependency audit is complete
+  build: checked resolver-complete Cargo source and system-ORT patches; blocked before Cargo build pending provider, native, license, model, and target proof
 upstream:
   provider: github
   repository: xberg-io/xberg
@@ -41,17 +41,19 @@ cargo_source_contract:
   normal_build_dev_packages: 629
   git_dependencies: 0
   ort_download_delta: -2
-  resolver_only_additions: 0
+  resolver_only_additions: 529
   vendor_archive: xberg-1.0.1-cargo-vendor.tar.zst
   vendor_archive_tracked: false
   source_evidence:
-    closure: { file: xberg-1.0.1-cargo-closure.json, sha256: 1ed156386098a7a25590c918b9da8d58cff0923c07879ad5b6c463084244dd19 }
-    vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: 62f9932f13965696415d9b60c5e7b21d47ee132a81c680dd5815bcf94e40ab4b }
-    license_text_presence: { file: xberg-1.0.1-license-text-presence.json, sha256: a58d4bb6bcb230b110e04f0d18e7aa7b7b1099bc46f730e517be34c437a60cc2 }
-    vendor_manifest: { file: xberg-1.0.1-cargo-vendor.txt, sha256: 82e5024de178a5d65161d2c25068407b8a5a26436e49a5ca773ee2657ce85b02 }
-    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: 5a137f12d19ad5f128b69c33fa0f38cf84c45fe67f4c9d70b2717faf181b4729 }
-  vendor_tree: { sha256: 5491d0a5c54ca07ff5109b27332dfef48a87d65e35ed84086f1c9f25de1bc614, files: 29905, directories: 4815, symlinks: 0, bytes: 411276011 }
-  license_text_presence: { present: 581, absent: 23, final_linked_license_complete: false }
+    closure: { file: xberg-1.0.1-cargo-closure.json, sha256: 784e3684c3c67e3e0ff815bf30bd301b827a089663aaa60222606c4f946c7d99 }
+    vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1 }
+    license_text_presence: { file: xberg-1.0.1-license-text-presence.json, sha256: c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86 }
+    vendor_manifest: { file: xberg-1.0.1-cargo-vendor.txt, sha256: 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983 }
+    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: e039a8a637b0c58ae91649c2930003d803ebf602d13a241c16f8669ce9be54a6 }
+  vendor_tree: { sha256: ac80b58f273017594a7bef816568c73e6532db0e86003edd6d1046926c3a3c04, files: 56653, directories: 10401, symlinks: 0, bytes: 1205044301 }
+  vendor_registry_identities: 1133
+  resolver_only_registry_identities: 529
+  license_text_presence: { present: 1043, absent: 90, final_linked_license_complete: false }
 duplicate_check:
   checked: "2026-07-28"
   fedora_43_44_rawhide: absent

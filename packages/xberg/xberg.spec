@@ -3,15 +3,15 @@
 %global system_ort_audit_sha256 a68aa83911e275096845d17ad526277440ce04b9bc97bf6f918d226f5e882460
 %global system_onnxruntime_patch_sha256 be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b
 %global fedora_onnxruntime_path_patch_sha256 b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
-%global cargo_closure_sha256 1ed156386098a7a25590c918b9da8d58cff0923c07879ad5b6c463084244dd19
-%global cargo_vendor_receipt_sha256 62f9932f13965696415d9b60c5e7b21d47ee132a81c680dd5815bcf94e40ab4b
-%global license_text_presence_sha256 a58d4bb6bcb230b110e04f0d18e7aa7b7b1099bc46f730e517be34c437a60cc2
-%global cargo_vendor_manifest_sha256 82e5024de178a5d65161d2c25068407b8a5a26436e49a5ca773ee2657ce85b02
-%global cargo_auditor_sha256 5a137f12d19ad5f128b69c33fa0f38cf84c45fe67f4c9d70b2717faf181b4729
+%global cargo_closure_sha256 784e3684c3c67e3e0ff815bf30bd301b827a089663aaa60222606c4f946c7d99
+%global cargo_vendor_receipt_sha256 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1
+%global license_text_presence_sha256 c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86
+%global cargo_vendor_manifest_sha256 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983
+%global cargo_auditor_sha256 e039a8a637b0c58ae91649c2930003d803ebf602d13a241c16f8669ce9be54a6
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.7%{?dist}
+Release:        0.8%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -60,20 +60,23 @@ echo "%{cargo_vendor_receipt_sha256}  %{SOURCE4}" | sha256sum -c -
 echo "%{license_text_presence_sha256}  %{SOURCE5}" | sha256sum -c -
 echo "%{cargo_vendor_manifest_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{cargo_auditor_sha256}  %{SOURCE8}" | sha256sum -c -
-%autosetup -p1 -n xberg-%{version} -N
+%autosetup -p1 -n xberg-%{version}
 echo "f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd  Cargo.lock" | sha256sum -c -
 install -Dm0755 %{SOURCE8} .agentlab-source/audit-xberg-cargo-closure
 tar --zstd --extract --no-same-owner --no-same-permissions --file %{SOURCE6} --directory .
 ruby .agentlab-source/audit-xberg-cargo-closure --verify --vendor-dir cargo-vendor --receipt %{SOURCE4}
-test "$(wc -l < %{SOURCE7})" -eq 604
-# Fedora's workspace-wide %cargo_vendor_manifest follows resolver-complete
-# workspace semantics, not this selected 604-directory CLI contract. The
-# auditor validates Source7 instead; do not make a false byte comparison.
+test "$(wc -l < %{SOURCE7})" -eq 1133
+# Fedora's workspace-wide %cargo_vendor_manifest follows different feature
+# semantics. The auditor validates this resolver-complete 1,133-directory
+# root-lock contract and its 604-package selected CLI subset instead.
 %cargo_prep -v cargo-vendor
 echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, provider, native, and target-build proof remain incomplete' >&2
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.8
+- Record resolver-complete cache-independent Cargo generation and patch application.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.7
 - Bind the retained closure report identity to the blocked Cargo receipt.
 

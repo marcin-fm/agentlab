@@ -50,16 +50,17 @@ review, enablement, COPR, and retirements remain blocked.
 
 The configured-SCM materializer checks the patched default `xberg-cli` Linux
 `x86_64` Cargo closure and writes only the ignored transport archive. Its four
-tracked receipts bind 604 checked registry identities, a 610 normal / 629
-normal-build-dev graph, no Git dependencies, the `-2` ORT downloader delta,
-and the canonical 29,905-file vendor tree SHA-256
-`5491d0a5c54ca07ff5109b27332dfef48a87d65e35ed84086f1c9f25de1bc614`.
+tracked receipts bind 604 selected registry identities, 529 resolver-only
+identities, the complete 1,133-record root-lock registry source, a 610 normal /
+629 normal-build-dev graph, no Git dependencies, the `-2` ORT downloader delta,
+and the canonical 56,653-file vendor tree SHA-256
+`ac80b58f273017594a7bef816568c73e6532db0e86003edd6d1046926c3a3c04`.
 
-The source-level text inventory finds texts in 581 vendor directories and no
-recognized text in 23. This is not final linked-license completeness; all 23
+The source-level text inventory finds texts in 1,043 vendor directories and no
+recognized text in 90. This is not final linked-license completeness; all 90
 gaps remain publication blockers. Fedora's workspace-wide
-`%cargo_vendor_manifest` has different resolver semantics, so `%prep` checks
-the selected manifest through the auditor rather than making a false comparison.
+`%cargo_vendor_manifest` has different feature semantics, so `%prep` checks the
+root-lock manifest through the auditor rather than making a false comparison.
 
 ## Duplicate Checks
 

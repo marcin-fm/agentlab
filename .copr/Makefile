@@ -70,14 +70,14 @@ srpm:
 		xberg.spec) \
 			set -eu; \
 			specdir="$$(dirname "$(spec)")"; \
-			dnf -y install cargo cargo-rpm-macros ruby ruby-default-gems rubygem-json tar zstd patch; \
+			dnf -y install cargo cargo-rpm-macros curl ruby rubypick ruby-default-gems rubygem-json tar zstd patch; \
 			install -d -m0755 /srv/tmp; \
 			tempdir="$$(mktemp -d /srv/tmp/agentlab-xberg-srpm.XXXXXX)"; \
 			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
 			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
 			source_file="$$(rpmspec -P "$(spec)" | ruby -e 'matches = ARGF.each_line.filter_map { |line| line[/^Source0:\s+(\S+)/, 1] }; abort("expected exactly one Source0: record, found #{matches.length}") unless matches.one?; puts File.basename(matches.first.split("#", 2).first)')"; \
 			install -pm0755 "$(repo_root)/scripts/audit-xberg-cargo-closure" "$$specdir/audit-xberg-cargo-closure"; \
-			ruby "$$specdir/audit-xberg-cargo-closure" --source "$$specdir/$$source_file" --patch-dir "$$specdir" --workdir "$$tempdir/materialization" --output-dir "$$tempdir/output"; \
+			ruby "$$specdir/audit-xberg-cargo-closure" --source "$$specdir/$$source_file" --closure "$$specdir/xberg-$$version-cargo-closure.json" --patch-dir "$$specdir" --workdir "$$tempdir/materialization" --output-dir "$$tempdir/output"; \
 			for suffix in cargo-closure.json cargo-vendor-receipt.json license-text-presence.json cargo-vendor.txt; do \
 				cmp "$$tempdir/output/xberg-$$version-$$suffix" "$$specdir/xberg-$$version-$$suffix"; \
 			done; \

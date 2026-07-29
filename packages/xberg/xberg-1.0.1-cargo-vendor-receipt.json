@@ -11,16 +11,15 @@
   },
   "vendor_tree": {
     "algorithm": "sha256(sorted type,path,mode,link-target,size,content-sha256 records)",
-    "sha256": "5491d0a5c54ca07ff5109b27332dfef48a87d65e35ed84086f1c9f25de1bc614",
-    "files": 29905,
-    "directories": 4815,
+    "sha256": "ac80b58f273017594a7bef816568c73e6532db0e86003edd6d1046926c3a3c04",
+    "files": 56653,
+    "directories": 10401,
     "symlinks": 0,
-    "bytes": 411276011
+    "bytes": 1205044301
   },
   "inputs": {
-    "closure_report_sha256": "c38a83d8229f92e8590f8f2d3e678a06dfb9906dab66bbf1a0bbd40db9a65a9f",
-    "cargo_closure_sha256": "1ed156386098a7a25590c918b9da8d58cff0923c07879ad5b6c463084244dd19",
-    "license_text_presence_sha256": "a58d4bb6bcb230b110e04f0d18e7aa7b7b1099bc46f730e517be34c437a60cc2"
+    "cargo_closure_sha256": "784e3684c3c67e3e0ff815bf30bd301b827a089663aaa60222606c4f946c7d99",
+    "license_text_presence_sha256": "c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86"
   },
   "root_lock": {
     "registry": 1133,
@@ -30,15 +29,13 @@
   "graph": {
     "normal": 610,
     "normal_build_dev": 629,
-    "ort_download_delta": -2,
-    "resolver_only_additions": 0
+    "ort_download_delta": -2
   },
   "validation": {
     "lock_checksums_verified": true,
     "archive_paths_and_symlink_escapes_rejected": true,
     "offline_frozen_package_metadata_and_tree_verified": true,
     "git_dependencies_zero": true,
-    "resolver_only_additions_zero": true,
     "final_linked_license_complete": false
   }
 }
