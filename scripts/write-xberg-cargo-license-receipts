@@ -1,0 +1,73 @@
+#!/usr/bin/ruby
+# frozen_string_literal: true
+
+require "open3"
+require "optparse"
+
+module XbergCargoLicenseReceipts
+  class Error < StandardError; end
+
+  PACKAGE = "xberg-cli"
+  FEATURES = "default"
+
+  module_function
+
+  def tree_command(format, cargo: "/usr/bin/cargo")
+    [
+      cargo,
+      "tree",
+      "-Zavoid-dev-deps",
+      "--package=#{PACKAGE}",
+      "--offline",
+      "--locked",
+      "--edges=no-build,no-dev,no-proc-macro",
+      "--target=all",
+      "--prefix=none",
+      "--format",
+      format,
+      "--features=#{FEATURES}"
+    ]
+  end
+
+  def normalize(output, cwd: Dir.pwd)
+    output.lines(chomp: true)
+      .reject { |line| line.end_with?(" (*)") }
+      .map { |line| line.delete_suffix(" (#{cwd})").gsub(" / ", "/").gsub("/", " OR ") }
+      .uniq
+      .sort
+  end
+
+  def cargo_tree(format, cargo: "/usr/bin/cargo", cwd: Dir.pwd)
+    env = { "CARGO_HOME" => File.join(cwd, ".cargo"), "RUSTC_BOOTSTRAP" => "1" }
+    stdout, stderr, status = Open3.capture3(env, *tree_command(format, cargo: cargo), chdir: cwd)
+    raise Error, "cargo tree failed: #{stderr.strip}" unless status.success?
+
+    normalize(stdout, cwd: cwd)
+  end
+
+  def write(output:, cargo: "/usr/bin/cargo", cwd: Dir.pwd)
+    summary = cargo_tree("# {l}", cargo: cargo, cwd: cwd)
+    breakdown = cargo_tree("{l}: {p}", cargo: cargo, cwd: cwd)
+
+    File.write(output, "#{breakdown.join("\n")}\n")
+    puts "### BEGIN LICENSE SUMMARY ###"
+    puts summary
+    puts "###  END LICENSE SUMMARY  ###"
+  end
+
+  def run(argv)
+    options = { output: "LICENSE.dependencies", cargo: "/usr/bin/cargo" }
+    OptionParser.new do |parser|
+      parser.banner = "Usage: write-xberg-cargo-license-receipts [--output PATH] [--cargo PATH]"
+      parser.on("--output PATH", "Write the deterministic license breakdown to PATH") { |path| options[:output] = path }
+      parser.on("--cargo PATH", "Cargo executable") { |path| options[:cargo] = path }
+    end.parse!(argv)
+    raise Error, "unexpected arguments: #{argv.join(' ')}" unless argv.empty?
+
+    write(**options)
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  XbergCargoLicenseReceipts.run(ARGV)
+end

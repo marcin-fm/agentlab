@@ -613,29 +613,33 @@ packages.each do |package|
       errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
       errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 963, "absent" => 77 } && license.dig("validation", "final_linked_license_complete") == false
       errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false
-      source_proof = package.data["source_delivery_proof"]
-      expected_source_proof = {
-         "historical_builds" => [
-           { "build_id" => 10_786_324, "status" => "superseded", "reason" => "old 1,133-source lock contract" },
-           { "build_id" => 10_786_342, "status" => "superseded", "reason" => "old 1,133-source lock contract" }
-         ],
-         "local_source_generation_verified" => true,
-         "configured_scm_source_generated" => false,
-         "source_hashes_and_patches_verified" => false,
-         "vendor_tree_verified" => false,
-         "cargo_offline_configuration_verified" => false,
-         "intentional_post_build_blocker_reached" => false,
-         "cargo_compilation" => false,
-         "rpm_installed" => false,
-         "provider_matrix" => false,
-         "runtime_smoke" => false,
-         "final_linked_license_complete" => false,
-         "copr" => false,
-         "temporary_copr_definition_deleted" => true
+      compile_contract = package.data["compile_proof_contract"]
+      expected_compile_contract = {
+         "package" => "xberg-cli",
+         "features" => ["default"],
+         "cargo_build" => "%cargo_build -- --package xberg-cli --features default --locked",
+         "license_writer" => "scripts/write-xberg-cargo-license-receipts",
+         "license_output" => "LICENSE.dependencies",
+         "license_scope" => "cargo2rpm-equivalent target-all static dependency inventory; not final Linux linked-license evidence",
+         "configured_scm_source_required" => true,
+         "checked_vendor_required" => true,
+         "offline_required" => true,
+         "cli_smoke_required" => true,
+         "dynamic_link_checks_required" => true,
+         "deliberate_post_build_gate_required" => true,
+         "rpm_installation_out_of_scope" => true,
+         "final_linked_license_proof_required" => true,
+         "runtime_smoke_required" => true,
+         "full_matrix_required" => true
       }
-      errors << "xberg: configured-SCM source proof is incomplete" unless source_proof == expected_source_proof
-       required = ["Source10:       %{name}-%{version}-fedora-Cargo.lock", "Source11:       %{name}-%{version}-provider-proof.json", "Source12:       %{name}-%{version}-source-license-receipt.json", "Source13:       %{name}-%{version}-fedora-license-allowlist.json", "Source14:       audit-xberg-proof-receipts", "Patch2:", "Patch3:", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "install -pm0644 %{SOURCE10} Cargo.lock", "audit-xberg-cargo-closure --verify", "%cargo_prep -v cargo-vendor", "--prepared-source", "--vendor-dir", "test \"$(wc -l < %{SOURCE7})\" -eq 1040", "%cargo_build_crate -n xberg-cli", "LICENSE.dependencies", "target/rpm/xberg --version", "ldd -r target/rpm/xberg", "readelf -d target/rpm/xberg", "exit 1"]
-      errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
+      errors << "xberg: compile proof contract is incomplete" unless compile_contract == expected_compile_contract
+      required = ["Source10:       %{name}-%{version}-fedora-Cargo.lock", "Source11:       %{name}-%{version}-provider-proof.json", "Source12:       %{name}-%{version}-source-license-receipt.json", "Source13:       %{name}-%{version}-fedora-license-allowlist.json", "Source14:       audit-xberg-proof-receipts", "Source15:       write-xberg-cargo-license-receipts", "Patch2:", "Patch3:", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "install -pm0644 %{SOURCE10} Cargo.lock", "audit-xberg-cargo-closure --verify", "%cargo_prep -v cargo-vendor", "--prepared-source", "--vendor-dir", "test \"$(wc -l < %{SOURCE7})\" -eq 1040", "%cargo_build -- --package xberg-cli --features default --locked", "ruby .agentlab-source/write-xberg-cargo-license-receipts --output LICENSE.dependencies", "LICENSE.dependencies", "target/rpm/xberg --version", "ldd -r target/rpm/xberg", "readelf -d target/rpm/xberg", "exit 1"]
+       errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
+       errors << "xberg: spec disables the selected default CLI features" if spec.include?("%cargo_build_crate -n") || spec.include?("--no-default-features")
+       build_index = spec.index("%cargo_build -- --package xberg-cli --features default --locked")
+       license_index = spec.index("ruby .agentlab-source/write-xberg-cargo-license-receipts --output LICENSE.dependencies")
+       check_index = spec.index("%check")
+       errors << "xberg: build and license commands do not precede the proof gate" unless build_index && license_index && check_index && build_index < license_index && license_index < check_index
       sanitize_index = spec.index("--sanitize-only --source . --filter %{SOURCE9}")
       autopatch_index = spec.index("%autopatch -p1")
       errors << "xberg: spec does not apply checked patches after sanitizing source links" unless sanitize_index && autopatch_index && sanitize_index < autopatch_index
@@ -645,13 +649,17 @@ packages.each do |package|
       errors << "xberg: SCM rule does not supply the checked closure and link filter" unless makefile.include?("--closure \"$$specdir/xberg-$$version-cargo-closure.json\"") && makefile.include?("--filter \"$$specdir/xberg-$$version-source-filter.json\"")
        errors << "xberg: SCM rule lacks the Ruby selector provider" unless makefile.include?("cargo-rpm-macros curl ruby rubypick")
        errors << "xberg: SCM rule does not pass the checked Fedora lock" unless makefile.include?("--lock \"$$specdir/$$lock_file\"")
-       errors << "xberg: SCM rule does not verify tracked proof receipts" unless makefile.include?("--provider \"$$specdir/xberg-$$version-provider-proof.json\"") && makefile.include?("--allowlist \"$$specdir/xberg-$$version-fedora-license-allowlist.json\"")
+      errors << "xberg: SCM rule does not verify tracked proof receipts" unless makefile.include?("--provider \"$$specdir/xberg-$$version-provider-proof.json\"") && makefile.include?("--allowlist \"$$specdir/xberg-$$version-fedora-license-allowlist.json\"")
+      errors << "xberg: SCM rule does not stage the checked Cargo license writer" unless makefile.include?("scripts/write-xberg-cargo-license-receipts")
       auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-cargo-closure"))
        errors << "xberg: source extractor lacks receipt-driven safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "verify_unsafe_links!", "sanitize_tree!", "gnu_extension_value!", "pax_records!", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
        errors << "xberg: spec exits before the build gate" unless spec.index("exit 1") && spec.index("exit 1") > spec.index("%check")
-       proof_auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-proof-receipts"))
-       errors << "xberg: proof auditor lacks tracked provider input" unless proof_auditor.include?("--provider PATH") && proof_auditor.include?("validate_provider!")
-       errors << "xberg: proof auditor lacks prepared-source mode" unless proof_auditor.include?("--prepared-source DIR") && proof_auditor.include?("--vendor-dir DIR")
+      proof_auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-proof-receipts"))
+      errors << "xberg: proof auditor lacks tracked provider input" unless proof_auditor.include?("--provider PATH") && proof_auditor.include?("validate_provider!")
+      errors << "xberg: proof auditor lacks prepared-source mode" unless proof_auditor.include?("--prepared-source DIR") && proof_auditor.include?("--vendor-dir DIR")
+      license_writer = File.read(File.join(Agentlab::ROOT, "scripts", "write-xberg-cargo-license-receipts"))
+      license_writer_fragments = ["PACKAGE = \"xberg-cli\"", "FEATURES = \"default\"", '"--package=#{PACKAGE}"', '"--offline"', '"--locked"', '"--edges=no-build,no-dev,no-proc-macro"', '"--target=all"', 'line.end_with?(" (*)")', '.gsub(" / ", "/").gsub("/", " OR ")', 'File.write(output']
+      errors << "xberg: Cargo license writer does not match the selected default CLI contract" unless license_writer_fragments.all? { |fragment| license_writer.include?(fragment) }
        source_license = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.1-source-license-receipt.json")))
        provider_proof = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.1-provider-proof.json")))
         dynamic_tesseract_check_index = spec.index('echo "%{dynamic_tesseract_patch_sha256}  %{PATCH2}" | sha256sum -c -')

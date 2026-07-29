@@ -16,10 +16,11 @@
 %global fedora_license_allowlist_sha256 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0
 %global proof_auditor_sha256 f9c6c0446912b3b98c50861940949860e83c2de5ade1b6bc07d8d863631a96da
 %global source_filter_sha256 233d5ce7fe8630ef7fad81d7b52878e3d282999c11f1294cc7b271f392984fbd
+%global cargo_license_writer_sha256 f37b954d1dc4880deb29de9f7b0fe80859de1a80256d95f28cc295d8dd93156a
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.19%{?dist}
+Release:        0.20%{?dist}
 Summary:        Document intelligence toolkit
 
 %global xberg_source_license_expression ((Apache-2.0 OR MIT) AND BSD-3-Clause) AND ((MIT OR Apache-2.0) AND Apache-2.0) AND ((MIT OR Apache-2.0) AND ISC) AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR CC0-1.0) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC) AND (Apache-2.0 AND MIT) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 OR MIT OR Zlib) AND Apache-2.0 WITH LLVM-exception AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-3-Clause AND (BSD-3-Clause AND MIT) AND (BSD-3-Clause OR Apache-2.0) AND (BSD-3-Clause OR MIT) AND BSL-1.0 AND (BlueOak-1.0.0 OR MIT OR Apache-2.0) AND CC0-1.0 AND (CC0-1.0 OR Apache-2.0) AND (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception) AND (CC0-1.0 OR MIT-0) AND (CC0-1.0 OR MIT-0 OR Apache-2.0) AND CDDL-1.0 AND CDLA-Permissive-2.0 AND GPL-2.0-or-later AND ISC AND (ISC AND (Apache-2.0 OR ISC)) AND (ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)) AND MIT AND (MIT AND BSD-3-Clause) AND (MIT OR Apache-2.0) AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND MIT-0 AND MPL-2.0 AND (MPL-2.0 OR LGPL-2.1-or-later) AND Unicode-3.0 AND (Unlicense OR MIT) AND (Unlicense OR MIT OR Apache-2.0 OR CC0-1.0) AND Zlib AND (Zlib OR Apache-2.0 OR MIT) AND bzip2-1.0.6
@@ -40,6 +41,7 @@ Source11:       %{name}-%{version}-provider-proof.json
 Source12:       %{name}-%{version}-source-license-receipt.json
 Source13:       %{name}-%{version}-fedora-license-allowlist.json
 Source14:       audit-xberg-proof-receipts
+Source15:       write-xberg-cargo-license-receipts
 # Fedora system ONNX Runtime: select Xberg's released dynamic feature path for
 # the default CLI ML surface. Fedora-specific; local upstream history has no
 # released default-Linux feature-edge equivalent.
@@ -98,9 +100,11 @@ echo "%{provider_proof_sha256}  %{SOURCE11}" | sha256sum -c -
 echo "%{source_license_receipt_sha256}  %{SOURCE12}" | sha256sum -c -
 echo "%{fedora_license_allowlist_sha256}  %{SOURCE13}" | sha256sum -c -
 echo "%{proof_auditor_sha256}  %{SOURCE14}" | sha256sum -c -
+echo "%{cargo_license_writer_sha256}  %{SOURCE15}" | sha256sum -c -
 %setup -q -n xberg-%{version}
 install -Dm0755 %{SOURCE8} .agentlab-source/audit-xberg-cargo-closure
 install -Dm0755 %{SOURCE14} .agentlab-source/audit-xberg-proof-receipts
+install -Dm0755 %{SOURCE15} .agentlab-source/write-xberg-cargo-license-receipts
 ruby .agentlab-source/audit-xberg-cargo-closure --sanitize-only --source . --filter %{SOURCE9}
 %autopatch -p1
 install -pm0644 %{PATCH0} %{PATCH1} %{PATCH2} %{PATCH3} .agentlab-source/
@@ -125,7 +129,8 @@ export HF_DATASETS_OFFLINE=1
 install -d -m0700 .test-home .cargo-cache
 export HOME="$PWD/.test-home"
 export CARGO_HOME="$PWD/.cargo-cache"
-%cargo_build_crate -n xberg-cli
+%cargo_build -- --package xberg-cli --features default --locked
+ruby .agentlab-source/write-xberg-cargo-license-receipts --output LICENSE.dependencies
 
 %check
 test -s target/rpm/xberg
@@ -141,6 +146,9 @@ echo 'xberg remains blocked after the deliberate post-build integration gate: fi
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.20
+- Build and account for the exact default-feature Xberg CLI surface.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.19
 - Exclude the independently audited vendor tree from Source0 manifest checks.
 

@@ -7,6 +7,7 @@ require "yaml"
 require_relative "../scripts/lib/agentlab"
 load File.expand_path("../scripts/audit-openchamber-lock-closure", __dir__)
 load File.expand_path("../scripts/audit-xberg-proof-receipts", __dir__)
+load File.expand_path("../scripts/write-xberg-cargo-license-receipts", __dir__)
 
 class AgentlabTest < Minitest::Test
   def registry_entry(overrides = {})
@@ -1039,7 +1040,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Name:           xberg")
     assert_includes(spec, "Version:        1.0.1")
     assert_includes(spec, "%global source_sha256 a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6")
-    assert_includes(spec, "Release:        0.19%{?dist}")
+    assert_includes(spec, "Release:        0.20%{?dist}")
     assert_includes(spec, "# Select the six-member Fedora workspace")
     assert_includes(spec, "Source1:        %{name}-%{version}-source-audit.json")
     assert_includes(spec, "Source2:        %{name}-%{version}-system-ort-audit.json")
@@ -1049,6 +1050,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Source12:       %{name}-%{version}-source-license-receipt.json")
     assert_includes(spec, "Source13:       %{name}-%{version}-fedora-license-allowlist.json")
     assert_includes(spec, "Source14:       audit-xberg-proof-receipts")
+    assert_includes(spec, "Source15:       write-xberg-cargo-license-receipts")
     assert_includes(spec, "%setup -q -n xberg-%{version}")
     assert_includes(spec, "--sanitize-only --source . --filter %{SOURCE9}")
     dynamic_tesseract_check = 'echo "%{dynamic_tesseract_patch_sha256}  %{PATCH2}" | sha256sum -c -'
@@ -1071,13 +1073,27 @@ class AgentlabTest < Minitest::Test
     assert_equal({ "symlinks" => 51, "hardlinks" => 0, "safe_in_root_links" => 50, "unsafe_links" => 1 }, filter_receipt.fetch("archive_link_inventory"))
     assert_equal([604, 1_040, 436, 610, 629, 0, -2, 436], contract.values_at("selected_registry_identities", "vendor_registry_identities", "resolver_only_registry_identities", "normal_packages", "normal_build_dev_packages", "git_dependencies", "ort_download_delta", "resolver_only_additions"))
     assert_equal(false, contract.dig("license_text_presence", "final_linked_license_complete"))
-    source_proof = package.data.fetch("source_delivery_proof")
-    assert_equal([10_786_324, 10_786_342], source_proof.fetch("historical_builds").map { |build| build.fetch("build_id") })
-    assert_equal(true, source_proof.fetch("local_source_generation_verified"))
-    assert_equal([false, false, false, false, false], source_proof.values_at("configured_scm_source_generated", "source_hashes_and_patches_verified", "vendor_tree_verified", "cargo_offline_configuration_verified", "intentional_post_build_blocker_reached"))
-    assert_equal(true, source_proof.fetch("temporary_copr_definition_deleted"))
-    assert_equal(false, source_proof.fetch("cargo_compilation"))
-    assert_equal(false, source_proof.fetch("rpm_installed"))
+    assert_equal(
+      {
+        "package" => "xberg-cli",
+        "features" => ["default"],
+        "cargo_build" => "%cargo_build -- --package xberg-cli --features default --locked",
+        "license_writer" => "scripts/write-xberg-cargo-license-receipts",
+        "license_output" => "LICENSE.dependencies",
+        "license_scope" => "cargo2rpm-equivalent target-all static dependency inventory; not final Linux linked-license evidence",
+        "configured_scm_source_required" => true,
+        "checked_vendor_required" => true,
+        "offline_required" => true,
+        "cli_smoke_required" => true,
+        "dynamic_link_checks_required" => true,
+        "deliberate_post_build_gate_required" => true,
+        "rpm_installation_out_of_scope" => true,
+        "final_linked_license_proof_required" => true,
+        "runtime_smoke_required" => true,
+        "full_matrix_required" => true
+      },
+      package.data.fetch("compile_proof_contract")
+    )
     assert_equal(contract.dig("source_evidence", "auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-cargo-closure", __dir__)).hexdigest)
     assert_equal(contract.dig("source_evidence", "proof_auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-proof-receipts", __dir__)).hexdigest)
     closure = JSON.parse(File.read(File.join(package.directory, contract.dig("source_evidence", "closure", "file"))))
@@ -1095,12 +1111,25 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "%cargo_prep -v cargo-vendor")
     assert_includes(spec, "--prepared-source")
     assert_includes(spec, "--vendor-dir")
-    assert_includes(spec, "%cargo_build_crate -n xberg-cli")
+    assert_includes(spec, "%global cargo_license_writer_sha256 f37b954d1dc4880deb29de9f7b0fe80859de1a80256d95f28cc295d8dd93156a")
+    assert_includes(spec, "%cargo_build -- --package xberg-cli --features default --locked")
+    assert_includes(spec, "ruby .agentlab-source/write-xberg-cargo-license-receipts --output LICENSE.dependencies")
+    refute_includes(spec, "%cargo_build_crate -n")
+    refute_includes(spec, "--no-default-features")
+    license_writer = contract.dig("source_evidence", "license_writer")
+    assert_equal("scripts/write-xberg-cargo-license-receipts", license_writer.fetch("file"))
+    assert_equal(license_writer.fetch("sha256"), Digest::SHA256.file(File.expand_path("../scripts/write-xberg-cargo-license-receipts", __dir__)).hexdigest)
+    assert_equal(
+      ["/usr/bin/cargo", "tree", "-Zavoid-dev-deps", "--package=xberg-cli", "--offline", "--locked", "--edges=no-build,no-dev,no-proc-macro", "--target=all", "--prefix=none", "--format", "# {l}", "--features=default"],
+      XbergCargoLicenseReceipts.tree_command("# {l}")
+    )
+    assert_equal(["# Apache-2.0 OR MIT", "# MIT"], XbergCargoLicenseReceipts.normalize("# MIT\n# Apache-2.0 / MIT\n# MIT (*)\n", cwd: "/source"))
     assert_includes(spec, "target/rpm/xberg --version")
     assert_includes(spec, "ldd -r target/rpm/xberg")
     assert_includes(makefile, '--closure "$$specdir/xberg-$$version-cargo-closure.json"')
     assert_includes(makefile, '--filter "$$specdir/xberg-$$version-source-filter.json"')
     assert_includes(makefile, "cargo-rpm-macros curl ruby rubypick")
+    assert_includes(makefile, "scripts/write-xberg-cargo-license-receipts")
     auditor = File.read(File.expand_path("../scripts/audit-xberg-cargo-closure", __dir__))
     assert_includes(auditor, "safe_symlink_target")
     assert_includes(auditor, "safe_hardlink_target")

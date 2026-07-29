@@ -79,6 +79,7 @@ srpm:
 			lock_file="xberg-$$version-fedora-Cargo.lock"; \
 			install -pm0755 "$(repo_root)/scripts/audit-xberg-cargo-closure" "$$specdir/audit-xberg-cargo-closure"; \
 			install -pm0755 "$(repo_root)/scripts/audit-xberg-proof-receipts" "$$specdir/audit-xberg-proof-receipts"; \
+			install -pm0755 "$(repo_root)/scripts/write-xberg-cargo-license-receipts" "$$specdir/write-xberg-cargo-license-receipts"; \
 			ruby "$$specdir/audit-xberg-cargo-closure" --source "$$specdir/$$source_file" --filter "$$specdir/xberg-$$version-source-filter.json" --closure "$$specdir/xberg-$$version-cargo-closure.json" --lock "$$specdir/$$lock_file" --patch-dir "$$specdir" --workdir "$$tempdir/materialization" --output-dir "$$tempdir/output"; \
 			for suffix in cargo-closure.json cargo-vendor-receipt.json license-text-presence.json cargo-vendor.txt; do \
 				cmp "$$tempdir/output/xberg-$$version-$$suffix" "$$specdir/xberg-$$version-$$suffix"; \

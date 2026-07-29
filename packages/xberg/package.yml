@@ -3,12 +3,12 @@ status: blocked
 blockers:
   - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora provider or native-library closure.
   - "The checked six-member Fedora workspace lock vendors 1,040 registry sources and is not final linked-license completeness: 77 source text gaps remain blockers."
-  - The corrected 1,040-source configured-SCM and Cargo compile proof has not run; prior 1,133-source proofs are superseded.
+  - The corrected 1,040-source default-feature Cargo compile proof has not run; build 10788466 used no default features and is diagnostic only.
   - The historical Kreuzberg 4.10.2 patch and receipt set is not applicable to Xberg v1.0.1.
   - RPM Fusion duplicate checks were unavailable because no RPM Fusion repository is configured in the query environment.
 source_policy:
   source: published Xberg v1.0.1 GitHub tag archive
-  build: checked resolver-complete Cargo source and Fedora provider patches; the compile-proof recipe ends at a deliberate post-build gate pending native, license, model, runtime, and target proof
+  build: checked resolver-complete Cargo source and Fedora provider patches; compile and Cargo license accounting select xberg-cli with the default feature set before a deliberate post-build gate
 upstream:
   provider: github
   repository: xberg-io/xberg
@@ -67,27 +67,28 @@ cargo_source_contract:
     provider_proof: { file: xberg-1.0.1-provider-proof.json, sha256: 8b11b645c50d23b323231f01d23fe699ba1b3a1a50755811878de1ced7e66adc }
     fedora_allowlist: { file: xberg-1.0.1-fedora-license-allowlist.json, sha256: 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0 }
     proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: f9c6c0446912b3b98c50861940949860e83c2de5ade1b6bc07d8d863631a96da }
+    license_writer: { file: scripts/write-xberg-cargo-license-receipts, sha256: f37b954d1dc4880deb29de9f7b0fe80859de1a80256d95f28cc295d8dd93156a }
   vendor_tree: { sha256: e3418b1feee8a7824b243e91552e3f550066410e6028c4c5484757d340dc9672, files: 51400, directories: 9488, symlinks: 0, bytes: 1101005097 }
   resolver_only_registry_identities: 436
   license_text_presence: { present: 963, absent: 77, selected_normal_gaps: 23, resolver_only_gaps: 54, required_text_count: 76, final_linked_license_complete: false }
   intel_sources: absent
-source_delivery_proof:
-  historical_builds:
-    - { build_id: 10786324, status: superseded, reason: "old 1,133-source lock contract" }
-    - { build_id: 10786342, status: superseded, reason: "old 1,133-source lock contract" }
-  local_source_generation_verified: true
-  configured_scm_source_generated: false
-  source_hashes_and_patches_verified: false
-  vendor_tree_verified: false
-  cargo_offline_configuration_verified: false
-  intentional_post_build_blocker_reached: false
-  cargo_compilation: false
-  rpm_installed: false
-  provider_matrix: false
-  runtime_smoke: false
-  final_linked_license_complete: false
-  copr: false
-  temporary_copr_definition_deleted: true
+compile_proof_contract:
+  package: xberg-cli
+  features: [default]
+  cargo_build: "%cargo_build -- --package xberg-cli --features default --locked"
+  license_writer: scripts/write-xberg-cargo-license-receipts
+  license_output: LICENSE.dependencies
+  license_scope: cargo2rpm-equivalent target-all static dependency inventory; not final Linux linked-license evidence
+  configured_scm_source_required: true
+  checked_vendor_required: true
+  offline_required: true
+  cli_smoke_required: true
+  dynamic_link_checks_required: true
+  deliberate_post_build_gate_required: true
+  rpm_installation_out_of_scope: true
+  final_linked_license_proof_required: true
+  runtime_smoke_required: true
+  full_matrix_required: true
 duplicate_check:
   checked: "2026-07-28"
   fedora_43_44_rawhide: absent

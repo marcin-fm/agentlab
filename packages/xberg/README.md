@@ -43,9 +43,17 @@ Cargo auditor preserves deterministic safe extraction, the checked lock, the
 full resolver vendor tree, and offline directory-source metadata/tree proof.
 The proof auditor can regenerate both receipts from a prepared sanitized,
 patched, lock-replaced source and extracted vendor tree without transient
-research files.
+research files. The checked Cargo license writer selects package `xberg-cli`
+with feature `default`, mirrors Fedora cargo2rpm's normalized summary/breakdown
+format and conservative `--target=all` scope, and retains the checked lock and
+offline vendor configuration. That inventory is not final Linux linked-license
+or RPM payload evidence.
 
 Historical configured-SCM proofs `10786324` and `10786342` used the superseded
-1,133-source contract and are not current evidence. No compile or binary RPM
-proof exists. Xberg remains blocked and COPR-disabled pending provider,
-native, model, runtime, final-license, and target-matrix proof.
+1,133-source contract and are not current evidence. Build `10788466` verified
+the corrected source/prep contract but `%cargo_build_crate -n xberg-cli`
+expanded to a no-default-features build and ignored the package token, so its
+binary and 240-line license inventory are diagnostic only. Release `0.20`
+selects the exact default-feature CLI consistently for build and license
+accounting. Xberg remains blocked and COPR-disabled pending that proof plus
+native, model, runtime, final-license, payload, and target-matrix evidence.
