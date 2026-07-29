@@ -66,7 +66,7 @@ cargo_source_contract:
     source_license_receipt: { file: xberg-1.0.1-source-license-receipt.json, sha256: 3cbf7857f5b572fa6ca5a7f061c0ac4d226e87db3dd554ffd4bdc792fd5d2925 }
     provider_proof: { file: xberg-1.0.1-provider-proof.json, sha256: 8b11b645c50d23b323231f01d23fe699ba1b3a1a50755811878de1ced7e66adc }
     fedora_allowlist: { file: xberg-1.0.1-fedora-license-allowlist.json, sha256: 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0 }
-    proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: 2ccd90220247f1faef4401117188d68f84ea46e79035a6fdbcdb376d65d0c420 }
+    proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: f9c6c0446912b3b98c50861940949860e83c2de5ade1b6bc07d8d863631a96da }
   vendor_tree: { sha256: e3418b1feee8a7824b243e91552e3f550066410e6028c4c5484757d340dc9672, files: 51400, directories: 9488, symlinks: 0, bytes: 1101005097 }
   resolver_only_registry_identities: 436
   license_text_presence: { present: 963, absent: 77, selected_normal_gaps: 23, resolver_only_gaps: 54, required_text_count: 76, final_linked_license_complete: false }

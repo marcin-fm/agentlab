@@ -14,12 +14,12 @@
 %global source_license_receipt_sha256 3cbf7857f5b572fa6ca5a7f061c0ac4d226e87db3dd554ffd4bdc792fd5d2925
 %global provider_proof_sha256 8b11b645c50d23b323231f01d23fe699ba1b3a1a50755811878de1ced7e66adc
 %global fedora_license_allowlist_sha256 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0
-%global proof_auditor_sha256 2ccd90220247f1faef4401117188d68f84ea46e79035a6fdbcdb376d65d0c420
+%global proof_auditor_sha256 f9c6c0446912b3b98c50861940949860e83c2de5ade1b6bc07d8d863631a96da
 %global source_filter_sha256 233d5ce7fe8630ef7fad81d7b52878e3d282999c11f1294cc7b271f392984fbd
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.18%{?dist}
+Release:        0.19%{?dist}
 Summary:        Document intelligence toolkit
 
 %global xberg_source_license_expression ((Apache-2.0 OR MIT) AND BSD-3-Clause) AND ((MIT OR Apache-2.0) AND Apache-2.0) AND ((MIT OR Apache-2.0) AND ISC) AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR CC0-1.0) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC) AND (Apache-2.0 AND MIT) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 OR MIT OR Zlib) AND Apache-2.0 WITH LLVM-exception AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-3-Clause AND (BSD-3-Clause AND MIT) AND (BSD-3-Clause OR Apache-2.0) AND (BSD-3-Clause OR MIT) AND BSL-1.0 AND (BlueOak-1.0.0 OR MIT OR Apache-2.0) AND CC0-1.0 AND (CC0-1.0 OR Apache-2.0) AND (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception) AND (CC0-1.0 OR MIT-0) AND (CC0-1.0 OR MIT-0 OR Apache-2.0) AND CDDL-1.0 AND CDLA-Permissive-2.0 AND GPL-2.0-or-later AND ISC AND (ISC AND (Apache-2.0 OR ISC)) AND (ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)) AND MIT AND (MIT AND BSD-3-Clause) AND (MIT OR Apache-2.0) AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND MIT-0 AND MPL-2.0 AND (MPL-2.0 OR LGPL-2.1-or-later) AND Unicode-3.0 AND (Unlicense OR MIT) AND (Unlicense OR MIT OR Apache-2.0 OR CC0-1.0) AND Zlib AND (Zlib OR Apache-2.0 OR MIT) AND bzip2-1.0.6
@@ -141,6 +141,9 @@ echo 'xberg remains blocked after the deliberate post-build integration gate: fi
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.19
+- Exclude the independently audited vendor tree from Source0 manifest checks.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.18
 - Verify every Fedora patch before applying the compile-proof source contract.
 

@@ -154,8 +154,11 @@ module XbergProofReceipts
     end
   end
 
-  def source_manifest_records(source)
-    Dir.glob(File.join(source, "**", "Cargo.toml")).sort.map do |path|
+  def source_manifest_records(source, excluded_directory: nil)
+    excluded_prefix = excluded_directory && "#{File.expand_path(excluded_directory)}#{File::SEPARATOR}"
+    Dir.glob(File.join(source, "**", "Cargo.toml")).sort.reject do |path|
+      excluded_prefix && File.expand_path(path).start_with?(excluded_prefix)
+    end.map do |path|
       text = File.read(path)
       license = field(text, "license")
       inherited = license.nil? && (path == File.join(source, "Cargo.toml") || text.match?(/^\s*license\.workspace\s*=\s*true/))
@@ -240,7 +243,7 @@ module XbergProofReceipts
       record["normalized_license"] = classified ? classified.fetch("normalized_license") : normalize_expression(record["license"])
       fail!("unclassified vendor identity #{record['name']} #{record['version']}") unless record["normalized_license"]
     end
-    manifests = source_manifest_records(patched)
+    manifests = source_manifest_records(patched, excluded_directory: vendor)
     components = source_components(patched)
     allowed, exceptions = allowlist_identifiers(allowlist_path)
     expressions = records.map { |r| r["normalized_license"] } + manifests.map { |r| r["expression"] } + components.map { |r| r["expression"] }
@@ -327,28 +330,30 @@ module XbergProofReceipts
   end
 end
 
-options = { mode: :generate }
-OptionParser.new do |parser|
-  parser.on("--verify") { options[:mode] = :verify }
-  parser.on("--source PATH") { |value| options[:source] = value }
-  parser.on("--patch-dir PATH") { |value| options[:patch_dir] = value }
-  parser.on("--vendor-archive PATH") { |value| options[:vendor_archive] = value }
-  parser.on("--closure PATH") { |value| options[:closure] = value }
-  parser.on("--presence PATH") { |value| options[:presence] = value }
-  parser.on("--allowlist PATH") { |value| options[:allowlist] = value }
-  parser.on("--provider PATH") { |value| options[:provider] = value }
-  parser.on("--prepared-source DIR") { |value| options[:prepared_source] = value }
-  parser.on("--vendor-dir DIR") { |value| options[:vendor_dir] = value }
-  parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
-  parser.on("--workdir PATH") { |value| options[:workdir] = value }
-end.parse!
-required = %i[patch_dir closure presence allowlist provider output_dir workdir]
-missing = required.reject { |key| options[key] }
-abort("missing options: #{missing.join(', ')}") unless missing.empty?
-if options[:prepared_source] || options[:vendor_dir]
-  abort("--prepared-source and --vendor-dir are required together") unless options[:prepared_source] && options[:vendor_dir]
-else
-  abort("--source and --vendor-archive are required outside prepared mode") unless options[:source] && options[:vendor_archive]
+if $PROGRAM_NAME == __FILE__
+  options = { mode: :generate }
+  OptionParser.new do |parser|
+    parser.on("--verify") { options[:mode] = :verify }
+    parser.on("--source PATH") { |value| options[:source] = value }
+    parser.on("--patch-dir PATH") { |value| options[:patch_dir] = value }
+    parser.on("--vendor-archive PATH") { |value| options[:vendor_archive] = value }
+    parser.on("--closure PATH") { |value| options[:closure] = value }
+    parser.on("--presence PATH") { |value| options[:presence] = value }
+    parser.on("--allowlist PATH") { |value| options[:allowlist] = value }
+    parser.on("--provider PATH") { |value| options[:provider] = value }
+    parser.on("--prepared-source DIR") { |value| options[:prepared_source] = value }
+    parser.on("--vendor-dir DIR") { |value| options[:vendor_dir] = value }
+    parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
+    parser.on("--workdir PATH") { |value| options[:workdir] = value }
+  end.parse!
+  required = %i[patch_dir closure presence allowlist provider output_dir workdir]
+  missing = required.reject { |key| options[key] }
+  abort("missing options: #{missing.join(', ')}") unless missing.empty?
+  if options[:prepared_source] || options[:vendor_dir]
+    abort("--prepared-source and --vendor-dir are required together") unless options[:prepared_source] && options[:vendor_dir]
+  else
+    abort("--source and --vendor-archive are required outside prepared mode") unless options[:source] && options[:vendor_archive]
+  end
+  XbergProofReceipts.public_send(options[:mode] == :verify ? :verify! : :generate!, options)
+  puts "xberg proof receipts #{options[:mode]} ok"
 end
-XbergProofReceipts.public_send(options[:mode] == :verify ? :verify! : :generate!, options)
-puts "xberg proof receipts #{options[:mode]} ok"

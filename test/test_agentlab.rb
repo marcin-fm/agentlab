@@ -6,6 +6,7 @@ require "tmpdir"
 require "yaml"
 require_relative "../scripts/lib/agentlab"
 load File.expand_path("../scripts/audit-openchamber-lock-closure", __dir__)
+load File.expand_path("../scripts/audit-xberg-proof-receipts", __dir__)
 
 class AgentlabTest < Minitest::Test
   def registry_entry(overrides = {})
@@ -1038,7 +1039,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Name:           xberg")
     assert_includes(spec, "Version:        1.0.1")
     assert_includes(spec, "%global source_sha256 a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6")
-    assert_includes(spec, "Release:        0.18%{?dist}")
+    assert_includes(spec, "Release:        0.19%{?dist}")
     assert_includes(spec, "# Select the six-member Fedora workspace")
     assert_includes(spec, "Source1:        %{name}-%{version}-source-audit.json")
     assert_includes(spec, "Source2:        %{name}-%{version}-system-ort-audit.json")
@@ -1078,6 +1079,7 @@ class AgentlabTest < Minitest::Test
     assert_equal(false, source_proof.fetch("cargo_compilation"))
     assert_equal(false, source_proof.fetch("rpm_installed"))
     assert_equal(contract.dig("source_evidence", "auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-cargo-closure", __dir__)).hexdigest)
+    assert_equal(contract.dig("source_evidence", "proof_auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-proof-receipts", __dir__)).hexdigest)
     closure = JSON.parse(File.read(File.join(package.directory, contract.dig("source_evidence", "closure", "file"))))
     assert_equal("agentlab-xberg-cargo-closure/v2", closure.fetch("schema"))
     assert_equal("selected-Fedora-workspace-lock-complete", closure.dig("resolver_model", "kind"))
@@ -1138,6 +1140,46 @@ class AgentlabTest < Minitest::Test
     assert_operator(spec.index("exit 1"), :>, spec.index("%check"))
     retirement = YAML.safe_load_file(File.expand_path("../archived/kreuzberg/retirement.yml", __dir__))
     assert_equal("kreuzberg", retirement.fetch("name"))
+  end
+
+  def test_xberg_proof_auditor_excludes_the_prepared_vendor_tree_from_source0
+    Dir.mktmpdir do |source|
+      File.write(File.join(source, "Cargo.toml"), <<~TOML)
+        [package]
+        name = "xberg"
+        version = "1.0.1"
+        license = "MIT"
+      TOML
+      nested_manifest = File.join(source, "crates", "xberg-cli")
+      FileUtils.mkdir_p(nested_manifest)
+      File.write(File.join(nested_manifest, "Cargo.toml"), <<~TOML)
+        [package]
+        name = "xberg-cli"
+        version = "1.0.1"
+        license.workspace = true
+      TOML
+      crate = File.join(source, "cargo-vendor", "model2vec-rs-0.2.1")
+      FileUtils.mkdir_p(crate)
+      File.write(File.join(crate, "Cargo.toml"), <<~TOML)
+        [package]
+        name = "model2vec-rs"
+        version = "0.2.1"
+        license-file = "LICENSE"
+      TOML
+      File.write(File.join(crate, "LICENSE"), <<~LICENSE)
+        MIT License
+        Permission is hereby granted, free of charge, to any person obtaining a copy.
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+      LICENSE
+
+      error = assert_raises(RuntimeError) { XbergProofReceipts.source_manifest_records(source) }
+      assert_includes(error.message, "cargo-vendor/model2vec-rs-0.2.1/Cargo.toml")
+      manifests = XbergProofReceipts.source_manifest_records(source, excluded_directory: File.join(source, "cargo-vendor"))
+      assert_equal(["Cargo.toml", "crates/xberg-cli/Cargo.toml"], manifests.map { |record| record.fetch("path") })
+      vendor_records = XbergProofReceipts.cargo_records(File.join(source, "cargo-vendor"))
+      license_records = XbergProofReceipts.license_file_records(vendor_records, File.join(source, "cargo-vendor"))
+      assert_equal(["MIT"], license_records.map { |record| record.fetch("normalized_license") })
+    end
   end
 
   def test_agent_browser_has_complete_enabled_cargo_source_closure
