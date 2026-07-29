@@ -12,7 +12,7 @@
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.14%{?dist}
+Release:        0.15%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -71,7 +71,7 @@ echo "f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd  Cargo.lo
 tar --zstd --extract --no-same-owner --no-same-permissions --file %{SOURCE6} --directory .
 ruby .agentlab-source/audit-xberg-cargo-closure --verify --vendor-dir cargo-vendor --receipt %{SOURCE4}
 test "$(wc -l < %{SOURCE7})" -eq 1133
-# Fedora's workspace-wide %cargo_vendor_manifest follows different feature
+# Fedora's workspace-wide %%cargo_vendor_manifest follows different feature
 # semantics. The auditor validates this resolver-complete 1,133-directory
 # root-lock contract and its 604-package selected CLI subset instead.
 %cargo_prep -v cargo-vendor
@@ -79,6 +79,9 @@ echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, pr
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.15
+- Prevent the explanatory vendor-manifest comment from expanding as an RPM macro.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.14
 - Bind the corrected extended-path Cargo vendor tree receipt.
 
