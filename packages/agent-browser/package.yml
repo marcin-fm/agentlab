@@ -34,34 +34,26 @@ dependency_status:
     vendor_receipt_sha256: 64007acb028f36b99d30795bc19309055a1d926ba9c88ab848032a39f14321b2
     license_audit_sha256: 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
     auditor_sha256: 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
-    fedora_proof_sha256: 99394344316e435b898c35e3715189a427ed59bff7d8cabf1b362e528f406bca
-    remote_proof: fedora_43_44_rawhide_six_cell_compile_test_runtime_witness
-    remote_proof_builds: [10785628, 10785764]
-    production_compile_verified: true
-    main_tests_passed: 1028
-    doctor_tests_passed: 2
-    ignored_tests: 96
-    chromium_smoke_verified: true
-    final_aggregate_license_reviewed: true
-    current_binary_build_success: true
+    fedora_contract_sha256: 06e0e41027929da4bc25f9b5ef0803fdf9905e5fb269b6c305e487bd8748903f
+    required_proofs: [production_compile, cargo_tests, linked_license, installed_payload, elf, chromium_runtime, target_matrix]
   browser:
     package: chromium-headless
     executable: /usr/lib64/chromium-browser/headless_shell
-    fedora_43_44_rawhide_verified: true
-    runtime_smoke_verified: true
-    version_compatibility_matrix_verified: true
+    required_target_families: [fedora-43, fedora-44, fedora-rawhide]
+    required_architectures: [x86_64, aarch64]
+    required_runtime_smoke: [navigation, snapshot, runtime-eval, url, close-session]
 license_audit:
   upstream: Apache-2.0
   embedded_axe_core: MPL-2.0
   embedded_axe_third_party: MIT AND ISC
   embedded_react_devtools: MIT
   selected_source_candidate_expression: parenthesized_raw_declarations_in_agent-browser-0.33.1-license-audit.json
-  aggregate_binary_expression: bound_to_agent-browser-0.33.1-fedora-proof.json
-  complete: true
+  aggregate_binary_expression: bound_to_agent-browser-0.33.1-fedora-contract.json
+  selected_source_metadata_complete: true
 duplicate_check:
-  checked: '2026-07-29'
-  fedora_43_44_rawhide: absent
-  rpm_fusion_free_nonfree_43_44_rawhide: absent
+  required: true
+  repositories: [fedora, rpm_fusion_free, rpm_fusion_nonfree]
+  target_families: [fedora-43, fedora-44, fedora-rawhide]
   queries: [agent-browser, /usr/bin/agent-browser, /usr/libexec/agent-browser/bin/agent-browser]
 upstream:
   provider: github

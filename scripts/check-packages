@@ -377,29 +377,121 @@ packages.each do |package|
         errors << "agent-browser: missing #{item.fetch('file')}" unless File.file?(path)
         errors << "agent-browser: stale #{item.fetch('file')}" if File.file?(path) && Digest::SHA256.file(path).hexdigest != item.fetch("sha256")
       end
-      errors << "agent-browser: final linked payload is not verified" unless cargo["final_linked_payload_verified"] == true
       errors << "agent-browser: provider mapping is not reviewed" unless cargo["fedora_provider_mapping"] == true
-      errors << "agent-browser: runtime layout is not verified" unless cargo["runtime_layout_verified"] == true
-      errors << "agent-browser: target matrix is not verified" unless cargo["target_matrix_verified"] == true
-      errors << "agent-browser: linked license is not verified" unless cargo["license_verified"] == true
+      required_proofs = %w[production_compile cargo_tests linked_license installed_payload elf chromium_runtime target_matrix]
+      errors << "agent-browser: required remote proof scope is incomplete" unless cargo["required_verification"] == required_proofs && package.data.dig("dependency_status", "cargo", "required_proofs") == required_proofs
       receipt = JSON.parse(File.read(File.join(package.directory, evidence.fetch("vendor_receipt").fetch("file"))))
       errors << "agent-browser: vendor receipt has archive-byte identity" if receipt.fetch("vendor_archive").keys != %w[name root]
       errors << "agent-browser: vendor tree identity lacks canonical algorithm" unless receipt.dig("vendor_tree", "algorithm") == "sha256(sorted type,path,mode,link-target,size,content-sha256 records)"
       audit = JSON.parse(File.read(File.join(package.directory, evidence.fetch("license_audit").fetch("file"))))
-      proof = JSON.parse(File.read(File.join(package.directory, evidence.fetch("fedora_proof").fetch("file"))))
-      aggregate_license = spec[/^License:\s+(.+)$/, 1]
-      expected_targets = %w[fedora-43-x86_64 fedora-43-aarch64 fedora-44-x86_64 fedora-44-aarch64 fedora-rawhide-x86_64 fedora-rawhide-aarch64]
-      expected_validations = %w[source_srpm_generated production_compile install_layout tests license elf headless_runtime current_binary_build_success target_matrix_complete duplicate_availability]
-      errors << "agent-browser: Fedora proof schema is not v2" unless proof["schema"] == "agentlab-agent-browser-fedora-proof/v2"
-      errors << "agent-browser: Fedora proof build IDs are incomplete" unless proof.fetch("builds", []).map { |build| build["id"] }.sort == [10_785_628, 10_785_764]
-      errors << "agent-browser: Fedora proof source NVR is incorrect" unless proof.dig("release", "source_nvr") == "agent-browser-0.33.1-0.14.src.rpm"
-      errors << "agent-browser: Fedora proof target matrix is incomplete" unless proof.fetch("target_matrix", []).map { |target| target["target"] }.sort == expected_targets.sort
-      errors << "agent-browser: Fedora proof target data is incomplete" unless proof.fetch("target_matrix", []).all? { |target| target["builder_log_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && target["chromium_headless_version"].to_s.start_with?("150.0.7871.") && target["user_agent"] == "HeadlessChrome/#{target['chromium_headless_version']}" }
-      errors << "agent-browser: Fedora proof runtime evidence is incomplete" unless proof.dig("runtime", "main_tests") == 1028 && proof.dig("runtime", "doctor_tests") == 2 && proof.dig("runtime", "ignored_tests") == 96 && proof.dig("runtime", "cdp_protocol_markers") == %w[navigation snapshot runtime-eval url] && proof.dig("runtime", "headless_default") == true && proof.dig("runtime", "wrapper_preserves_explicit_browser_and_external_engine_routing") == true
-      errors << "agent-browser: Fedora proof license inventory is incomplete" unless proof.dig("license", "license_dependencies_records") == 264 && proof.dig("license", "license_dependencies_sha256") == "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06"
-      errors << "agent-browser: Fedora proof RPM Fusion absence audit is incomplete" unless proof.dig("duplicate_audit", "fedora_and_rpm_fusion_free_nonfree") == true && proof.dig("duplicate_audit", "matches") == 0 && proof.dig("duplicate_audit", "targets").sort == expected_targets.sort && proof.dig("duplicate_audit", "queries").sort == ["agent-browser", "/usr/bin/agent-browser", "/usr/libexec/agent-browser/bin/agent-browser"].sort
-      errors << "agent-browser: Fedora proof validation is incomplete" unless proof.fetch("validation", {}).keys.sort == expected_validations.sort && proof.fetch("validation", {}).values.all? { |value| value == true }
-      errors << "agent-browser: Fedora proof license does not match the spec" unless proof.dig("license", "aggregate_spdx") == aggregate_license
+      errors << "agent-browser: dynamic COPR result evidence is embedded in package inputs" if evidence.key?("fedora_proof") || cargo.key?("proof_builds") || spec.match?(/fedora[_-]proof/i)
+      package_cargo_keys = %w[auditor_sha256 closure_sha256 closure_verified fedora_contract_sha256 license_audit_sha256 linux_x86_64_normal_build_candidates lockfile lockfile_sha256 manifest package required_proofs resolver_only_records source_closure_records vendor_archive vendor_archive_tracked vendor_receipt_sha256 version]
+      package_browser_keys = %w[executable package required_architectures required_runtime_smoke required_target_families]
+      package_license_keys = %w[aggregate_binary_expression embedded_axe_core embedded_axe_third_party embedded_react_devtools selected_source_candidate_expression selected_source_metadata_complete upstream]
+      dependency_cargo_keys = %w[cargo_license_audit cargo_vendor_manifest cargo_vendor_receipt fedora_provider_mapping generated_closure linux_x86_64_normal_build_candidates lockfile lockfile_sha256 offline_verified required_verification resolver_only_records source_closure_records source_evidence]
+      dependency_browser_keys = %w[compatibility_checks default_executable headed_override_executable headed_override_package required_architectures required_target_families source_downloads system_package]
+      dependency_skill_keys = %w[intended_install_root required_payload source_directories]
+      dependency_license_keys = %w[cargo_expression embedded_axe_core embedded_axe_third_party embedded_react_devtools required_checks upstream]
+      errors << "agent-browser: package Cargo contract contains unknown fields" unless package.data.dig("dependency_status", "cargo")&.keys&.sort == package_cargo_keys
+      errors << "agent-browser: package browser contract contains unknown fields" unless package.data.dig("dependency_status", "browser")&.keys&.sort == package_browser_keys
+      errors << "agent-browser: package license contract contains unknown fields" unless package.data["license_audit"]&.keys&.sort == package_license_keys
+      errors << "agent-browser: dependency Cargo contract contains unknown fields" unless cargo.keys.sort == dependency_cargo_keys
+      errors << "agent-browser: dependency source evidence contains unknown fields" unless evidence.keys.sort == %w[auditor closure fedora_contract license_audit vendor_manifest vendor_receipt] && evidence.values.all? { |item| item.keys.sort == %w[file sha256] }
+      errors << "agent-browser: dependency browser contract contains unknown fields" unless dependencies["browser"]&.keys&.sort == dependency_browser_keys
+      errors << "agent-browser: dependency skill contract contains unknown fields" unless dependencies["skills"]&.keys&.sort == dependency_skill_keys
+      errors << "agent-browser: dependency license contract contains unknown fields" unless dependencies["license"]&.keys&.sort == dependency_license_keys
+      duplicate_contract = {
+        "required" => true,
+        "repositories" => %w[fedora rpm_fusion_free rpm_fusion_nonfree],
+        "target_families" => %w[fedora-43 fedora-44 fedora-rawhide],
+        "queries" => ["agent-browser", "/usr/bin/agent-browser", "/usr/libexec/agent-browser/bin/agent-browser"]
+      }
+      errors << "agent-browser: duplicate-audit requirement is incomplete" unless package.data["duplicate_check"] == duplicate_contract && dependencies["duplicate_availability"] == duplicate_contract
+      contract_item = evidence["fedora_contract"]
+      unless contract_item
+        errors << "agent-browser: static Fedora contract is missing"
+      else
+        contract = JSON.parse(File.read(File.join(package.directory, contract_item.fetch("file"))))
+        errors << "agent-browser: static Fedora contract contains unknown sections" unless contract.keys.sort == %w[browser_contract build_contract forbidden_build_inputs license_contract release schema source_contract]
+        errors << "agent-browser: static Fedora contract schema is invalid" unless contract["schema"] == "agentlab-agent-browser-fedora-contract/v1"
+        errors << "agent-browser: static Fedora contract release is invalid" unless contract["release"] == { "name" => "agent-browser", "version" => manifest_version }
+        expected_source_contract = {
+          "source_sha256" => manifest_sha256,
+          "cargo_lock_sha256" => cargo["lockfile_sha256"],
+          "cargo_closure_sha256" => evidence.dig("closure", "sha256"),
+          "vendor_receipt_sha256" => evidence.dig("vendor_receipt", "sha256"),
+          "license_audit_sha256" => evidence.dig("license_audit", "sha256"),
+          "vendor_manifest_sha256" => evidence.dig("vendor_manifest", "sha256"),
+          "auditor_sha256" => evidence.dig("auditor", "sha256")
+        }
+        errors << "agent-browser: static Fedora source contract is inconsistent" unless contract["source_contract"] == expected_source_contract
+        errors << "agent-browser: package Fedora contract hash is inconsistent" unless package.data.dig("dependency_status", "cargo", "fedora_contract_sha256") == contract_item["sha256"]
+        aggregate_license = spec[/^License:\s+(.+)$/, 1]
+        license_contract = contract["license_contract"] || {}
+        license_dependencies = license_contract["generated_license_dependencies"] || {}
+        installed_license_files = %w[LICENSE LICENSE-axe-core.txt LICENSE-axe-core-THIRD-PARTY.txt React-DevTools-MIT-notice.js cargo-vendor.txt LICENSE.dependencies]
+        expected_license_contract = {
+          "aggregate_spdx" => aggregate_license,
+          "generated_license_dependencies" => {
+            "records" => 264,
+            "sha256" => "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06"
+          },
+          "installed_license_files" => installed_license_files
+        }
+        errors << "agent-browser: static license contract is inconsistent" unless license_contract == expected_license_contract
+        errors << "agent-browser: LICENSE.dependencies SHA-256 contract is not enforced" unless spec.include?(%Q{test "$(sha256sum "$license_file" | cut -d' ' -f1)" = #{license_dependencies["sha256"]}})
+        errors << "agent-browser: LICENSE.dependencies record contract is not enforced" unless spec.include?(%Q{test "$(wc -l < "$license_file")" -eq #{license_dependencies["records"]}})
+        errors << "agent-browser: installed-license contract is incomplete" unless license_contract["installed_license_files"] == installed_license_files && installed_license_files.all? { |name| spec.include?("/%{name}/#{name}") }
+        expected_build_contract = {
+          "cargo_tests_required" => true,
+          "help_smoke_required" => true,
+          "required_payload_paths" => ["/usr/bin/agent-browser", "/usr/libexec/agent-browser/bin/agent-browser", "/usr/libexec/agent-browser/skills", "/usr/libexec/agent-browser/skill-data"],
+          "required_elf_checks" => %w[pie no-rpath-or-runpath no-unresolved-dependencies]
+        }
+        errors << "agent-browser: static build contract is incomplete" unless contract["build_contract"] == expected_build_contract
+        build_contract_fragments = [
+          "%cargo_test",
+          "target/rpm/agent-browser --help",
+          "install -Dpm0755 cli/target/rpm/agent-browser %{buildroot}%{_libexecdir}/agent-browser/bin/agent-browser",
+          "cat > %{buildroot}%{_bindir}/agent-browser",
+          "cp -a skills skill-data %{buildroot}%{_libexecdir}/agent-browser/",
+          "readelf -h \"$binary\" | grep -Eq 'Type:.*DYN'",
+          "grep -Eq 'RPATH|RUNPATH'",
+          "ldd -r \"$binary\"",
+          "grep -Eq 'not found|undefined symbol' \"$PWD/.agentlab-ldd.txt\""
+        ]
+        errors << "agent-browser: spec does not enforce the static build contract" unless build_contract_fragments.all? { |fragment| spec.include?(fragment) }
+        expected_browser_contract = {
+          "system_browser_package" => "chromium-headless",
+          "system_browser_path" => "/usr/lib64/chromium-browser/headless_shell",
+          "optional_headed_browser_package" => "chromium",
+          "optional_headed_browser_path" => "/usr/bin/chromium-browser",
+          "required_smoke_steps" => %w[navigation snapshot runtime-eval url close-session],
+          "user_agent_product" => "HeadlessChrome",
+          "installed_browser_major_match_required" => true,
+          "wrapper_preserves_explicit_browser_and_external_engine_routing" => true,
+          "source_downloads_forbidden" => true
+        }
+        errors << "agent-browser: static browser contract is incomplete" unless contract["browser_contract"] == expected_browser_contract
+        browser_contract_fragments = [
+          "BuildRequires:  chromium-headless",
+          "Requires:       chromium-headless",
+          "Suggests:       chromium",
+          "AGENT_BROWSER_EXECUTABLE_PATH=/usr/lib64/chromium-browser/headless_shell",
+          "AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium-browser",
+          "AGENT_BROWSER_EXECUTABLE_PATH=/custom/browser",
+          "AGENT_BROWSER_ENGINE=lightpanda",
+          '"$public" --session copr-check --json open',
+          '"$public" --session copr-check snapshot -i --json',
+          '"$public" --session copr-check --json eval \'navigator.userAgent\'',
+          '"$public" --session copr-check --json get url',
+          '"$public" --session copr-check close',
+          'grep -E "(HeadlessChrome|Chrome)/${browser_major}'
+        ]
+        errors << "agent-browser: spec does not enforce the static browser contract" unless browser_contract_fragments.all? { |fragment| spec.include?(fragment) }
+        errors << "agent-browser: forbidden build-input contract is incomplete" unless contract["forbidden_build_inputs"] == %w[npm-postinstall-prebuilt-binary chrome-for-testing-download package-manager-mutation]
+        errors << "agent-browser: static Fedora contract is incorrectly an RPM Source" if spec.match?(/^Source\d+:\s+.*fedora-contract/m)
+      end
       errors << "agent-browser: selected normal/link license metadata is incomplete" unless audit.dig("validation", "selected_normal_link_license_metadata_complete") == true && audit.fetch("missing_selected_normal_link_license_metadata").empty?
       errors << "agent-browser: spec lacks generated Cargo vendor contract" unless ["%cargo_prep -v cargo-vendor", "ruby .agentlab-source/audit-agent-browser-cargo-closure", "--verify --vendor-dir cli/cargo-vendor --receipt %{SOURCE2}", "%cargo_vendor_manifest", "%cargo_build_crate", "BuildRequires:  ruby", "BuildRequires:  rubypick", "BuildRequires:  rubygem-json", "BuildRequires:  zstd", "install -d -m0700 .test-home", "export HOME=\"$PWD/.test-home\"\n%cargo_test", "%{_libexecdir}/agent-browser"].all? { |fragment| spec.include?(fragment) }
       errors << "agent-browser: final recipe retains a blocked proof gate" if spec.include?("proof intentionally fails after compile/tests") || spec.include?("blocked source-build draft")

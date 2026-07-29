@@ -5,11 +5,10 @@
 %global cargo_license_audit_sha256 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778
 %global cargo_vendor_manifest_sha256 ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0
 %global cargo_auditor_sha256 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684
-%global fedora_proof_sha256 99394344316e435b898c35e3715189a427ed59bff7d8cabf1b362e528f406bca
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.15%{?dist}
+Release:        0.16%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # The aggregate combines the cargo2rpm linked-license summary with the project,
@@ -23,7 +22,6 @@ Source3:        %{name}-%{version}-license-audit.json
 Source4:        %{name}-%{version}-cargo-vendor.tar.zst
 Source5:        %{name}-%{version}-cargo-vendor.txt
 Source6:        audit-agent-browser-cargo-closure
-Source7:        %{name}-%{version}-fedora-proof.json
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  binutils
@@ -52,7 +50,6 @@ echo "%{cargo_vendor_receipt_sha256}  %{SOURCE2}" | sha256sum -c -
 echo "%{cargo_license_audit_sha256}  %{SOURCE3}" | sha256sum -c -
 echo "%{cargo_vendor_manifest_sha256}  %{SOURCE5}" | sha256sum -c -
 echo "%{cargo_auditor_sha256}  %{SOURCE6}" | sha256sum -c -
-echo "%{fedora_proof_sha256}  %{SOURCE7}" | sha256sum -c -
 %autosetup -n agent-browser-%{version} -N
 echo "afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb  cli/Cargo.lock" | sha256sum -c -
 install -Dm0755 %{SOURCE6} .agentlab-source/audit-agent-browser-cargo-closure
@@ -194,8 +191,8 @@ if grep -Eq 'RPATH|RUNPATH' "$PWD/.agentlab-readelf-dynamic.txt"; then
   exit 1
 fi
 ldd -r "$binary" > "$PWD/.agentlab-ldd.txt"
-if grep -Fq 'not found' "$PWD/.agentlab-ldd.txt"; then
-  echo 'agent-browser proof found an unresolved dynamic dependency' >&2
+if grep -Eq 'not found|undefined symbol' "$PWD/.agentlab-ldd.txt"; then
+  echo 'agent-browser proof found an unresolved dynamic dependency or symbol' >&2
   exit 1
 fi
 
@@ -239,6 +236,10 @@ popd >/dev/null
 %{_libexecdir}/agent-browser
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.16
+- Separate static build checks from dynamic COPR result evidence.
+- Reject unresolved dynamic symbols in the ELF proof.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.15
 - Enable after the complete Fedora headless Chromium target matrix and duplicate audit.
 

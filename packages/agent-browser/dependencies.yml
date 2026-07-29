@@ -17,41 +17,36 @@ cargo:
   source_closure_records: 331
   linux_x86_64_normal_build_candidates: 256
   resolver_only_records: 76
-  final_linked_payload_verified: true
-  runtime_layout_verified: true
-  target_matrix_verified: true
-  license_verified: true
-  proof_builds: [10785628, 10785764]
+  required_verification: [production_compile, cargo_tests, linked_license, installed_payload, elf, chromium_runtime, target_matrix]
   source_evidence:
     closure: {file: agent-browser-0.33.1-cargo-closure.json, sha256: 1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6}
     vendor_receipt: {file: agent-browser-0.33.1-cargo-vendor-receipt.json, sha256: 64007acb028f36b99d30795bc19309055a1d926ba9c88ab848032a39f14321b2}
     license_audit: {file: agent-browser-0.33.1-license-audit.json, sha256: 68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778}
     vendor_manifest: {file: agent-browser-0.33.1-cargo-vendor.txt, sha256: ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0}
     auditor: {file: scripts/audit-agent-browser-cargo-closure, sha256: 9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684}
-    fedora_proof: {file: agent-browser-0.33.1-fedora-proof.json, sha256: 99394344316e435b898c35e3715189a427ed59bff7d8cabf1b362e528f406bca}
+    fedora_contract: {file: agent-browser-0.33.1-fedora-contract.json, sha256: 06e0e41027929da4bc25f9b5ef0803fdf9905e5fb269b6c305e487bd8748903f}
 browser:
   system_package: chromium-headless
   default_executable: /usr/lib64/chromium-browser/headless_shell
   headed_override_package: chromium
   headed_override_executable: /usr/bin/chromium-browser
   source_downloads: forbidden
-  fedora_43_44_rawhide_metadata: verified
-  runtime_smoke: true
-  version_compatibility_matrix: true
+  required_target_families: [fedora-43, fedora-44, fedora-rawhide]
+  required_architectures: [x86_64, aarch64]
   compatibility_checks: [open data URL, interactive snapshot, navigator.userAgent, get URL, close session]
 skills:
   source_directories: [skills, skill-data]
   intended_install_root: '%{_libexecdir}/agent-browser'
-  runtime_layout_verified: true
+  required_payload: true
 license:
   upstream: Apache-2.0
   embedded_axe_core: MPL-2.0
   embedded_axe_third_party: MIT AND ISC
   embedded_react_devtools: MIT
-  cargo_expression: bound_to_agent-browser-0.33.1-fedora-proof.json
-  final_linked_license_verified: true
-  final_payload_license_verified: true
-  complete: true
+  cargo_expression: bound_to_agent-browser-0.33.1-fedora-contract.json
+  required_checks: [aggregate_spdx, generated_LICENSE.dependencies, installed_license_payload]
 duplicate_availability:
-  fedora_rpm_fusion_free_nonfree_verified: true
-  proof_sha256: 99394344316e435b898c35e3715189a427ed59bff7d8cabf1b362e528f406bca
+  required: true
+  repositories: [fedora, rpm_fusion_free, rpm_fusion_nonfree]
+  target_families: [fedora-43, fedora-44, fedora-rawhide]
+  queries: [agent-browser, /usr/bin/agent-browser, /usr/libexec/agent-browser/bin/agent-browser]

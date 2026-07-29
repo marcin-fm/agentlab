@@ -1191,8 +1191,11 @@ class AgentlabTest < Minitest::Test
     assert_equal(true, package.data.dig("copr", "enabled"))
     assert_equal("0.33.1", package.upstream.fetch("current_version"))
     assert_includes(spec, "Version:        0.33.1")
+    assert_includes(spec, "Release:        0.16%{?dist}")
     assert_includes(spec, "%global source_sha256 313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022")
     dependencies = YAML.safe_load_file(File.join(package.directory, "dependencies.yml"))
+    contract_path = File.join(package.directory, "agent-browser-0.33.1-fedora-contract.json")
+    contract = JSON.parse(File.read(contract_path))
     assert_includes(spec, "npm postinstall prebuilt downloads")
     assert_includes(spec, "Chrome for Testing")
     assert_equal("forbidden", package.data.dig("source_policy", "npm_postinstall_prebuilt_downloads"))
@@ -1200,13 +1203,21 @@ class AgentlabTest < Minitest::Test
     assert_equal(331, dependencies.dig("cargo", "source_closure_records"))
     assert_equal(256, dependencies.dig("cargo", "linux_x86_64_normal_build_candidates"))
     assert_equal(76, dependencies.dig("cargo", "resolver_only_records"))
-    assert_equal(true, dependencies.dig("cargo", "final_linked_payload_verified"))
+    required_proofs = %w[production_compile cargo_tests linked_license installed_payload elf chromium_runtime target_matrix]
+    assert_equal(required_proofs, dependencies.dig("cargo", "required_verification"))
+    assert_equal(required_proofs, package.data.dig("dependency_status", "cargo", "required_proofs"))
+    assert_equal(%w[auditor_sha256 closure_sha256 closure_verified fedora_contract_sha256 license_audit_sha256 linux_x86_64_normal_build_candidates lockfile lockfile_sha256 manifest package required_proofs resolver_only_records source_closure_records vendor_archive vendor_archive_tracked vendor_receipt_sha256 version], package.data.dig("dependency_status", "cargo").keys.sort)
+    assert_equal(%w[executable package required_architectures required_runtime_smoke required_target_families], package.data.dig("dependency_status", "browser").keys.sort)
+    assert_equal(%w[aggregate_binary_expression embedded_axe_core embedded_axe_third_party embedded_react_devtools selected_source_candidate_expression selected_source_metadata_complete upstream], package.data.fetch("license_audit").keys.sort)
+    assert_equal(%w[cargo_license_audit cargo_vendor_manifest cargo_vendor_receipt fedora_provider_mapping generated_closure linux_x86_64_normal_build_candidates lockfile lockfile_sha256 offline_verified required_verification resolver_only_records source_closure_records source_evidence], dependencies.fetch("cargo").keys.sort)
+    assert_equal(%w[compatibility_checks default_executable headed_override_executable headed_override_package required_architectures required_target_families source_downloads system_package], dependencies.fetch("browser").keys.sort)
+    assert_equal(%w[intended_install_root required_payload source_directories], dependencies.fetch("skills").keys.sort)
+    assert_equal(%w[cargo_expression embedded_axe_core embedded_axe_third_party embedded_react_devtools required_checks upstream], dependencies.fetch("license").keys.sort)
     assert_equal(true, dependencies.dig("cargo", "fedora_provider_mapping"))
-    assert_equal(true, dependencies.dig("cargo", "runtime_layout_verified"))
-    assert_equal(true, dependencies.dig("cargo", "target_matrix_verified"))
-    assert_equal(true, dependencies.dig("cargo", "license_verified"))
-    assert_equal([10_785_628, 10_785_764], dependencies.dig("cargo", "proof_builds"))
+    refute(dependencies.dig("cargo").key?("proof_builds"))
+    assert_equal(%w[auditor closure fedora_contract license_audit vendor_manifest vendor_receipt], dependencies.dig("cargo", "source_evidence").keys.sort)
     dependencies.dig("cargo", "source_evidence").each_value do |item|
+      assert_equal(%w[file sha256], item.keys.sort)
       path = item.fetch("file").start_with?("scripts/") ? File.expand_path("../#{item.fetch('file')}", __dir__) : File.join(package.directory, item.fetch("file"))
       assert_equal(item.fetch("sha256"), Digest::SHA256.file(path).hexdigest)
     end
@@ -1226,8 +1237,9 @@ class AgentlabTest < Minitest::Test
     refute_includes(spec, "HOME=\"$PWD/.test-home\" %cargo_test")
     refute_includes(spec, "%cargo_test --skip")
     assert_includes(spec, "ruby .agentlab-source/audit-agent-browser-cargo-closure")
-    assert_includes(spec, "Source7:        %{name}-%{version}-fedora-proof.json")
-    assert_includes(spec, "%global fedora_proof_sha256 99394344316e435b898c35e3715189a427ed59bff7d8cabf1b362e528f406bca")
+    refute_includes(spec, "fedora-proof")
+    refute_includes(spec, "fedora_proof")
+    refute_includes(spec, "fedora-contract")
     assert_includes(spec, "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06")
     assert_includes(spec, "Requires:       chromium-headless")
     assert_includes(spec, "Suggests:       chromium")
@@ -1241,27 +1253,74 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "eval 'navigator.userAgent'")
     assert_includes(spec, "fedora-headless-proof")
     assert_includes(spec, "readelf -d \"$binary\"")
-    assert_equal([10_785_628, 10_785_764], package.data.dig("dependency_status", "cargo", "remote_proof_builds"))
-    assert_equal(1028, package.data.dig("dependency_status", "cargo", "main_tests_passed"))
+    refute(package.data.dig("dependency_status", "cargo").key?("remote_proof_builds"))
     assert_includes(spec, "--verify --vendor-dir cli/cargo-vendor --receipt %{SOURCE2}")
-    proof = JSON.parse(File.read(File.join(package.directory, "agent-browser-0.33.1-fedora-proof.json")))
-    assert_equal("agentlab-agent-browser-fedora-proof/v2", proof.fetch("schema"))
-    assert_equal([10_785_628, 10_785_764], proof.fetch("builds").map { |build| build.fetch("id") }.sort)
-    assert_equal("agent-browser-0.33.1-0.14.src.rpm", proof.dig("release", "source_nvr"))
-    assert_equal(%w[fedora-43-x86_64 fedora-43-aarch64 fedora-44-x86_64 fedora-44-aarch64 fedora-rawhide-x86_64 fedora-rawhide-aarch64].sort, proof.fetch("target_matrix").map { |target| target.fetch("target") }.sort)
-    assert(proof.fetch("target_matrix").all? { |target| target.fetch("builder_log_sha256").match?(/\A[0-9a-f]{64}\z/) && target.fetch("user_agent") == "HeadlessChrome/#{target.fetch('chromium_headless_version')}" })
-    assert_equal(1028, proof.dig("runtime", "main_tests"))
-    assert_equal(2, proof.dig("runtime", "doctor_tests"))
-    assert_equal(96, proof.dig("runtime", "ignored_tests"))
-    assert_equal(%w[navigation snapshot runtime-eval url], proof.dig("runtime", "cdp_protocol_markers"))
-    assert_equal(true, proof.dig("runtime", "headless_default"))
-    assert_equal(true, proof.dig("runtime", "wrapper_preserves_explicit_browser_and_external_engine_routing"))
-    assert_equal(264, proof.dig("license", "license_dependencies_records"))
-    assert_equal("b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06", proof.dig("license", "license_dependencies_sha256"))
-    assert_equal(true, proof.dig("duplicate_audit", "fedora_and_rpm_fusion_free_nonfree"))
-    assert_equal(0, proof.dig("duplicate_audit", "matches"))
-    assert(proof.fetch("validation").values.all? { |value| value == true })
-    assert_equal(spec[/^License:\s+(.+)$/, 1], proof.dig("license", "aggregate_spdx"))
+    refute_path_exists(File.join(package.directory, "agent-browser-0.33.1-fedora-proof.json"))
+    assert_equal("bound_to_agent-browser-0.33.1-fedora-contract.json", package.data.dig("license_audit", "aggregate_binary_expression"))
+    assert_equal("bound_to_agent-browser-0.33.1-fedora-contract.json", dependencies.dig("license", "cargo_expression"))
+    assert_equal("06e0e41027929da4bc25f9b5ef0803fdf9905e5fb269b6c305e487bd8748903f", Digest::SHA256.file(contract_path).hexdigest)
+    assert_equal(Digest::SHA256.file(contract_path).hexdigest, dependencies.dig("cargo", "source_evidence", "fedora_contract", "sha256"))
+    assert_equal(Digest::SHA256.file(contract_path).hexdigest, package.data.dig("dependency_status", "cargo", "fedora_contract_sha256"))
+    assert_equal(%w[browser_contract build_contract forbidden_build_inputs license_contract release schema source_contract], contract.keys.sort)
+    assert_equal("agentlab-agent-browser-fedora-contract/v1", contract.fetch("schema"))
+    assert_equal({ "name" => "agent-browser", "version" => "0.33.1" }, contract.fetch("release"))
+    assert_equal(
+      {
+        "source_sha256" => package.upstream.fetch("source_sha256"),
+        "cargo_lock_sha256" => dependencies.dig("cargo", "lockfile_sha256"),
+        "cargo_closure_sha256" => dependencies.dig("cargo", "source_evidence", "closure", "sha256"),
+        "vendor_receipt_sha256" => dependencies.dig("cargo", "source_evidence", "vendor_receipt", "sha256"),
+        "license_audit_sha256" => dependencies.dig("cargo", "source_evidence", "license_audit", "sha256"),
+        "vendor_manifest_sha256" => dependencies.dig("cargo", "source_evidence", "vendor_manifest", "sha256"),
+        "auditor_sha256" => dependencies.dig("cargo", "source_evidence", "auditor", "sha256")
+      },
+      contract.fetch("source_contract")
+    )
+    assert_equal(spec[/^License:\s+(.+)$/, 1], contract.dig("license_contract", "aggregate_spdx"))
+    assert_equal({ "records" => 264, "sha256" => "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06" }, contract.dig("license_contract", "generated_license_dependencies"))
+    assert_equal(%w[LICENSE LICENSE-axe-core.txt LICENSE-axe-core-THIRD-PARTY.txt React-DevTools-MIT-notice.js cargo-vendor.txt LICENSE.dependencies], contract.dig("license_contract", "installed_license_files"))
+    assert_equal(%w[pie no-rpath-or-runpath no-unresolved-dependencies], contract.dig("build_contract", "required_elf_checks"))
+    assert_equal(%w[navigation snapshot runtime-eval url close-session], contract.dig("browser_contract", "required_smoke_steps"))
+    assert_equal(%w[npm-postinstall-prebuilt-binary chrome-for-testing-download package-manager-mutation], contract.fetch("forbidden_build_inputs"))
+    build_contract_fragments = [
+      "%cargo_test",
+      "target/rpm/agent-browser --help",
+      "install -Dpm0755 cli/target/rpm/agent-browser %{buildroot}%{_libexecdir}/agent-browser/bin/agent-browser",
+      "cat > %{buildroot}%{_bindir}/agent-browser",
+      "cp -a skills skill-data %{buildroot}%{_libexecdir}/agent-browser/",
+      "readelf -h \"$binary\" | grep -Eq 'Type:.*DYN'",
+      "grep -Eq 'RPATH|RUNPATH'",
+      "ldd -r \"$binary\"",
+      "grep -Eq 'not found|undefined symbol' \"$PWD/.agentlab-ldd.txt\""
+    ]
+    assert(build_contract_fragments.all? { |fragment| spec.include?(fragment) })
+    browser_contract_fragments = [
+      "BuildRequires:  chromium-headless",
+      "Requires:       chromium-headless",
+      "Suggests:       chromium",
+      "AGENT_BROWSER_EXECUTABLE_PATH=/usr/lib64/chromium-browser/headless_shell",
+      "AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium-browser",
+      "AGENT_BROWSER_EXECUTABLE_PATH=/custom/browser",
+      "AGENT_BROWSER_ENGINE=lightpanda",
+      '"$public" --session copr-check --json open',
+      '"$public" --session copr-check snapshot -i --json',
+      '"$public" --session copr-check --json eval \'navigator.userAgent\'',
+      '"$public" --session copr-check --json get url',
+      '"$public" --session copr-check close',
+      'grep -E "(HeadlessChrome|Chrome)/${browser_major}'
+    ]
+    assert(browser_contract_fragments.all? { |fragment| spec.include?(fragment) })
+    duplicate_contract = {
+      "required" => true,
+      "repositories" => %w[fedora rpm_fusion_free rpm_fusion_nonfree],
+      "target_families" => %w[fedora-43 fedora-44 fedora-rawhide],
+      "queries" => ["agent-browser", "/usr/bin/agent-browser", "/usr/libexec/agent-browser/bin/agent-browser"]
+    }
+    assert_equal(duplicate_contract, package.data.fetch("duplicate_check"))
+    assert_equal(duplicate_contract, dependencies.fetch("duplicate_availability"))
+    readme = File.read(File.join(package.directory, "README.md"))
+    refute_includes(readme, "10786218")
+    refute_includes(readme, "/srv/tmp/")
     refute_includes(spec, "proof intentionally fails after compile/tests")
     assert_includes(spec, "%{_libexecdir}/agent-browser/bin/agent-browser")
     assert_includes(spec, "React-DevTools-MIT-notice.js")

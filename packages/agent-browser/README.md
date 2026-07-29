@@ -12,19 +12,16 @@ Cargo lockfile SHA-256 is
 The checked Cargo closure has 331 crates.io records: 256 Linux x86_64
 normal/build candidates and 76 resolver-only records. The tracked closure,
 vendor receipt, license audit, vendor manifest, and auditor are source inputs;
-the generated vendor archive remains untracked. The final linked SPDX expression
-and 264-record `LICENSE.dependencies` inventory are bound to the schema-v2
-Fedora proof. Its SHA-256 is
+the generated vendor archive remains untracked. The static Fedora contract binds
+the final linked SPDX expression and deterministic 264-record
+`LICENSE.dependencies` inventory. Its inventory SHA-256 is
 `b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06`.
 
-COPR builds `10785628` and `10785764` prove `agent-browser-0.33.1-0.14.src.rpm`
-on Fedora 43, Fedora 44, and Rawhide for x86_64 and aarch64. Every cell passes
-1,028 main tests and two doctor tests, retains 96 ignored tests, produces binary,
-debuginfo, and debugsource RPMs, and confirms PIE, no RPATH/RUNPATH, and no
-unresolved dependencies. The headless CDP checks cover navigation, snapshot,
-runtime evaluation, and URL retrieval. Fedora 44 x86_64 uses chromium-headless
-`150.0.7871.181`; the other five cells use `150.0.7871.186`, each matching its
-reported `HeadlessChrome` user agent.
+Every enabled release requires a configured-SCM proof on Fedora 43, Fedora 44,
+and Rawhide for x86_64 and aarch64. The proof must cover Cargo tests, payload and
+ELF checks, and target-native headless Chromium navigation, snapshot, runtime
+evaluation, URL retrieval, and close-session behavior. Current NVRs, build IDs,
+browser versions, and outcomes remain in COPR and the canonical Agentlab wiki.
 
 The layout keeps the native executable, `skills/`, and `skill-data/` below
 `%{_libexecdir}/agent-browser`, with a public `%{_bindir}/agent-browser` wrapper.
@@ -37,11 +34,12 @@ The package builds only from source. It never uses npm postinstall binaries,
 Chrome for Testing downloads, `agent-browser install`, or package-manager
 mutation during RPM phases.
 
-The 2026-07-29 Fedora and RPM Fusion free/nonfree duplicate audit found zero
-matches for `agent-browser`, `/usr/bin/agent-browser`, and
-`/usr/libexec/agent-browser/bin/agent-browser` on all six targets. The retained
-audit summary is
-`/srv/tmp/agentlab-agent-browser-rpmfusion-20260729-v3-audit-summary.txt`.
+Fedora and RPM Fusion free/nonfree duplicate audits are required for
+`agent-browser`, `/usr/bin/agent-browser`, and
+`/usr/libexec/agent-browser/bin/agent-browser` across every target family.
+Current audit results and retained evidence remain in the canonical wiki.
 
-The spec is now `0.15` solely because this final enablement changes the checked
-proof hash. A new complete target-matrix rebuild is required after publication.
+Release `0.16` removes dynamic COPR IDs, result NVRs, and log hashes from package
+inputs. The spec retains deterministic source, license, payload, ELF, wrapper,
+and runtime checks, while current matrix identities remain in COPR and the
+canonical wiki.

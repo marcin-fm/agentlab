@@ -1,0 +1,42 @@
+{
+  "schema": "agentlab-agent-browser-fedora-contract/v1",
+  "release": {
+    "name": "agent-browser",
+    "version": "0.33.1"
+  },
+  "source_contract": {
+    "source_sha256": "313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022",
+    "cargo_lock_sha256": "afa68d9dc97647e34be8ae1b62ae2a977dae0e09266e7780fd08ff17a4b74ffb",
+    "cargo_closure_sha256": "1517ea537c6e160fa03567d4c6c2b82aa01721b4964d652205b7981d2b36c6a6",
+    "vendor_receipt_sha256": "64007acb028f36b99d30795bc19309055a1d926ba9c88ab848032a39f14321b2",
+    "license_audit_sha256": "68070a97b47e8107b635e48adb79e7f1e903115ff8d70bbbdfbfa0ecf81ee778",
+    "vendor_manifest_sha256": "ab25da7fe915f71771d9c5e3f78acb718557575bfdc96b1dfa5ac82aef0098e0",
+    "auditor_sha256": "9abab1d177fa90a5d30b93f1eea54e9efa3d5a67564b57250b8ed3dfd9d43684"
+  },
+  "license_contract": {
+    "aggregate_spdx": "Apache-2.0 AND MPL-2.0 AND MIT AND ISC AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND (0BSD OR MIT OR Apache-2.0) AND (Apache-2.0 AND ISC) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-3-Clause OR Apache-2.0) AND BSD-3-Clause AND (CC0-1.0 OR Apache-2.0) AND CDLA-Permissive-2.0 AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND (Unlicense OR MIT) AND (Zlib OR Apache-2.0 OR MIT) AND Zlib AND Unicode-3.0",
+    "generated_license_dependencies": {
+      "records": 264,
+      "sha256": "b232a66a487cfb5c45519501e9e7e7c5cc7dfbc879b181c8a0f2fc5e3a2e0e06"
+    },
+    "installed_license_files": ["LICENSE", "LICENSE-axe-core.txt", "LICENSE-axe-core-THIRD-PARTY.txt", "React-DevTools-MIT-notice.js", "cargo-vendor.txt", "LICENSE.dependencies"]
+  },
+  "build_contract": {
+    "cargo_tests_required": true,
+    "help_smoke_required": true,
+    "required_payload_paths": ["/usr/bin/agent-browser", "/usr/libexec/agent-browser/bin/agent-browser", "/usr/libexec/agent-browser/skills", "/usr/libexec/agent-browser/skill-data"],
+    "required_elf_checks": ["pie", "no-rpath-or-runpath", "no-unresolved-dependencies"]
+  },
+  "browser_contract": {
+    "system_browser_package": "chromium-headless",
+    "system_browser_path": "/usr/lib64/chromium-browser/headless_shell",
+    "optional_headed_browser_package": "chromium",
+    "optional_headed_browser_path": "/usr/bin/chromium-browser",
+    "required_smoke_steps": ["navigation", "snapshot", "runtime-eval", "url", "close-session"],
+    "user_agent_product": "HeadlessChrome",
+    "installed_browser_major_match_required": true,
+    "wrapper_preserves_explicit_browser_and_external_engine_routing": true,
+    "source_downloads_forbidden": true
+  },
+  "forbidden_build_inputs": ["npm-postinstall-prebuilt-binary", "chrome-for-testing-download", "package-manager-mutation"]
+}
