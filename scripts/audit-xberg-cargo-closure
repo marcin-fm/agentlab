@@ -57,8 +57,25 @@ module XbergCargoClosure
     end
   end
 
+  def safe_symlink_target(path, linkname)
+    raise Error, "absolute symlink target: #{path}" if Pathname.new(linkname).absolute?
+
+    resolved = Pathname.new(File.join(File.dirname(path), linkname)).cleanpath.to_s
+    root = path.split("/", 2).first
+    raise Error, "symlink escape: #{path}" if resolved == ".." || resolved.start_with?("../") || resolved.split("/", 2).first != root
+
+    resolved
+  end
+
+  def safe_hardlink_target(path, linkname)
+    resolved = safe_path(linkname)
+    raise Error, "hardlink crosses archive root: #{path}" if resolved.split("/", 2).first != path.split("/", 2).first
+
+    resolved
+  end
+
   def extract_gzip!(archive, destination)
-    roots, seen = Set.new, Set.new
+    roots, seen, links = Set.new, Set.new, []
     Zlib::GzipReader.open(archive) do |gzip|
       Gem::Package::TarReader.new(gzip) do |tar|
         tar.each do |entry|
@@ -67,7 +84,8 @@ module XbergCargoClosure
             next
           end
           path = safe_path(entry.full_name)
-          seen << path
+          raise Error, "duplicate archive entry #{path}" unless seen.add?(path)
+
           roots << path.split("/", 2).first
           target = File.join(destination, path)
           if entry.directory?
@@ -75,6 +93,10 @@ module XbergCargoClosure
           elsif entry.file?
             FileUtils.mkdir_p(File.dirname(target))
             File.open(target, "wb", entry.header.mode & 0o777) { |file| IO.copy_stream(entry, file) }
+          elsif entry.header.typeflag == "2"
+            links << [:symlink, path, entry.header.linkname, safe_symlink_target(path, entry.header.linkname)]
+          elsif entry.header.typeflag == "1"
+            links << [:hardlink, path, entry.header.linkname, safe_hardlink_target(path, entry.header.linkname)]
           else
             raise Error, "unsafe archive entry #{path}"
           end
@@ -83,7 +105,21 @@ module XbergCargoClosure
     end
     raise Error, "source archive must contain exactly one root" unless roots.length == 1
 
-    File.join(destination, roots.first)
+    links.select { |type,| type == :hardlink }.each do |_type, path, _linkname, resolved|
+      source = File.join(destination, resolved)
+      raise Error, "hardlink source is not a regular file: #{path}" unless File.file?(source) && !File.symlink?(source)
+
+      target = File.join(destination, path)
+      FileUtils.mkdir_p(File.dirname(target))
+      File.link(source, target)
+    end
+    links.select { |type,| type == :symlink }.each do |_type, path, linkname, _resolved|
+      target = File.join(destination, path)
+      FileUtils.mkdir_p(File.dirname(target))
+      File.symlink(linkname, target)
+    end
+
+    File.join(destination, roots.first).tap { |root| safe_tree!(root) }
   rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
     raise Error, "cannot safely extract #{archive}: #{e.message}"
   end
@@ -326,6 +362,7 @@ module XbergCargoClosure
   end
 end
 
+if $PROGRAM_NAME == __FILE__
 options = {}
 OptionParser.new do |parser|
   parser.on("--source PATH") { |value| options[:source] = value }
@@ -345,4 +382,5 @@ else
   abort("error: workdir must be below /srv/tmp") unless File.expand_path(options[:workdir]).start_with?("/srv/tmp/")
   default_patches = File.expand_path("../packages/xberg", __dir__)
   XbergCargoClosure.generate!(source_input: File.expand_path(options[:source]), closure_input: File.expand_path(options[:closure]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]), patch_dir: File.expand_path(options[:patch_dir] || default_patches))
+end
 end

@@ -7,11 +7,11 @@
 %global cargo_vendor_receipt_sha256 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1
 %global license_text_presence_sha256 c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86
 %global cargo_vendor_manifest_sha256 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983
-%global cargo_auditor_sha256 e039a8a637b0c58ae91649c2930003d803ebf602d13a241c16f8669ce9be54a6
+%global cargo_auditor_sha256 e4efb6796fce422a78d02b392cbab18d47a2c734577fe097f4b5c4fc68a8c596
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.8%{?dist}
+Release:        0.9%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -74,6 +74,9 @@ echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, pr
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.9
+- Safely preserve in-tree symbolic and hard links during configured-SCM extraction.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.8
 - Record resolver-complete cache-independent Cargo generation and patch application.
 
