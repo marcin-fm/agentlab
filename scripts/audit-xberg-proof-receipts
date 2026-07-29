@@ -1,0 +1,354 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "set"
+
+module XbergProofReceipts
+  module_function
+
+  NAME = "xberg"
+  VERSION = "1.0.1"
+  TARGET = "x86_64-unknown-linux-gnu"
+  REGISTRY = 1040
+  SELECTED_REGISTRY = 604
+  EXPECTED_GAPS = 77
+  EXPECTED_SELECTED_GAPS = 23
+  EXPECTED_RESOLVER_GAPS = 54
+  CARGO_LOCK_SHA256 = "ca592b84261f3bff605b43adc49b99e2401907a9697fe936dc7f27225c16ca52"
+  CLOSURE_SHA256 = "4de24a9fd1d98ef475e0029a5e13732a718d6b541459b4ca727b2c5ef0f538ff"
+  DYNAMIC_TESSERACT_SHA256 = "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f"
+  WORKSPACE_PATCH_SHA256 = "8adc6c208ff3cc888400c290049315bd285e9229b4fd08890070bb3f34ea6ecf"
+  LICENSE_FILE_NAMES = /\A(?:licen[cs]e|copying|notice|authors)(?:[._-].*)?\z/i
+  TEXT_MARKERS = {
+    "SPDX-License-Identifier" => /SPDX-License-Identifier/i,
+    "Apache-2.0" => /Apache License|Apache-2\.0/i,
+    "MIT" => /MIT License|Permission is hereby granted/i,
+    "BSD" => /Redistribution and use in source and binary forms/i,
+    "ISC" => /Permission to use, copy, modify, and\/or distribute/i,
+    "MPL" => /Mozilla Public License|MPL-2\.0/i,
+    "GPL" => /GNU General Public License|GPL-2\.0-or-later/i,
+    "copyright" => /copyright/i
+  }.freeze
+
+  def fail!(message)
+    raise "xberg proof receipt error: #{message}"
+  end
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def read_json(path)
+    JSON.parse(File.read(path))
+  rescue JSON::ParserError => e
+    fail!("invalid JSON #{path}: #{e.message}")
+  end
+
+  def field(text, key)
+    text.each_line do |line|
+      match = line.match(/^\s*#{Regexp.escape(key)}\s*=\s*["']([^"']+)["']/)
+      return match[1] if match
+    end
+    nil
+  end
+
+  def normalize_expression(expression)
+    return nil if expression.nil? || expression.empty?
+
+    expression.gsub(/\s*\/\s*/, " OR ").gsub(/\s+/, " ").strip
+  end
+
+  def aggregate(expressions)
+    expressions.compact.map { |expression| normalize_expression(expression) }.uniq.sort.map do |expression|
+      expression.match?(/\b(?:AND|OR)\b/) ? "(#{expression})" : expression
+    end.join(" AND ")
+  end
+
+  def expression_identifiers(expression)
+    expression.scan(/[A-Za-z0-9][A-Za-z0-9.+-]*/).reject { |token| %w[AND OR WITH].include?(token) }
+  end
+
+  def allowlist_identifiers(path)
+    receipt = read_json(path)
+    fail!("Fedora allowlist schema mismatch") unless receipt["schema"] == "agentlab-xberg-fedora-license-allowlist/v1"
+    fail!("Fedora allowlist does not reject Intel source") unless receipt.dig("validation", "intel_simplified_software_license_present") == false
+    [Set.new(receipt.fetch("identifiers")), receipt.fetch("exceptions")]
+  end
+
+  def validate_expression!(expression, allowed, exceptions)
+    unknown = expression_identifiers(expression).uniq.reject { |identifier| allowed.include?(identifier) || identifier == "LLVM-exception" }
+    fail!("expression #{expression.inspect} has unapproved identifiers #{unknown.join(', ')}") unless unknown.empty?
+    used_exceptions = expression.scan(/[A-Za-z0-9.+-]+\s+WITH\s+[A-Za-z0-9.+-]+/).uniq
+    fail!("expression #{expression.inspect} has unapproved exceptions #{used_exceptions.inspect}") unless (used_exceptions - exceptions).empty?
+  end
+
+  def classify_license_text(text)
+    return "Apache-2.0" if text.match?(/Apache License\s*\n\s*Version 2\.0/i)
+    return "MIT" if text.match?(/Permission is hereby granted/i) && text.match?(/THE SOFTWARE IS PROVIDED/i)
+    return "Intel-Simplified-Software-License-2017" if text.match?(/Intel Simplified Software License/i)
+
+    nil
+  end
+
+  def cargo_records(vendor)
+    Dir.children(vendor).sort.filter_map do |directory|
+      path = File.join(vendor, directory, "Cargo.toml")
+      next unless File.file?(path)
+
+      text = File.read(path)
+      {
+        "name" => field(text, "name"),
+        "version" => field(text, "version"),
+        "directory" => directory,
+        "license" => field(text, "license"),
+        "license_file" => field(text, "license-file")
+      }
+    end
+  end
+
+  def license_file_records(records, vendor)
+    records.filter_map do |record|
+      next unless record["license"].nil? && record["license_file"]
+
+      path = File.join(vendor, record["directory"], record["license_file"])
+      fail!("missing license-file #{record['directory']}/#{record['license_file']}") unless File.file?(path)
+
+      text = File.read(path, mode: "rb").force_encoding("UTF-8")
+      classification = classify_license_text(text)
+      fail!("unclassified license-file #{record['directory']}/#{record['license_file']}") unless classification
+
+      record.merge(
+        "license_file_classification" => classification,
+        "license_file_sha256" => sha256(path),
+        "normalized_license" => classification == "Intel-Simplified-Software-License-2017" ? "LicenseRef-Intel-Simplified-Software-License-2017" : classification,
+        "license_file_excerpt" => text.lines.first(4).map(&:strip)
+      )
+    end
+  end
+
+  def source_components(source)
+    components = [
+      ["root-project", ["LICENSE", "Cargo.toml"], "MIT"],
+      ["pandoc-test-documents-and-baselines", ["test_documents", "ATTRIBUTIONS.md"], "GPL-2.0-or-later"],
+      ["librevenge-0.0.6", ["crates/xberg-libwpd/vendor/librevenge-0.0.6.tar.gz", "crates/xberg-libwpd/vendor/PROVENANCE.md"], "MPL-2.0 OR LGPL-2.1-or-later"],
+      ["libwpd-0.10.3", ["crates/xberg-libwpd/vendor/libwpd-0.10.3.tar.gz", "crates/xberg-libwpd/vendor/PROVENANCE.md"], "MPL-2.0 OR LGPL-2.1-or-later"],
+      ["boost-subset", ["crates/xberg-libwpd/vendor/boost-subset.tar.gz", "THIRD_PARTY_LICENSES.md"], "BSL-1.0"],
+      ["docx-lite-inlined", ["crates/xberg/src/extraction/docx/parser.rs", "ATTRIBUTIONS.md"], "MIT OR Apache-2.0"],
+      ["hwpers-inlined", ["crates/xberg/src/extraction/hwp", "ATTRIBUTIONS.md"], "MIT OR Apache-2.0"],
+      ["paddle-ocr-rs-inlined", ["crates/xberg-paddle-ocr", "ATTRIBUTIONS.md"], "Apache-2.0 AND MIT"],
+      ["fastembed-rs-inlined", ["crates/xberg/src/embeddings/engine.rs", "ATTRIBUTIONS.md"], "Apache-2.0"],
+      ["yake-rust-inlined", ["crates/xberg/src/keywords/yake", "ATTRIBUTIONS.md"], "MIT"],
+      ["text-splitter-inlined", ["crates/xberg/src/chunking/text_splitter", "ATTRIBUTIONS.md"], "MIT"],
+      ["xberg-gliner-source", ["crates/xberg-gliner/Cargo.toml", "ATTRIBUTIONS.md"], "Apache-2.0"],
+      ["aha-inlined", ["crates/xberg-candle-ocr/src/vendor/aha", "ATTRIBUTIONS.md"], "Apache-2.0"]
+    ]
+    components.map do |name, paths, expression|
+      paths.each { |relative| fail!("missing Source0 component path #{relative}") unless File.exist?(File.join(source, relative)) }
+      { "component" => name, "paths" => paths, "expression" => normalize_expression(expression) }
+    end
+  end
+
+  def source_manifest_records(source)
+    Dir.glob(File.join(source, "**", "Cargo.toml")).sort.map do |path|
+      text = File.read(path)
+      license = field(text, "license")
+      inherited = license.nil? && (path == File.join(source, "Cargo.toml") || text.match?(/^\s*license\.workspace\s*=\s*true/))
+      expression = normalize_expression(license || (inherited ? "MIT" : nil))
+      fail!("unclassified Source0 Cargo manifest #{path.delete_prefix(source + '/')}") unless expression
+      { "path" => path.delete_prefix(source + "/"), "name" => field(text, "name"), "version" => field(text, "version"), "expression" => expression, "workspace_inherited" => inherited }
+    end
+  end
+
+  def gap_evidence(vendor, record)
+    root = File.join(vendor, "#{record['name']}-#{record['version']}")
+    evidence = []
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      next unless File.file?(path)
+
+      text = File.read(path, mode: "rb").force_encoding("UTF-8") rescue next
+      next unless text.valid_encoding?
+      markers = TEXT_MARKERS.filter_map { |name, pattern| name if text.match?(pattern) }
+      next if markers.empty?
+      relative = path.delete_prefix(root + "/")
+      next if File.basename(path).match?(LICENSE_FILE_NAMES)
+
+      evidence << { "path" => relative, "markers" => markers }
+    end
+    evidence
+  end
+
+  def patch_source!(source, patch_dir, workdir)
+    staged = File.join(workdir, "source")
+    FileUtils.mkdir_p(workdir)
+    FileUtils.mkdir_p(staged)
+    Dir.children(source).reject { |entry| entry == ".git" }.each do |entry|
+      FileUtils.cp_r(File.join(source, entry), staged, preserve: true)
+    end
+    %w[xberg-system-onnxruntime.patch xberg-fedora-onnxruntime-path.patch xberg-dynamic-tesseract.patch xberg-selected-workspace.patch].each do |name|
+      patch = File.join(patch_dir, name)
+      fail!("missing patch #{name}") unless File.file?(patch)
+      command = ["patch", "--dry-run", "--fuzz=0", "-p1", "-i", patch]
+      _out, error, status = Open3.capture3(*command, chdir: staged)
+      fail!("patch dry-run #{name}: #{error}") unless status.success?
+      _out, error, status = Open3.capture3("patch", "--fuzz=0", "-p1", "-i", patch, chdir: staged)
+      fail!("patch apply #{name}: #{error}") unless status.success?
+    end
+    staged
+  end
+
+  def extract_vendor!(archive, workdir)
+    destination = File.join(workdir, "vendor")
+    FileUtils.mkdir_p(destination)
+    _out, error, status = Open3.capture3("tar", "--zstd", "--extract", "--no-same-owner", "--no-same-permissions", "--file", archive, "--directory", destination)
+    fail!("vendor extraction failed: #{error}") unless status.success?
+    vendor = File.join(destination, "cargo-vendor")
+    fail!("vendor root missing") unless File.directory?(vendor)
+    vendor
+  end
+
+  def source_receipt(source, patch_dir, vendor_archive, closure_path, presence_path, allowlist_path, workdir, prepared_source: nil, prepared_vendor: nil)
+    prepared = prepared_source || prepared_vendor
+    fail!("--prepared-source and --vendor-dir must be supplied together") if prepared && (!prepared_source || !prepared_vendor)
+    if prepared_source && prepared_vendor
+      patched = File.expand_path(prepared_source)
+      vendor = File.expand_path(prepared_vendor)
+      fail!("prepared source directory is missing") unless File.directory?(patched)
+      fail!("prepared vendor directory is missing") unless File.directory?(vendor)
+    else
+      patched = patch_source!(source, patch_dir, workdir)
+      vendor = extract_vendor!(vendor_archive, workdir)
+    end
+    closure = read_json(closure_path)
+    presence = read_json(presence_path)
+    fail!("closure registry count") unless closure.dig("counts", "vendor_registry_identities") == REGISTRY
+    fail!("closure selected count") unless closure.dig("counts", "selected_registry_identities") == SELECTED_REGISTRY
+    fail!("presence registry count") unless presence.fetch("packages").length == REGISTRY
+    selected = closure.fetch("selection").fetch("registry_identities").to_h { |item| [[item["name"], item["version"]], true] }
+    records = cargo_records(vendor)
+    fail!("vendor Cargo identity count #{records.length}") unless records.length == REGISTRY
+    file_only = license_file_records(records, vendor)
+    file_only_by_identity = file_only.to_h { |record| [[record["name"], record["version"]], record] }
+    fail!("removed Intel identity remains") if records.any? { |r| r["name"].to_s.include?("intel-mkl") }
+    records.each do |record|
+      classified = file_only_by_identity[[record["name"], record["version"]]]
+      record["normalized_license"] = classified ? classified.fetch("normalized_license") : normalize_expression(record["license"])
+      fail!("unclassified vendor identity #{record['name']} #{record['version']}") unless record["normalized_license"]
+    end
+    manifests = source_manifest_records(patched)
+    components = source_components(patched)
+    allowed, exceptions = allowlist_identifiers(allowlist_path)
+    expressions = records.map { |r| r["normalized_license"] } + manifests.map { |r| r["expression"] } + components.map { |r| r["expression"] }
+    expressions.each { |expression| validate_expression!(expression, allowed, exceptions) }
+    selected_expressions = records.select { |r| selected[[r["name"], r["version"]]] }.map { |r| r["normalized_license"] }
+    selected_workspace = %w[xberg xberg-cli xberg-libheif xberg-libwpd xberg-paddle-ocr xberg-tesseract]
+    selected_expressions.concat(manifests.select { |r| selected_workspace.include?(r["name"]) }.map { |r| r["expression"] })
+    selected_expression = aggregate(selected_expressions)
+    source_expression = aggregate(expressions)
+    gap_rows = presence.fetch("packages").select { |r| r.fetch("license_texts").empty? }.map do |gap|
+      key = [gap["name"], gap["version"]]
+      license = records.find { |r| [r["name"], r["version"]] == key }
+      fail!("gap absent from vendor Cargo metadata #{key.join(' ')}") unless license
+      role = selected[key] ? "selected-normal" : "resolver-only"
+      required = !license["normalized_license"].match?(/\A(?:0BSD|CC0-1\.0)(?:\s+OR\s+(?:0BSD|CC0-1\.0))*\z/)
+      { "name" => gap["name"], "version" => gap["version"], "role" => role, "cargo_license" => license["license"], "license_file" => license["license_file"], "recognized_texts" => gap["license_texts"], "nonrecognized_evidence" => gap_evidence(vendor, gap), "distribution_text_required" => required }
+    end
+    fail!("expected 77 gaps") unless gap_rows.length == EXPECTED_GAPS
+    fail!("expected 23 selected-normal gaps") unless gap_rows.count { |r| r["role"] == "selected-normal" } == EXPECTED_SELECTED_GAPS
+    fail!("expected sole no-text-required gap") unless gap_rows.count { |r| !r["distribution_text_required"] } == 1 && gap_rows.find { |r| !r["distribution_text_required"] }["name"] == "roman-numerals-rs"
+    {
+      "schema" => "agentlab-xberg-source-license-receipt/v1",
+      "release" => { "name" => NAME, "version" => VERSION, "target" => TARGET },
+      "scope" => { "source0_components" => components, "source0_cargo_manifests" => manifests, "vendored_registry_identities" => REGISTRY, "final_linked_license_complete" => false },
+      "inputs" => { "closure" => File.basename(closure_path), "presence" => File.basename(presence_path), "vendor_archive" => File.basename(vendor_archive || "xberg-1.0.1-cargo-vendor.tar.zst"), "fedora_license_lists" => File.basename(allowlist_path) },
+      "graph" => { "selected_registry_identities" => SELECTED_REGISTRY, "resolver_only_registry_identities" => closure.dig("counts", "resolver_only_registry_identities"), "normal_packages" => closure.dig("counts", "normal_packages"), "normal_build_dev_packages" => closure.dig("counts", "normal_build_dev_packages"), "normal_identity_sha256" => closure.dig("outputs", "normal_identity_sha256"), "normal_build_dev_identity_sha256" => closure.dig("outputs", "normal_build_dev_identity_sha256") },
+      "source_package_expression" => { "expression" => source_expression, "sha256" => Digest::SHA256.hexdigest(source_expression) },
+      "selected_normal_source_candidate" => { "expression" => selected_expression, "sha256" => Digest::SHA256.hexdigest(selected_expression), "final_linked_license_complete" => false },
+      "license_file_only" => file_only.map { |r| r.slice("name", "version", "directory", "license_file", "license_file_classification", "license_file_sha256", "normalized_license") },
+      "missing_text_gaps" => { "count" => gap_rows.length, "selected_normal" => gap_rows.count { |r| r["role"] == "selected-normal" }, "resolver_only" => gap_rows.count { |r| r["role"] == "resolver-only" }, "required_text_count" => gap_rows.count { |r| r["distribution_text_required"] }, "identities" => gap_rows },
+      "validation" => { "fedora_allowed_identifiers" => true, "intel_license_refs" => false, "candle_identities" => false, "no_absolute_paths" => true, "final_linked_license_complete" => false }
+    }
+  ensure
+    FileUtils.rm_rf(workdir) if workdir && !prepared
+  end
+
+  def validate_provider!(path, patch_dir)
+    audit = read_json(path)
+    fail!("provider proof schema mismatch") unless audit["schema"] == "agentlab-xberg-provider-proof/v1"
+    fail!("provider proof release mismatch") unless audit["release"] == { "name" => NAME, "version" => VERSION, "target" => TARGET }
+    contract = audit.fetch("source_contract")
+    fail!("provider source contract mismatch") unless contract["source_tag"] == "v1.0.1" && contract["source_commit"] == "60557740a675908ea8d27145841dafd4f6a06917" && contract["selected_workspace_patch"] == "xberg-selected-workspace.patch" && contract.dig("dynamic_tesseract_patch", "sha256") == DYNAMIC_TESSERACT_SHA256
+    fail!("selected workspace patch hash mismatch") unless sha256(File.join(patch_dir, "xberg-selected-workspace.patch")) == WORKSPACE_PATCH_SHA256
+    graph = audit.fetch("selected_graph")
+    fail!("provider selected graph mismatch") unless graph == { "registry_identities" => SELECTED_REGISTRY, "normal_packages" => 610, "normal_build_dev_packages" => 629, "resolver_only_registry_identities" => 436, "cargo_lock_sha256" => CARGO_LOCK_SHA256, "closure_sha256" => CLOSURE_SHA256, "normal_identity_sha256" => "c930c15acc15299b82b26d5197e41768a70a2913404bd2e20820c417c8af9253", "normal_build_dev_identity_sha256" => "837d6ea61d5d5eefdb8f7339a1603cba2a11680d6d42678b81cffcb0890e9e2d" }
+    ort = audit.fetch("retained_ort_patches")
+    expected_ort = { "xberg-system-onnxruntime.patch" => "be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b", "xberg-fedora-onnxruntime-path.patch" => "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c" }
+    fail!("provider ORT patch hashes mismatch") unless ort == expected_ort.to_h { |name, digest| [name, { "sha256" => digest }] }
+    providers = audit.fetch("providers")
+    fail!("provider releases mismatch") unless providers.keys.sort == %w[fedora43 fedora44 rawhide]
+    providers.each do |release, records|
+      fail!("provider records incomplete for #{release}") unless records.keys.sort == %w[libheif onnxruntime tesseract tessdata toolchain].sort
+      records.each_value { |record| fail!("empty provider record for #{release}") if record.nil? || record.empty? }
+    end
+    fail!("provider proof contains a machine path") if JSON.generate(audit).include?("/srv/tmp/")
+    fail!("tree-sitter contract mismatch") unless audit["tree_sitter"] == { "selected_feature" => "download", "build_time_parser_download_when_static_languages_unset" => false, "runtime_parser_pack_download" => true, "runtime_parser_pack_approved" => false }
+    %w[build_downloads model_weights_in_source offline_runtime_proof].each { |key| fail!("runtime policy #{key} is not false") unless audit.dig("model_runtime_policy", key) == false }
+    audit.fetch("validation").each { |key, value| fail!("provider validation #{key} is not false") unless value == false }
+    audit
+  end
+
+  def write_json(path, value)
+    File.write(path, JSON.generate(value) + "\n")
+  end
+
+  def generate!(options)
+    FileUtils.mkdir_p(options.fetch(:output_dir))
+    source_receipt = source_receipt(options[:source], options.fetch(:patch_dir), options[:vendor_archive], options.fetch(:closure), options.fetch(:presence), options.fetch(:allowlist), options.fetch(:workdir), prepared_source: options[:prepared_source], prepared_vendor: options[:vendor_dir])
+    provider_receipt = validate_provider!(options.fetch(:provider), options.fetch(:patch_dir))
+    write_json(File.join(options.fetch(:output_dir), "xberg-1.0.1-source-license-receipt.json"), source_receipt)
+    write_json(File.join(options.fetch(:output_dir), "xberg-1.0.1-provider-proof.json"), provider_receipt)
+  end
+
+  def verify!(options)
+    temporary = File.join(options.fetch(:workdir), "verify-output")
+    FileUtils.rm_rf(temporary)
+    generate!(options.merge(output_dir: temporary, workdir: File.join(options.fetch(:workdir), "verify-work")))
+    %w[xberg-1.0.1-source-license-receipt.json xberg-1.0.1-provider-proof.json].each do |name|
+      expected = File.read(File.join(options.fetch(:output_dir), name))
+      actual = File.read(File.join(temporary, name))
+      fail!("receipt mismatch #{name}") unless expected == actual
+    end
+    FileUtils.rm_rf(temporary)
+  end
+end
+
+options = { mode: :generate }
+OptionParser.new do |parser|
+  parser.on("--verify") { options[:mode] = :verify }
+  parser.on("--source PATH") { |value| options[:source] = value }
+  parser.on("--patch-dir PATH") { |value| options[:patch_dir] = value }
+  parser.on("--vendor-archive PATH") { |value| options[:vendor_archive] = value }
+  parser.on("--closure PATH") { |value| options[:closure] = value }
+  parser.on("--presence PATH") { |value| options[:presence] = value }
+  parser.on("--allowlist PATH") { |value| options[:allowlist] = value }
+  parser.on("--provider PATH") { |value| options[:provider] = value }
+  parser.on("--prepared-source DIR") { |value| options[:prepared_source] = value }
+  parser.on("--vendor-dir DIR") { |value| options[:vendor_dir] = value }
+  parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
+  parser.on("--workdir PATH") { |value| options[:workdir] = value }
+end.parse!
+required = %i[patch_dir closure presence allowlist provider output_dir workdir]
+missing = required.reject { |key| options[key] }
+abort("missing options: #{missing.join(', ')}") unless missing.empty?
+if options[:prepared_source] || options[:vendor_dir]
+  abort("--prepared-source and --vendor-dir are required together") unless options[:prepared_source] && options[:vendor_dir]
+else
+  abort("--source and --vendor-archive are required outside prepared mode") unless options[:source] && options[:vendor_archive]
+end
+XbergProofReceipts.public_send(options[:mode] == :verify ? :verify! : :generate!, options)
+puts "xberg proof receipts #{options[:mode]} ok"

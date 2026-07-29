@@ -509,9 +509,9 @@ packages.each do |package|
       closure = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "closure", "file"))))
       receipt = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "vendor_receipt", "file"))))
       license = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "license_text_presence", "file"))))
-      errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["vendor_registry_identities"], cargo["resolver_only_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [604, 1_133, 529, 610, 629, 0, -2, 529]
+      errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["vendor_registry_identities"], cargo["resolver_only_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [604, 1_040, 436, 610, 629, 0, -2, 436]
       errors << "xberg: Cargo source contract does not declare canonical graph receipt v2" unless cargo["closure_schema"] == "agentlab-xberg-cargo-closure/v2" && cargo["graph_identity_serialization"] == "UTF-8 sorted unique name\\tversion\\n lines"
-      errors << "xberg: Cargo resolver model is not root-lock complete" unless closure.dig("resolver_model", "kind") == "root-lock-registry-complete" && closure.dig("counts", "selected_registry_identities") == 604 && closure.dig("counts", "vendor_registry_identities") == 1_133 && closure.dig("counts", "resolver_only_registry_identities") == 529
+      errors << "xberg: Cargo resolver model is not selected-Fedora-workspace-lock complete" unless closure.dig("resolver_model", "kind") == "selected-Fedora-workspace-lock-complete" && closure.dig("counts", "selected_registry_identities") == 604 && closure.dig("counts", "vendor_registry_identities") == 1_040 && closure.dig("counts", "resolver_only_registry_identities") == 436 && closure.dig("counts", "root_lock_workspace") == 6
       errors << "xberg: Cargo closure schema is not canonical identity v2" unless closure["schema"] == "agentlab-xberg-cargo-closure/v2"
       errors << "xberg: Cargo graph counts differ" unless closure.fetch("counts").values_at("normal_packages", "normal_build_dev_packages", "git_dependencies") == [610, 629, 0]
       identities = closure.dig("selection", "registry_identities")
@@ -519,27 +519,30 @@ packages.each do |package|
       outputs = closure["outputs"]
       errors << "xberg: Cargo graph identity receipt is incomplete" unless outputs.is_a?(Hash) && outputs.keys.sort == %w[identity_serialization normal_build_dev_identity_sha256 normal_identity_sha256] && outputs["identity_serialization"] == "UTF-8 sorted unique name\\tversion\\n lines" && outputs.values_at("normal_identity_sha256", "normal_build_dev_identity_sha256").all? { |value| value.match?(/\A[0-9a-f]{64}\z/) }
       errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
-      errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 1_043, "absent" => 90 } && license.dig("validation", "final_linked_license_complete") == false
+      errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 963, "absent" => 77 } && license.dig("validation", "final_linked_license_complete") == false
       errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false
       source_proof = package.data["source_delivery_proof"]
       expected_source_proof = {
-        "copr_build_id" => 10_786_324,
-        "target" => "fedora-44-x86_64",
-        "source_nvr" => "xberg-1.0.1-0.15",
-        "srpm_sha256" => "9da0f4b96a2c125cdc2ac83031b3776d26108c92e69e1e43e9361cc293168971",
-        "srpm_size_bytes" => 195_601_069,
-        "srpm_members" => 13,
-        "configured_scm_source_generated" => true,
-        "source_hashes_and_patches_verified" => true,
-        "vendor_tree_verified" => true,
-        "cargo_offline_configuration_verified" => true,
-        "intentional_prep_blocker_reached" => true,
-        "cargo_compilation" => false,
-        "rpm_installed" => false,
-        "temporary_copr_definition_deleted" => true
+         "historical_builds" => [
+           { "build_id" => 10_786_324, "status" => "superseded", "reason" => "old 1,133-source lock contract" },
+           { "build_id" => 10_786_342, "status" => "superseded", "reason" => "old 1,133-source lock contract" }
+         ],
+         "local_source_generation_verified" => true,
+         "configured_scm_source_generated" => false,
+         "source_hashes_and_patches_verified" => false,
+         "vendor_tree_verified" => false,
+         "cargo_offline_configuration_verified" => false,
+         "intentional_post_build_blocker_reached" => false,
+         "cargo_compilation" => false,
+         "rpm_installed" => false,
+         "provider_matrix" => false,
+         "runtime_smoke" => false,
+         "final_linked_license_complete" => false,
+         "copr" => false,
+         "temporary_copr_definition_deleted" => true
       }
       errors << "xberg: configured-SCM source proof is incomplete" unless source_proof == expected_source_proof
-      required = ["Source6:        %{name}-%{version}-cargo-vendor.tar.zst", "Source9:        %{name}-%{version}-source-filter.json", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "%cargo_prep -v cargo-vendor", "audit-xberg-cargo-closure --verify", "test \"$(wc -l < %{SOURCE7})\" -eq 1133", "exit 1"]
+       required = ["Source10:       %{name}-%{version}-fedora-Cargo.lock", "Source11:       %{name}-%{version}-provider-proof.json", "Source12:       %{name}-%{version}-source-license-receipt.json", "Source13:       %{name}-%{version}-fedora-license-allowlist.json", "Source14:       audit-xberg-proof-receipts", "Patch2:", "Patch3:", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "install -pm0644 %{SOURCE10} Cargo.lock", "audit-xberg-cargo-closure --verify", "%cargo_prep -v cargo-vendor", "--prepared-source", "--vendor-dir", "test \"$(wc -l < %{SOURCE7})\" -eq 1040", "%cargo_build_crate -n xberg-cli", "LICENSE.dependencies", "target/rpm/xberg --version", "ldd -r target/rpm/xberg", "readelf -d target/rpm/xberg", "exit 1"]
       errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
       sanitize_index = spec.index("--sanitize-only --source . --filter %{SOURCE9}")
       autopatch_index = spec.index("%autopatch -p1")
@@ -548,9 +551,22 @@ packages.each do |package|
       errors << "xberg: SCM rule overwrites tracked Cargo evidence" if makefile.include?("--output-dir \"$$specdir\"")
       errors << "xberg: SCM rule does not compare Xberg evidence" unless makefile.include?("cmp \"$$tempdir/output/xberg-$$version-$$suffix\"")
       errors << "xberg: SCM rule does not supply the checked closure and link filter" unless makefile.include?("--closure \"$$specdir/xberg-$$version-cargo-closure.json\"") && makefile.include?("--filter \"$$specdir/xberg-$$version-source-filter.json\"")
-      errors << "xberg: SCM rule lacks the Ruby selector provider" unless makefile.include?("cargo-rpm-macros curl ruby rubypick")
+       errors << "xberg: SCM rule lacks the Ruby selector provider" unless makefile.include?("cargo-rpm-macros curl ruby rubypick")
+       errors << "xberg: SCM rule does not pass the checked Fedora lock" unless makefile.include?("--lock \"$$specdir/$$lock_file\"")
+       errors << "xberg: SCM rule does not verify tracked proof receipts" unless makefile.include?("--provider \"$$specdir/xberg-$$version-provider-proof.json\"") && makefile.include?("--allowlist \"$$specdir/xberg-$$version-fedora-license-allowlist.json\"")
       auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-cargo-closure"))
-      errors << "xberg: source extractor lacks receipt-driven safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "verify_unsafe_links!", "sanitize_tree!", "gnu_extension_value!", "pax_records!", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
+       errors << "xberg: source extractor lacks receipt-driven safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "verify_unsafe_links!", "sanitize_tree!", "gnu_extension_value!", "pax_records!", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
+       errors << "xberg: spec exits before the build gate" unless spec.index("exit 1") && spec.index("exit 1") > spec.index("%check")
+       proof_auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-proof-receipts"))
+       errors << "xberg: proof auditor lacks tracked provider input" unless proof_auditor.include?("--provider PATH") && proof_auditor.include?("validate_provider!")
+       errors << "xberg: proof auditor lacks prepared-source mode" unless proof_auditor.include?("--prepared-source DIR") && proof_auditor.include?("--vendor-dir DIR")
+       source_license = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.1-source-license-receipt.json")))
+       provider_proof = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.1-provider-proof.json")))
+       errors << "xberg: spec does not bind dynamic Tesseract patch" unless spec.include?("%global dynamic_tesseract_patch_sha256 8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7")
+       errors << "xberg: spec does not bind selected workspace patch" unless spec.include?("%global selected_workspace_patch_sha256 8adc6c208ff3cc888400c290049315bd285e9229b4fd08890070bb3f34ea6ecf")
+       errors << "xberg: spec License differs from tracked source expression" unless spec.include?("License:        %{xberg_source_license_expression}") && spec.include?(source_license.fetch("source_package_expression").fetch("expression"))
+       errors << "xberg: provider proof graph is stale" unless provider_proof.dig("selected_graph", "cargo_lock_sha256") == cargo.dig("source_evidence", "fedora_lock", "sha256") && provider_proof.dig("selected_graph", "closure_sha256") == cargo.dig("source_evidence", "closure", "sha256")
+       errors << "xberg: provider proof schema or gates are invalid" unless provider_proof["schema"] == "agentlab-xberg-provider-proof/v1" && provider_proof.fetch("providers").keys.sort == %w[fedora43 fedora44 rawhide] && provider_proof.fetch("validation").values.all? { |value| value == false } && provider_proof.dig("tree_sitter", "runtime_parser_pack_approved") == false
     end
   end
 

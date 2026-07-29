@@ -19,9 +19,10 @@ module XbergCargoClosure
   NAME = "xberg"
   VERSION = "1.0.1"
   SOURCE_SHA256 = "a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6"
-  LOCK_SHA256 = "f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd"
+  LOCK_SHA256 = "ca592b84261f3bff605b43adc49b99e2401907a9697fe936dc7f27225c16ca52"
   TARGET = "x86_64-unknown-linux-gnu"
   REGISTRY = "registry+https://github.com/rust-lang/crates.io-index"
+  FORBIDDEN_IDENTITIES = Set[["intel-mkl-src", "0.8.1"], ["intel-mkl-tool", "0.8.1"]]
   LICENSE = /\A(?:licen[cs]e|copying|notice|authors)(?:[._-].*)?\z/i
   IDENTITY_SERIALIZATION = "UTF-8 sorted unique name\\tversion\\n lines"
 
@@ -260,7 +261,7 @@ module XbergCargoClosure
   end
 
   def apply_patches!(source, patch_dir)
-    %w[xberg-system-onnxruntime.patch xberg-fedora-onnxruntime-path.patch].each do |name|
+    %w[xberg-system-onnxruntime.patch xberg-fedora-onnxruntime-path.patch xberg-dynamic-tesseract.patch xberg-selected-workspace.patch].each do |name|
       patch = File.join(patch_dir, name)
       raise Error, "missing tracked patch #{patch}" unless File.file?(patch)
       run!("patch", "--dry-run", "--fuzz=0", "-p1", "-i", patch, chdir: source)
@@ -269,6 +270,16 @@ module XbergCargoClosure
   end
 
   def lock_packages(lock)
+    if lock.lstrip.start_with?("{")
+      data = JSON.parse(lock)
+      return data.fetch("package").map do |item|
+        fields = item.slice("name", "version", "source", "checksum")
+        raise Error, "incomplete Cargo.lock record" unless fields["name"] && fields["version"]
+
+        fields
+      end
+    end
+
     lock.split(/(?=^\[\[package\]\]$)/).filter_map do |block|
       next unless block.start_with?("[[package]]\n")
       fields = block.each_line.each_with_object({}) do |line, values|
@@ -287,6 +298,11 @@ module XbergCargoClosure
   end
 
   def identity(item) = [item.fetch("name"), item.fetch("version")]
+
+  def reject_forbidden!(items, context)
+    forbidden = items.map { |item| identity(item) } & FORBIDDEN_IDENTITIES.to_a
+    raise Error, "forbidden Intel identity in #{context}: #{forbidden.map { |name, version| "#{name} #{version}" }.join(', ')}" unless forbidden.empty?
+  end
 
   def acquire!(item, cache, cargo_home)
     filename = "#{item.fetch('name')}-#{item.fetch('version')}.crate"
@@ -314,8 +330,8 @@ module XbergCargoClosure
     File.write(File.join(root, ".cargo-checksum.json"), JSON.generate("files" => files, "package" => checksum) + "\n")
   end
 
-  def materialize_vendor!(items, cargo_home, workdir)
-    vendor, cache = File.join(workdir, "cargo-vendor"), File.join(workdir, "crates")
+  def materialize_vendor!(items, cargo_home, workdir, cache_input: nil)
+    vendor, cache = File.join(workdir, "cargo-vendor"), (cache_input || File.join(workdir, "crates"))
     FileUtils.mkdir_p([vendor, cache])
     items.each do |item|
       destination = File.join(vendor, "#{item.fetch('name')}-#{item.fetch('version')}")
@@ -429,19 +445,33 @@ module XbergCargoClosure
     run!("tar", "--create", "--zstd", "--file", output, "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--pax-option=delete=atime,delete=ctime", "--directory", File.dirname(vendor), File.basename(vendor))
   end
 
-  def generate!(source_input:, closure_input:, workdir:, output_dir:, patch_dir:, filter:)
+  def generate!(source_input:, closure_input:, lock_input:, workdir:, output_dir:, patch_dir:, filter:, cache_input: nil)
     FileUtils.rm_rf(workdir)
     FileUtils.mkdir_p([workdir, output_dir])
     source = prepare_source!(source_input, workdir, filter: filter)
     apply_patches!(source, patch_dir)
+    raise Error, "checked Cargo.lock is missing" unless File.file?(lock_input)
+    raise Error, "checked Cargo.lock SHA-256 mismatch" unless sha256(lock_input) == LOCK_SHA256
     lock = File.join(source, "Cargo.lock")
-    raise Error, "Cargo.lock SHA-256 mismatch" unless sha256(lock) == LOCK_SHA256
-    lock_registry = registry_packages(File.read(lock))
+    FileUtils.cp(lock_input, lock)
+    lock_text = File.read(lock)
+    lock_items = lock_packages(lock_text)
+    lock_registry = registry_packages(lock_text)
+    workspace_block = File.read(File.join(source, "Cargo.toml")).match(/\[workspace\].*?members\s*=\s*\[(.*?)\]/m)&.captures&.first
+    raise Error, "workspace members are missing" unless workspace_block
+    workspace_names = workspace_block.scan(/"([^"]+)"/).map { |member| File.basename(member.first) }
+    lock_workspace = lock_items.reject { |item| item["source"] }.select { |item| workspace_names.include?(item.fetch("name")) }
+    lock_git = lock_items.select { |item| item["source"].to_s.start_with?("git+") }
+    raise Error, "checked lock must contain 1,040 registry identities" unless lock_registry.length == 1040
+    raise Error, "checked lock must contain six workspace identities" unless lock_workspace.length == 6
+    raise Error, "checked lock must contain zero Git identities" unless lock_git.empty?
+    reject_forbidden!(lock_registry, "checked Cargo.lock")
     tracked_closure = JSON.parse(File.read(closure_input))
     raise Error, "tracked closure schema mismatch" unless tracked_closure["schema"] == "agentlab-xberg-cargo-closure/v2"
-    raise Error, "tracked closure release mismatch" unless tracked_closure.dig("release", "name") == NAME && tracked_closure.dig("release", "version") == VERSION && tracked_closure.dig("release", "cargo_lock_sha256") == LOCK_SHA256
+    raise Error, "tracked closure release mismatch" unless tracked_closure.dig("release", "name") == NAME && tracked_closure.dig("release", "version") == VERSION
     tracked_items = tracked_closure.dig("selection", "registry_identities")
     raise Error, "tracked closure must select 604 registry identities" unless tracked_items.is_a?(Array) && tracked_items.length == 604
+    reject_forbidden!(tracked_items, "tracked selection")
     lock_by_identity = lock_registry.to_h { |item| [identity(item), item] }
     items = tracked_items.map do |tracked|
       item = lock_by_identity.fetch(identity(tracked)) { raise Error, "tracked closure identity is absent from Cargo.lock: #{identity(tracked).join(' ')}" }
@@ -453,11 +483,15 @@ module XbergCargoClosure
     FileUtils.mkdir_p(cache_home)
     vendor_items = lock_registry.sort_by { |item| identity(item) }
     FileUtils.rm_rf(File.join(workdir, "cargo-vendor"))
-    vendor = materialize_vendor!(vendor_items, cache_home, workdir)
+    vendor = materialize_vendor!(vendor_items, cache_home, workdir, cache_input: cache_input && File.expand_path(cache_input))
     home = cargo_home!(vendor, workdir)
     metadata = metadata!(source, home)
     raise Error, "directory-source replacement was not configured" unless File.read(File.join(home, "config.toml")).include?(vendor)
     raise Error, "Git dependency found" unless metadata.fetch("packages").none? { |item| item["source"].to_s.start_with?("git+") }
+    metadata_registry = metadata.fetch("packages").select { |item| item["source"] == REGISTRY }
+    reject_forbidden!(metadata_registry, "Cargo metadata")
+    unknown_metadata = metadata_registry.map { |item| identity(item) } - lock_by_identity.keys
+    raise Error, "Cargo registry identity absent from checked lock/closure: #{unknown_metadata.map { |name, version| "#{name} #{version}" }.join(', ')}" unless unknown_metadata.empty?
     normal_tree = cargo_tree!(source, home, "normal")
     all_tree = cargo_tree!(source, home, "normal,build,dev")
     normal_graph = tree_identities(normal_tree)
@@ -469,9 +503,9 @@ module XbergCargoClosure
     resolver_only = vendor_items.reject { |item| items.any? { |selected| identity(selected) == identity(item) } }
     tree = tree_receipt(vendor)
     manifest = vendor_items.map { |item| "#{item.fetch('name')} #{item.fetch('version')}" }.join("\n") + "\n"
-    closure = { "schema" => "agentlab-xberg-cargo-closure/v2", "release" => { "name" => NAME, "version" => VERSION, "cargo_lock_sha256" => LOCK_SHA256 }, "selection" => { "package" => "xberg-cli", "target" => TARGET, "features" => ["default"], "registry_identities" => items }, "resolver_model" => { "kind" => "root-lock-registry-complete", "rationale" => "Workspace metadata requires the complete locked registry set." }, "vendor_registry_identities" => vendor_items, "resolver_only_registry_identities" => resolver_only, "counts" => { "selected_registry_identities" => items.length, "vendor_registry_identities" => vendor_items.length, "resolver_only_registry_identities" => resolver_only.length, "normal_packages" => normal_graph.length, "normal_build_dev_packages" => all_graph.length, "root_lock_registry" => lock_registry.length, "root_lock_workspace" => lock_packages(File.read(lock)).count { |item| !item["source"] }, "git_dependencies" => 0 }, "commands" => { "metadata" => "cargo metadata --frozen --offline --filter-platform #{TARGET}", "tree_normal" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal", "tree_all" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal,build,dev" }, "outputs" => { "identity_serialization" => IDENTITY_SERIALIZATION, "normal_identity_sha256" => identity_digest(normal_graph), "normal_build_dev_identity_sha256" => identity_digest(all_graph) }, "validation" => { "lock_checksums_verified" => true, "archive_paths_and_symlink_escapes_rejected" => true, "offline_frozen_package_metadata_and_tree_verified" => true, "git_dependencies_zero" => true, "final_linked_license_complete" => false } }
+    closure = { "schema" => "agentlab-xberg-cargo-closure/v2", "release" => { "name" => NAME, "version" => VERSION, "cargo_lock_sha256" => LOCK_SHA256 }, "selection" => { "package" => "xberg-cli", "target" => TARGET, "features" => ["default"], "registry_identities" => items }, "resolver_model" => { "kind" => "selected-Fedora-workspace-lock-complete", "rationale" => "The checked six-member Fedora workspace lock is complete for Cargo resolution; all 1,040 locked registry identities are vendored while the selected CLI closure remains explicit." }, "vendor_registry_identities" => vendor_items, "resolver_only_registry_identities" => resolver_only, "counts" => { "selected_registry_identities" => items.length, "vendor_registry_identities" => vendor_items.length, "resolver_only_registry_identities" => resolver_only.length, "normal_packages" => normal_graph.length, "normal_build_dev_packages" => all_graph.length, "root_lock_registry" => lock_registry.length, "root_lock_workspace" => lock_workspace.length, "git_dependencies" => lock_git.length }, "commands" => { "generation_lock" => "--lock PATH (checked SHA-256 #{LOCK_SHA256})", "metadata" => "cargo metadata --frozen --offline --filter-platform #{TARGET}", "tree_normal" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal", "tree_all" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal,build,dev" }, "outputs" => { "identity_serialization" => IDENTITY_SERIALIZATION, "normal_identity_sha256" => identity_digest(normal_graph), "normal_build_dev_identity_sha256" => identity_digest(all_graph) }, "validation" => { "lock_checksums_verified" => true, "archive_paths_and_symlink_escapes_rejected" => true, "offline_frozen_package_metadata_and_tree_verified" => true, "git_dependencies_zero" => true, "forbidden_intel_identities_rejected" => true, "registry_identities_bound_to_checked_lock_and_closure" => true, "final_linked_license_complete" => false } }
     license = license_inventory(vendor_items, vendor)
-    receipt = { "schema" => "agentlab-xberg-cargo-vendor/v1", "release" => closure.fetch("release"), "vendor_archive" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.tar.zst", "root" => "cargo-vendor" }, "vendor_tree" => tree, "inputs" => { "cargo_closure_sha256" => nil, "license_text_presence_sha256" => nil }, "root_lock" => { "registry" => 1133, "workspace" => 17, "git" => 0 }, "graph" => { "normal" => 610, "normal_build_dev" => 629, "ort_download_delta" => -2 }, "validation" => closure.fetch("validation") }
+    receipt = { "schema" => "agentlab-xberg-cargo-vendor/v1", "release" => closure.fetch("release"), "vendor_archive" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.tar.zst", "root" => "cargo-vendor" }, "vendor_tree" => tree, "inputs" => { "cargo_closure_sha256" => nil, "license_text_presence_sha256" => nil }, "root_lock" => { "registry" => 1040, "workspace" => 6, "git" => 0 }, "graph" => { "normal" => 610, "normal_build_dev" => 629, "ort_download_delta" => -2 }, "validation" => closure.fetch("validation") }
     File.write(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt"), manifest)
     write_json(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json"), closure)
     write_json(File.join(output_dir, "#{NAME}-#{VERSION}-license-text-presence.json"), license)
@@ -494,10 +528,12 @@ options = {}
 OptionParser.new do |parser|
   parser.on("--source PATH") { |value| options[:source] = value }
   parser.on("--closure PATH") { |value| options[:closure] = value }
+  parser.on("--lock PATH") { |value| options[:lock] = value }
   parser.on("--workdir PATH") { |value| options[:workdir] = value }
   parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
   parser.on("--patch-dir PATH") { |value| options[:patch_dir] = value }
   parser.on("--filter PATH") { |value| options[:filter] = value }
+  parser.on("--cache PATH") { |value| options[:cache] = value }
   parser.on("--sanitize-only") { options[:sanitize_only] = true }
   parser.on("--verify") { options[:verify] = true }
   parser.on("--vendor-dir PATH") { |value| options[:vendor_dir] = value }
@@ -512,9 +548,9 @@ elsif options[:verify]
   abort("error: --vendor-dir and --receipt are required") unless options.values_at(:vendor_dir, :receipt).all?
   XbergCargoClosure.verify!(vendor: File.expand_path(options[:vendor_dir]), receipt: File.expand_path(options[:receipt]))
 else
-  abort("error: --source, --closure, --workdir, --output-dir, and --filter are required") unless options.values_at(:source, :closure, :workdir, :output_dir, :filter).all?
+  abort("error: --source, --closure, --lock, --workdir, --output-dir, and --filter are required") unless options.values_at(:source, :closure, :lock, :workdir, :output_dir, :filter).all?
   abort("error: workdir must be below /srv/tmp") unless File.expand_path(options[:workdir]).start_with?("/srv/tmp/")
   default_patches = File.expand_path("../packages/xberg", __dir__)
-  XbergCargoClosure.generate!(source_input: File.expand_path(options[:source]), closure_input: File.expand_path(options[:closure]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]), patch_dir: File.expand_path(options[:patch_dir] || default_patches), filter: File.expand_path(options[:filter]))
+  XbergCargoClosure.generate!(source_input: File.expand_path(options[:source]), closure_input: File.expand_path(options[:closure]), lock_input: File.expand_path(options[:lock]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]), patch_dir: File.expand_path(options[:patch_dir] || default_patches), filter: File.expand_path(options[:filter]), cache_input: options[:cache] && File.expand_path(options[:cache]))
 end
 end

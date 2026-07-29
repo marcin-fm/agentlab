@@ -1,0 +1,12 @@
+diff --git a/crates/xberg/Cargo.toml b/crates/xberg/Cargo.toml
+index 2026d5c..9e4f4cc 100644
+--- a/crates/xberg/Cargo.toml
++++ b/crates/xberg/Cargo.toml
+@@ -967,7 +967,7 @@ xberg-libwpd = { path = "../xberg-libwpd", version = "1.0.1", optional = true }
+ # ("only one package ... may specify the same links value"). The publish-crates
+ # action injects the version at cargo-publish time, so crates.io still gets a
+ # version requirement. Do not re-pin it here.
+-xberg-tesseract = { path = "../xberg-tesseract", optional = true }
++xberg-tesseract = { path = "../xberg-tesseract", optional = true, default-features = false, features = ["dynamic-linking"] }
+ zeroize = { version = "1", optional = true }
+ zip = { version = ">=7.0.0", optional = true, default-features = false, features = ["deflate-flate2"] }

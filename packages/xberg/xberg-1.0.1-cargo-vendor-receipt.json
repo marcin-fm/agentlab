@@ -3,7 +3,7 @@
   "release": {
     "name": "xberg",
     "version": "1.0.1",
-    "cargo_lock_sha256": "f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd"
+    "cargo_lock_sha256": "ca592b84261f3bff605b43adc49b99e2401907a9697fe936dc7f27225c16ca52"
   },
   "vendor_archive": {
     "name": "xberg-1.0.1-cargo-vendor.tar.zst",
@@ -11,19 +11,19 @@
   },
   "vendor_tree": {
     "algorithm": "sha256(sorted type,path,mode,link-target,size,content-sha256 records)",
-    "sha256": "b0d603d84a23e6f58590660220edf82bfc5152269419abb7084fd831bb4762f2",
-    "files": 57079,
-    "directories": 10432,
+    "sha256": "e3418b1feee8a7824b243e91552e3f550066410e6028c4c5484757d340dc9672",
+    "files": 51400,
+    "directories": 9488,
     "symlinks": 0,
-    "bytes": 1211004693
+    "bytes": 1101005097
   },
   "inputs": {
-    "cargo_closure_sha256": "4c52a15a829e5a458f64b268ae0e5e0efafd113853eafd69a9937831376ca309",
-    "license_text_presence_sha256": "c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86"
+    "cargo_closure_sha256": "4de24a9fd1d98ef475e0029a5e13732a718d6b541459b4ca727b2c5ef0f538ff",
+    "license_text_presence_sha256": "537c397f02885ab7e5d291a060f90101fa74fcfd5e8ce7d0501ad70a0170796e"
   },
   "root_lock": {
-    "registry": 1133,
-    "workspace": 17,
+    "registry": 1040,
+    "workspace": 6,
     "git": 0
   },
   "graph": {
@@ -36,6 +36,8 @@
     "archive_paths_and_symlink_escapes_rejected": true,
     "offline_frozen_package_metadata_and_tree_verified": true,
     "git_dependencies_zero": true,
+    "forbidden_intel_identities_rejected": true,
+    "registry_identities_bound_to_checked_lock_and_closure": true,
     "final_linked_license_complete": false
   }
 }

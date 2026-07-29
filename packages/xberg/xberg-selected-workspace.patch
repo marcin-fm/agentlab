@@ -1,0 +1,122 @@
+diff --git a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml
++++ b/Cargo.toml
+index 348deae..244a813 100644
+@@ -1,22 +1,11 @@
+ [workspace]
+ members = [
+     "crates/xberg",
+-    "crates/xberg-candle-ocr",
+     "crates/xberg-cli",
+-    "crates/xberg-ffi",
+-    "crates/xberg-gliner",
+-    "crates/xberg-jni",
+     "crates/xberg-libheif",
+     "crates/xberg-libwpd",
+-    "crates/xberg-node",
+     "crates/xberg-paddle-ocr",
+-    "crates/xberg-php",
+-    "crates/xberg-py",
+     "crates/xberg-tesseract",
+-    "crates/xberg-wasm",
+-    "packages/dart/rust",
+-    "packages/swift/rust",
+-    "tools/benchmark-harness",
+ ]
+ exclude = ["e2e/rust", "packages/elixir/native/xberg_nif", "packages/ruby/ext/xberg_rb"]
+ default-members = ["crates/xberg", "crates/xberg-cli"]
+@@ -144,7 +133,6 @@ xberg = { path = "crates/xberg" }
+ xberg-gliner = { path = "crates/xberg-gliner" }
+ xberg-tesseract = { path = "crates/xberg-tesseract" }
+ xberg-paddle-ocr = { path = "crates/xberg-paddle-ocr" }
+-xberg-candle-ocr = { path = "crates/xberg-candle-ocr" }
+ 
+ [profile.release]
+ lto = "thin"
+diff --git a/crates/xberg/Cargo.toml b/crates/xberg/Cargo.toml
+--- a/crates/xberg/Cargo.toml
++++ b/crates/xberg/Cargo.toml
+index 0c01f6e..8041ad0 100644
+@@ -150,45 +150,6 @@ wordperfect = ["dep:xberg-libwpd"]
+ # PaddleOCR type definitions only — pure-Rust config structs, no ORT dependency.
+ # Exposes PaddleOcrConfig, PaddleLanguage, ModelPaths. Safe on Android/WASM.
+ paddle-ocr-types = []
+-# Candle-based VLM OCR backends. Pure-Rust transformer inference via candle —
+-# no ORT, no native binaries. Compatible with `ort-bundled` / `paddle-ocr`;
+-# multiple OCR backends can be registered side-by-side.
+-#
+-# Per-model sub-features live in xberg-candle-ocr; enable them via
+-# `--features candle-ocr,xberg-candle-ocr/trocr` or by depending on
+-# xberg-candle-ocr directly with the sub-feature.
+-candle-ocr = [
+-    "dep:xberg-candle-ocr",
+-    "dep:image",
+-    "dep:hf-hub",
+-    "dep:reqwest",
+-    "dep:sha2",
+-    "dep:fs2",
+-    "ocr-pipeline",
+-    "tokio-runtime",
+-]
+-# TrOCR backend: aggregate feature enabling candle-ocr with trocr sub-feature
+-candle-trocr = ["candle-ocr", "xberg-candle-ocr/trocr"]
+-# PaddleOCR-VL backend: aggregate feature enabling candle-ocr with paddleocr-vl sub-feature
+-candle-paddleocr-vl = ["candle-ocr", "xberg-candle-ocr/paddleocr-vl"]
+-# GLM-OCR backend: aggregate feature enabling candle-ocr with glm-ocr sub-feature; requires layout-detection for paired dispatch
+-candle-glm-ocr = ["candle-ocr", "xberg-candle-ocr/glm-ocr", "layout-detection"]
+-# DeepSeek-OCR backend: aggregate feature enabling candle-ocr with deepseek-ocr sub-feature
+-candle-deepseek-ocr = ["candle-ocr", "xberg-candle-ocr/deepseek-ocr"]
+-# Umbrella aggregate for all candle VLM OCR backends (not in full/formats/wasm-target/android-target)
+-candle-vlm-ocr = [
+-    "candle-deepseek-ocr",
+-    "candle-paddleocr-vl",
+-    "candle-glm-ocr",
+-    "candle-trocr",
+-]
+-# Candle GPU acceleration pass-throughs. Enable alongside any candle-* backend
+-# to compile the corresponding candle backend (CUDA / Metal / Accelerate /
+-# MKL) — CPU decode of the larger VLM backends is impractically slow.
+-candle-cuda = ["candle-ocr", "xberg-candle-ocr/cuda"]
+-candle-metal = ["candle-ocr", "xberg-candle-ocr/metal"]
+-candle-accelerate = ["candle-ocr", "xberg-candle-ocr/accelerate"]
+-candle-mkl = ["candle-ocr", "xberg-candle-ocr/mkl"]
+ # PaddleOCR via ONNX Runtime
+ # Requires 'ocr' feature for shared conversion utilities and table reconstruction
+ paddle-ocr = [
+@@ -981,7 +942,6 @@ tokenizers = { version = "0.23", default-features = false, features = ["fancy-re
+ # Note: candle-core unconditionally links platform-specific deps (cudarc on Linux, metal-kernels on macOS).
+ # To avoid conflicts during feature unification, GPU features (candle-cuda/metal/mkl/accelerate) should
+ # only be explicitly enabled with platform awareness. CI uses `--features full` which excludes GPU accel.
+-xberg-candle-ocr = { path = "../xberg-candle-ocr", version = "1.0.1", optional = true }
+ # PaddleOCR via ONNX Runtime - not available on WASM (vendored from paddle-ocr-rs)
+ xberg-paddle-ocr = { path = "../xberg-paddle-ocr", version = "1.0.1", optional = true }
+ 
+@@ -1012,7 +972,6 @@ ureq = { version = "3.3", default-features = false, features = [
+     "json",
+ ], optional = true }
+ # Candle-based VLM OCR backends - pure-Rust transformer inference, not on WASM yet.
+-xberg-candle-ocr = { path = "../xberg-candle-ocr", version = "1.0.1", optional = true }
+ # PaddleOCR via ONNX Runtime - not available on WASM (vendored from paddle-ocr-rs)
+ xberg-paddle-ocr = { path = "../xberg-paddle-ocr", version = "1.0.1", optional = true }
+ 
+diff --git a/crates/xberg-cli/Cargo.toml b/crates/xberg-cli/Cargo.toml
+--- a/crates/xberg-cli/Cargo.toml
++++ b/crates/xberg-cli/Cargo.toml
+index 527392b..a9b87e1 100644
+@@ -71,16 +71,6 @@ mcp = ["legacy-base", "xberg/mcp"]
+ mcp-http = ["legacy-base", "xberg/mcp-http"]
+ embeddings = ["legacy-base", "xberg/embeddings"]
+ paddle-ocr = ["legacy-base", "ocr-surface", "xberg/paddle-ocr"]
+-candle-ocr = ["legacy-base", "ocr-surface", "xberg/candle-ocr"]
+-candle-trocr = ["legacy-base", "ocr-surface", "xberg/candle-trocr"]
+-candle-paddleocr-vl = ["legacy-base", "ocr-surface", "xberg/candle-paddleocr-vl"]
+-candle-glm-ocr = ["legacy-base", "ocr-surface", "layout-detection", "xberg/candle-glm-ocr"]
+-candle-deepseek-ocr = ["legacy-base", "ocr-surface", "xberg/candle-deepseek-ocr"]
+-candle-vlm-ocr = ["legacy-base", "ocr-surface", "layout-detection", "xberg/candle-vlm-ocr"]
+-candle-cuda = ["legacy-base", "xberg/candle-cuda"]
+-candle-metal = ["legacy-base", "xberg/candle-metal"]
+-candle-accelerate = ["legacy-base", "xberg/candle-accelerate"]
+-candle-mkl = ["legacy-base", "xberg/candle-mkl"]
+ layout-detection = ["legacy-base", "xberg/layout-detection"]
+ chunking-tokenizers = ["legacy-base", "xberg/chunking-tokenizers"]
+ html = ["legacy-base", "xberg/html"]
