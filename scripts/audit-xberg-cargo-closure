@@ -105,10 +105,14 @@ module XbergCargoClosure
   end
 
   def verify_unsafe_links!(observed, filter)
-    raise Error, "unsafe archive links differ from checked source filter" unless observed == load_filter!(filter)
+    if filter
+      raise Error, "unsafe archive links differ from checked source filter" unless observed == load_filter!(filter)
+    else
+      raise Error, "unsafe archive links require a checked source filter" unless observed.empty?
+    end
   end
 
-  def extract_gzip!(archive, destination, filter:)
+  def extract_gzip!(archive, destination, filter: nil)
     roots, seen, links, unsafe = Set.new, Set.new, [], []
     Zlib::GzipReader.open(archive) do |gzip|
       Gem::Package::TarReader.new(gzip) do |tar|

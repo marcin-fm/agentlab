@@ -53,6 +53,20 @@ class XbergCargoClosureTest < Minitest::Test
     end
   end
 
+  def test_safe_archive_does_not_require_a_filter
+    with_archive([{ type: :file, path: "xberg-1.0.1/README", content: "ok" }], filter("xberg-1.0.1/e2e/reviewed", "/reviewed")) do |archive, _receipt, directory|
+      root = XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"))
+      assert_equal("ok", File.read(File.join(root, "README")))
+    end
+  end
+
+  def test_unsafe_archive_without_a_filter_is_rejected
+    with_archive([{ type: :symlink, path: "xberg-1.0.1/e2e/unknown", target: "/unknown" }], filter("xberg-1.0.1/e2e/reviewed", "/reviewed")) do |archive, _receipt, directory|
+      error = assert_raises(XbergCargoClosure::Error) { XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out")) }
+      assert_includes(error.message, "require a checked source filter")
+    end
+  end
+
   def test_missing_expected_unsafe_link_is_rejected
     with_archive([{ type: :file, path: "xberg-1.0.1/README", content: "ok" }], filter("xberg-1.0.1/e2e/reviewed", "/reviewed")) do |archive, receipt, directory|
       assert_raises(XbergCargoClosure::Error) { XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"), filter: receipt) }

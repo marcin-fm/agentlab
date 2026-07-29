@@ -7,12 +7,12 @@
 %global cargo_vendor_receipt_sha256 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1
 %global license_text_presence_sha256 c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86
 %global cargo_vendor_manifest_sha256 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983
-%global cargo_auditor_sha256 5cd8bf3ad22940b73136d3f27da8391ec966fe55d8dfd901195c1bad0fae9ca9
+%global cargo_auditor_sha256 043a0920e1073b71487bd402a0bd9e0e8410f2b7a8fc96879068acc3b6491de4
 %global source_filter_sha256 233d5ce7fe8630ef7fad81d7b52878e3d282999c11f1294cc7b271f392984fbd
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.10%{?dist}
+Release:        0.11%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -79,6 +79,9 @@ echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, pr
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.11
+- Keep unsafe-link filtering specific to archives that declare a checked filter.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.10
 - Filter only checked unsafe source links before applying Fedora patches.
 

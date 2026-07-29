@@ -1038,7 +1038,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Name:           xberg")
     assert_includes(spec, "Version:        1.0.1")
     assert_includes(spec, "%global source_sha256 a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6")
-    assert_includes(spec, "Release:        0.10%{?dist}")
+    assert_includes(spec, "Release:        0.11%{?dist}")
     assert_includes(spec, "Source1:        %{name}-%{version}-source-audit.json")
     assert_includes(spec, "Source2:        %{name}-%{version}-system-ort-audit.json")
     assert_includes(spec, "Source9:        %{name}-%{version}-source-filter.json")
