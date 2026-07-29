@@ -1,9 +1,9 @@
 %global source_sha256 a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6
-%global source_audit_sha256 e6110883c400e12e859f04c0a2a1542746897be22493ddb2000f24edeac15e88
+%global source_audit_sha256 cb49f4c4a035795e87f0eedf0fee219bfde506347b085cbb7dfb6b6a0b97e12a
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -23,6 +23,9 @@ echo 'xberg is blocked: fresh upstream and Fedora source-build review required' 
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.4
+- Correct the Xberg tag commit and record its source tree separately.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.3
 - Distinguish historical lock observations from a selected Xberg closure.
 

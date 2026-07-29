@@ -15,13 +15,14 @@ upstream:
   tag_prefix: v
   current_version: 1.0.1
   source_tag: v1.0.1
-  source_commit: 19705db11615dd4d1722dec9224c3b752cd369af
+  source_commit: 60557740a675908ea8d27145841dafd4f6a06917
+  source_tree: 19705db11615dd4d1722dec9224c3b752cd369af
   source_url_template: https://github.com/xberg-io/xberg/archive/refs/tags/v{version}.tar.gz
   source_sha256: a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6
 source_audit_receipt:
   file: xberg-1.0.1-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: e6110883c400e12e859f04c0a2a1542746897be22493ddb2000f24edeac15e88
+  sha256: cb49f4c4a035795e87f0eedf0fee219bfde506347b085cbb7dfb6b6a0b97e12a
 duplicate_check:
   checked: "2026-07-28"
   fedora_43_44_rawhide: absent

@@ -1,6 +1,7 @@
 # Xberg
 
 This is a blocked source-package draft for upstream Xberg `1.0.1`, tag commit
+`60557740a675908ea8d27145841dafd4f6a06917` and source tree
 `19705db11615dd4d1722dec9224c3b752cd369af`.
 
 The official tag archive is Source0 with SHA-256
@@ -20,7 +21,7 @@ Kreuzberg-only dependency packages are a separate follow-up audit.
 ## Source Audit Receipt
 
 `xberg-1.0.1-source-audit.json` is a checked `Source1` receipt (SHA-256
-`e6110883c400e12e859f04c0a2a1542746897be22493ddb2000f24edeac15e88`). It records
+`cb49f4c4a035795e87f0eedf0fee219bfde506347b085cbb7dfb6b6a0b97e12a`). It records
 the selected Rust CLI workspace and default feature surface, excludes the Node
 binding and `xberg-gliner`, and keeps all closure, provider, native, license,
 build, matrix, enablement, publication, and retirement gates false. The prior

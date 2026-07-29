@@ -3,7 +3,11 @@
   "release": "1.0.1",
   "source": {
     "tag": "v1.0.1",
-    "commit": "19705db11615dd4d1722dec9224c3b752cd369af",
+    "commit": "60557740a675908ea8d27145841dafd4f6a06917",
+    "tree": "19705db11615dd4d1722dec9224c3b752cd369af",
+    "parent": "ae07e17a6c0ee6fe87402020d1b68a94084b2c36",
+    "authored_at": "2026-07-28T11:08:33Z",
+    "subject": "chore(swift): update Package.swift with checksum for v1.0.1",
     "archive_sha256": "a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6"
   },
   "selected_root_surface": {

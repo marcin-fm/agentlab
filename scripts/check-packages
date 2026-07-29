@@ -416,6 +416,7 @@ packages.each do |package|
         errors << "xberg: source audit receipt schema is invalid" unless audit["schema"] == audit_config["schema"]
         errors << "xberg: source audit release does not match" unless audit["release"] == manifest_version
         errors << "xberg: source audit commit does not match" unless audit.dig("source", "commit") == package.upstream["source_commit"]
+        errors << "xberg: source audit tree does not match" unless audit.dig("source", "tree") == package.upstream["source_tree"]
         errors << "xberg: source audit archive SHA-256 does not match" unless audit.dig("source", "archive_sha256") == manifest_sha256
         errors << "xberg: package metadata exposes prior audit counts as current evidence" unless audit_config.keys.sort == %w[file schema sha256]
         prior_notes = audit["prior_audit_notes"] || {}
