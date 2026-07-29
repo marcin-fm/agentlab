@@ -18,6 +18,7 @@
     "bytes": 411276011
   },
   "inputs": {
+    "closure_report_sha256": "c38a83d8229f92e8590f8f2d3e678a06dfb9906dab66bbf1a0bbd40db9a65a9f",
     "cargo_closure_sha256": "1ed156386098a7a25590c918b9da8d58cff0923c07879ad5b6c463084244dd19",
     "license_text_presence_sha256": "a58d4bb6bcb230b110e04f0d18e7aa7b7b1099bc46f730e517be34c437a60cc2"
   },

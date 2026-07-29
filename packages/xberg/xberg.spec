@@ -4,14 +4,14 @@
 %global system_onnxruntime_patch_sha256 be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b
 %global fedora_onnxruntime_path_patch_sha256 b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
 %global cargo_closure_sha256 1ed156386098a7a25590c918b9da8d58cff0923c07879ad5b6c463084244dd19
-%global cargo_vendor_receipt_sha256 cfab477ee06413b8ce3e93577a3dc3c833b757301c2e7da48202eb8a75786194
+%global cargo_vendor_receipt_sha256 62f9932f13965696415d9b60c5e7b21d47ee132a81c680dd5815bcf94e40ab4b
 %global license_text_presence_sha256 a58d4bb6bcb230b110e04f0d18e7aa7b7b1099bc46f730e517be34c437a60cc2
 %global cargo_vendor_manifest_sha256 82e5024de178a5d65161d2c25068407b8a5a26436e49a5ca773ee2657ce85b02
-%global cargo_auditor_sha256 f16bd90cbfc11e2a9a40e2afcda6b9cc5550dcfaa95df011ec3d1a92ce55f0ea
+%global cargo_auditor_sha256 5a137f12d19ad5f128b69c33fa0f38cf84c45fe67f4c9d70b2717faf181b4729
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.6%{?dist}
+Release:        0.7%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -74,6 +74,9 @@ echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, pr
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.7
+- Bind the retained closure report identity to the blocked Cargo receipt.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.6
 - Add the checked configured-SCM Cargo source contract and retain the build gate.
 
