@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-xberg-cargo-closure/v1",
+  "schema": "agentlab-xberg-cargo-closure/v2",
   "release": {
     "name": "xberg",
     "version": "1.0.1",
@@ -13634,8 +13634,9 @@
     "tree_all": "cargo tree --frozen --offline --target x86_64-unknown-linux-gnu --package xberg-cli --features default --edges normal,build,dev"
   },
   "outputs": {
-    "normal_tree_sha256": "2a4788c832f88e6a57b19a46dc1178cac485767f2ab89cf0cfe4e370244a9779",
-    "normal_build_dev_tree_sha256": "bf027cf6345d4a993424b6f09bbaedb63af262b15ae08880543fa0ea9c929df0"
+    "identity_serialization": "UTF-8 sorted unique name\\tversion\\n lines",
+    "normal_identity_sha256": "c930c15acc15299b82b26d5197e41768a70a2913404bd2e20820c417c8af9253",
+    "normal_build_dev_identity_sha256": "837d6ea61d5d5eefdb8f7339a1603cba2a11680d6d42678b81cffcb0890e9e2d"
   },
   "validation": {
     "lock_checksums_verified": true,

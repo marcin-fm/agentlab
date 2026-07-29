@@ -3,16 +3,16 @@
 %global system_ort_audit_sha256 a68aa83911e275096845d17ad526277440ce04b9bc97bf6f918d226f5e882460
 %global system_onnxruntime_patch_sha256 be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b
 %global fedora_onnxruntime_path_patch_sha256 b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
-%global cargo_closure_sha256 784e3684c3c67e3e0ff815bf30bd301b827a089663aaa60222606c4f946c7d99
-%global cargo_vendor_receipt_sha256 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1
+%global cargo_closure_sha256 4c52a15a829e5a458f64b268ae0e5e0efafd113853eafd69a9937831376ca309
+%global cargo_vendor_receipt_sha256 22a0d5a36391f340a83103163c8a7d4232e0083c3e79ffcf076b0866e2100c4a
 %global license_text_presence_sha256 c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86
 %global cargo_vendor_manifest_sha256 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983
-%global cargo_auditor_sha256 aaeb86ec031280408d6b549d1f5893f2e1e42b3ba18ea1f8fb0ded099c764b10
+%global cargo_auditor_sha256 bf32ba2a291dcbdf503036cd71eee50f8eb6ae6b61fcaddc5d3750995d849224
 %global source_filter_sha256 233d5ce7fe8630ef7fad81d7b52878e3d282999c11f1294cc7b271f392984fbd
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.12%{?dist}
+Release:        0.13%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -79,6 +79,9 @@ echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, pr
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.13
+- Canonicalize Cargo graph receipts by sorted package identity.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.12
 - Safely honor GNU and POSIX extended tar paths during Cargo extraction.
 

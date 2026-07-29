@@ -40,6 +40,8 @@ system_ort_audit_receipt:
   state: source-only; vendor delivery, provider matrix, compilation, runtime smoke, models/licenses, aggregate license, enablement, COPR, and retirements remain false.
 cargo_source_contract:
   selected_surface: xberg-cli default on Linux x86_64
+  closure_schema: agentlab-xberg-cargo-closure/v2
+  graph_identity_serialization: "UTF-8 sorted unique name\\tversion\\n lines"
   cargo_lock_sha256: f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd
   selected_registry_identities: 604
   normal_packages: 610
@@ -50,11 +52,11 @@ cargo_source_contract:
   vendor_archive: xberg-1.0.1-cargo-vendor.tar.zst
   vendor_archive_tracked: false
   source_evidence:
-    closure: { file: xberg-1.0.1-cargo-closure.json, sha256: 784e3684c3c67e3e0ff815bf30bd301b827a089663aaa60222606c4f946c7d99 }
-    vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1 }
+    closure: { file: xberg-1.0.1-cargo-closure.json, sha256: 4c52a15a829e5a458f64b268ae0e5e0efafd113853eafd69a9937831376ca309 }
+    vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: 22a0d5a36391f340a83103163c8a7d4232e0083c3e79ffcf076b0866e2100c4a }
     license_text_presence: { file: xberg-1.0.1-license-text-presence.json, sha256: c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86 }
     vendor_manifest: { file: xberg-1.0.1-cargo-vendor.txt, sha256: 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983 }
-    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: aaeb86ec031280408d6b549d1f5893f2e1e42b3ba18ea1f8fb0ded099c764b10 }
+    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: bf32ba2a291dcbdf503036cd71eee50f8eb6ae6b61fcaddc5d3750995d849224 }
   vendor_tree: { sha256: ac80b58f273017594a7bef816568c73e6532db0e86003edd6d1046926c3a3c04, files: 56653, directories: 10401, symlinks: 0, bytes: 1205044301 }
   vendor_registry_identities: 1133
   resolver_only_registry_identities: 529

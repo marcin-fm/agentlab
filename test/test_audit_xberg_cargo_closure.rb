@@ -217,4 +217,10 @@ class XbergCargoClosureTest < Minitest::Test
       assert_equal("inside", File.readlink(File.join(root, "e2e/safe")))
     end
   end
+
+  def test_identity_digest_uses_sorted_unique_tab_delimited_lines
+    canonical = "alpha\t1.0.0\nbeta\t2.0.0\n"
+    assert_equal(Digest::SHA256.hexdigest(canonical), XbergCargoClosure.identity_digest([["alpha", "1.0.0"], ["beta", "2.0.0"]]))
+    assert_raises(XbergCargoClosure::Error) { XbergCargoClosure.identity_digest([["beta", "2.0.0"], ["alpha", "1.0.0"]]) }
+  end
 end

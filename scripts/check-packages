@@ -510,7 +510,14 @@ packages.each do |package|
       receipt = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "vendor_receipt", "file"))))
       license = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "license_text_presence", "file"))))
       errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["vendor_registry_identities"], cargo["resolver_only_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [604, 1_133, 529, 610, 629, 0, -2, 529]
+      errors << "xberg: Cargo source contract does not declare canonical graph receipt v2" unless cargo["closure_schema"] == "agentlab-xberg-cargo-closure/v2" && cargo["graph_identity_serialization"] == "UTF-8 sorted unique name\\tversion\\n lines"
       errors << "xberg: Cargo resolver model is not root-lock complete" unless closure.dig("resolver_model", "kind") == "root-lock-registry-complete" && closure.dig("counts", "selected_registry_identities") == 604 && closure.dig("counts", "vendor_registry_identities") == 1_133 && closure.dig("counts", "resolver_only_registry_identities") == 529
+      errors << "xberg: Cargo closure schema is not canonical identity v2" unless closure["schema"] == "agentlab-xberg-cargo-closure/v2"
+      errors << "xberg: Cargo graph counts differ" unless closure.fetch("counts").values_at("normal_packages", "normal_build_dev_packages", "git_dependencies") == [610, 629, 0]
+      identities = closure.dig("selection", "registry_identities")
+      errors << "xberg: selected registry identities are not sorted and unique" unless identities.is_a?(Array) && identities.length == 604 && identities.map { |item| [item["name"], item["version"]] } == identities.map { |item| [item["name"], item["version"]] }.uniq.sort
+      outputs = closure["outputs"]
+      errors << "xberg: Cargo graph identity receipt is incomplete" unless outputs.is_a?(Hash) && outputs.keys.sort == %w[identity_serialization normal_build_dev_identity_sha256 normal_identity_sha256] && outputs["identity_serialization"] == "UTF-8 sorted unique name\\tversion\\n lines" && outputs.values_at("normal_identity_sha256", "normal_build_dev_identity_sha256").all? { |value| value.match?(/\A[0-9a-f]{64}\z/) }
       errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
       errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 1_043, "absent" => 90 } && license.dig("validation", "final_linked_license_complete") == false
       errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false

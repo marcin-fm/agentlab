@@ -23,6 +23,7 @@ module XbergCargoClosure
   TARGET = "x86_64-unknown-linux-gnu"
   REGISTRY = "registry+https://github.com/rust-lang/crates.io-index"
   LICENSE = /\A(?:licen[cs]e|copying|notice|authors)(?:[._-].*)?\z/i
+  IDENTITY_SERIALIZATION = "UTF-8 sorted unique name\\tversion\\n lines"
 
   def run!(*command, env: {}, chdir: nil)
     options = {}
@@ -359,6 +360,13 @@ module XbergCargoClosure
     output.each_line.filter_map { |line| line.match(/\A([A-Za-z0-9_-]+) v([^\s]+)/)&.captures }.uniq.sort
   end
 
+  def identity_digest(identities)
+    canonical = identities.uniq.sort
+    raise Error, "graph identities are not sorted and unique" unless identities == canonical
+
+    Digest::SHA256.hexdigest(canonical.map { |name, version| "#{name}\t#{version}\n" }.join)
+  end
+
   def selected(metadata)
     packages = metadata.fetch("packages").to_h { |item| [item.fetch("id"), item] }
     nodes = metadata.fetch("resolve").fetch("nodes").to_h { |item| [item.fetch("id"), item] }
@@ -430,7 +438,7 @@ module XbergCargoClosure
     raise Error, "Cargo.lock SHA-256 mismatch" unless sha256(lock) == LOCK_SHA256
     lock_registry = registry_packages(File.read(lock))
     tracked_closure = JSON.parse(File.read(closure_input))
-    raise Error, "tracked closure schema mismatch" unless tracked_closure["schema"] == "agentlab-xberg-cargo-closure/v1"
+    raise Error, "tracked closure schema mismatch" unless tracked_closure["schema"] == "agentlab-xberg-cargo-closure/v2"
     raise Error, "tracked closure release mismatch" unless tracked_closure.dig("release", "name") == NAME && tracked_closure.dig("release", "version") == VERSION && tracked_closure.dig("release", "cargo_lock_sha256") == LOCK_SHA256
     tracked_items = tracked_closure.dig("selection", "registry_identities")
     raise Error, "tracked closure must select 604 registry identities" unless tracked_items.is_a?(Array) && tracked_items.length == 604
@@ -461,7 +469,7 @@ module XbergCargoClosure
     resolver_only = vendor_items.reject { |item| items.any? { |selected| identity(selected) == identity(item) } }
     tree = tree_receipt(vendor)
     manifest = vendor_items.map { |item| "#{item.fetch('name')} #{item.fetch('version')}" }.join("\n") + "\n"
-    closure = { "schema" => "agentlab-xberg-cargo-closure/v1", "release" => { "name" => NAME, "version" => VERSION, "cargo_lock_sha256" => LOCK_SHA256 }, "selection" => { "package" => "xberg-cli", "target" => TARGET, "features" => ["default"], "registry_identities" => items }, "resolver_model" => { "kind" => "root-lock-registry-complete", "rationale" => "Workspace metadata requires the complete locked registry set." }, "vendor_registry_identities" => vendor_items, "resolver_only_registry_identities" => resolver_only, "counts" => { "selected_registry_identities" => items.length, "vendor_registry_identities" => vendor_items.length, "resolver_only_registry_identities" => resolver_only.length, "normal_packages" => normal_graph.length, "normal_build_dev_packages" => all_graph.length, "root_lock_registry" => lock_registry.length, "root_lock_workspace" => lock_packages(File.read(lock)).count { |item| !item["source"] }, "git_dependencies" => 0 }, "commands" => { "metadata" => "cargo metadata --frozen --offline --filter-platform #{TARGET}", "tree_normal" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal", "tree_all" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal,build,dev" }, "outputs" => { "normal_tree_sha256" => Digest::SHA256.hexdigest(normal_tree), "normal_build_dev_tree_sha256" => Digest::SHA256.hexdigest(all_tree) }, "validation" => { "lock_checksums_verified" => true, "archive_paths_and_symlink_escapes_rejected" => true, "offline_frozen_package_metadata_and_tree_verified" => true, "git_dependencies_zero" => true, "final_linked_license_complete" => false } }
+    closure = { "schema" => "agentlab-xberg-cargo-closure/v2", "release" => { "name" => NAME, "version" => VERSION, "cargo_lock_sha256" => LOCK_SHA256 }, "selection" => { "package" => "xberg-cli", "target" => TARGET, "features" => ["default"], "registry_identities" => items }, "resolver_model" => { "kind" => "root-lock-registry-complete", "rationale" => "Workspace metadata requires the complete locked registry set." }, "vendor_registry_identities" => vendor_items, "resolver_only_registry_identities" => resolver_only, "counts" => { "selected_registry_identities" => items.length, "vendor_registry_identities" => vendor_items.length, "resolver_only_registry_identities" => resolver_only.length, "normal_packages" => normal_graph.length, "normal_build_dev_packages" => all_graph.length, "root_lock_registry" => lock_registry.length, "root_lock_workspace" => lock_packages(File.read(lock)).count { |item| !item["source"] }, "git_dependencies" => 0 }, "commands" => { "metadata" => "cargo metadata --frozen --offline --filter-platform #{TARGET}", "tree_normal" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal", "tree_all" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal,build,dev" }, "outputs" => { "identity_serialization" => IDENTITY_SERIALIZATION, "normal_identity_sha256" => identity_digest(normal_graph), "normal_build_dev_identity_sha256" => identity_digest(all_graph) }, "validation" => { "lock_checksums_verified" => true, "archive_paths_and_symlink_escapes_rejected" => true, "offline_frozen_package_metadata_and_tree_verified" => true, "git_dependencies_zero" => true, "final_linked_license_complete" => false } }
     license = license_inventory(vendor_items, vendor)
     receipt = { "schema" => "agentlab-xberg-cargo-vendor/v1", "release" => closure.fetch("release"), "vendor_archive" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.tar.zst", "root" => "cargo-vendor" }, "vendor_tree" => tree, "inputs" => { "cargo_closure_sha256" => nil, "license_text_presence_sha256" => nil }, "root_lock" => { "registry" => 1133, "workspace" => 17, "git" => 0 }, "graph" => { "normal" => 610, "normal_build_dev" => 629, "ort_download_delta" => -2 }, "validation" => closure.fetch("validation") }
     File.write(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt"), manifest)
