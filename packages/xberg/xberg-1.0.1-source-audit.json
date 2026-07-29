@@ -1,0 +1,89 @@
+{
+  "schema": "agentlab-xberg-source-audit/v1",
+  "release": "1.0.1",
+  "source": {
+    "tag": "v1.0.1",
+    "commit": "19705db11615dd4d1722dec9224c3b752cd369af",
+    "archive_sha256": "a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6"
+  },
+  "selected_root_surface": {
+    "workspace_members": [
+      "xberg",
+      "xberg-cli"
+    ],
+    "node_binding": {
+      "name": "@xberg-io/xberg",
+      "selected": false
+    }
+  },
+  "default_cli_features": [
+    "formats",
+    "analysis",
+    "core-cli",
+    "embeddings",
+    "html",
+    "url-ingestion",
+    "liter-llm",
+    "ocr",
+    "paddle-ocr",
+    "layout-detection",
+    "chunking-tokenizers",
+    "tree-sitter"
+  ],
+  "selected_workspace_crates": [
+    "xberg",
+    "xberg-cli",
+    "xberg-libheif",
+    "xberg-libwpd",
+    "xberg-paddle-ocr",
+    "xberg-tesseract"
+  ],
+  "unselected_workspace_crates": [
+    "xberg-gliner"
+  ],
+  "prior_audited_dependency_notes": {
+    "known_reusable_exact_identities": {
+      "count": 45,
+      "revalidated_for_xberg": false
+    },
+    "known_version_update_identities": {
+      "count": 5,
+      "revalidated_for_xberg": false
+    },
+    "known_new_identities": [
+      "pdf_oxide",
+      "crawlberg",
+      "xberg-libheif",
+      "xberg-libwpd",
+      "xberg-paddle-ocr",
+      "xberg-tesseract"
+    ],
+    "conservative_retirement_candidates": {
+      "former_current_surface_edge_count": 17,
+      "retirement_action_taken": false,
+      "reason": "Former Kreuzberg-only edges require a fresh selected-consumer and provider audit."
+    }
+  },
+  "native_boundaries": {
+    "onnx_runtime": "system/dynamic ORT",
+    "tesseract_leptonica": "investigate Tesseract/Leptonica",
+    "libheif": "system libheif",
+    "xberg_libwpd": "unresolved static bundled libwpd, librevenge, Boost, and zlib",
+    "runtime_models_and_tessdata": "runtime cache behavior, not build sources"
+  },
+  "offline_cargo_metadata": {
+    "complete": false,
+    "limitation": "Complete offline Cargo metadata stopped on missing auto_enums 0.8.10."
+  },
+  "validation": {
+    "complete_cargo_closure": false,
+    "fedora_rpm_fusion_provider_parity": false,
+    "native_integration": false,
+    "aggregate_license": false,
+    "offline_target_build": false,
+    "target_matrix": false,
+    "enablement": false,
+    "copr_publication": false,
+    "retirements": false
+  }
+}

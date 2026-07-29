@@ -2,6 +2,7 @@ name: xberg
 status: blocked
 blockers:
   - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora dependency closure.
+  - Complete offline Cargo metadata stopped on missing auto_enums 0.8.10.
   - No Fedora source-build, license, native-binding, or runtime integration proof exists for Xberg v1.0.1.
   - The historical Kreuzberg 4.10.2 patch and receipt set is not applicable to Xberg v1.0.1.
   - RPM Fusion duplicate checks were unavailable because no RPM Fusion repository is configured in the query environment.
@@ -17,6 +18,13 @@ upstream:
   source_commit: 19705db11615dd4d1722dec9224c3b752cd369af
   source_url_template: https://github.com/xberg-io/xberg/archive/refs/tags/v{version}.tar.gz
   source_sha256: a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6
+source_audit_receipt:
+  file: xberg-1.0.1-source-audit.json
+  schema: agentlab-xberg-source-audit/v1
+  sha256: 84c8ef0e116bb495791d46b9d2adb80060f556911197c351f3bb47296c2818d1
+  reusable_exact_identities: 45
+  version_update_identities: 5
+  conservative_retirement_candidates: 17
 duplicate_check:
   checked: "2026-07-28"
   fedora_43_44_rawhide: absent

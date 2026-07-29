@@ -403,6 +403,46 @@ packages.each do |package|
     end
   end
 
+  if package.name == "xberg"
+    audit_config = package.data["source_audit_receipt"]
+    audit_file = audit_config && audit_config["file"]
+    audit_path = audit_file.is_a?(String) && File.join(package.directory, audit_file)
+    unless audit_path && File.file?(audit_path)
+      errors << "xberg: source audit receipt is missing"
+    else
+      errors << "xberg: source audit receipt SHA-256 does not match" unless Digest::SHA256.file(audit_path).hexdigest == audit_config["sha256"]
+      begin
+        audit = JSON.parse(File.read(audit_path))
+        errors << "xberg: source audit receipt schema is invalid" unless audit["schema"] == audit_config["schema"]
+        errors << "xberg: source audit release does not match" unless audit["release"] == manifest_version
+        errors << "xberg: source audit commit does not match" unless audit.dig("source", "commit") == package.upstream["source_commit"]
+        errors << "xberg: source audit archive SHA-256 does not match" unless audit.dig("source", "archive_sha256") == manifest_sha256
+        errors << "xberg: source audit reusable identity count does not match" unless audit.dig("prior_audited_dependency_notes", "known_reusable_exact_identities", "count") == audit_config["reusable_exact_identities"]
+        errors << "xberg: source audit version-update identity count does not match" unless audit.dig("prior_audited_dependency_notes", "known_version_update_identities", "count") == audit_config["version_update_identities"]
+        errors << "xberg: source audit retirement candidate count does not match" unless audit.dig("prior_audited_dependency_notes", "conservative_retirement_candidates", "former_current_surface_edge_count") == audit_config["conservative_retirement_candidates"]
+        errors << "xberg: source audit does not select the required CLI workspace" unless audit.dig("selected_root_surface", "workspace_members") == %w[xberg xberg-cli]
+        errors << "xberg: source audit does not exclude the Node binding" unless audit.dig("selected_root_surface", "node_binding", "selected") == false
+        errors << "xberg: source audit CLI feature surface is incomplete" unless audit["default_cli_features"] == %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers tree-sitter]
+        errors << "xberg: source audit does not select the required workspace crates" unless audit["selected_workspace_crates"] == %w[xberg xberg-cli xberg-libheif xberg-libwpd xberg-paddle-ocr xberg-tesseract]
+        errors << "xberg: source audit does not exclude xberg-gliner" unless audit["unselected_workspace_crates"] == ["xberg-gliner"]
+        errors << "xberg: source audit offline metadata limit is incomplete" unless audit.dig("offline_cargo_metadata", "complete") == false && audit.dig("offline_cargo_metadata", "limitation") == "Complete offline Cargo metadata stopped on missing auto_enums 0.8.10."
+        errors << "xberg: source audit native boundaries are incomplete" unless audit["native_boundaries"] == {
+          "onnx_runtime" => "system/dynamic ORT",
+          "tesseract_leptonica" => "investigate Tesseract/Leptonica",
+          "libheif" => "system libheif",
+          "xberg_libwpd" => "unresolved static bundled libwpd, librevenge, Boost, and zlib",
+          "runtime_models_and_tessdata" => "runtime cache behavior, not build sources"
+        }
+        %w[complete_cargo_closure fedora_rpm_fusion_provider_parity native_integration aggregate_license offline_target_build target_matrix enablement copr_publication retirements].each do |flag|
+          errors << "xberg: source audit validation #{flag} is not false" unless audit.dig("validation", flag) == false
+        end
+      rescue JSON::ParserError => e
+        errors << "xberg: invalid source audit receipt: #{e.message}"
+      end
+    end
+    errors << "xberg: spec does not check the source audit receipt" unless spec.include?("Source1:        %{name}-%{version}-source-audit.json") && spec.include?("%global source_audit_sha256 #{audit_config && audit_config['sha256']}")
+  end
+
   next unless Agentlab.command_available?("rpmspec")
 
   _stdout, stderr, status = Agentlab.capture(["rpmspec", "-P", package.spec_path])

@@ -17,6 +17,16 @@ Xberg evidence. A complete literal copy of the former package is retained at
 The exact dependency overlap, version comparison, and any retirement of former
 Kreuzberg-only dependency packages are a separate follow-up audit.
 
+## Source Audit Receipt
+
+`xberg-1.0.1-source-audit.json` is a checked `Source1` receipt (SHA-256
+`84c8ef0e116bb495791d46b9d2adb80060f556911197c351f3bb47296c2818d1`). It records
+the selected Rust CLI workspace and default feature surface, excludes the Node
+binding and `xberg-gliner`, and keeps all closure, provider, native, license,
+build, matrix, enablement, publication, and retirement gates false. The prior
+offline metadata attempt stopped on missing `auto_enums 0.8.10`; this receipt is
+source-side scope evidence, not a completed Cargo closure or build result.
+
 ## Duplicate Checks
 
 Read-only DNF5 queries found no Fedora package named `xberg` and no provider for
