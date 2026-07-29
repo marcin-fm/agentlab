@@ -23,6 +23,11 @@ source_audit_receipt:
   file: xberg-1.0.1-source-audit.json
   schema: agentlab-xberg-source-audit/v1
   sha256: cb49f4c4a035795e87f0eedf0fee219bfde506347b085cbb7dfb6b6a0b97e12a
+source_link_filter:
+  file: xberg-1.0.1-source-filter.json
+  schema: agentlab-xberg-source-filter/v1
+  sha256: 233d5ce7fe8630ef7fad81d7b52878e3d282999c11f1294cc7b271f392984fbd
+  unsafe_links: 1
 system_ort_audit_receipt:
   file: xberg-1.0.1-system-ort-audit.json
   schema: agentlab-xberg-system-ort-audit/v1
@@ -49,7 +54,7 @@ cargo_source_contract:
     vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1 }
     license_text_presence: { file: xberg-1.0.1-license-text-presence.json, sha256: c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86 }
     vendor_manifest: { file: xberg-1.0.1-cargo-vendor.txt, sha256: 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983 }
-    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: e4efb6796fce422a78d02b392cbab18d47a2c734577fe097f4b5c4fc68a8c596 }
+    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: 5cd8bf3ad22940b73136d3f27da8391ec966fe55d8dfd901195c1bad0fae9ca9 }
   vendor_tree: { sha256: ac80b58f273017594a7bef816568c73e6532db0e86003edd6d1046926c3a3c04, files: 56653, directories: 10401, symlinks: 0, bytes: 1205044301 }
   vendor_registry_identities: 1133
   resolver_only_registry_identities: 529

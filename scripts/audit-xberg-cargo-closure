@@ -37,7 +37,7 @@ module XbergCargoClosure
 
   def safe_path(path)
     clean = Pathname.new(path).cleanpath.to_s
-    raise Error, "unsafe archive path #{path.inspect}" if Pathname.new(path).absolute? || clean == ".." || clean.start_with?("../")
+    raise Error, "unsafe archive path #{path.inspect}" if Pathname.new(path).absolute? || clean == "." || clean == ".." || clean.start_with?("../")
 
     clean
   end
@@ -57,25 +57,59 @@ module XbergCargoClosure
     end
   end
 
-  def safe_symlink_target(path, linkname)
-    raise Error, "absolute symlink target: #{path}" if Pathname.new(linkname).absolute?
+  def link_record(type, path, target, mode)
+    { "path" => path, "mode" => mode, "type" => type.to_s, "target" => target }
+  end
 
-    resolved = Pathname.new(File.join(File.dirname(path), linkname)).cleanpath.to_s
+  def link_target(type, path, target)
+    return [nil, "absolute-target"] if Pathname.new(target).absolute?
+
+    resolved = type == :symlink ? Pathname.new(File.join(File.dirname(path), target)).cleanpath.to_s : safe_path(target)
     root = path.split("/", 2).first
-    raise Error, "symlink escape: #{path}" if resolved == ".." || resolved.start_with?("../") || resolved.split("/", 2).first != root
+    return [nil, "root-escaping-target"] if resolved == ".." || resolved.start_with?("../") || resolved.split("/", 2).first != root
+
+    [resolved, nil]
+  rescue Error
+    [nil, "root-escaping-target"]
+  end
+
+  def safe_symlink_target(path, target)
+    resolved, reason = link_target(:symlink, path, target)
+    raise Error, "unsafe symlink target: #{path}" if reason
 
     resolved
   end
 
-  def safe_hardlink_target(path, linkname)
-    resolved = safe_path(linkname)
-    raise Error, "hardlink crosses archive root: #{path}" if resolved.split("/", 2).first != path.split("/", 2).first
+  def safe_hardlink_target(path, target)
+    resolved, reason = link_target(:hardlink, path, target)
+    raise Error, "unsafe hardlink target: #{path}" if reason
 
     resolved
   end
 
-  def extract_gzip!(archive, destination)
-    roots, seen, links = Set.new, Set.new, []
+  def load_filter!(path)
+    filter = JSON.parse(File.read(path))
+    raise Error, "source filter schema mismatch" unless filter["schema"] == "agentlab-xberg-source-filter/v1"
+    raise Error, "source filter release mismatch" unless filter.dig("release", "name") == NAME && filter.dig("release", "version") == VERSION
+    source = filter["source"]
+    raise Error, "source filter identity is incomplete" unless source.is_a?(Hash) && source.values_at("tag", "commit", "tree", "archive_sha256").all? { |value| value.is_a?(String) && !value.empty? }
+    normalized = filter.fetch("unsafe_links").map do |link|
+      raise Error, "source filter unsafe link is invalid" unless link.is_a?(Hash) && link.values_at("path", "mode", "type", "target", "reason").all? { |value| value.is_a?(String) && !value.empty? }
+      link.slice("path", "mode", "type", "target", "reason")
+    end
+    raise Error, "source filter unsafe links are not sorted and unique" unless normalized == normalized.sort_by { |link| [link["path"], link["type"], link["target"]] } && normalized.uniq == normalized
+
+    normalized
+  rescue JSON::ParserError => e
+    raise Error, "invalid source filter: #{e.message}"
+  end
+
+  def verify_unsafe_links!(observed, filter)
+    raise Error, "unsafe archive links differ from checked source filter" unless observed == load_filter!(filter)
+  end
+
+  def extract_gzip!(archive, destination, filter:)
+    roots, seen, links, unsafe = Set.new, Set.new, [], []
     Zlib::GzipReader.open(archive) do |gzip|
       Gem::Package::TarReader.new(gzip) do |tar|
         tar.each do |entry|
@@ -93,10 +127,12 @@ module XbergCargoClosure
           elsif entry.file?
             FileUtils.mkdir_p(File.dirname(target))
             File.open(target, "wb", entry.header.mode & 0o777) { |file| IO.copy_stream(entry, file) }
-          elsif entry.header.typeflag == "2"
-            links << [:symlink, path, entry.header.linkname, safe_symlink_target(path, entry.header.linkname)]
-          elsif entry.header.typeflag == "1"
-            links << [:hardlink, path, entry.header.linkname, safe_hardlink_target(path, entry.header.linkname)]
+          elsif entry.header.typeflag == "2" || entry.header.typeflag == "1"
+            type = entry.header.typeflag == "2" ? :symlink : :hardlink
+            mode = type == :symlink ? "120000" : format("%06o", 0o100000 | (entry.header.mode & 0o777))
+            resolved, reason = link_target(type, path, entry.header.linkname)
+            record = link_record(type, path, entry.header.linkname, mode)
+            reason ? unsafe << record.merge("reason" => reason) : links << [type, path, entry.header.linkname, resolved]
           else
             raise Error, "unsafe archive entry #{path}"
           end
@@ -104,6 +140,7 @@ module XbergCargoClosure
       end
     end
     raise Error, "source archive must contain exactly one root" unless roots.length == 1
+    verify_unsafe_links!(unsafe.sort_by { |link| [link["path"], link["type"], link["target"]] }, filter)
 
     links.select { |type,| type == :hardlink }.each do |_type, path, _linkname, resolved|
       source = File.join(destination, resolved)
@@ -124,11 +161,25 @@ module XbergCargoClosure
     raise Error, "cannot safely extract #{archive}: #{e.message}"
   end
 
-  def prepare_source!(input, workdir)
+  def sanitize_tree!(source, filter:)
+    root, unsafe = File.basename(source), []
+    Dir.glob(File.join(source, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      next if %w[. ..].include?(File.basename(path)) || !File.lstat(path).symlink?
+
+      relative, target = path.delete_prefix("#{source}/"), File.readlink(path)
+      _resolved, reason = link_target(:symlink, File.join(root, relative), target)
+      unsafe << link_record(:symlink, File.join(root, relative), target, "120000").merge("reason" => reason) if reason
+    end
+    verify_unsafe_links!(unsafe.sort_by { |link| [link["path"], link["type"], link["target"]] }, filter)
+    unsafe.each { |link| FileUtils.rm_f(File.join(source, link.fetch("path").delete_prefix("#{root}/"))) }
+    safe_tree!(source)
+  end
+
+  def prepare_source!(input, workdir, filter:)
     destination = File.join(workdir, "source")
     if File.file?(input)
       raise Error, "Source0 SHA-256 mismatch" unless sha256(input) == SOURCE_SHA256
-      source = extract_gzip!(input, destination)
+      source = extract_gzip!(input, destination, filter: filter)
     elsif File.directory?(input)
       FileUtils.mkdir_p(destination)
       source = File.join(destination, "xberg-#{VERSION}")
@@ -302,10 +353,10 @@ module XbergCargoClosure
     run!("tar", "--create", "--zstd", "--file", output, "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--pax-option=delete=atime,delete=ctime", "--directory", File.dirname(vendor), File.basename(vendor))
   end
 
-  def generate!(source_input:, closure_input:, workdir:, output_dir:, patch_dir:)
+  def generate!(source_input:, closure_input:, workdir:, output_dir:, patch_dir:, filter:)
     FileUtils.rm_rf(workdir)
     FileUtils.mkdir_p([workdir, output_dir])
-    source = prepare_source!(source_input, workdir)
+    source = prepare_source!(source_input, workdir, filter: filter)
     apply_patches!(source, patch_dir)
     lock = File.join(source, "Cargo.lock")
     raise Error, "Cargo.lock SHA-256 mismatch" unless sha256(lock) == LOCK_SHA256
@@ -370,17 +421,24 @@ OptionParser.new do |parser|
   parser.on("--workdir PATH") { |value| options[:workdir] = value }
   parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
   parser.on("--patch-dir PATH") { |value| options[:patch_dir] = value }
+  parser.on("--filter PATH") { |value| options[:filter] = value }
+  parser.on("--sanitize-only") { options[:sanitize_only] = true }
   parser.on("--verify") { options[:verify] = true }
   parser.on("--vendor-dir PATH") { |value| options[:vendor_dir] = value }
   parser.on("--receipt PATH") { |value| options[:receipt] = value }
 end.parse!
-if options[:verify]
+if options[:sanitize_only]
+  abort("error: --source and --filter are required for --sanitize-only") unless options.values_at(:source, :filter).all?
+  source = File.expand_path(options[:source])
+  abort("error: --source must name an extracted source directory") unless File.directory?(source)
+  XbergCargoClosure.sanitize_tree!(source, filter: File.expand_path(options[:filter]))
+elsif options[:verify]
   abort("error: --vendor-dir and --receipt are required") unless options.values_at(:vendor_dir, :receipt).all?
   XbergCargoClosure.verify!(vendor: File.expand_path(options[:vendor_dir]), receipt: File.expand_path(options[:receipt]))
 else
-  abort("error: --source, --closure, --workdir, and --output-dir are required") unless options.values_at(:source, :closure, :workdir, :output_dir).all?
+  abort("error: --source, --closure, --workdir, --output-dir, and --filter are required") unless options.values_at(:source, :closure, :workdir, :output_dir, :filter).all?
   abort("error: workdir must be below /srv/tmp") unless File.expand_path(options[:workdir]).start_with?("/srv/tmp/")
   default_patches = File.expand_path("../packages/xberg", __dir__)
-  XbergCargoClosure.generate!(source_input: File.expand_path(options[:source]), closure_input: File.expand_path(options[:closure]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]), patch_dir: File.expand_path(options[:patch_dir] || default_patches))
+  XbergCargoClosure.generate!(source_input: File.expand_path(options[:source]), closure_input: File.expand_path(options[:closure]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]), patch_dir: File.expand_path(options[:patch_dir] || default_patches), filter: File.expand_path(options[:filter]))
 end
 end

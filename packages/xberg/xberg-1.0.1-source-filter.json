@@ -1,0 +1,29 @@
+{
+  "schema": "agentlab-xberg-source-filter/v1",
+  "release": {
+    "name": "xberg",
+    "version": "1.0.1"
+  },
+  "source": {
+    "tag": "v1.0.1",
+    "commit": "60557740a675908ea8d27145841dafd4f6a06917",
+    "tree": "19705db11615dd4d1722dec9224c3b752cd369af",
+    "archive_sha256": "a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6"
+  },
+  "archive_link_inventory": {
+    "symlinks": 51,
+    "hardlinks": 0,
+    "safe_in_root_links": 50,
+    "unsafe_links": 1
+  },
+  "unsafe_links": [
+    {
+      "path": "xberg-1.0.1/e2e/test_documents",
+      "mode": "120000",
+      "type": "symlink",
+      "target": "/Users/naamanhirschfeld/workspace/kreuzberg-dev/kreuzberg/test_documents",
+      "reason": "absolute-target"
+    }
+  ],
+  "omission_rationale": "The sole omitted link is an upstream developer-machine e2e fixture path outside the selected default xberg-cli build/runtime source surface. Safe in-root e2e links remain present; this receipt does not omit ordinary safe links."
+}

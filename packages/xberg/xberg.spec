@@ -7,11 +7,12 @@
 %global cargo_vendor_receipt_sha256 036b0658cffe53d2a27e2288cefdf66792f5d3e82b57dee22f3518ddfb538ca1
 %global license_text_presence_sha256 c5466dc05ec7338db90600192dcefaf0396306ba24df41f25d5c41efbd5e5b86
 %global cargo_vendor_manifest_sha256 526bc615feab2f711d2e7982b91793b3aedaf12f8e6f64374edbefdcb7f5e983
-%global cargo_auditor_sha256 e4efb6796fce422a78d02b392cbab18d47a2c734577fe097f4b5c4fc68a8c596
+%global cargo_auditor_sha256 5cd8bf3ad22940b73136d3f27da8391ec966fe55d8dfd901195c1bad0fae9ca9
+%global source_filter_sha256 233d5ce7fe8630ef7fad81d7b52878e3d282999c11f1294cc7b271f392984fbd
 
 Name:           xberg
 Version:        1.0.1
-Release:        0.9%{?dist}
+Release:        0.10%{?dist}
 Summary:        Document intelligence toolkit
 
 License:        MIT
@@ -25,6 +26,7 @@ Source5:        %{name}-%{version}-license-text-presence.json
 Source6:        %{name}-%{version}-cargo-vendor.tar.zst
 Source7:        %{name}-%{version}-cargo-vendor.txt
 Source8:        audit-xberg-cargo-closure
+Source9:        %{name}-%{version}-source-filter.json
 # Fedora system ONNX Runtime: select Xberg's released dynamic feature path for
 # the default CLI ML surface. Fedora-specific; local upstream history has no
 # released default-Linux feature-edge equivalent.
@@ -60,9 +62,12 @@ echo "%{cargo_vendor_receipt_sha256}  %{SOURCE4}" | sha256sum -c -
 echo "%{license_text_presence_sha256}  %{SOURCE5}" | sha256sum -c -
 echo "%{cargo_vendor_manifest_sha256}  %{SOURCE7}" | sha256sum -c -
 echo "%{cargo_auditor_sha256}  %{SOURCE8}" | sha256sum -c -
-%autosetup -p1 -n xberg-%{version}
-echo "f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd  Cargo.lock" | sha256sum -c -
+echo "%{source_filter_sha256}  %{SOURCE9}" | sha256sum -c -
+%setup -q -n xberg-%{version}
 install -Dm0755 %{SOURCE8} .agentlab-source/audit-xberg-cargo-closure
+ruby .agentlab-source/audit-xberg-cargo-closure --sanitize-only --source . --filter %{SOURCE9}
+%autopatch -p1
+echo "f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd  Cargo.lock" | sha256sum -c -
 tar --zstd --extract --no-same-owner --no-same-permissions --file %{SOURCE6} --directory .
 ruby .agentlab-source/audit-xberg-cargo-closure --verify --vendor-dir cargo-vendor --receipt %{SOURCE4}
 test "$(wc -l < %{SOURCE7})" -eq 1133
@@ -74,6 +79,9 @@ echo 'xberg is blocked: Cargo source delivery is checked, but linked-license, pr
 exit 1
 
 %changelog
+* Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.10
+- Filter only checked unsafe source links before applying Fedora patches.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 1.0.1-0.9
 - Safely preserve in-tree symbolic and hard links during configured-SCM extraction.
 

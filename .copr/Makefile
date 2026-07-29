@@ -77,7 +77,7 @@ srpm:
 			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
 			source_file="$$(rpmspec -P "$(spec)" | ruby -e 'matches = ARGF.each_line.filter_map { |line| line[/^Source0:\s+(\S+)/, 1] }; abort("expected exactly one Source0: record, found #{matches.length}") unless matches.one?; puts File.basename(matches.first.split("#", 2).first)')"; \
 			install -pm0755 "$(repo_root)/scripts/audit-xberg-cargo-closure" "$$specdir/audit-xberg-cargo-closure"; \
-			ruby "$$specdir/audit-xberg-cargo-closure" --source "$$specdir/$$source_file" --closure "$$specdir/xberg-$$version-cargo-closure.json" --patch-dir "$$specdir" --workdir "$$tempdir/materialization" --output-dir "$$tempdir/output"; \
+			ruby "$$specdir/audit-xberg-cargo-closure" --source "$$specdir/$$source_file" --filter "$$specdir/xberg-$$version-source-filter.json" --closure "$$specdir/xberg-$$version-cargo-closure.json" --patch-dir "$$specdir" --workdir "$$tempdir/materialization" --output-dir "$$tempdir/output"; \
 			for suffix in cargo-closure.json cargo-vendor-receipt.json license-text-presence.json cargo-vendor.txt; do \
 				cmp "$$tempdir/output/xberg-$$version-$$suffix" "$$specdir/xberg-$$version-$$suffix"; \
 			done; \

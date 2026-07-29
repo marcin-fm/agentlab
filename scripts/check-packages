@@ -484,6 +484,19 @@ packages.each do |package|
       end
     end
     errors << "xberg: spec does not check the system ORT audit receipt" unless spec.include?("Source2:        %{name}-%{version}-system-ort-audit.json") && spec.include?("%global system_ort_audit_sha256 #{system_audit_config && system_audit_config['sha256']}")
+    filter_config = package.data["source_link_filter"]
+    filter_path = filter_config && File.join(package.directory, filter_config["file"].to_s)
+    if !filter_config.is_a?(Hash) || !File.file?(filter_path)
+      errors << "xberg: source link filter is missing"
+    elsif Digest::SHA256.file(filter_path).hexdigest != filter_config["sha256"]
+      errors << "xberg: source link filter SHA-256 does not match"
+    else
+      filter = JSON.parse(File.read(filter_path))
+      errors << "xberg: source link filter schema is invalid" unless filter["schema"] == filter_config["schema"]
+      errors << "xberg: source link filter source identity does not match" unless filter.dig("source", "commit") == package.upstream["source_commit"] && filter.dig("source", "tree") == package.upstream["source_tree"] && filter.dig("source", "archive_sha256") == manifest_sha256
+      errors << "xberg: source link filter count does not match" unless filter.fetch("unsafe_links", []).length == filter_config["unsafe_links"]
+      errors << "xberg: source link inventory is incomplete" unless filter["archive_link_inventory"] == { "symlinks" => 51, "hardlinks" => 0, "safe_in_root_links" => 50, "unsafe_links" => 1 }
+    end
     cargo = package.data["cargo_source_contract"]
     unless cargo.is_a?(Hash)
       errors << "xberg: checked Cargo source contract is missing"
@@ -501,16 +514,18 @@ packages.each do |package|
       errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
       errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 1_043, "absent" => 90 } && license.dig("validation", "final_linked_license_complete") == false
       errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false
-      required = ["Source6:        %{name}-%{version}-cargo-vendor.tar.zst", "%autosetup -p1 -n xberg-%{version}\n", "%cargo_prep -v cargo-vendor", "audit-xberg-cargo-closure --verify", "test \"$(wc -l < %{SOURCE7})\" -eq 1133", "exit 1"]
+      required = ["Source6:        %{name}-%{version}-cargo-vendor.tar.zst", "Source9:        %{name}-%{version}-source-filter.json", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "%cargo_prep -v cargo-vendor", "audit-xberg-cargo-closure --verify", "test \"$(wc -l < %{SOURCE7})\" -eq 1133", "exit 1"]
       errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
-      errors << "xberg: spec disables the checked patch application" if spec.match?(/^%autosetup .*\s-N(?:\s|$)/)
+      sanitize_index = spec.index("--sanitize-only --source . --filter %{SOURCE9}")
+      autopatch_index = spec.index("%autopatch -p1")
+      errors << "xberg: spec does not apply checked patches after sanitizing source links" unless sanitize_index && autopatch_index && sanitize_index < autopatch_index
       makefile = File.read(File.join(Agentlab::ROOT, ".copr", "Makefile"))
       errors << "xberg: SCM rule overwrites tracked Cargo evidence" if makefile.include?("--output-dir \"$$specdir\"")
       errors << "xberg: SCM rule does not compare Xberg evidence" unless makefile.include?("cmp \"$$tempdir/output/xberg-$$version-$$suffix\"")
-      errors << "xberg: SCM rule does not supply the checked closure" unless makefile.include?("--closure \"$$specdir/xberg-$$version-cargo-closure.json\"")
+      errors << "xberg: SCM rule does not supply the checked closure and link filter" unless makefile.include?("--closure \"$$specdir/xberg-$$version-cargo-closure.json\"") && makefile.include?("--filter \"$$specdir/xberg-$$version-source-filter.json\"")
       errors << "xberg: SCM rule lacks the Ruby selector provider" unless makefile.include?("cargo-rpm-macros curl ruby rubypick")
       auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-cargo-closure"))
-      errors << "xberg: source extractor lacks general safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
+      errors << "xberg: source extractor lacks receipt-driven safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "verify_unsafe_links!", "sanitize_tree!", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
     end
   end
 

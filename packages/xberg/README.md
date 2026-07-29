@@ -18,6 +18,17 @@ Xberg evidence. A complete literal copy of the former package is retained at
 The exact dependency overlap, version comparison, and any retirement of former
 Kreuzberg-only dependency packages are a separate follow-up audit.
 
+## Source Link Filter
+
+`xberg-1.0.1-source-filter.json` is Source9 and records the complete reviewed
+unsafe-link set from the exact release tag: 51 symlinks and no hardlinks, with
+one mode-`120000` absolute symlink,
+`xberg-1.0.1/e2e/test_documents`. The generic extractor and `%prep` sanitizer
+compare every unsafe archive/tree link to this receipt before omitting only an
+exact match. The omitted developer-machine e2e fixture is outside the selected
+default `xberg-cli` build/runtime source surface; ordinary in-root e2e links are
+retained. Unknown, missing, or changed unsafe links fail closed.
+
 ## Source Audit Receipt
 
 `xberg-1.0.1-source-audit.json` is a checked `Source1` receipt (SHA-256
