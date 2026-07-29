@@ -1,0 +1,355 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "set"
+require "tmpdir"
+require "zlib"
+
+module XbergCargoClosure
+  class Error < StandardError; end
+  module_function
+
+  NAME = "xberg"
+  VERSION = "1.0.1"
+  SOURCE_SHA256 = "a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6"
+  LOCK_SHA256 = "f5c39e192455b1f19b162176c15e343d45e096319d78082b379dd0b1a56257cd"
+  TARGET = "x86_64-unknown-linux-gnu"
+  REGISTRY = "registry+https://github.com/rust-lang/crates.io-index"
+  TREE = { "sha256" => "5491d0a5c54ca07ff5109b27332dfef48a87d65e35ed84086f1c9f25de1bc614", "files" => 29_905, "directories" => 4_815, "symlinks" => 0, "bytes" => 411_276_011 }.freeze
+  LICENSE = /\A(?:licen[cs]e|copying|notice|authors)(?:[._-].*)?\z/i
+
+  def run!(*command, env: {}, chdir: nil)
+    options = {}
+    options[:chdir] = chdir if chdir
+    output, error, status = Open3.capture3(env, *command, **options)
+    return output if status.success?
+
+    raise Error, "command failed: #{command.join(' ')}\n#{error.lines.last(20).join}#{output.lines.last(20).join}"
+  end
+
+  def sha256(path) = Digest::SHA256.file(path).hexdigest
+
+  def safe_path(path)
+    clean = Pathname.new(path).cleanpath.to_s
+    raise Error, "unsafe archive path #{path.inspect}" if Pathname.new(path).absolute? || clean == ".." || clean.start_with?("../")
+
+    clean
+  end
+
+  def safe_tree!(root)
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      next if %w[. ..].include?(File.basename(path))
+
+      relative = path.delete_prefix("#{root}/")
+      if File.lstat(path).symlink?
+        target = File.readlink(path)
+        resolved = Pathname.new(File.join(File.dirname(relative), target)).cleanpath.to_s
+        raise Error, "symlink escape: #{relative}" if Pathname.new(target).absolute? || resolved == ".." || resolved.start_with?("../")
+        next
+      end
+      raise Error, "unsafe source entry: #{relative}" unless File.directory?(path) || File.file?(path)
+    end
+  end
+
+  def extract_gzip!(archive, destination)
+    roots, seen = Set.new, Set.new
+    Zlib::GzipReader.open(archive) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          if %w[g x L K].include?(entry.header.typeflag)
+            entry.read
+            next
+          end
+          path = safe_path(entry.full_name)
+          seen << path
+          roots << path.split("/", 2).first
+          target = File.join(destination, path)
+          if entry.directory?
+            FileUtils.mkdir_p(target)
+          elsif entry.file?
+            FileUtils.mkdir_p(File.dirname(target))
+            File.open(target, "wb", entry.header.mode & 0o777) { |file| IO.copy_stream(entry, file) }
+          else
+            raise Error, "unsafe archive entry #{path}"
+          end
+        end
+      end
+    end
+    raise Error, "source archive must contain exactly one root" unless roots.length == 1
+
+    File.join(destination, roots.first)
+  rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => e
+    raise Error, "cannot safely extract #{archive}: #{e.message}"
+  end
+
+  def prepare_source!(input, workdir)
+    destination = File.join(workdir, "source")
+    if File.file?(input)
+      raise Error, "Source0 SHA-256 mismatch" unless sha256(input) == SOURCE_SHA256
+      source = extract_gzip!(input, destination)
+    elsif File.directory?(input)
+      FileUtils.mkdir_p(destination)
+      source = File.join(destination, "xberg-#{VERSION}")
+      FileUtils.cp_r(input, source, preserve: true)
+    else
+      raise Error, "--source must name an archive or complete source directory"
+    end
+    source
+  end
+
+  def apply_patches!(source, patch_dir)
+    %w[xberg-system-onnxruntime.patch xberg-fedora-onnxruntime-path.patch].each do |name|
+      patch = File.join(patch_dir, name)
+      raise Error, "missing tracked patch #{patch}" unless File.file?(patch)
+      run!("patch", "--dry-run", "--fuzz=0", "-p1", "-i", patch, chdir: source)
+      run!("patch", "--fuzz=0", "-p1", "-i", patch, chdir: source)
+    end
+  end
+
+  def lock_packages(lock)
+    lock.split(/(?=^\[\[package\]\]$)/).filter_map do |block|
+      next unless block.start_with?("[[package]]\n")
+      fields = block.each_line.each_with_object({}) do |line, values|
+        match = line.chomp.match(/\A(name|version|source|checksum) = "([^"]+)"\z/)
+        values[match[1]] = match[2] if match
+      end
+      raise Error, "incomplete Cargo.lock record" unless fields["name"] && fields["version"]
+      fields
+    end
+  end
+
+  def registry_packages(lock)
+    lock_packages(lock).select { |item| item["source"] == REGISTRY }.tap do |items|
+      raise Error, "registry package lacks checksum" unless items.all? { |item| item["checksum"]&.match?(/\A[0-9a-f]{64}\z/) }
+    end
+  end
+
+  def identity(item) = [item.fetch("name"), item.fetch("version")]
+
+  def registry_cache_roots(cargo_home)
+    Dir.glob(File.join(cargo_home, "registry", "src", "*"))
+  end
+
+  def source_from_cache!(item, cargo_home)
+    directory = "#{item.fetch('name')}-#{item.fetch('version')}"
+    source = registry_cache_roots(cargo_home).map { |root| File.join(root, directory) }.find { |path| File.directory?(path) }
+    archive = Dir.glob(File.join(cargo_home, "registry", "cache", "*", "#{directory}.crate")).find { |path| File.file?(path) }
+    return source if source && archive && sha256(archive) == item.fetch("checksum")
+
+    nil
+  end
+
+  def acquire!(item, cache, cargo_home)
+    filename = "#{item.fetch('name')}-#{item.fetch('version')}.crate"
+    path = File.join(cache, filename)
+    unless File.file?(path)
+      cached = Dir.glob(File.join(cargo_home, "registry", "cache", "*", filename)).find { |candidate| File.file?(candidate) }
+      if cached
+        FileUtils.cp(cached, path)
+      else
+        temporary = "#{path}.tmp-#{Process.pid}"
+        run!("curl", "--fail", "--location", "--retry", "3", "--output", temporary, "https://static.crates.io/crates/#{item.fetch('name')}/#{filename}")
+        File.rename(temporary, path)
+      end
+    end
+    raise Error, "crate checksum mismatch: #{filename}" unless sha256(path) == item.fetch("checksum")
+    path
+  ensure
+    FileUtils.rm_f(temporary) if defined?(temporary) && temporary
+  end
+
+  def cargo_checksum!(root, checksum)
+    files = Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.sort.to_h do |path|
+      [path.delete_prefix("#{root}/"), sha256(path)]
+    end
+    File.write(File.join(root, ".cargo-checksum.json"), JSON.generate("files" => files, "package" => checksum) + "\n")
+  end
+
+  def materialize_vendor!(items, cargo_home, workdir)
+    vendor, cache = File.join(workdir, "cargo-vendor"), File.join(workdir, "crates")
+    FileUtils.rm_rf(vendor)
+    FileUtils.mkdir_p([vendor, cache])
+    items.each do |item|
+      destination = File.join(vendor, "#{item.fetch('name')}-#{item.fetch('version')}")
+      if (cached = source_from_cache!(item, cargo_home))
+        FileUtils.cp_r(cached, destination, preserve: true)
+      else
+        extract_gzip!(acquire!(item, cache, cargo_home), vendor)
+      end
+      safe_tree!(destination)
+      cargo_checksum!(destination, item.fetch("checksum"))
+    end
+    vendor
+  end
+
+  def cargo_home!(vendor, workdir)
+    home = File.join(workdir, "cargo-home")
+    FileUtils.mkdir_p(home)
+    File.write(File.join(home, "config.toml"), <<~TOML)
+      [source.crates-io]
+      replace-with = "vendored-sources"
+      [source.vendored-sources]
+      directory = #{vendor.dump}
+      [net]
+      offline = true
+    TOML
+    home
+  end
+
+  def metadata!(source, home)
+    JSON.parse(run!("cargo", "metadata", "--frozen", "--offline", "--format-version", "1", "--manifest-path", File.join(source, "crates/xberg-cli/Cargo.toml"), "--filter-platform", TARGET, env: { "CARGO_HOME" => home, "CARGO_NET_OFFLINE" => "true" }))
+  end
+
+  def cargo_tree!(source, home, edges)
+    cli = File.join(source, "crates", "xberg-cli")
+    run!("cargo", "tree", "--frozen", "--offline", "--target", TARGET, "--manifest-path", File.join(cli, "Cargo.toml"), "--package", "xberg-cli", "--features", "default", "--edges", edges, "--no-dedupe", "--prefix", "none", "--format", "{p}", env: { "CARGO_HOME" => home, "CARGO_NET_OFFLINE" => "true" })
+  end
+
+  def tree_identities(output)
+    output.each_line.filter_map { |line| line.match(/\A([A-Za-z0-9_-]+) v([^\s]+)/)&.captures }.uniq.sort
+  end
+
+  def selected(metadata)
+    packages = metadata.fetch("packages").to_h { |item| [item.fetch("id"), item] }
+    nodes = metadata.fetch("resolve").fetch("nodes").to_h { |item| [item.fetch("id"), item] }
+    root = metadata.fetch("resolve").fetch("root")
+    roles, seen = Hash.new { |hash, key| hash[key] = Set.new }, Set.new
+    visit = lambda do |id, role|
+      return unless seen.add?([id, role])
+      roles[id] << role
+      nodes.fetch(id).fetch("deps").each do |dependency|
+        dependency.fetch("dep_kinds").each do |kind|
+          next unless [nil, "build", "dev"].include?(kind["kind"])
+          visit.call(dependency.fetch("pkg"), kind["kind"] || role)
+        end
+      end
+    end
+    visit.call(root, "normal")
+    roles.map do |id, kinds|
+      package = packages.fetch(id)
+      { "name" => package.fetch("name"), "version" => package.fetch("version"), "source" => package["source"], "roles" => kinds.to_a.sort }
+    end.sort_by { |item| identity(item) }
+  end
+
+  def tree_receipt(root)
+    digest, files, directories, symlinks, bytes = Digest::SHA256.new, 0, 0, 0, 0
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).sort.each do |path|
+      next if %w[. ..].include?(File.basename(path))
+      relative, stat = path.delete_prefix("#{root}/"), File.lstat(path)
+      mode = format("%04o", stat.mode & 0o777)
+      if stat.directory?
+        directories += 1
+        digest.update(["directory", relative, mode].join("\0") + "\0")
+      elsif stat.file?
+        files += 1
+        bytes += stat.size
+        digest.update(["file", relative, mode, stat.size, sha256(path)].join("\0") + "\0")
+      elsif stat.symlink?
+        symlinks += 1
+        target = File.readlink(path)
+        raise Error, "vendor symlink escape #{relative}" if Pathname.new(target).absolute? || Pathname.new(File.join(File.dirname(relative), target)).cleanpath.to_s.start_with?("../")
+        digest.update(["symlink", relative, mode, target].join("\0") + "\0")
+      else
+        raise Error, "unsafe vendor entry #{relative}"
+      end
+    end
+    { "algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)", "sha256" => digest.hexdigest, "files" => files, "directories" => directories, "symlinks" => symlinks, "bytes" => bytes }
+  end
+
+  def license_inventory(items, vendor)
+    entries = items.map do |item|
+      root = File.join(vendor, "#{item.fetch('name')}-#{item.fetch('version')}")
+      texts = Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) && File.basename(path).match?(LICENSE) }.sort.map { |path| path.delete_prefix("#{root}/") }
+      { "name" => item.fetch("name"), "version" => item.fetch("version"), "license_texts" => texts }
+    end
+    { "schema" => "agentlab-xberg-source-license-texts/v1", "method" => "source-level filename inventory; not final linked-license completeness", "packages" => entries, "counts" => { "present" => entries.count { |item| item["license_texts"].any? }, "absent" => entries.count { |item| item["license_texts"].empty? } }, "validation" => { "source_text_presence_verified" => true, "final_linked_license_complete" => false } }
+  end
+
+  def write_json(path, value) = File.write(path, JSON.pretty_generate(value) + "\n")
+
+  def archive!(vendor, output)
+    run!("tar", "--create", "--zstd", "--file", output, "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner", "--pax-option=delete=atime,delete=ctime", "--directory", File.dirname(vendor), File.basename(vendor))
+  end
+
+  def generate!(source_input:, workdir:, output_dir:, patch_dir:)
+    FileUtils.rm_rf(workdir)
+    FileUtils.mkdir_p([workdir, output_dir])
+    source = prepare_source!(source_input, workdir)
+    apply_patches!(source, patch_dir)
+    lock = File.join(source, "Cargo.lock")
+    raise Error, "Cargo.lock SHA-256 mismatch" unless sha256(lock) == LOCK_SHA256
+    lock_registry = registry_packages(File.read(lock))
+    source_home = ENV.fetch("CARGO_HOME") { raise Error, "CARGO_HOME must supply the checked source cache" }
+    # The package-scoped target tree is the selection authority; workspace-wide
+    # metadata intentionally contains inactive workspace and target records.
+    pre_metadata = metadata!(source, source_home)
+    pre_normal_tree = cargo_tree!(source, source_home, "normal")
+    normal_identities = tree_identities(pre_normal_tree)
+    raise Error, "normal graph is not 610" unless normal_identities.length == 610
+    lock_by_identity = lock_registry.to_h { |item| [identity(item), item] }
+    items = normal_identities.filter_map { |identity| lock_by_identity[identity] }.sort_by { |item| identity(item) }
+    raise Error, "expected 604 selected normal registry identities, got #{items.length}" unless items.length == 604
+    vendor = materialize_vendor!(items, source_home, workdir)
+    tree = tree_receipt(vendor)
+    expected_tree = TREE.merge("algorithm" => tree.fetch("algorithm"))
+    raise Error, "canonical vendor tree identity mismatch: #{tree.inspect}" unless tree == expected_tree
+    home = cargo_home!(vendor, workdir)
+    raise Error, "directory-source replacement was not configured" unless File.read(File.join(home, "config.toml")).include?(vendor)
+    raise Error, "Git dependency found" unless pre_metadata.fetch("packages").none? { |item| item["source"].to_s.start_with?("git+") }
+    # Cargo resolves inactive workspace manifests before package filtering; use
+    # the checked cache for this read-only proof while retaining the separate
+    # directory-source configuration consumed by `%cargo_prep -v`.
+    normal_tree = cargo_tree!(source, source_home, "normal")
+    all_tree = cargo_tree!(source, source_home, "normal,build,dev")
+    normal_graph = tree_identities(normal_tree)
+    all_graph = tree_identities(all_tree)
+    raise Error, "normal graph is not 610" unless normal_graph.length == 610
+    raise Error, "normal/build/dev graph is not 629" unless all_graph.length == 629
+    manifest = items.map { |item| "#{item.fetch('name')} #{item.fetch('version')}" }.join("\n") + "\n"
+    closure = { "schema" => "agentlab-xberg-cargo-closure/v1", "release" => { "name" => NAME, "version" => VERSION, "cargo_lock_sha256" => LOCK_SHA256 }, "selection" => { "package" => "xberg-cli", "target" => TARGET, "features" => ["default"], "registry_identities" => items, "workspace_packages" => normal_identities.reject { |item| lock_by_identity.key?(item) }.map { |name, version| { "name" => name, "version" => version } } }, "counts" => { "selected_registry_identities" => items.length, "normal_packages" => normal_graph.length, "normal_build_dev_packages" => all_graph.length, "root_lock_registry" => lock_registry.length, "root_lock_workspace" => lock_packages(File.read(lock)).count { |item| !item["source"] }, "git_dependencies" => 0, "resolver_only_additions" => 0 }, "commands" => { "metadata" => "cargo metadata --frozen --offline --filter-platform #{TARGET}", "tree_normal" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal", "tree_all" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli --features default --edges normal,build,dev" }, "outputs" => { "normal_tree_sha256" => Digest::SHA256.hexdigest(normal_tree), "normal_build_dev_tree_sha256" => Digest::SHA256.hexdigest(all_tree) }, "validation" => { "lock_checksums_verified" => true, "archive_paths_and_symlink_escapes_rejected" => true, "offline_frozen_package_metadata_and_tree_verified" => true, "git_dependencies_zero" => true, "resolver_only_additions_zero" => true, "final_linked_license_complete" => false } }
+    license = license_inventory(items, vendor)
+    raise Error, "license text inventory counts differ" unless license.fetch("counts") == { "present" => 581, "absent" => 23 }
+    receipt = { "schema" => "agentlab-xberg-cargo-vendor/v1", "release" => closure.fetch("release"), "vendor_archive" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.tar.zst", "root" => "cargo-vendor" }, "vendor_tree" => tree, "inputs" => { "cargo_closure_sha256" => nil, "license_text_presence_sha256" => nil }, "root_lock" => { "registry" => 1133, "workspace" => 17, "git" => 0 }, "graph" => { "normal" => 610, "normal_build_dev" => 629, "ort_download_delta" => -2, "resolver_only_additions" => 0 }, "validation" => closure.fetch("validation") }
+    File.write(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.txt"), manifest)
+    write_json(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json"), closure)
+    write_json(File.join(output_dir, "#{NAME}-#{VERSION}-license-text-presence.json"), license)
+    receipt["inputs"]["cargo_closure_sha256"] = sha256(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-closure.json"))
+    receipt["inputs"]["license_text_presence_sha256"] = sha256(File.join(output_dir, "#{NAME}-#{VERSION}-license-text-presence.json"))
+    write_json(File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor-receipt.json"), receipt)
+    archive!(vendor, File.join(output_dir, "#{NAME}-#{VERSION}-cargo-vendor.tar.zst"))
+  end
+
+  def verify!(vendor:, receipt:)
+    expected = JSON.parse(File.read(receipt)).fetch("vendor_tree")
+    actual = tree_receipt(vendor)
+    raise Error, "vendor tree identity mismatch" unless actual == expected
+    raise Error, "vendor tree must have no symlinks" unless actual.fetch("symlinks").zero?
+  end
+end
+
+options = {}
+OptionParser.new do |parser|
+  parser.on("--source PATH") { |value| options[:source] = value }
+  parser.on("--workdir PATH") { |value| options[:workdir] = value }
+  parser.on("--output-dir PATH") { |value| options[:output_dir] = value }
+  parser.on("--patch-dir PATH") { |value| options[:patch_dir] = value }
+  parser.on("--verify") { options[:verify] = true }
+  parser.on("--vendor-dir PATH") { |value| options[:vendor_dir] = value }
+  parser.on("--receipt PATH") { |value| options[:receipt] = value }
+end.parse!
+if options[:verify]
+  abort("error: --vendor-dir and --receipt are required") unless options.values_at(:vendor_dir, :receipt).all?
+  XbergCargoClosure.verify!(vendor: File.expand_path(options[:vendor_dir]), receipt: File.expand_path(options[:receipt]))
+else
+  abort("error: --source, --workdir, and --output-dir are required") unless options.values_at(:source, :workdir, :output_dir).all?
+  abort("error: workdir must be below /srv/tmp") unless File.expand_path(options[:workdir]).start_with?("/srv/tmp/")
+  default_patches = File.expand_path("../packages/xberg", __dir__)
+  XbergCargoClosure.generate!(source_input: File.expand_path(options[:source]), workdir: File.expand_path(options[:workdir]), output_dir: File.expand_path(options[:output_dir]), patch_dir: File.expand_path(options[:patch_dir] || default_patches))
+end

@@ -55,7 +55,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | ast-grep | 0.44.1 | enabled | Clean F43/F44 mock builds, tests, CLI smoke, and aggregate linked-license audit passed |
 | agent-browser | 0.33.1 | blocked | Native Cargo closure, aggregate licensing, installed skill layout, and Fedora Chromium runtime smoke remain |
 | mermaid-cli | 11.16.0 | blocked | F43/F44 builds pass; immutable generated-source hosting and upstream bundling record remain |
-| xberg | 1.0.1 | blocked | Renamed upstream source requires a fresh Fedora dependency, license, native-binding, and offline-build audit |
+| xberg | 1.0.1 | blocked | Checked 604-crate SCM Cargo source contract exists; 23 source-text gaps plus provider, native, and target-build proof remain |
 | pdfium | 146.0.7678.0 | enabled | Immutable Chromium-pinned source, private ABI, embedded ICU, and six-cell configured-SCM proof accepted |
 | python-docling-mcp | 2.1.0 | blocked | Downstream stdio and remote-conversion product profiles removed; an upstream-supported selected surface and complete dependency/transport review remain |
 | python-doclang | 0.7.3 | enabled | Reusable Docling prerequisite; clean F43/F44 builds and installed schema/CLI smokes passed |

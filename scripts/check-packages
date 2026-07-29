@@ -470,6 +470,27 @@ packages.each do |package|
       end
     end
     errors << "xberg: spec does not check the system ORT audit receipt" unless spec.include?("Source2:        %{name}-%{version}-system-ort-audit.json") && spec.include?("%global system_ort_audit_sha256 #{system_audit_config && system_audit_config['sha256']}")
+    cargo = package.data["cargo_source_contract"]
+    unless cargo.is_a?(Hash)
+      errors << "xberg: checked Cargo source contract is missing"
+    else
+      cargo.fetch("source_evidence", {}).each_value do |evidence|
+        path = evidence.fetch("file").start_with?("scripts/") ? File.join(Agentlab::ROOT, evidence.fetch("file")) : File.join(package.directory, evidence.fetch("file"))
+        errors << "xberg: missing Cargo evidence #{evidence.fetch('file')}" unless File.file?(path)
+        errors << "xberg: stale Cargo evidence #{evidence.fetch('file')}" if File.file?(path) && Digest::SHA256.file(path).hexdigest != evidence.fetch("sha256")
+      end
+      receipt = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "vendor_receipt", "file"))))
+      license = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "license_text_presence", "file"))))
+      errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [604, 610, 629, 0, -2, 0]
+      errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
+      errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 581, "absent" => 23 } && license.dig("validation", "final_linked_license_complete") == false
+      errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false
+      required = ["Source6:        %{name}-%{version}-cargo-vendor.tar.zst", "%cargo_prep -v cargo-vendor", "audit-xberg-cargo-closure --verify", "test \"$(wc -l < %{SOURCE7})\" -eq 604", "exit 1"]
+      errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
+      makefile = File.read(File.join(Agentlab::ROOT, ".copr", "Makefile"))
+      errors << "xberg: SCM rule overwrites tracked Cargo evidence" if makefile.include?("--output-dir \"$$specdir\"")
+      errors << "xberg: SCM rule does not compare Xberg evidence" unless makefile.include?("cmp \"$$tempdir/output/xberg-$$version-$$suffix\"")
+    end
   end
 
   next unless Agentlab.command_available?("rpmspec")

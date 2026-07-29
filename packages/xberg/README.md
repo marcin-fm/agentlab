@@ -46,6 +46,21 @@ This is source-only integration evidence. Vendor delivery, Fedora provider
 matrix, compilation, ORT runtime smoke, model/license and aggregate-license
 review, enablement, COPR, and retirements remain blocked.
 
+## Cargo Source Contract
+
+The configured-SCM materializer checks the patched default `xberg-cli` Linux
+`x86_64` Cargo closure and writes only the ignored transport archive. Its four
+tracked receipts bind 604 checked registry identities, a 610 normal / 629
+normal-build-dev graph, no Git dependencies, the `-2` ORT downloader delta,
+and the canonical 29,905-file vendor tree SHA-256
+`5491d0a5c54ca07ff5109b27332dfef48a87d65e35ed84086f1c9f25de1bc614`.
+
+The source-level text inventory finds texts in 581 vendor directories and no
+recognized text in 23. This is not final linked-license completeness; all 23
+gaps remain publication blockers. Fedora's workspace-wide
+`%cargo_vendor_manifest` has different resolver semantics, so `%prep` checks
+the selected manifest through the auditor rather than making a false comparison.
+
 ## Duplicate Checks
 
 Read-only DNF5 queries found no Fedora package named `xberg` and no provider for
