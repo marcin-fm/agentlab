@@ -18,8 +18,9 @@ link candidates and 9 build-only candidates); 76 resolver-only records remain
 in the vendor source because Cargo requires them for offline locked resolution.
 The deterministic vendor archive is generated at configured-SCM/SRPM time and
 is deliberately untracked. The checked closure, vendor receipt, license audit,
-and `cargo-vendor.txt` are tracked inputs; no bundled Provides, Fedora provider
-mapping, or final aggregate SPDX expression is claimed. Fedora 44 x86_64 COPR
+and `cargo-vendor.txt` are tracked inputs; no Fedora provider mapping is claimed.
+The final aggregate SPDX expression is bound to the checked Fedora witness.
+Fedora 44 x86_64 COPR
 build `10785021` is a checked release-0.12 witness for production compilation,
 install layout, 1,028 main tests, two doctor tests, ELF structure, and Chromium
 `about:blank`. It does not prove a successful current 0.13 RPM or the remaining
@@ -37,12 +38,15 @@ postinstall script or any upstream platform binary download, must not run
 `agent-browser install --with-deps` or otherwise mutate packages during RPM
 phases.
 
-Fedora metadata for Fedora 43, Fedora 44, and Rawhide provides the `chromium`
-package with `/usr/bin/chromium-browser`; `chromium-headless` provides
-`/usr/lib64/chromium-browser/headless_shell`. The intended normal dependency
-is `chromium` because upstream autodetects `chromium-browser`; the headless
-path remains an explicit-path alternative. Runtime browser smokes remain
-unverified.
+Fedora metadata for Fedora 43, Fedora 44, and Rawhide provides
+`chromium-headless` with `/usr/lib64/chromium-browser/headless_shell` on both
+architectures. The package wrapper selects that executable only when the user
+has not supplied another browser, CDP endpoint, provider, or non-Chromium engine.
+Full `chromium` remains an optional dependency selected automatically for
+`--headed` when installed; an explicit path still overrides either default.
+The target matrix must prove navigation, snapshot,
+JavaScript evaluation, and URL retrieval against Fedora's differing Chromium
+versions rather than pinning one browser build.
 
 The upstream project is Apache-2.0. Embedded axe-core is MPL-2.0 with retained
 MIT/ISC third-party notices, and embedded React DevTools has an MIT notice.
@@ -50,9 +54,9 @@ The exact applicable source texts are
 `cli/src/native/a11y/LICENSE-axe-core.txt` and
 `cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt`, plus
 `cli/src/native/react/installHook.js`. The source candidate expression is kept
-in the generated license audit. Final linked Cargo and installed-payload license
-flags remain false until the current build output is captured in a checked
-receipt and the aggregate expression is reviewed.
+in the generated license audit. The aggregate expression is checked, but the
+installed-payload witness predates the new public wrapper. The corrected payload,
+headless-default runtime, and remaining target matrix are still pending.
 
 Fedora exact-name and `/usr/bin/agent-browser` capability queries found no
 provider for Fedora 43, Fedora 44, or Rawhide. RPM Fusion repositories were
@@ -63,6 +67,5 @@ The still-blocked spec verifies the immutable source, lock, closure receipt,
 license audit, vendor manifest, and source auditor before using Fedora Cargo
 macros with the generated directory source. It installs only the application,
 skills, skill data, and executable-relative public command, never a crate-devel
-interface. The remaining gates are checked final link and payload accounting,
-the remaining target matrix, installed skill-layout proof, and Chromium runtime
-smoke.
+interface. The remaining gates are the headless-default runtime proof, Chromium
+version compatibility across the configured matrix, and RPM Fusion availability.

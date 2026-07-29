@@ -9,7 +9,7 @@
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.13%{?dist}
+Release:        0.14%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # The aggregate combines the cargo2rpm linked-license summary with the project,
@@ -27,13 +27,14 @@ Source7:        %{name}-%{version}-fedora-proof.json
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  binutils
-BuildRequires:  chromium
+BuildRequires:  chromium-headless
 BuildRequires:  file
 BuildRequires:  ruby
 BuildRequires:  rubypick
 BuildRequires:  rubygem-json
 BuildRequires:  zstd
-Requires:       chromium
+Requires:       chromium-headless
+Suggests:       chromium
 
 %description
 Native Rust browser automation CLI for AI agents.
@@ -73,7 +74,59 @@ install -Dpm0755 cli/target/rpm/agent-browser %{buildroot}%{_libexecdir}/agent-b
 install -d -m0755 %{buildroot}%{_libexecdir}/agent-browser
 cp -a skills skill-data %{buildroot}%{_libexecdir}/agent-browser/
 install -d -m0755 %{buildroot}%{_bindir}
-ln -s %{_libexecdir}/agent-browser/bin/agent-browser %{buildroot}%{_bindir}/agent-browser
+cat > %{buildroot}%{_bindir}/agent-browser <<'AGENT_BROWSER_WRAPPER'
+#!/usr/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+agent_browser_binary=${AGENT_BROWSER_PRIVATE_BINARY:-/usr/libexec/agent-browser/bin/agent-browser}
+if [ "${AGENT_BROWSER_EXECUTABLE_PATH+x}" != x ]; then
+  agent_browser_external_engine=false
+  agent_browser_headed=false
+  agent_browser_next=
+  case "${AGENT_BROWSER_ENGINE:-}" in
+    ''|chrome|chromium) ;;
+    *) agent_browser_external_engine=true ;;
+  esac
+  [ -n "${AGENT_BROWSER_CDP:-}" ] && agent_browser_external_engine=true
+  [ -n "${AGENT_BROWSER_PROVIDER:-}" ] && agent_browser_external_engine=true
+  for agent_browser_arg in "$@"; do
+    if [ -n "$agent_browser_next" ]; then
+      case "$agent_browser_next:$agent_browser_arg" in
+        engine:chrome|engine:chromium) ;;
+        *) agent_browser_external_engine=true ;;
+      esac
+      agent_browser_next=
+      continue
+    fi
+    case "$agent_browser_arg" in
+      --engine|--executable-path|--provider|--cdp)
+        agent_browser_next=${agent_browser_arg#--}
+        ;;
+      --engine=chrome|--engine=chromium)
+        ;;
+      --engine=*|--executable-path=*|--provider=*|--cdp=*|--auto-connect|connect)
+        agent_browser_external_engine=true
+        ;;
+      --headed)
+        agent_browser_headed=true
+        ;;
+    esac
+  done
+  if [ "$agent_browser_external_engine" = false ]; then
+    if [ "$agent_browser_headed" = true ]; then
+      if [ ! -x /usr/bin/chromium-browser ]; then
+        echo 'agent-browser: --headed requires the optional chromium package or an explicit --executable-path' >&2
+        exit 1
+      fi
+      AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    else
+      AGENT_BROWSER_EXECUTABLE_PATH=/usr/lib64/chromium-browser/headless_shell
+    fi
+    export AGENT_BROWSER_EXECUTABLE_PATH
+  fi
+fi
+exec "$agent_browser_binary" "$@"
+AGENT_BROWSER_WRAPPER
+chmod 0755 %{buildroot}%{_bindir}/agent-browser
 install -Dpm0644 LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE
 install -Dpm0644 cli/src/native/a11y/LICENSE-axe-core.txt %{buildroot}%{_licensedir}/%{name}/LICENSE-axe-core.txt
 install -Dpm0644 cli/src/native/a11y/LICENSE-axe-core-THIRD-PARTY.txt %{buildroot}%{_licensedir}/%{name}/LICENSE-axe-core-THIRD-PARTY.txt
@@ -100,11 +153,33 @@ test "$(sha256sum "$license_file" | cut -d' ' -f1)" = b232a66a487cfb5c45519501e9
 test "$(wc -l < "$license_file")" -eq 264
 
 test -x "$binary"
-test -L "$public"
-test "$(readlink "$public")" = "%{_libexecdir}/agent-browser/bin/agent-browser"
-test -x "%{buildroot}$(readlink "$public")"
+test -x "$public"
+test ! -L "$public"
+grep -F 'AGENT_BROWSER_EXECUTABLE_PATH=/usr/lib64/chromium-browser/headless_shell' "$public"
+grep -F 'agent_browser_binary=${AGENT_BROWSER_PRIVATE_BINARY:-/usr/libexec/agent-browser/bin/agent-browser}' "$public"
+grep -F 'exec "$agent_browser_binary" "$@"' "$public"
 test -d "$payload/skills"
 test -d "$payload/skill-data"
+
+wrapper_probe="$PWD/.agentlab-wrapper-probe"
+cat > "$wrapper_probe" <<'AGENT_BROWSER_WRAPPER_PROBE'
+#!/usr/bin/sh
+printf '%%s\n' "${AGENT_BROWSER_EXECUTABLE_PATH-}"
+AGENT_BROWSER_WRAPPER_PROBE
+chmod 0755 "$wrapper_probe"
+test "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public")" = /usr/lib64/chromium-browser/headless_shell
+test "$(AGENT_BROWSER_EXECUTABLE_PATH=/custom/browser AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public")" = /custom/browser
+test -z "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_ENGINE=lightpanda AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public")"
+test -z "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --engine lightpanda)"
+if [ -x /usr/bin/chromium-browser ]; then
+  test "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --headed)" = /usr/bin/chromium-browser
+else
+  if env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --headed >"$PWD/.agentlab-headed.out" 2>"$PWD/.agentlab-headed.err"; then
+    echo 'agent-browser wrapper unexpectedly accepted headed mode without full Chromium' >&2
+    exit 1
+  fi
+  grep -F 'requires the optional chromium package' "$PWD/.agentlab-headed.err"
+fi
 (
   cd %{buildroot}
   find ./usr/bin/agent-browser ./usr/libexec/agent-browser ./usr/share/licenses/agent-browser -printf '%%y %%m %%s %%p %%l\n'
@@ -127,17 +202,27 @@ fi
 runtime_home=$(mktemp -d /tmp/agent-browser-copr-check.XXXXXX)
 export HOME="$runtime_home"
 export AGENT_BROWSER_SOCKET_DIR="$runtime_home/sockets"
+export AGENT_BROWSER_PRIVATE_BINARY="$binary"
+unset AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_ENGINE AGENT_BROWSER_CDP AGENT_BROWSER_PROVIDER
 install -d -m0700 "$AGENT_BROWSER_SOCKET_DIR"
+test -x /usr/lib64/chromium-browser/headless_shell
 cleanup_agent_browser_proof() {
   "$binary" --session copr-check close >/dev/null 2>&1 || :
   rm -rf "$runtime_home"
 }
 trap cleanup_agent_browser_proof EXIT
-echo 'AGENT_BROWSER_CHROMIUM_SMOKE_BEGIN'
-"$binary" --session copr-check --executable-path /usr/bin/chromium-browser --json open about:blank | grep -F '"url":"about:blank"'
-"$binary" --session copr-check --json get url | grep -F '"url":"about:blank"'
-"$binary" --session copr-check close
-echo 'AGENT_BROWSER_CHROMIUM_SMOKE_END'
+smoke_url='data:text/html,<button>fedora-headless-proof</button>'
+browser_version=$(rpm -q --qf '%%{VERSION}' chromium-headless)
+browser_major=${browser_version%%%%.*}
+echo 'AGENT_BROWSER_HEADLESS_COMPATIBILITY_BEGIN'
+echo "AGENT_BROWSER_HEADLESS_RPM_VERSION=$browser_version"
+"$public" --session copr-check --json open "$smoke_url" | tee "$PWD/.agentlab-headless-open.json" | grep -F '"success":true'
+"$public" --session copr-check snapshot -i --json | tee "$PWD/.agentlab-headless-snapshot.json" | grep -F 'fedora-headless-proof'
+"$public" --session copr-check --json eval 'navigator.userAgent' | tee "$PWD/.agentlab-headless-user-agent.json" | grep -E "(HeadlessChrome|Chrome)/${browser_major}\\."
+"$public" --session copr-check --json get url | tee "$PWD/.agentlab-headless-url.json" | grep -F 'fedora-headless-proof'
+"$public" --session copr-check close
+echo 'AGENT_BROWSER_CDP_PROTOCOL_COMPATIBILITY=navigation,snapshot,runtime-eval,url'
+echo 'AGENT_BROWSER_HEADLESS_COMPATIBILITY_END'
 cleanup_agent_browser_proof
 trap - EXIT
 popd >/dev/null
@@ -154,6 +239,9 @@ popd >/dev/null
 %{_libexecdir}/agent-browser
 
 %changelog
+* Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.14
+- Use Fedora headless Chromium by default and prove wrapper/CDP compatibility.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.13
 - Record the Fedora 44 x86_64 compile and runtime witness.
 

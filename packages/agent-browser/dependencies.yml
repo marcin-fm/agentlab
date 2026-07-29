@@ -51,12 +51,20 @@ cargo:
       file: agent-browser-0.33.1-fedora-proof.json
       sha256: ac566fd40dd6b9190bf596c92b76aa8dbf275d7712c4f848cdb58f223eb77028
 browser:
-  system_package: chromium
-  autodetected_executable: /usr/bin/chromium-browser
-  headless_executable: /usr/lib64/chromium-browser/headless_shell
+  system_package: chromium-headless
+  default_executable: /usr/lib64/chromium-browser/headless_shell
+  headed_override_package: chromium
+  headed_override_executable: /usr/bin/chromium-browser
   source_downloads: forbidden
   fedora_43_44_rawhide_metadata: verified
   runtime_smoke: false
+  version_compatibility_matrix: false
+  compatibility_checks:
+  - open data URL
+  - interactive snapshot
+  - navigator.userAgent
+  - get URL
+  - close session
 skills:
   source_directories:
   - skills

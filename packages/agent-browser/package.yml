@@ -2,9 +2,8 @@
 name: agent-browser
 status: blocked
 blockers:
-- Fedora 44 x86_64 compiles and passes the full test suite, but the checked final evidence receipt and remaining target matrix do not yet exist.
-- The final aggregate SPDX expression for the statically linked Rust binary is not verified.
-- Fedora Chromium runtime integration is source-evidenced but not package-built or smoke-tested.
+- Fedora 44 x86_64 compiles, passes the full test suite, and has a reviewed aggregate license, but the corrected headless-default recipe and remaining target matrix are not yet proven.
+- Fedora headless Chromium compatibility must pass navigation, snapshot, JavaScript, and URL checks on every configured target version.
 - RPM Fusion metadata was unavailable for the duplicate check.
 source_policy:
   selected_package: cli/Cargo.toml
@@ -19,9 +18,10 @@ source_policy:
   intended_install_root: '%{_libexecdir}/agent-browser'
   intended_binary_path: '%{_libexecdir}/agent-browser/bin/agent-browser'
   intended_command_path: '%{_bindir}/agent-browser'
-  intended_system_browser: chromium
-  intended_system_browser_path: /usr/bin/chromium-browser
-  headless_browser_alternative: /usr/lib64/chromium-browser/headless_shell
+  intended_system_browser: chromium-headless
+  intended_system_browser_path: /usr/lib64/chromium-browser/headless_shell
+  headed_browser_override_package: chromium
+  headed_browser_override_path: /usr/bin/chromium-browser
 dependency_status:
   cargo:
     manifest: cli/Cargo.toml
@@ -50,17 +50,18 @@ dependency_status:
     final_aggregate_license_reviewed: true
     current_binary_build_success: false
   browser:
-    package: chromium
-    executable: /usr/bin/chromium-browser
+    package: chromium-headless
+    executable: /usr/lib64/chromium-browser/headless_shell
     fedora_43_44_rawhide_verified: true
     runtime_smoke_verified: false
+    version_compatibility_matrix_verified: false
 license_audit:
   upstream: Apache-2.0
   embedded_axe_core: MPL-2.0
   embedded_axe_third_party: MIT AND ISC
   embedded_react_devtools: MIT
   selected_source_candidate_expression: parenthesized_raw_declarations_in_agent-browser-0.33.1-license-audit.json
-  aggregate_binary_expression: reviewed_fedora_44_x86_64_witness
+  aggregate_binary_expression: bound_to_agent-browser-0.33.1-fedora-proof.json
   complete: false
 duplicate_check:
   checked: '2026-07-28'
