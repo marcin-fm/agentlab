@@ -1,0 +1,14 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Discover ONNX Runtime in Fedora lib64
+
+Include Fedora's architecture-specific library location in Xberg's existing
+dynamic ONNX Runtime discovery path.
+
+Fedora-specific; not submitted upstream. Local Xberg history has no released
+Fedora lib64 discovery change.
+
+diff --git a/crates/xberg/src/ort_discovery.rs b/crates/xberg/src/ort_discovery.rs
+--- a/crates/xberg/src/ort_discovery.rs
++++ b/crates/xberg/src/ort_discovery.rs
+@@ -67,0 +68 @@ fn platform_candidates() -> &'static [&'static str] {
++        "/usr/lib64/libonnxruntime.so",

@@ -1,0 +1,120 @@
+{
+  "schema": "agentlab-xberg-system-ort-audit/v1",
+  "release": "1.0.1",
+  "source": {
+    "tag": "v1.0.1",
+    "commit": "60557740a675908ea8d27145841dafd4f6a06917",
+    "tree": "19705db11615dd4d1722dec9224c3b752cd369af",
+    "archive_sha256": "a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6"
+  },
+  "patches": [
+    {
+      "file": "xberg-system-onnxruntime.patch",
+      "sha256": "be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b",
+      "purpose": "Select the released dynamic ORT feature for every default-CLI-reachable ORT feature edge.",
+      "upstream_status": "Fedora-specific; local history has dynamic ORT support but no released default-Linux feature-edge change.",
+      "zero_fuzz_applied": true
+    },
+    {
+      "file": "xberg-fedora-onnxruntime-path.patch",
+      "sha256": "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c",
+      "purpose": "Add Fedora lib64 to the released dynamic ORT discovery candidates.",
+      "upstream_status": "Fedora-specific; local history has no released Fedora lib64 discovery change.",
+      "zero_fuzz_applied": true
+    }
+  ],
+  "selected_surface": {
+    "package": "xberg-cli",
+    "target": "x86_64-unknown-linux-gnu",
+    "features": [
+      "formats",
+      "analysis",
+      "core-cli",
+      "embeddings",
+      "html",
+      "url-ingestion",
+      "liter-llm",
+      "ocr",
+      "paddle-ocr",
+      "layout-detection",
+      "chunking-tokenizers",
+      "tree-sitter"
+    ],
+    "feature_preserved": true,
+    "unselected_default_adjacent_ort_features": ["transcription", "ner-onnx"]
+  },
+  "proof": {
+    "scratch": "/srv/tmp/agentlab-xberg-system-ort-proof-20260729",
+    "cargo_home": "/srv/tmp/agentlab-xberg-cargo-closure-20260728/cargo-home",
+    "cargo_version": "cargo 1.97.1 (c980f4866 2026-06-30) (Fedora 1.97.1-1.fc44)",
+    "baseline_tree": "git archive --format=tar 19705db11615dd4d1722dec9224c3b752cd369af | tar -x -C baseline",
+    "patch_check": "patch --dry-run --fuzz=0 -p1 -i PATCH",
+    "patch_apply": "patch --fuzz=0 -p1 -i PATCH",
+    "metadata": "CARGO_HOME=/srv/tmp/agentlab-xberg-cargo-closure-20260728/cargo-home CARGO_NET_OFFLINE=true cargo metadata --frozen --format-version 1 --manifest-path TREE/crates/xberg-cli/Cargo.toml --filter-platform x86_64-unknown-linux-gnu --features default",
+    "tree_all_edges": "CARGO_HOME=/srv/tmp/agentlab-xberg-cargo-closure-20260728/cargo-home CARGO_NET_OFFLINE=true cargo tree --frozen --target x86_64-unknown-linux-gnu --manifest-path TREE/crates/xberg-cli/Cargo.toml --package xberg-cli --features default --edges normal,build,dev --no-dedupe --prefix none --format {p}",
+    "tree_normal_edges": "CARGO_HOME=/srv/tmp/agentlab-xberg-cargo-closure-20260728/cargo-home CARGO_NET_OFFLINE=true cargo tree --frozen --target x86_64-unknown-linux-gnu --manifest-path TREE/crates/xberg-cli/Cargo.toml --package xberg-cli --features default --edges normal --no-dedupe --prefix none --format {p}",
+    "ort_feature_tree": "CARGO_HOME=/srv/tmp/agentlab-xberg-cargo-closure-20260728/cargo-home CARGO_NET_OFFLINE=true cargo tree --frozen --target x86_64-unknown-linux-gnu --manifest-path TREE/crates/xberg-cli/Cargo.toml --package xberg-cli --features default --edges features --invert ort-sys --no-dedupe --prefix none --format {p} {f}",
+    "frozen_means_locked_and_offline": true
+  },
+  "outputs": {
+    "baseline_metadata_sha256": "29eab35e6a020379762ca51e2c985c020d3db1d04fedf4aec6b50c572633a8f1",
+    "patched_metadata_sha256": "5ac4008cf92d6c5d4d3478815bc8fa5370b0c2da5b9a2826237ccd5bd743d1cd",
+    "baseline_all_edges_tree_sha256": "8c8ad549f93443687fc243c871ff039f658d8719b53d26f365b0652396629d92",
+    "patched_all_edges_tree_sha256": "7d90d1816683427e97f054967d40c666b1989e50c920e8d32bf0092558a171b6",
+    "baseline_normal_tree_sha256": "f015ae075dcd040125b37ed11bede6b41e0f44dafa2b3f66b8041832371826fb",
+    "patched_normal_tree_sha256": "0065539665d29288cb19d31d1250c1afd059fdf2ebfc95ca233063703c70a97b",
+    "baseline_ort_feature_tree_sha256": "7e1c451651a5e4900d4d08e5832e82e99cd30763b2b79ec5146a3d610de249a2",
+    "patched_ort_feature_tree_sha256": "d72502a5546d8d9625d5ff120a13bc328a51effeec66136fdf88444b24f901ab"
+  },
+  "graph": {
+    "normal_edges": {
+      "baseline_packages": 610,
+      "patched_packages": 610,
+      "delta": 0
+    },
+    "normal_build_dev_union": {
+      "baseline_packages": 631,
+      "patched_packages": 629,
+      "delta": -2,
+      "removed": ["hmac-sha256 1.1.14", "lzma-rust2 0.15.8"],
+      "added": []
+    },
+    "prior_610_reconciled": "The earlier 610 count is the normal-edge tree. The 631 baseline is the identically normalized union of normal, build, and dev tree edges; it includes the two download-only build dependencies."
+  },
+  "ort_feature_resolution": {
+    "baseline_ort_sys_features": ["__tls", "api-17", "api-18", "download-binaries", "std", "tls-rustls", "tls-rustls-no-provider"],
+    "patched_ort_sys_features": ["api-17", "api-18", "disable-linking", "std"],
+    "baseline_ort_features": ["api-17", "api-18", "download-binaries", "ndarray", "std", "tls-rustls"],
+    "patched_ort_features": ["api-17", "api-18", "load-dynamic", "ndarray", "preload-dylibs", "std"],
+    "ort_sys_download_binaries_baseline": true,
+    "ort_sys_download_binaries_patched": false,
+    "hmac_sha256_baseline": true,
+    "hmac_sha256_patched": false,
+    "lzma_rust2_0_15_8_baseline": true,
+    "lzma_rust2_0_15_8_patched": false,
+    "lzma_rust2_0_16_5_baseline": true,
+    "lzma_rust2_0_16_5_patched": true
+  },
+  "system_provider_contract": {
+    "buildrequires": "pkgconfig(libonnxruntime) >= 1.18",
+    "requires": "onnxruntime%{?_isa} >= 1.18",
+    "runtime_environment": "ORT_DYLIB_PATH=%{_libdir}/libonnxruntime.so",
+    "runtime_library": "/usr/lib64/libonnxruntime.so",
+    "spec_declared": true,
+    "provider_matrix_proven": false
+  },
+  "validation": {
+    "patches_zero_fuzz": true,
+    "locked_offline_metadata": true,
+    "locked_offline_tree": true,
+    "vendor_source_delivery": false,
+    "provider_matrix": false,
+    "compilation": false,
+    "ort_runtime_smoke": false,
+    "models_licenses": false,
+    "aggregate_license": false,
+    "enablement": false,
+    "copr": false,
+    "retirements": false
+  }
+}

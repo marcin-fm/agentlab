@@ -31,6 +31,21 @@ The 45 reusable and 17 retirement-candidate values are unrevalidated prior-audit
 counts. Its 63-row/42-pair root-lock cross-check proves lock presence only, not
 selected Xberg consumption, and authorizes no retirement.
 
+## System ONNX Runtime Source Audit
+
+`xberg-1.0.1-system-ort-audit.json` is a checked `Source2` receipt (SHA-256
+`a68aa83911e275096845d17ad526277440ce04b9bc97bf6f918d226f5e882460`). Its two
+separate zero-fuzz patches preserve all default `xberg-cli` features while
+switching the three default-reachable ORT feature edges to upstream
+`ort-dynamic`, then add Fedora `/usr/lib64/libonnxruntime.so` discovery. The
+locked/offline proof retains 610 normal-edge packages before and after the
+patch; its normal/build/dev union drops only the downloader-only
+`hmac-sha256 1.1.14` and `lzma-rust2 0.15.8` packages, from 631 to 629.
+
+This is source-only integration evidence. Vendor delivery, Fedora provider
+matrix, compilation, ORT runtime smoke, model/license and aggregate-license
+review, enablement, COPR, and retirements remain blocked.
+
 ## Duplicate Checks
 
 Read-only DNF5 queries found no Fedora package named `xberg` and no provider for

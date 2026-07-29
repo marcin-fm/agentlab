@@ -23,6 +23,16 @@ source_audit_receipt:
   file: xberg-1.0.1-source-audit.json
   schema: agentlab-xberg-source-audit/v1
   sha256: cb49f4c4a035795e87f0eedf0fee219bfde506347b085cbb7dfb6b6a0b97e12a
+system_ort_audit_receipt:
+  file: xberg-1.0.1-system-ort-audit.json
+  schema: agentlab-xberg-system-ort-audit/v1
+  sha256: a68aa83911e275096845d17ad526277440ce04b9bc97bf6f918d226f5e882460
+  patches:
+    xberg-system-onnxruntime.patch: be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b
+    xberg-fedora-onnxruntime-path.patch: b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
+  selected_surface: xberg-cli default on Linux x86_64; every default feature remains selected.
+  graph: normal edges remain 610; normal/build/dev union is 631 baseline and 629 patched.
+  state: source-only; vendor delivery, provider matrix, compilation, runtime smoke, models/licenses, aggregate license, enablement, COPR, and retirements remain false.
 duplicate_check:
   checked: "2026-07-28"
   fedora_43_44_rawhide: absent

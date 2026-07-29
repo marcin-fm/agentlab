@@ -448,6 +448,28 @@ packages.each do |package|
       end
     end
     errors << "xberg: spec does not check the source audit receipt" unless spec.include?("Source1:        %{name}-%{version}-source-audit.json") && spec.include?("%global source_audit_sha256 #{audit_config && audit_config['sha256']}")
+
+    system_audit_config = package.data["system_ort_audit_receipt"]
+    system_audit_path = system_audit_config.is_a?(Hash) && system_audit_config["file"] && File.join(package.directory, system_audit_config["file"])
+    unless system_audit_path && File.file?(system_audit_path)
+      errors << "xberg: system ORT audit receipt is missing"
+    else
+      errors << "xberg: system ORT audit receipt SHA-256 does not match" unless Digest::SHA256.file(system_audit_path).hexdigest == system_audit_config["sha256"]
+      begin
+        system_audit = JSON.parse(File.read(system_audit_path))
+        errors << "xberg: system ORT audit receipt schema is invalid" unless system_audit["schema"] == system_audit_config["schema"]
+        errors << "xberg: system ORT audit release does not match" unless system_audit["release"] == manifest_version
+        errors << "xberg: system ORT audit source identity does not match" unless system_audit.dig("source", "commit") == package.upstream["source_commit"] && system_audit.dig("source", "tree") == package.upstream["source_tree"] && system_audit.dig("source", "archive_sha256") == manifest_sha256
+        errors << "xberg: system ORT audit patch hashes do not match" unless system_audit.fetch("patches", []).to_h { |patch| [patch["file"], patch["sha256"]] } == system_audit_config["patches"]
+        errors << "xberg: system ORT audit does not preserve the default feature surface" unless system_audit.dig("selected_surface", "feature_preserved") == true
+        %w[vendor_source_delivery provider_matrix compilation ort_runtime_smoke models_licenses aggregate_license enablement copr retirements].each do |flag|
+          errors << "xberg: system ORT audit validation #{flag} is not false" unless system_audit.dig("validation", flag) == false
+        end
+      rescue JSON::ParserError => e
+        errors << "xberg: invalid system ORT audit receipt: #{e.message}"
+      end
+    end
+    errors << "xberg: spec does not check the system ORT audit receipt" unless spec.include?("Source2:        %{name}-%{version}-system-ort-audit.json") && spec.include?("%global system_ort_audit_sha256 #{system_audit_config && system_audit_config['sha256']}")
   end
 
   next unless Agentlab.command_available?("rpmspec")

@@ -1,0 +1,23 @@
+From: Marcin FM <marcin@lgic.pl>
+Subject: [PATCH] Use dynamic ONNX Runtime for default CLI ML features
+
+Fedora supplies ONNX Runtime as a system library. Keep the released default
+CLI capabilities while selecting Xberg's existing dynamic ORT configuration
+instead of the upstream prebuilt-runtime download path.
+
+Fedora-specific; not submitted upstream. Local Xberg history contains existing
+dynamic ORT support for other release targets, but no released/default-Linux
+feature-edge change.
+
+diff --git a/crates/xberg/Cargo.toml b/crates/xberg/Cargo.toml
+--- a/crates/xberg/Cargo.toml
++++ b/crates/xberg/Cargo.toml
+@@ -229 +229 @@ auto-rotate = [
+-    "ort-bundled",
++    "ort-dynamic",
+@@ -241 +241 @@ layout-detection = [
+-    "ort-bundled",
++    "ort-dynamic",
+@@ -349 +349 @@ onnx-runtime = [
+-    "ort-bundled",
++    "ort-dynamic",
