@@ -8,9 +8,9 @@ release:
   source_uploaded: "2026-07-29T23:24:15.245277Z"
   repository: chopratejas/headroom
 current_draft:
-  release: 0.33.0-0.5
-  validation: source audit, exact Fedora-family linked-license contracts, and the ML-only integration-test gate complete; configured-SCM six-cell build required
-  spec_sha256: 8e0b2c655614af04c38a29cdcb1192dd43d14417527877bc9c9f44dc543c40f8
+  release: 0.33.0-0.6
+  validation: source audit, exact Fedora-family linked-license contracts, reproducible released parity fixtures, and deterministic non-ML tests complete; configured-SCM six-cell build required
+  spec_sha256: aa8683acaba0afb64b738890ed3a757008d7f9974c0269aa026a84703c086e02
   selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
   license_gate: target builds retain the 217-record source audit and compare generated linked records with the exact 172-record Source2 contract for Fedora 43, 44, or 45
   selected_license_audit:
@@ -26,6 +26,20 @@ current_draft:
       "43": 261fff0ffc64c0704b89a3e95daa89380a519bc53682f07a4c89b326934c7b45
       "44": 405798ed561507c67423ebb6227faaf973a054f267b8c01e7d868b1019aadd96
       "45": b490d0f022f657589341c881e46c22b8305e3109fe4c82a7379a3fa700ea8119
+  released_test_source:
+    commit: 28aa53dc7ca51e687cc719c3fe160f3be50c6570
+    url: https://codeload.github.com/chopratejas/headroom/tar.gz/28aa53dc7ca51e687cc719c3fe160f3be50c6570
+    sha256: fd83d0f65f8c729a7b0f78c54a767bfb467a4c8d6d2edce89125677475f4a82a
+    archive_bytes: 32586584
+    generated_archive: headroom-0.33.0-code-compressor-fixtures.tar.gz
+    generated_sha256: bd9fd41b61a7041743ac23ad6fdb4d26cb7547c29deb4ba88d4f6c2828c289e1
+    generated_bytes: 15420
+    generator: scripts/prepare-headroom-fixture-source
+    generator_sha256: ca62bc11715067fb90ea0bfc34cd8eca39536aeec92b1d41d32904c6fe87ecbb
+    fixture_path: tests/parity/fixtures/code_aware_compressor
+    fixture_count: 30
+    fixture_bytes: 84202
+    fixture_manifest_sha256: f5fef19e35104e7bcca2c89d604ca5288d6da7045386f07f3998ffc37e63a5e8
 selected_surface:
   python: upstream base project plus mcp extra
   native_features:
@@ -48,8 +62,9 @@ patches:
   headroom-drop-benchmark-dev-dependency.patch: 16c6d041618191bf65def6b3516bcf986c91759a22bb48aadb626a6fcb378137
   headroom-system-ast-grep.patch: 5a1f90b0acccb1a468bb709a827de843ba841640462e19c436fca95fff4fa87b
   headroom-gate-ml-integration-test.patch: 27f3b96007451511b3157e278c3c3ab79f9ed2e6ddb124f19f7c99c8cdbf3a35
+  headroom-stabilize-sqlite-ttl-test.patch: 4cbf2a1c55ce5533f6090dd5a682c8720642f394b69858aef1e73efb263faf38
 current_static_validation:
-  exact_sdist_patch_apply: five patches passed with zero fuzz
+  exact_sdist_patch_apply: six patches passed with zero fuzz
   cargo_metadata: headroom-py dependency uses_default_features is false and unselected optional ML and Redis dependencies are absent
   upstream_workspace: root workspace already contains only headroom-core and headroom-py
   ast_grep_provider: source-built Agentlab ast-grep replaces the upstream PyPI binary wheel
@@ -63,6 +78,8 @@ current_static_validation:
   unicode_license_probe: regex-syntax 0.8.11 bundles generated Unicode tables and includes src/unicode_tables/LICENSE-UNICODE while Cargo metadata declares only MIT OR Apache-2.0
   buildroot_license_probe: normalize cargo2rpm's headroom-core sibling path, compare the complete generated 172-record set with Source2's auditable common-plus-family inventory and digest, retain Source1 as the 217-record all-target source audit, and install the verified regex-syntax Unicode text
   ml_only_test_gate: kompress_parity declares required-features = ["ml"] and the full non-ML Cargo integration-test surface remains selected
+  parity_fixture_gate: exact release commit archive reproducibly generates a fixture-only Source3 with 30 JSON fixtures totaling 84,202 bytes, LICENSE, NOTICE, provenance, and canonical manifest SHA-256 f5fef19e35104e7bcca2c89d604ca5288d6da7045386f07f3998ffc37e63a5e8
+  sqlite_ttl_test_gate: test-only pre-expiry sleep is 500 ms and the 2,600 ms absolute-lifetime assertion remains unchanged
   license_macro_redirection: canonical braced cargo_license expansion writes ../../LICENSE.dependencies
   system_sqlite_probe: target checks require the Rust CCR test binary to link Fedora libsqlite3 and the installed Python backend to open a database
   extension_dynamic_probe: target checks reject RPATH or RUNPATH; unused Rust CCR code may be dead-stripped from the extension

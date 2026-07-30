@@ -8,6 +8,7 @@ require_relative "../scripts/lib/agentlab"
 load File.expand_path("../scripts/audit-openchamber-lock-closure", __dir__)
 load File.expand_path("../scripts/audit-xberg-proof-receipts", __dir__)
 load File.expand_path("../scripts/write-xberg-cargo-license-receipts", __dir__)
+load File.expand_path("../scripts/prepare-headroom-fixture-source", __dir__)
 
 class AgentlabTest < Minitest::Test
   def registry_entry(overrides = {})
@@ -1089,6 +1090,7 @@ class AgentlabTest < Minitest::Test
     assert_equal("Zlib", contract.dig("target_only_records", 0, "cargo_license_expression"))
     assert_includes(headroom_spec, "Source1:        headroom-%{version}-selected-cargo-license-audit.json")
     assert_includes(headroom_spec, "Source2:        headroom-%{version}-fedora-license-contract.json")
+    assert_includes(headroom_spec, "Source3:        headroom-%{version}-code-compressor-fixtures.tar.gz")
     assert_includes(headroom_spec, '%{python3} - "%{SOURCE1}" "%{SOURCE2}" LICENSE.dependencies "%{headroom_binary_license}" "%{fedora}"')
     assert_includes(headroom_spec, 'expected = sorted(set(common_records + additional_records))')
     assert_includes(headroom_spec, 'Fedora linked-license records differ')
@@ -1097,7 +1099,17 @@ class AgentlabTest < Minitest::Test
     assert_includes(headroom_spec, "LICENSE.regex-syntax-unicode")
     assert_includes(headroom_spec, "Requires:       python3dist(mcp) >= 1.28.1")
     assert_includes(headroom_spec, "Requires:       python3dist(mcp) < 2")
-    assert_equal("0.33.0-0.5", headroom.data.dig("build_validation", "release"))
+    assert_equal("0.33.0-0.6", headroom.data.dig("build_validation", "release"))
+    assert_equal("28aa53dc7ca51e687cc719c3fe160f3be50c6570", headroom.data.dig("build_validation", "released_test_source_commit"))
+    assert_equal("fd83d0f65f8c729a7b0f78c54a767bfb467a4c8d6d2edce89125677475f4a82a", headroom.data.dig("build_validation", "released_test_source_sha256"))
+    assert_equal("headroom-0.33.0-code-compressor-fixtures.tar.gz", headroom.data.dig("build_validation", "generated_fixture_source_file"))
+    assert_equal("bd9fd41b61a7041743ac23ad6fdb4d26cb7547c29deb4ba88d4f6c2828c289e1", headroom.data.dig("build_validation", "generated_fixture_source_sha256"))
+    assert_equal(15_420, headroom.data.dig("build_validation", "generated_fixture_source_bytes"))
+    fixture_generator = File.join(Agentlab::ROOT, headroom.data.dig("build_validation", "fixture_source_generator"))
+    assert_equal("ca62bc11715067fb90ea0bfc34cd8eca39536aeec92b1d41d32904c6fe87ecbb", Digest::SHA256.file(fixture_generator).hexdigest)
+    assert_equal(30, headroom.data.dig("build_validation", "code_compressor_fixture_count"))
+    assert_equal(84_202, headroom.data.dig("build_validation", "code_compressor_fixture_bytes"))
+    assert_equal("f5fef19e35104e7bcca2c89d604ca5288d6da7045386f07f3998ffc37e63a5e8", headroom.data.dig("build_validation", "code_compressor_fixture_manifest_sha256"))
     ml_test_patch_path = File.join(headroom.directory, "headroom-gate-ml-integration-test.patch")
     ml_test_patch = File.read(ml_test_patch_path)
     assert_equal("27f3b96007451511b3157e278c3c3ab79f9ed2e6ddb124f19f7c99c8cdbf3a35", Digest::SHA256.file(ml_test_patch_path).hexdigest)
@@ -1105,6 +1117,22 @@ class AgentlabTest < Minitest::Test
     assert_includes(ml_test_patch, '+path = "tests/kompress_parity.rs"')
     assert_includes(ml_test_patch, '+required-features = ["ml"]')
     assert_includes(headroom_spec, "Patch4:         headroom-gate-ml-integration-test.patch")
+    sqlite_test_patch_path = File.join(headroom.directory, "headroom-stabilize-sqlite-ttl-test.patch")
+    sqlite_test_patch = File.read(sqlite_test_patch_path)
+    assert_equal("4cbf2a1c55ce5533f6090dd5a682c8720642f394b69858aef1e73efb263faf38", Digest::SHA256.file(sqlite_test_patch_path).hexdigest)
+    assert_includes(sqlite_test_patch, "-    std::thread::sleep(Duration::from_millis(1_500));")
+    assert_includes(sqlite_test_patch, "+    std::thread::sleep(Duration::from_millis(500));")
+    refute_includes(sqlite_test_patch, "Duration::from_millis(2_600)")
+    assert_includes(headroom_spec, "Patch5:         headroom-stabilize-sqlite-ttl-test.patch")
+    assert_includes(headroom_spec, "%autosetup -n headroom_ai-%{version} -N")
+    assert_includes(headroom_spec, "headroom-%{version}-code-compressor-fixtures/tests/parity/fixtures/code_aware_compressor")
+    assert_includes(headroom_spec, "agentlab-headroom-code-compressor-fixture-source/v1")
+    assert_includes(headroom_spec, "code-compressor fixture acquisition provenance differs")
+    assert_includes(headroom_spec, "code-compressor fixture manifest differs")
+    headroom_makefile = File.read(File.join(Agentlab::ROOT, ".copr", "Makefile"))
+    assert_includes(headroom_makefile, "scripts/prepare-headroom-fixture-source")
+    assert_includes(headroom_makefile, "headroom-$$version-code-compressor-fixtures.tar.gz")
+    assert_equal(Digest::SHA256.file(headroom.spec_path).hexdigest, reproducibility.dig("current_draft", "spec_sha256"))
     assert_includes(headroom_spec, "%cargo_test -n")
     headroom_dependencies = Agentlab.load_yaml(File.join(headroom.directory, "dependencies.yml"))
     assert_includes(headroom_dependencies.dig("build_runtime", "local_packages"), "rust-tree-sitter0.25.2 = 0.25.2")
@@ -4487,5 +4515,85 @@ class AgentlabTest < Minitest::Test
     errors = Agentlab.validate_rust_v8_evidence(source_package, dependencies, File.read(source_package.spec_path))
 
     assert_includes(errors, "rust-v8: dependency production-build evidence aarch64_verified does not match")
+  end
+
+  def test_prepares_deterministic_headroom_fixture_source
+    Dir.mktmpdir do |directory|
+      version = "9.9.9"
+      commit = "a" * 40
+      source_root = File.join(directory, "headroom-#{commit}")
+      fixture_root = File.join(source_root, HeadroomFixtureSource::FIXTURE_PATH)
+      FileUtils.mkdir_p(fixture_root)
+      File.write(File.join(source_root, "LICENSE"), "Apache fixture license\n")
+      File.write(File.join(source_root, "NOTICE"), "Fixture notice\n")
+      30.times do |index|
+        File.write(File.join(fixture_root, format("%016x.json", index)), "{\"fixture\":#{index}}\n")
+      end
+
+      tar_path = File.join(directory, "source.tar")
+      source = File.join(directory, "source.tar.gz")
+      assert(system(
+        { "LC_ALL" => "C", "TZ" => "UTC" },
+        "tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner",
+        "--format=ustar", "--create", "--file", tar_path, "--directory", directory, File.basename(source_root)
+      ))
+      File.open(source, "wb") do |file|
+        gzip = Zlib::GzipWriter.new(file, Zlib::BEST_COMPRESSION)
+        gzip.mtime = 0
+        File.open(tar_path, "rb") { |tar| IO.copy_stream(tar, gzip) }
+        gzip.close
+      end
+
+      fixtures = Dir.glob(File.join(fixture_root, "*.json")).sort
+      records = fixtures.map do |path|
+        content = File.binread(path)
+        "#{File.basename(path)}\t#{content.bytesize}\t#{Digest::SHA256.hexdigest(content)}\n"
+      end
+      fixture_bytes = fixtures.sum { |path| File.size(path) }
+      fixture_manifest = Digest::SHA256.hexdigest(records.join)
+      spec = File.join(directory, "python-headroom-ai.spec")
+      File.write(spec, <<~SPEC)
+        %global upstream_source_commit #{commit}
+        %global upstream_source_sha256 #{Digest::SHA256.file(source).hexdigest}
+        %global code_compressor_fixture_count 30
+        %global code_compressor_fixture_bytes #{fixture_bytes}
+        %global code_compressor_fixture_manifest_sha256 #{fixture_manifest}
+        Version: #{version}
+      SPEC
+
+      first = File.join(directory, "first.tar.gz")
+      second = File.join(directory, "second.tar.gz")
+      digest = HeadroomFixtureSource.generate!(spec:, source:, output: first, verify_output_hash: false)
+      File.write(
+        spec,
+        File.read(spec).sub(
+          "Version: #{version}",
+          "%global code_compressor_fixture_source_sha256 #{digest}\nVersion: #{version}"
+        )
+      )
+      assert_equal(digest, HeadroomFixtureSource.generate!(spec:, source:, output: second))
+      assert_equal(File.binread(first), File.binread(second))
+
+      members = {}
+      Zlib::GzipReader.open(first) do |gzip|
+        Gem::Package::TarReader.new(gzip) do |tar|
+          tar.each { |entry| members[entry.full_name] = entry.read if entry.file? }
+        end
+      end
+      archive_root = "headroom-#{version}-code-compressor-fixtures"
+      assert_equal(33, members.length)
+      assert_equal(30, members.keys.count { |path| path.start_with?("#{archive_root}/#{HeadroomFixtureSource::FIXTURE_PATH}/") })
+      provenance = JSON.parse(members.fetch("#{archive_root}/provenance.json"))
+      assert_equal("agentlab-headroom-code-compressor-fixture-source/v1", provenance.fetch("schema"))
+      assert_equal(commit, provenance.dig("release", "commit"))
+      assert_equal(fixture_manifest, provenance.dig("fixture_contract", "manifest_sha256"))
+      assert_equal(%w[LICENSE NOTICE], provenance.fetch("license_files").keys.sort)
+
+      File.open(source, "ab") { |file| file.write("tampered") }
+      error = assert_raises(HeadroomFixtureSource::Error) do
+        HeadroomFixtureSource.generate!(spec:, source:, output: second)
+      end
+      assert_includes(error.message, "upstream source SHA-256 mismatch")
+    end
   end
 end

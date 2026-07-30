@@ -1,0 +1,224 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "rubygems/package"
+require "tmpdir"
+require "zlib"
+
+module HeadroomFixtureSource
+  class Error < StandardError; end
+
+  FIXTURE_PATH = "tests/parity/fixtures/code_aware_compressor"
+  LICENSE_FILES = %w[LICENSE NOTICE].freeze
+
+  module_function
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def temporary_root
+    configured = ENV["TMPDIR"]
+    return configured if configured && Dir.exist?(configured)
+    return "/srv/tmp" if Dir.exist?("/srv/tmp")
+
+    Dir.tmpdir
+  end
+
+  def parse_spec(path)
+    globals = {}
+    version = nil
+    File.foreach(path) do |line|
+      if (match = line.match(/\A%global\s+(\w+)\s+(\S+)\s*\z/))
+        globals[match[1]] = match[2]
+      elsif (match = line.match(/\AVersion:\s+(\S+)\s*\z/))
+        version = match[1]
+      end
+    end
+    raise Error, "missing Version in #{path}" unless version
+
+    required = %w[
+      upstream_source_commit
+      upstream_source_sha256
+      code_compressor_fixture_count
+      code_compressor_fixture_bytes
+      code_compressor_fixture_manifest_sha256
+    ]
+    missing = required.reject { |name| globals.key?(name) }
+    raise Error, "missing spec globals: #{missing.join(', ')}" unless missing.empty?
+
+    {
+      "version" => version,
+      "commit" => globals.fetch("upstream_source_commit"),
+      "source_sha256" => globals.fetch("upstream_source_sha256"),
+      "fixture_count" => Integer(globals.fetch("code_compressor_fixture_count"), 10),
+      "fixture_bytes" => Integer(globals.fetch("code_compressor_fixture_bytes"), 10),
+      "fixture_manifest_sha256" => globals.fetch("code_compressor_fixture_manifest_sha256"),
+      "output_sha256" => globals["code_compressor_fixture_source_sha256"]
+    }
+  end
+
+  def read_selected_source(source, contract)
+    actual = sha256(source)
+    unless actual == contract.fetch("source_sha256")
+      raise Error, "upstream source SHA-256 mismatch: expected #{contract.fetch('source_sha256')}, got #{actual}"
+    end
+
+    source_root = "headroom-#{contract.fetch('commit')}"
+    fixture_prefix = "#{source_root}/#{FIXTURE_PATH}/"
+    fixtures = {}
+    licenses = {}
+
+    Zlib::GzipReader.open(source) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          next unless entry.file?
+
+          path = entry.full_name
+          if LICENSE_FILES.include?(path.delete_prefix("#{source_root}/")) && path.start_with?("#{source_root}/")
+            name = path.delete_prefix("#{source_root}/")
+            raise Error, "duplicate upstream source member #{name}" if licenses.key?(name)
+
+            licenses[name] = entry.read
+          elsif path.start_with?(fixture_prefix)
+            name = path.delete_prefix(fixture_prefix)
+            unless !name.empty? && !name.include?("/") && name.end_with?(".json")
+              raise Error, "unexpected code-compressor fixture member #{path}"
+            end
+            raise Error, "duplicate code-compressor fixture #{name}" if fixtures.key?(name)
+
+            fixtures[name] = entry.read
+          end
+        end
+      end
+    end
+
+    missing_licenses = LICENSE_FILES.reject { |name| licenses.key?(name) }
+    raise Error, "missing upstream license files: #{missing_licenses.join(', ')}" unless missing_licenses.empty?
+
+    records = fixtures.sort.map do |name, bytes|
+      {
+        "path" => "#{FIXTURE_PATH}/#{name}",
+        "size_bytes" => bytes.bytesize,
+        "sha256" => Digest::SHA256.hexdigest(bytes)
+      }
+    end
+    manifest = records.map do |record|
+      "#{File.basename(record.fetch('path'))}\t#{record.fetch('size_bytes')}\t#{record.fetch('sha256')}\n"
+    end.join
+    total_bytes = records.sum { |record| record.fetch("size_bytes") }
+    manifest_sha256 = Digest::SHA256.hexdigest(manifest)
+
+    unless records.length == contract.fetch("fixture_count")
+      raise Error, "fixture count mismatch: expected #{contract.fetch('fixture_count')}, got #{records.length}"
+    end
+    unless total_bytes == contract.fetch("fixture_bytes")
+      raise Error, "fixture byte count mismatch: expected #{contract.fetch('fixture_bytes')}, got #{total_bytes}"
+    end
+    unless manifest_sha256 == contract.fetch("fixture_manifest_sha256")
+      raise Error, "fixture manifest SHA-256 mismatch: expected #{contract.fetch('fixture_manifest_sha256')}, got #{manifest_sha256}"
+    end
+
+    [fixtures, licenses, records]
+  end
+
+  def write_file(root, path, bytes)
+    destination = File.join(root, path)
+    FileUtils.mkdir_p(File.dirname(destination), mode: 0o755)
+    File.binwrite(destination, bytes)
+    File.chmod(0o644, destination)
+  end
+
+  def create_archive(output, contract, fixtures, licenses, records)
+    archive_root = "headroom-#{contract.fetch('version')}-code-compressor-fixtures"
+    provenance = {
+      "schema" => "agentlab-headroom-code-compressor-fixture-source/v1",
+      "release" => {
+        "version" => contract.fetch("version"),
+        "tag" => "v#{contract.fetch('version')}",
+        "commit" => contract.fetch("commit"),
+        "acquisition_url" => "https://codeload.github.com/chopratejas/headroom/tar.gz/#{contract.fetch('commit')}",
+        "acquisition_sha256" => contract.fetch("source_sha256")
+      },
+      "fixture_contract" => {
+        "path" => FIXTURE_PATH,
+        "count" => records.length,
+        "total_bytes" => records.sum { |record| record.fetch("size_bytes") },
+        "manifest_sha256" => contract.fetch("fixture_manifest_sha256"),
+        "records" => records
+      },
+      "license_files" => LICENSE_FILES.to_h do |name|
+        bytes = licenses.fetch(name)
+        [name, { "size_bytes" => bytes.bytesize, "sha256" => Digest::SHA256.hexdigest(bytes) }]
+      end
+    }
+
+    FileUtils.mkdir_p(File.dirname(File.expand_path(output)))
+    Dir.mktmpdir("agentlab-headroom-fixture-source-", temporary_root) do |temporary|
+      tree = File.join(temporary, archive_root)
+      FileUtils.mkdir_p(tree, mode: 0o755)
+      LICENSE_FILES.each { |name| write_file(tree, name, licenses.fetch(name)) }
+      write_file(tree, "provenance.json", JSON.pretty_generate(provenance) + "\n")
+      fixtures.sort.each do |name, bytes|
+        write_file(tree, "#{FIXTURE_PATH}/#{name}", bytes)
+      end
+
+      tar_path = File.join(temporary, "fixtures.tar")
+      stdout, stderr, status = Open3.capture3(
+        { "LC_ALL" => "C", "TZ" => "UTC" },
+        "tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0", "--numeric-owner",
+        "--format=ustar", "--create", "--file", tar_path, "--directory", temporary, archive_root
+      )
+      raise Error, "tar failed: #{stderr.empty? ? stdout : stderr}" unless status.success?
+
+      temporary_output = File.join(temporary, "fixtures.tar.gz")
+      File.open(temporary_output, "wb") do |file|
+        gzip = Zlib::GzipWriter.new(file, Zlib::BEST_COMPRESSION)
+        gzip.mtime = 0
+        gzip.orig_name = ""
+        gzip.comment = ""
+        File.open(tar_path, "rb") { |tar| IO.copy_stream(tar, gzip) }
+        gzip.close
+      end
+      FileUtils.mv(temporary_output, output)
+    end
+  end
+
+  def generate!(spec:, source:, output:, verify_output_hash: true)
+    contract = parse_spec(spec)
+    fixtures, licenses, records = read_selected_source(source, contract)
+    create_archive(output, contract, fixtures, licenses, records)
+    output_sha256 = sha256(output)
+    expected = contract["output_sha256"]
+    if verify_output_hash
+      raise Error, "missing code_compressor_fixture_source_sha256 in #{spec}" unless expected
+      raise Error, "fixture source SHA-256 mismatch: expected #{expected}, got #{output_sha256}" unless output_sha256 == expected
+    end
+
+    output_sha256
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  options = { verify_output_hash: true }
+  OptionParser.new do |parser|
+    parser.on("--spec PATH") { |value| options[:spec] = value }
+    parser.on("--source PATH") { |value| options[:source] = value }
+    parser.on("--output PATH") { |value| options[:output] = value }
+    parser.on("--skip-output-hash") { options[:verify_output_hash] = false }
+  end.parse!
+  %i[spec source output].each { |key| abort("missing --#{key.to_s.tr('_', '-')}") unless options[key] }
+
+  begin
+    digest = HeadroomFixtureSource.generate!(**options)
+    puts "#{digest}  #{options.fetch(:output)}"
+  rescue HeadroomFixtureSource::Error => error
+    warn error.message
+    exit 1
+  end
+end

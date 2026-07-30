@@ -533,7 +533,111 @@ packages.each do |package|
         '+required-features = ["ml"]'
       ].all? { |fragment| ml_test_patch_content.include?(fragment) }
     end
-    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.5" && reproducibility.dig("current_draft", "release") == "0.33.0-0.5"
+    sqlite_test_patch = File.join(package.directory, "headroom-stabilize-sqlite-ttl-test.patch")
+    errors << "python-headroom-ai: SQLite TTL test patch is missing" unless File.file?(sqlite_test_patch)
+    if File.file?(sqlite_test_patch)
+      errors << "python-headroom-ai: SQLite TTL test patch SHA-256 does not match" unless Digest::SHA256.file(sqlite_test_patch).hexdigest == "4cbf2a1c55ce5533f6090dd5a682c8720642f394b69858aef1e73efb263faf38"
+      sqlite_test_patch_content = File.read(sqlite_test_patch)
+      errors << "python-headroom-ai: SQLite TTL test patch changes the wrong boundary" unless sqlite_test_patch_content.include?("-    std::thread::sleep(Duration::from_millis(1_500));") && sqlite_test_patch_content.include?("+    std::thread::sleep(Duration::from_millis(500));") && !sqlite_test_patch_content.include?("Duration::from_millis(2_600)")
+    end
+    fixture_generator = File.join(Agentlab::ROOT, audit_config["fixture_source_generator"].to_s)
+    unless File.file?(fixture_generator)
+      errors << "python-headroom-ai: fixture source generator is missing"
+    else
+      errors << "python-headroom-ai: fixture source generator SHA-256 does not match" unless Digest::SHA256.file(fixture_generator).hexdigest == audit_config["fixture_source_generator_sha256"]
+    end
+    fixture_archive = ENV["AGENTLAB_HEADROOM_SOURCE3"]
+    if fixture_archive && File.file?(fixture_archive)
+      errors << "python-headroom-ai: generated fixture source SHA-256 does not match" unless Digest::SHA256.file(fixture_archive).hexdigest == audit_config["generated_fixture_source_sha256"]
+      errors << "python-headroom-ai: generated fixture source size does not match" unless File.size(fixture_archive) == audit_config["generated_fixture_source_bytes"]
+      workdir = "/srv/tmp/agentlab-check-headroom-fixtures-#{Process.pid}"
+      FileUtils.rm_rf(workdir)
+      FileUtils.mkdir_p(workdir)
+      _stdout, stderr, status = Agentlab.capture(["tar", "-xzf", fixture_archive, "-C", workdir])
+      unless status.success?
+        errors << "python-headroom-ai: generated fixture source extraction failed: #{stderr.strip}"
+      else
+        source_root = File.join(workdir, "headroom-#{manifest_version}-code-compressor-fixtures")
+        fixture_root = File.join(source_root, "tests", "parity", "fixtures", "code_aware_compressor")
+        files = Dir.glob(File.join(fixture_root, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.sort
+        expected_count = audit_config["code_compressor_fixture_count"]
+        expected_bytes = audit_config["code_compressor_fixture_bytes"]
+        files_valid = files.length == expected_count && files.all? { |path| File.extname(path) == ".json" && File.dirname(path) == fixture_root }
+        errors << "python-headroom-ai: generated fixture file set differs" unless files_valid
+        total_bytes = files.sum { |path| File.size(path) }
+        errors << "python-headroom-ai: generated fixture bytes differ" unless total_bytes == expected_bytes
+        fixture_records = files.map do |path|
+          content = File.binread(path)
+          {
+            "path" => "tests/parity/fixtures/code_aware_compressor/#{File.basename(path)}",
+            "size_bytes" => content.bytesize,
+            "sha256" => Digest::SHA256.hexdigest(content)
+          }
+        end
+        records = fixture_records.map { |record| "#{File.basename(record['path'])}\t#{record['size_bytes']}\t#{record['sha256']}\n" }
+        fixture_manifest_sha256 = Digest::SHA256.hexdigest(records.join)
+        errors << "python-headroom-ai: generated fixture manifest differs" unless fixture_manifest_sha256 == audit_config["code_compressor_fixture_manifest_sha256"]
+        provenance_path = File.join(source_root, "provenance.json")
+        if !File.file?(provenance_path)
+          errors << "python-headroom-ai: generated fixture provenance is missing"
+        else
+          begin
+            provenance = JSON.parse(File.read(provenance_path))
+            expected_release = {
+              "version" => manifest_version,
+              "tag" => "v#{manifest_version}",
+              "commit" => audit_config["released_test_source_commit"],
+              "acquisition_url" => audit_config["released_test_source_url"],
+              "acquisition_sha256" => audit_config["released_test_source_sha256"]
+            }
+            expected_fixture_contract = {
+              "path" => "tests/parity/fixtures/code_aware_compressor",
+              "count" => expected_count,
+              "total_bytes" => expected_bytes,
+              "manifest_sha256" => audit_config["code_compressor_fixture_manifest_sha256"],
+              "records" => fixture_records
+            }
+            errors << "python-headroom-ai: generated fixture provenance schema differs" unless provenance["schema"] == "agentlab-headroom-code-compressor-fixture-source/v1"
+            errors << "python-headroom-ai: generated fixture acquisition provenance differs" unless provenance["release"] == expected_release
+            errors << "python-headroom-ai: generated fixture record provenance differs" unless provenance["fixture_contract"] == expected_fixture_contract
+            license_files = provenance["license_files"]
+            license_files_valid = license_files.is_a?(Hash) && license_files.keys.sort == %w[LICENSE NOTICE] && license_files.all? do |name, expected|
+              path = File.join(source_root, name)
+              File.file?(path) && expected == { "size_bytes" => File.size(path), "sha256" => Digest::SHA256.file(path).hexdigest }
+            end
+            errors << "python-headroom-ai: generated fixture license provenance differs" unless license_files_valid
+            allowed_files = fixture_records.map { |record| record["path"] } + %w[LICENSE NOTICE provenance.json]
+            actual_files = Dir.glob(File.join(source_root, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.map { |path| path.delete_prefix("#{source_root}/") }.sort
+            errors << "python-headroom-ai: generated fixture source contains unexpected files" unless actual_files == allowed_files.sort
+          rescue JSON::ParserError => e
+            errors << "python-headroom-ai: invalid generated fixture provenance: #{e.message}"
+          end
+        end
+      end
+      FileUtils.rm_rf(workdir)
+      upstream_archive = ENV["AGENTLAB_HEADROOM_UPSTREAM_SOURCE"]
+      if upstream_archive && File.file?(upstream_archive) && File.file?(fixture_generator)
+        errors << "python-headroom-ai: fixture acquisition source SHA-256 does not match" unless Digest::SHA256.file(upstream_archive).hexdigest == audit_config["released_test_source_sha256"]
+        regenerated = "/srv/tmp/agentlab-check-headroom-fixture-source-#{Process.pid}.tar.gz"
+        FileUtils.rm_f(regenerated)
+        _stdout, stderr, status = Agentlab.capture(["ruby", fixture_generator, "--spec", package.spec_path, "--source", upstream_archive, "--output", regenerated])
+        errors << "python-headroom-ai: fixture source regeneration failed: #{stderr.strip}" unless status.success?
+        errors << "python-headroom-ai: generated fixture source is not reproducible" unless status.success? && FileUtils.compare_file(fixture_archive, regenerated)
+        FileUtils.rm_f(regenerated)
+      else
+        warnings << "python-headroom-ai: fixture source regeneration skipped; set AGENTLAB_HEADROOM_UPSTREAM_SOURCE to the checked release archive"
+      end
+    else
+      warnings << "python-headroom-ai: generated fixture source validation skipped; set AGENTLAB_HEADROOM_SOURCE3 to the checked fixture archive"
+    end
+    makefile = File.read(File.join(Agentlab::ROOT, ".copr", "Makefile"))
+    errors << "python-headroom-ai: configured-SCM fixture source generation is incomplete" unless [
+      "python-headroom-ai.spec)",
+      "scripts/prepare-headroom-fixture-source",
+      "https://codeload.github.com/chopratejas/headroom/tar.gz/$$commit",
+      "headroom-$$version-code-compressor-fixtures.tar.gz"
+    ].all? { |fragment| makefile.include?(fragment) }
+    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.6" && reproducibility.dig("current_draft", "release") == "0.33.0-0.6"
     declared_headroom_patches = Agentlab.spec_patch_files(spec)
     expected_headroom_patches = %w[
       headroom-disable-default-ml.patch
@@ -541,6 +645,7 @@ packages.each do |package|
       headroom-drop-benchmark-dev-dependency.patch
       headroom-system-ast-grep.patch
       headroom-gate-ml-integration-test.patch
+      headroom-stabilize-sqlite-ttl-test.patch
     ]
     errors << "python-headroom-ai: spec patch order differs from the checked contract" unless declared_headroom_patches == expected_headroom_patches
     validate_patches_zero_fuzz!(
@@ -557,9 +662,19 @@ packages.each do |package|
       "%global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3",
       "Source1:        headroom-%{version}-selected-cargo-license-audit.json",
       "Source2:        headroom-%{version}-fedora-license-contract.json",
+      "%global code_compressor_fixture_source_sha256 #{audit_config['generated_fixture_source_sha256']}",
+      "Source3:        headroom-%{version}-code-compressor-fixtures.tar.gz",
       "Patch4:         headroom-gate-ml-integration-test.patch",
+      "Patch5:         headroom-stabilize-sqlite-ttl-test.patch",
       'echo "%{selected_license_audit_sha256}  %{SOURCE1}" | sha256sum -c -',
       'echo "%{fedora_license_contract_sha256}  %{SOURCE2}" | sha256sum -c -',
+      'echo "%{code_compressor_fixture_source_sha256}  %{SOURCE3}" | sha256sum -c -',
+      '%autosetup -n headroom_ai-%{version} -N',
+      'headroom-%{version}-code-compressor-fixtures/tests/parity/fixtures/code_aware_compressor',
+      'agentlab-headroom-code-compressor-fixture-source/v1',
+      'code-compressor fixture acquisition provenance differs',
+      'code-compressor fixture manifest differs',
+      '%autopatch -p1',
       '%{python3} - "%{SOURCE1}" "%{SOURCE2}" LICENSE.dependencies "%{headroom_binary_license}" "%{fedora}"',
       'unsupported Fedora license-contract family',
       'common_records = contract.get("common_records")',

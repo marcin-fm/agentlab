@@ -71,7 +71,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | rust-unidiff0.4 | 0.4.0 | enabled | Stable-only Headroom Rust dependency; Rawhide provides the exact crate |
 | rust-tree-sitter0.25.2 | 0.25.2 | enabled | Exact core tree-sitter compatibility crate selected by Headroom 0.33.0; published on all six targets |
 | rust-tokenizers0.22 | 0.22.2 | enabled | Rawhide-only exact tokenizers compatibility branch selected by Headroom 0.33.0; Fedora 43/44 provide 0.22.2 |
-| python-headroom-ai | 0.33.0 | enabled | Release 0.5 selects exact tree-sitter/tokenizers providers, a checked Fedora-family linked-license contract, and an ML-only test gate; current six-target configured-SCM matrix required |
+| python-headroom-ai | 0.33.0 | enabled | Release 0.6 selects exact tree-sitter/tokenizers providers, a checked Fedora-family linked-license contract, a reproducible fixture-only source from the exact upstream commit, and deterministic non-ML test timing; current six-target configured-SCM matrix required |
 | python-jwt | 2.13.0 | enabled | Fedora 43-only compatibility provider for python-mcp 1.28.1 |
 | python-mcp | 1.28.1 | enabled | Full-matrix dependency provider selected by python-headroom-ai 0.33.0 |
 

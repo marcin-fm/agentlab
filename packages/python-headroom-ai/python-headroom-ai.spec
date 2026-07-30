@@ -1,4 +1,10 @@
 %global source_sha256 97d817e5923903d72bed24f75e0424e9cb7f86b3ddde0fc1acec4f3f85deeb5a
+%global upstream_source_commit 28aa53dc7ca51e687cc719c3fe160f3be50c6570
+%global upstream_source_sha256 fd83d0f65f8c729a7b0f78c54a767bfb467a4c8d6d2edce89125677475f4a82a
+%global code_compressor_fixture_count 30
+%global code_compressor_fixture_bytes 84202
+%global code_compressor_fixture_manifest_sha256 f5fef19e35104e7bcca2c89d604ca5288d6da7045386f07f3998ffc37e63a5e8
+%global code_compressor_fixture_source_sha256 bd9fd41b61a7041743ac23ad6fdb4d26cb7547c29deb4ba88d4f6c2828c289e1
 %global selected_license_audit_sha256 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71
 %global fedora_license_contract_sha256 4dbc7e06524b52b997d74cbbcf847e2988c807630544ffb42301b704eae27738
 %global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3
@@ -7,7 +13,7 @@
 
 Name:           python-headroom-ai
 Version:        0.33.0
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
@@ -17,6 +23,9 @@ URL:            https://github.com/chopratejas/headroom
 Source0:        https://files.pythonhosted.org/packages/87/2c/d3aeeb62d8f61430c9cf5b84c1bd0227362e43eaaaf710d6bb1759fec153/headroom_ai-%{version}.tar.gz
 Source1:        headroom-%{version}-selected-cargo-license-audit.json
 Source2:        headroom-%{version}-fedora-license-contract.json
+# The PyPI sdist omits the released code-compressor parity fixtures. Configured
+# SCM derives this minimal source from the exact release commit archive.
+Source3:        headroom-%{version}-code-compressor-fixtures.tar.gz
 # Packaging-only feature selection: upstream headroom-core defaults to ML and
 # Cargo metadata resolves even unselected optional dependencies. Propagate the
 # non-ML choice and remove only unselected ML/Redis dependency declarations.
@@ -40,6 +49,11 @@ Patch3:         headroom-system-ast-grep.patch
 # assets. Keep every non-ML integration test in the normal Cargo test run.
 # Not submitted; retain while upstream does not declare required-features.
 Patch4:         headroom-gate-ml-integration-test.patch
+# Test-only upstream timing correction: SQLite stores whole-second timestamps,
+# so the original 1,500 ms sleep can cross two ticks and expire a 2-second row.
+# Upstream commit e825588bfbc59fa9e86085e23b4a078e9a0038ba introduced the test;
+# no released upstream correction exists. Production behavior is unchanged.
+Patch5:         headroom-stabilize-sqlite-ttl-test.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  gcc
@@ -48,6 +62,7 @@ BuildRequires:  pyproject-rpm-macros
 BuildRequires:  python3-devel
 BuildRequires:  python3dist(fastapi) >= 0.100
 BuildRequires:  rust >= 1.80
+BuildRequires:  tar
 
 %description
 Headroom compresses AI-agent context and exposes command-line and Model Context
@@ -74,7 +89,77 @@ path without redefining Headroom's upstream command surface.
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{selected_license_audit_sha256}  %{SOURCE1}" | sha256sum -c -
 echo "%{fedora_license_contract_sha256}  %{SOURCE2}" | sha256sum -c -
-%autosetup -n headroom_ai-%{version} -p1
+echo "%{code_compressor_fixture_source_sha256}  %{SOURCE3}" | sha256sum -c -
+%autosetup -n headroom_ai-%{version} -N
+rm -rf .agentlab-headroom-fixture-source
+mkdir .agentlab-headroom-fixture-source
+%{__tar} -xzf %{SOURCE3} -C .agentlab-headroom-fixture-source
+%{python3} - "%{code_compressor_fixture_count}" "%{code_compressor_fixture_bytes}" "%{code_compressor_fixture_manifest_sha256}" "%{version}" "%{upstream_source_commit}" "%{upstream_source_sha256}" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+source_root = Path(f".agentlab-headroom-fixture-source/headroom-{sys.argv[4]}-code-compressor-fixtures")
+root = source_root / "tests/parity/fixtures/code_aware_compressor"
+files = sorted(path for path in root.rglob("*") if path.is_file())
+expected_count = int(sys.argv[1])
+expected_bytes = int(sys.argv[2])
+expected_manifest = sys.argv[3]
+if len(files) != expected_count or any(path.suffix != ".json" or path.parent != root for path in files):
+    raise SystemExit(f"code-compressor fixture file set differs: {len(files)} != {expected_count}")
+records = []
+provenance_records = []
+total_bytes = 0
+for path in files:
+    content = path.read_bytes()
+    total_bytes += len(content)
+    digest = hashlib.sha256(content).hexdigest()
+    records.append(f"{path.name}\t{len(content)}\t{digest}\n")
+    provenance_records.append({
+        "path": f"tests/parity/fixtures/code_aware_compressor/{path.name}",
+        "size_bytes": len(content),
+        "sha256": digest,
+    })
+if total_bytes != expected_bytes:
+    raise SystemExit(f"code-compressor fixture bytes differ: {total_bytes} != {expected_bytes}")
+actual_manifest = hashlib.sha256("".join(records).encode("utf-8")).hexdigest()
+if actual_manifest != expected_manifest:
+    raise SystemExit(f"code-compressor fixture manifest differs: {actual_manifest} != {expected_manifest}")
+provenance = json.loads((source_root / "provenance.json").read_text(encoding="utf-8"))
+if provenance.get("schema") != "agentlab-headroom-code-compressor-fixture-source/v1":
+    raise SystemExit("code-compressor fixture provenance schema differs")
+release = provenance.get("release", {})
+if release != {
+    "version": sys.argv[4],
+    "tag": f"v{sys.argv[4]}",
+    "commit": sys.argv[5],
+    "acquisition_url": f"https://codeload.github.com/chopratejas/headroom/tar.gz/{sys.argv[5]}",
+    "acquisition_sha256": sys.argv[6],
+}:
+    raise SystemExit("code-compressor fixture acquisition provenance differs")
+fixture_contract = provenance.get("fixture_contract", {})
+if fixture_contract != {
+    "path": "tests/parity/fixtures/code_aware_compressor",
+    "count": expected_count,
+    "total_bytes": expected_bytes,
+    "manifest_sha256": expected_manifest,
+    "records": provenance_records,
+}:
+    raise SystemExit("code-compressor fixture provenance records differ")
+for name, expected in provenance.get("license_files", {}).items():
+    content = (source_root / name).read_bytes()
+    actual = {"size_bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
+    if actual != expected:
+        raise SystemExit(f"code-compressor fixture license provenance differs: {name}")
+if sorted(provenance.get("license_files", {})) != ["LICENSE", "NOTICE"]:
+    raise SystemExit("code-compressor fixture license file set differs")
+PY
+rm -rf tests/parity/fixtures/code_aware_compressor
+mkdir -p tests/parity/fixtures
+cp -a .agentlab-headroom-fixture-source/headroom-%{version}-code-compressor-fixtures/tests/parity/fixtures/code_aware_compressor tests/parity/fixtures/
+rm -rf .agentlab-headroom-fixture-source
+%autopatch -p1
 %cargo_prep
 
 %generate_buildrequires
@@ -208,6 +293,9 @@ PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindi
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.6
+- Restore the released parity fixtures and stabilize the SQLite TTL test.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.5
 - Gate the ML-only Kompress integration test through its required feature.
 

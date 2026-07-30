@@ -48,6 +48,18 @@ srpm:
 			ruby "$(repo_root)/scripts/prepare-codex-cargo-srpm-sources" --spec "$(spec)"; \
 			ruby "$(repo_root)/scripts/prepare-codex-cargo-license-sources" --spec "$(spec)"; \
 			;; \
+		python-headroom-ai.spec) \
+			set -eu; \
+			specdir="$$(dirname "$(spec)")"; \
+			command -v ruby >/dev/null 2>&1 && command -v tar >/dev/null 2>&1 || dnf -y install ruby ruby-default-gems rubygem-json tar; \
+			install -d -m0755 /srv/tmp; \
+			tempdir="$$(mktemp -d /srv/tmp/agentlab-headroom-fixtures.XXXXXX)"; \
+			trap 'rm -rf "$$tempdir"' EXIT HUP INT TERM; \
+			version="$$(rpmspec -q --srpm --qf '%{VERSION}' "$(spec)")"; \
+			commit="$$(ruby -e 'File.foreach(ARGV.fetch(0)) { |line| if (match = line.match(/^%global\s+upstream_source_commit\s+(\S+)/)); puts match[1]; exit; end }; abort("missing upstream_source_commit")' "$(spec)")"; \
+			curl --fail --location --retry 3 --output "$$tempdir/headroom-source.tar.gz" "https://codeload.github.com/chopratejas/headroom/tar.gz/$$commit"; \
+			ruby "$(repo_root)/scripts/prepare-headroom-fixture-source" --spec "$(spec)" --source "$$tempdir/headroom-source.tar.gz" --output "$$specdir/headroom-$$version-code-compressor-fixtures.tar.gz"; \
+			;; \
 		agent-browser.spec) \
 			set -eu; \
 			specdir="$$(dirname "$(spec)")"; \

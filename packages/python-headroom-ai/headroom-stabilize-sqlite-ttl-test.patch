@@ -1,0 +1,11 @@
+--- a/crates/headroom-core/tests/ccr_backends.rs
++++ b/crates/headroom-core/tests/ccr_backends.rs
+@@ -248,7 +248,7 @@
+         SqliteCcrStore::open_with_ttls(&path, 2, 3).expect("open sqlite store with ceiling");
+     let hash = compute_key(b"capped sqlite");
+     store.put(&hash, "capped sqlite");
+-    std::thread::sleep(Duration::from_millis(1_500));
++    std::thread::sleep(Duration::from_millis(500));
+     assert_eq!(
+         store.get(&hash).as_deref(),
+         Some("capped sqlite"),

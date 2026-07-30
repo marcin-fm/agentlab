@@ -34,7 +34,7 @@ Headroom's declared floor; Fedora 43 additionally uses the scoped
 `python-jwt 2.13.0` compatibility provider. The native `ml` feature remains
 disabled.
 
-The five `0.33.0` patches apply sequentially with zero fuzz. They retain the
+The six `0.33.0` patches apply sequentially with zero fuzz. They retain the
 non-ML upstream surface, system SQLite, complete Cargo tests, and installed
 Python smokes while rebasing the ast-grep metadata substitution. The checks
 fail unless the Rust CCR test binary links Fedora's system SQLite, the installed
@@ -42,6 +42,21 @@ Python SQLite backend opens a database, the extension has no RPATH/RUNPATH, the
 package imports successfully, and the installed CLI help path runs. Fedora's
 FastAPI package remains explicit because upstream CLI registration imports the
 proxy request-scope module even when only the `mcp` extra is selected.
+
+The PyPI sdist omits the released code-compressor parity fixtures. Configured
+SCM acquires exact release commit `28aa53dc7ca51e687cc719c3fe160f3be50c6570`,
+32,586,584 bytes at SHA-256
+`fd83d0f65f8c729a7b0f78c54a767bfb467a4c8d6d2edce89125677475f4a82a`,
+only as a temporary source-generation input. The SRPM instead carries a
+deterministic 15,420-byte fixture source at SHA-256
+`bd9fd41b61a7041743ac23ad6fdb4d26cb7547c29deb4ba88d4f6c2828c289e1`
+containing the 30 JSON fixtures, root Apache `LICENSE`/`NOTICE`, and provenance
+for the exact tag, commit, acquisition archive, and fixture records. `%prep`
+verifies the generated source and its canonical 84,202-byte fixture manifest
+SHA-256 `f5fef19e35104e7bcca2c89d604ca5288d6da7045386f07f3998ffc37e63a5e8`.
+The sixth patch changes only the SQLite max-lifetime test's first sleep from
+1,500 ms to 500 ms, preventing an integer-second clock rollover before the
+2-second idle TTL while retaining the 2,600 ms absolute-lifetime assertion.
 
 The selected `0.33.0` Cargo graph resolves 307 packages and contains 217 unique
 package/version records across 391 target-all normal tree entries. It adds
@@ -87,7 +102,10 @@ and prove system SQLite plus extension ELF behavior. Historical `0.32.x`
 results remain evidence only and are not active package inputs.
 
 Historical Fedora 43 and Fedora 44 receipts remain evidence only; they do not
-validate `0.33.0-0.5`. Released non-ML Headroom still requires
+validate `0.33.0-0.6`. Build `10795822` proved the license contract and ML-only
+test gate across all six cells, then exposed the missing sdist fixtures and the
+SQLite whole-second timing boundary; it is historical failure evidence, not
+current matrix proof. Released non-ML Headroom still requires
 `tiktoken-rs 0.11`, its `fancy-regex 0.17` edge, and `unidiff 0.4`, so those
 three compatibility records remain selected for the package. No produced RPM
 was installed.

@@ -40,11 +40,23 @@ network_policy:
   model_assets: native ml feature is disabled; the selected tokenizer closure retains upstream hf-hub capability
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.33.0-0.5
-  status: source audit, exact Fedora-family linked-license contracts, and the ML-only integration-test gate complete; configured-SCM six-cell build required
+  release: 0.33.0-0.6
+  status: source audit, exact Fedora-family linked-license contracts, reproducible released parity fixtures, and deterministic non-ML tests complete; configured-SCM six-cell build required
   source_sha256_verified: true
   source_size: 2462330
-  exact_sdist_patch_apply: five patches passed with zero fuzz
+  released_test_source_commit: 28aa53dc7ca51e687cc719c3fe160f3be50c6570
+  released_test_source_url: https://codeload.github.com/chopratejas/headroom/tar.gz/28aa53dc7ca51e687cc719c3fe160f3be50c6570
+  released_test_source_sha256: fd83d0f65f8c729a7b0f78c54a767bfb467a4c8d6d2edce89125677475f4a82a
+  released_test_source_archive_bytes: 32586584
+  generated_fixture_source_file: headroom-0.33.0-code-compressor-fixtures.tar.gz
+  generated_fixture_source_sha256: bd9fd41b61a7041743ac23ad6fdb4d26cb7547c29deb4ba88d4f6c2828c289e1
+  generated_fixture_source_bytes: 15420
+  fixture_source_generator: scripts/prepare-headroom-fixture-source
+  fixture_source_generator_sha256: ca62bc11715067fb90ea0bfc34cd8eca39536aeec92b1d41d32904c6fe87ecbb
+  code_compressor_fixture_count: 30
+  code_compressor_fixture_bytes: 84202
+  code_compressor_fixture_manifest_sha256: f5fef19e35104e7bcca2c89d604ca5288d6da7045386f07f3998ffc37e63a5e8
+  exact_sdist_patch_apply: six patches passed with zero fuzz
   cargo_metadata: headroom-py disables headroom-core default features and the selected manifest omits unselected ML and Redis dependency declarations
   upstream_workspace: the published sdist already limits the root workspace to headroom-core and headroom-py
   ast_grep_provider: upstream PyPI binary-wheel dependency is replaced by the source-built Agentlab ast-grep executable
@@ -56,6 +68,8 @@ build_validation:
   tree_sitter_provider: exact rust-tree-sitter0.25.2 = 0.25.2 is published on all configured targets
   tokenizers_provider: Fedora 43/44 provide 0.22.2; Rawhide requires rust-tokenizers0.22 = 0.22.2 before Headroom is rebuilt
   ml_only_test_gate: kompress_parity declares required-features = ["ml"]; the full non-ML Cargo integration-test surface remains selected
+  parity_fixture_gate: configured SCM derives a 30-file fixture-only source with LICENSE, NOTICE, and exact provenance from the checked release commit archive
+  sqlite_ttl_test_gate: the pre-expiry sleep is 500 ms so integer-second timestamps cannot cross a 2-second idle window; the 2,600 ms max-lifetime check is unchanged
   candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
   selected_license_audit_file: headroom-0.33.0-selected-cargo-license-audit.json
   selected_license_audit_sha256: 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71
@@ -101,6 +115,11 @@ upstream:
   source_url: https://files.pythonhosted.org/packages/87/2c/d3aeeb62d8f61430c9cf5b84c1bd0227362e43eaaaf710d6bb1759fec153/headroom_ai-0.33.0.tar.gz
   source_sha256: 97d817e5923903d72bed24f75e0424e9cb7f86b3ddde0fc1acec4f3f85deeb5a
   source_size: 2462330
+  released_source_commit: 28aa53dc7ca51e687cc719c3fe160f3be50c6570
+  released_source_url: https://codeload.github.com/chopratejas/headroom/tar.gz/28aa53dc7ca51e687cc719c3fe160f3be50c6570
+  released_source_sha256: fd83d0f65f8c729a7b0f78c54a767bfb467a4c8d6d2edce89125677475f4a82a
+  generated_fixture_source: headroom-0.33.0-code-compressor-fixtures.tar.gz
+  generated_fixture_source_sha256: bd9fd41b61a7041743ac23ad6fdb4d26cb7547c29deb4ba88d4f6c2828c289e1
   source_uploaded: "2026-07-29T23:24:15.245277Z"
   repository: chopratejas/headroom
   license: Apache-2.0
