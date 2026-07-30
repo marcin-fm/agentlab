@@ -23,11 +23,10 @@ validation:
   spec_parse: passed
   package_manifest: passed
   required_copr_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
-  current_release_copr: pending
   upstream_tests: unavailable; sdist excludes the test tree
   installed_smokes: base import, expanded service-client exports, client construction, and local HTTP health response
 artifacts:
-  spec_sha256: 1f305c4e3e6d1c9fcd765d00276cc9262570f6f91af7e8b71e3d4d067a3d519c
+  spec_sha256: a048cfe2f45cd27cebef0b35ee1970a94f9ed48663731c5d75f17d5d9c705daa
   service_client_patch_sha256: 89a19e07fe9c16eed200da92c5aeb41db376c0554ddf83760d6028a404b84f47
 upstream:
   provider: pypi

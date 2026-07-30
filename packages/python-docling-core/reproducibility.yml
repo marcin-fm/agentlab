@@ -1,6 +1,6 @@
 schema: python-docling-core-reproducibility/v1
 package: python-docling-core
-version: 2.88.0-0.1
+version: 2.88.0-0.2
 source:
   url: https://files.pythonhosted.org/packages/ef/e7/38b149398ef5d433689e2b3bc356a91e06d7c77bb89731f82f24ab3d3508/docling_core-2.88.0.tar.gz
   sha256: ffc67cb863f6f93a875dfcc3dd3ac109fff68abcadcb4c951036fae777d82796
@@ -14,7 +14,7 @@ patches:
   docling-core-typer-0.26.patch:
     purpose: Accept Fedora Rawhide Typer 0.26 without changing the CLI implementation.
     sha256: 87531869bf34e18b690b281786729f40c04388f6cec576b55893d68cc958ddd1
-spec_sha256: 1f47ff2a1f6125534b572871fcfacb7d59a8b5a516ecab8a0a4dacadd02d14aa
+spec_sha256: f7e1d505749b85a037aa26f69570b4afcd4c96566e02cc440c58ae2927aa7772
 prerequisites:
   python-doclang:
     version: 0.7.3-1
@@ -35,7 +35,6 @@ validation:
     - fedora-44-aarch64
     - fedora-rawhide-x86_64
     - fedora-rawhide-aarch64
-  current_release_copr: pending
 limitations:
   - Many upstream tests depend on fixture trees omitted from the sdist.
   - Optional chunking and model integrations are outside the base-package scope.

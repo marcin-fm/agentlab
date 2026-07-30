@@ -1,6 +1,6 @@
 schema: python-docling-slim-reproducibility/v1
 package: python-docling-slim
-version: 2.116.0-0.1
+version: 2.116.0-0.2
 source:
   url: https://files.pythonhosted.org/packages/34/61/a92577403bd8ac709701fa90d72ef56d4b5a174448b5562b3885d9da0a98/docling_slim-2.116.0.tar.gz
   sha256: f64500b4f42e772994ca83547e1bd6a9a41eda421313b3072028206950c12068
@@ -13,7 +13,7 @@ patches:
     purpose: Remove command-only Typer, Rich, and dotenv dependencies from the service-client extra.
 prerequisites:
   python-docling-core:
-    version: 2.88.0-0.1
+    version: 2.88.0-0.2
     required: true
 validation:
   static:
@@ -28,9 +28,8 @@ validation:
     - fedora-44-aarch64
     - fedora-rawhide-x86_64
     - fedora-rawhide-aarch64
-  current_release_copr: pending
 artifacts:
-  spec_sha256: 1f305c4e3e6d1c9fcd765d00276cc9262570f6f91af7e8b71e3d4d067a3d519c
+  spec_sha256: a048cfe2f45cd27cebef0b35ee1970a94f9ed48663731c5d75f17d5d9c705daa
 limitations:
   - The PyPI sdist excludes the upstream test tree.
   - The service client is useful only when an administrator explicitly configures a remote Docling service.

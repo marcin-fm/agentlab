@@ -2,7 +2,7 @@
 
 Name:           python-docling-core
 Version:        2.88.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Core document types and serialization for Docling
 License:        MIT
 URL:            https://github.com/docling-project/docling-core
@@ -88,6 +88,9 @@ PY
 %{_bindir}/docling-view
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.88.0-0.2
+- Remove dynamic COPR result state from the static package contract.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.88.0-0.1
 - Update the core document model and serializers to upstream 2.88.0.
 

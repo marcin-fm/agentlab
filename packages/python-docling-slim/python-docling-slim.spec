@@ -2,7 +2,7 @@
 
 Name:           python-docling-slim
 Version:        2.116.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
@@ -118,6 +118,9 @@ trap - EXIT
 %doc packages/docling-slim/README.md
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.116.0-0.2
+- Remove dynamic COPR result state from the static package contract.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.116.0-0.1
 - Update to upstream 2.116.0 and drop the integrated SciPy lazy-import patch.
 

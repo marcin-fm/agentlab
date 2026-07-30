@@ -22,7 +22,6 @@ validation:
   selected_tests: six complete self-contained files
   installed_smokes: document creation, JSON roundtrip, DocLang serialization, and both CLI help commands
   required_copr_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
-  current_release_copr: pending
 upstream:
   provider: pypi
   project: docling-core
