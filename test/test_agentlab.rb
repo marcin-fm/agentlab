@@ -1035,18 +1035,18 @@ class AgentlabTest < Minitest::Test
     system_ort_receipt = JSON.parse(File.read(system_ort_receipt_path))
     provider_proof_path = File.join(package.directory, package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "file"))
     provider_proof = JSON.parse(File.read(provider_proof_path))
-    assert_equal("0aeba6bb536a247e5fd941c44dcb8a86b42737561eab16bfb7a52e2dc3d48f5c", package.data.dig("source_audit_receipt", "sha256"))
+    assert_equal("21b6cf73308d8e09df04987fcfb7b706021a78ad3219d8edf5d122666a637803", package.data.dig("source_audit_receipt", "sha256"))
     assert_equal("baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d", package.data.dig("source_link_filter", "sha256"))
-    assert_equal("95f51ae6fa6e1fe0b519875feda0d2a12510cefc469c5936def24921bc2e7d76", package.data.dig("system_ort_audit_receipt", "sha256"))
+    assert_equal("68327b502bfc978d754aa75c99ddd2e7b378fe1fdcee601fe3837df3f18a59f7", package.data.dig("system_ort_audit_receipt", "sha256"))
     assert_equal("a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667", package.data.dig("cargo_source_contract", "cargo_lock_sha256"))
     assert_equal("3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907", package.data.dig("cargo_source_contract", "source_evidence", "closure", "sha256"))
     assert_equal("8980a1d9bb4a1123b2cbdc6dcc082993226c3d0eca09facc59c39124896f2819", package.data.dig("cargo_source_contract", "source_evidence", "vendor_receipt", "sha256"))
     assert_equal("99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691", package.data.dig("cargo_source_contract", "source_evidence", "license_text_presence", "sha256"))
     assert_equal("5d571bb5bc923c855a1e75f335d32187fda5cbb6f9d64b20af960b8c5a7ba544", package.data.dig("cargo_source_contract", "source_evidence", "vendor_manifest", "sha256"))
     assert_equal("151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32", package.data.dig("cargo_source_contract", "source_evidence", "source_license_receipt", "sha256"))
-    assert_equal("961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937", package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "sha256"))
+    assert_equal("d69fca803d1b6c654af3d6ae8c0bab16f08f016f372851383bf2812b5e6394dd", package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "sha256"))
     assert_equal("9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0", package.data.dig("cargo_source_contract", "source_evidence", "fedora_allowlist", "sha256"))
-    assert_equal({ "xberg-dynamic-tesseract.patch" => "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f", "xberg-selected-workspace.patch" => "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2", "xberg-fedora-system-tessdata.patch" => "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20" }, package.data.dig("cargo_source_contract", "patches"))
+    assert_equal({ "xberg-dynamic-tesseract.patch" => "4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634", "xberg-selected-workspace.patch" => "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2", "xberg-fedora-system-tessdata.patch" => "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20" }, package.data.dig("cargo_source_contract", "patches"))
 
     refute_includes(makefile, "kreuzberg.spec)")
     assert_equal("blocked", package.status)
@@ -1054,7 +1054,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Name:           xberg")
     assert_includes(spec, "Version:        1.0.3")
     assert_includes(spec, "%global source_sha256 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e")
-    assert_includes(spec, "Release:        0.2%{?dist}")
+    assert_includes(spec, "Release:        0.3%{?dist}")
     assert_includes(spec, "# Select the six-member Fedora workspace")
     assert_includes(spec, "Source1:        %{name}-%{version}-source-audit.json")
     assert_includes(spec, "Source2:        %{name}-%{version}-system-ort-audit.json")
@@ -1117,9 +1117,9 @@ class AgentlabTest < Minitest::Test
       package.data.fetch("compile_proof_contract")
     )
     assert_equal(contract.dig("source_evidence", "auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-cargo-closure", __dir__)).hexdigest)
-    assert_equal("fbcf02cdc6f20f325cd86fd9a4882f47d69fe5839ed2f01f1c75d7936d5057ce", contract.dig("source_evidence", "auditor", "sha256"))
+    assert_equal("dd1eff01ff3c46cdde79291392b0069374f61497e9e99a3cdb158d347257dc0a", contract.dig("source_evidence", "auditor", "sha256"))
     assert_equal(contract.dig("source_evidence", "proof_auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-proof-receipts", __dir__)).hexdigest)
-    assert_equal("f976958e8a51865710b7f91c38fb2d2bea2a33304ed587aff7713013e1a045d8", contract.dig("source_evidence", "proof_auditor", "sha256"))
+    assert_equal("94005bcab4a60d17c65e1eee9f73e3a46a0bee60d3f70009081e46102b22eb74", contract.dig("source_evidence", "proof_auditor", "sha256"))
     closure = JSON.parse(File.read(File.join(package.directory, contract.dig("source_evidence", "closure", "file"))))
     assert_equal("agentlab-xberg-cargo-closure/v2", closure.fetch("schema"))
     assert_equal("selected-Fedora-workspace-lock-complete", closure.dig("resolver_model", "kind"))
@@ -1147,8 +1147,16 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "%cargo_prep -v cargo-vendor")
     assert_includes(spec, "target/rpm/xberg --help >/dev/null")
     assert_includes(spec, "readelf -d target/rpm/xberg >> .agentlab-ldd-r.txt")
+    assert_includes(spec, "%global dynamic_tesseract_patch_sha256 4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634")
     assert_includes(spec, "%global selected_workspace_patch_sha256 054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2")
     assert_includes(spec, "%global fedora_tessdata_patch_sha256 a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20")
+    dynamic_patch = File.read(File.join(package.directory, "xberg-dynamic-tesseract.patch"))
+    dynamic_cfg = '+#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]'
+    assert_equal(14, dynamic_patch.lines.count { |line| line.chomp == dynamic_cfg })
+    %w[api.rs leptonica.rs lib.rs result_iterator.rs].each do |name|
+      assert_includes(dynamic_patch, "crates/xberg-tesseract/src/#{name}")
+    end
+    refute_includes(dynamic_patch, "crates/xberg-tesseract/build.rs")
     %w[gcc gcc-c++ cmake clang perl binutils ruby rubypick rubygem-json tar zstd].each do |requirement|
       assert_includes(spec, requirement)
     end
@@ -1180,7 +1188,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(auditor, "File.link(source, target)")
     assert_includes(spec, "exit 1")
     assert_equal(package.data.dig("source_audit_receipt", "sha256"), Digest::SHA256.file(receipt_path).hexdigest)
-    assert_equal("1.0.3-0.2", receipt.fetch("current_package_version"))
+    assert_equal("1.0.3-0.3", receipt.fetch("current_package_version"))
     assert_equal("v1.0.3", receipt.dig("source", "tag"))
     assert_equal("37b9fee5762450351e9303243a00e51184a1f24b", receipt.dig("source", "commit"))
     assert_equal("2a5341953d531c886f8713c6f86c6aac2836ac82", receipt.dig("source", "tree"))
@@ -1189,7 +1197,7 @@ class AgentlabTest < Minitest::Test
       "source_filter" => { "filename" => "xberg-1.0.3-source-filter.json", "sha256" => "baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d" },
       "cargo_closure" => { "filename" => "xberg-1.0.3-cargo-closure.json", "sha256" => "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907", "cargo_lock_sha256" => "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667" },
       "source_license" => { "filename" => "xberg-1.0.3-source-license-receipt.json", "sha256" => "151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32" },
-      "provider_proof" => { "filename" => "xberg-1.0.3-provider-proof.json", "sha256" => "961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937" }
+      "provider_proof" => { "filename" => "xberg-1.0.3-provider-proof.json", "sha256" => "d69fca803d1b6c654af3d6ae8c0bab16f08f016f372851383bf2812b5e6394dd" }
     }, receipt.fetch("source_receipts"))
     assert_equal({ "total" => 75, "selected_normal" => 22, "resolver_only" => 53, "distribution_text_required" => 74 }, receipt.dig("source_license_accounting", "missing_text_gaps"))
     assert_equal({ "fedora_xberg_provider_absent" => true, "rpm_fusion_duplicate_absence_established" => true }, receipt.fetch("distribution_duplicate_audit"))
@@ -1222,7 +1230,7 @@ class AgentlabTest < Minitest::Test
       [
         [0, "xberg-system-onnxruntime.patch", "8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab", true],
         [1, "xberg-fedora-onnxruntime-path.patch", "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c", true],
-        [2, "xberg-dynamic-tesseract.patch", "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f", true],
+        [2, "xberg-dynamic-tesseract.patch", "4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634", true],
         [3, "xberg-selected-workspace.patch", "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2", true],
         [4, "xberg-fedora-system-tessdata.patch", "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20", true]
       ],
@@ -1246,7 +1254,7 @@ class AgentlabTest < Minitest::Test
     assert_equal(4, system_ort_receipt.dig("blocker", "findings").length)
     assert_equal(package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "sha256"), Digest::SHA256.file(provider_proof_path).hexdigest)
     assert_equal([597, 603, 622, 437], provider_proof.fetch("selected_graph").values_at("registry_identities", "normal_packages", "normal_build_dev_packages", "resolver_only_registry_identities"))
-    assert_equal({ "source_tag" => "v1.0.3", "source_commit" => "37b9fee5762450351e9303243a00e51184a1f24b", "selected_workspace_patch" => "xberg-selected-workspace.patch", "selection" => { "package" => "xberg-cli", "no_default_features" => true, "features" => selected_features }, "dynamic_tesseract_patch" => { "sha256" => "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f" }, "fedora_system_tessdata_patch" => { "sha256" => "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20" } }, provider_proof.fetch("source_contract"))
+    assert_equal({ "source_tag" => "v1.0.3", "source_commit" => "37b9fee5762450351e9303243a00e51184a1f24b", "selected_workspace_patch" => "xberg-selected-workspace.patch", "selection" => { "package" => "xberg-cli", "no_default_features" => true, "features" => selected_features }, "dynamic_tesseract_patch" => { "sha256" => "4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634" }, "fedora_system_tessdata_patch" => { "sha256" => "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20" } }, provider_proof.fetch("source_contract"))
     assert_equal({ "xberg-system-onnxruntime.patch" => { "sha256" => "8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab" }, "xberg-fedora-onnxruntime-path.patch" => { "sha256" => "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c" } }, provider_proof.fetch("retained_ort_patches"))
     assert_equal(false, provider_proof.dig("tree_sitter", "selected"))
     assert_equal(true, provider_proof.dig("tree_sitter", "omitted_from_initial_rpm"))

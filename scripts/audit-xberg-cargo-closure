@@ -21,6 +21,9 @@ module XbergCargoClosure
   SOURCE_SHA256 = "238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e"
   LOCK_SHA256 = "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667"
   PATCH_SHA256 = {
+    "xberg-system-onnxruntime.patch" => "8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab",
+    "xberg-fedora-onnxruntime-path.patch" => "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c",
+    "xberg-dynamic-tesseract.patch" => "4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634",
     "xberg-selected-workspace.patch" => "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2",
     "xberg-fedora-system-tessdata.patch" => "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20"
   }.freeze

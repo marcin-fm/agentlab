@@ -1,8 +1,141 @@
+diff --git a/crates/xberg-tesseract/src/api.rs b/crates/xberg-tesseract/src/api.rs
+index c91f3daa3a..f0c0216e06 100644
+--- a/crates/xberg-tesseract/src/api.rs
++++ b/crates/xberg-tesseract/src/api.rs
+@@ -77,7 +77,7 @@ pub struct TesseractConfiguration {
+ }
+ 
+ /// Main interface to the Tesseract OCR engine.
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ pub struct TesseractAPI {
+     /// Handle to the Tesseract engine.
+     pub handle: Arc<Mutex<*mut c_void>>,
+@@ -87,7 +87,7 @@ pub struct TesseractAPI {
+ unsafe impl Send for TesseractAPI {}
+ unsafe impl Sync for TesseractAPI {}
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ impl TesseractAPI {
+     /// Creates a new instance of the Tesseract API.
+     ///
+@@ -1653,7 +1653,7 @@ impl TesseractAPI {
+     }
+ }
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ impl Drop for TesseractAPI {
+     /// Drops the TesseractAPI instance.
+     ///
+@@ -1670,7 +1670,7 @@ impl Drop for TesseractAPI {
+     }
+ }
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ impl Clone for TesseractAPI {
+     /// Clones the TesseractAPI instance, attempting to clone its configuration and state.
+     ///
+@@ -1783,7 +1783,7 @@ fn ensure_tesseract_cleanup_registered() {
+     });
+ }
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ ffi_extern! {
+     fn TessBaseAPIMeanTextConf(handle: *mut c_void) -> c_int;
+     fn TessBaseAPISetVariable(handle: *mut c_void, name: *const c_char, value: *const c_char) -> c_int;
+diff --git a/crates/xberg-tesseract/src/leptonica.rs b/crates/xberg-tesseract/src/leptonica.rs
+index d39c4e3399..ae5021195c 100644
+--- a/crates/xberg-tesseract/src/leptonica.rs
++++ b/crates/xberg-tesseract/src/leptonica.rs
+@@ -24,7 +24,7 @@
+ use crate::error::{Result, TesseractError};
+ use std::ffi::c_void;
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ ffi_extern! {
+     /// Allocates a new Pix with the given dimensions and bit depth.
+     fn pixCreate(width: i32, height: i32, depth: i32) -> *mut c_void;
+@@ -167,22 +167,22 @@ ffi_extern! {
+ /// `Pix` is `Send` because Leptonica image objects are independent heap
+ /// allocations with no shared mutable state. Concurrent mutation from multiple
+ /// threads is **not** safe (no `Sync`).
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ pub struct Pix {
+     ptr: *mut c_void,
+ }
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ impl std::fmt::Debug for Pix {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+         f.debug_struct("Pix").field("ptr", &self.ptr).finish()
+     }
+ }
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ unsafe impl Send for Pix {}
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ impl Pix {
+     /// Creates a 32 bpp Leptonica Pix from a packed RGB byte slice.
+     ///
+@@ -710,7 +710,7 @@ impl Pix {
+     }
+ }
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ impl Drop for Pix {
+     fn drop(&mut self) {
+         if !self.ptr.is_null() {
+@@ -720,7 +720,7 @@ impl Drop for Pix {
+ }
+ 
+ #[cfg(test)]
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ mod tests {
+     use super::*;
+ 
+diff --git a/crates/xberg-tesseract/src/lib.rs b/crates/xberg-tesseract/src/lib.rs
+index 366901e18e..c0e9ad2629 100644
+--- a/crates/xberg-tesseract/src/lib.rs
++++ b/crates/xberg-tesseract/src/lib.rs
+@@ -190,7 +190,7 @@ pub use enums::{
+ mod api;
+ pub use api::{BoundingBoxArray, TesseractAPI};
+ pub mod leptonica;
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ pub use leptonica::Pix;
+ 
+ /// Returns the compile-time-bundled English `eng.traineddata` blob when the
+diff --git a/crates/xberg-tesseract/src/result_iterator.rs b/crates/xberg-tesseract/src/result_iterator.rs
+index 626609726e..a1aafeb8c0 100644
+--- a/crates/xberg-tesseract/src/result_iterator.rs
++++ b/crates/xberg-tesseract/src/result_iterator.rs
+@@ -415,7 +415,7 @@ impl Drop for ResultIterator {
+     }
+ }
+ 
+-#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm"))]
++#[cfg(any(feature = "build-tesseract", feature = "build-tesseract-wasm", feature = "dynamic-linking"))]
+ ffi_extern! {
+     pub fn TessResultIteratorDelete(handle: *mut c_void);
+     pub fn TessPageIteratorBegin(handle: *mut c_void);
 diff --git a/crates/xberg/Cargo.toml b/crates/xberg/Cargo.toml
-index 2026d5c..9e4f4cc 100644
+index 30693a8dd6..6ed7ae17d3 100644
 --- a/crates/xberg/Cargo.toml
 +++ b/crates/xberg/Cargo.toml
-@@ -967,7 +967,7 @@ xberg-libwpd = { path = "../xberg-libwpd", version = "1.0.1", optional = true }
+@@ -1000,7 +1000,7 @@ xberg-libwpd = { path = "../xberg-libwpd", version = "1.0.3", optional = true }
  # ("only one package ... may specify the same links value"). The publish-crates
  # action injects the version at cargo-publish time, so crates.io still gets a
  # version requirement. Do not re-pin it here.
@@ -10,3 +143,4 @@ index 2026d5c..9e4f4cc 100644
 +xberg-tesseract = { path = "../xberg-tesseract", optional = true, default-features = false, features = ["dynamic-linking"] }
  zeroize = { version = "1", optional = true }
  zip = { version = ">=7.0.0", optional = true, default-features = false, features = ["deflate-flate2"] }
+ 

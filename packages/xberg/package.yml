@@ -3,7 +3,7 @@ status: blocked
 blockers:
   - Xberg v1.0.3 is a renamed/new upstream source tree whose selected Fedora surface still lacks final native-link and RPM-payload proof.
   - "The checked six-member Fedora workspace lock vendors 1,034 registry sources and is not final linked-license completeness: 75 source text gaps remain blockers, split into 22 selected-normal and 53 resolver-only identities."
-  - No configured-SCM compile proof exists for the exact Xberg 1.0.3 default-minus-tree-sitter surface.
+  - Configured-SCM build 10791299 reached the exact Xberg 1.0.3 default-minus-tree-sitter compile, then exposed upstream's incomplete dynamic-Tesseract API gating; the 0.3 correction still needs remote proof.
   - The historical Kreuzberg 4.10.2 and Xberg 1.0.1 receipt sets are not applicable to Xberg v1.0.3.
   - Immutable checksum-verified model downloads are approved only as opt-in content outside the RPM payload; model provenance, offline behavior, and runtime smoke remain incomplete.
   - Tree-sitter is intentionally omitted from the initial RPM pending exact 1.13.5 parser-source, license, and offline x86_64/aarch64 review.
@@ -23,7 +23,7 @@ upstream:
 source_audit_receipt:
   file: xberg-1.0.3-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: 0aeba6bb536a247e5fd941c44dcb8a86b42737561eab16bfb7a52e2dc3d48f5c
+  sha256: 21b6cf73308d8e09df04987fcfb7b706021a78ad3219d8edf5d122666a637803
 source_link_filter:
   file: xberg-1.0.3-source-filter.json
   schema: agentlab-xberg-source-filter/v1
@@ -32,7 +32,7 @@ source_link_filter:
 system_ort_audit_receipt:
   file: xberg-1.0.3-system-ort-audit.json
   schema: agentlab-xberg-system-ort-audit/v3
-  sha256: 95f51ae6fa6e1fe0b519875feda0d2a12510cefc469c5936def24921bc2e7d76
+  sha256: 68327b502bfc978d754aa75c99ddd2e7b378fe1fdcee601fe3837df3f18a59f7
   patches:
     xberg-system-onnxruntime.patch: 8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab
     xberg-fedora-onnxruntime-path.patch: b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
@@ -55,7 +55,7 @@ cargo_source_contract:
   vendor_archive: xberg-1.0.3-cargo-vendor.tar.zst
   vendor_archive_tracked: false
   patches:
-    xberg-dynamic-tesseract.patch: 8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f
+    xberg-dynamic-tesseract.patch: 4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634
     xberg-selected-workspace.patch: 054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2
     xberg-fedora-system-tessdata.patch: a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20
   source_evidence:
@@ -63,12 +63,12 @@ cargo_source_contract:
     vendor_receipt: { file: xberg-1.0.3-cargo-vendor-receipt.json, sha256: 8980a1d9bb4a1123b2cbdc6dcc082993226c3d0eca09facc59c39124896f2819 }
     license_text_presence: { file: xberg-1.0.3-license-text-presence.json, sha256: 99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691 }
     vendor_manifest: { file: xberg-1.0.3-cargo-vendor.txt, sha256: 5d571bb5bc923c855a1e75f335d32187fda5cbb6f9d64b20af960b8c5a7ba544 }
-    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: fbcf02cdc6f20f325cd86fd9a4882f47d69fe5839ed2f01f1c75d7936d5057ce }
+    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: dd1eff01ff3c46cdde79291392b0069374f61497e9e99a3cdb158d347257dc0a }
     fedora_lock: { file: xberg-1.0.3-fedora-Cargo.lock, sha256: a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667 }
     source_license_receipt: { file: xberg-1.0.3-source-license-receipt.json, sha256: 151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32 }
-    provider_proof: { file: xberg-1.0.3-provider-proof.json, sha256: 961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937 }
+    provider_proof: { file: xberg-1.0.3-provider-proof.json, sha256: d69fca803d1b6c654af3d6ae8c0bab16f08f016f372851383bf2812b5e6394dd }
     fedora_allowlist: { file: xberg-1.0.3-fedora-license-allowlist.json, sha256: 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0 }
-    proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: f976958e8a51865710b7f91c38fb2d2bea2a33304ed587aff7713013e1a045d8 }
+    proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: 94005bcab4a60d17c65e1eee9f73e3a46a0bee60d3f70009081e46102b22eb74 }
     license_writer: { file: scripts/write-xberg-cargo-license-receipts, sha256: 7dd6a505e65900dceded74405d586459180e2a701806b31ac24452e37acd1a51 }
   vendor_tree: { sha256: fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917, files: 51213, directories: 9444, symlinks: 0, bytes: 1099639051 }
   resolver_only_registry_identities: 437

@@ -47,7 +47,7 @@
     {
       "order": 2,
       "file": "xberg-dynamic-tesseract.patch",
-      "sha256": "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f",
+      "sha256": "4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634",
       "purpose": "Use Fedora's dynamic Tesseract provider.",
       "upstream_status": "Fedora-specific; not submitted upstream.",
       "zero_fuzz_applied": true
