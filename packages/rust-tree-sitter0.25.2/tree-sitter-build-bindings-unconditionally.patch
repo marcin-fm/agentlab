@@ -1,0 +1,50 @@
+From 63060a0f1c6f50b29b8bbfec50bf4d8b19dca1b0 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Wed, 28 Feb 2024 18:48:11 -0800
+Subject: [PATCH] build bindings unconditionally
+
+---
+ Cargo.toml            | 2 +-
+ binding_rust/build.rs | 2 --
+ binding_rust/ffi.rs   | 4 ----
+ 3 files changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/binding_rust/build.rs b/binding_rust/build.rs
+index 255740af..da4b904d 100644
+--- a/binding_rust/build.rs
++++ b/binding_rust/build.rs
+@@ -3,7 +3,6 @@ use std::{env, fs, path::PathBuf};
+ fn main() {
+     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+ 
+-    #[cfg(feature = "bindgen")]
+     generate_bindings(&out_dir);
+ 
+     fs::copy(
+@@ -50,7 +49,6 @@ fn main() {
+     println!("cargo:include={}", include_path.display());
+ }
+ 
+-#[cfg(feature = "bindgen")]
+ fn generate_bindings(out_dir: &std::path::Path) {
+     use std::{process::Command, str::FromStr};
+ 
+diff --git a/binding_rust/ffi.rs b/binding_rust/ffi.rs
+index af0824d7..4e59f37b 100644
+--- a/binding_rust/ffi.rs
++++ b/binding_rust/ffi.rs
+@@ -3,12 +3,8 @@
+ #![allow(non_camel_case_types)]
+ #![allow(clippy::missing_const_for_fn)]
+ 
+-#[cfg(feature = "bindgen")]
+ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+ 
+-#[cfg(not(feature = "bindgen"))]
+-include!("./bindings.rs");
+-
+ #[cfg(unix)]
+ #[cfg(feature = "std")]
+ extern "C" {
+-- 
+2.48.1

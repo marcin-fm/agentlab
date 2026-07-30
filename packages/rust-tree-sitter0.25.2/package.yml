@@ -1,0 +1,57 @@
+name: rust-tree-sitter0.25.2
+status: enabled
+summary: Exact tree-sitter 0.25.2 compatibility crate selected by Headroom 0.33.0.
+blockers: []
+selection:
+  consumer: python-headroom-ai 0.33.0
+  capability: crate(tree-sitter/default) = 0.25.2
+  selected_features:
+    - default
+    - std
+  excluded_features:
+    - wasm and optional wasmtime-c-api-impl
+duplicate_check:
+  checked: "2026-07-30"
+  fedora_43: Fedora provides other tree-sitter branches but not exact 0.25.2.
+  fedora_44: Fedora provides tree-sitter 0.25.10 and 0.26, not exact 0.25.2.
+  fedora_rawhide: Fedora provides tree-sitter 0.25.10 and 0.26, not exact 0.25.2.
+  rpm_fusion: absent from Free and Nonfree release/update metadata on all target families.
+license_audit:
+  expression: MIT AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND LicenseRef-Fedora-Public-Domain
+  bundled_components: tree-sitter C library plus ICU-derived Unicode sources
+  provenance: exact-source adaptation of Fedora rust-tree-sitter0.25 0.25.10 license handling
+validation:
+  source_sha256: 5168a515fe492af54c5cc8800ff8c840be09fa5168de45838afaecd3e008bce4
+  license_sha256: 5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147
+  spec_sha256: f1f2b14638280f76398873a522a98a60a3f41b82a9998ea87e6f0b90c76c6b7c
+  patches:
+    tree-sitter-fix-metadata.diff: 78645b2d2fa0849f9bcf2b98db1ac2895d7db54091a9fd8b427fc77bf185fa13
+    tree-sitter-build-bindings-unconditionally.patch: a090bde8896cdd99e2e6f678ce30e0de5d0ad5f33e608822dbaf14d5adfa96bc
+    tree-sitter-bindgen-rust-version.patch: 23f04c2c6c1b64a0672a2d5ff47731860ec1d0252f4017102278ecb64905993d
+  patches_zero_fuzz: required
+  feature_subpackages:
+    - default
+    - std
+  generated_cargo_provides:
+    - crate(tree-sitter/default) = 0.25.2
+    - crate(tree-sitter/std) = 0.25.2
+  bundled_provides:
+    - bundled(tree-sitter) = 0.25.2
+    - bundled(icu) = 65.1
+  license_payload:
+    - LICENSE
+    - src/unicode/LICENSE
+  tests: disabled because the released crate archive omits upstream test data and additional source repositories
+  required_copr_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+upstream:
+  provider: crates_io
+  crate: tree-sitter
+  current_version: 0.25.2
+  source_url: https://static.crates.io/crates/tree-sitter/tree-sitter-0.25.2.crate
+  source_sha256: 5168a515fe492af54c5cc8800ff8c840be09fa5168de45838afaecd3e008bce4
+  rust_version: "1.76"
+  repository: tree-sitter/tree-sitter
+copr:
+  enabled: true
+  subdir: packages/rust-tree-sitter0.25.2
+  spec: rust-tree-sitter0.25.2.spec

@@ -1,0 +1,61 @@
+From 9e885b4995e9b4620a0e5fdaedfb819fcdeec0e2 Mon Sep 17 00:00:00 2001
+From: Aleksei Bavshin <alebastr89@gmail.com>
+Date: Fri, 31 Jan 2025 22:18:29 -0800
+Subject: [PATCH] fedora: fix rust-version detection in build.rs
+
+---
+ binding_rust/build.rs | 32 +++++---------------------------
+ 1 file changed, 5 insertions(+), 27 deletions(-)
+
+diff --git a/binding_rust/build.rs b/binding_rust/build.rs
+index da4b904d..7a0dd9ea 100644
+--- a/binding_rust/build.rs
++++ b/binding_rust/build.rs
+@@ -50,32 +50,10 @@ fn main() {
+ }
+ 
+ fn generate_bindings(out_dir: &std::path::Path) {
+-    use std::{process::Command, str::FromStr};
+-
+-    use bindgen::RustTarget;
+-
+-    let output = Command::new("cargo")
+-        .args(["metadata", "--format-version", "1"])
+-        .output()
+-        .unwrap();
+-
+-    let metadata = serde_json::from_slice::<serde_json::Value>(&output.stdout).unwrap();
+-
+-    let Some(rust_version) = metadata
+-        .get("packages")
+-        .and_then(|packages| packages.as_array())
+-        .and_then(|packages| {
+-            packages.iter().find_map(|package| {
+-                if package["name"] == "tree-sitter" {
+-                    package.get("rust_version").and_then(|v| v.as_str())
+-                } else {
+-                    None
+-                }
+-            })
+-        })
+-    else {
+-        panic!("Failed to find tree-sitter package in cargo metadata");
+-    };
++    let rust_target: bindgen::RustTarget = env::var("CARGO_PKG_RUST_VERSION")
++        .expect("rust-version")
++        .parse()
++        .expect("valid bindgen::RustTarget");
+ 
+     const HEADER_PATH: &str = "include/tree_sitter/api.h";
+ 
+@@ -105,7 +83,7 @@ fn generate_bindings(out_dir: &std::path::Path) {
+         .prepend_enum_name(false)
+         .use_core()
+         .clang_arg("-D TREE_SITTER_FEATURE_WASM")
+-        .rust_target(RustTarget::from_str(rust_version).unwrap())
++        .rust_target(rust_target)
+         .generate()
+         .expect("Failed to generate bindings");
+ 
+-- 
+2.49.0

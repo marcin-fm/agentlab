@@ -1071,6 +1071,9 @@ class AgentlabTest < Minitest::Test
     assert_includes(headroom_spec, "LICENSE.regex-syntax-unicode")
     assert_includes(headroom_spec, "Requires:       python3dist(mcp) >= 1.28.1")
     assert_includes(headroom_spec, "Requires:       python3dist(mcp) < 2")
+    assert_equal("0.33.0-0.2", headroom.data.dig("build_validation", "release"))
+    headroom_dependencies = Agentlab.load_yaml(File.join(headroom.directory, "dependencies.yml"))
+    assert_includes(headroom_dependencies.dig("build_runtime", "local_packages"), "rust-tree-sitter0.25.2 = 0.25.2")
     refute(reproducibility.fetch("current_static_validation").keys.any? { |key| key.match?(/remote|copr|build_id/) })
 
     mcp = Agentlab.package_named("python-mcp")
@@ -1101,6 +1104,39 @@ class AgentlabTest < Minitest::Test
     applicability = Agentlab.load_yaml(File.join(Agentlab::ROOT, "config", "target-applicability.yml"))
     assert_equal("python3-jwt 2.10.1-3.fc44", applicability.dig("overrides", "python-jwt", "omitted", "44", "provider"))
     assert_equal("python3-jwt 2.13.0-2.fc45", applicability.dig("overrides", "python-jwt", "omitted", "rawhide", "provider"))
+
+    tree_sitter = Agentlab.package_named("rust-tree-sitter0.25.2")
+    tree_sitter_spec = File.read(tree_sitter.spec_path)
+    assert_equal("0.25.2", tree_sitter.upstream.fetch("current_version"))
+    assert_equal(targets, tree_sitter.chroots(targets))
+    assert_includes(tree_sitter_spec, "License:        MIT AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND LicenseRef-Fedora-Public-Domain")
+    assert_includes(tree_sitter_spec, "Patch0:         tree-sitter-fix-metadata.diff")
+    assert_includes(tree_sitter_spec, "Provides:       bundled(tree-sitter) = %{version}")
+    assert_includes(tree_sitter_spec, "Provides:       bundled(icu) = 65.1")
+    assert_includes(tree_sitter_spec, "%license %{crate_instdir}/src/unicode/LICENSE")
+    assert_includes(tree_sitter_spec, "%package     -n %{name}+default-devel")
+    assert_includes(tree_sitter_spec, "%package     -n %{name}+std-devel")
+    assert_equal(%w[default std], tree_sitter.data.dig("validation", "feature_subpackages"))
+    assert_equal(["crate(tree-sitter/default) = 0.25.2", "crate(tree-sitter/std) = 0.25.2"], tree_sitter.data.dig("validation", "generated_cargo_provides"))
+    assert_equal(["bundled(tree-sitter) = 0.25.2", "bundled(icu) = 65.1"], tree_sitter.data.dig("validation", "bundled_provides"))
+    assert_equal(["LICENSE", "src/unicode/LICENSE"], tree_sitter.data.dig("validation", "license_payload"))
+    assert_equal(1, tree_sitter_spec.scan("%cargo_generate_buildrequires").length)
+    assert_operator(tree_sitter_spec.index("%cargo_generate_buildrequires"), :>, tree_sitter_spec.index("%generate_buildrequires"))
+    assert_includes(tree_sitter_spec, 'test "$(cargo2rpm --path Cargo.toml provides --feature default)" = "crate(tree-sitter/default) = %{version}"')
+    assert_includes(tree_sitter_spec, 'test "$(cargo2rpm --path Cargo.toml provides --feature std)" = "crate(tree-sitter/std) = %{version}"')
+    assert_equal(Digest::SHA256.file(tree_sitter.spec_path).hexdigest, tree_sitter.data.dig("validation", "spec_sha256"))
+    tree_sitter_expanded, tree_sitter_error, tree_sitter_status = Agentlab.capture(["rpmspec", "--define", "_sourcedir #{tree_sitter.directory}", "-P", tree_sitter.spec_path])
+    assert(tree_sitter_status.success?, tree_sitter_error)
+    tree_sitter_patch_markers = [
+      'echo "Patch #0 (tree-sitter-fix-metadata.diff):"',
+      'echo "Patch #1 (tree-sitter-build-bindings-unconditionally.patch):"',
+      'echo "Patch #2 (tree-sitter-bindgen-rust-version.patch):"'
+    ]
+    tree_sitter_patch_offsets = tree_sitter_patch_markers.map { |marker| tree_sitter_expanded.index(marker) }
+    assert(tree_sitter_patch_offsets.all?)
+    assert_equal(tree_sitter_patch_offsets.sort, tree_sitter_patch_offsets)
+    assert_operator(tree_sitter_expanded.scan("--fuzz=0").length, :>=, 3)
+    assert_includes(tree_sitter_spec, "%bcond check 0")
   end
 
   def test_docling_core_and_slim_current_static_contracts

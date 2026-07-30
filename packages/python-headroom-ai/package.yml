@@ -20,7 +20,7 @@ dependency_status:
     - rusqlite 0.31 against system SQLite through a Fedora compatibility patch
     - unidiff 0.4 from the completed rust-unidiff0.4 package
     - ICU4X segmenter 2.2 with compiled data for CJK text boundaries
-    - tree-sitter 0.25 plus the eight exact language grammar branches selected by headroom-core
+    - tree-sitter 0.25.2 from rust-tree-sitter0.25.2 plus the eight exact Fedora grammar branches selected by headroom-core
     - md-5 0.10, sha2 0.10, dashmap 6, aho-corasick 1, and http 1
   excluded_surfaces:
     - headroom-core ml feature, including fastembed, Magika, and ORT, removed from selected Cargo metadata
@@ -40,8 +40,8 @@ network_policy:
   model_assets: native ml feature is disabled; the selected tokenizer closure retains upstream hf-hub capability
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.33.0-0.1
-  status: static source and selected-graph validation complete; configured-SCM six-cell build required
+  release: 0.33.0-0.2
+  status: static source and selected-graph validation complete; exact tree-sitter provider and configured-SCM six-cell build required
   source_sha256_verified: true
   source_size: 2462330
   exact_sdist_patch_apply: four patches passed with zero fuzz
@@ -53,6 +53,7 @@ build_validation:
   license_workspace: headroom-core and headroom-py only; unrelated proxy, simulator, parity, ML, AWS, and HTTP members are excluded
   cargo_resolution_records: 307 packages resolved; 217 unique package/version records across 391 target-all normal tree entries
   selected_new_dependencies: ICU4X segmenter data, tree-sitter language grammars, crypto hashes, dashmap, aho-corasick, and http
+  tree_sitter_provider: rust-tree-sitter0.25.2 must complete all six targets before Headroom is rebuilt
   candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
   selected_license_audit_file: headroom-0.33.0-selected-cargo-license-audit.json
   selected_license_audit_sha256: 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71

@@ -22,7 +22,7 @@ production_runtime:
     - rusqlite >= 0.31, < 0.32 using system SQLite through a compatibility patch
     - unidiff >= 0.4, < 0.5 using rust-unidiff0.4
     - icu_segmenter 2.2 with compiled_data
-    - tree-sitter 0.25.2 and exact Python, JavaScript, TypeScript, Go, Rust, Java, C, and C++ grammar branches
+    - tree-sitter 0.25.2 from rust-tree-sitter0.25.2 and exact Fedora Python, JavaScript, TypeScript, Go, Rust, Java, C, and C++ grammar branches
     - md-5 0.10, sha2 0.10, dashmap 6, aho-corasick 1, and http 1
     - Fedora-provided serde, serde_json, bytes, thiserror, tracing, digest, compression, regex, rayon, toml, and blake3 branches
 excluded_runtime:
@@ -43,10 +43,11 @@ build_runtime:
     - rust-unidiff0.4 = 0.4.0
     - rust-fancy-regex0.17 = 0.17.0
     - rust-tiktoken-rs0.11 = 0.11.0
+    - rust-tree-sitter0.25.2 = 0.25.2
 validation:
   current_draft:
-    release: 0.33.0-0.1
-    status: static source and selected-graph validation complete; configured-SCM six-cell build required
+    release: 0.33.0-0.2
+    status: static source and selected-graph validation complete; exact tree-sitter provider and configured-SCM six-cell build required
     static_validation: exact-sdist four-patch zero-fuzz application, selected manifest closure, system ast-grep substitution, and network-isolated source resolution passed
     cargo_resolution: 307 resolved packages; 217 unique package/version records across 391 target-all normal tree entries
     source_license_probe: headroom-0.33.0-selected-cargo-license-audit.json records all 217 selected package/version/license tuples and the regex-syntax Unicode supplement at SHA-256 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71

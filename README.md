@@ -69,7 +69,8 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | python-mslex | 1.3.0 | enabled | Clean F43/F44 builds and tests passed; expected missing-manpage warning only |
 | python-oslex | 2.0.0 | enabled | Clean F43/F44 builds passed using the local mslex provider |
 | rust-unidiff0.4 | 0.4.0 | enabled | Stable-only Headroom Rust dependency; Rawhide provides the exact crate |
-| python-headroom-ai | 0.33.0 | enabled | Release 0.1 preserves upstream non-ML Headroom with system SQLite and source-built ast-grep; static graph review passed and the current six-target configured-SCM matrix is required |
+| rust-tree-sitter0.25.2 | 0.25.2 | enabled | Exact core tree-sitter compatibility crate selected by Headroom 0.33.0; full six-cell matrix required |
+| python-headroom-ai | 0.33.0 | enabled | Release 0.2 selects exact tree-sitter 0.25.2 plus upstream non-ML Headroom with system SQLite and source-built ast-grep; current six-target configured-SCM matrix required |
 | python-jwt | 2.13.0 | enabled | Fedora 43-only compatibility provider for python-mcp 1.28.1 |
 | python-mcp | 1.28.1 | enabled | Full-matrix dependency provider selected by python-headroom-ai 0.33.0 |
 

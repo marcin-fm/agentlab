@@ -6,7 +6,7 @@
 
 Name:           python-headroom-ai
 Version:        0.33.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
@@ -168,6 +168,9 @@ PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindi
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.2
+- Add the exact tree-sitter 0.25.2 compatibility provider.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.1
 - Update to the complete published 0.33.0 PyPI sdist.
 - Rebase the non-ML and system ast-grep metadata patches.

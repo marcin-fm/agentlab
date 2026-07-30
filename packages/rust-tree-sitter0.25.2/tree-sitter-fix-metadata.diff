@@ -1,0 +1,52 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -47,7 +47,7 @@
+     "parsing",
+     "text-editors",
+ ]
+-license = "MIT"
++license = "MIT AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND LicenseRef-Fedora-Public-Domain"
+ repository = "https://github.com/tree-sitter/tree-sitter"
+ 
+ [package.metadata.docs.rs]
+@@ -80,27 +80,12 @@
+ [dependencies.tree-sitter-language]
+ version = "0.1"
+ 
+-[dependencies.wasmtime-c-api]
+-version = "29.0.1"
+-features = [
+-    "cranelift",
+-    "gc-drc",
+-]
+-optional = true
+-default-features = false
+-package = "wasmtime-c-api-impl"
+-
+ [build-dependencies.bindgen]
+-version = "0.71.1"
+-optional = true
++version = "0.72.1"
+ 
+ [build-dependencies.cc]
+ version = "1.2.10"
+
+-[build-dependencies.serde_json]
+-version = "1.0.137"
+-features = ["preserve_order"]
+-
+ [features]
+ default = ["std"]
+ std = [
+@@ -108,10 +93,7 @@
+     "regex/perf",
+     "regex-syntax/unicode",
+ ]
+-wasm = [
+-    "std",
+-    "wasmtime-c-api",
+-]
++wasm = []
+ 
+ [lints.clippy]
+ branches_sharing_code = "allow"

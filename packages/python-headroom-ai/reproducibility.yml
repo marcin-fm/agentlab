@@ -8,9 +8,9 @@ release:
   source_uploaded: "2026-07-29T23:24:15.245277Z"
   repository: chopratejas/headroom
 current_draft:
-  release: 0.33.0-0.1
-  validation: static source and selected-graph validation complete; configured-SCM six-cell build required
-  spec_sha256: 10e459eb1e3a4bde2c198c7de61806382db5bd3cfaa4ab8cb86bab4485fee92e
+  release: 0.33.0-0.2
+  validation: static source and selected-graph validation complete; exact tree-sitter provider and configured-SCM six-cell build required
+  spec_sha256: 91e8f96d6f34b13769134b14b6c04932cc97bbf22ebd2e7c4c1041d67a795a5c
   selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
   license_gate: target builds must normalize cargo2rpm's headroom-core sibling path and compare all 217 records with the checked Source1 audit
   selected_license_audit:
@@ -44,6 +44,7 @@ current_static_validation:
   cargo_metadata: headroom-py dependency uses_default_features is false and unselected optional ML and Redis dependencies are absent
   upstream_workspace: root workspace already contains only headroom-core and headroom-py
   ast_grep_provider: source-built Agentlab ast-grep replaces the upstream PyPI binary wheel
+  tree_sitter_provider: rust-tree-sitter0.25.2 must provide exact crate(tree-sitter/default) = 0.25.2 on every target
   cargo_resolution: rusqlite 0.31.0 and libsqlite3-sys 0.28.0 selected
   sqlite_source_review: v0.31.0 to v0.32.0 changes only the backend TTL documentation, not its rusqlite API use
   license_workspace: headroom-core and headroom-py only

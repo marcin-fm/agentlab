@@ -478,6 +478,9 @@ packages.each do |package|
     current_static = reproducibility.fetch("current_static_validation")
     errors << "python-headroom-ai: current static validation retains dynamic remote evidence" if current_static.keys.any? { |key| key.match?(/remote|copr|build_id/) }
     errors << "python-headroom-ai: reproducibility does not bind the selected Cargo license audit" unless reproducibility.dig("current_draft", "selected_license_audit", "sha256") == audit_config["selected_license_audit_sha256"]
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    errors << "python-headroom-ai: exact tree-sitter provider is missing" unless dependencies.dig("build_runtime", "local_packages")&.include?("rust-tree-sitter0.25.2 = 0.25.2")
+    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.2" && reproducibility.dig("current_draft", "release") == "0.33.0-0.2"
     required_spec_fragments = [
       "%global selected_license_audit_sha256 #{audit_config['selected_license_audit_sha256']}",
       "%global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3",
@@ -525,6 +528,64 @@ packages.each do |package|
     errors << "python-jwt: compatibility target scope is invalid" unless package.chroots(project_chroots) == expected_chroots
     errors << "python-jwt: omitted target provider evidence is incomplete" unless package.data.dig("copr", "omitted_target_families")&.keys&.sort == %w[fedora_44 rawhide]
     errors << "python-jwt: target applicability provider evidence is incomplete" unless override == { "releases" => ["43"], "omitted" => expected_omitted }
+  end
+
+  if package.name == "rust-tree-sitter0.25.2"
+    expected_patches = {
+      "tree-sitter-fix-metadata.diff" => "78645b2d2fa0849f9bcf2b98db1ac2895d7db54091a9fd8b427fc77bf185fa13",
+      "tree-sitter-build-bindings-unconditionally.patch" => "a090bde8896cdd99e2e6f678ce30e0de5d0ad5f33e608822dbaf14d5adfa96bc",
+      "tree-sitter-bindgen-rust-version.patch" => "23f04c2c6c1b64a0672a2d5ff47731860ec1d0252f4017102278ecb64905993d"
+    }
+    expected_patches.each do |name, sha256|
+      path = File.join(package.directory, name)
+      errors << "rust-tree-sitter0.25.2: missing #{name}" unless File.file?(path)
+      errors << "rust-tree-sitter0.25.2: stale #{name} hash" if File.file?(path) && Digest::SHA256.file(path).hexdigest != sha256
+    end
+    required_fragments = [
+      "%global source_sha256 5168a515fe492af54c5cc8800ff8c840be09fa5168de45838afaecd3e008bce4",
+      "%global license_sha256 5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147",
+      "License:        MIT AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND LicenseRef-Fedora-Public-Domain",
+      "Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate",
+      "Source1:        https://raw.githubusercontent.com/tree-sitter/tree-sitter/v%{version}/LICENSE",
+      "Patch0:         tree-sitter-fix-metadata.diff",
+      "Patch1:         tree-sitter-build-bindings-unconditionally.patch",
+      "Patch2:         tree-sitter-bindgen-rust-version.patch",
+      "Provides:       bundled(tree-sitter) = %{version}",
+      "Provides:       bundled(icu) = 65.1",
+      "%license %{crate_instdir}/LICENSE",
+      "%license %{crate_instdir}/src/unicode/LICENSE",
+      "%package     -n %{name}+default-devel",
+      "%package     -n %{name}+std-devel",
+      "%setup -q -n %{crate}-%{version_no_tilde}",
+      "%patch -P 0 -p1",
+      "%patch -P 1 -p1",
+      "%patch -P 2 -p1",
+      "test \"$(cargo2rpm --path Cargo.toml provides --feature default)\" = \"crate(tree-sitter/default) = %{version}\"",
+      "test \"$(cargo2rpm --path Cargo.toml provides --feature std)\" = \"crate(tree-sitter/std) = %{version}\"",
+      "%bcond check 0"
+    ]
+    errors << "rust-tree-sitter0.25.2: spec contract is incomplete" unless required_fragments.all? { |fragment| spec.include?(fragment) }
+    validation = package.data.fetch("validation")
+    errors << "rust-tree-sitter0.25.2: spec hash is stale" unless validation["spec_sha256"] == Digest::SHA256.file(package.spec_path).hexdigest
+    errors << "rust-tree-sitter0.25.2: feature subpackage contract is incomplete" unless validation["feature_subpackages"] == %w[default std]
+    errors << "rust-tree-sitter0.25.2: generated Cargo provides are incomplete" unless validation["generated_cargo_provides"] == ["crate(tree-sitter/default) = 0.25.2", "crate(tree-sitter/std) = 0.25.2"]
+    errors << "rust-tree-sitter0.25.2: bundled provides are incomplete" unless validation["bundled_provides"] == ["bundled(tree-sitter) = 0.25.2", "bundled(icu) = 65.1"]
+    errors << "rust-tree-sitter0.25.2: license payload is incomplete" unless validation["license_payload"] == ["LICENSE", "src/unicode/LICENSE"]
+    buildrequires_markers = [spec.index("%generate_buildrequires"), spec.index("%cargo_generate_buildrequires")]
+    errors << "rust-tree-sitter0.25.2: dynamic BuildRequires generator is misplaced or duplicated" unless spec.scan("%cargo_generate_buildrequires").length == 1 && buildrequires_markers.all? && buildrequires_markers == buildrequires_markers.sort
+    if Agentlab.command_available?("rpmspec")
+      expanded, expanded_error, expanded_status = Agentlab.capture(["rpmspec", "--define", "_sourcedir #{package.directory}", "-P", package.spec_path])
+      patch_markers = [
+        'echo "Patch #0 (tree-sitter-fix-metadata.diff):"',
+        'echo "Patch #1 (tree-sitter-build-bindings-unconditionally.patch):"',
+        'echo "Patch #2 (tree-sitter-bindgen-rust-version.patch):"'
+      ]
+      patch_offsets = patch_markers.map { |marker| expanded.index(marker) }
+      errors << "rust-tree-sitter0.25.2: spec expansion failed: #{expanded_error.strip}" unless expanded_status.success?
+      errors << "rust-tree-sitter0.25.2: patch expansion is incomplete or out of order" unless patch_offsets.all? && patch_offsets == patch_offsets.sort
+      errors << "rust-tree-sitter0.25.2: expanded patches do not enforce zero fuzz" unless expanded.scan("--fuzz=0").length >= 3
+    end
+    errors << "rust-tree-sitter0.25.2: target scope is incomplete" unless package.chroots(project_chroots) == project_chroots
   end
 
   if package.name == "python-docling-core"

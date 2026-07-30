@@ -107,6 +107,7 @@ dependency_groups:
       - python-mcp
       - rust-fancy-regex0.17
       - rust-tiktoken-rs0.11
+      - rust-tree-sitter0.25.2
       - rust-unidiff0.4
   python-mcp:
     reason: Fedora 43-only PyJWT compatibility provider selected by python-mcp.
