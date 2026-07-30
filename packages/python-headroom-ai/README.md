@@ -57,9 +57,13 @@ AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016`. The checked
 package/version/license tuples plus that Unicode supplement at SHA-256
 `3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71`.
 The spec checks that receipt as `Source1`, compares all 217 normalized records
-with target-generated `LICENSE.dependencies` after stripping cargo2rpm's one
-sibling-workspace build path, and installs the verified regex-syntax Unicode
-text separately.
+as the all-target source-selection audit, and installs the verified regex-syntax
+Unicode text separately. Fedora's target-pruned linked graph has 172 records per
+family and includes reviewed provider SPDX normalization plus target-only
+`foldhash 0.1.5` under Zlib. Checked `Source2` stores 166 common records plus six
+explicit additions per Fedora family and an independent family hash. The
+generated `LICENSE.dependencies` must match that complete auditable inventory
+for Fedora 43, 44, or 45; unknown future families fail closed.
 
 Configured-SCM build `10794547` proved the `0.33.0-0.1` source contract but
 failed every target during dynamic BuildRequires because Fedora lacks exact
@@ -69,14 +73,17 @@ grammar branch. Release `0.33.0-0.2` selects the dedicated full-matrix
 targets. The first provider-complete retry exposed the only remaining selected
 Cargo gap: Rawhide has tokenizers `0.23.1`, outside the
 required `0.22` branch, while Fedora 43/44 already provide `0.22.2`. Release
-`0.33.0-0.3` selects Rawhide-only `rust-tokenizers0.22` and still requires the
+`0.33.0-0.3` selects Rawhide-only `rust-tokenizers0.22`. Its provider-complete
+build reached compilation but proved that an all-target Cargo-lock receipt
+cannot equal Fedora's target-pruned linked graph. Release `0.33.0-0.4` adds the
+separate family-specific linked-license contract and still requires the
 complete configured-SCM six-cell build and non-installing runtime artifact proof. Target builds must
 regenerate `LICENSE.dependencies`, run the Cargo and installed Python smokes,
 and prove system SQLite plus extension ELF behavior. Historical `0.32.x`
 results remain evidence only and are not active package inputs.
 
 Historical Fedora 43 and Fedora 44 receipts remain evidence only; they do not
-validate `0.33.0-0.3`. Released non-ML Headroom still requires
+validate `0.33.0-0.4`. Released non-ML Headroom still requires
 `tiktoken-rs 0.11`, its `fancy-regex 0.17` edge, and `unidiff 0.4`, so those
 three compatibility records remain selected for the package. No produced RPM
 was installed.

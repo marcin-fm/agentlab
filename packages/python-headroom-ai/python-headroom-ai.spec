@@ -1,12 +1,13 @@
 %global source_sha256 97d817e5923903d72bed24f75e0424e9cb7f86b3ddde0fc1acec4f3f85deeb5a
 %global selected_license_audit_sha256 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71
+%global fedora_license_contract_sha256 4dbc7e06524b52b997d74cbbcf847e2988c807630544ffb42301b704eae27738
 %global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3
-%global headroom_binary_license Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
+%global headroom_binary_license Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
 %bcond check 1
 
 Name:           python-headroom-ai
 Version:        0.33.0
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
@@ -15,6 +16,7 @@ License:        %{headroom_binary_license}
 URL:            https://github.com/chopratejas/headroom
 Source0:        https://files.pythonhosted.org/packages/87/2c/d3aeeb62d8f61430c9cf5b84c1bd0227362e43eaaaf710d6bb1759fec153/headroom_ai-%{version}.tar.gz
 Source1:        headroom-%{version}-selected-cargo-license-audit.json
+Source2:        headroom-%{version}-fedora-license-contract.json
 # Packaging-only feature selection: upstream headroom-core defaults to ML and
 # Cargo metadata resolves even unselected optional dependencies. Propagate the
 # non-ML choice and remove only unselected ML/Redis dependency declarations.
@@ -66,6 +68,7 @@ path without redefining Headroom's upstream command surface.
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{selected_license_audit_sha256}  %{SOURCE1}" | sha256sum -c -
+echo "%{fedora_license_contract_sha256}  %{SOURCE2}" | sha256sum -c -
 %autosetup -n headroom_ai-%{version} -p1
 %cargo_prep
 
@@ -88,42 +91,74 @@ pushd crates/headroom-py >/dev/null
 %{cargo_license -n -f extension-module} > ../../LICENSE.dependencies
 popd >/dev/null
 test -s LICENSE.dependencies
-%{python3} - "%{SOURCE1}" LICENSE.dependencies "%{headroom_binary_license}" <<'PY'
+%{python3} - "%{SOURCE1}" "%{SOURCE2}" LICENSE.dependencies "%{headroom_binary_license}" "%{fedora}" <<'PY'
+import hashlib
 import json
 import re
 import sys
 from pathlib import Path
 
-audit = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+source_audit = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+contract = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+dependencies_path = Path(sys.argv[3])
+spec_license = sys.argv[4]
+fedora_family = sys.argv[5]
 
 def canonicalize(line):
     return re.sub(r"^(.+: headroom-core v0\.1\.0) \(.*\)$", r"\1", line.strip())
 
 actual = sorted({
     canonicalize(line)
-    for line in Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
+    for line in dependencies_path.read_text(encoding="utf-8").splitlines()
     if line.strip()
 })
 
 def normalize(expression):
     return expression.replace(" / ", "/").replace("/", " OR ")
 
-records = audit["records"]
-expected = sorted({
+records = source_audit["records"]
+source_expected = sorted({
     f"{normalize(item['cargo_license_expression'])}: {item['name']} v{item['version']}"
     for item in records
 })
-if len(records) != 217 or len(expected) != 217:
+if len(records) != 217 or len(source_expected) != 217:
     raise SystemExit("selected Cargo license receipt does not contain 217 unique records")
-if audit["candidate_binary_spdx"] != sys.argv[3]:
-    raise SystemExit("selected Cargo license expression differs from the spec")
+if source_audit["candidate_binary_spdx"] != contract["source_audit"]["candidate_binary_spdx"]:
+    raise SystemExit("source Cargo license expression differs from the Fedora contract")
+if contract["target_binary_spdx"] != spec_license:
+    raise SystemExit("Fedora linked license expression differs from the spec")
+family = contract["families"].get(fedora_family)
+if family is None:
+    raise SystemExit(f"unsupported Fedora license-contract family: {fedora_family}")
+common_records = contract.get("common_records")
+additional_records = family.get("additional_records")
+if not isinstance(common_records, list) or common_records != sorted(set(common_records)):
+    raise SystemExit("Fedora linked-license common records are invalid")
+if not isinstance(additional_records, list) or additional_records != sorted(set(additional_records)):
+    raise SystemExit("Fedora linked-license family records are invalid")
+expected = sorted(set(common_records + additional_records))
+if len(expected) != family["record_count"]:
+    raise SystemExit(f"Fedora linked-license contract record count differs: {len(expected)} != {family['record_count']}")
 if actual != expected:
     missing = sorted(set(expected) - set(actual))
     unexpected = sorted(set(actual) - set(expected))
-    raise SystemExit(f"LICENSE.dependencies differs: missing={missing!r} unexpected={unexpected!r}")
-if audit["validation"].get("target_license_dependencies_comparison_implemented") is not True:
+    raise SystemExit(f"Fedora linked-license records differ: missing={missing!r} unexpected={unexpected!r}")
+payload = "\n".join(actual) + "\n"
+if len(actual) != family["record_count"]:
+    raise SystemExit(f"Fedora linked license record count differs: {len(actual)} != {family['record_count']}")
+actual_sha256 = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+if actual_sha256 != family["canonical_sha256"]:
+    raise SystemExit(f"Fedora linked license record hash differs: {actual_sha256} != {family['canonical_sha256']}")
+if source_audit["validation"].get("target_license_dependencies_comparison_implemented") is not True:
     raise SystemExit("selected Cargo license receipt does not require the implemented target comparison")
-Path(sys.argv[2]).write_text("\n".join(actual) + "\n", encoding="utf-8")
+if contract["validation"] != {
+    "records_sorted_unique": True,
+    "architectures_identical_within_family": True,
+    "unknown_family_fails": True,
+    "dynamic_build_identities_absent": True,
+}:
+    raise SystemExit("Fedora linked license contract validation flags differ")
+dependencies_path.write_text(payload, encoding="utf-8")
 PY
 
 unicode_license=/usr/share/cargo/registry/regex-syntax-0.8.11/src/unicode_tables/LICENSE-UNICODE
@@ -168,6 +203,9 @@ PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindi
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.4
+- Bind the Fedora-family linked Rust license records and aggregate expression.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.3
 - Add the Rawhide tokenizers 0.22 compatibility provider.
 

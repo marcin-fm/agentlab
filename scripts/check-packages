@@ -466,7 +466,7 @@ packages.each do |package|
         errors << "python-headroom-ai: selected Cargo license audit selection is invalid" unless audit["selection"] == { "workspace_package" => "headroom-py", "default_features" => false, "features" => ["extension-module"], "target" => "all", "normal_tree_entries" => 391, "unique_package_versions" => 217 }
         record_keys = records&.map { |record| record.values_at("name", "version", "cargo_license_expression") }
         errors << "python-headroom-ai: selected Cargo license audit records are incomplete" unless records.is_a?(Array) && records.length == 217 && record_keys == record_keys.uniq.sort
-        errors << "python-headroom-ai: selected Cargo license audit expression differs from the spec" unless audit["candidate_binary_spdx"] == spec[/^%global headroom_binary_license\s+(.+)$/, 1]
+        errors << "python-headroom-ai: selected Cargo source-license expression is invalid" unless audit["candidate_binary_spdx"] == "Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016"
         errors << "python-headroom-ai: selected Cargo Unicode supplement is incomplete" unless audit["supplemental_license_texts"] == [{ "name" => "regex-syntax", "version" => "0.8.11", "path" => "src/unicode_tables/LICENSE-UNICODE", "sha256" => "74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3", "spdx" => "Unicode-DFS-2016", "reason" => "bundled generated Unicode tables are not represented in Cargo metadata" }]
         expected_validation = { "source_license_metadata_complete" => true, "records_sorted_unique" => true, "supplemental_unicode_text_retained" => true, "target_license_dependencies_comparison_required" => true, "target_license_dependencies_comparison_implemented" => true, "final_target_license_dependencies_verified" => false }
         errors << "python-headroom-ai: selected Cargo license audit validation is incomplete" unless audit["validation"] == expected_validation
@@ -474,21 +474,69 @@ packages.each do |package|
         errors << "python-headroom-ai: invalid selected Cargo license audit: #{e.message}"
       end
     end
+    contract_file = audit_config && audit_config["fedora_license_contract_file"]
+    contract_path = contract_file && File.join(package.directory, contract_file)
+    unless contract_path && File.file?(contract_path)
+      errors << "python-headroom-ai: Fedora linked-license contract is missing"
+    else
+      errors << "python-headroom-ai: Fedora linked-license contract SHA-256 does not match" unless Digest::SHA256.file(contract_path).hexdigest == audit_config["fedora_license_contract_sha256"]
+      begin
+        contract = JSON.parse(File.read(contract_path))
+        expected_families = {
+          "43" => { "label" => "fedora-43", "architectures" => %w[x86_64 aarch64], "record_count" => 172, "canonical_sha256" => "261fff0ffc64c0704b89a3e95daa89380a519bc53682f07a4c89b326934c7b45" },
+          "44" => { "label" => "fedora-44", "architectures" => %w[x86_64 aarch64], "record_count" => 172, "canonical_sha256" => "405798ed561507c67423ebb6227faaf973a054f267b8c01e7d868b1019aadd96" },
+          "45" => { "label" => "rawhide-at-fedora-45", "architectures" => %w[x86_64 aarch64], "record_count" => 172, "canonical_sha256" => "b490d0f022f657589341c881e46c22b8305e3109fe4c82a7379a3fa700ea8119" }
+        }
+        target_license = "Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib"
+        errors << "python-headroom-ai: Fedora linked-license contract schema is invalid" unless contract["schema"] == "agentlab-headroom-fedora-linked-license-contract/v2"
+        errors << "python-headroom-ai: Fedora linked-license contract release is invalid" unless contract["release"] == { "name" => "python-headroom-ai", "version" => manifest_version, "source_sha256" => manifest_sha256 }
+        errors << "python-headroom-ai: Fedora linked-license contract source binding is invalid" unless contract["source_audit"] == { "file" => audit_file, "sha256" => audit_config["selected_license_audit_sha256"], "record_count" => 217, "candidate_binary_spdx" => "Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016" }
+        errors << "python-headroom-ai: Fedora linked-license expression differs from the spec" unless contract["target_binary_spdx"] == target_license && spec[/^%global headroom_binary_license\s+(.+)$/, 1] == target_license && audit_config["candidate_license"] == target_license
+        common_records = contract["common_records"]
+        common_records_valid = common_records.is_a?(Array) && common_records.length == 166 && common_records == common_records.uniq.sort
+        family_inventories_valid = common_records_valid && expected_families.all? do |family, expected|
+          data = contract.dig("families", family)
+          next false unless data.is_a?(Hash)
+
+          additional = data["additional_records"]
+          next false unless additional.is_a?(Array) && additional.length == 6 && additional == additional.uniq.sort
+
+          records = (common_records + additional).uniq.sort
+          metadata = data.reject { |key, _value| key == "additional_records" }
+          metadata == expected && records.length == expected["record_count"] && Digest::SHA256.hexdigest(records.join("\n") + "\n") == expected["canonical_sha256"]
+        end
+        errors << "python-headroom-ai: Fedora linked-license inventories are incomplete" unless family_inventories_valid && audit_config["fedora_family_record_sha256"] == expected_families.transform_values { |value| value["canonical_sha256"] }
+        errors << "python-headroom-ai: Fedora target-only license record is incomplete" unless contract["target_only_records"] == [{ "name" => "foldhash", "version" => "0.1.5", "cargo_license_expression" => "Zlib", "fedora_provider" => "rust-foldhash0.1-devel", "reason" => "Fedora hashbrown provider closure differs from the all-target source lock" }]
+        errors << "python-headroom-ai: Fedora provider license normalizations are incomplete" unless contract["reviewed_provider_normalizations"] == { "regex-syntax" => "(MIT OR Apache-2.0) AND Unicode-DFS-2016", "tree-sitter" => "MIT AND Unicode-DFS-2016 AND BSD-2-Clause AND BSD-3-Clause AND LicenseRef-Fedora-Public-Domain", "esaxx-rs" => "Apache-2.0 AND MIT", "ring" => "Apache-2.0 AND ISC AND (MIT OR Apache-2.0)" }
+        errors << "python-headroom-ai: Fedora linked-license validation flags are incomplete" unless contract["validation"] == { "records_sorted_unique" => true, "architectures_identical_within_family" => true, "unknown_family_fails" => true, "dynamic_build_identities_absent" => true }
+      rescue JSON::ParserError => e
+        errors << "python-headroom-ai: invalid Fedora linked-license contract: #{e.message}"
+      end
+    end
     reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
     current_static = reproducibility.fetch("current_static_validation")
     errors << "python-headroom-ai: current static validation retains dynamic remote evidence" if current_static.keys.any? { |key| key.match?(/remote|copr|build_id/) }
     errors << "python-headroom-ai: active static metadata retains a dynamic build identity" if [audit_config, current_static].flat_map(&:values).grep(String).any? { |value| value.match?(/\b(?:copr|build)\s+\d+\b/i) }
     errors << "python-headroom-ai: reproducibility does not bind the selected Cargo license audit" unless reproducibility.dig("current_draft", "selected_license_audit", "sha256") == audit_config["selected_license_audit_sha256"]
+    errors << "python-headroom-ai: reproducibility does not bind the Fedora linked-license contract" unless reproducibility.dig("current_draft", "fedora_license_contract", "sha256") == audit_config["fedora_license_contract_sha256"]
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
     errors << "python-headroom-ai: exact tree-sitter provider is missing" unless dependencies.dig("build_runtime", "local_packages")&.include?("rust-tree-sitter0.25.2 = 0.25.2")
     errors << "python-headroom-ai: exact tokenizers provider is missing" unless dependencies.dig("build_runtime", "local_packages")&.include?("rust-tokenizers0.22 = 0.22.2")
-    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.3" && reproducibility.dig("current_draft", "release") == "0.33.0-0.3"
+    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.4" && reproducibility.dig("current_draft", "release") == "0.33.0-0.4"
     required_spec_fragments = [
       "%global selected_license_audit_sha256 #{audit_config['selected_license_audit_sha256']}",
+      "%global fedora_license_contract_sha256 #{audit_config['fedora_license_contract_sha256']}",
       "%global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3",
       "Source1:        headroom-%{version}-selected-cargo-license-audit.json",
+      "Source2:        headroom-%{version}-fedora-license-contract.json",
       'echo "%{selected_license_audit_sha256}  %{SOURCE1}" | sha256sum -c -',
-      '%{python3} - "%{SOURCE1}" LICENSE.dependencies "%{headroom_binary_license}"',
+      'echo "%{fedora_license_contract_sha256}  %{SOURCE2}" | sha256sum -c -',
+      '%{python3} - "%{SOURCE1}" "%{SOURCE2}" LICENSE.dependencies "%{headroom_binary_license}" "%{fedora}"',
+      'unsupported Fedora license-contract family',
+      'common_records = contract.get("common_records")',
+      'additional_records = family.get("additional_records")',
+      'Fedora linked-license records differ',
+      'hashlib.sha256(payload.encode("utf-8")).hexdigest()',
       'headroom-core v0\\.1\\.0',
       "target_license_dependencies_comparison_implemented",
       "LICENSE.regex-syntax-unicode",

@@ -8,16 +8,24 @@ release:
   source_uploaded: "2026-07-29T23:24:15.245277Z"
   repository: chopratejas/headroom
 current_draft:
-  release: 0.33.0-0.3
-  validation: static source and selected-graph validation complete; exact tree-sitter and Rawhide tokenizers providers proven before the configured-SCM six-cell build
-  spec_sha256: d4b857115c24a5e7894a1f15111dc886d94a6ed4912845c27b569800d9c945d5
-  selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
-  license_gate: target builds must normalize cargo2rpm's headroom-core sibling path and compare all 217 records with the checked Source1 audit
+  release: 0.33.0-0.4
+  validation: source audit and exact Fedora-family linked-license contracts complete; configured-SCM six-cell build required
+  spec_sha256: 0b56c5e4c0acbc6036876d2180e7086ade43d5cf6782049b4109064b09eb62f9
+  selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
+  license_gate: target builds retain the 217-record source audit and compare generated linked records with the exact 172-record Source2 contract for Fedora 43, 44, or 45
   selected_license_audit:
     file: headroom-0.33.0-selected-cargo-license-audit.json
     sha256: 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71
     records: 217
     supplemental_text: regex-syntax 0.8.11 src/unicode_tables/LICENSE-UNICODE as Unicode-DFS-2016 at SHA-256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3
+  fedora_license_contract:
+    file: headroom-0.33.0-fedora-license-contract.json
+    sha256: 4dbc7e06524b52b997d74cbbcf847e2988c807630544ffb42301b704eae27738
+    record_count_per_family: 172
+    family_sha256:
+      "43": 261fff0ffc64c0704b89a3e95daa89380a519bc53682f07a4c89b326934c7b45
+      "44": 405798ed561507c67423ebb6227faaf973a054f267b8c01e7d868b1019aadd96
+      "45": b490d0f022f657589341c881e46c22b8305e3109fe4c82a7379a3fa700ea8119
 selected_surface:
   python: upstream base project plus mcp extra
   native_features:
@@ -52,7 +60,7 @@ current_static_validation:
   cargo_resolution: 307 resolved packages; 217 unique package/version records across 391 target-all normal tree entries
   source_license_probe: fastembed, Magika, ORT, and Redis are absent; ICU4X and the exact tree-sitter grammar set are selected
   unicode_license_probe: regex-syntax 0.8.11 bundles generated Unicode tables and includes src/unicode_tables/LICENSE-UNICODE while Cargo metadata declares only MIT OR Apache-2.0
-  buildroot_license_probe: normalize cargo2rpm's headroom-core sibling path, compare all 217 regenerated LICENSE.dependencies records with checked Source1, and install the verified regex-syntax Unicode text
+  buildroot_license_probe: normalize cargo2rpm's headroom-core sibling path, compare the complete generated 172-record set with Source2's auditable common-plus-family inventory and digest, retain Source1 as the 217-record all-target source audit, and install the verified regex-syntax Unicode text
   license_macro_redirection: canonical braced cargo_license expansion writes ../../LICENSE.dependencies
   system_sqlite_probe: target checks require the Rust CCR test binary to link Fedora libsqlite3 and the installed Python backend to open a database
   extension_dynamic_probe: target checks reject RPATH or RUNPATH; unused Rust CCR code may be dead-stripped from the extension
