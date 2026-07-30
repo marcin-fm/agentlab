@@ -1,0 +1,189 @@
+{
+  "schema": "agentlab-xberg-system-ort-audit/v3",
+  "release": "1.0.3",
+  "source": {
+    "archive": "xberg-1.0.3-source0.tar.gz",
+    "tag": "v1.0.3",
+    "commit": "37b9fee5762450351e9303243a00e51184a1f24b",
+    "tree": "2a5341953d531c886f8713c6f86c6aac2836ac82",
+    "archive_sha256": "238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e"
+  },
+  "selected_surface": {
+    "package": "xberg-cli",
+    "target": "x86_64-unknown-linux-gnu",
+    "no_default_features": true,
+    "features": [
+      "formats",
+      "analysis",
+      "core-cli",
+      "embeddings",
+      "html",
+      "url-ingestion",
+      "liter-llm",
+      "ocr",
+      "paddle-ocr",
+      "layout-detection",
+      "chunking-tokenizers"
+    ],
+    "tree_sitter_selected": false
+  },
+  "patches": [
+    {
+      "order": 0,
+      "file": "xberg-system-onnxruntime.patch",
+      "sha256": "8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab",
+      "purpose": "Select dynamic system ORT on the selected ML feature edges.",
+      "upstream_status": "Fedora-specific; not submitted upstream.",
+      "zero_fuzz_applied": true
+    },
+    {
+      "order": 1,
+      "file": "xberg-fedora-onnxruntime-path.patch",
+      "sha256": "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c",
+      "purpose": "Add Fedora lib64 to dynamic ORT discovery.",
+      "upstream_status": "Fedora-specific; not submitted upstream.",
+      "zero_fuzz_applied": true
+    },
+    {
+      "order": 2,
+      "file": "xberg-dynamic-tesseract.patch",
+      "sha256": "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f",
+      "purpose": "Use Fedora's dynamic Tesseract provider.",
+      "upstream_status": "Fedora-specific; not submitted upstream.",
+      "zero_fuzz_applied": true
+    },
+    {
+      "order": 3,
+      "file": "xberg-selected-workspace.patch",
+      "sha256": "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2",
+      "purpose": "Keep the six-member Fedora workspace and omit unselected Candle sources.",
+      "upstream_status": "Fedora-specific; package-surface selection.",
+      "zero_fuzz_applied": true
+    },
+    {
+      "order": 4,
+      "file": "xberg-fedora-system-tessdata.patch",
+      "sha256": "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20",
+      "purpose": "Use Fedora-managed tessdata and prevent mutable tessdata downloads.",
+      "upstream_status": "Fedora-specific; not submitted upstream.",
+      "zero_fuzz_applied": true
+    }
+  ],
+  "graph": {
+    "identity_serialization": "UTF-8 sorted unique name\\tversion\\n lines",
+    "baseline": {
+      "patches_omitted": ["xberg-system-onnxruntime.patch", "xberg-fedora-onnxruntime-path.patch"],
+      "patches_applied": ["xberg-dynamic-tesseract.patch", "xberg-selected-workspace.patch", "xberg-fedora-system-tessdata.patch"],
+      "normal_packages": 602,
+      "normal_build_dev_packages": 624,
+      "normal_identity_sha256": "f114e8f281ef70d46e226c6a04e191e7136aa72396b18dacd240c52f1767774a",
+      "normal_build_dev_identity_sha256": "ea64c64d2fbbbb5aab32032b77a422628ac7cd33aac39d14e5396abffdff3c82"
+    },
+    "patched": {
+      "patches_applied": [
+        "xberg-system-onnxruntime.patch",
+        "xberg-fedora-onnxruntime-path.patch",
+        "xberg-dynamic-tesseract.patch",
+        "xberg-selected-workspace.patch",
+        "xberg-fedora-system-tessdata.patch"
+      ],
+      "normal_packages": 603,
+      "normal_build_dev_packages": 622,
+      "normal_identity_sha256": "9f7b783531614c0a9460001ddae469dcd53ec02b37453db77f00896c72cb89fe",
+      "normal_build_dev_identity_sha256": "a49d533f5008678529641692a1951539120d35ccdb85197447c7aace5c954c91"
+    },
+    "delta": {
+      "normal_packages": 1,
+      "normal_build_dev_packages": -2,
+      "normal_added": ["libloading 0.9.0"],
+      "normal_removed": [],
+      "normal_build_dev_added": ["libloading 0.9.0"],
+      "normal_build_dev_removed": ["hmac-sha256 1.1.14", "lzma-rust2 0.15.8", "socks 0.3.4"]
+    }
+  },
+  "ort_feature_resolution": {
+    "baseline": {
+      "ort_sys_features": ["__tls", "api-17", "api-18", "download-binaries", "std", "tls-rustls", "tls-rustls-no-provider"],
+      "ort_features": ["api-17", "api-18", "download-binaries", "ndarray", "std", "tls-rustls", "tls-rustls-no-provider"],
+      "download_binaries": true
+    },
+    "patched": {
+      "ort_sys_features": ["api-17", "api-18", "disable-linking", "std"],
+      "ort_features": ["api-17", "api-18", "load-dynamic", "ndarray", "preload-dylibs", "std"],
+      "download_binaries": false
+    }
+  },
+  "commands": {
+    "metadata": "cargo metadata --locked --offline --format-version 1 --filter-platform x86_64-unknown-linux-gnu --manifest-path crates/xberg-cli/Cargo.toml --no-default-features --features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers",
+    "tree_normal": "cargo tree --locked --offline --target x86_64-unknown-linux-gnu --manifest-path crates/xberg-cli/Cargo.toml --package xberg-cli --no-default-features --features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers --edges normal --no-dedupe --prefix none --format {p}",
+    "tree_normal_build_dev": "cargo tree --locked --offline --target x86_64-unknown-linux-gnu --manifest-path crates/xberg-cli/Cargo.toml --package xberg-cli --no-default-features --features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers --edges normal,build,dev --no-dedupe --prefix none --format {p}",
+    "ort_features": "cargo tree --locked --offline --target x86_64-unknown-linux-gnu --manifest-path crates/xberg-cli/Cargo.toml --package xberg-cli --no-default-features --features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers --edges features --invert ort-sys --no-dedupe --prefix none --format {p} {f}"
+  },
+  "bindings": {
+    "lock": {
+      "file": "xberg-1.0.3-fedora-Cargo.lock",
+      "sha256": "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667"
+    },
+    "closure": {
+      "file": "xberg-1.0.3-cargo-closure.json",
+      "sha256": "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907"
+    },
+    "vendor": {
+      "directory": "cargo-vendor",
+      "registry_identities": 1034,
+      "tree_sha256": "fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917",
+      "files": 51213,
+      "directories": 9444,
+      "symlinks": 0,
+      "bytes": 1099639051
+    },
+    "source_filter": {
+      "file": "xberg-1.0.3-source-filter.json",
+      "sha256": "4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4",
+      "unsafe_links_removed": 1
+    },
+    "source_license_receipt": {
+      "file": "xberg-1.0.3-source-license-receipt.json",
+      "sha256": "151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32"
+    },
+    "license_text_presence": {
+      "file": "xberg-1.0.3-license-text-presence.json",
+      "sha256": "99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691",
+      "present": 959,
+      "absent": 75,
+      "final_linked_license_complete": false
+    }
+  },
+  "system_provider_contract": {
+    "onnxruntime": "dynamic system library",
+    "runtime_library": "/usr/lib64/libonnxruntime.so",
+    "buildrequires": "pkgconfig(libonnxruntime) >= 1.18",
+    "requires": ["onnxruntime%{?_isa} >= 1.18", "tesseract-langpack-eng"],
+    "runtime_environment": "ORT_DYLIB_PATH=%{_libdir}/libonnxruntime.so",
+    "download_binaries": false
+  },
+  "validation": {
+    "source_archive_verified": true,
+    "lock_checked": true,
+    "patches_zero_fuzz": true,
+    "locked_offline_metadata": true,
+    "locked_offline_tree": true,
+    "vendor_source_delivery": true,
+    "compilation": false,
+    "ort_runtime_smoke": false,
+    "models_licenses": false,
+    "aggregate_license": false,
+    "enablement": false,
+    "copr": false,
+    "retirements": false
+  },
+  "blocker": {
+    "status": "blocked",
+    "findings": [
+      "This is a source/lock/vendor graph audit only; no compilation or runtime proof was performed.",
+      "Final linked-license completeness is not proven; 75 source-level license text identities are absent.",
+      "Model provenance, offline runtime behavior, native-link evidence, RPM payload accounting, and full matrix proof remain incomplete.",
+      "COPR and publication state were intentionally not queried or changed."
+    ]
+  }
+}

@@ -87,17 +87,17 @@ index 0c01f6e..8041ad0 100644
  # Note: candle-core unconditionally links platform-specific deps (cudarc on Linux, metal-kernels on macOS).
  # To avoid conflicts during feature unification, GPU features (candle-cuda/metal/mkl/accelerate) should
  # only be explicitly enabled with platform awareness. CI uses `--features full` which excludes GPU accel.
--xberg-candle-ocr = { path = "../xberg-candle-ocr", version = "1.0.1", optional = true }
+-xberg-candle-ocr = { path = "../xberg-candle-ocr", version = "1.0.3", optional = true }
  # PaddleOCR via ONNX Runtime - not available on WASM (vendored from paddle-ocr-rs)
- xberg-paddle-ocr = { path = "../xberg-paddle-ocr", version = "1.0.1", optional = true }
+ xberg-paddle-ocr = { path = "../xberg-paddle-ocr", version = "1.0.3", optional = true }
  
 @@ -1012,7 +972,6 @@ ureq = { version = "3.3", default-features = false, features = [
      "json",
  ], optional = true }
  # Candle-based VLM OCR backends - pure-Rust transformer inference, not on WASM yet.
--xberg-candle-ocr = { path = "../xberg-candle-ocr", version = "1.0.1", optional = true }
+-xberg-candle-ocr = { path = "../xberg-candle-ocr", version = "1.0.3", optional = true }
  # PaddleOCR via ONNX Runtime - not available on WASM (vendored from paddle-ocr-rs)
- xberg-paddle-ocr = { path = "../xberg-paddle-ocr", version = "1.0.1", optional = true }
+ xberg-paddle-ocr = { path = "../xberg-paddle-ocr", version = "1.0.3", optional = true }
  
 diff --git a/crates/xberg-cli/Cargo.toml b/crates/xberg-cli/Cargo.toml
 --- a/crates/xberg-cli/Cargo.toml

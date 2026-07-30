@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 require "optparse"
 require_relative "lib/agentlab"
 
@@ -15,6 +16,49 @@ packages = selected_name ? [Agentlab.package_named(selected_name)] : Agentlab.pa
 project_chroots = Agentlab.config.fetch("chroots")
 errors = []
 warnings = []
+
+def validate_xberg_patches_zero_fuzz!(package, errors, warnings)
+  source_hash = package.upstream.fetch("source_sha256")
+  explicit_archive = ENV["AGENTLAB_XBERG_SOURCE0"]
+  source_archive = explicit_archive if explicit_archive && File.file?(explicit_archive) && Digest::SHA256.file(explicit_archive).hexdigest == source_hash
+  source_archive ||= Dir.glob(File.join("/srv/cache/cargo-agentlab/source-files", "#{source_hash}--*"), File::FNM_DOTMATCH).first
+  unless source_archive && File.file?(source_archive)
+    warnings << "xberg: zero-fuzz patch validation skipped; set AGENTLAB_XBERG_SOURCE0 to the checked Source0 archive"
+    return
+  end
+
+  workdir = "/srv/tmp/agentlab-check-xberg-patches-#{Process.pid}"
+  source_root = File.join(workdir, "xberg-1.0.3")
+  FileUtils.rm_rf(workdir)
+  FileUtils.mkdir_p(workdir)
+  _stdout, stderr, status = Agentlab.capture(["tar", "-xzf", source_archive, "-C", workdir])
+  unless status.success? && File.directory?(source_root)
+    errors << "xberg: Source0 extraction failed for zero-fuzz patch validation: #{stderr.strip}"
+    return
+  end
+
+  %w[
+    xberg-system-onnxruntime.patch
+    xberg-fedora-onnxruntime-path.patch
+    xberg-dynamic-tesseract.patch
+    xberg-selected-workspace.patch
+    xberg-fedora-system-tessdata.patch
+  ].each do |name|
+    path = File.join(package.directory, name)
+    _stdout, stderr, status = Agentlab.capture(["patch", "--dry-run", "--fuzz=0", "-p1", "-i", path], chdir: source_root)
+    unless status.success?
+      errors << "xberg: #{name} does not apply with zero fuzz in spec order: #{stderr.strip}"
+      break
+    end
+    _stdout, stderr, status = Agentlab.capture(["patch", "--fuzz=0", "-p1", "-i", path], chdir: source_root)
+    unless status.success?
+      errors << "xberg: #{name} failed while preparing zero-fuzz patch validation: #{stderr.strip}"
+      break
+    end
+  end
+ensure
+  FileUtils.rm_rf(workdir) if workdir
+end
 
 Agentlab.copr_chroot_matrix_errors(project_chroots, require_all_stable_releases: true).each do |error|
   errors << "config/copr.yml: #{error}"
@@ -523,32 +567,38 @@ packages.each do |package|
         errors << "xberg: source audit release does not match" unless audit["release"] == manifest_version
         errors << "xberg: source audit commit does not match" unless audit.dig("source", "commit") == package.upstream["source_commit"]
         errors << "xberg: source audit tree does not match" unless audit.dig("source", "tree") == package.upstream["source_tree"]
-        errors << "xberg: source audit archive SHA-256 does not match" unless audit.dig("source", "archive_sha256") == manifest_sha256
+        errors << "xberg: source audit current package version is invalid" unless audit["current_package_version"] == "#{manifest_version}-0.1"
+        errors << "xberg: source audit source identity is invalid" unless audit.dig("source", "tag") == package.upstream["source_tag"] && audit.dig("source", "commit") == package.upstream["source_commit"] && audit.dig("source", "tree") == package.upstream["source_tree"] && audit.dig("source", "archive", "sha256") == manifest_sha256
         errors << "xberg: package metadata exposes prior audit counts as current evidence" unless audit_config.keys.sort == %w[file schema sha256]
-        prior_notes = audit["prior_audit_notes"] || {}
-        errors << "xberg: source audit prior reusable count is not clearly unrevalidated" unless prior_notes.dig("reusable_exact_identities") == { "prior_reported_count" => 45, "revalidated_for_xberg" => false }
-        errors << "xberg: source audit prior retirement count is not clearly unrevalidated" unless prior_notes.dig("conservative_retirement_candidates", "prior_reported_count") == 17 && prior_notes.dig("conservative_retirement_candidates", "revalidated_for_xberg") == false
-        root_lock = prior_notes["root_lock_presence_cross_check"]
-        errors << "xberg: source audit root lock cross-check is incomplete" unless root_lock && root_lock["historical_dependency_finalization"] == "historical/kreuzberg-4.10.2/dependency-finalization.yml" && root_lock["historical_package_rows"] == 63 && root_lock["exact_crate_name_version_pairs_present_in_xberg_root_lock"] == 42 && root_lock["scope"] == "lock presence only" && root_lock["retirements_authorized"] == false
-        errors << "xberg: source audit root lock exclusions are incomplete" unless root_lock && root_lock["inventory_exclusions"] == [{ "package" => "rust-hayro-jpeg2000", "old_version" => "0.3.5", "xberg_root_lock" => "present" }, { "package" => "rust-fearless_simd", "old_version" => "0.4.0", "xberg_root_lock" => "not exact; 0.4.1 present" }]
-        errors << "xberg: source audit version review notes are incomplete" unless prior_notes["version_review_notes"]&.length == 5
-        errors << "xberg: source audit new identity notes are incomplete" unless prior_notes["new_identity_notes"]&.map { |note| [note["crate"], note["version"]] } == [["auto_enums", "0.8.10"], ["calamine", "0.36.1"], ["crawlberg", "1.0.10"], ["hf-hub", "1.0.0"], ["icu family", "2.2"], ["liter-llm", "1.11.3"], ["pdf_oxide", "0.3.76"], ["reqwest", "0.13.4"], ["tokenizers", "0.23.1"], ["zip", "8.6.0"]]
+        expected_receipts = {
+          "source_filter" => { "filename" => "xberg-1.0.3-source-filter.json", "sha256" => package.data.dig("source_link_filter", "sha256") },
+          "cargo_closure" => { "filename" => "xberg-1.0.3-cargo-closure.json", "sha256" => package.data.dig("cargo_source_contract", "source_evidence", "closure", "sha256"), "cargo_lock_sha256" => package.data.dig("cargo_source_contract", "cargo_lock_sha256") },
+          "source_license" => { "filename" => "xberg-1.0.3-source-license-receipt.json", "sha256" => package.data.dig("cargo_source_contract", "source_evidence", "source_license_receipt", "sha256") },
+          "provider_proof" => { "filename" => "xberg-1.0.3-provider-proof.json", "sha256" => package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "sha256") }
+        }
+        errors << "xberg: source audit receipt bindings are invalid" unless audit["source_receipts"] == expected_receipts
         errors << "xberg: source audit does not select the required CLI workspace" unless audit.dig("selected_root_surface", "workspace_members") == %w[xberg xberg-cli]
         errors << "xberg: source audit does not exclude the Node binding" unless audit.dig("selected_root_surface", "node_binding", "selected") == false
-        errors << "xberg: source audit CLI feature surface is incomplete" unless audit["default_cli_features"] == %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers tree-sitter]
+        selected_features = %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers]
+        errors << "xberg: source audit upstream default feature surface is incomplete" unless audit["default_cli_features"] == selected_features + ["tree-sitter"]
+        errors << "xberg: source audit packaged feature selection is incomplete" unless audit["packaged_feature_selection"] == { "package" => "xberg-cli", "no_default_features" => true, "features" => selected_features, "tree_sitter_included" => false }
         errors << "xberg: source audit does not select the required workspace crates" unless audit["selected_workspace_crates"] == %w[xberg xberg-cli xberg-libheif xberg-libwpd xberg-paddle-ocr xberg-tesseract]
         errors << "xberg: source audit does not exclude xberg-gliner" unless audit["unselected_workspace_crates"] == ["xberg-gliner"]
-        errors << "xberg: source audit offline metadata limit is incomplete" unless audit.dig("offline_cargo_metadata", "complete") == false && audit.dig("offline_cargo_metadata", "limitation") == "Complete offline Cargo metadata stopped on missing auto_enums 0.8.10."
+        errors << "xberg: source audit offline graph is incomplete" unless audit["offline_cargo_metadata"] == { "complete" => true, "selected_registry_identities" => 597, "vendor_registry_identities" => 1_034, "resolver_only_registry_identities" => 437, "normal_packages" => 603, "normal_build_dev_packages" => 622, "git_dependencies" => 0 }
         errors << "xberg: source audit native boundaries are incomplete" unless audit["native_boundaries"] == {
-          "onnx_runtime" => "system/dynamic ORT",
-          "tesseract_leptonica" => "investigate Tesseract/Leptonica",
-          "libheif" => "system libheif",
-          "xberg_libwpd" => "unresolved static bundled libwpd, librevenge, Boost, and zlib",
-          "runtime_models_and_tessdata" => "runtime cache behavior, not build sources"
+          "onnx_runtime" => "dynamic system ONNX Runtime",
+          "tesseract_leptonica" => "dynamic system Tesseract and Leptonica",
+          "libheif" => "dynamic system libheif",
+          "xberg_libwpd" => "bundled source boundary; final link evidence is pending",
+          "runtime_models_and_tessdata" => "models are opt-in only; tessdata is Fedora-provided"
         }
-        %w[complete_cargo_closure fedora_rpm_fusion_provider_parity native_integration aggregate_license offline_target_build target_matrix enablement copr_publication retirements retirements_authorized].each do |flag|
-          errors << "xberg: source audit validation #{flag} is not false" unless audit.dig("validation", flag) == false
-        end
+        errors << "xberg: source audit runtime boundaries are incomplete" unless audit.dig("runtime_boundaries", "tree_sitter") == { "selected" => false, "omitted_from_initial_rpm" => true, "runtime_parser_pack_download" => false, "return_todo" => "Audit tree-sitter-language-pack 1.13.5 parser sources and licenses before restoring the feature." } && audit.dig("runtime_boundaries", "model_downloads") == { "policy" => "opt-in only for immutable checksum-verified content outside the RPM payload", "provenance_complete" => false, "offline_runtime_proof_complete" => false, "runtime_smoke_complete" => false } && audit.dig("runtime_boundaries", "tessdata") == { "mutable_downloads_enabled" => false, "provider" => "Fedora tesseract-langpack-* packages or an explicit local tessdata path", "default_path" => "/usr/share/tesseract/tessdata/eng.traineddata" }
+        errors << "xberg: source audit source-license gaps are incomplete" unless audit.dig("source_license_accounting", "missing_text_gaps") == { "total" => 75, "selected_normal" => 22, "resolver_only" => 53, "distribution_text_required" => 74 }
+        errors << "xberg: source audit duplicate absence evidence is invalid" unless audit["distribution_duplicate_audit"] == { "fedora_xberg_provider_absent" => true, "rpm_fusion_duplicate_absence_established" => true }
+        completed_flags = %w[manifest_review_complete static_dependency_closure_complete dependency_license_text_inventory_complete]
+        incomplete_flags = %w[native_integration_review_complete provider_audit_complete aggregate_license_complete target_source_build_complete compile_complete link_complete payload_complete final_linked_license_complete models_and_tessdata_licenses_complete runtime_smoke_complete target_matrix_complete enablement_complete copr_publication_complete retirements_complete retirements_authorized]
+        errors << "xberg: source audit completed validations are incomplete" unless completed_flags.all? { |flag| audit.dig("validation", flag) == true }
+        errors << "xberg: source audit unresolved validations are not false" unless incomplete_flags.all? { |flag| audit.dig("validation", flag) == false }
       rescue JSON::ParserError => e
         errors << "xberg: invalid source audit receipt: #{e.message}"
       end
@@ -565,12 +615,16 @@ packages.each do |package|
         system_audit = JSON.parse(File.read(system_audit_path))
         errors << "xberg: system ORT audit receipt schema is invalid" unless system_audit["schema"] == system_audit_config["schema"]
         errors << "xberg: system ORT audit release does not match" unless system_audit["release"] == manifest_version
-        errors << "xberg: system ORT audit source identity does not match" unless system_audit.dig("source", "commit") == package.upstream["source_commit"] && system_audit.dig("source", "tree") == package.upstream["source_tree"] && system_audit.dig("source", "archive_sha256") == manifest_sha256
-        errors << "xberg: system ORT audit patch hashes do not match" unless system_audit.fetch("patches", []).to_h { |patch| [patch["file"], patch["sha256"]] } == system_audit_config["patches"]
-        errors << "xberg: system ORT audit does not preserve the default feature surface" unless system_audit.dig("selected_surface", "feature_preserved") == true
-        %w[vendor_source_delivery provider_matrix compilation ort_runtime_smoke models_licenses aggregate_license enablement copr retirements].each do |flag|
-          errors << "xberg: system ORT audit validation #{flag} is not false" unless system_audit.dig("validation", flag) == false
-        end
+        errors << "xberg: system ORT audit source identity does not match" unless system_audit["source"] == { "archive" => "xberg-1.0.3-source0.tar.gz", "tag" => package.upstream["source_tag"], "commit" => package.upstream["source_commit"], "tree" => package.upstream["source_tree"], "archive_sha256" => manifest_sha256 }
+        expected_patches = [[0, "xberg-system-onnxruntime.patch", "8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab"], [1, "xberg-fedora-onnxruntime-path.patch", "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c"], [2, "xberg-dynamic-tesseract.patch", "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f"], [3, "xberg-selected-workspace.patch", "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2"], [4, "xberg-fedora-system-tessdata.patch", "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20"]]
+        errors << "xberg: system ORT audit patch hashes do not match" unless system_audit.fetch("patches", []).map { |patch| [patch["order"], patch["file"], patch["sha256"], patch["zero_fuzz_applied"]] } == expected_patches.map { |order, file, sha256| [order, file, sha256, true] }
+        selected_features = %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers]
+        errors << "xberg: system ORT audit selected feature set is incomplete" unless system_audit["selected_surface"] == { "package" => "xberg-cli", "target" => "x86_64-unknown-linux-gnu", "no_default_features" => true, "features" => selected_features, "tree_sitter_selected" => false }
+        errors << "xberg: system ORT graph audit is incomplete" unless system_audit.dig("graph", "baseline") == { "patches_omitted" => expected_patches.first(2).map { |_, file, _| file }, "patches_applied" => expected_patches.last(3).map { |_, file, _| file }, "normal_packages" => 602, "normal_build_dev_packages" => 624, "normal_identity_sha256" => "f114e8f281ef70d46e226c6a04e191e7136aa72396b18dacd240c52f1767774a", "normal_build_dev_identity_sha256" => "ea64c64d2fbbbb5aab32032b77a422628ac7cd33aac39d14e5396abffdff3c82" } && system_audit.dig("graph", "patched") == { "patches_applied" => expected_patches.map { |_, file, _| file }, "normal_packages" => 603, "normal_build_dev_packages" => 622, "normal_identity_sha256" => "9f7b783531614c0a9460001ddae469dcd53ec02b37453db77f00896c72cb89fe", "normal_build_dev_identity_sha256" => "a49d533f5008678529641692a1951539120d35ccdb85197447c7aace5c954c91" } && system_audit.dig("graph", "delta") == { "normal_packages" => 1, "normal_build_dev_packages" => -2, "normal_added" => ["libloading 0.9.0"], "normal_removed" => [], "normal_build_dev_added" => ["libloading 0.9.0"], "normal_build_dev_removed" => ["hmac-sha256 1.1.14", "lzma-rust2 0.15.8", "socks 0.3.4"] }
+        errors << "xberg: system ORT feature audit is incomplete" unless system_audit["ort_feature_resolution"] == { "baseline" => { "ort_sys_features" => %w[__tls api-17 api-18 download-binaries std tls-rustls tls-rustls-no-provider], "ort_features" => %w[api-17 api-18 download-binaries ndarray std tls-rustls tls-rustls-no-provider], "download_binaries" => true }, "patched" => { "ort_sys_features" => %w[api-17 api-18 disable-linking std], "ort_features" => %w[api-17 api-18 load-dynamic ndarray preload-dylibs std], "download_binaries" => false } }
+        errors << "xberg: system ORT bindings are invalid" unless system_audit["bindings"] == { "lock" => { "file" => "xberg-1.0.3-fedora-Cargo.lock", "sha256" => "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667" }, "closure" => { "file" => "xberg-1.0.3-cargo-closure.json", "sha256" => "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907" }, "vendor" => { "directory" => "cargo-vendor", "registry_identities" => 1_034, "tree_sha256" => "fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917", "files" => 51_213, "directories" => 9_444, "symlinks" => 0, "bytes" => 1_099_639_051 }, "source_filter" => { "file" => "xberg-1.0.3-source-filter.json", "sha256" => "4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4", "unsafe_links_removed" => 1 }, "source_license_receipt" => { "file" => "xberg-1.0.3-source-license-receipt.json", "sha256" => "151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32" }, "license_text_presence" => { "file" => "xberg-1.0.3-license-text-presence.json", "sha256" => "99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691", "present" => 959, "absent" => 75, "final_linked_license_complete" => false } }
+        errors << "xberg: system ORT provider contract is incomplete" unless system_audit["system_provider_contract"] == { "onnxruntime" => "dynamic system library", "runtime_library" => "/usr/lib64/libonnxruntime.so", "buildrequires" => "pkgconfig(libonnxruntime) >= 1.18", "requires" => ["onnxruntime%{?_isa} >= 1.18", "tesseract-langpack-eng"], "runtime_environment" => "ORT_DYLIB_PATH=%{_libdir}/libonnxruntime.so", "download_binaries" => false }
+        errors << "xberg: system ORT source-only gate is invalid" unless system_audit["validation"] == { "source_archive_verified" => true, "lock_checked" => true, "patches_zero_fuzz" => true, "locked_offline_metadata" => true, "locked_offline_tree" => true, "vendor_source_delivery" => true, "compilation" => false, "ort_runtime_smoke" => false, "models_licenses" => false, "aggregate_license" => false, "enablement" => false, "copr" => false, "retirements" => false } && system_audit.dig("blocker", "status") == "blocked" && system_audit.dig("blocker", "findings")&.length == 4
       rescue JSON::ParserError => e
         errors << "xberg: invalid system ORT audit receipt: #{e.message}"
       end
@@ -601,23 +655,28 @@ packages.each do |package|
       closure = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "closure", "file"))))
       receipt = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "vendor_receipt", "file"))))
       license = JSON.parse(File.read(File.join(package.directory, cargo.dig("source_evidence", "license_text_presence", "file"))))
-      errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["vendor_registry_identities"], cargo["resolver_only_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [604, 1_040, 436, 610, 629, 0, -2, 436]
+      selected_features = %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers]
+      errors << "xberg: Cargo source contract counts differ" unless [cargo["selected_registry_identities"], cargo["vendor_registry_identities"], cargo["resolver_only_registry_identities"], cargo["normal_packages"], cargo["normal_build_dev_packages"], cargo["git_dependencies"], cargo["ort_download_delta"], cargo["resolver_only_additions"]] == [597, 1_034, 437, 603, 622, 0, -2, 437]
       errors << "xberg: Cargo source contract does not declare canonical graph receipt v2" unless cargo["closure_schema"] == "agentlab-xberg-cargo-closure/v2" && cargo["graph_identity_serialization"] == "UTF-8 sorted unique name\\tversion\\n lines"
-      errors << "xberg: Cargo resolver model is not selected-Fedora-workspace-lock complete" unless closure.dig("resolver_model", "kind") == "selected-Fedora-workspace-lock-complete" && closure.dig("counts", "selected_registry_identities") == 604 && closure.dig("counts", "vendor_registry_identities") == 1_040 && closure.dig("counts", "resolver_only_registry_identities") == 436 && closure.dig("counts", "root_lock_workspace") == 6
+      errors << "xberg: Cargo resolver model is not selected-Fedora-workspace-lock complete" unless closure.dig("resolver_model", "kind") == "selected-Fedora-workspace-lock-complete" && closure.dig("counts", "selected_registry_identities") == 597 && closure.dig("counts", "vendor_registry_identities") == 1_034 && closure.dig("counts", "resolver_only_registry_identities") == 437 && closure.dig("counts", "root_lock_workspace") == 6
       errors << "xberg: Cargo closure schema is not canonical identity v2" unless closure["schema"] == "agentlab-xberg-cargo-closure/v2"
-      errors << "xberg: Cargo graph counts differ" unless closure.fetch("counts").values_at("normal_packages", "normal_build_dev_packages", "git_dependencies") == [610, 629, 0]
+      errors << "xberg: Cargo graph counts differ" unless closure.fetch("counts").values_at("normal_packages", "normal_build_dev_packages", "git_dependencies") == [603, 622, 0]
+      errors << "xberg: Cargo selected feature surface is incomplete" unless closure.dig("selection", "package") == "xberg-cli" && closure.dig("selection", "no_default_features") == true && closure.dig("selection", "features") == selected_features
       identities = closure.dig("selection", "registry_identities")
-      errors << "xberg: selected registry identities are not sorted and unique" unless identities.is_a?(Array) && identities.length == 604 && identities.map { |item| [item["name"], item["version"]] } == identities.map { |item| [item["name"], item["version"]] }.uniq.sort
+      errors << "xberg: selected registry identities are not sorted and unique" unless identities.is_a?(Array) && identities.length == 597 && identities.map { |item| [item["name"], item["version"]] } == identities.map { |item| [item["name"], item["version"]] }.uniq.sort
       outputs = closure["outputs"]
       errors << "xberg: Cargo graph identity receipt is incomplete" unless outputs.is_a?(Hash) && outputs.keys.sort == %w[identity_serialization normal_build_dev_identity_sha256 normal_identity_sha256] && outputs["identity_serialization"] == "UTF-8 sorted unique name\\tversion\\n lines" && outputs.values_at("normal_identity_sha256", "normal_build_dev_identity_sha256").all? { |value| value.match?(/\A[0-9a-f]{64}\z/) }
+      errors << "xberg: Cargo graph identity hashes differ" unless outputs.values_at("normal_identity_sha256", "normal_build_dev_identity_sha256") == ["9f7b783531614c0a9460001ddae469dcd53ec02b37453db77f00896c72cb89fe", "a49d533f5008678529641692a1951539120d35ccdb85197447c7aace5c954c91"]
       errors << "xberg: Cargo vendor tree is not canonical" unless receipt["vendor_tree"] == cargo["vendor_tree"].merge("algorithm" => "sha256(sorted type,path,mode,link-target,size,content-sha256 records)")
-      errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 963, "absent" => 77 } && license.dig("validation", "final_linked_license_complete") == false
-      errors << "xberg: Cargo source contract incorrectly claims final license completion" unless cargo.dig("license_text_presence", "final_linked_license_complete") == false
+      errors << "xberg: Cargo vendor tree counts differ" unless cargo["vendor_tree"] == { "sha256" => "fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917", "files" => 51_213, "directories" => 9_444, "symlinks" => 0, "bytes" => 1_099_639_051 }
+      errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 959, "absent" => 75 } && license.dig("validation", "source_text_presence_verified") == true && license.dig("validation", "final_linked_license_complete") == false
+      errors << "xberg: Cargo source contract license-gap roles differ" unless cargo["license_text_presence"] == { "present" => 959, "absent" => 75, "selected_normal_gaps" => 22, "resolver_only_gaps" => 53, "required_text_count" => 74, "final_linked_license_complete" => false }
       compile_contract = package.data["compile_proof_contract"]
       expected_compile_contract = {
          "package" => "xberg-cli",
-         "features" => ["default"],
-         "cargo_build" => "%cargo_build -- --package xberg-cli --features default --locked",
+         "no_default_features" => true,
+         "features" => selected_features,
+         "cargo_build" => "%cargo_build -- --package xberg-cli --no-default-features --features %{xberg_cli_features} --locked",
          "license_writer" => "scripts/write-xberg-cargo-license-receipts",
          "license_output" => "LICENSE.dependencies",
          "license_scope" => "cargo2rpm-equivalent target-all static dependency inventory; not final Linux linked-license evidence",
@@ -633,10 +692,11 @@ packages.each do |package|
          "full_matrix_required" => true
       }
       errors << "xberg: compile proof contract is incomplete" unless compile_contract == expected_compile_contract
-      required = ["Source10:       %{name}-%{version}-fedora-Cargo.lock", "Source11:       %{name}-%{version}-provider-proof.json", "Source12:       %{name}-%{version}-source-license-receipt.json", "Source13:       %{name}-%{version}-fedora-license-allowlist.json", "Source14:       audit-xberg-proof-receipts", "Source15:       write-xberg-cargo-license-receipts", "Patch2:", "Patch3:", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "install -pm0644 %{SOURCE10} Cargo.lock", "audit-xberg-cargo-closure --verify", "%cargo_prep -v cargo-vendor", "--prepared-source", "--vendor-dir", "test \"$(wc -l < %{SOURCE7})\" -eq 1040", "%cargo_build -- --package xberg-cli --features default --locked", "ruby .agentlab-source/write-xberg-cargo-license-receipts --output LICENSE.dependencies", "LICENSE.dependencies", "target/rpm/xberg --version", "ldd -r target/rpm/xberg", "readelf -d target/rpm/xberg", "exit 1"]
+      required = ["Source10:       %{name}-%{version}-fedora-Cargo.lock", "Source11:       %{name}-%{version}-provider-proof.json", "Source12:       %{name}-%{version}-source-license-receipt.json", "Source13:       %{name}-%{version}-fedora-license-allowlist.json", "Source14:       audit-xberg-proof-receipts", "Source15:       write-xberg-cargo-license-receipts", "Patch2:", "Patch3:", "Patch4:", "%setup -q -n xberg-%{version}", "--sanitize-only --source . --filter %{SOURCE9}", "%autopatch -p1", "install -pm0644 %{SOURCE10} Cargo.lock", "audit-xberg-cargo-closure --verify", "%cargo_prep -v cargo-vendor", "--prepared-source", "--vendor-dir", "test \"$(wc -l < %{SOURCE7})\" -eq 1034", "%cargo_build -- --package xberg-cli --no-default-features --features %{xberg_cli_features} --locked", "ruby .agentlab-source/write-xberg-cargo-license-receipts --output LICENSE.dependencies", "LICENSE.dependencies", "target/rpm/xberg --version", "ldd -r target/rpm/xberg", "readelf -d target/rpm/xberg", "exit 1"]
        errors << "xberg: spec lacks fail-closed Cargo vendor contract" unless required.all? { |fragment| spec.include?(fragment) }
-       errors << "xberg: spec disables the selected default CLI features" if spec.include?("%cargo_build_crate -n") || spec.include?("--no-default-features")
-       build_index = spec.index("%cargo_build -- --package xberg-cli --features default --locked")
+       errors << "xberg: spec uses the broken Cargo macro package option" if spec.include?("%cargo_build_crate -n") || spec.include?("--features default")
+       errors << "xberg: spec does not bind the exact selected feature surface" unless spec.include?("%global xberg_cli_features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers")
+       build_index = spec.index("%cargo_build -- --package xberg-cli --no-default-features --features %{xberg_cli_features} --locked")
        license_index = spec.index("ruby .agentlab-source/write-xberg-cargo-license-receipts --output LICENSE.dependencies")
        check_index = spec.index("%check")
        errors << "xberg: build and license commands do not precede the proof gate" unless build_index && license_index && check_index && build_index < license_index && license_index < check_index
@@ -655,20 +715,28 @@ packages.each do |package|
        errors << "xberg: source extractor lacks receipt-driven safe link handling" unless ["safe_symlink_target", "safe_hardlink_target", "verify_unsafe_links!", "sanitize_tree!", "gnu_extension_value!", "pax_records!", "File.symlink(linkname, target)", "File.link(source, target)", "duplicate archive entry"].all? { |fragment| auditor.include?(fragment) }
        errors << "xberg: spec exits before the build gate" unless spec.index("exit 1") && spec.index("exit 1") > spec.index("%check")
       proof_auditor = File.read(File.join(Agentlab::ROOT, "scripts", "audit-xberg-proof-receipts"))
-      errors << "xberg: proof auditor lacks tracked provider input" unless proof_auditor.include?("--provider PATH") && proof_auditor.include?("validate_provider!")
+      errors << "xberg: proof auditor lacks tracked provider input" unless proof_auditor.include?("--provider PATH") && proof_auditor.include?("provider_receipt")
       errors << "xberg: proof auditor lacks prepared-source mode" unless proof_auditor.include?("--prepared-source DIR") && proof_auditor.include?("--vendor-dir DIR")
+       errors << "xberg: proof auditor feature contract differs" unless ["VERSION = \"1.0.3\"", "REGISTRY = 1034", "SELECTED_REGISTRY = 597", "EXPECTED_GAPS = 75", "EXPECTED_SELECTED_GAPS = 22", "EXPECTED_RESOLVER_GAPS = 53", "NORMAL_PACKAGES = 603", "NORMAL_BUILD_DEV_PACKAGES = 622", "RESOLVER_ONLY_REGISTRY = 437", "9f7b783531614c0a9460001ddae469dcd53ec02b37453db77f00896c72cb89fe", "a49d533f5008678529641692a1951539120d35ccdb85197447c7aace5c954c91", "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2", "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20", "xberg-fedora-system-tessdata.patch"].all? { |fragment| proof_auditor.include?(fragment) }
       license_writer = File.read(File.join(Agentlab::ROOT, "scripts", "write-xberg-cargo-license-receipts"))
-      license_writer_fragments = ["PACKAGE = \"xberg-cli\"", "FEATURES = \"default\"", '"--package=#{PACKAGE}"', '"--offline"', '"--locked"', '"--edges=no-build,no-dev,no-proc-macro"', '"--target=all"', 'line.end_with?(" (*)")', '.gsub(" / ", "/").gsub("/", " OR ")', 'File.write(output']
-      errors << "xberg: Cargo license writer does not match the selected default CLI contract" unless license_writer_fragments.all? { |fragment| license_writer.include?(fragment) }
-       source_license = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.1-source-license-receipt.json")))
-       provider_proof = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.1-provider-proof.json")))
-        dynamic_tesseract_check_index = spec.index('echo "%{dynamic_tesseract_patch_sha256}  %{PATCH2}" | sha256sum -c -')
-        selected_workspace_check_index = spec.index('echo "%{selected_workspace_patch_sha256}  %{PATCH3}" | sha256sum -c -')
+      license_writer_fragments = ["PACKAGE = \"xberg-cli\"", "FEATURES = %w[", '"--package=#{PACKAGE}"', '"--offline"', '"--locked"', '"--edges=no-build,no-dev,no-proc-macro"', '"--target=all"', '"--no-default-features"', '"--features=#{FEATURES.join(\',\')}"', 'line.end_with?(" (*)")', '.gsub(" / ", "/").gsub("/", " OR ")', 'File.write(output']
+      errors << "xberg: Cargo license writer does not match the selected CLI contract" unless license_writer_fragments.all? { |fragment| license_writer.include?(fragment) }
+       source_license = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.3-source-license-receipt.json")))
+       provider_proof = JSON.parse(File.read(File.join(package.directory, "xberg-1.0.3-provider-proof.json")))
+         dynamic_tesseract_check_index = spec.index('echo "%{dynamic_tesseract_patch_sha256}  %{PATCH2}" | sha256sum -c -')
+         selected_workspace_check_index = spec.index('echo "%{selected_workspace_patch_sha256}  %{PATCH3}" | sha256sum -c -')
+         fedora_tessdata_check_index = spec.index('echo "%{fedora_tessdata_patch_sha256}  %{PATCH4}" | sha256sum -c -')
         errors << "xberg: spec does not bind dynamic Tesseract patch before applying patches" unless spec.include?("%global dynamic_tesseract_patch_sha256 8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7") && dynamic_tesseract_check_index && autopatch_index && dynamic_tesseract_check_index < autopatch_index
-        errors << "xberg: spec does not bind selected workspace patch before applying patches" unless spec.include?("%global selected_workspace_patch_sha256 8adc6c208ff3cc888400c290049315bd285e9229b4fd08890070bb3f34ea6ecf") && selected_workspace_check_index && autopatch_index && selected_workspace_check_index < autopatch_index
+         errors << "xberg: spec does not bind selected workspace patch before applying patches" unless spec.include?("%global selected_workspace_patch_sha256 054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2") && selected_workspace_check_index && autopatch_index && selected_workspace_check_index < autopatch_index
+         errors << "xberg: spec does not bind Fedora tessdata patch before applying patches" unless spec.include?("%global fedora_tessdata_patch_sha256 a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20") && fedora_tessdata_check_index && autopatch_index && fedora_tessdata_check_index < autopatch_index
+        errors << "xberg: explicit runtime provider dependencies are incomplete" unless spec.include?("Requires:       onnxruntime%{?_isa} >= 1.18") && spec.include?("Requires:       tesseract-langpack-eng") && package.data.dig("provider_contract", "runtime_requires") == ["onnxruntime%{?_isa} >= 1.18", "tesseract-langpack-eng"]
+        tessdata_patch_additions = File.readlines(File.join(package.directory, "xberg-fedora-system-tessdata.patch"), chomp: true).select { |line| line.start_with?("+") && !line.start_with?("+++") }.join("\n")
+        errors << "xberg: Fedora tessdata patch adds mutable runtime download URLs" if tessdata_patch_additions.match?(%r{https?://|tessdata_fast})
        errors << "xberg: spec License differs from tracked source expression" unless spec.include?("License:        %{xberg_source_license_expression}") && spec.include?(source_license.fetch("source_package_expression").fetch("expression"))
+       errors << "xberg: source-license receipt graph or gaps are invalid" unless source_license["schema"] == "agentlab-xberg-source-license-receipt/v1" && source_license["release"] == { "name" => "xberg", "version" => manifest_version, "target" => "x86_64-unknown-linux-gnu" } && source_license.dig("scope", "selected_package") == "xberg-cli" && source_license.dig("scope", "selected_features") == selected_features && source_license["graph"] == { "selected_registry_identities" => 597, "resolver_only_registry_identities" => 437, "normal_packages" => 603, "normal_build_dev_packages" => 622, "normal_identity_sha256" => "9f7b783531614c0a9460001ddae469dcd53ec02b37453db77f00896c72cb89fe", "normal_build_dev_identity_sha256" => "a49d533f5008678529641692a1951539120d35ccdb85197447c7aace5c954c91" } && source_license.dig("missing_text_gaps")&.slice("count", "selected_normal", "resolver_only", "required_text_count") == { "count" => 75, "selected_normal" => 22, "resolver_only" => 53, "required_text_count" => 74 } && source_license.dig("validation", "final_linked_license_complete") == false
        errors << "xberg: provider proof graph is stale" unless provider_proof.dig("selected_graph", "cargo_lock_sha256") == cargo.dig("source_evidence", "fedora_lock", "sha256") && provider_proof.dig("selected_graph", "closure_sha256") == cargo.dig("source_evidence", "closure", "sha256")
-       errors << "xberg: provider proof schema or gates are invalid" unless provider_proof["schema"] == "agentlab-xberg-provider-proof/v1" && provider_proof.fetch("providers").keys.sort == %w[fedora43 fedora44 rawhide] && provider_proof.fetch("validation").values.all? { |value| value == false } && provider_proof.dig("tree_sitter", "runtime_parser_pack_approved") == false
+        errors << "xberg: provider proof schema or gates are invalid" unless provider_proof["schema"] == "agentlab-xberg-provider-proof/v1" && provider_proof.fetch("providers").keys.sort == %w[fedora43 fedora44 rawhide] && provider_proof.dig("selected_graph") == { "registry_identities" => 597, "normal_packages" => 603, "normal_build_dev_packages" => 622, "resolver_only_registry_identities" => 437, "cargo_lock_sha256" => cargo.dig("source_evidence", "fedora_lock", "sha256"), "closure_sha256" => cargo.dig("source_evidence", "closure", "sha256"), "normal_identity_sha256" => "9f7b783531614c0a9460001ddae469dcd53ec02b37453db77f00896c72cb89fe", "normal_build_dev_identity_sha256" => "a49d533f5008678529641692a1951539120d35ccdb85197447c7aace5c954c91" } && provider_proof.fetch("validation").values.all? { |value| value == false } && provider_proof.dig("tree_sitter") == { "selected" => false, "omitted_from_initial_rpm" => true, "runtime_parser_pack_download" => false, "return_todo" => "Audit tree-sitter-language-pack 1.13.5 parser sources and licenses before restoring the feature." } && provider_proof.dig("model_runtime_policy") == { "build_downloads" => false, "model_weights_in_source" => false, "runtime_model_downloads" => "opt-in only for immutable checksum-verified content outside the RPM payload", "model_license_provenance_complete" => false, "tessdata_runtime_download" => false, "tessdata_provider" => "Fedora tesseract-langpack-* packages or an explicit local tessdata path", "offline_runtime_proof" => false }
+        validate_xberg_patches_zero_fuzz!(package, errors, warnings)
     end
   end
 

@@ -12,12 +12,42 @@ feature-edge change.
 diff --git a/crates/xberg/Cargo.toml b/crates/xberg/Cargo.toml
 --- a/crates/xberg/Cargo.toml
 +++ b/crates/xberg/Cargo.toml
-@@ -229 +229 @@ auto-rotate = [
+@@ -224,11 +224,11 @@ auto-rotate = [
+     "dep:reqwest",
+     "dep:sha2",
+     "dep:fs2",
+     "dep:image",
+     "dep:ureq",
 -    "ort-bundled",
 +    "ort-dynamic",
-@@ -241 +241 @@ layout-detection = [
+ ]
+ layout-detection = [
+     "layout-types",
+     "dep:fs2",
+     "dep:ort",
+@@ -236,11 +236,11 @@ layout-detection = [
+     "dep:hf-hub",
+     "dep:reqwest",
+     "dep:sha2",
+     "dep:image",
+     "tokio-runtime",
 -    "ort-bundled",
 +    "ort-dynamic",
-@@ -349 +349 @@ onnx-runtime = [
+ ]
+ # layout-tract: no-ORT sibling of `layout-detection` (issue #1275, Phase 5). Runs RT-DETR
+ # layout detection and the PP-LCNet table (wired/wireless) classifier through the pure-Rust
+ # `tract` engine instead of ONNX Runtime, so it builds on no-ORT targets (Android x86_64
+ # emulator). Table STRUCTURE recognition (TATR, SLANeXT) and PP-DocLayout-V3 stay ORT-only —
+@@ -344,11 +344,11 @@ onnx-runtime = [
+     "dep:reqwest",
+     "dep:ort",
+     "dep:tokenizers",
+     "dep:sha2",
+     "dep:fs2",
 -    "ort-bundled",
 +    "ort-dynamic",
+ ]
+ # embedding-presets: static preset metadata (WASM-safe, no ORT)
+ embedding-presets = []
+ # embeddings: full embedding generation with ONNX Runtime (ORT-dependent, WASM-incompatible)
+ # NOTE: embedding-presets is a subset of embeddings (no ORT); always implied by embeddings.

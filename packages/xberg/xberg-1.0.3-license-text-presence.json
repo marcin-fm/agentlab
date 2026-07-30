@@ -37,7 +37,7 @@
     },
     {
       "name": "aes",
-      "version": "0.9.1",
+      "version": "0.9.2",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -961,7 +961,7 @@
     },
     {
       "name": "clap_complete",
-      "version": "4.6.7",
+      "version": "4.6.8",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -1331,7 +1331,7 @@
     },
     {
       "name": "ctor",
-      "version": "1.0.10",
+      "version": "1.0.11",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -1614,7 +1614,7 @@
     },
     {
       "name": "displaydoc",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -2692,7 +2692,7 @@
     },
     {
       "name": "html-to-markdown-rs",
-      "version": "3.9.0",
+      "version": "3.9.2",
       "license_texts": []
     },
     {
@@ -3139,16 +3139,6 @@
       ]
     },
     {
-      "name": "jni",
-      "version": "0.22.4",
-      "license_texts": []
-    },
-    {
-      "name": "jni-macros",
-      "version": "0.22.4",
-      "license_texts": []
-    },
-    {
       "name": "jni-sys",
       "version": "0.3.1",
       "license_texts": [
@@ -3202,19 +3192,19 @@
     },
     {
       "name": "jsonschema",
-      "version": "0.49.0",
+      "version": "0.49.2",
       "license_texts": [
         "LICENSE"
       ]
     },
     {
       "name": "jsonschema-regex",
-      "version": "0.49.0",
+      "version": "0.49.2",
       "license_texts": []
     },
     {
       "name": "jsonschema-value",
-      "version": "0.49.0",
+      "version": "0.49.2",
       "license_texts": []
     },
     {
@@ -3381,7 +3371,7 @@
     },
     {
       "name": "liter-llm",
-      "version": "1.11.3",
+      "version": "1.11.4",
       "license_texts": []
     },
     {
@@ -4148,7 +4138,7 @@
     },
     {
       "name": "ort",
-      "version": "2.0.0-rc.12",
+      "version": "2.0.0-rc.13",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -4156,7 +4146,7 @@
     },
     {
       "name": "ort-sys",
-      "version": "2.0.0-rc.12",
+      "version": "2.0.0-rc.13",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -4264,7 +4254,7 @@
     },
     {
       "name": "pdf_oxide",
-      "version": "0.3.76",
+      "version": "0.3.77",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT",
@@ -4998,7 +4988,7 @@
     },
     {
       "name": "referencing",
-      "version": "0.49.0",
+      "version": "0.49.2",
       "license_texts": [
         "LICENSE"
       ]
@@ -5103,12 +5093,12 @@
     },
     {
       "name": "rmcp",
-      "version": "2.2.0",
+      "version": "3.0.0",
       "license_texts": []
     },
     {
       "name": "rmcp-macros",
-      "version": "2.2.0",
+      "version": "3.0.0",
       "license_texts": []
     },
     {
@@ -5179,14 +5169,6 @@
       ]
     },
     {
-      "name": "rustc_version",
-      "version": "0.4.1",
-      "license_texts": [
-        "LICENSE-APACHE",
-        "LICENSE-MIT"
-      ]
-    },
-    {
       "name": "rustfft",
       "version": "6.4.1",
       "license_texts": [
@@ -5233,14 +5215,6 @@
     {
       "name": "rustls-platform-verifier",
       "version": "0.6.2",
-      "license_texts": [
-        "LICENSE-APACHE",
-        "LICENSE-MIT"
-      ]
-    },
-    {
-      "name": "rustls-platform-verifier",
-      "version": "0.7.0",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -5343,14 +5317,14 @@
     },
     {
       "name": "schemars",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "license_texts": [
         "LICENSE"
       ]
     },
     {
       "name": "schemars_derive",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "license_texts": [
         "LICENSE"
       ]
@@ -5401,14 +5375,6 @@
       ]
     },
     {
-      "name": "semver",
-      "version": "1.0.28",
-      "license_texts": [
-        "LICENSE-APACHE",
-        "LICENSE-MIT"
-      ]
-    },
-    {
       "name": "seq-macro",
       "version": "0.3.6",
       "license_texts": [
@@ -5442,7 +5408,7 @@
     },
     {
       "name": "serde_derive_internals",
-      "version": "0.29.1",
+      "version": "0.30.0",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -5598,14 +5564,6 @@
       "version": "0.3.10",
       "license_texts": [
         "LICENSE.md"
-      ]
-    },
-    {
-      "name": "simd_cesu8",
-      "version": "1.2.0",
-      "license_texts": [
-        "LICENSE-APACHE",
-        "LICENSE-MIT"
       ]
     },
     {
@@ -6327,7 +6285,7 @@
     },
     {
       "name": "toml",
-      "version": "1.1.3+spec-1.1.0",
+      "version": "1.1.4+spec-1.1.0",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -6351,7 +6309,7 @@
     },
     {
       "name": "toml_parser",
-      "version": "1.1.2+spec-1.1.0",
+      "version": "1.1.3+spec-1.1.0",
       "license_texts": [
         "LICENSE-APACHE",
         "LICENSE-MIT"
@@ -7833,8 +7791,8 @@
     }
   ],
   "counts": {
-    "present": 963,
-    "absent": 77
+    "present": 959,
+    "absent": 75
   },
   "validation": {
     "source_text_presence_verified": true,

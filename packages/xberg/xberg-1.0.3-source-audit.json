@@ -1,0 +1,161 @@
+{
+  "schema": "agentlab-xberg-source-audit/v1",
+  "release": "1.0.3",
+  "current_package_version": "1.0.3-0.1",
+  "source": {
+    "tag": "v1.0.3",
+    "commit": "37b9fee5762450351e9303243a00e51184a1f24b",
+    "tree": "2a5341953d531c886f8713c6f86c6aac2836ac82",
+    "parent": "f5c93bd2af4547c886c85df28959a8d1a2ee0736",
+    "authored_at": "2026-07-29T15:47:57Z",
+    "subject": "chore(swift): update Package.swift with checksum for v1.0.3",
+    "archive": {
+      "sha256": "238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e",
+      "unsafe_links_omitted": 1,
+      "safe_in_root_links_retained": 50
+    }
+  },
+  "source_receipts": {
+    "source_filter": {
+      "filename": "xberg-1.0.3-source-filter.json",
+      "sha256": "4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4"
+    },
+    "cargo_closure": {
+      "filename": "xberg-1.0.3-cargo-closure.json",
+      "sha256": "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907",
+      "cargo_lock_sha256": "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667"
+    },
+    "source_license": {
+      "filename": "xberg-1.0.3-source-license-receipt.json",
+      "sha256": "151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32"
+    },
+    "provider_proof": {
+      "filename": "xberg-1.0.3-provider-proof.json",
+      "sha256": "961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937"
+    }
+  },
+  "selected_root_surface": {
+    "workspace_members": [
+      "xberg",
+      "xberg-cli"
+    ],
+    "node_binding": {
+      "name": "@xberg-io/xberg",
+      "selected": false
+    }
+  },
+  "default_cli_features": [
+    "formats",
+    "analysis",
+    "core-cli",
+    "embeddings",
+    "html",
+    "url-ingestion",
+    "liter-llm",
+    "ocr",
+    "paddle-ocr",
+    "layout-detection",
+    "chunking-tokenizers",
+    "tree-sitter"
+  ],
+  "packaged_feature_selection": {
+    "package": "xberg-cli",
+    "no_default_features": true,
+    "features": [
+      "formats",
+      "analysis",
+      "core-cli",
+      "embeddings",
+      "html",
+      "url-ingestion",
+      "liter-llm",
+      "ocr",
+      "paddle-ocr",
+      "layout-detection",
+      "chunking-tokenizers"
+    ],
+    "tree_sitter_included": false
+  },
+  "selected_workspace_crates": [
+    "xberg",
+    "xberg-cli",
+    "xberg-libheif",
+    "xberg-libwpd",
+    "xberg-paddle-ocr",
+    "xberg-tesseract"
+  ],
+  "unselected_workspace_crates": [
+    "xberg-gliner"
+  ],
+  "native_boundaries": {
+    "onnx_runtime": "dynamic system ONNX Runtime",
+    "tesseract_leptonica": "dynamic system Tesseract and Leptonica",
+    "libheif": "dynamic system libheif",
+    "xberg_libwpd": "bundled source boundary; final link evidence is pending",
+    "runtime_models_and_tessdata": "models are opt-in only; tessdata is Fedora-provided"
+  },
+  "offline_cargo_metadata": {
+    "complete": true,
+    "selected_registry_identities": 597,
+    "vendor_registry_identities": 1034,
+    "resolver_only_registry_identities": 437,
+    "normal_packages": 603,
+    "normal_build_dev_packages": 622,
+    "git_dependencies": 0
+  },
+  "source_license_accounting": {
+    "source_components_inventory_complete": true,
+    "fedora_allowed_identifiers": true,
+    "selected_normal_source_candidate_sha256": "dc84727bcd9a492085e6bc465f3c1d4c27c7bb6fa3e2d2cb49a1f7cbf26b4e4a",
+    "source_package_expression_sha256": "fc6ece2c7a9acd17ec0292d56a1ebd5239a7f954e229f58e69abadaf11a3fae8",
+    "missing_text_gaps": {
+      "total": 75,
+      "selected_normal": 22,
+      "resolver_only": 53,
+      "distribution_text_required": 74
+    }
+  },
+  "runtime_boundaries": {
+    "tree_sitter": {
+      "selected": false,
+      "omitted_from_initial_rpm": true,
+      "runtime_parser_pack_download": false,
+      "return_todo": "Audit tree-sitter-language-pack 1.13.5 parser sources and licenses before restoring the feature."
+    },
+    "model_downloads": {
+      "policy": "opt-in only for immutable checksum-verified content outside the RPM payload",
+      "provenance_complete": false,
+      "offline_runtime_proof_complete": false,
+      "runtime_smoke_complete": false
+    },
+    "tessdata": {
+      "mutable_downloads_enabled": false,
+      "provider": "Fedora tesseract-langpack-* packages or an explicit local tessdata path",
+      "default_path": "/usr/share/tesseract/tessdata/eng.traineddata"
+    }
+  },
+  "distribution_duplicate_audit": {
+    "fedora_xberg_provider_absent": true,
+    "rpm_fusion_duplicate_absence_established": true
+  },
+  "validation": {
+    "manifest_review_complete": true,
+    "static_dependency_closure_complete": true,
+    "dependency_license_text_inventory_complete": true,
+    "native_integration_review_complete": false,
+    "provider_audit_complete": false,
+    "aggregate_license_complete": false,
+    "target_source_build_complete": false,
+    "compile_complete": false,
+    "link_complete": false,
+    "payload_complete": false,
+    "final_linked_license_complete": false,
+    "models_and_tessdata_licenses_complete": false,
+    "runtime_smoke_complete": false,
+    "target_matrix_complete": false,
+    "enablement_complete": false,
+    "copr_publication_complete": false,
+    "retirements_complete": false,
+    "retirements_authorized": false
+  }
+}

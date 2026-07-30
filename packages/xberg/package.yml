@@ -1,81 +1,84 @@
 name: xberg
 status: blocked
 blockers:
-  - Xberg v1.0.1 is a renamed/new upstream source tree and has no reconciled Fedora provider or native-library closure.
-  - "The checked six-member Fedora workspace lock vendors 1,040 registry sources and is not final linked-license completeness: 77 source text gaps remain blockers."
-  - The corrected 1,040-source default-feature Cargo compile proof has not run; build 10788466 used no default features and is diagnostic only.
-  - The historical Kreuzberg 4.10.2 patch and receipt set is not applicable to Xberg v1.0.1.
-  - RPM Fusion duplicate checks were unavailable because no RPM Fusion repository is configured in the query environment.
+  - Xberg v1.0.3 is a renamed/new upstream source tree whose selected Fedora surface still lacks final native-link and RPM-payload proof.
+  - "The checked six-member Fedora workspace lock vendors 1,034 registry sources and is not final linked-license completeness: 75 source text gaps remain blockers, split into 22 selected-normal and 53 resolver-only identities."
+  - No configured-SCM compile proof exists for the exact Xberg 1.0.3 default-minus-tree-sitter surface.
+  - The historical Kreuzberg 4.10.2 and Xberg 1.0.1 receipt sets are not applicable to Xberg v1.0.3.
+  - Immutable checksum-verified model downloads are approved only as opt-in content outside the RPM payload; model provenance, offline behavior, and runtime smoke remain incomplete.
+  - Tree-sitter is intentionally omitted from the initial RPM pending exact 1.13.5 parser-source, license, and offline x86_64/aarch64 review.
 source_policy:
-  source: published Xberg v1.0.1 GitHub tag archive
-  build: checked resolver-complete Cargo source and Fedora provider patches; compile and Cargo license accounting select xberg-cli with the default feature set before a deliberate post-build gate
+  source: published Xberg v1.0.3 GitHub tag archive
+  build: checked resolver-complete Cargo source and Fedora provider patches; compile and Cargo license accounting select xberg-cli with an explicit default-minus-tree-sitter feature set before a deliberate post-build gate
 upstream:
   provider: github
   repository: xberg-io/xberg
   tag_prefix: v
-  current_version: 1.0.1
-  source_tag: v1.0.1
-  source_commit: 60557740a675908ea8d27145841dafd4f6a06917
-  source_tree: 19705db11615dd4d1722dec9224c3b752cd369af
+  current_version: 1.0.3
+  source_tag: v1.0.3
+  source_commit: 37b9fee5762450351e9303243a00e51184a1f24b
+  source_tree: 2a5341953d531c886f8713c6f86c6aac2836ac82
   source_url_template: https://github.com/xberg-io/xberg/archive/refs/tags/v{version}.tar.gz
-  source_sha256: a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6
+  source_sha256: 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e
 source_audit_receipt:
-  file: xberg-1.0.1-source-audit.json
+  file: xberg-1.0.3-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: cb49f4c4a035795e87f0eedf0fee219bfde506347b085cbb7dfb6b6a0b97e12a
+  sha256: 27306e06e2309b355746c24ea55c3201667490335649f8a0f1b7b543652f446c
 source_link_filter:
-  file: xberg-1.0.1-source-filter.json
+  file: xberg-1.0.3-source-filter.json
   schema: agentlab-xberg-source-filter/v1
-  sha256: 233d5ce7fe8630ef7fad81d7b52878e3d282999c11f1294cc7b271f392984fbd
+  sha256: 4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4
   unsafe_links: 1
 system_ort_audit_receipt:
-  file: xberg-1.0.1-system-ort-audit.json
-  schema: agentlab-xberg-system-ort-audit/v1
-  sha256: a68aa83911e275096845d17ad526277440ce04b9bc97bf6f918d226f5e882460
+  file: xberg-1.0.3-system-ort-audit.json
+  schema: agentlab-xberg-system-ort-audit/v3
+  sha256: 3592fa5417ddc1292a4d1fb2eaa34bbb10fff3f62319f7fe9ac07522ff1078a7
   patches:
-    xberg-system-onnxruntime.patch: be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b
+    xberg-system-onnxruntime.patch: 8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab
     xberg-fedora-onnxruntime-path.patch: b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
-  selected_surface: xberg-cli default on Linux x86_64; every default feature remains selected.
-  graph: normal edges remain 610; normal/build/dev union is 631 baseline and 629 patched.
-  state: source-only; vendor delivery, provider matrix, compilation, runtime smoke, models/licenses, aggregate license, enablement, COPR, and retirements remain false.
+  selected_surface: xberg-cli on Linux x86_64 with no default features and the explicit default-minus-tree-sitter tuple.
+  graph: normal edges are 602 baseline and 603 patched; normal/build/dev union is 624 baseline and 622 patched.
+  state: source-only graph/provider proof; compilation, runtime smoke, models/licenses, aggregate license, enablement, COPR, and retirements remain false.
 cargo_source_contract:
-  selected_surface: xberg-cli default on Linux x86_64
+  selected_surface: xberg-cli explicit default-minus-tree-sitter features on Linux x86_64
   closure_schema: agentlab-xberg-cargo-closure/v2
   graph_identity_serialization: "UTF-8 sorted unique name\\tversion\\n lines"
-  cargo_lock_sha256: ca592b84261f3bff605b43adc49b99e2401907a9697fe936dc7f27225c16ca52
-  selected_registry_identities: 604
-  vendor_registry_identities: 1040
+  cargo_lock_sha256: a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667
+  selected_registry_identities: 597
+  vendor_registry_identities: 1034
   workspace_identities: 6
-  normal_packages: 610
-  normal_build_dev_packages: 629
+  normal_packages: 603
+  normal_build_dev_packages: 622
   git_dependencies: 0
   ort_download_delta: -2
-  resolver_only_additions: 436
-  vendor_archive: xberg-1.0.1-cargo-vendor.tar.zst
+  resolver_only_additions: 437
+  vendor_archive: xberg-1.0.3-cargo-vendor.tar.zst
   vendor_archive_tracked: false
   patches:
     xberg-dynamic-tesseract.patch: 8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f
-    xberg-selected-workspace.patch: 8adc6c208ff3cc888400c290049315bd285e9229b4fd08890070bb3f34ea6ecf
+    xberg-selected-workspace.patch: 054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2
+    xberg-fedora-system-tessdata.patch: a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20
   source_evidence:
-    closure: { file: xberg-1.0.1-cargo-closure.json, sha256: 4de24a9fd1d98ef475e0029a5e13732a718d6b541459b4ca727b2c5ef0f538ff }
-    vendor_receipt: { file: xberg-1.0.1-cargo-vendor-receipt.json, sha256: ff7fcbd21efc96098c609b843f9b70a06ae447f1a1fdff18f189ef3bf5c15498 }
-    license_text_presence: { file: xberg-1.0.1-license-text-presence.json, sha256: 537c397f02885ab7e5d291a060f90101fa74fcfd5e8ce7d0501ad70a0170796e }
-    vendor_manifest: { file: xberg-1.0.1-cargo-vendor.txt, sha256: e0554364055d65efa64692ed42e016ea0f3d63aeba96038b1a665989fc32b569 }
-    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: 22902bdd818c3c949757d6cf2874328877b79455fa1e2ce2d767e8371f442eb3 }
-    fedora_lock: { file: xberg-1.0.1-fedora-Cargo.lock, sha256: ca592b84261f3bff605b43adc49b99e2401907a9697fe936dc7f27225c16ca52 }
-    source_license_receipt: { file: xberg-1.0.1-source-license-receipt.json, sha256: 3cbf7857f5b572fa6ca5a7f061c0ac4d226e87db3dd554ffd4bdc792fd5d2925 }
-    provider_proof: { file: xberg-1.0.1-provider-proof.json, sha256: 8b11b645c50d23b323231f01d23fe699ba1b3a1a50755811878de1ced7e66adc }
-    fedora_allowlist: { file: xberg-1.0.1-fedora-license-allowlist.json, sha256: 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0 }
-    proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: f9c6c0446912b3b98c50861940949860e83c2de5ade1b6bc07d8d863631a96da }
-    license_writer: { file: scripts/write-xberg-cargo-license-receipts, sha256: f37b954d1dc4880deb29de9f7b0fe80859de1a80256d95f28cc295d8dd93156a }
-  vendor_tree: { sha256: e3418b1feee8a7824b243e91552e3f550066410e6028c4c5484757d340dc9672, files: 51400, directories: 9488, symlinks: 0, bytes: 1101005097 }
-  resolver_only_registry_identities: 436
-  license_text_presence: { present: 963, absent: 77, selected_normal_gaps: 23, resolver_only_gaps: 54, required_text_count: 76, final_linked_license_complete: false }
+    closure: { file: xberg-1.0.3-cargo-closure.json, sha256: 3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907 }
+    vendor_receipt: { file: xberg-1.0.3-cargo-vendor-receipt.json, sha256: 8980a1d9bb4a1123b2cbdc6dcc082993226c3d0eca09facc59c39124896f2819 }
+    license_text_presence: { file: xberg-1.0.3-license-text-presence.json, sha256: 99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691 }
+    vendor_manifest: { file: xberg-1.0.3-cargo-vendor.txt, sha256: 5d571bb5bc923c855a1e75f335d32187fda5cbb6f9d64b20af960b8c5a7ba544 }
+    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: b457619ba755e3ba5e05301010aee1314832c3a0de2dd365ed35d6c6e6a6303e }
+    fedora_lock: { file: xberg-1.0.3-fedora-Cargo.lock, sha256: a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667 }
+    source_license_receipt: { file: xberg-1.0.3-source-license-receipt.json, sha256: 151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32 }
+    provider_proof: { file: xberg-1.0.3-provider-proof.json, sha256: 961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937 }
+    fedora_allowlist: { file: xberg-1.0.3-fedora-license-allowlist.json, sha256: 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0 }
+    proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: f976958e8a51865710b7f91c38fb2d2bea2a33304ed587aff7713013e1a045d8 }
+    license_writer: { file: scripts/write-xberg-cargo-license-receipts, sha256: 7dd6a505e65900dceded74405d586459180e2a701806b31ac24452e37acd1a51 }
+  vendor_tree: { sha256: fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917, files: 51213, directories: 9444, symlinks: 0, bytes: 1099639051 }
+  resolver_only_registry_identities: 437
+  license_text_presence: { present: 959, absent: 75, selected_normal_gaps: 22, resolver_only_gaps: 53, required_text_count: 74, final_linked_license_complete: false }
   intel_sources: absent
 compile_proof_contract:
   package: xberg-cli
-  features: [default]
-  cargo_build: "%cargo_build -- --package xberg-cli --features default --locked"
+  no_default_features: true
+  features: [formats, analysis, core-cli, embeddings, html, url-ingestion, liter-llm, ocr, paddle-ocr, layout-detection, chunking-tokenizers]
+  cargo_build: "%cargo_build -- --package xberg-cli --no-default-features --features %{xberg_cli_features} --locked"
   license_writer: scripts/write-xberg-cargo-license-receipts
   license_output: LICENSE.dependencies
   license_scope: cargo2rpm-equivalent target-all static dependency inventory; not final Linux linked-license evidence
@@ -90,35 +93,34 @@ compile_proof_contract:
   runtime_smoke_required: true
   full_matrix_required: true
 duplicate_check:
-  checked: "2026-07-28"
+  checked: "2026-07-29"
   fedora_43_44_rawhide: absent
   fedora_evidence:
     package_name: no matching xberg package records
     executable: no provider for /usr/bin/xberg
-    query_artifacts:
-      - /srv/tmp/agentlab-xberg-fedora43-package-query.txt
-      - /srv/tmp/agentlab-xberg-fedora43-file-query.txt
-      - /srv/tmp/agentlab-xberg-fedora44-package-query.txt
-      - /srv/tmp/agentlab-xberg-fedora44-file-query.txt
-      - /srv/tmp/agentlab-xberg-rawhide-package-query.txt
-      - /srv/tmp/agentlab-xberg-rawhide-file-query.txt
-  rpm_fusion_43_44_rawhide: unavailable
-  rpm_fusion_evidence: No RPM Fusion repository or installed RPM Fusion repository package was available; configured repositories are recorded in /srv/tmp/agentlab-xberg-repolist-all.txt.
+    scope: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+  rpm_fusion_43_44_rawhide: absent
+  rpm_fusion_evidence: Public free/nonfree release, updates, and Rawhide metadata returned no xberg, kreuzberg, /usr/bin/xberg, or /usr/bin/kreuzberg matches in all 20 applicable repository cells.
 provider_contract:
   onnxruntime: dynamic system ONNX Runtime via /usr/lib64/libonnxruntime.so
   libheif: dynamic system libheif
   tesseract: dynamic system Tesseract and Leptonica
   english_tessdata: system tesseract-langpack-eng at /usr/share/tesseract/tessdata/eng.traineddata
+  runtime_requires: ["onnxruntime%{?_isa} >= 1.18", tesseract-langpack-eng]
 runtime_model_policy:
   build_downloads: false
   model_weights_in_source: false
-  runtime_model_downloads: not approved for RPM payload
+  runtime_model_downloads: opt-in only for immutable checksum-verified content outside RPM payload
+  immutable_downloads_approved: true
+  provenance_complete: false
   offline_runtime_proof: false
 tree_sitter:
-  selected_feature: download
+  selected_feature: false
+  omitted_from_initial_rpm: true
   build_time_parser_download_when_static_languages_unset: false
-  runtime_parser_pack_download: true
+  runtime_parser_pack_download: false
   runtime_parser_pack_approved: false
+  return_todo: Audit tree-sitter-language-pack 1.13.5 parser pins, source licenses, and offline x86_64/aarch64 builds before restoring this feature.
 copr:
   enabled: false
   subdir: packages/xberg

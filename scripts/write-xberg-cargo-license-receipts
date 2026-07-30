@@ -8,7 +8,7 @@ module XbergCargoLicenseReceipts
   class Error < StandardError; end
 
   PACKAGE = "xberg-cli"
-  FEATURES = "default"
+  FEATURES = %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers].freeze
 
   module_function
 
@@ -25,7 +25,8 @@ module XbergCargoLicenseReceipts
       "--prefix=none",
       "--format",
       format,
-      "--features=#{FEATURES}"
+      "--no-default-features",
+      "--features=#{FEATURES.join(',')}"
     ]
   end
 

@@ -2,34 +2,34 @@
   "schema": "agentlab-xberg-cargo-vendor/v1",
   "release": {
     "name": "xberg",
-    "version": "1.0.1",
-    "cargo_lock_sha256": "ca592b84261f3bff605b43adc49b99e2401907a9697fe936dc7f27225c16ca52"
+    "version": "1.0.3",
+    "cargo_lock_sha256": "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667"
   },
   "vendor_archive": {
-    "name": "xberg-1.0.1-cargo-vendor.tar.zst",
+    "name": "xberg-1.0.3-cargo-vendor.tar.zst",
     "root": "cargo-vendor"
   },
   "vendor_tree": {
     "algorithm": "sha256(sorted type,path,mode,link-target,size,content-sha256 records)",
-    "sha256": "e3418b1feee8a7824b243e91552e3f550066410e6028c4c5484757d340dc9672",
-    "files": 51400,
-    "directories": 9488,
+    "sha256": "fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917",
+    "files": 51213,
+    "directories": 9444,
     "symlinks": 0,
-    "bytes": 1101005097
+    "bytes": 1099639051
   },
   "inputs": {
-    "cargo_closure_sha256": "4de24a9fd1d98ef475e0029a5e13732a718d6b541459b4ca727b2c5ef0f538ff",
-    "license_text_presence_sha256": "537c397f02885ab7e5d291a060f90101fa74fcfd5e8ce7d0501ad70a0170796e"
+    "cargo_closure_sha256": "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907",
+    "license_text_presence_sha256": "99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691"
   },
   "root_lock": {
-    "registry": 1040,
+    "registry": 1034,
     "workspace": 6,
     "git": 0
   },
   "graph": {
-    "normal": 610,
-    "normal_build_dev": 629,
-    "ort_download_delta": -2
+    "normal": 603,
+    "normal_build_dev": 622,
+    "ort_download_delta": null
   },
   "validation": {
     "lock_checksums_verified": true,

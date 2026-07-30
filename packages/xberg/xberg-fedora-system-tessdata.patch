@@ -1,0 +1,551 @@
+diff --git a/crates/xberg-cli/src/commands/cache.rs b/crates/xberg-cli/src/commands/cache.rs
+index 03fa842..05191a7 100644
+--- a/crates/xberg-cli/src/commands/cache.rs
++++ b/crates/xberg-cli/src/commands/cache.rs
+@@ -192,13 +192,6 @@ fn manifest_command_inner(format: WireFormat) -> Result<()> {
+         }));
+     }
+ 
+-    #[cfg(feature = "paddle-ocr")]
+-    {
+-        entries.extend(xberg::ocr::TessdataManager::manifest().into_iter().map(|entry| {
+-            CacheManifestEntry::new(entry.relative_path, entry.sha256, entry.size_bytes, entry.source_url)
+-        }));
+-    }
+-
+     #[cfg(feature = "ner-onnx")]
+     {
+         entries.extend(xberg::text::ner::manifest().into_iter().map(|entry| {
+@@ -385,22 +378,6 @@ pub fn warm_command(
+         }
+     }
+ 
+-    #[cfg(feature = "paddle-ocr")]
+-    {
+-        let tessdata_dir = cache_base.join("tessdata");
+-        let manager = xberg::ocr::TessdataManager::new(Some(tessdata_dir));
+-
+-        let newly_downloaded = manager
+-            .ensure_all_languages()
+-            .context("Failed to download tessdata files")?;
+-
+-        if newly_downloaded > 0 {
+-            downloaded.push(format!("tessdata ({newly_downloaded} languages)"));
+-        } else {
+-            already_cached.push("tessdata (all languages)".to_string());
+-        }
+-    }
+-
+     #[cfg(feature = "embeddings")]
+     {
+         let presets_to_warm: Vec<xberg::EmbeddingPreset> = if all_embeddings {
+diff --git a/crates/xberg-tesseract/tests/integration_test.rs b/crates/xberg-tesseract/tests/integration_test.rs
+index 80ed8cb..67b528c 100644
+--- a/crates/xberg-tesseract/tests/integration_test.rs
++++ b/crates/xberg-tesseract/tests/integration_test.rs
+@@ -11,6 +11,7 @@ fn get_default_tessdata_dir() -> PathBuf {
+             .join("tessdata")
+     } else if cfg!(target_os = "linux") {
+         let system_paths = [
++            PathBuf::from("/usr/share/tesseract/tessdata"),
+             PathBuf::from("/usr/share/tesseract-ocr/5/tessdata"),
+             PathBuf::from("/usr/share/tesseract-ocr/tessdata"),
+         ];
+diff --git a/crates/xberg/src/ocr/mod.rs b/crates/xberg/src/ocr/mod.rs
+index a980f56b9c..923fd7ade0 100644
+--- a/crates/xberg/src/ocr/mod.rs
++++ b/crates/xberg/src/ocr/mod.rs
+@@ -65,10 +65,10 @@ pub mod processor;
+ /// TSV and hOCR table reconstruction utilities.
+ pub mod table;
+ #[cfg(feature = "ocr")]
+-/// Runtime tessdata language pack download utilities.
++/// Compatibility module retained without runtime tessdata download behavior.
+ pub mod tessdata_download;
+ #[cfg(feature = "ocr")]
+-/// Tessdata language-pack download and management utilities.
++/// Tessdata language-pack cache inspection utilities.
+ pub mod tessdata_manager;
+ #[cfg(feature = "ocr")]
+ /// Native Tesseract backend using `xberg-tesseract` (C FFI).
+diff --git a/crates/xberg/src/ocr/processor/validation.rs b/crates/xberg/src/ocr/processor/validation.rs
+index f86e837..9aedc07 100644
+--- a/crates/xberg/src/ocr/processor/validation.rs
++++ b/crates/xberg/src/ocr/processor/validation.rs
+@@ -61,9 +61,9 @@ pub(super) fn validate_language_and_traineddata(language: &str, tessdata_path: &
+ /// 2. `TESSDATA_PREFIX` environment variable
+ /// 3. `XBERG_CACHE_DIR/tessdata`
+ /// 4. `crate::cache_dir::resolve_cache_base().join("tessdata")`
+-/// 5. System fallback paths (macOS, Linux, Windows)
+-/// 6. If languages are still missing, materialize bundled `eng` bytes and
+-///    download any others from the GitHub `tessdata_fast` repo into the cache
++/// 5. System fallback paths (Fedora, macOS, Linux, Windows)
++///
++/// Fedora builds never materialize or download tessdata at runtime.
+ ///
+ /// # Arguments
+ ///
+@@ -77,6 +77,7 @@ pub(super) fn validate_language_and_traineddata(language: &str, tessdata_path: &
+ /// requested languages, or `Err(OcrError)` if resolution fails.
+ pub(super) fn resolve_tessdata_path(languages: &[String], override_path: Option<&Path>) -> Result<String, OcrError> {
+     let fallback_paths = [
++        "/usr/share/tesseract/tessdata",
+         "/opt/homebrew/share/tessdata",
+         "/opt/homebrew/opt/tesseract/share/tessdata",
+         "/usr/local/opt/tesseract/share/tessdata",
+@@ -121,29 +122,13 @@ pub(super) fn resolve_tessdata_path(languages: &[String], override_path: Option<&
+         }
+     }
+ 
+-    let download_dest = cache_base;
+-    std::fs::create_dir_all(&download_dest).map_err(|e| {
+-        OcrError::TesseractInitializationFailed(format!(
+-            "Failed to create tessdata cache directory '{}': {}",
+-            download_dest.display(),
+-            e
+-        ))
+-    })?;
+-
+-    materialize_missing_languages(&download_dest, languages)?;
+-
+-    let dest_str = download_dest
+-        .to_str()
+-        .ok_or_else(|| OcrError::TesseractInitializationFailed("Tessdata path is not valid UTF-8".to_string()))?;
+-
+-    if all_languages_exist(dest_str, languages)? {
+-        Ok(dest_str.to_string())
+-    } else {
+-        Err(OcrError::TesseractInitializationFailed(format!(
+-            "Failed to resolve all requested languages: {:?}",
+-            languages
+-        )))
+-    }
++    Err(OcrError::TesseractInitializationFailed(format!(
++        "Missing Tesseract traineddata language(s): {}. Install the corresponding Fedora \
++         tesseract-langpack-* package(s), for example tesseract-langpack-eng for eng, or \
++         set OcrConfig.tessdata_path or TESSDATA_PREFIX to an explicit tessdata directory. \
++         Fedora builds do not download tessdata at runtime.",
++        languages.join(", ")
++    )))
+ }
+ 
+ /// Check if all languages in the list exist as traineddata files in the given directory.
+@@ -167,46 +152,6 @@ fn all_languages_exist(tessdata_path: &str, languages: &[String]) -> Result<bool,
+     Ok(true)
+ }
+ 
+-/// Materialize missing language files by attempting to use bundled 'eng' or download from GitHub.
+-#[cfg(not(target_arch = "wasm32"))]
+-fn materialize_missing_languages(tessdata_path: &Path, languages: &[String]) -> Result<(), OcrError> {
+-    use crate::ocr::tessdata_download::download_language_pack;
+-
+-    for lang in languages {
+-        let traineddata_path = tessdata_path.join(format!("{}.traineddata", lang));
+-        if traineddata_path.exists() {
+-            continue;
+-        }
+-
+-        if lang == "eng"
+-            && let Some(bundled_bytes) = xberg_tesseract::bundled_eng_traineddata()
+-        {
+-            std::fs::write(&traineddata_path, bundled_bytes).map_err(|e| {
+-                OcrError::TesseractInitializationFailed(format!(
+-                    "Failed to write bundled eng.traineddata to '{}': {}",
+-                    traineddata_path.display(),
+-                    e
+-                ))
+-            })?;
+-            tracing::info!("Materialized bundled eng.traineddata to '{}'", tessdata_path.display());
+-            continue;
+-        }
+-
+-        download_language_pack(lang, tessdata_path)?;
+-    }
+-
+-    Ok(())
+-}
+-
+-/// WASM stub: no network access, no file writes.
+-#[cfg(target_arch = "wasm32")]
+-fn materialize_missing_languages(_tessdata_path: &Path, languages: &[String]) -> Result<(), OcrError> {
+-    Err(OcrError::TesseractInitializationFailed(format!(
+-        "Cannot download language packs on WASM. Requested: {:?}",
+-        languages
+-    )))
+-}
+-
+ /// Resolve all installed Tesseract languages from the tessdata directory.
+ ///
+ /// Scans the tessdata directory for `*.traineddata` files, filters against
+@@ -417,15 +362,18 @@ mod tests {
+         }
+     }
+ 
+-    #[cfg(feature = "bundle-tessdata-eng")]
+     #[test]
+-    fn test_materialize_eng_from_bundled_bytes() {
++    fn test_resolve_tessdata_path_fails_without_materializing() {
+         let dir = tempfile::tempdir().unwrap();
+-        let langs = vec!["eng".to_string()];
++        let language = "agentlab-missing-language";
++        let langs = vec![language.to_string()];
+ 
+-        materialize_missing_languages(dir.path(), &langs).unwrap();
+-        assert!(dir.path().join("eng.traineddata").exists());
+-        assert!(all_languages_exist(dir.path().to_str().unwrap(), &langs).unwrap());
++        let error = resolve_tessdata_path(&langs, Some(dir.path())).unwrap_err().to_string();
++        assert!(error.contains(language));
++        assert!(error.contains("tesseract-langpack-*"));
++        assert!(error.contains("tesseract-langpack-eng"));
++        assert!(error.contains("do not download tessdata at runtime"));
++        assert!(!dir.path().join(format!("{language}.traineddata")).exists());
+     }
+ 
+     #[test]
+diff --git a/crates/xberg/src/ocr/tessdata_manager.rs b/crates/xberg/src/ocr/tessdata_manager.rs
+index 519000d..115322a 100644
+--- a/crates/xberg/src/ocr/tessdata_manager.rs
++++ b/crates/xberg/src/ocr/tessdata_manager.rs
+@@ -1,33 +1,13 @@
+-//! Tessdata file downloading and cache management.
++//! Tessdata cache inspection for system- or user-provided language data.
+ //!
+-//! Downloads `.traineddata` files from the tessdata_fast GitHub repository
+-//! and manages them in the xberg cache directory.
++//! Fedora builds never download tessdata at runtime.
+ 
+ use std::path::{Path, PathBuf};
+ 
+-#[cfg(feature = "paddle-ocr")]
+-use std::fs;
+-
+ #[cfg(feature = "paddle-ocr")]
+ use super::error::OcrError;
+-#[cfg(feature = "paddle-ocr")]
+-use super::validation::TESSERACT_SUPPORTED_LANGUAGE_CODES;
+-
+-#[cfg(feature = "paddle-ocr")]
+-const TESSDATA_FAST_BASE_URL: &str = "https://github.com/tesseract-ocr/tessdata_fast/raw/main";
+-
+-/// All language codes to download (supported languages + osd for script detection).
+-#[cfg(feature = "paddle-ocr")]
+-fn all_download_codes() -> Vec<&'static str> {
+-    let mut codes: Vec<&str> = TESSERACT_SUPPORTED_LANGUAGE_CODES.iter().copied().collect();
+-    if !codes.contains(&"osd") {
+-        codes.push("osd");
+-    }
+-    codes.sort();
+-    codes
+-}
+ 
+-/// Manages tessdata file downloading, caching, and manifest generation.
++/// Inspects an explicit tessdata cache directory.
+ #[derive(Debug, Clone)]
+ #[cfg_attr(alef, alef(skip))]
+ pub struct TessdataManager {
+@@ -55,21 +35,11 @@ impl TessdataManager {
+         self.cache_dir.join(format!("{lang}.traineddata")).exists()
+     }
+ 
+-    /// Returns the manifest of all tessdata files.
+-    ///
+-    /// Paths are relative to the cache root (prefixed with "tessdata/").
++    /// Fedora-managed tessdata is not part of Xberg's downloadable model manifest.
+     #[cfg(feature = "paddle-ocr")]
+     #[cfg_attr(alef, alef(skip))]
+     pub fn manifest() -> Vec<crate::paddle_ocr::ModelManifestEntry> {
+-        all_download_codes()
+-            .into_iter()
+-            .map(|lang| crate::paddle_ocr::ModelManifestEntry {
+-                relative_path: format!("tessdata/{lang}.traineddata"),
+-                sha256: String::new(),
+-                size_bytes: 0,
+-                source_url: format!("{TESSDATA_FAST_BASE_URL}/{lang}.traineddata"),
+-            })
+-            .collect()
++        Vec::new()
+     }
+ 
+     /// Downloads all tessdata_fast traineddata files to the cache directory.
+@@ -83,87 +53,16 @@ impl TessdataManager {
+         Ok(0)
+     }
+ 
+-    /// Downloads all tessdata_fast traineddata files to the cache directory.
+-    ///
+-    /// Skips files that already exist. Returns the count of newly downloaded files.
+-    ///
+-    /// Requires the `paddle-ocr` feature for HTTP download support (ureq).
++    /// Reject runtime tessdata downloads in Fedora builds.
+     #[cfg(feature = "paddle-ocr")]
+     pub fn ensure_all_languages(&self) -> Result<usize, OcrError> {
+-        fs::create_dir_all(&self.cache_dir).map_err(|e| {
+-            OcrError::TesseractInitializationFailed(format!(
+-                "Failed to create tessdata cache dir {}: {e}",
+-                self.cache_dir.display()
+-            ))
+-        })?;
+-
+-        let codes = all_download_codes();
+-        let total = codes.len();
+-        let mut downloaded = 0usize;
+-
+-        for (i, lang) in codes.iter().enumerate() {
+-            let dest = self.cache_dir.join(format!("{lang}.traineddata"));
+-            if dest.exists() {
+-                continue;
+-            }
+-
+-            let url = format!("{TESSDATA_FAST_BASE_URL}/{lang}.traineddata");
+-            tracing::info!(lang, progress = format!("{}/{}", i + 1, total), "Downloading tessdata");
+-
+-            download_traineddata(&url, &dest).map_err(|e| {
+-                OcrError::TesseractInitializationFailed(format!("Failed to download {lang}.traineddata: {e}"))
+-            })?;
+-
+-            downloaded += 1;
+-        }
+-
+-        tracing::info!(downloaded, total, "Tessdata download complete");
+-
+-        Ok(downloaded)
+-    }
+-}
+-
+-/// Download a single traineddata file with retries.
+-#[cfg(feature = "paddle-ocr")]
+-fn download_traineddata(url: &str, dest: &Path) -> Result<(), String> {
+-    const MAX_ATTEMPTS: u32 = 3;
+-
+-    let mut last_error = String::new();
+-
+-    for attempt in 1..=MAX_ATTEMPTS {
+-        let result = (|| -> Result<Vec<u8>, String> {
+-            let agent = ureq::Agent::new_with_defaults();
+-            let response = agent.get(url).call().map_err(|e| format!("HTTP request failed: {e}"))?;
+-
+-            let status = response.status();
+-            if status != 200 {
+-                return Err(format!("HTTP {status}"));
+-            }
+-
+-            let body = response
+-                .into_body()
+-                .with_config()
+-                .limit(50 * 1024 * 1024)
+-                .read_to_vec()
+-                .map_err(|e| format!("Failed to read response body: {e}"))?;
+-
+-            Ok(body)
+-        })();
+-
+-        match result {
+-            Ok(bytes) => {
+-                fs::write(dest, &bytes).map_err(|e| format!("Failed to write {}: {e}", dest.display()))?;
+-                return Ok(());
+-            }
+-            Err(e) => {
+-                tracing::warn!(attempt, max_attempts = MAX_ATTEMPTS, error = %e, "Download failed, retrying...");
+-                std::thread::sleep(std::time::Duration::from_secs(2u64.pow((attempt - 1).min(3))));
+-                last_error = e;
+-            }
+-        }
++        Err(OcrError::TesseractInitializationFailed(
++            "Fedora builds do not download tessdata at runtime; install the required \
++             tesseract-langpack-* package(s), or use OcrConfig.tessdata_path or \
++             TESSDATA_PREFIX for explicit local data."
++                .to_string(),
++        ))
+     }
+-
+-    Err(format!("Failed after {MAX_ATTEMPTS} attempts: {last_error}"))
+ }
+ 
+ #[cfg(test)]
+@@ -195,63 +94,19 @@ mod tests {
+ 
+     #[cfg(feature = "paddle-ocr")]
+     #[test]
+-    fn test_all_download_codes_includes_osd() {
+-        let codes = all_download_codes();
+-        assert!(codes.contains(&"osd"));
+-        assert!(codes.contains(&"eng"));
+-        assert!(codes.contains(&"fra"));
+-    }
+-
+-    #[cfg(feature = "paddle-ocr")]
+-    #[test]
+-    fn test_all_download_codes_sorted() {
+-        let codes = all_download_codes();
+-        let mut sorted = codes.clone();
+-        sorted.sort();
+-        assert_eq!(codes, sorted);
++    fn test_manifest_excludes_system_tessdata() {
++        assert!(TessdataManager::manifest().is_empty());
+     }
+ 
+     #[cfg(feature = "paddle-ocr")]
+     #[test]
+-    fn test_manifest_returns_entries() {
+-        let entries = TessdataManager::manifest();
+-        assert!(!entries.is_empty());
+-
+-        let paths: Vec<&str> = entries.iter().map(|e| e.relative_path.as_str()).collect();
+-        assert!(paths.contains(&"tessdata/eng.traineddata"));
+-        assert!(paths.contains(&"tessdata/osd.traineddata"));
+-    }
+-
+-    #[cfg(feature = "paddle-ocr")]
+-    #[test]
+-    fn test_manifest_entries_have_valid_urls() {
+-        let entries = TessdataManager::manifest();
+-        for entry in &entries {
+-            assert!(
+-                entry
+-                    .source_url
+-                    .starts_with("https://github.com/tesseract-ocr/tessdata_fast/"),
+-                "Source URL should point to tessdata_fast: {}",
+-                entry.source_url
+-            );
+-            assert!(
+-                entry.relative_path.starts_with("tessdata/"),
+-                "Paths should be prefixed with tessdata/"
+-            );
+-        }
+-    }
+-
+-    #[cfg(feature = "paddle-ocr")]
+-    #[test]
+-    fn test_ensure_all_languages_with_existing_files() {
++    fn test_ensure_all_languages_fails_closed_without_creating_cache() {
+         let temp_dir = TempDir::new().unwrap();
+-        let manager = TessdataManager::new(Some(temp_dir.path().to_path_buf()));
+-
+-        for code in all_download_codes() {
+-            fs::write(temp_dir.path().join(format!("{code}.traineddata")), "fake").unwrap();
+-        }
+-
+-        let downloaded = manager.ensure_all_languages().unwrap();
+-        assert_eq!(downloaded, 0);
++        let cache_dir = temp_dir.path().join("tessdata");
++        let manager = TessdataManager::new(Some(cache_dir.clone()));
++        let error = manager.ensure_all_languages().unwrap_err().to_string();
++        assert!(error.contains("do not download tessdata at runtime"));
++        assert!(error.contains("tesseract-langpack-*"));
++        assert!(!cache_dir.exists());
+     }
+ }
+diff --git a/crates/xberg/src/ocr/tessdata_download.rs b/crates/xberg/src/ocr/tessdata_download.rs
+index 22c7d2722c..cf92ae3a01 100644
+--- a/crates/xberg/src/ocr/tessdata_download.rs
++++ b/crates/xberg/src/ocr/tessdata_download.rs
+@@ -1,95 +1,47 @@
+-//! Tessdata language pack download utilities for runtime language pack materialization.
++//! Compatibility helpers for runtime tessdata language pack requests.
+ //!
+-//! Provides functions to download `.traineddata` files from the official Tesseract
+-//! tessdata_fast repository on GitHub, with fallback URLs for redundancy.
++//! Fedora builds use system- or user-provided `.traineddata` files and never
++//! download tessdata at runtime.
+ 
+ use crate::ocr::error::OcrError;
+ use std::path::Path;
+ 
+-/// Download a language pack from the tessdata_fast repository.
++/// Reject a runtime language-pack download request.
+ ///
+-/// Attempts to download `{lang}.traineddata` from GitHub with fallback URLs
+-/// for redundancy. Skips download if the file already exists. Uses `ureq`
+-/// with rustls + platform-verifier for HTTPS (OS trust store; respects SSL_CERT_FILE).
++/// Fedora packages provide language data through `tesseract-langpack-*` RPMs
++/// or an explicitly configured local tessdata directory.
+ ///
+ /// # Arguments
+ ///
+ /// * `lang` - Language code (e.g., "eng", "fra", "deu")
+-/// * `output_dir` - Directory to write the traineddata file
++/// * `output_dir` - Unused compatibility argument
+ ///
+ /// # Returns
+ ///
+-/// `Ok(())` if download succeeds or file already exists, `Err(OcrError)` on failure.
++/// Always returns `Err(OcrError)` with local configuration guidance.
+ ///
+ /// # Panics
+ ///
+ /// Does not panic. All errors are returned as `OcrError`.
+ #[cfg(not(target_arch = "wasm32"))]
+-pub(crate) fn download_language_pack(lang: &str, output_dir: &Path) -> Result<(), OcrError> {
+-    let traineddata_path = output_dir.join(format!("{}.traineddata", lang));
+-
+-    if traineddata_path.exists() {
+-        tracing::debug!(
+-            "Language pack '{}' already exists at {}",
+-            lang,
+-            traineddata_path.display()
+-        );
+-        return Ok(());
+-    }
+-
+-    let urls = [
+-        format!(
+-            "https://github.com/tesseract-ocr/tessdata_fast/raw/main/{}.traineddata",
+-            lang
+-        ),
+-        format!(
+-            "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/{}.traineddata",
+-            lang
+-        ),
+-    ];
+-
+-    tracing::info!(
+-        "Downloading Tesseract language pack '{}' to {} (source: tessdata_fast)",
+-        lang,
+-        traineddata_path.display()
+-    );
+-
+-    for url in &urls {
+-        tracing::info!("Fetching language pack '{}' from {}", lang, url);
+-        match download_file(url, &traineddata_path) {
+-            Ok(_) => {
+-                tracing::info!(
+-                    "Successfully downloaded language pack '{}' to {}",
+-                    lang,
+-                    traineddata_path.display()
+-                );
+-                return Ok(());
+-            }
+-            Err(e) => {
+-                tracing::warn!("Failed to download from {}: {}", url, e);
+-                continue;
+-            }
+-        }
+-    }
+-
++pub(crate) fn download_language_pack(lang: &str, _output_dir: &Path) -> Result<(), OcrError> {
+     Err(OcrError::TesseractInitializationFailed(format!(
+-        "Failed to download language pack '{}' from tessdata_fast repository. \
+-         Tried URLs: {}. Check your network connection and verify the language code is valid.",
+-        lang,
+-        urls.join(", ")
++        "Missing Tesseract traineddata language '{lang}'. Fedora builds do not download \
++         tessdata at runtime; install the corresponding tesseract-langpack-* package or \
++         configure OcrConfig.tessdata_path or TESSDATA_PREFIX."
+     )))
+ }
+ 
+ /// Maximum traineddata download size (64 MB). The largest `tessdata_fast`
+ /// language packs are well under this; it guards against pathological responses.
+-#[cfg(not(target_arch = "wasm32"))]
++#[cfg(any())]
+ const MAX_TRAINEDDATA_BYTES: u64 = 64 * 1024 * 1024;
+ 
+ /// Download a file from a URL and write it atomically to the specified path.
+ ///
+ /// Writes to a sibling temp file first, then renames into place so an
+ /// interrupted download never leaves a partial `.traineddata` behind.
+-#[cfg(not(target_arch = "wasm32"))]
++#[cfg(any())]
+ fn download_file(url: &str, output_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+     let response = ureq::get(url).call()?;
+ 

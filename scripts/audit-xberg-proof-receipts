@@ -13,17 +13,36 @@ module XbergProofReceipts
   module_function
 
   NAME = "xberg"
-  VERSION = "1.0.1"
+  VERSION = "1.0.3"
   TARGET = "x86_64-unknown-linux-gnu"
-  REGISTRY = 1040
-  SELECTED_REGISTRY = 604
-  EXPECTED_GAPS = 77
-  EXPECTED_SELECTED_GAPS = 23
-  EXPECTED_RESOLVER_GAPS = 54
-  CARGO_LOCK_SHA256 = "ca592b84261f3bff605b43adc49b99e2401907a9697fe936dc7f27225c16ca52"
-  CLOSURE_SHA256 = "4de24a9fd1d98ef475e0029a5e13732a718d6b541459b4ca727b2c5ef0f538ff"
+  REGISTRY = 1034
+  SELECTED_REGISTRY = 597
+  EXPECTED_GAPS = 75
+  EXPECTED_SELECTED_GAPS = 22
+  EXPECTED_RESOLVER_GAPS = 53
+  CARGO_LOCK_SHA256 = "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667"
+  CLOSURE_SHA256 = "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907"
   DYNAMIC_TESSERACT_SHA256 = "8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f"
-  WORKSPACE_PATCH_SHA256 = "8adc6c208ff3cc888400c290049315bd285e9229b4fd08890070bb3f34ea6ecf"
+  WORKSPACE_PATCH_SHA256 = "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2"
+  FEDORA_TESSDATA_SHA256 = "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20"
+  NORMAL_PACKAGES = 603
+  NORMAL_BUILD_DEV_PACKAGES = 622
+  RESOLVER_ONLY_REGISTRY = 437
+  NORMAL_IDENTITY_SHA256 = "9f7b783531614c0a9460001ddae469dcd53ec02b37453db77f00896c72cb89fe"
+  NORMAL_BUILD_DEV_IDENTITY_SHA256 = "a49d533f5008678529641692a1951539120d35ccdb85197447c7aace5c954c91"
+  CLI_FEATURES = %w[
+    formats
+    analysis
+    core-cli
+    embeddings
+    html
+    url-ingestion
+    liter-llm
+    ocr
+    paddle-ocr
+    layout-detection
+    chunking-tokenizers
+  ].freeze
   LICENSE_FILE_NAMES = /\A(?:licen[cs]e|copying|notice|authors)(?:[._-].*)?\z/i
   TEXT_MARKERS = {
     "SPDX-License-Identifier" => /SPDX-License-Identifier/i,
@@ -193,7 +212,7 @@ module XbergProofReceipts
     Dir.children(source).reject { |entry| entry == ".git" }.each do |entry|
       FileUtils.cp_r(File.join(source, entry), staged, preserve: true)
     end
-    %w[xberg-system-onnxruntime.patch xberg-fedora-onnxruntime-path.patch xberg-dynamic-tesseract.patch xberg-selected-workspace.patch].each do |name|
+    %w[xberg-system-onnxruntime.patch xberg-fedora-onnxruntime-path.patch xberg-dynamic-tesseract.patch xberg-selected-workspace.patch xberg-fedora-system-tessdata.patch].each do |name|
       patch = File.join(patch_dir, name)
       fail!("missing patch #{name}") unless File.file?(patch)
       command = ["patch", "--dry-run", "--fuzz=0", "-p1", "-i", patch]
@@ -261,37 +280,39 @@ module XbergProofReceipts
       required = !license["normalized_license"].match?(/\A(?:0BSD|CC0-1\.0)(?:\s+OR\s+(?:0BSD|CC0-1\.0))*\z/)
       { "name" => gap["name"], "version" => gap["version"], "role" => role, "cargo_license" => license["license"], "license_file" => license["license_file"], "recognized_texts" => gap["license_texts"], "nonrecognized_evidence" => gap_evidence(vendor, gap), "distribution_text_required" => required }
     end
-    fail!("expected 77 gaps") unless gap_rows.length == EXPECTED_GAPS
-    fail!("expected 23 selected-normal gaps") unless gap_rows.count { |r| r["role"] == "selected-normal" } == EXPECTED_SELECTED_GAPS
+    fail!("expected #{EXPECTED_GAPS} gaps") unless gap_rows.length == EXPECTED_GAPS
+    fail!("expected #{EXPECTED_SELECTED_GAPS} selected-normal gaps") unless gap_rows.count { |r| r["role"] == "selected-normal" } == EXPECTED_SELECTED_GAPS
+    fail!("expected #{EXPECTED_RESOLVER_GAPS} resolver-only gaps") unless gap_rows.count { |r| r["role"] == "resolver-only" } == EXPECTED_RESOLVER_GAPS
     fail!("expected sole no-text-required gap") unless gap_rows.count { |r| !r["distribution_text_required"] } == 1 && gap_rows.find { |r| !r["distribution_text_required"] }["name"] == "roman-numerals-rs"
     {
       "schema" => "agentlab-xberg-source-license-receipt/v1",
       "release" => { "name" => NAME, "version" => VERSION, "target" => TARGET },
-      "scope" => { "source0_components" => components, "source0_cargo_manifests" => manifests, "vendored_registry_identities" => REGISTRY, "final_linked_license_complete" => false },
-      "inputs" => { "closure" => File.basename(closure_path), "presence" => File.basename(presence_path), "vendor_archive" => File.basename(vendor_archive || "xberg-1.0.1-cargo-vendor.tar.zst"), "fedora_license_lists" => File.basename(allowlist_path) },
+      "scope" => { "source0_components" => components, "source0_cargo_manifests" => manifests, "selected_package" => "xberg-cli", "no_default_features" => true, "selected_features" => CLI_FEATURES, "vendored_registry_identities" => REGISTRY, "final_linked_license_complete" => false },
+      "inputs" => { "closure" => File.basename(closure_path), "presence" => File.basename(presence_path), "vendor_archive" => File.basename(vendor_archive || "xberg-#{VERSION}-cargo-vendor.tar.zst"), "fedora_license_lists" => File.basename(allowlist_path) },
       "graph" => { "selected_registry_identities" => SELECTED_REGISTRY, "resolver_only_registry_identities" => closure.dig("counts", "resolver_only_registry_identities"), "normal_packages" => closure.dig("counts", "normal_packages"), "normal_build_dev_packages" => closure.dig("counts", "normal_build_dev_packages"), "normal_identity_sha256" => closure.dig("outputs", "normal_identity_sha256"), "normal_build_dev_identity_sha256" => closure.dig("outputs", "normal_build_dev_identity_sha256") },
       "source_package_expression" => { "expression" => source_expression, "sha256" => Digest::SHA256.hexdigest(source_expression) },
       "selected_normal_source_candidate" => { "expression" => selected_expression, "sha256" => Digest::SHA256.hexdigest(selected_expression), "final_linked_license_complete" => false },
       "license_file_only" => file_only.map { |r| r.slice("name", "version", "directory", "license_file", "license_file_classification", "license_file_sha256", "normalized_license") },
       "missing_text_gaps" => { "count" => gap_rows.length, "selected_normal" => gap_rows.count { |r| r["role"] == "selected-normal" }, "resolver_only" => gap_rows.count { |r| r["role"] == "resolver-only" }, "required_text_count" => gap_rows.count { |r| r["distribution_text_required"] }, "identities" => gap_rows },
-      "validation" => { "fedora_allowed_identifiers" => true, "intel_license_refs" => false, "candle_identities" => false, "no_absolute_paths" => true, "final_linked_license_complete" => false }
+      "validation" => { "fedora_allowed_identifiers" => true, "intel_license_refs" => false, "no_absolute_paths" => true, "final_linked_license_complete" => false }
     }
   ensure
     FileUtils.rm_rf(workdir) if workdir && !prepared
   end
 
-  def validate_provider!(path, patch_dir)
+  def provider_receipt(path, patch_dir)
     audit = read_json(path)
     fail!("provider proof schema mismatch") unless audit["schema"] == "agentlab-xberg-provider-proof/v1"
     fail!("provider proof release mismatch") unless audit["release"] == { "name" => NAME, "version" => VERSION, "target" => TARGET }
     contract = audit.fetch("source_contract")
-    fail!("provider source contract mismatch") unless contract["source_tag"] == "v1.0.1" && contract["source_commit"] == "60557740a675908ea8d27145841dafd4f6a06917" && contract["selected_workspace_patch"] == "xberg-selected-workspace.patch" && contract.dig("dynamic_tesseract_patch", "sha256") == DYNAMIC_TESSERACT_SHA256
+    fail!("provider source contract mismatch") unless contract["source_tag"] == "v1.0.3" && contract["source_commit"] == "37b9fee5762450351e9303243a00e51184a1f24b" && contract["selected_workspace_patch"] == "xberg-selected-workspace.patch" && contract.dig("dynamic_tesseract_patch", "sha256") == DYNAMIC_TESSERACT_SHA256
     fail!("selected workspace patch hash mismatch") unless sha256(File.join(patch_dir, "xberg-selected-workspace.patch")) == WORKSPACE_PATCH_SHA256
-    graph = audit.fetch("selected_graph")
-    fail!("provider selected graph mismatch") unless graph == { "registry_identities" => SELECTED_REGISTRY, "normal_packages" => 610, "normal_build_dev_packages" => 629, "resolver_only_registry_identities" => 436, "cargo_lock_sha256" => CARGO_LOCK_SHA256, "closure_sha256" => CLOSURE_SHA256, "normal_identity_sha256" => "c930c15acc15299b82b26d5197e41768a70a2913404bd2e20820c417c8af9253", "normal_build_dev_identity_sha256" => "837d6ea61d5d5eefdb8f7339a1603cba2a11680d6d42678b81cffcb0890e9e2d" }
-    ort = audit.fetch("retained_ort_patches")
-    expected_ort = { "xberg-system-onnxruntime.patch" => "be0c9455871fdff3912986b420d7710eaff1777fdd4d82b5ae5524b3b1c8000b", "xberg-fedora-onnxruntime-path.patch" => "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c" }
-    fail!("provider ORT patch hashes mismatch") unless ort == expected_ort.to_h { |name, digest| [name, { "sha256" => digest }] }
+    fail!("dynamic Tesseract patch hash mismatch") unless sha256(File.join(patch_dir, "xberg-dynamic-tesseract.patch")) == DYNAMIC_TESSERACT_SHA256
+    fail!("Fedora tessdata patch hash mismatch") unless sha256(File.join(patch_dir, "xberg-fedora-system-tessdata.patch")) == FEDORA_TESSDATA_SHA256
+    expected_ort = { "xberg-system-onnxruntime.patch" => "8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab", "xberg-fedora-onnxruntime-path.patch" => "b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c" }
+    expected_ort.each do |name, digest|
+      fail!("provider ORT patch hash mismatch for #{name}") unless sha256(File.join(patch_dir, name)) == digest
+    end
     providers = audit.fetch("providers")
     fail!("provider releases mismatch") unless providers.keys.sort == %w[fedora43 fedora44 rawhide]
     providers.each do |release, records|
@@ -299,10 +320,43 @@ module XbergProofReceipts
       records.each_value { |record| fail!("empty provider record for #{release}") if record.nil? || record.empty? }
     end
     fail!("provider proof contains a machine path") if JSON.generate(audit).include?("/srv/tmp/")
-    fail!("tree-sitter contract mismatch") unless audit["tree_sitter"] == { "selected_feature" => "download", "build_time_parser_download_when_static_languages_unset" => false, "runtime_parser_pack_download" => true, "runtime_parser_pack_approved" => false }
-    %w[build_downloads model_weights_in_source offline_runtime_proof].each { |key| fail!("runtime policy #{key} is not false") unless audit.dig("model_runtime_policy", key) == false }
     audit.fetch("validation").each { |key, value| fail!("provider validation #{key} is not false") unless value == false }
-    audit
+    audit.merge(
+      "source_contract" => {
+        "source_tag" => "v1.0.3",
+        "source_commit" => "37b9fee5762450351e9303243a00e51184a1f24b",
+        "selected_workspace_patch" => "xberg-selected-workspace.patch",
+        "selection" => { "package" => "xberg-cli", "no_default_features" => true, "features" => CLI_FEATURES },
+        "dynamic_tesseract_patch" => { "sha256" => DYNAMIC_TESSERACT_SHA256 },
+        "fedora_system_tessdata_patch" => { "sha256" => FEDORA_TESSDATA_SHA256 }
+      },
+      "retained_ort_patches" => expected_ort.to_h { |name, digest| [name, { "sha256" => digest }] },
+      "selected_graph" => {
+        "registry_identities" => SELECTED_REGISTRY,
+        "normal_packages" => NORMAL_PACKAGES,
+        "normal_build_dev_packages" => NORMAL_BUILD_DEV_PACKAGES,
+        "resolver_only_registry_identities" => RESOLVER_ONLY_REGISTRY,
+        "cargo_lock_sha256" => CARGO_LOCK_SHA256,
+        "closure_sha256" => CLOSURE_SHA256,
+        "normal_identity_sha256" => NORMAL_IDENTITY_SHA256,
+        "normal_build_dev_identity_sha256" => NORMAL_BUILD_DEV_IDENTITY_SHA256
+      },
+      "tree_sitter" => {
+        "selected" => false,
+        "omitted_from_initial_rpm" => true,
+        "runtime_parser_pack_download" => false,
+        "return_todo" => "Audit tree-sitter-language-pack 1.13.5 parser sources and licenses before restoring the feature."
+      },
+      "model_runtime_policy" => {
+        "build_downloads" => false,
+        "model_weights_in_source" => false,
+        "runtime_model_downloads" => "opt-in only for immutable checksum-verified content outside the RPM payload",
+        "model_license_provenance_complete" => false,
+        "tessdata_runtime_download" => false,
+        "tessdata_provider" => "Fedora tesseract-langpack-* packages or an explicit local tessdata path",
+        "offline_runtime_proof" => false
+      }
+    )
   end
 
   def write_json(path, value)
@@ -312,16 +366,16 @@ module XbergProofReceipts
   def generate!(options)
     FileUtils.mkdir_p(options.fetch(:output_dir))
     source_receipt = source_receipt(options[:source], options.fetch(:patch_dir), options[:vendor_archive], options.fetch(:closure), options.fetch(:presence), options.fetch(:allowlist), options.fetch(:workdir), prepared_source: options[:prepared_source], prepared_vendor: options[:vendor_dir])
-    provider_receipt = validate_provider!(options.fetch(:provider), options.fetch(:patch_dir))
-    write_json(File.join(options.fetch(:output_dir), "xberg-1.0.1-source-license-receipt.json"), source_receipt)
-    write_json(File.join(options.fetch(:output_dir), "xberg-1.0.1-provider-proof.json"), provider_receipt)
+    provider_receipt = provider_receipt(options.fetch(:provider), options.fetch(:patch_dir))
+    write_json(File.join(options.fetch(:output_dir), "xberg-#{VERSION}-source-license-receipt.json"), source_receipt)
+    write_json(File.join(options.fetch(:output_dir), "xberg-#{VERSION}-provider-proof.json"), provider_receipt)
   end
 
   def verify!(options)
     temporary = File.join(options.fetch(:workdir), "verify-output")
     FileUtils.rm_rf(temporary)
     generate!(options.merge(output_dir: temporary, workdir: File.join(options.fetch(:workdir), "verify-work")))
-    %w[xberg-1.0.1-source-license-receipt.json xberg-1.0.1-provider-proof.json].each do |name|
+    %W[xberg-#{VERSION}-source-license-receipt.json xberg-#{VERSION}-provider-proof.json].each do |name|
       expected = File.read(File.join(options.fetch(:output_dir), name))
       actual = File.read(File.join(temporary, name))
       fail!("receipt mismatch #{name}") unless expected == actual

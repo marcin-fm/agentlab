@@ -1,40 +1,43 @@
 # Xberg
 
-This is a blocked source-package draft for upstream Xberg 1.0.1, tag commit
-`60557740a675908ea8d27145841dafd4f6a06917`. The official tag archive is Source0
-with SHA-256 `a2e3ac73c051476625ec3f540c523553be2086282d3808c3f32979067a070ee6`.
+This is a blocked source-package draft for upstream Xberg 1.0.3, tag commit
+`37b9fee5762450351e9303243a00e51184a1f24b`. The official tag archive is Source0
+with SHA-256 `238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e`.
 
 ## Corrected Cargo Contract
 
 The selected Fedora workspace has six members: `xberg`, `xberg-cli`,
 `xberg-libheif`, `xberg-libwpd`, `xberg-paddle-ocr`, and `xberg-tesseract`.
-The checked Fedora lock contains 1,040 registry identities, 604 selected
-identities, and 436 resolver-only identities. The normal and
-normal/build/dev graphs contain 610 and 629 packages, respectively, with no
+The checked Fedora lock contains 1,034 registry identities, 597 selected
+identities, and 437 resolver-only identities. The normal and
+normal/build/dev graphs contain 603 and 622 packages, respectively, with no
 Git dependencies. Intel MKL source identities are absent.
 
-The four source patches apply in this order: system ORT feature, Fedora ORT
-lib64 discovery, dynamic Tesseract, and selected workspace/Candle pruning.
-The Cargo vendor tree contains 51,400 files, 9,488 directories, no symlinks,
-and 1,101,005,097 bytes. Its tree SHA-256 is
-`e3418b1feee8a7824b243e91552e3f550066410e6028c4c5484757d340dc9672`.
+The five source patches apply in this order: system ORT feature, Fedora ORT
+lib64 discovery, dynamic Tesseract, selected workspace/Candle pruning, and
+Fedora-managed tessdata enforcement.
+The Cargo vendor tree contains 51,213 files, 9,444 directories, no symlinks,
+and 1,099,639,051 bytes. Its tree SHA-256 is
+`fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917`.
 
 ## Provider Boundary
 
 The provider proof records Fedora ONNX Runtime, libheif, Tesseract,
-Leptonica, and English tessdata records for Fedora 43, Fedora 44, and
-Rawhide. Tesseract and ORT use dynamic system providers. Tree-sitter's
-selected feature is `download`; build-time parser downloads are disabled when
-static languages are unset, while runtime parser-pack download remains
-unapproved. Build downloads, runtime model downloads, compilation, runtime
-smoke, final linked-license completeness, enablement, matrix proof, and COPR
-publication remain false.
+Leptonica, and English tessdata records for Fedora 43, Fedora 44, and Rawhide.
+Tesseract and ORT use dynamic system providers. Mutable tessdata downloads are
+disabled; missing languages require Fedora `tesseract-langpack-*` packages or
+an explicit local path. Tree-sitter is omitted from the initial RPM and remains
+a prominent return TODO pending exact parser source, license, and offline
+x86_64/aarch64 review. Immutable checksum-verified model downloads may be
+opted into outside the RPM payload, but their provenance, offline behavior,
+runtime smoke, final linked-license completeness, enablement, matrix proof,
+and COPR publication remain incomplete.
 
 ## License Boundary
 
-The tracked source-license receipt covers Source0 and the 1,040-source vendor
-tree. It records 77 missing license-text gaps: 23 selected-normal and 54
-resolver-only, with 76 distribution texts required. The source package
+The tracked source-license receipt covers Source0 and the 1,034-source vendor
+tree. It records 75 missing license-text gaps: 22 selected-normal and 53
+resolver-only, with 74 distribution texts required. The source package
 expression is source-payload coverage only; final binary linked-license proof
 is not complete.
 
@@ -44,16 +47,17 @@ full resolver vendor tree, and offline directory-source metadata/tree proof.
 The proof auditor can regenerate both receipts from a prepared sanitized,
 patched, lock-replaced source and extracted vendor tree without transient
 research files. The checked Cargo license writer selects package `xberg-cli`
-with feature `default`, mirrors Fedora cargo2rpm's normalized summary/breakdown
-format and conservative `--target=all` scope, and retains the checked lock and
-offline vendor configuration. That inventory is not final Linux linked-license
-or RPM payload evidence.
+with no default features and the explicit `formats`, `analysis`, `core-cli`,
+`embeddings`, `html`, `url-ingestion`, `liter-llm`, `ocr`, `paddle-ocr`,
+`layout-detection`, and `chunking-tokenizers` tuple. It mirrors Fedora
+cargo2rpm's normalized summary/breakdown format and conservative `--target=all`
+scope while retaining the checked lock and offline vendor configuration. That
+inventory is not final Linux linked-license or RPM payload evidence.
 
-Historical configured-SCM proofs `10786324` and `10786342` used the superseded
-1,133-source contract and are not current evidence. Build `10788466` verified
-the corrected source/prep contract but `%cargo_build_crate -n xberg-cli`
-expanded to a no-default-features build and ignored the package token, so its
-binary and 240-line license inventory are diagnostic only. Release `0.20`
-selects the exact default-feature CLI consistently for build and license
-accounting. Xberg remains blocked and COPR-disabled pending that proof plus
-native, model, runtime, final-license, payload, and target-matrix evidence.
+All `1.0.1` configured-SCM results and receipts are historical evidence only.
+Release `1.0.3-0.1` regenerates the exact default-minus-tree-sitter source,
+lock, vendor, provider, and license contracts; disables mutable tessdata
+downloads; and retains only explicit opt-in immutable model downloads. No
+`1.0.3` compile proof exists yet. Xberg remains blocked and COPR-disabled
+pending that proof plus native, model, runtime, final-license, payload, and
+target-matrix evidence.
