@@ -8,9 +8,9 @@ release:
   source_uploaded: "2026-07-29T23:24:15.245277Z"
   repository: chopratejas/headroom
 current_draft:
-  release: 0.33.0-0.4
-  validation: source audit and exact Fedora-family linked-license contracts complete; configured-SCM six-cell build required
-  spec_sha256: 0b56c5e4c0acbc6036876d2180e7086ade43d5cf6782049b4109064b09eb62f9
+  release: 0.33.0-0.5
+  validation: source audit, exact Fedora-family linked-license contracts, and the ML-only integration-test gate complete; configured-SCM six-cell build required
+  spec_sha256: 8e0b2c655614af04c38a29cdcb1192dd43d14417527877bc9c9f44dc543c40f8
   selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
   license_gate: target builds retain the 217-record source audit and compare generated linked records with the exact 172-record Source2 contract for Fedora 43, 44, or 45
   selected_license_audit:
@@ -47,8 +47,9 @@ patches:
   headroom-system-rusqlite.patch: f1c57c7646aa916420407640bba5c128dc661a5078121e8b8196b48b944fe459
   headroom-drop-benchmark-dev-dependency.patch: 16c6d041618191bf65def6b3516bcf986c91759a22bb48aadb626a6fcb378137
   headroom-system-ast-grep.patch: 5a1f90b0acccb1a468bb709a827de843ba841640462e19c436fca95fff4fa87b
+  headroom-gate-ml-integration-test.patch: 27f3b96007451511b3157e278c3c3ab79f9ed2e6ddb124f19f7c99c8cdbf3a35
 current_static_validation:
-  exact_sdist_patch_apply: four patches passed with zero fuzz
+  exact_sdist_patch_apply: five patches passed with zero fuzz
   cargo_metadata: headroom-py dependency uses_default_features is false and unselected optional ML and Redis dependencies are absent
   upstream_workspace: root workspace already contains only headroom-core and headroom-py
   ast_grep_provider: source-built Agentlab ast-grep replaces the upstream PyPI binary wheel
@@ -61,6 +62,7 @@ current_static_validation:
   source_license_probe: fastembed, Magika, ORT, and Redis are absent; ICU4X and the exact tree-sitter grammar set are selected
   unicode_license_probe: regex-syntax 0.8.11 bundles generated Unicode tables and includes src/unicode_tables/LICENSE-UNICODE while Cargo metadata declares only MIT OR Apache-2.0
   buildroot_license_probe: normalize cargo2rpm's headroom-core sibling path, compare the complete generated 172-record set with Source2's auditable common-plus-family inventory and digest, retain Source1 as the 217-record all-target source audit, and install the verified regex-syntax Unicode text
+  ml_only_test_gate: kompress_parity declares required-features = ["ml"] and the full non-ML Cargo integration-test surface remains selected
   license_macro_redirection: canonical braced cargo_license expansion writes ../../LICENSE.dependencies
   system_sqlite_probe: target checks require the Rust CCR test binary to link Fedora libsqlite3 and the installed Python backend to open a database
   extension_dynamic_probe: target checks reject RPATH or RUNPATH; unused Rust CCR code may be dead-stripped from the extension

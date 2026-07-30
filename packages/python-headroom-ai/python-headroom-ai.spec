@@ -7,7 +7,7 @@
 
 Name:           python-headroom-ai
 Version:        0.33.0
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
@@ -35,6 +35,11 @@ Patch2:         headroom-drop-benchmark-dev-dependency.patch
 # PyPI binary-wheel dependency and require the system executable instead.
 # Fedora-specific; not submitted because upstream supports pip environments.
 Patch3:         headroom-system-ast-grep.patch
+# Packaging-only test selection: this integration target imports the Kompress
+# transform exported only by the unselected ml feature and requires local model
+# assets. Keep every non-ML integration test in the normal Cargo test run.
+# Not submitted; retain while upstream does not declare required-features.
+Patch4:         headroom-gate-ml-integration-test.patch
 
 BuildRequires:  cargo-rpm-macros >= 24
 BuildRequires:  gcc
@@ -203,6 +208,9 @@ PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindi
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.5
+- Gate the ML-only Kompress integration test through its required feature.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.4
 - Bind the Fedora-family linked Rust license records and aggregate expression.
 

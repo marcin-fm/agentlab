@@ -47,14 +47,15 @@ build_runtime:
     - rust-tokenizers0.22 = 0.22.2
 validation:
   current_draft:
-    release: 0.33.0-0.4
-    status: source audit and exact Fedora-family linked-license contracts complete; configured-SCM six-cell build required
-    static_validation: exact-sdist four-patch zero-fuzz application, selected manifest closure, system ast-grep substitution, and network-isolated source resolution passed
+    release: 0.33.0-0.5
+    status: source audit, exact Fedora-family linked-license contracts, and the ML-only integration-test gate complete; configured-SCM six-cell build required
+    static_validation: exact-sdist five-patch zero-fuzz application, selected manifest closure, system ast-grep substitution, ML-only test gating, and network-isolated source resolution passed
     cargo_resolution: 307 resolved packages; 217 unique package/version records across 391 target-all normal tree entries
     source_license_probe: headroom-0.33.0-selected-cargo-license-audit.json records all 217 selected package/version/license tuples and the regex-syntax Unicode supplement at SHA-256 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71
     candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
     unicode_license_probe: regex-syntax 0.8.11 includes generated Unicode tables and LICENSE-UNICODE while declaring only MIT OR Apache-2.0 in Cargo metadata
     buildroot_license_gate: target builds must retain Source1 as the 217-record all-target audit, normalize cargo2rpm's headroom-core sibling path, compare all 172 linked LICENSE.dependencies records with checked Source2, and install the verified regex-syntax Unicode text
+    ml_only_test_gate: kompress_parity requires the ml feature while the complete non-ML Cargo integration-test surface remains enabled
     system_sqlite_gate: target checks must prove the Rust CCR test binary links Fedora libsqlite3 and the installed Python SQLite backend opens a database
     installed_smoke_gate: target checks must verify PyInit__core and import the buildroot package in safe-path mode before running the installed CLI help path
     required_target_checks: Cargo tests, linked-license inventory, system SQLite, extension ELF, installed import and CLI, and the complete six-cell matrix

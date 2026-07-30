@@ -40,11 +40,11 @@ network_policy:
   model_assets: native ml feature is disabled; the selected tokenizer closure retains upstream hf-hub capability
   rpm_build: offline after source and dependency acquisition
 build_validation:
-  release: 0.33.0-0.4
-  status: source audit and exact Fedora-family linked-license contracts complete; configured-SCM six-cell build required
+  release: 0.33.0-0.5
+  status: source audit, exact Fedora-family linked-license contracts, and the ML-only integration-test gate complete; configured-SCM six-cell build required
   source_sha256_verified: true
   source_size: 2462330
-  exact_sdist_patch_apply: four patches passed with zero fuzz
+  exact_sdist_patch_apply: five patches passed with zero fuzz
   cargo_metadata: headroom-py disables headroom-core default features and the selected manifest omits unselected ML and Redis dependency declarations
   upstream_workspace: the published sdist already limits the root workspace to headroom-core and headroom-py
   ast_grep_provider: upstream PyPI binary-wheel dependency is replaced by the source-built Agentlab ast-grep executable
@@ -55,6 +55,7 @@ build_validation:
   selected_new_dependencies: ICU4X segmenter data, tree-sitter language grammars, crypto hashes, dashmap, aho-corasick, and http
   tree_sitter_provider: exact rust-tree-sitter0.25.2 = 0.25.2 is published on all configured targets
   tokenizers_provider: Fedora 43/44 provide 0.22.2; Rawhide requires rust-tokenizers0.22 = 0.22.2 before Headroom is rebuilt
+  ml_only_test_gate: kompress_parity declares required-features = ["ml"]; the full non-ML Cargo integration-test surface remains selected
   candidate_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND LicenseRef-Fedora-Public-Domain AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
   selected_license_audit_file: headroom-0.33.0-selected-cargo-license-audit.json
   selected_license_audit_sha256: 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71
@@ -75,6 +76,7 @@ build_validation:
   required_target_checks:
     - verify the checked Source1 all-target audit still contains the exact 217 selected source records
     - compare the complete target-generated linked record set with the exact 172-record Fedora-family contract
+    - verify the ML-only kompress_parity target is gated by required-features without narrowing the non-ML Cargo test run
     - run headroom-core Cargo tests with default features disabled
     - prove system SQLite linkage and installed Python SQLite operation
     - reject extension RPATH or RUNPATH and verify PyInit__core

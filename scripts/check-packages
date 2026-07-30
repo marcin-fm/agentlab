@@ -60,7 +60,7 @@ ensure
   FileUtils.rm_rf(workdir) if workdir
 end
 
-def validate_docling_patches_zero_fuzz!(package, source_env:, source_root:, patches:, errors:, warnings:)
+def validate_patches_zero_fuzz!(package, source_env:, source_root:, patches:, errors:, warnings:)
   source_archive = ENV[source_env]
   unless source_archive && File.file?(source_archive)
     warnings << "#{package.name}: zero-fuzz patch validation skipped; set #{source_env} to the checked Source0 archive"
@@ -522,13 +522,42 @@ packages.each do |package|
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
     errors << "python-headroom-ai: exact tree-sitter provider is missing" unless dependencies.dig("build_runtime", "local_packages")&.include?("rust-tree-sitter0.25.2 = 0.25.2")
     errors << "python-headroom-ai: exact tokenizers provider is missing" unless dependencies.dig("build_runtime", "local_packages")&.include?("rust-tokenizers0.22 = 0.22.2")
-    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.4" && reproducibility.dig("current_draft", "release") == "0.33.0-0.4"
+    ml_test_patch = File.join(package.directory, "headroom-gate-ml-integration-test.patch")
+    errors << "python-headroom-ai: ML-only integration-test patch is missing" unless File.file?(ml_test_patch)
+    if File.file?(ml_test_patch)
+      errors << "python-headroom-ai: ML-only integration-test patch SHA-256 does not match" unless Digest::SHA256.file(ml_test_patch).hexdigest == "27f3b96007451511b3157e278c3c3ab79f9ed2e6ddb124f19f7c99c8cdbf3a35"
+      ml_test_patch_content = File.read(ml_test_patch)
+      errors << "python-headroom-ai: ML-only integration-test patch does not gate only kompress_parity" unless [
+        '+name = "kompress_parity"',
+        '+path = "tests/kompress_parity.rs"',
+        '+required-features = ["ml"]'
+      ].all? { |fragment| ml_test_patch_content.include?(fragment) }
+    end
+    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.5" && reproducibility.dig("current_draft", "release") == "0.33.0-0.5"
+    declared_headroom_patches = Agentlab.spec_patch_files(spec)
+    expected_headroom_patches = %w[
+      headroom-disable-default-ml.patch
+      headroom-system-rusqlite.patch
+      headroom-drop-benchmark-dev-dependency.patch
+      headroom-system-ast-grep.patch
+      headroom-gate-ml-integration-test.patch
+    ]
+    errors << "python-headroom-ai: spec patch order differs from the checked contract" unless declared_headroom_patches == expected_headroom_patches
+    validate_patches_zero_fuzz!(
+      package,
+      source_env: "AGENTLAB_HEADROOM_SOURCE0",
+      source_root: "headroom_ai-#{manifest_version}",
+      patches: declared_headroom_patches,
+      errors: errors,
+      warnings: warnings
+    )
     required_spec_fragments = [
       "%global selected_license_audit_sha256 #{audit_config['selected_license_audit_sha256']}",
       "%global fedora_license_contract_sha256 #{audit_config['fedora_license_contract_sha256']}",
       "%global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3",
       "Source1:        headroom-%{version}-selected-cargo-license-audit.json",
       "Source2:        headroom-%{version}-fedora-license-contract.json",
+      "Patch4:         headroom-gate-ml-integration-test.patch",
       'echo "%{selected_license_audit_sha256}  %{SOURCE1}" | sha256sum -c -',
       'echo "%{fedora_license_contract_sha256}  %{SOURCE2}" | sha256sum -c -',
       '%{python3} - "%{SOURCE1}" "%{SOURCE2}" LICENSE.dependencies "%{headroom_binary_license}" "%{fedora}"',
@@ -540,6 +569,7 @@ packages.each do |package|
       'headroom-core v0\\.1\\.0',
       "target_license_dependencies_comparison_implemented",
       "LICENSE.regex-syntax-unicode",
+      "%cargo_test -n",
       "Requires:       python3dist(mcp) >= 1.28.1",
       "Requires:       python3dist(mcp) < 2"
     ]
@@ -681,7 +711,7 @@ packages.each do |package|
       errors << "rust-tokenizers0.22: spec expansion failed: #{expanded_error.strip}" unless expanded_status.success?
       errors << "rust-tokenizers0.22: expanded patch does not enforce zero fuzz" unless expanded.include?(patch_marker) && expanded.include?("--fuzz=0")
     end
-    validate_docling_patches_zero_fuzz!(
+    validate_patches_zero_fuzz!(
       package,
       source_env: "AGENTLAB_TOKENIZERS_SOURCE0",
       source_root: "tokenizers-0.22.2",
@@ -718,7 +748,7 @@ packages.each do |package|
     errors << "python-docling-core: spec patch order differs from the checked contract" unless declared_patches == expected_patches.keys
     core_fragments = expected_patches.keys + %w[test/test_base.py test/test_data_gen_flag.py test/test_doc_base.py test/test_otsl_table_export.py test/test_page.py test/test_regions_to_table.py] + ["%autosetup -n docling_core-%{version} -p1", "DocLangDocSerializer", "docling-serialize --help", "docling-view --help"]
     errors << "python-docling-core: spec does not enforce the selected patch/test/smoke contract" unless core_fragments.all? { |fragment| spec.include?(fragment) }
-    validate_docling_patches_zero_fuzz!(
+    validate_patches_zero_fuzz!(
       package,
       source_env: "AGENTLAB_DOCLING_CORE_SOURCE0",
       source_root: "docling_core-#{manifest_version}",
@@ -753,7 +783,7 @@ packages.each do |package|
     errors << "python-docling-slim: spec patch order differs from the checked contract" unless declared_patches == [patch_name]
     slim_fragments = [patch_name, "%autosetup -n docling_slim-%{version} -p1", "%pyproject_buildrequires -x service-client", "rm -f %{buildroot}%{_bindir}/docling", "rm -f %{buildroot}%{_bindir}/docling-tools", "BatchSourceRequestInput", "BatchTargetRequestInput", "GenericSourceRequest", "GenericTargetRequest", "DoclingServiceClient(f\"http://127.0.0.1:{port}\").health()"]
     errors << "python-docling-slim: spec does not enforce the selected API-only smoke contract" unless slim_fragments.all? { |fragment| spec.include?(fragment) }
-    validate_docling_patches_zero_fuzz!(
+    validate_patches_zero_fuzz!(
       package,
       source_env: "AGENTLAB_DOCLING_SLIM_SOURCE0",
       source_root: "docling_slim-#{manifest_version}",

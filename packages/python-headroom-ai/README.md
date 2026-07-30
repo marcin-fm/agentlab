@@ -34,7 +34,7 @@ Headroom's declared floor; Fedora 43 additionally uses the scoped
 `python-jwt 2.13.0` compatibility provider. The native `ml` feature remains
 disabled.
 
-The `0.33.0` patches apply sequentially with zero fuzz. They retain the
+The five `0.33.0` patches apply sequentially with zero fuzz. They retain the
 non-ML upstream surface, system SQLite, complete Cargo tests, and installed
 Python smokes while rebasing the ast-grep metadata substitution. The checks
 fail unless the Rust CCR test binary links Fedora's system SQLite, the installed
@@ -75,15 +75,19 @@ Cargo gap: Rawhide has tokenizers `0.23.1`, outside the
 required `0.22` branch, while Fedora 43/44 already provide `0.22.2`. Release
 `0.33.0-0.3` selects Rawhide-only `rust-tokenizers0.22`. Its provider-complete
 build reached compilation but proved that an all-target Cargo-lock receipt
-cannot equal Fedora's target-pruned linked graph. Release `0.33.0-0.4` adds the
-separate family-specific linked-license contract and still requires the
+cannot equal Fedora's target-pruned linked graph. Release `0.33.0-0.4` added the
+separate family-specific linked-license contract and proved it on all six
+targets before the ML-only `kompress_parity` integration test failed to compile
+without the `ml` feature. Release `0.33.0-0.5` declares that one test target's
+required feature while preserving the complete non-ML Cargo test surface, and
+still requires the
 complete configured-SCM six-cell build and non-installing runtime artifact proof. Target builds must
 regenerate `LICENSE.dependencies`, run the Cargo and installed Python smokes,
 and prove system SQLite plus extension ELF behavior. Historical `0.32.x`
 results remain evidence only and are not active package inputs.
 
 Historical Fedora 43 and Fedora 44 receipts remain evidence only; they do not
-validate `0.33.0-0.4`. Released non-ML Headroom still requires
+validate `0.33.0-0.5`. Released non-ML Headroom still requires
 `tiktoken-rs 0.11`, its `fancy-regex 0.17` edge, and `unidiff 0.4`, so those
 three compatibility records remain selected for the package. No produced RPM
 was installed.

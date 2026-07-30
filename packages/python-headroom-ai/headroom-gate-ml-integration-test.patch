@@ -1,0 +1,14 @@
+--- a/crates/headroom-core/Cargo.toml
++++ b/crates/headroom-core/Cargo.toml
+@@ -186,6 +186,11 @@
+ # single-worker / single-instance setups.
+ redis = []
+ 
++[[test]]
++name = "kompress_parity"
++path = "tests/kompress_parity.rs"
++required-features = ["ml"]
++
+ [dev-dependencies]
+ proptest = "1"
+ tempfile = "3"
