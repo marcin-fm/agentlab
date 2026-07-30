@@ -48,7 +48,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | OpenCode | 1.18.5 | blocked | Updating to 1.18.8 requires a release-matched standalone binary-embedding receipt and refreshed source closure |
 | OpenChamber | 1.16.1 | blocked | Web CLI draft requires Bun, an audited Node/native closure, and the OpenCode provider |
 | Bun | 1.3.14 | blocked | First isolated source build works; immutable RPM inputs, self-rebuild, relink, and final audits remain |
-| RTK | 0.43.0 | enabled | Release 0.6 uses Fedora dirs 6, passes all six COPR targets, 2,245 Fedora 44 tests, system-SQLite and directory-path smokes, and artifact review |
+| RTK | 0.43.0 | enabled | Current configured-SCM matrix passed; the 0.44.1 update is deferred until the Fedora 43 Rust 1.91 toolchain boundary is resolved |
 | codex-cli | 0.145.0 | blocked | Final static-consumer licensing and configured offline proof builds remain |
 | rust-v8 | 149.2.0 | blocked | Exact recursive identities and stable-Rust patches are recorded; immutable submodule sources, licenses, and offline builds remain |
 | rubygem-ferrum | 0.17.2 | enabled | Pure-Ruby package; Fedora 43/44 clean builds and Chromium CDP smoke passed |
@@ -69,7 +69,9 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | python-mslex | 1.3.0 | enabled | Clean F43/F44 builds and tests passed; expected missing-manpage warning only |
 | python-oslex | 2.0.0 | enabled | Clean F43/F44 builds passed using the local mslex provider |
 | rust-unidiff0.4 | 0.4.0 | enabled | Stable-only Headroom Rust dependency; Rawhide provides the exact crate |
-| python-headroom-ai | 0.31.0 | blocked | Custom MCP-minimal draft requires re-scope around upstream 0.32.0 features, aggregate Rust licensing, and fresh F43/F44 proof |
+| python-headroom-ai | 0.33.0 | enabled | Release 0.1 preserves upstream non-ML Headroom with system SQLite and source-built ast-grep; static graph review passed and the current six-target configured-SCM matrix is required |
+| python-jwt | 2.13.0 | enabled | Fedora 43-only compatibility provider for python-mcp 1.28.1 |
+| python-mcp | 1.28.1 | enabled | Full-matrix dependency provider selected by python-headroom-ai 0.33.0 |
 
 Blocked specs are reviewable drafts. Automation will not create a COPR package or submit a build until `package.yml` has both `status: enabled` and `copr.enabled: true`.
 

@@ -450,6 +450,83 @@ packages.each do |package|
 
   errors.concat(Agentlab.validate_pdfium_source(package, spec))
 
+  if package.name == "python-headroom-ai"
+    audit_config = package.data["build_validation"]
+    audit_file = audit_config && audit_config["selected_license_audit_file"]
+    audit_path = audit_file && File.join(package.directory, audit_file)
+    unless audit_path && File.file?(audit_path)
+      errors << "python-headroom-ai: selected Cargo license audit is missing"
+    else
+      errors << "python-headroom-ai: selected Cargo license audit SHA-256 does not match" unless Digest::SHA256.file(audit_path).hexdigest == audit_config["selected_license_audit_sha256"]
+      begin
+        audit = JSON.parse(File.read(audit_path))
+        records = audit["records"]
+        errors << "python-headroom-ai: selected Cargo license audit schema is invalid" unless audit["schema"] == "agentlab-headroom-selected-cargo-license-audit/v1"
+        errors << "python-headroom-ai: selected Cargo license audit release is invalid" unless audit["release"] == { "name" => "python-headroom-ai", "version" => manifest_version, "source_sha256" => manifest_sha256 }
+        errors << "python-headroom-ai: selected Cargo license audit selection is invalid" unless audit["selection"] == { "workspace_package" => "headroom-py", "default_features" => false, "features" => ["extension-module"], "target" => "all", "normal_tree_entries" => 391, "unique_package_versions" => 217 }
+        record_keys = records&.map { |record| record.values_at("name", "version", "cargo_license_expression") }
+        errors << "python-headroom-ai: selected Cargo license audit records are incomplete" unless records.is_a?(Array) && records.length == 217 && record_keys == record_keys.uniq.sort
+        errors << "python-headroom-ai: selected Cargo license audit expression differs from the spec" unless audit["candidate_binary_spdx"] == spec[/^%global headroom_binary_license\s+(.+)$/, 1]
+        errors << "python-headroom-ai: selected Cargo Unicode supplement is incomplete" unless audit["supplemental_license_texts"] == [{ "name" => "regex-syntax", "version" => "0.8.11", "path" => "src/unicode_tables/LICENSE-UNICODE", "sha256" => "74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3", "spdx" => "Unicode-DFS-2016", "reason" => "bundled generated Unicode tables are not represented in Cargo metadata" }]
+        expected_validation = { "source_license_metadata_complete" => true, "records_sorted_unique" => true, "supplemental_unicode_text_retained" => true, "target_license_dependencies_comparison_required" => true, "target_license_dependencies_comparison_implemented" => true, "final_target_license_dependencies_verified" => false }
+        errors << "python-headroom-ai: selected Cargo license audit validation is incomplete" unless audit["validation"] == expected_validation
+      rescue JSON::ParserError => e
+        errors << "python-headroom-ai: invalid selected Cargo license audit: #{e.message}"
+      end
+    end
+    reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
+    current_static = reproducibility.fetch("current_static_validation")
+    errors << "python-headroom-ai: current static validation retains dynamic remote evidence" if current_static.keys.any? { |key| key.match?(/remote|copr|build_id/) }
+    errors << "python-headroom-ai: reproducibility does not bind the selected Cargo license audit" unless reproducibility.dig("current_draft", "selected_license_audit", "sha256") == audit_config["selected_license_audit_sha256"]
+    required_spec_fragments = [
+      "%global selected_license_audit_sha256 #{audit_config['selected_license_audit_sha256']}",
+      "%global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3",
+      "Source1:        headroom-%{version}-selected-cargo-license-audit.json",
+      'echo "%{selected_license_audit_sha256}  %{SOURCE1}" | sha256sum -c -',
+      '%{python3} - "%{SOURCE1}" LICENSE.dependencies "%{headroom_binary_license}"',
+      'headroom-core v0\\.1\\.0',
+      "target_license_dependencies_comparison_implemented",
+      "LICENSE.regex-syntax-unicode",
+      "Requires:       python3dist(mcp) >= 1.28.1",
+      "Requires:       python3dist(mcp) < 2"
+    ]
+    errors << "python-headroom-ai: spec does not consume the checked license or MCP contract" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
+  end
+
+  if package.name == "python-mcp"
+    reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
+    mcp_dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    errors << "python-mcp: Fedora 43 backend patch hash is stale" unless reproducibility.dig("patches", "replace-uv-dynamic-version-with-hatchling-vcs.diff") == "ef60c72690bca5b1afa11ac9c3e5a7ef490740061c79dd02a4a849108a16ac1c"
+    errors << "python-mcp: Fedora 43 sdist fallback proof is missing" unless package.data.dig("validation", "fedora_43_backend_proof")&.include?("mcp-1.28.1-py3-none-any.whl")
+    errors << "python-mcp: PyJWT runtime floor is missing" unless mcp_dependencies["runtime"]&.include?("python3dist(pyjwt) >= 2.10.1")
+    required_fragments = ["%if 0%{?fedora} == 43", "Patch0:         replace-uv-dynamic-version-with-hatchling-vcs.diff", "Patch1:         pass-pythonpath-for-subprocess.diff", "%patch -P 0 -p1", "%patch -P 1 -p1"]
+    errors << "python-mcp: conditional Fedora patch contract is incomplete" unless required_fragments.all? { |fragment| spec.include?(fragment) }
+    if Agentlab.command_available?("rpmspec")
+      fedora_44, fedora_44_error, fedora_44_status = Agentlab.capture(["rpmspec", "-P", package.spec_path])
+      fedora_43, fedora_43_error, fedora_43_status = Agentlab.capture(["rpmspec", "--define", "fedora 43", "--define", "dist .fc43", "-P", package.spec_path])
+      backend_patch = 'echo "Patch #0 (replace-uv-dynamic-version-with-hatchling-vcs.diff):"'
+      pythonpath_patch = 'echo "Patch #1 (pass-pythonpath-for-subprocess.diff):"'
+      errors << "python-mcp: Fedora 44 spec expansion failed: #{fedora_44_error.strip}" unless fedora_44_status.success?
+      errors << "python-mcp: Fedora 43 spec expansion failed: #{fedora_43_error.strip}" unless fedora_43_status.success?
+      errors << "python-mcp: Fedora 44 unexpectedly applies the Fedora 43 backend patch" if fedora_44.include?(backend_patch)
+      errors << "python-mcp: Fedora 44 does not apply the PYTHONPATH patch" unless fedora_44.include?(pythonpath_patch)
+      errors << "python-mcp: Fedora 43 patch expansion is incomplete or out of order" unless fedora_43.index(backend_patch) && fedora_43.index(pythonpath_patch) && fedora_43.index(backend_patch) < fedora_43.index(pythonpath_patch)
+    end
+  end
+
+  if package.name == "python-jwt"
+    expected_chroots = %w[fedora-43-x86_64 fedora-43-aarch64]
+    applicability = Agentlab.load_yaml(File.join(Agentlab::ROOT, "config", "target-applicability.yml"))
+    override = applicability.dig("overrides", "python-jwt")
+    expected_omitted = {
+      "44" => { "source" => "fedora", "provider" => "python3-jwt 2.10.1-3.fc44", "capability" => "python3dist(pyjwt) >= 2.10.1 with the crypto extra", "checked_on" => "2026-07-30" },
+      "rawhide" => { "source" => "fedora", "provider" => "python3-jwt 2.13.0-2.fc45", "capability" => "python3dist(pyjwt) >= 2.10.1 with the crypto extra", "checked_on" => "2026-07-30" }
+    }
+    errors << "python-jwt: compatibility target scope is invalid" unless package.chroots(project_chroots) == expected_chroots
+    errors << "python-jwt: omitted target provider evidence is incomplete" unless package.data.dig("copr", "omitted_target_families")&.keys&.sort == %w[fedora_44 rawhide]
+    errors << "python-jwt: target applicability provider evidence is incomplete" unless override == { "releases" => ["43"], "omitted" => expected_omitted }
+  end
+
   if package.name == "python-docling-core"
     reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
     expected_validation = {

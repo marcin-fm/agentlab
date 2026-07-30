@@ -1,0 +1,38 @@
+target_release: 1.28.1
+runtime:
+  - python3dist(anyio) >= 4.5
+  - python3dist(httpx) >= 0.27.1, < 1
+  - python3dist(httpx-sse) >= 0.4
+  - python3dist(pydantic) >= 2.11, < 3
+  - python3dist(starlette) >= 0.27
+  - python3dist(python-multipart) >= 0.0.9
+  - python3dist(sse-starlette) >= 1.6.1
+  - python3dist(pydantic-settings) >= 2.5.2
+  - python3dist(uvicorn) >= 0.31.1
+  - python3dist(jsonschema) >= 4.20
+  - python3dist(pyjwt) >= 2.10.1
+  - python3dist(typing-extensions) >= 4.9
+  - python3dist(typing-inspection) >= 0.4.1
+extras:
+  cli:
+    - python3dist(typer) >= 0.16
+    - python3dist(python-dotenv) >= 1
+  rich:
+    - python3dist(rich) >= 13.9.4
+  ws:
+    - python3dist(websockets) >= 15.0.1
+build:
+  - pyproject-rpm-macros
+  - python3-devel
+  - Fedora 43 uses python3dist(hatch-vcs); Fedora 44 and Rawhide retain python3dist(uv-dynamic-versioning)
+test:
+  - python3dist(pytest)
+  - python3dist(pytest-xdist)
+  - python3dist(requests)
+  - python3dist(inline-snapshot)
+  - python3dist(dirty-equals)
+consumers:
+  - python-headroom-ai 0.33.0
+local_packages:
+  fedora_43:
+    - python-jwt 2.13.0

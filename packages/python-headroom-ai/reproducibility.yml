@@ -1,18 +1,23 @@
 schema: headroom-ai-reproducibility/v1
 release:
-  version: 0.32.1
+  version: 0.33.0
   source_kind: complete published PyPI sdist
-  source_url: https://files.pythonhosted.org/packages/a1/b3/af494f2320111fa62f89724840f912ec8f4382a7768942bb9205a557b11f/headroom_ai-0.32.1.tar.gz
-  source_sha256: 329dda3328f0fb45ec7128353f7fc9108f08e9676c9dc1873b4841c5c00c94bd
-  source_size: 2277688
-  source_uploaded: "2026-07-19T04:39:30.588166Z"
+  source_url: https://files.pythonhosted.org/packages/87/2c/d3aeeb62d8f61430c9cf5b84c1bd0227362e43eaaaf710d6bb1759fec153/headroom_ai-0.33.0.tar.gz
+  source_sha256: 97d817e5923903d72bed24f75e0424e9cb7f86b3ddde0fc1acec4f3f85deeb5a
+  source_size: 2462330
+  source_uploaded: "2026-07-29T23:24:15.245277Z"
   repository: chopratejas/headroom
 current_draft:
-  release: 0.32.1-0.1
-  validation: local source, SRPM, package, and repository validation passed; configured-SCM six-cell build pending
-  spec_sha256: eb6f3c5d5b44c0b1b976eaa0e1b6cb4f715c320fc98acf4bce423a0a1d1c6215
+  release: 0.33.0-0.1
+  validation: static source and selected-graph validation complete; configured-SCM six-cell build required
+  spec_sha256: 10e459eb1e3a4bde2c198c7de61806382db5bd3cfaa4ab8cb86bab4485fee92e
   selected_license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016
-  license_gate: target builds must regenerate LICENSE.dependencies from the selected closure
+  license_gate: target builds must normalize cargo2rpm's headroom-core sibling path and compare all 217 records with the checked Source1 audit
+  selected_license_audit:
+    file: headroom-0.33.0-selected-cargo-license-audit.json
+    sha256: 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71
+    records: 217
+    supplemental_text: regex-syntax 0.8.11 src/unicode_tables/LICENSE-UNICODE as Unicode-DFS-2016 at SHA-256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3
 selected_surface:
   python: upstream base project plus mcp extra
   native_features:
@@ -30,10 +35,10 @@ selected_surface:
     - these are documented upstream runtime behaviors, not build-time network access
     - FastAPI is required because upstream CLI registration imports proxy request-scope types
 patches:
-  headroom-disable-default-ml.patch: 5b694b45929dff377da1266695524b47e2957e6d57e4725b50c537109f5e4abd
+  headroom-disable-default-ml.patch: fb1645ebcc47591c9ddc4b08029e31add938d6fa0515cd1592e51039434a7551
   headroom-system-rusqlite.patch: f1c57c7646aa916420407640bba5c128dc661a5078121e8b8196b48b944fe459
   headroom-drop-benchmark-dev-dependency.patch: 16c6d041618191bf65def6b3516bcf986c91759a22bb48aadb626a6fcb378137
-  headroom-system-ast-grep.patch: 6b354018d010d392fa4705e9973cd7552e1fc0e088d9438571e9dd8901d25673
+  headroom-system-ast-grep.patch: 5a1f90b0acccb1a468bb709a827de843ba841640462e19c436fca95fff4fa87b
 current_static_validation:
   exact_sdist_patch_apply: four patches passed with zero fuzz
   cargo_metadata: headroom-py dependency uses_default_features is false and unselected optional ML and Redis dependencies are absent
@@ -42,33 +47,15 @@ current_static_validation:
   cargo_resolution: rusqlite 0.31.0 and libsqlite3-sys 0.28.0 selected
   sqlite_source_review: v0.31.0 to v0.32.0 changes only the backend TTL documentation, not its rusqlite API use
   license_workspace: headroom-core and headroom-py only
-  cargo_resolution: 296 resolved packages; 272 packages in the target-all normal dependency closure
-  source_license_probe: 206 unique package/version records across 371 cargo2rpm-equivalent tree entries; fastembed and aws-config are absent
-  license_breakdown_records: 206
+  cargo_resolution: 307 resolved packages; 217 unique package/version records across 391 target-all normal tree entries
+  source_license_probe: fastembed, Magika, ORT, and Redis are absent; ICU4X and the exact tree-sitter grammar set are selected
   unicode_license_probe: regex-syntax 0.8.11 bundles generated Unicode tables and includes src/unicode_tables/LICENSE-UNICODE while Cargo metadata declares only MIT OR Apache-2.0
-  buildroot_license_probe: retain Unicode-DFS-2016 in the aggregate and regenerate LICENSE.dependencies in the configured target build
+  buildroot_license_probe: normalize cargo2rpm's headroom-core sibling path, compare all 217 regenerated LICENSE.dependencies records with checked Source1, and install the verified regex-syntax Unicode text
   license_macro_redirection: canonical braced cargo_license expansion writes ../../LICENSE.dependencies
   system_sqlite_probe: target checks require the Rust CCR test binary to link Fedora libsqlite3 and the installed Python backend to open a database
   extension_dynamic_probe: target checks reject RPATH or RUNPATH; unused Rust CCR code may be dead-stripped from the extension
   installed_smoke: target checks verify PyInit__core, import the buildroot package in safe-path mode, and run headroom --help
-  spec_parse: passed
-  local_srpm_sha256: 2d608c7ac37dec579ad6340dec474622082d7893cb8e0ce5dadb9d3635549dc8
-  local_srpm_members: 6
-  rpmlint: zero errors, zero warnings, four filtered
-  prior_local_mock_fedora_44_x86_64: release 0.9 passed
-  prior_local_runtime_rpm_sha256: cf4b945776325b0798ed6da14bcc514a8fdca7608ff7a07082366e4276186390
-  prior_local_debuginfo_rpm_sha256: 366ba34cec0d6d0856e97ff333ecb545f6399e5dc04266a4583967203d246432
-  prior_local_binary_rpmlint: zero errors and one missing-manpage warning
-  prior_local_cargo_tests: release 0.9 passed 936 plus doctests; 3 ignored
-  yaml_parse: passed
-  scoped_package_validator: passed
-  full_package_validator: 131 packages passed
-  repository_tests: 100 runs, 1027 assertions, zero failures with the known unrelated Bun WebKit collision-order test excluded
-  diff_check: passed
-  prior_configured_scm_build: 10770459
-  prior_configured_scm_matrix: 0.32.0-0.10 passed Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
-  prior_remote_runtime_rpm_sha256: db2c6905c6179f4b3f799f27e251714a7e9fd0d1ced18bfa52ed63612f128b66
-  prior_remote_license_dependencies_sha256: b76c43d8881c07cfca9dfca078d6eb3599d45241c40f46f7e23c56cae97e7770
+  target_build_required: regenerate LICENSE.dependencies, run Cargo/Python/SQLite/ELF smokes, and complete all six targets
 validation:
   applies_to: 0.31.0-0.1 historical package only; no current build evidence
   source_hash_verified: true

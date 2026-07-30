@@ -30,7 +30,7 @@ selected_consumers:
     reason: Released source-build dependency closure selected for the blocked reusable Playwright module.
   python-headroom-ai:
     releases: ["43", "44", rawhide]
-    reason: Released dependency closure selected for the blocked non-ML Headroom surface.
+    reason: Released dependency closure selected for the enabled non-ML Headroom surface.
   python-docling-mcp:
     releases: ["43", "44", rawhide]
     reason: Selected Docling MCP application retained as a blocked consumer pending an upstream-supported package surface.
@@ -102,13 +102,31 @@ dependency_groups:
     packages:
       - golang-github-evanw-esbuild
   python-headroom-ai:
-    reason: Rust compatibility dependency selected by the non-ML Headroom surface.
+    reason: Reusable Python and Rust dependencies selected by the non-ML Headroom surface.
     packages:
+      - python-mcp
       - rust-fancy-regex0.17
       - rust-tiktoken-rs0.11
       - rust-unidiff0.4
+  python-mcp:
+    reason: Fedora 43-only PyJWT compatibility provider selected by python-mcp.
+    packages:
+      - python-jwt
 
 overrides:
+  python-jwt:
+    releases: ["43"]
+    omitted:
+      "44":
+        source: fedora
+        provider: python3-jwt 2.10.1-3.fc44
+        capability: python3dist(pyjwt) >= 2.10.1 with the crypto extra
+        checked_on: "2026-07-30"
+      rawhide:
+        source: fedora
+        provider: python3-jwt 2.13.0-2.fc45
+        capability: python3dist(pyjwt) >= 2.10.1 with the crypto extra
+        checked_on: "2026-07-30"
   rust-atty0.2:
     releases: ["44", rawhide]
     omitted:

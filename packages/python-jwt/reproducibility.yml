@@ -1,0 +1,20 @@
+schema: python-jwt-reproducibility/v1
+package: python-jwt
+version: 2.13.0-0.1
+source:
+  url: https://files.pythonhosted.org/packages/3b/81/58d0ac84e1ef3a3843791d6954d94c0b33d526c75eeb1efbce9d0a4c4077/pyjwt-2.13.0.tar.gz
+  sha256: 41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423
+  size: 107515
+patches: {}
+validation:
+  current:
+    spec_sha256: 861e18bd199a6fe05293bace1f33eaead8fc4502fa1cb43aca3b4fffbdd0a781
+    targets:
+      - fedora-43-x86_64
+      - fedora-43-aarch64
+    configured_scm_build: required
+    tests: required
+    rpmlint: required
+host_policy:
+  produced_rpms_installed: false
+  copr_mutated: false

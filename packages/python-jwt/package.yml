@@ -1,0 +1,46 @@
+name: python-jwt
+status: enabled
+blockers: []
+scope:
+  role: dependency-only Fedora 43 compatibility provider
+  consumer: python-mcp 1.28.1 selected by python-headroom-ai 0.33.0
+  target_families:
+    - fedora_43
+source_policy:
+  source: immutable PyPI sdist
+  vendored_dependencies: none
+license_audit:
+  expression: MIT
+  license_file: LICENSE
+duplicate_check:
+  checked: "2026-07-30"
+  fedora_43: python3-jwt 2.8.0-7.fc43 is present but below python-mcp's PyJWT >= 2.10.1 requirement
+  fedora_44: python3-jwt 2.10.1-3.fc44 satisfies the consumer; Agentlab package omitted
+  fedora_rawhide: python3-jwt 2.13.0-2.fc45 satisfies the consumer; Agentlab package omitted
+  rpm_fusion_43_44_rawhide: absent
+validation:
+  release: 2.13.0-0.1
+  status: static source/spec validation complete; Fedora 43 x86_64/aarch64 configured-SCM build required
+  source_sha256_verified: true
+  source_size: 107515
+  test_policy: Fedora Rawhide test selection retained; four crypto/environment-sensitive tests excluded
+upstream:
+  provider: pypi
+  project: PyJWT
+  current_version: 2.13.0
+  source_url: https://files.pythonhosted.org/packages/3b/81/58d0ac84e1ef3a3843791d6954d94c0b33d526c75eeb1efbce9d0a4c4077/pyjwt-2.13.0.tar.gz
+  source_sha256: 41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423
+  source_size: 107515
+  released: "2026-05-21"
+  repository: jpadilla/pyjwt
+  license: MIT
+copr:
+  enabled: true
+  subdir: packages/python-jwt
+  spec: python-jwt.spec
+  chroots:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+  omitted_target_families:
+    fedora_44: Fedora 44 provides python3-jwt 2.10.1, satisfying python-mcp.
+    rawhide: Fedora Rawhide provides python3-jwt 2.13.0, satisfying python-mcp.

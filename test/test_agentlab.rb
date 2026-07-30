@@ -1036,6 +1036,73 @@ class AgentlabTest < Minitest::Test
     )
   end
 
+  def test_headroom_mcp_and_jwt_current_static_contracts
+    targets = Agentlab.config.fetch("chroots")
+    headroom = Agentlab.package_named("python-headroom-ai")
+    headroom_spec = File.read(headroom.spec_path)
+    audit_path = File.join(
+      headroom.directory,
+      headroom.data.dig("build_validation", "selected_license_audit_file")
+    )
+    audit = JSON.parse(File.read(audit_path))
+    reproducibility = Agentlab.load_yaml(File.join(headroom.directory, "reproducibility.yml"))
+
+    assert_equal("0.33.0", headroom.upstream.fetch("current_version"))
+    assert_equal(targets, headroom.chroots(targets))
+    assert_equal(
+      headroom.data.dig("build_validation", "selected_license_audit_sha256"),
+      Digest::SHA256.file(audit_path).hexdigest
+    )
+    assert_equal("agentlab-headroom-selected-cargo-license-audit/v1", audit.fetch("schema"))
+    assert_equal(391, audit.dig("selection", "normal_tree_entries"))
+    assert_equal(217, audit.dig("selection", "unique_package_versions"))
+    assert_equal(217, audit.fetch("records").length)
+    assert_equal(audit.fetch("records").uniq, audit.fetch("records"))
+    assert_equal(headroom_spec[/^%global headroom_binary_license\s+(.+)$/, 1], audit.fetch("candidate_binary_spdx"))
+    assert_equal(
+      "3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71",
+      reproducibility.dig("current_draft", "selected_license_audit", "sha256")
+    )
+    assert_equal("74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3", audit.dig("supplemental_license_texts", 0, "sha256"))
+    assert_equal(true, audit.dig("validation", "target_license_dependencies_comparison_implemented"))
+    assert_includes(headroom_spec, "Source1:        headroom-%{version}-selected-cargo-license-audit.json")
+    assert_includes(headroom_spec, '%{python3} - "%{SOURCE1}" LICENSE.dependencies "%{headroom_binary_license}"')
+    assert_includes(headroom_spec, 'headroom-core v0\\.1\\.0')
+    assert_includes(headroom_spec, "LICENSE.regex-syntax-unicode")
+    assert_includes(headroom_spec, "Requires:       python3dist(mcp) >= 1.28.1")
+    assert_includes(headroom_spec, "Requires:       python3dist(mcp) < 2")
+    refute(reproducibility.fetch("current_static_validation").keys.any? { |key| key.match?(/remote|copr|build_id/) })
+
+    mcp = Agentlab.package_named("python-mcp")
+    mcp_spec = File.read(mcp.spec_path)
+    mcp_reproducibility = Agentlab.load_yaml(File.join(mcp.directory, "reproducibility.yml"))
+    mcp_dependencies = Agentlab.load_yaml(File.join(mcp.directory, "dependencies.yml"))
+    assert_equal(targets, mcp.chroots(targets))
+    assert_equal(
+      "ef60c72690bca5b1afa11ac9c3e5a7ef490740061c79dd02a4a849108a16ac1c",
+      mcp_reproducibility.dig("patches", "replace-uv-dynamic-version-with-hatchling-vcs.diff")
+    )
+    assert_includes(mcp.data.dig("validation", "fedora_43_backend_proof"), "mcp-1.28.1-py3-none-any.whl")
+    assert_includes(mcp_spec, "%if 0%{?fedora} == 43")
+    assert_includes(mcp_dependencies["runtime"], "python3dist(pyjwt) >= 2.10.1")
+    fedora_44, fedora_44_error, fedora_44_status = Agentlab.capture(["rpmspec", "-P", mcp.spec_path])
+    fedora_43, fedora_43_error, fedora_43_status = Agentlab.capture(["rpmspec", "--define", "fedora 43", "--define", "dist .fc43", "-P", mcp.spec_path])
+    assert(fedora_44_status.success?, fedora_44_error)
+    assert(fedora_43_status.success?, fedora_43_error)
+    backend_patch = 'echo "Patch #0 (replace-uv-dynamic-version-with-hatchling-vcs.diff):"'
+    pythonpath_patch = 'echo "Patch #1 (pass-pythonpath-for-subprocess.diff):"'
+    refute_includes(fedora_44, backend_patch)
+    assert_includes(fedora_44, pythonpath_patch)
+    assert_operator(fedora_43.index(backend_patch), :<, fedora_43.index(pythonpath_patch))
+
+    jwt = Agentlab.package_named("python-jwt")
+    assert_equal(%w[fedora-43-x86_64 fedora-43-aarch64], jwt.chroots(targets))
+    assert_equal(%w[fedora_44 rawhide], jwt.data.dig("copr", "omitted_target_families").keys.sort)
+    applicability = Agentlab.load_yaml(File.join(Agentlab::ROOT, "config", "target-applicability.yml"))
+    assert_equal("python3-jwt 2.10.1-3.fc44", applicability.dig("overrides", "python-jwt", "omitted", "44", "provider"))
+    assert_equal("python3-jwt 2.13.0-2.fc45", applicability.dig("overrides", "python-jwt", "omitted", "rawhide", "provider"))
+  end
+
   def test_docling_core_and_slim_current_static_contracts
     targets = Agentlab.config.fetch("chroots")
     core = Agentlab.package_named("python-docling-core")

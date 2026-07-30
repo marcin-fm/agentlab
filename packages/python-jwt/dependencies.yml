@@ -1,0 +1,19 @@
+target_release: 2.13.0
+runtime:
+  - python3
+  - python3dist(typing-extensions) >= 4.0 on Python below 3.11
+extras:
+  crypto:
+    - python3dist(cryptography) >= 3.4
+build:
+  - pyproject-rpm-macros
+  - python3-devel
+  - python3dist(setuptools) >= 77.0.3
+test:
+  - python3dist(pytest); Fedora's current package is used for the published suite
+consumers:
+  - python-mcp 1.28.1 on Fedora 43
+target_applicability:
+  fedora_43: required because Fedora's PyJWT 2.8.0 is below python-mcp's declared floor
+  fedora_44: omitted because Fedora PyJWT 2.10.1 satisfies the consumer
+  fedora_rawhide: omitted because Fedora PyJWT 2.13.0 satisfies the consumer
