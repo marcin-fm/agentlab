@@ -563,7 +563,8 @@ packages.each do |package|
       "%patch -P 2 -p1",
       "test \"$(cargo2rpm --path Cargo.toml provides --feature default)\" = \"crate(tree-sitter/default) = %{version}\"",
       "test \"$(cargo2rpm --path Cargo.toml provides --feature std)\" = \"crate(tree-sitter/std) = %{version}\"",
-      "%bcond check 0"
+      "%bcond check 0",
+      "%global debug_package %{nil}"
     ]
     errors << "rust-tree-sitter0.25.2: spec contract is incomplete" unless required_fragments.all? { |fragment| spec.include?(fragment) }
     validation = package.data.fetch("validation")
@@ -572,6 +573,7 @@ packages.each do |package|
     errors << "rust-tree-sitter0.25.2: generated Cargo provides are incomplete" unless validation["generated_cargo_provides"] == ["crate(tree-sitter/default) = 0.25.2", "crate(tree-sitter/std) = 0.25.2"]
     errors << "rust-tree-sitter0.25.2: bundled provides are incomplete" unless validation["bundled_provides"] == ["bundled(tree-sitter) = 0.25.2", "bundled(icu) = 65.1"]
     errors << "rust-tree-sitter0.25.2: license payload is incomplete" unless validation["license_payload"] == ["LICENSE", "src/unicode/LICENSE"]
+    errors << "rust-tree-sitter0.25.2: debug-package contract is incomplete" unless validation["debug_package"] == "disabled for the noarch source-only payload" && spec.scan("%global debug_package %{nil}").length == 1 && spec.scan("BuildArch:      noarch").length == 3
     buildrequires_markers = [spec.index("%generate_buildrequires"), spec.index("%cargo_generate_buildrequires")]
     errors << "rust-tree-sitter0.25.2: dynamic BuildRequires generator is misplaced or duplicated" unless spec.scan("%cargo_generate_buildrequires").length == 1 && buildrequires_markers.all? && buildrequires_markers == buildrequires_markers.sort
     if Agentlab.command_available?("rpmspec")

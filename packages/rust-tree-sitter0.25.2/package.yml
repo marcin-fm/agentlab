@@ -23,7 +23,7 @@ license_audit:
 validation:
   source_sha256: 5168a515fe492af54c5cc8800ff8c840be09fa5168de45838afaecd3e008bce4
   license_sha256: 5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147
-  spec_sha256: ed0bcea16bbfc3acd4f8b74d247efcd58c01a7ecb40d644ab3268ca4adf8707e
+  spec_sha256: 80f6745e094fa2011ee9820e3de799a3013b4a32298be9f04968a5435c6a5d6e
   patches:
     tree-sitter-fix-metadata.diff: 78645b2d2fa0849f9bcf2b98db1ac2895d7db54091a9fd8b427fc77bf185fa13
     tree-sitter-build-bindings-unconditionally.patch: a090bde8896cdd99e2e6f678ce30e0de5d0ad5f33e608822dbaf14d5adfa96bc
@@ -41,6 +41,7 @@ validation:
   license_payload:
     - LICENSE
     - src/unicode/LICENSE
+  debug_package: disabled for the noarch source-only payload
   tests: disabled because the released crate archive omits upstream test data and additional source repositories
   required_copr_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
 upstream:

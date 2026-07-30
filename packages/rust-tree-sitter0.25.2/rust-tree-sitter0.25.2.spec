@@ -2,10 +2,11 @@
 %global source_sha256 5168a515fe492af54c5cc8800ff8c840be09fa5168de45838afaecd3e008bce4
 %global license_sha256 5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147
 %bcond check 0
+%global debug_package %{nil}
 
 Name:           rust-tree-sitter0.25.2
 Version:        0.25.2
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Rust bindings to the tree-sitter incremental parsing library
 
 # Upstream bundles the tree-sitter C library and ICU-derived Unicode sources.
@@ -103,6 +104,9 @@ test "$(cargo2rpm --path Cargo.toml provides --feature std)" = "crate(tree-sitte
 %endif
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.25.2-0.3
+- Disable empty debug packages for the noarch Rust source payload.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.25.2-0.2
 - Install the separately sourced upstream license in the crate payload.
 

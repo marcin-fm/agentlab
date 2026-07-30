@@ -25,6 +25,9 @@ both upstream and ICU/Unicode license texts, and emits explicit `default` and
 The separately checked upstream `Source1` license is copied into the installed
 crate payload after `%cargo_install`, because the released crate's include list
 does not retain a root `LICENSE` file.
+Automatic debug packages are disabled following Fedora's exact compatibility
+spec precedent because this package installs only noarch Rust source/devel
+content and therefore has no archful payload for a debugsource subpackage.
 An unconditional `%check` requires cargo2rpm to emit
 `crate(tree-sitter/default) = 0.25.2` and `crate(tree-sitter/std) = 0.25.2` from
 the patched source before the package can complete.
