@@ -55,7 +55,7 @@ scope while retaining the checked lock and offline vendor configuration. That
 inventory is not final Linux linked-license or RPM payload evidence.
 
 All `1.0.1` configured-SCM results and receipts are historical evidence only.
-Release `1.0.3-0.1` regenerates the exact default-minus-tree-sitter source,
+Release `1.0.3-0.2` regenerates the exact default-minus-tree-sitter source,
 lock, vendor, provider, and license contracts; disables mutable tessdata
 downloads; and retains only explicit opt-in immutable model downloads. No
 `1.0.3` compile proof exists yet. Xberg remains blocked and COPR-disabled

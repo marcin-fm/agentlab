@@ -23,16 +23,16 @@ upstream:
 source_audit_receipt:
   file: xberg-1.0.3-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: 27306e06e2309b355746c24ea55c3201667490335649f8a0f1b7b543652f446c
+  sha256: 0aeba6bb536a247e5fd941c44dcb8a86b42737561eab16bfb7a52e2dc3d48f5c
 source_link_filter:
   file: xberg-1.0.3-source-filter.json
   schema: agentlab-xberg-source-filter/v1
-  sha256: 4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4
+  sha256: baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d
   unsafe_links: 1
 system_ort_audit_receipt:
   file: xberg-1.0.3-system-ort-audit.json
   schema: agentlab-xberg-system-ort-audit/v3
-  sha256: 3592fa5417ddc1292a4d1fb2eaa34bbb10fff3f62319f7fe9ac07522ff1078a7
+  sha256: 95f51ae6fa6e1fe0b519875feda0d2a12510cefc469c5936def24921bc2e7d76
   patches:
     xberg-system-onnxruntime.patch: 8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab
     xberg-fedora-onnxruntime-path.patch: b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
@@ -63,7 +63,7 @@ cargo_source_contract:
     vendor_receipt: { file: xberg-1.0.3-cargo-vendor-receipt.json, sha256: 8980a1d9bb4a1123b2cbdc6dcc082993226c3d0eca09facc59c39124896f2819 }
     license_text_presence: { file: xberg-1.0.3-license-text-presence.json, sha256: 99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691 }
     vendor_manifest: { file: xberg-1.0.3-cargo-vendor.txt, sha256: 5d571bb5bc923c855a1e75f335d32187fda5cbb6f9d64b20af960b8c5a7ba544 }
-    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: b457619ba755e3ba5e05301010aee1314832c3a0de2dd365ed35d6c6e6a6303e }
+    auditor: { file: scripts/audit-xberg-cargo-closure, sha256: fbcf02cdc6f20f325cd86fd9a4882f47d69fe5839ed2f01f1c75d7936d5057ce }
     fedora_lock: { file: xberg-1.0.3-fedora-Cargo.lock, sha256: a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667 }
     source_license_receipt: { file: xberg-1.0.3-source-license-receipt.json, sha256: 151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32 }
     provider_proof: { file: xberg-1.0.3-provider-proof.json, sha256: 961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937 }

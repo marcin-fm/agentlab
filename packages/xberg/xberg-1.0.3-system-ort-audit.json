@@ -139,7 +139,7 @@
     },
     "source_filter": {
       "file": "xberg-1.0.3-source-filter.json",
-      "sha256": "4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4",
+      "sha256": "baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d",
       "unsafe_links_removed": 1
     },
     "source_license_receipt": {

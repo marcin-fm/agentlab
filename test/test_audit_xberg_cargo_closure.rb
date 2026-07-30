@@ -8,8 +8,10 @@ require "zlib"
 load File.expand_path("../scripts/audit-xberg-cargo-closure", __dir__)
 
 class XbergCargoClosureTest < Minitest::Test
-  def filter(path, target, reason: "absolute-target", type: "symlink", mode: "120000")
-    { "schema" => "agentlab-xberg-source-filter/v1", "release" => { "name" => "xberg", "version" => "1.0.1" }, "source" => { "tag" => "v1.0.1", "commit" => "commit", "tree" => "tree", "archive_sha256" => "sha256" }, "unsafe_links" => [{ "path" => path, "mode" => mode, "type" => type, "target" => target, "reason" => reason }] }
+  def filter(path, target, reason: "absolute-target", type: "symlink", mode: "120000", safe_links: 0)
+    symlinks = safe_links + (type == "symlink" ? 1 : 0)
+    hardlinks = type == "hardlink" ? 1 : 0
+    { "schema" => "agentlab-xberg-source-filter/v1", "release" => { "name" => "xberg", "version" => XbergCargoClosure::VERSION }, "source" => { "tag" => "v#{XbergCargoClosure::VERSION}", "commit" => "commit", "tree" => "tree", "archive_sha256" => "sha256" }, "archive_link_inventory" => { "symlinks" => symlinks, "hardlinks" => hardlinks, "safe_in_root_links" => safe_links, "unsafe_links" => 1 }, "unsafe_links" => [{ "path" => path, "mode" => mode, "type" => type, "target" => target, "reason" => reason }] }
   end
 
   def with_archive(entries, receipt)
@@ -71,10 +73,22 @@ class XbergCargoClosureTest < Minitest::Test
       { type: :file, path: "xberg-1.0.1/test_documents/fixture", content: "fixture" },
       { type: :symlink, path: "xberg-1.0.1/e2e/safe", target: "../test_documents/fixture" },
       { type: :symlink, path: "xberg-1.0.1/e2e/unavailable", target: target }
-    ], filter("xberg-1.0.1/e2e/unavailable", target)) do |archive, receipt, directory|
+    ], filter("xberg-1.0.1/e2e/unavailable", target, safe_links: 1)) do |archive, receipt, directory|
       root = XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"), filter: receipt)
       assert_equal("../test_documents/fixture", File.readlink(File.join(root, "e2e/safe")))
       refute_path_exists(File.join(root, "e2e/unavailable"))
+    end
+  end
+
+  def test_archive_link_inventory_must_match_the_checked_filter
+    target = "/reviewed/developer/fixture"
+    with_archive([
+      { type: :file, path: "xberg-1.0.1/test_documents/fixture", content: "fixture" },
+      { type: :symlink, path: "xberg-1.0.1/e2e/safe", target: "../test_documents/fixture" },
+      { type: :symlink, path: "xberg-1.0.1/e2e/unavailable", target: target }
+    ], filter("xberg-1.0.1/e2e/unavailable", target)) do |archive, receipt, directory|
+      error = assert_raises(XbergCargoClosure::Error) { XbergCargoClosure.extract_gzip!(archive, File.join(directory, "out"), filter: receipt) }
+      assert_includes(error.message, "archive link inventory differs")
     end
   end
 

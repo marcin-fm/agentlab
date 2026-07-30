@@ -116,14 +116,22 @@ module XbergCargoClosure
     end
     raise Error, "source filter unsafe links are not sorted and unique" unless normalized == normalized.sort_by { |link| [link["path"], link["type"], link["target"]] } && normalized.uniq == normalized
 
-    normalized
+    inventory = filter["archive_link_inventory"]
+    inventory_keys = %w[symlinks hardlinks safe_in_root_links unsafe_links]
+    raise Error, "source filter link inventory is invalid" unless inventory.is_a?(Hash) && inventory.keys.sort == inventory_keys.sort && inventory.values.all? { |value| value.is_a?(Integer) && value >= 0 }
+    raise Error, "source filter link inventory totals are inconsistent" unless inventory.values_at("symlinks", "hardlinks").sum == inventory.values_at("safe_in_root_links", "unsafe_links").sum
+    raise Error, "source filter unsafe-link count is inconsistent" unless inventory["unsafe_links"] == normalized.length
+
+    { "unsafe_links" => normalized, "archive_link_inventory" => inventory }
   rescue JSON::ParserError => e
     raise Error, "invalid source filter: #{e.message}"
   end
 
-  def verify_unsafe_links!(observed, filter)
+  def verify_unsafe_links!(observed, filter, inventory: nil)
     if filter
-      raise Error, "unsafe archive links differ from checked source filter" unless observed == load_filter!(filter)
+      checked = load_filter!(filter)
+      raise Error, "unsafe archive links differ from checked source filter" unless observed == checked["unsafe_links"]
+      raise Error, "archive link inventory differs from checked source filter" if inventory && inventory != checked["archive_link_inventory"]
     else
       raise Error, "unsafe archive links require a checked source filter" unless observed.empty?
     end
@@ -225,7 +233,13 @@ module XbergCargoClosure
     end
     raise Error, "dangling per-entry archive extension record" if per_entry_pax || gnu_path || gnu_linkpath
     raise Error, "source archive must contain exactly one root" unless roots.length == 1
-    verify_unsafe_links!(unsafe.sort_by { |link| [link["path"], link["type"], link["target"]] }, filter)
+    inventory = {
+      "symlinks" => links.count { |type,| type == :symlink } + unsafe.count { |link| link["type"] == "symlink" },
+      "hardlinks" => links.count { |type,| type == :hardlink } + unsafe.count { |link| link["type"] == "hardlink" },
+      "safe_in_root_links" => links.length,
+      "unsafe_links" => unsafe.length
+    }
+    verify_unsafe_links!(unsafe.sort_by { |link| [link["path"], link["type"], link["target"]] }, filter, inventory: inventory)
 
     links.select { |type,| type == :hardlink }.each do |_type, path, _linkname, resolved|
       source = File.join(destination, resolved)
@@ -538,7 +552,7 @@ module XbergCargoClosure
     tree = tree_receipt(vendor)
     manifest = vendor_items.map { |item| "#{item.fetch('name')} #{item.fetch('version')}" }.join("\n") + "\n"
     selection = "--no-default-features --features #{CLI_FEATURES_ARGUMENT}"
-    closure = { "schema" => "agentlab-xberg-cargo-closure/v2", "release" => { "name" => NAME, "version" => VERSION, "cargo_lock_sha256" => LOCK_SHA256 }, "selection" => { "package" => "xberg-cli", "target" => TARGET, "features" => CLI_FEATURES, "no_default_features" => true, "registry_identities" => items }, "resolver_model" => { "kind" => "selected-Fedora-workspace-lock-complete", "rationale" => "The checked six-member Fedora workspace lock is complete for Cargo resolution; all 1,040 locked registry identities are vendored while the selected CLI closure remains explicit." }, "vendor_registry_identities" => vendor_items, "resolver_only_registry_identities" => resolver_only, "counts" => { "selected_registry_identities" => items.length, "vendor_registry_identities" => vendor_items.length, "resolver_only_registry_identities" => resolver_only.length, "normal_packages" => normal_graph.length, "normal_build_dev_packages" => all_graph.length, "root_lock_registry" => lock_registry.length, "root_lock_workspace" => lock_workspace.length, "git_dependencies" => lock_git.length }, "commands" => { "generation_lock" => "--lock PATH (checked SHA-256 #{LOCK_SHA256})", "metadata" => "cargo metadata --frozen --offline --filter-platform #{TARGET} #{selection}", "tree_normal" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli #{selection} --edges normal", "tree_all" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli #{selection} --edges normal,build,dev" }, "outputs" => { "identity_serialization" => IDENTITY_SERIALIZATION, "normal_identity_sha256" => identity_digest(normal_graph), "normal_build_dev_identity_sha256" => identity_digest(all_graph) }, "validation" => { "lock_checksums_verified" => true, "archive_paths_and_symlink_escapes_rejected" => true, "offline_frozen_package_metadata_and_tree_verified" => true, "git_dependencies_zero" => true, "forbidden_intel_identities_rejected" => true, "registry_identities_bound_to_checked_lock_and_closure" => true, "final_linked_license_complete" => false } }
+    closure = { "schema" => "agentlab-xberg-cargo-closure/v2", "release" => { "name" => NAME, "version" => VERSION, "cargo_lock_sha256" => LOCK_SHA256 }, "selection" => { "package" => "xberg-cli", "target" => TARGET, "features" => CLI_FEATURES, "no_default_features" => true, "registry_identities" => items }, "resolver_model" => { "kind" => "selected-Fedora-workspace-lock-complete", "rationale" => "The checked six-member Fedora workspace lock is complete for Cargo resolution; all locked registry identities are vendored while the selected CLI closure remains explicit." }, "vendor_registry_identities" => vendor_items, "resolver_only_registry_identities" => resolver_only, "counts" => { "selected_registry_identities" => items.length, "vendor_registry_identities" => vendor_items.length, "resolver_only_registry_identities" => resolver_only.length, "normal_packages" => normal_graph.length, "normal_build_dev_packages" => all_graph.length, "root_lock_registry" => lock_registry.length, "root_lock_workspace" => lock_workspace.length, "git_dependencies" => lock_git.length }, "commands" => { "generation_lock" => "--lock PATH (checked SHA-256 #{LOCK_SHA256})", "metadata" => "cargo metadata --frozen --offline --filter-platform #{TARGET} #{selection}", "tree_normal" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli #{selection} --edges normal", "tree_all" => "cargo tree --frozen --offline --target #{TARGET} --package xberg-cli #{selection} --edges normal,build,dev" }, "outputs" => { "identity_serialization" => IDENTITY_SERIALIZATION, "normal_identity_sha256" => identity_digest(normal_graph), "normal_build_dev_identity_sha256" => identity_digest(all_graph) }, "validation" => { "lock_checksums_verified" => true, "archive_paths_and_symlink_escapes_rejected" => true, "offline_frozen_package_metadata_and_tree_verified" => true, "git_dependencies_zero" => true, "forbidden_intel_identities_rejected" => true, "registry_identities_bound_to_checked_lock_and_closure" => true, "final_linked_license_complete" => false } }
     closure["resolver_model"]["rationale"] = "The checked six-member Fedora workspace lock is complete for Cargo resolution; all locked registry identities are vendored while the selected CLI closure remains explicit."
     license = license_inventory(vendor_items, vendor)
     receipt = { "schema" => "agentlab-xberg-cargo-vendor/v1", "release" => closure.fetch("release"), "vendor_archive" => { "name" => "#{NAME}-#{VERSION}-cargo-vendor.tar.zst", "root" => "cargo-vendor" }, "vendor_tree" => tree, "inputs" => { "cargo_closure_sha256" => nil, "license_text_presence_sha256" => nil }, "root_lock" => { "registry" => lock_registry.length, "workspace" => lock_workspace.length, "git" => lock_git.length }, "graph" => { "normal" => normal_graph.length, "normal_build_dev" => all_graph.length, "ort_download_delta" => nil }, "validation" => closure.fetch("validation") }

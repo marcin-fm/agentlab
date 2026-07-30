@@ -1,6 +1,6 @@
 %global source_sha256 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e
-%global source_audit_sha256 27306e06e2309b355746c24ea55c3201667490335649f8a0f1b7b543652f446c
-%global system_ort_audit_sha256 3592fa5417ddc1292a4d1fb2eaa34bbb10fff3f62319f7fe9ac07522ff1078a7
+%global source_audit_sha256 0aeba6bb536a247e5fd941c44dcb8a86b42737561eab16bfb7a52e2dc3d48f5c
+%global system_ort_audit_sha256 95f51ae6fa6e1fe0b519875feda0d2a12510cefc469c5936def24921bc2e7d76
 %global system_onnxruntime_patch_sha256 8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab
 %global fedora_onnxruntime_path_patch_sha256 b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
 %global cargo_lock_sha256 a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667
@@ -8,7 +8,7 @@
 %global cargo_vendor_receipt_sha256 8980a1d9bb4a1123b2cbdc6dcc082993226c3d0eca09facc59c39124896f2819
 %global license_text_presence_sha256 99b5a7f6d2f1f3d5b2559f784b3d729a21743e14eee89721b5c0c24ab4fed691
 %global cargo_vendor_manifest_sha256 5d571bb5bc923c855a1e75f335d32187fda5cbb6f9d64b20af960b8c5a7ba544
-%global cargo_auditor_sha256 b457619ba755e3ba5e05301010aee1314832c3a0de2dd365ed35d6c6e6a6303e
+%global cargo_auditor_sha256 fbcf02cdc6f20f325cd86fd9a4882f47d69fe5839ed2f01f1c75d7936d5057ce
 %global dynamic_tesseract_patch_sha256 8ef0d3253fac28c655ad303a9649d356e51aff024fadc12d642394af0ccb0d7f
 %global selected_workspace_patch_sha256 054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2
 %global fedora_tessdata_patch_sha256 a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20
@@ -16,13 +16,13 @@
 %global provider_proof_sha256 961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937
 %global fedora_license_allowlist_sha256 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0
 %global proof_auditor_sha256 f976958e8a51865710b7f91c38fb2d2bea2a33304ed587aff7713013e1a045d8
-%global source_filter_sha256 4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4
+%global source_filter_sha256 baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d
 %global cargo_license_writer_sha256 7dd6a505e65900dceded74405d586459180e2a701806b31ac24452e37acd1a51
 %global xberg_cli_features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers
 
 Name:           xberg
 Version:        1.0.3
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Document intelligence toolkit
 
 %global xberg_source_license_expression ((Apache-2.0 OR MIT) AND BSD-3-Clause) AND ((MIT OR Apache-2.0) AND Apache-2.0) AND ((MIT OR Apache-2.0) AND ISC) AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR CC0-1.0) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC) AND (Apache-2.0 AND MIT) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 OR MIT OR Zlib) AND Apache-2.0 WITH LLVM-exception AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-3-Clause AND (BSD-3-Clause AND MIT) AND (BSD-3-Clause OR Apache-2.0) AND (BSD-3-Clause OR MIT) AND BSL-1.0 AND (BlueOak-1.0.0 OR MIT OR Apache-2.0) AND CC0-1.0 AND (CC0-1.0 OR Apache-2.0) AND (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception) AND (CC0-1.0 OR MIT-0) AND (CC0-1.0 OR MIT-0 OR Apache-2.0) AND CDDL-1.0 AND CDLA-Permissive-2.0 AND GPL-2.0-or-later AND ISC AND (ISC AND (Apache-2.0 OR ISC)) AND (ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)) AND MIT AND (MIT AND BSD-3-Clause) AND (MIT OR Apache-2.0) AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND MIT-0 AND MPL-2.0 AND (MPL-2.0 OR LGPL-2.1-or-later) AND Unicode-3.0 AND (Unlicense OR MIT) AND (Unlicense OR MIT OR Apache-2.0 OR CC0-1.0) AND Zlib AND (Zlib OR Apache-2.0 OR MIT) AND bzip2-1.0.6
@@ -155,6 +155,9 @@ echo 'xberg remains blocked after the deliberate post-build integration gate: fi
 exit 1
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.2
+- Correct the exact Source0 safe-symlink inventory and rebind its audits.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.1
 - Update to upstream Xberg 1.0.3 and regenerate every source-bound receipt.
 - Retain the exact default-minus-tree-sitter Fedora feature surface.

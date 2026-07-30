@@ -11,9 +11,9 @@
     "archive_sha256": "238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e"
   },
   "archive_link_inventory": {
-    "symlinks": 51,
+    "symlinks": 50,
     "hardlinks": 0,
-    "safe_in_root_links": 50,
+    "safe_in_root_links": 49,
     "unsafe_links": 1
   },
   "unsafe_links": [

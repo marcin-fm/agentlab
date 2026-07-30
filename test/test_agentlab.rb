@@ -1035,9 +1035,9 @@ class AgentlabTest < Minitest::Test
     system_ort_receipt = JSON.parse(File.read(system_ort_receipt_path))
     provider_proof_path = File.join(package.directory, package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "file"))
     provider_proof = JSON.parse(File.read(provider_proof_path))
-    assert_equal("27306e06e2309b355746c24ea55c3201667490335649f8a0f1b7b543652f446c", package.data.dig("source_audit_receipt", "sha256"))
-    assert_equal("4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4", package.data.dig("source_link_filter", "sha256"))
-    assert_equal("3592fa5417ddc1292a4d1fb2eaa34bbb10fff3f62319f7fe9ac07522ff1078a7", package.data.dig("system_ort_audit_receipt", "sha256"))
+    assert_equal("0aeba6bb536a247e5fd941c44dcb8a86b42737561eab16bfb7a52e2dc3d48f5c", package.data.dig("source_audit_receipt", "sha256"))
+    assert_equal("baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d", package.data.dig("source_link_filter", "sha256"))
+    assert_equal("95f51ae6fa6e1fe0b519875feda0d2a12510cefc469c5936def24921bc2e7d76", package.data.dig("system_ort_audit_receipt", "sha256"))
     assert_equal("a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667", package.data.dig("cargo_source_contract", "cargo_lock_sha256"))
     assert_equal("3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907", package.data.dig("cargo_source_contract", "source_evidence", "closure", "sha256"))
     assert_equal("8980a1d9bb4a1123b2cbdc6dcc082993226c3d0eca09facc59c39124896f2819", package.data.dig("cargo_source_contract", "source_evidence", "vendor_receipt", "sha256"))
@@ -1054,7 +1054,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Name:           xberg")
     assert_includes(spec, "Version:        1.0.3")
     assert_includes(spec, "%global source_sha256 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e")
-    assert_includes(spec, "Release:        0.1%{?dist}")
+    assert_includes(spec, "Release:        0.2%{?dist}")
     assert_includes(spec, "# Select the six-member Fedora workspace")
     assert_includes(spec, "Source1:        %{name}-%{version}-source-audit.json")
     assert_includes(spec, "Source2:        %{name}-%{version}-system-ort-audit.json")
@@ -1088,7 +1088,7 @@ class AgentlabTest < Minitest::Test
     assert_equal(source_filter.fetch("sha256"), Digest::SHA256.file(source_filter_path).hexdigest)
     filter_receipt = JSON.parse(File.read(source_filter_path))
     assert_equal("agentlab-xberg-source-filter/v1", filter_receipt.fetch("schema"))
-    assert_equal({ "symlinks" => 51, "hardlinks" => 0, "safe_in_root_links" => 50, "unsafe_links" => 1 }, filter_receipt.fetch("archive_link_inventory"))
+    assert_equal({ "symlinks" => 50, "hardlinks" => 0, "safe_in_root_links" => 49, "unsafe_links" => 1 }, filter_receipt.fetch("archive_link_inventory"))
     assert_equal({ "tag" => "v1.0.3", "commit" => "37b9fee5762450351e9303243a00e51184a1f24b", "tree" => "2a5341953d531c886f8713c6f86c6aac2836ac82", "archive_sha256" => "238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e" }, filter_receipt.fetch("source"))
     assert_equal("xberg-1.0.3/e2e/test_documents", filter_receipt.fetch("unsafe_links").first.fetch("path"))
     selected_features = %w[formats analysis core-cli embeddings html url-ingestion liter-llm ocr paddle-ocr layout-detection chunking-tokenizers]
@@ -1117,7 +1117,7 @@ class AgentlabTest < Minitest::Test
       package.data.fetch("compile_proof_contract")
     )
     assert_equal(contract.dig("source_evidence", "auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-cargo-closure", __dir__)).hexdigest)
-    assert_equal("b457619ba755e3ba5e05301010aee1314832c3a0de2dd365ed35d6c6e6a6303e", contract.dig("source_evidence", "auditor", "sha256"))
+    assert_equal("fbcf02cdc6f20f325cd86fd9a4882f47d69fe5839ed2f01f1c75d7936d5057ce", contract.dig("source_evidence", "auditor", "sha256"))
     assert_equal(contract.dig("source_evidence", "proof_auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-proof-receipts", __dir__)).hexdigest)
     assert_equal("f976958e8a51865710b7f91c38fb2d2bea2a33304ed587aff7713013e1a045d8", contract.dig("source_evidence", "proof_auditor", "sha256"))
     closure = JSON.parse(File.read(File.join(package.directory, contract.dig("source_evidence", "closure", "file"))))
@@ -1180,13 +1180,13 @@ class AgentlabTest < Minitest::Test
     assert_includes(auditor, "File.link(source, target)")
     assert_includes(spec, "exit 1")
     assert_equal(package.data.dig("source_audit_receipt", "sha256"), Digest::SHA256.file(receipt_path).hexdigest)
-    assert_equal("1.0.3-0.1", receipt.fetch("current_package_version"))
+    assert_equal("1.0.3-0.2", receipt.fetch("current_package_version"))
     assert_equal("v1.0.3", receipt.dig("source", "tag"))
     assert_equal("37b9fee5762450351e9303243a00e51184a1f24b", receipt.dig("source", "commit"))
     assert_equal("2a5341953d531c886f8713c6f86c6aac2836ac82", receipt.dig("source", "tree"))
     assert_equal("238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e", receipt.dig("source", "archive", "sha256"))
     assert_equal({
-      "source_filter" => { "filename" => "xberg-1.0.3-source-filter.json", "sha256" => "4f67dc9a32060406fbd38d10314c0460dda326fbce10de75c18ea1303d9d6dd4" },
+      "source_filter" => { "filename" => "xberg-1.0.3-source-filter.json", "sha256" => "baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d" },
       "cargo_closure" => { "filename" => "xberg-1.0.3-cargo-closure.json", "sha256" => "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907", "cargo_lock_sha256" => "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667" },
       "source_license" => { "filename" => "xberg-1.0.3-source-license-receipt.json", "sha256" => "151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32" },
       "provider_proof" => { "filename" => "xberg-1.0.3-provider-proof.json", "sha256" => "961816ce0f789c92091bc4d7f40e780a7a16abdb02d1819df1c121b7dc48a937" }
