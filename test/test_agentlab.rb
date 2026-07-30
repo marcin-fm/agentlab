@@ -1114,6 +1114,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(tree_sitter_spec, "Provides:       bundled(tree-sitter) = %{version}")
     assert_includes(tree_sitter_spec, "Provides:       bundled(icu) = 65.1")
     assert_includes(tree_sitter_spec, "%license %{crate_instdir}/src/unicode/LICENSE")
+    assert_includes(tree_sitter_spec, "install -pm0644 %{SOURCE1} %{buildroot}%{crate_instdir}/LICENSE")
     assert_includes(tree_sitter_spec, "%package     -n %{name}+default-devel")
     assert_includes(tree_sitter_spec, "%package     -n %{name}+std-devel")
     assert_equal(%w[default std], tree_sitter.data.dig("validation", "feature_subpackages"))

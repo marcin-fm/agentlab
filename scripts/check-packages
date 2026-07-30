@@ -554,6 +554,7 @@ packages.each do |package|
       "Provides:       bundled(icu) = 65.1",
       "%license %{crate_instdir}/LICENSE",
       "%license %{crate_instdir}/src/unicode/LICENSE",
+      "install -pm0644 %{SOURCE1} %{buildroot}%{crate_instdir}/LICENSE",
       "%package     -n %{name}+default-devel",
       "%package     -n %{name}+std-devel",
       "%setup -q -n %{crate}-%{version_no_tilde}",

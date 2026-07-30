@@ -5,7 +5,7 @@
 
 Name:           rust-tree-sitter0.25.2
 Version:        0.25.2
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Rust bindings to the tree-sitter incremental parsing library
 
 # Upstream bundles the tree-sitter C library and ICU-derived Unicode sources.
@@ -92,6 +92,7 @@ install -pm0644 %{SOURCE1} LICENSE
 
 %install
 %cargo_install
+install -pm0644 %{SOURCE1} %{buildroot}%{crate_instdir}/LICENSE
 
 %check
 test "$(cargo2rpm --path Cargo.toml provides --feature default)" = "crate(tree-sitter/default) = %{version}"
@@ -102,5 +103,8 @@ test "$(cargo2rpm --path Cargo.toml provides --feature std)" = "crate(tree-sitte
 %endif
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.25.2-0.2
+- Install the separately sourced upstream license in the crate payload.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.25.2-0.1
 - Add the exact tree-sitter compatibility branch required by Headroom 0.33.0.

@@ -22,6 +22,9 @@ before Headroom `0.33.0-0.2` is submitted.
 The devel package declares bundled tree-sitter C and ICU 65.1 provides, installs
 both upstream and ICU/Unicode license texts, and emits explicit `default` and
 `std` feature subpackages so Headroom's exact generated dependency can resolve.
+The separately checked upstream `Source1` license is copied into the installed
+crate payload after `%cargo_install`, because the released crate's include list
+does not retain a root `LICENSE` file.
 An unconditional `%check` requires cargo2rpm to emit
 `crate(tree-sitter/default) = 0.25.2` and `crate(tree-sitter/std) = 0.25.2` from
 the patched source before the package can complete.
