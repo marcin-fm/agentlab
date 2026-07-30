@@ -477,10 +477,12 @@ packages.each do |package|
     reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
     current_static = reproducibility.fetch("current_static_validation")
     errors << "python-headroom-ai: current static validation retains dynamic remote evidence" if current_static.keys.any? { |key| key.match?(/remote|copr|build_id/) }
+    errors << "python-headroom-ai: active static metadata retains a dynamic build identity" if [audit_config, current_static].flat_map(&:values).grep(String).any? { |value| value.match?(/\b(?:copr|build)\s+\d+\b/i) }
     errors << "python-headroom-ai: reproducibility does not bind the selected Cargo license audit" unless reproducibility.dig("current_draft", "selected_license_audit", "sha256") == audit_config["selected_license_audit_sha256"]
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
     errors << "python-headroom-ai: exact tree-sitter provider is missing" unless dependencies.dig("build_runtime", "local_packages")&.include?("rust-tree-sitter0.25.2 = 0.25.2")
-    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.2" && reproducibility.dig("current_draft", "release") == "0.33.0-0.2"
+    errors << "python-headroom-ai: exact tokenizers provider is missing" unless dependencies.dig("build_runtime", "local_packages")&.include?("rust-tokenizers0.22 = 0.22.2")
+    errors << "python-headroom-ai: failed NVR was not advanced" unless audit_config["release"] == "0.33.0-0.3" && reproducibility.dig("current_draft", "release") == "0.33.0-0.3"
     required_spec_fragments = [
       "%global selected_license_audit_sha256 #{audit_config['selected_license_audit_sha256']}",
       "%global unicode_license_sha256 74db5baf44a41b1000312c673544b3374e4198af5605c7f9080a402cec42cfa3",
@@ -589,6 +591,56 @@ packages.each do |package|
       errors << "rust-tree-sitter0.25.2: expanded patches do not enforce zero fuzz" unless expanded.scan("--fuzz=0").length >= 3
     end
     errors << "rust-tree-sitter0.25.2: target scope is incomplete" unless package.chroots(project_chroots) == project_chroots
+  end
+
+  if package.name == "rust-tokenizers0.22"
+    expected_chroots = %w[fedora-rawhide-x86_64 fedora-rawhide-aarch64]
+    expected_features = %w[default esaxx_fast fancy-regex hf-hub http indicatif onig progressbar rustls-tls]
+    patch_name = "tokenizers-fix-metadata.diff"
+    patch_sha256 = "7f730f9d509caa800e5a40ce763577141e363f40fb4d9f17a61bc0eec0aa482a"
+    patch_path = File.join(package.directory, patch_name)
+    errors << "rust-tokenizers0.22: metadata patch is missing" unless File.file?(patch_path)
+    errors << "rust-tokenizers0.22: metadata patch hash is stale" if File.file?(patch_path) && Digest::SHA256.file(patch_path).hexdigest != patch_sha256
+    required_fragments = [
+      "%global source_sha256 b238e22d44a15349529690fb07bd645cf58149a1b1e44d6cb5bd1641ff1a6223",
+      "%global debug_package %{nil}",
+      "License:        Apache-2.0",
+      "Source0:        https://static.crates.io/crates/%{crate}/%{crate}-%{version}.crate",
+      "Patch0:         tokenizers-fix-metadata.diff",
+      "%patch -P 0 -p1",
+      "%cargo_generate_buildrequires"
+    ]
+    expected_features.each do |feature|
+      required_fragments << "%package     -n %{name}+#{feature}-devel"
+      required_fragments << "test \"$(cargo2rpm --path Cargo.toml provides --feature #{feature})\" = \"crate(tokenizers/#{feature}) = %{version}\""
+    end
+    errors << "rust-tokenizers0.22: spec contract is incomplete" unless required_fragments.all? { |fragment| spec.include?(fragment) }
+    validation = package.data.fetch("validation")
+    errors << "rust-tokenizers0.22: spec hash is stale" unless validation["spec_sha256"] == Digest::SHA256.file(package.spec_path).hexdigest
+    errors << "rust-tokenizers0.22: feature subpackage contract is incomplete" unless validation["feature_subpackages"] == expected_features
+    errors << "rust-tokenizers0.22: target scope is invalid" unless package.chroots(project_chroots) == expected_chroots
+    errors << "rust-tokenizers0.22: noarch debug-package contract is incomplete" unless spec.scan("%global debug_package %{nil}").length == 1 && spec.scan("BuildArch:      noarch").length == 10
+    errors << "rust-tokenizers0.22: dynamic BuildRequires generator is misplaced or duplicated" unless spec.scan("%cargo_generate_buildrequires").length == 1 && spec.index("%cargo_generate_buildrequires") > spec.index("%generate_buildrequires")
+    applicability = Agentlab.load_yaml(File.join(Agentlab::ROOT, "config", "target-applicability.yml"))
+    expected_omitted = {
+      "43" => { "source" => "fedora", "provider" => "rust-tokenizers+default-devel 0.22.2-5.fc43", "capability" => "crate(tokenizers/default) = 0.22.2", "checked_on" => "2026-07-30" },
+      "44" => { "source" => "fedora", "provider" => "rust-tokenizers+default-devel 0.22.2-5.fc44", "capability" => "crate(tokenizers/default) = 0.22.2", "checked_on" => "2026-07-30" }
+    }
+    errors << "rust-tokenizers0.22: target applicability provider evidence is incomplete" unless applicability.dig("overrides", "rust-tokenizers0.22") == { "releases" => ["rawhide"], "omitted" => expected_omitted }
+    if Agentlab.command_available?("rpmspec")
+      expanded, expanded_error, expanded_status = Agentlab.capture(["rpmspec", "--define", "_sourcedir #{package.directory}", "-P", package.spec_path])
+      patch_marker = 'echo "Patch #0 (tokenizers-fix-metadata.diff):"'
+      errors << "rust-tokenizers0.22: spec expansion failed: #{expanded_error.strip}" unless expanded_status.success?
+      errors << "rust-tokenizers0.22: expanded patch does not enforce zero fuzz" unless expanded.include?(patch_marker) && expanded.include?("--fuzz=0")
+    end
+    validate_docling_patches_zero_fuzz!(
+      package,
+      source_env: "AGENTLAB_TOKENIZERS_SOURCE0",
+      source_root: "tokenizers-0.22.2",
+      patches: [patch_name],
+      errors: errors,
+      warnings: warnings
+    )
   end
 
   if package.name == "python-docling-core"

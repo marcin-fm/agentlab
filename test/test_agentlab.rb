@@ -1071,10 +1071,13 @@ class AgentlabTest < Minitest::Test
     assert_includes(headroom_spec, "LICENSE.regex-syntax-unicode")
     assert_includes(headroom_spec, "Requires:       python3dist(mcp) >= 1.28.1")
     assert_includes(headroom_spec, "Requires:       python3dist(mcp) < 2")
-    assert_equal("0.33.0-0.2", headroom.data.dig("build_validation", "release"))
+    assert_equal("0.33.0-0.3", headroom.data.dig("build_validation", "release"))
     headroom_dependencies = Agentlab.load_yaml(File.join(headroom.directory, "dependencies.yml"))
     assert_includes(headroom_dependencies.dig("build_runtime", "local_packages"), "rust-tree-sitter0.25.2 = 0.25.2")
+    assert_includes(headroom_dependencies.dig("build_runtime", "local_packages"), "rust-tokenizers0.22 = 0.22.2")
     refute(reproducibility.fetch("current_static_validation").keys.any? { |key| key.match?(/remote|copr|build_id/) })
+    refute_match(/\b(?:copr|build)\s+\d+\b/i, headroom.data.fetch("build_validation").values.grep(String).join(" "))
+    refute_match(/\b(?:copr|build)\s+\d+\b/i, reproducibility.fetch("current_static_validation").values.grep(String).join(" "))
 
     mcp = Agentlab.package_named("python-mcp")
     mcp_spec = File.read(mcp.spec_path)
@@ -1141,6 +1144,26 @@ class AgentlabTest < Minitest::Test
     assert_equal(tree_sitter_patch_offsets.sort, tree_sitter_patch_offsets)
     assert_operator(tree_sitter_expanded.scan("--fuzz=0").length, :>=, 3)
     assert_includes(tree_sitter_spec, "%bcond check 0")
+
+    tokenizers = Agentlab.package_named("rust-tokenizers0.22")
+    tokenizers_spec = File.read(tokenizers.spec_path)
+    tokenizers_features = %w[default esaxx_fast fancy-regex hf-hub http indicatif onig progressbar rustls-tls]
+    assert_equal("0.22.2", tokenizers.upstream.fetch("current_version"))
+    assert_equal(%w[fedora-rawhide-x86_64 fedora-rawhide-aarch64], tokenizers.chroots(targets))
+    assert_equal("b238e22d44a15349529690fb07bd645cf58149a1b1e44d6cb5bd1641ff1a6223", tokenizers.upstream.fetch("source_sha256"))
+    assert_equal("7f730f9d509caa800e5a40ce763577141e363f40fb4d9f17a61bc0eec0aa482a", Digest::SHA256.file(File.join(tokenizers.directory, "tokenizers-fix-metadata.diff")).hexdigest)
+    assert_equal(tokenizers_features, tokenizers.data.dig("validation", "feature_subpackages"))
+    assert_equal(1, tokenizers_spec.scan("%global debug_package %{nil}").length)
+    assert_equal(10, tokenizers_spec.scan("BuildArch:      noarch").length)
+    tokenizers_features.each do |feature|
+      assert_includes(tokenizers_spec, "%package     -n %{name}+#{feature}-devel")
+      assert_includes(tokenizers_spec, "test \"$(cargo2rpm --path Cargo.toml provides --feature #{feature})\" = \"crate(tokenizers/#{feature}) = %{version}\"")
+    end
+    assert_includes(tokenizers_spec, "%patch -P 0 -p1")
+    assert_equal(Digest::SHA256.file(tokenizers.spec_path).hexdigest, tokenizers.data.dig("validation", "spec_sha256"))
+    tokenizers_override = applicability.dig("overrides", "rust-tokenizers0.22")
+    assert_equal(["rawhide"], tokenizers_override.fetch("releases"))
+    assert_equal(%w[43 44], tokenizers_override.fetch("omitted").keys.sort)
   end
 
   def test_docling_core_and_slim_current_static_contracts

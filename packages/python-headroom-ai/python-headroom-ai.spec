@@ -6,7 +6,7 @@
 
 Name:           python-headroom-ai
 Version:        0.33.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Context compression toolkit and MCP server
 
 # Selected linked Rust closure from the exact released non-ML source graph.
@@ -168,6 +168,9 @@ PYTHONSAFEPATH=1 PYTHONPATH=%{buildroot}%{python3_sitearch} %{buildroot}%{_bindi
 %{_bindir}/headroom
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.3
+- Add the Rawhide tokenizers 0.22 compatibility provider.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.33.0-0.2
 - Add the exact tree-sitter 0.25.2 compatibility provider.
 

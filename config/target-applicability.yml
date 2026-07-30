@@ -108,6 +108,7 @@ dependency_groups:
       - rust-fancy-regex0.17
       - rust-tiktoken-rs0.11
       - rust-tree-sitter0.25.2
+      - rust-tokenizers0.22
       - rust-unidiff0.4
   python-mcp:
     reason: Fedora 43-only PyJWT compatibility provider selected by python-mcp.
@@ -115,6 +116,19 @@ dependency_groups:
       - python-jwt
 
 overrides:
+  rust-tokenizers0.22:
+    releases: [rawhide]
+    omitted:
+      "43":
+        source: fedora
+        provider: rust-tokenizers+default-devel 0.22.2-5.fc43
+        capability: crate(tokenizers/default) = 0.22.2
+        checked_on: "2026-07-30"
+      "44":
+        source: fedora
+        provider: rust-tokenizers+default-devel 0.22.2-5.fc44
+        capability: crate(tokenizers/default) = 0.22.2
+        checked_on: "2026-07-30"
   python-jwt:
     releases: ["43"]
     omitted:

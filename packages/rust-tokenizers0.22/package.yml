@@ -1,0 +1,54 @@
+name: rust-tokenizers0.22
+status: enabled
+blockers: []
+selection:
+  consumer: python-headroom-ai 0.33.0
+  capability: crate(tokenizers/default) >= 0.22.0, < 0.23.0
+  selected_version: 0.22.2 from the released Headroom lock
+  selected_features:
+    - default
+    - esaxx_fast
+    - onig
+    - progressbar
+duplicate_check:
+  checked: "2026-07-30"
+  fedora_43: rust-tokenizers 0.22.2-5 provides the selected branch.
+  fedora_44: rust-tokenizers 0.22.2-5 provides the selected branch.
+  fedora_rawhide: rust-tokenizers 0.23.1 is outside Headroom's < 0.23 requirement.
+  rpm_fusion: absent from the package database.
+license_audit:
+  expression: Apache-2.0
+  provenance: exact-source adaptation of Fedora rust-tokenizers 0.22.2-5
+validation:
+  source_sha256: b238e22d44a15349529690fb07bd645cf58149a1b1e44d6cb5bd1641ff1a6223
+  patch_sha256: 7f730f9d509caa800e5a40ce763577141e363f40fb4d9f17a61bc0eec0aa482a
+  spec_sha256: 79d7449ef67380ae86b2bf091259f028a7e87da4f77aa05ca4348a49cfc76084
+  patch_zero_fuzz: required
+  feature_subpackages:
+    - default
+    - esaxx_fast
+    - fancy-regex
+    - hf-hub
+    - http
+    - indicatif
+    - onig
+    - progressbar
+    - rustls-tls
+  required_copr_matrix: Fedora Rawhide on x86_64 and aarch64
+upstream:
+  provider: crates_io
+  crate: tokenizers
+  current_version: 0.22.2
+  source_url: https://static.crates.io/crates/tokenizers/tokenizers-0.22.2.crate
+  source_sha256: b238e22d44a15349529690fb07bd645cf58149a1b1e44d6cb5bd1641ff1a6223
+  repository: huggingface/tokenizers
+  license: Apache-2.0
+copr:
+  enabled: true
+  chroots:
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  omitted_target_families:
+    stable: Fedora 43 and Fedora 44 provide rust-tokenizers-devel 0.22.2 for the selected Headroom consumer.
+  subdir: packages/rust-tokenizers0.22
+  spec: rust-tokenizers0.22.spec

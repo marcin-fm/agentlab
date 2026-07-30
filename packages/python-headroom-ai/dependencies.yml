@@ -15,7 +15,7 @@ production_runtime:
   rust_selected:
     - pyo3 >= 0.29, < 0.30 with abi3-py310 and extension-module
     - pyo3-log >= 0.13, < 0.14
-    - tokenizers >= 0.22, < 0.23
+    - tokenizers = 0.22.2 from Fedora 43/44 and rust-tokenizers0.22 on Rawhide
     - hf-hub >= 0.4, < 0.5 with ureq and rustls-tls
     - tiktoken-rs >= 0.11, < 0.12 using rust-tiktoken-rs0.11
     - fancy-regex >= 0.17, < 0.18 using rust-fancy-regex0.17
@@ -44,10 +44,11 @@ build_runtime:
     - rust-fancy-regex0.17 = 0.17.0
     - rust-tiktoken-rs0.11 = 0.11.0
     - rust-tree-sitter0.25.2 = 0.25.2
+    - rust-tokenizers0.22 = 0.22.2
 validation:
   current_draft:
-    release: 0.33.0-0.2
-    status: static source and selected-graph validation complete; exact tree-sitter provider and configured-SCM six-cell build required
+    release: 0.33.0-0.3
+    status: static source and selected-graph validation complete; exact tree-sitter and Rawhide tokenizers providers proven before the configured-SCM six-cell build
     static_validation: exact-sdist four-patch zero-fuzz application, selected manifest closure, system ast-grep substitution, and network-isolated source resolution passed
     cargo_resolution: 307 resolved packages; 217 unique package/version records across 391 target-all normal tree entries
     source_license_probe: headroom-0.33.0-selected-cargo-license-audit.json records all 217 selected package/version/license tuples and the regex-syntax Unicode supplement at SHA-256 3f8a0af6f859a553b6619b531c000dc805a4a8ba785e60768d1343faad2b2d71

@@ -45,7 +45,7 @@ proxy request-scope module even when only the `mcp` extra is selected.
 
 The selected `0.33.0` Cargo graph resolves 307 packages and contains 217 unique
 package/version records across 391 target-all normal tree entries. It adds
-ICU4X segmentation, tree-sitter `0.25.2`, the exact tree-sitter language grammars, crypto hashes,
+ICU4X segmentation, tree-sitter `0.25.2`, tokenizers `0.22.2`, the exact tree-sitter language grammars, crypto hashes,
 dashmap, aho-corasick, and HTTP types while retaining the disabled ML/Redis
 boundary. Cargo's metadata reports
 `regex-syntax 0.8.11` as only `MIT OR Apache-2.0`, but the exact crate still
@@ -65,14 +65,18 @@ Configured-SCM build `10794547` proved the `0.33.0-0.1` source contract but
 failed every target during dynamic BuildRequires because Fedora lacks exact
 `crate(tree-sitter/default) = 0.25.2`. Fedora already provides every selected
 grammar branch. Release `0.33.0-0.2` selects the dedicated full-matrix
-`rust-tree-sitter0.25.2` compatibility provider and still requires the complete
-configured-SCM six-cell build and non-installing runtime artifact proof. Target builds must
+`rust-tree-sitter0.25.2` compatibility provider, now published on all six
+targets. The first provider-complete retry exposed the only remaining selected
+Cargo gap: Rawhide has tokenizers `0.23.1`, outside the
+required `0.22` branch, while Fedora 43/44 already provide `0.22.2`. Release
+`0.33.0-0.3` selects Rawhide-only `rust-tokenizers0.22` and still requires the
+complete configured-SCM six-cell build and non-installing runtime artifact proof. Target builds must
 regenerate `LICENSE.dependencies`, run the Cargo and installed Python smokes,
 and prove system SQLite plus extension ELF behavior. Historical `0.32.x`
 results remain evidence only and are not active package inputs.
 
 Historical Fedora 43 and Fedora 44 receipts remain evidence only; they do not
-validate `0.33.0-0.2`. Released non-ML Headroom still requires
+validate `0.33.0-0.3`. Released non-ML Headroom still requires
 `tiktoken-rs 0.11`, its `fancy-regex 0.17` edge, and `unidiff 0.4`, so those
 three compatibility records remain selected for the package. No produced RPM
 was installed.
