@@ -71,6 +71,17 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_extracts_spec_patch_files_in_declaration_order
+    spec = <<~SPEC
+      Patch2: third.patch
+      # Commented Patch8: ignored.patch
+      Patch0: first.patch
+      Patch11: final.patch
+    SPEC
+
+    assert_equal(%w[third.patch first.patch final.patch], Agentlab.spec_patch_files(spec))
+  end
+
   def test_openchamber_lock_selector_preserves_role_precedence_and_platform_filters
     integrity = "sha512-fixture"
     workspaces = {
@@ -1023,6 +1034,86 @@ class AgentlabTest < Minitest::Test
       "84835d8fd1ced163b65bbf560c9fe9b3bd4d0753d1c1c96d85d8e5dd77f7a55b",
       inventory.fetch("closure_archive_sha256")
     )
+  end
+
+  def test_docling_core_and_slim_current_static_contracts
+    targets = Agentlab.config.fetch("chroots")
+    core = Agentlab.package_named("python-docling-core")
+    core_spec = File.read(core.spec_path)
+    core_reproducibility = Agentlab.load_yaml(File.join(core.directory, "reproducibility.yml"))
+    assert_equal("2.88.0", core.upstream.fetch("current_version"))
+    assert_equal("ffc67cb863f6f93a875dfcc3dd3ac109fff68abcadcb4c951036fae777d82796", core.upstream.fetch("source_sha256"))
+    assert_equal("2.88.0-0.1", core_reproducibility.fetch("version"))
+    assert_equal("required", core.data.dig("validation", "patches_zero_fuzz"))
+    assert_equal("pending", core.data.dig("validation", "current_release_copr"))
+    assert_equal(targets, core_reproducibility.dig("validation", "required_copr_targets"))
+    refute(core.data.key?("artifacts"))
+    refute(core.data.key?("historical_validation"))
+    refute(core_reproducibility.key?("historical_validation"))
+    %w[
+      docling-core-setuptools-backend.patch
+      docling-core-add-requests.patch
+      docling-core-typer-0.26.patch
+      test/test_base.py
+      test/test_data_gen_flag.py
+      test/test_doc_base.py
+      test/test_otsl_table_export.py
+      test/test_page.py
+      test/test_regions_to_table.py
+    ].each { |fragment| assert_includes(core_spec, fragment) }
+    assert_includes(core_spec, "DocLangDocSerializer")
+    assert_includes(core_spec, "docling-serialize --help")
+    assert_includes(core_spec, "docling-view --help")
+
+    slim = Agentlab.package_named("python-docling-slim")
+    slim_spec = File.read(slim.spec_path)
+    slim_reproducibility = Agentlab.load_yaml(File.join(slim.directory, "reproducibility.yml"))
+    assert_equal("2.116.0", slim.upstream.fetch("current_version"))
+    assert_equal("f64500b4f42e772994ca83547e1bd6a9a41eda421313b3072028206950c12068", slim.upstream.fetch("source_sha256"))
+    assert_equal("2.116.0-0.1", slim_reproducibility.fetch("version"))
+    assert_equal("required", slim.data.dig("validation", "patch_zero_fuzz"))
+    assert_equal("pending", slim.data.dig("validation", "current_release_copr"))
+    assert_equal(targets, slim_reproducibility.dig("validation", "required_copr_targets"))
+    refute(slim.data.key?("historical_validation"))
+    refute(slim_reproducibility.key?("historical_validation"))
+    refute_path_exists(File.join(slim.directory, "docling-slim-guard-scipy-import.patch"))
+    refute_includes(slim_spec, "docling-slim-guard-scipy-import.patch")
+    %w[
+      docling-slim-service-client-api-only.patch
+      BatchSourceRequestInput
+      BatchTargetRequestInput
+      GenericSourceRequest
+      GenericTargetRequest
+    ].each { |fragment| assert_includes(slim_spec, fragment) }
+    assert_includes(slim_spec, "%pyproject_buildrequires -x service-client")
+    assert_includes(slim_spec, "DoclingServiceClient(f\"http://127.0.0.1:{port}\").health()")
+  end
+
+  def test_docling_mcp_provider_refresh_remains_blocked
+    package = Agentlab.package_named("python-docling-mcp")
+    spec = File.read(package.spec_path)
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
+    providers = [
+      "python-docling-core 2.88.0",
+      "python-docling-slim 2.116.0 service-client API",
+      "python-doclang 0.7.3",
+      "python-latex2mathml 3.81.0"
+    ]
+
+    assert_equal("blocked", package.status)
+    assert_equal(false, package.data.dig("copr", "enabled"))
+    assert_equal(providers, package.data.dig("dependency_status", "completed_reusable_packages"))
+    assert_equal(providers, dependencies.fetch("completed_reusable_packages"))
+    assert_equal("2.1.0-0.5", package.data.dig("build_validation", "release"))
+    assert_equal("blocked-source-review-validated", package.data.dig("build_validation", "status"))
+    assert_equal("2.1.0-0.5", reproducibility.fetch("version"))
+    assert_equal("prohibited", reproducibility.dig("validation", "binary_build"))
+    refute(package.data.key?("historical_validation"))
+    refute(reproducibility.key?("historical_validation"))
+    assert_includes(spec, "python-docling-mcp is blocked: see package.yml and dependencies.yml")
+    assert_includes(spec, "exit 1")
+    refute_match(/^%build\b|^%install\b/m, spec)
   end
 
   def test_xberg_is_blocked_and_kreuzberg_is_not_wired_for_source_generation

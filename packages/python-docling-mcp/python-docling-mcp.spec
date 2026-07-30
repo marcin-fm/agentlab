@@ -5,7 +5,7 @@
 
 Name:           python-docling-mcp
 Version:        2.1.0
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        MCP server for Docling document processing
 
 License:        MIT
@@ -26,6 +26,9 @@ echo 'python-docling-mcp is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.1.0-0.5
+- Refresh the completed Docling Core and Slim provider references.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 2.1.0-0.4
 - Block the package after removing downstream product and security profiles.
 

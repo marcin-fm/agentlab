@@ -1,5 +1,5 @@
 schema: python-docling-core-dependencies/v1
-target_release: 2.87.1
+target_release: 2.88.0
 runtime_direct:
   - jsonschema >= 4.16, < 5
   - pydantic >= 2.6, < 3 with upstream exclusions for 2.10.0 through 2.10.2

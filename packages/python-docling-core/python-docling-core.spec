@@ -1,12 +1,12 @@
-%global source_sha256 a2c19e63519e49f993d93103481934b772db701c80c683900476f898dfac841a
+%global source_sha256 ffc67cb863f6f93a875dfcc3dd3ac109fff68abcadcb4c951036fae777d82796
 
 Name:           python-docling-core
-Version:        2.87.1
-Release:        0.3%{?dist}
+Version:        2.88.0
+Release:        0.1%{?dist}
 Summary:        Core document types and serialization for Docling
 License:        MIT
 URL:            https://github.com/docling-project/docling-core
-Source0:        https://files.pythonhosted.org/packages/6c/36/96e3c029d8e018403e178e1d68b2135b63413c1a3ed4c39a56fec032d265/docling_core-%{version}.tar.gz
+Source0:        https://files.pythonhosted.org/packages/ef/e7/38b149398ef5d433689e2b3bc356a91e06d7c77bb89731f82f24ab3d3508/docling_core-%{version}.tar.gz
 # Declare the standard setuptools backend omitted from the published sdist metadata.
 # Not submitted upstream; no matching issue or pull request found as of 2026-07-17.
 Patch0:         docling-core-setuptools-backend.patch
@@ -88,6 +88,9 @@ PY
 %{_bindir}/docling-view
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.88.0-0.1
+- Update the core document model and serializers to upstream 2.88.0.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 2.87.1-0.3
 - Accept Typer 0.26 for Fedora Rawhide compatibility.
 

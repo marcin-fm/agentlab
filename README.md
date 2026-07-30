@@ -60,8 +60,8 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | python-docling-mcp | 2.1.0 | blocked | Downstream stdio and remote-conversion product profiles removed; an upstream-supported selected surface and complete dependency/transport review remain |
 | python-doclang | 0.7.3 | enabled | Reusable Docling prerequisite; clean F43/F44 builds and installed schema/CLI smokes passed |
 | python-latex2mathml | 3.81.0 | enabled | Reusable Docling prerequisite; hatchling substitution and F43/F44 conversion smokes passed |
-| python-docling-core | 2.87.1 | enabled | Base Docling model/serialization package; clean F43/F44 builds, 29 tests, and installed smokes passed |
-| python-docling-slim | 2.113.0 | enabled | API-only base/service-client package; clean F43/F44 loopback health smokes passed without local parser/model branches |
+| python-docling-core | 2.88.0 | enabled | Base Docling model/serialization update; static source and patch validation precedes the required six-cell matrix |
+| python-docling-slim | 2.116.0 | enabled | API-only service-client update; upstream now contains the SciPy lazy-import fix and the six-cell matrix remains required |
 | playwright-mcp | 0.0.78 | blocked | All wrapper files match source and the exact stdio MCP works with Fedora Chromium 150; full generated monorepo closure, source-built esbuild, and licenses remain |
 | python-serena-agent | 1.6.0 | enabled | Headless stdio/LSP package; clean F43/F44 MCP smokes and download-denial checks passed |
 | python-sensai-utils | 1.6.0 | enabled | Repaired published sdist metadata; F44 Mock and 16 tests passed |

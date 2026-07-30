@@ -101,6 +101,10 @@ module Agentlab
     raise Error, "invalid YAML in #{path}: #{e.message}"
   end
 
+  def spec_patch_files(spec)
+    spec.scan(/^Patch\d+:\s+(\S+)/).flatten
+  end
+
   def parse_jsonc(content, source: "JSONC input")
     without_comments = +""
     index = 0

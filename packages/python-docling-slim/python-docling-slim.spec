@@ -1,18 +1,15 @@
-%global source_sha256 4440eb2118e64e14df45eabf5f927a01eda2c37dcaa50435a708e31c19f8b7f3
+%global source_sha256 f64500b4f42e772994ca83547e1bd6a9a41eda421313b3072028206950c12068
 
 Name:           python-docling-slim
-Version:        2.115.0
+Version:        2.116.0
 Release:        0.1%{?dist}
 Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
-Source0:        https://files.pythonhosted.org/packages/25/b8/c78b8c9a07f20325176299d6a58ee8a0dcf088815ddc45590b29fc6c671a/docling_slim-%{version}.tar.gz
+Source0:        https://files.pythonhosted.org/packages/34/61/a92577403bd8ac709701fa90d72ef56d4b5a174448b5562b3885d9da0a98/docling_slim-%{version}.tar.gz
 # Keep the selected service-client extra API-only by omitting command-only dependencies.
 # Fedora-specific package split; upstream CLI design is https://github.com/docling-project/docling/pull/3622.
 Patch0:         docling-slim-service-client-api-only.patch
-# Keep optional SciPy use inside the video scene-change execution path.
-# Backport: https://github.com/docling-project/docling/commit/9b51f4f857176cdd95cef53e2ec7f5f32ffbc6a5
-Patch1:         docling-slim-guard-scipy-import.patch
 
 BuildArch:      noarch
 BuildRequires:  pyproject-rpm-macros
@@ -121,6 +118,9 @@ trap - EXIT
 %doc packages/docling-slim/README.md
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.116.0-0.1
+- Update to upstream 2.116.0 and drop the integrated SciPy lazy-import patch.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 2.115.0-0.1
 - Update to upstream 2.115.0 and verify the expanded service-client API.
 - Backport the upstream fix for optional SciPy use in slim installations.

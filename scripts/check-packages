@@ -60,6 +60,46 @@ ensure
   FileUtils.rm_rf(workdir) if workdir
 end
 
+def validate_docling_patches_zero_fuzz!(package, source_env:, source_root:, patches:, errors:, warnings:)
+  source_archive = ENV[source_env]
+  unless source_archive && File.file?(source_archive)
+    warnings << "#{package.name}: zero-fuzz patch validation skipped; set #{source_env} to the checked Source0 archive"
+    return
+  end
+
+  expected_sha256 = package.upstream.fetch("source_sha256")
+  unless Digest::SHA256.file(source_archive).hexdigest == expected_sha256
+    errors << "#{package.name}: #{source_env} does not match the checked Source0 SHA-256"
+    return
+  end
+
+  workdir = "/srv/tmp/agentlab-check-#{package.name}-patches-#{Process.pid}"
+  source_directory = File.join(workdir, source_root)
+  FileUtils.rm_rf(workdir)
+  FileUtils.mkdir_p(workdir)
+  _stdout, stderr, status = Agentlab.capture(["tar", "-xzf", source_archive, "-C", workdir])
+  unless status.success? && File.directory?(source_directory)
+    errors << "#{package.name}: Source0 extraction failed for zero-fuzz patch validation: #{stderr.strip}"
+    return
+  end
+
+  patches.each do |name|
+    path = File.join(package.directory, name)
+    _stdout, stderr, status = Agentlab.capture(["patch", "--dry-run", "--fuzz=0", "-p1", "-i", path], chdir: source_directory)
+    unless status.success?
+      errors << "#{package.name}: #{name} does not apply with zero fuzz in spec order: #{stderr.strip}"
+      break
+    end
+    _stdout, stderr, status = Agentlab.capture(["patch", "--fuzz=0", "-p1", "-i", path], chdir: source_directory)
+    unless status.success?
+      errors << "#{package.name}: #{name} failed while preparing zero-fuzz patch validation: #{stderr.strip}"
+      break
+    end
+  end
+ensure
+  FileUtils.rm_rf(workdir) if workdir
+end
+
 Agentlab.copr_chroot_matrix_errors(project_chroots, require_all_stable_releases: true).each do |error|
   errors << "config/copr.yml: #{error}"
 end
@@ -409,6 +449,91 @@ packages.each do |package|
   errors.concat(Agentlab.validate_bun_build_plan(package, spec))
 
   errors.concat(Agentlab.validate_pdfium_source(package, spec))
+
+  if package.name == "python-docling-core"
+    reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
+    expected_validation = {
+      "source_sha256" => "verified",
+      "patches_zero_fuzz" => "required",
+      "spec_parse" => "passed",
+      "package_manifest" => "passed",
+      "selected_tests" => "six complete self-contained files",
+      "installed_smokes" => "document creation, JSON roundtrip, DocLang serialization, and both CLI help commands",
+      "required_copr_matrix" => "Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64",
+      "current_release_copr" => "pending"
+    }
+    expected_patches = {
+      "docling-core-setuptools-backend.patch" => "2a45fdb40ca407314f7882839cc7acef5f9c6872d00443d7891592a189efd542",
+      "docling-core-add-requests.patch" => "f0e906623fe9ff14bd0d38cf91fa7d2b10e99a355abe7a0947be1a19520aebff",
+      "docling-core-typer-0.26.patch" => "87531869bf34e18b690b281786729f40c04388f6cec576b55893d68cc958ddd1"
+    }
+    errors << "python-docling-core: current static validation contract is incomplete" unless package.data["validation"] == expected_validation
+    errors << "python-docling-core: dynamic historical results remain in package inputs" if package.data.key?("artifacts") || package.data.key?("historical_validation") || reproducibility.key?("historical_validation")
+    errors << "python-docling-core: reproducibility release is stale" unless reproducibility["version"] == "#{manifest_version}-0.1"
+    errors << "python-docling-core: reproducibility source identity is stale" unless reproducibility["source"] == { "url" => package.upstream["source_url"], "sha256" => manifest_sha256 }
+    errors << "python-docling-core: reproducibility patch hashes are stale" unless expected_patches.all? { |name, sha256| reproducibility.dig("patches", name, "sha256") == sha256 && Digest::SHA256.file(File.join(package.directory, name)).hexdigest == sha256 }
+    errors << "python-docling-core: reproducibility spec hash is stale" unless reproducibility["spec_sha256"] == Digest::SHA256.file(package.spec_path).hexdigest
+    errors << "python-docling-core: reproducibility static validation is incomplete" unless reproducibility.dig("validation", "static") == { "source_sha256" => "verified", "patch_fuzz_zero" => "required", "spec_parse" => "passed", "package_manifest" => "passed" } && reproducibility.dig("validation", "required_copr_targets") == project_chroots && reproducibility.dig("validation", "current_release_copr") == "pending"
+    declared_patches = Agentlab.spec_patch_files(spec)
+    errors << "python-docling-core: spec patch order differs from the checked contract" unless declared_patches == expected_patches.keys
+    core_fragments = expected_patches.keys + %w[test/test_base.py test/test_data_gen_flag.py test/test_doc_base.py test/test_otsl_table_export.py test/test_page.py test/test_regions_to_table.py] + ["%autosetup -n docling_core-%{version} -p1", "DocLangDocSerializer", "docling-serialize --help", "docling-view --help"]
+    errors << "python-docling-core: spec does not enforce the selected patch/test/smoke contract" unless core_fragments.all? { |fragment| spec.include?(fragment) }
+    validate_docling_patches_zero_fuzz!(
+      package,
+      source_env: "AGENTLAB_DOCLING_CORE_SOURCE0",
+      source_root: "docling_core-#{manifest_version}",
+      patches: declared_patches,
+      errors: errors,
+      warnings: warnings
+    )
+  end
+
+  if package.name == "python-docling-slim"
+    reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
+    expected_validation = {
+      "source_sha256" => "verified",
+      "patch_zero_fuzz" => "required",
+      "spec_parse" => "passed",
+      "package_manifest" => "passed",
+      "required_copr_matrix" => "Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64",
+      "current_release_copr" => "pending",
+      "upstream_tests" => "unavailable; sdist excludes the test tree",
+      "installed_smokes" => "base import, expanded service-client exports, client construction, and local HTTP health response"
+    }
+    patch_name = "docling-slim-service-client-api-only.patch"
+    patch_sha256 = "89a19e07fe9c16eed200da92c5aeb41db376c0554ddf83760d6028a404b84f47"
+    errors << "python-docling-slim: current static validation contract is incomplete" unless package.data["validation"] == expected_validation
+    errors << "python-docling-slim: dynamic historical results remain in package inputs" if package.data.key?("historical_validation") || reproducibility.key?("historical_validation")
+    errors << "python-docling-slim: obsolete SciPy backport remains" if File.exist?(File.join(package.directory, "docling-slim-guard-scipy-import.patch")) || spec.include?("docling-slim-guard-scipy-import.patch")
+    errors << "python-docling-slim: reproducibility release is stale" unless reproducibility["version"] == "#{manifest_version}-0.1"
+    errors << "python-docling-slim: reproducibility source identity is stale" unless reproducibility["source"] == { "url" => package.upstream["source_url"], "sha256" => manifest_sha256, "release_tag" => package.upstream["release_tag"], "release_commit" => package.upstream["release_commit"] }
+    errors << "python-docling-slim: service-client patch hash is stale" unless reproducibility.dig("patches", "service_client_api_only", "sha256") == patch_sha256 && Digest::SHA256.file(File.join(package.directory, patch_name)).hexdigest == patch_sha256
+    errors << "python-docling-slim: reproducibility spec hash is stale" unless reproducibility.dig("artifacts", "spec_sha256") == Digest::SHA256.file(package.spec_path).hexdigest
+    errors << "python-docling-slim: reproducibility static validation is incomplete" unless reproducibility.dig("validation", "static") == { "source_sha256" => "verified", "patch_fuzz_zero" => "required", "spec_parse" => "passed", "package_manifest" => "passed" } && reproducibility.dig("validation", "required_copr_targets") == project_chroots && reproducibility.dig("validation", "current_release_copr") == "pending"
+    declared_patches = Agentlab.spec_patch_files(spec)
+    errors << "python-docling-slim: spec patch order differs from the checked contract" unless declared_patches == [patch_name]
+    slim_fragments = [patch_name, "%autosetup -n docling_slim-%{version} -p1", "%pyproject_buildrequires -x service-client", "rm -f %{buildroot}%{_bindir}/docling", "rm -f %{buildroot}%{_bindir}/docling-tools", "BatchSourceRequestInput", "BatchTargetRequestInput", "GenericSourceRequest", "GenericTargetRequest", "DoclingServiceClient(f\"http://127.0.0.1:{port}\").health()"]
+    errors << "python-docling-slim: spec does not enforce the selected API-only smoke contract" unless slim_fragments.all? { |fragment| spec.include?(fragment) }
+    validate_docling_patches_zero_fuzz!(
+      package,
+      source_env: "AGENTLAB_DOCLING_SLIM_SOURCE0",
+      source_root: "docling_slim-#{manifest_version}",
+      patches: declared_patches,
+      errors: errors,
+      warnings: warnings
+    )
+  end
+
+  if package.name == "python-docling-mcp"
+    reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
+    expected_providers = ["python-docling-core 2.88.0", "python-docling-slim 2.116.0 service-client API", "python-doclang 0.7.3", "python-latex2mathml 3.81.0"]
+    errors << "python-docling-mcp: completed provider references are stale" unless package.data.dig("dependency_status", "completed_reusable_packages") == expected_providers && dependencies["completed_reusable_packages"] == expected_providers
+    errors << "python-docling-mcp: current blocked validation contract is incomplete" unless package.data["build_validation"] == { "release" => "2.1.0-0.5", "status" => "blocked-source-review-validated", "sdist_source" => "verified", "substantive_patches_removed" => true, "spec_parse" => "passed", "package_manifest" => "passed", "binary_build" => "prohibited" }
+    errors << "python-docling-mcp: dynamic historical results remain in package inputs" if package.data.key?("historical_validation") || reproducibility.key?("historical_validation")
+    errors << "python-docling-mcp: reproducibility release is stale" unless reproducibility["version"] == "2.1.0-0.5"
+    errors << "python-docling-mcp: reproducibility static validation is incomplete" unless reproducibility["validation"] == { "status" => "blocked-source-review-validated", "source_sha256" => "verified", "spec_sha256" => Digest::SHA256.file(package.spec_path).hexdigest, "spec_parse" => "passed", "package_manifest" => "passed", "binary_build" => "prohibited" }
+    errors << "python-docling-mcp: fail-closed spec contract is incomplete" unless spec.include?("python-docling-mcp is blocked: see package.yml and dependencies.yml") && spec.include?("exit 1") && !spec.match?(/^%build\b|^%install\b/m)
+  end
 
   if package.name == "agent-browser"
     cargo = dependencies && dependencies["cargo"]

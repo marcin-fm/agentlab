@@ -1,6 +1,6 @@
 schema: python-docling-mcp-reproducibility/v1
 package: python-docling-mcp
-version: 2.1.0-0.4
+version: 2.1.0-0.5
 source:
   url: https://files.pythonhosted.org/packages/e3/bc/59f74a19ac66ddebfe2bee76f8f5c6b208f9dd1fe96fff5d020720985f5d/docling_mcp-2.1.0.tar.gz
   sha256: 46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7
@@ -8,15 +8,11 @@ substantive_patches:
   stdio_generation: removed-prohibited-downstream-product-profile
   remote_conversion: removed-prohibited-downstream-product-development
 validation:
-  status: blocked-source-review-only
+  status: blocked-source-review-validated
   source_sha256: verified
-  spec_sha256: fc0cc2ea921d43cba51e3800381bf21425c593ad29d34904f8c7acbd9a7301a0
-  source_rpm_sha256: 772fdcab1aab3e427c4d9b5e6dce76a95820c24d8b8cfec82895778d549e6971
-  source_rpm_members:
-    - docling_mcp-2.1.0.tar.gz
-    - python-docling-mcp.spec
-  blocked_prep: failed as intended before unpacking
-  rpmlint: zero errors and three expected missing-section warnings
+  spec_sha256: a34d5f5cf9a3f81d8c85604355076b14ce3d40a65df15f6866c9431d07159343
+  spec_parse: passed
+  package_manifest: passed
   binary_build: prohibited
 limitations:
   - The PyPI sdist excludes the upstream test tree.

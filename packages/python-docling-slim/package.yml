@@ -5,7 +5,7 @@ source_policy:
   packaged_surface: Base modules plus the service-client extra; upstream command wrappers are removed.
   cli_exclusion: The wrappers import the excluded pypdfium2-backed local conversion path even for --help; docling-mcp consumes the Python service-client API instead.
   service_client_metadata_patch: Removes Typer, Rich, and python-dotenv from the service-client extra because only the omitted command wrappers import them; the client API imports only httpx and websockets.
-  runtime_backport: Upstream commit 9b51f4f857176cdd95cef53e2ec7f5f32ffbc6a5 guards SciPy imports inside video scene-change execution so base and service-client imports do not activate the excluded video extra.
+  upstream_scipy_guard: Release 2.116.0 includes upstream commit 9b51f4f857176cdd95cef53e2ec7f5f32ffbc6a5, so the downstream backport is removed.
   excluded_extras:
     - Local PDF parser and pypdfium2 branches.
     - Local IBM models, Torch, Transformers, OCR, VLM, audio, office, and chunking branches.
@@ -18,28 +18,26 @@ duplicate_check:
   fedora_43_44_rawhide: absent
   rpm_fusion_43_44_rawhide: absent
 validation:
-  local_source: Exact source hash passed; both patches apply without fuzz; the service-client metadata hunk applies at offset 9.
-  fedora_44: Clean x86_64 Mock build passed the base/client imports, expanded service-client exports, client construction, and loopback health smoke.
-  rpmlint: Zero errors and zero warnings for the Fedora 44 source and noarch RPMs.
-  copr_matrix: pending Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+  source_sha256: verified
+  patch_zero_fuzz: required
+  spec_parse: passed
+  package_manifest: passed
+  required_copr_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+  current_release_copr: pending
   upstream_tests: unavailable; sdist excludes the test tree
   installed_smokes: base import, expanded service-client exports, client construction, and local HTTP health response
 artifacts:
-  spec_sha256: 26729d70162acbb4bb72a361d37f7fe490b4bedf6c0ce506b17683730944f34a
+  spec_sha256: 1f305c4e3e6d1c9fcd765d00276cc9262570f6f91af7e8b71e3d4d067a3d519c
   service_client_patch_sha256: 89a19e07fe9c16eed200da92c5aeb41db376c0554ddf83760d6028a404b84f47
-  scipy_backport_sha256: 18c3259474eef0e484bf91009a915791c10e1396f6d8d42f52941546d8b8303a
-  fedora_44:
-    srpm_sha256: 3851a8986755a6b90831be8f341ce2367f6acbad5dc29bd2450ab598a0c7bdf5
-    rpm_sha256: 6e7cb9434998f8c1090bdb2df4f1b8f5e44defc40b15b98df327befe48b9b565
 upstream:
   provider: pypi
   project: docling-slim
-  current_version: 2.115.0
-  source_url: https://files.pythonhosted.org/packages/25/b8/c78b8c9a07f20325176299d6a58ee8a0dcf088815ddc45590b29fc6c671a/docling_slim-2.115.0.tar.gz
-  source_sha256: 4440eb2118e64e14df45eabf5f927a01eda2c37dcaa50435a708e31c19f8b7f3
+  current_version: 2.116.0
+  source_url: https://files.pythonhosted.org/packages/34/61/a92577403bd8ac709701fa90d72ef56d4b5a174448b5562b3885d9da0a98/docling_slim-2.116.0.tar.gz
+  source_sha256: f64500b4f42e772994ca83547e1bd6a9a41eda421313b3072028206950c12068
   repository: docling-project/docling
-  release_tag: v2.115.0
-  release_commit: b0a15d2db0baa439a074687454f871b30865b42b
+  release_tag: v2.116.0
+  release_commit: ec8571900ae57a4e398db72e280b8046c4768f57
 copr:
   enabled: true
   subdir: packages/python-docling-slim

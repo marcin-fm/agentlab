@@ -15,26 +15,20 @@ duplicate_check:
   fedora_43_44: absent
   rpm_fusion_43_44: absent
 validation:
-  fedora_43: clean Mock build passed
-  fedora_44: clean Mock build passed
-  rawhide_x86_64: clean Mock build passed with Fedora Typer 0.26.8
-  rawhide_chain: docling-core, docling-slim, and docling-mcp passed in dependency order
-  rpmlint: zero errors and two expected no-manual-page warnings per chroot
-  upstream_tests: 29 tests from six complete self-contained files passed per chroot
-  installed_smoke: document creation, JSON roundtrip, DocLang serialization, and both CLI help commands passed
-artifacts:
-  fedora_43:
-    srpm_sha256: bf72df4d89212b9bddcae222c8dc82f34de3490f5b805dff16088f95584297e0
-    rpm_sha256: 5f438fd8e05550cab73a32ba69a82bca8e057451c8bd780495dd5a856f740df1
-  fedora_44:
-    srpm_sha256: 609512bf7835833dc24b247372d67e16ca10ef93b017eec86b882382d20f4641
-    rpm_sha256: 2a105f14c4fab6f88d03551b76f82bf61211c6f09dd92bf1af0f5ed94783a53c
+  source_sha256: verified
+  patches_zero_fuzz: required
+  spec_parse: passed
+  package_manifest: passed
+  selected_tests: six complete self-contained files
+  installed_smokes: document creation, JSON roundtrip, DocLang serialization, and both CLI help commands
+  required_copr_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
+  current_release_copr: pending
 upstream:
   provider: pypi
   project: docling-core
-  current_version: 2.87.1
-  source_url: https://files.pythonhosted.org/packages/6c/36/96e3c029d8e018403e178e1d68b2135b63413c1a3ed4c39a56fec032d265/docling_core-2.87.1.tar.gz
-  source_sha256: a2c19e63519e49f993d93103481934b772db701c80c683900476f898dfac841a
+  current_version: 2.88.0
+  source_url: https://files.pythonhosted.org/packages/ef/e7/38b149398ef5d433689e2b3bc356a91e06d7c77bb89731f82f24ab3d3508/docling_core-2.88.0.tar.gz
+  source_sha256: ffc67cb863f6f93a875dfcc3dd3ac109fff68abcadcb4c951036fae777d82796
   repository: docling-project/docling-core
 copr:
   enabled: true

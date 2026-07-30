@@ -1,6 +1,6 @@
 # Docling MCP Packaging Status
 
-`docling-mcp` `2.1.0-0.4` is retained as a blocked source-package draft from the
+`docling-mcp` `2.1.0-0.5` is retained as a blocked source-package draft from the
 published MIT-licensed PyPI sdist. Tag `v2.1.0` is commit
 `59f793b1288e8e359778ab9a1230e86a7ffc10ec`; Source0 has SHA-256
 `46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7`.
@@ -21,3 +21,8 @@ The spec therefore verifies the exact source and fails closed before unpacking
 or building. Re-enable only after an upstream-supported selected surface and its
 complete Fedora dependency and transport graph are proven, or after explicit
 maintainer approval of a downstream product profile.
+
+The completed reusable-provider references now identify `python-docling-core
+2.88.0` and the `python-docling-slim 2.116.0` service-client API. Those updates
+do not resolve the selected application-surface blockers and no binary build is
+permitted.

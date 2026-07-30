@@ -1,5 +1,5 @@
 schema: python-docling-slim-dependencies/v1
-target_release: 2.115.0
+target_release: 2.116.0
 packaged_extra: service-client
 base_runtime:
   - pydantic >= 2, < 3
@@ -18,7 +18,7 @@ service_client_removed_cli_dependencies:
   - rich
   - python-dotenv
 local_prerequisites:
-  - python-docling-core 2.87.1
+  - python-docling-core 2.88.0
 excluded_branches:
   - docling-parse
   - docling-ibm-models
