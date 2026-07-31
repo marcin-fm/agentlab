@@ -27,14 +27,14 @@ source_closure:
   dynamic_buildrequires: Root production dependencies and C API dependencies are generated separately because cargo2rpm does not recurse through the local path dependency.
 c_api:
   crate_version: 1.4.0
-  rust_version: 1.89
+  rust_version: "1.89"
   library: liblolhtml.so.1.4.0
   soname: liblolhtml.so.1
   pkgconfig: lol-html
   header: lol_html.h
   exported_symbols: 97
   static_library_shipped: false
-  cargo_c_probe: passed with cargo-c 0.10.21 on Fedora 44 x86_64
+  cargo_c_version: 0.10.21
 patches:
   c_api_license:
     file: lol-html-c-api-license.patch
@@ -57,57 +57,75 @@ consumer_contract:
   build_requirement: pkgconfig(lol-html) >= 1.4.0
   runtime_soname: liblolhtml.so.1
   source_abi: lol_html_memory_settings_t includes graceful_bail_out_on_memory_limit_exceeded
-build_validation:
-  current:
-    provider_version: 3.0.1
-    release: 3.0.1-0.3
-    evidence_role: current_provider_pending
-    provider_gate_verified: false
-    target_matrix_verified: false
-    artifacts_verified: false
-    soname_probe_verified: false
-    pkgconfig_probe_verified: false
-    c_api_symbol_probe_verified: false
-    upstream_c_suites_verified: false
-    rpm_installed: false
-    mock_matrix:
-      configured_copr_build: pending
-      fedora_43_x86_64: pending
-      fedora_43_aarch64: pending
-      fedora_44_x86_64: pending
-      fedora_44_aarch64: pending
-      fedora_rawhide_x86_64: pending
-      fedora_rawhide_aarch64: pending
-  historical:
-    provider_version: 3.0.0
-    provider_release: 3.0.0-0.9
-    evidence_role: immutable_historical_provider_proof
-    manifest_snapshot:
-      path: packages/lol-html/lol-html-3.0.0-package.yml
-      source_path: packages/lol-html/package.yml
-      size_bytes: 3945
-      sha256: c8bab9f03901bf2378b64aead63cee5217c733fcb46e23876d53c075507dd2e2
-    fedora_44_x86_64_system_registry_mock: passed at 3.0.0-0.9.fc44
-    soname_probe: passed
-    pkgconfig_probe: passed
-    c_api_symbol_probe: passed
-    upstream_c_suites: 8 passed against the staged shared library
-    srpm_bytes: 581876
-    srpm_sha256: 2a93c00c8dccb4fa390ef4a13190c79e267419e7c2720490f1deac45e3c1c76d
-    runtime_rpm_bytes: 440392
-    runtime_rpm_sha256: e606e65eee112a0d64ca764f332daabd7ffd8a3cee00fad488f3415fee48a464
-    devel_rpm_bytes: 16644
-    devel_rpm_sha256: 4ef96f9825a06d7c80500bdc93a40ea556c74ce5e57767a9df17280af837db59
-    artifact_rpmlint: zero errors or warnings across the five Fedora 44 source, runtime, devel, debugsource, and debuginfo artifacts
-    rpm_installed: false
-    mock_matrix:
-      configured_copr_build: 10749257 succeeded at release 0.9
-      fedora_43_x86_64: passed
-      fedora_43_aarch64: passed
-      fedora_44_x86_64: passed
-      fedora_44_aarch64: passed
-      fedora_rawhide_x86_64: passed
-      fedora_rawhide_aarch64: passed
+validation_contract:
+  required_targets:
+    - fedora-43-x86_64
+    - fedora-43-aarch64
+    - fedora-44-x86_64
+    - fedora-44-aarch64
+    - fedora-rawhide-x86_64
+    - fedora-rawhide-aarch64
+  source:
+    commit: 608cc4a66b7ab4fcbe1bbdeb25df8f265572b11c
+    archive_sha256: 76b29b987ede8ea8971edf4a07a0e2edf5a1dfe21a8d2c073f6534d01b2f5c9f
+    patch_sha256: 03b853b37f75dbd8c35f3c8a920163c198c45ad6cca1b6f819f9d85c960a6594
+    network_builds: forbidden
+    patch_applies_zero_fuzz: required
+  cargo:
+    rust_version_floor: "1.89"
+    cargo_c_version: "0.10.21"
+    cargo_lock_packages: 45
+    registry_crates: 43
+    git_sources: 0
+    build_mode: fedora_system_registry
+    compatibility_providers:
+      - rust-cssparser0.36
+      - rust-selectors0.37
+    root_production_buildrequires: required
+    c_api_buildrequires: required
+    test_only_dependencies: excluded
+  c_api:
+    crate_version: 1.4.0
+    library: liblolhtml.so.1.4.0
+    soname: liblolhtml.so.1
+    pkgconfig: lol-html
+    header: lol_html.h
+    exported_symbols: 97
+    static_library_shipped: false
+    source_abi: graceful_bail_out_on_memory_limit_exceeded
+  license:
+    aggregate_expression: BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib
+    linked_license_entries: 29
+    dependencies_inventory: LICENSE.dependencies
+    dependencies_sha256: 4e32b2460074c0364c17f7f2e4eeb12a52f81bd581d4b7e04f111cd22826f541
+    payload:
+      - LICENSE
+      - LICENSE.dependencies
+    provider_license_corpora_copied: false
+    bundled_crate_provides: false
+    fedora_spdx_review_complete: true
+  runtime:
+    versioned_symlinks: required
+    soname_probe: required
+    pkgconfig_probe: required
+    c_api_symbol_probe: required
+    rpath_runpath_absent: required
+    focused_c_smoke: required
+    upstream_c_suites: 8
+    ldd_r: required
+  outputs:
+    - source
+    - runtime
+    - devel
+    - debuginfo
+    - debugsource
+historical_manifest_snapshot:
+  provider_version: 3.0.0
+  evidence_role: immutable_historical_consumer_input
+  path: packages/lol-html/lol-html-3.0.0-package.yml
+  source_path: packages/lol-html/package.yml
+  size_bytes: 3945
+  sha256: c8bab9f03901bf2378b64aead63cee5217c733fcb46e23876d53c075507dd2e2
 copr:
   enabled: true
   chroots:

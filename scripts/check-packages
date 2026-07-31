@@ -485,6 +485,10 @@ packages.each do |package|
 
   errors.concat(Agentlab.validate_bun_build_plan(package, spec))
 
+  lol_html_readme_path = File.join(package.directory, "README.md")
+  lol_html_readme = File.file?(lol_html_readme_path) ? File.read(lol_html_readme_path) : ""
+  errors.concat(Agentlab.validate_lol_html_build_contract(package, spec, lol_html_readme))
+
   errors.concat(Agentlab.validate_conventional_rust_leaf_contract(package, spec))
 
   errors.concat(Agentlab.validate_pdfium_source(package, spec))

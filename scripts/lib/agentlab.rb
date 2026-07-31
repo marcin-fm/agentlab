@@ -2908,37 +2908,116 @@ module Agentlab
     ["bun: invalid npm-install proof receipt: #{e.message}"]
   end
 
+  def lol_html_validation_contract
+    {
+      "required_targets" => %w[
+        fedora-43-x86_64
+        fedora-43-aarch64
+        fedora-44-x86_64
+        fedora-44-aarch64
+        fedora-rawhide-x86_64
+        fedora-rawhide-aarch64
+      ],
+      "source" => {
+        "commit" => "608cc4a66b7ab4fcbe1bbdeb25df8f265572b11c",
+        "archive_sha256" => "76b29b987ede8ea8971edf4a07a0e2edf5a1dfe21a8d2c073f6534d01b2f5c9f",
+        "patch_sha256" => "03b853b37f75dbd8c35f3c8a920163c198c45ad6cca1b6f819f9d85c960a6594",
+        "network_builds" => "forbidden",
+        "patch_applies_zero_fuzz" => "required"
+      },
+      "cargo" => {
+        "rust_version_floor" => "1.89",
+        "cargo_c_version" => "0.10.21",
+        "cargo_lock_packages" => 45,
+        "registry_crates" => 43,
+        "git_sources" => 0,
+        "build_mode" => "fedora_system_registry",
+        "compatibility_providers" => %w[rust-cssparser0.36 rust-selectors0.37],
+        "root_production_buildrequires" => "required",
+        "c_api_buildrequires" => "required",
+        "test_only_dependencies" => "excluded"
+      },
+      "c_api" => {
+        "crate_version" => "1.4.0",
+        "library" => "liblolhtml.so.1.4.0",
+        "soname" => "liblolhtml.so.1",
+        "pkgconfig" => "lol-html",
+        "header" => "lol_html.h",
+        "exported_symbols" => 97,
+        "static_library_shipped" => false,
+        "source_abi" => "graceful_bail_out_on_memory_limit_exceeded"
+      },
+      "license" => {
+        "aggregate_expression" => "BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib",
+        "linked_license_entries" => 29,
+        "dependencies_inventory" => "LICENSE.dependencies",
+        "dependencies_sha256" => "4e32b2460074c0364c17f7f2e4eeb12a52f81bd581d4b7e04f111cd22826f541",
+        "payload" => %w[LICENSE LICENSE.dependencies],
+        "provider_license_corpora_copied" => false,
+        "bundled_crate_provides" => false,
+        "fedora_spdx_review_complete" => true
+      },
+      "runtime" => {
+        "versioned_symlinks" => "required",
+        "soname_probe" => "required",
+        "pkgconfig_probe" => "required",
+        "c_api_symbol_probe" => "required",
+        "rpath_runpath_absent" => "required",
+        "focused_c_smoke" => "required",
+        "upstream_c_suites" => 8,
+        "ldd_r" => "required"
+      },
+      "outputs" => %w[source runtime devel debuginfo debugsource]
+    }
+  end
+
+  def lol_html_historical_manifest_snapshot
+    {
+      "provider_version" => "3.0.0",
+      "evidence_role" => "immutable_historical_consumer_input",
+      "path" => "packages/lol-html/lol-html-3.0.0-package.yml",
+      "source_path" => "packages/lol-html/package.yml",
+      "size_bytes" => 3945,
+      "sha256" => "c8bab9f03901bf2378b64aead63cee5217c733fcb46e23876d53c075507dd2e2"
+    }
+  end
+
   def valid_bun_lolhtml_provider_evidence_boundary?(provider, lolhtml)
-    current_validation = provider.data.dig("build_validation", "current") || {}
-    current_matrix = current_validation["mock_matrix"] || {}
-    historical_validation = provider.data.dig("build_validation", "historical") || {}
-    historical_matrix = historical_validation["mock_matrix"] || {}
-    current_pending = current_validation["provider_version"] == provider.upstream["current_version"] &&
-                      current_validation["evidence_role"] == "current_provider_pending" &&
-                      %w[provider_gate_verified target_matrix_verified artifacts_verified soname_probe_verified pkgconfig_probe_verified c_api_symbol_probe_verified upstream_c_suites_verified rpm_installed].all? { |key| current_validation[key] == false } &&
-                      current_matrix["configured_copr_build"] == "pending" &&
-                      %w[fedora_43_x86_64 fedora_43_aarch64 fedora_44_x86_64 fedora_44_aarch64 fedora_rawhide_x86_64 fedora_rawhide_aarch64].all? { |target| current_matrix[target] == "pending" }
-    historical_proof = historical_validation["provider_version"] == lolhtml["version"] &&
-                       historical_validation["provider_release"] == "3.0.0-0.9" &&
-                       historical_validation["evidence_role"] == "immutable_historical_provider_proof" &&
-                       %w[fedora_43_x86_64 fedora_43_aarch64 fedora_44_x86_64 fedora_44_aarch64 fedora_rawhide_x86_64 fedora_rawhide_aarch64].all? { |target| historical_matrix[target] == "passed" }
-    provider.enabled? &&
+    snapshot = provider.data["historical_manifest_snapshot"]
+    snapshot_path = snapshot.is_a?(Hash) && File.join(ROOT, snapshot["path"].to_s)
+    snapshot_valid = snapshot == lol_html_historical_manifest_snapshot &&
+                     snapshot_path &&
+                     File.file?(snapshot_path) &&
+                     !File.symlink?(snapshot_path) &&
+                     File.realpath(snapshot_path) == snapshot_path &&
+                     File.size(snapshot_path) == snapshot["size_bytes"] &&
+                     Digest::SHA256.file(snapshot_path).hexdigest == snapshot["sha256"]
+    snapshot_valid &&
+      provider.enabled? &&
+      provider.upstream["current_version"] == "3.0.1" &&
+      provider.data["validation_contract"] == lol_html_validation_contract &&
+      snapshot["provider_version"] == lolhtml["version"] &&
       provider.data.dig("c_api", "crate_version") == "1.4.0" &&
       provider.data.dig("c_api", "soname") == "liblolhtml.so.1" &&
       provider.data.dig("c_api", "static_library_shipped") == false &&
-      current_pending && historical_proof
+      !provider.data.key?("build_validation") &&
+      !dynamic_build_result_identity?(provider.data) &&
+      !dynamic_build_result_state?(provider.data)
   end
 
   def valid_bun_lolhtml_historical_manifest_snapshot?(receipt, lolhtml_data)
     record = receipt.dig("inputs", "lolhtml_package") || {}
-    snapshot = lolhtml_data.dig("build_validation", "historical", "manifest_snapshot") || {}
+    snapshot = lolhtml_data["historical_manifest_snapshot"] || {}
     snapshot_path = File.join(ROOT, snapshot["path"].to_s)
-    record["path"] == "packages/lol-html/package.yml" &&
+    snapshot == lol_html_historical_manifest_snapshot &&
+      record["path"] == "packages/lol-html/package.yml" &&
       snapshot["path"] == "packages/lol-html/lol-html-3.0.0-package.yml" &&
       snapshot["source_path"] == record["path"] &&
       snapshot["size_bytes"] == record["size_bytes"] &&
       snapshot["sha256"] == record["sha256"] &&
       File.file?(snapshot_path) &&
+      !File.symlink?(snapshot_path) &&
+      File.realpath(snapshot_path) == snapshot_path &&
       File.size(snapshot_path) == record["size_bytes"] &&
       Digest::SHA256.file(snapshot_path).hexdigest == record["sha256"]
   end
@@ -4270,7 +4349,7 @@ module Agentlab
     when Array
       value.any? { |nested| dynamic_build_result_identity?(nested) }
     when String
-      value.match?(/\b(?:COPR|configured-SCM)\s+builds?(?:\s+IDs?\s*:?)?\s+`?\d{7,}`?\b/i) ||
+      value.match?(/\b(?:COPR|configured-SCM)\s+builds?(?:\s+IDs?\s*:?)?\s+`?#?\d{7,}`?\b/i) ||
         value.match?(/\b(?:result\s+NVR|builder[- ]log\s+(?:SHA-256|hash))\b/i)
     else
       false
@@ -4284,12 +4363,15 @@ module Agentlab
         key_name = key.to_s.downcase
         state_key = key_name.match?(/\A(?:result|status|state|build_result|build_state|copr_result)\z/) &&
                     nested.to_s.match?(/\A(?:passed|success|succeeded|failed|failure|running|pending|queued|cancelled|complete|completed)\z/i)
-        numeric_result_key = key_name.match?(/\A(?:build|job|run|copr_job|configured_scm_run)(?:_id|_number)?\z/) &&
+        numeric_result_key = key_name.match?(/\A(?:build|job|run|execution|pipeline|artifact|copr_job|configured_scm_run)(?:_id|_number)?\z/) &&
                              nested.to_s.match?(/\A#?\d{7,}\z/)
-        contextual_result = key_name.match?(/(?:result|status|state|build|job|run|execution|pipeline|artifact)/) &&
-                            (nested.to_s.match?(/\A#?\d{7,}\z/) ||
-                             nested.to_s.match?(/\A(?:passed|success|succeeded|failed|failure|running|pending|queued|cancelled|complete|completed)\z/i))
-        state_key || numeric_result_key || contextual_result || dynamic_build_result_state?(nested)
+        contextual_numeric = key_name.match?(/(?:\A|_)(?:result|build|job|run|execution|pipeline|artifact)(?:_id|_number)\z/) &&
+                             nested.to_s.match?(/\A#?\d{7,}\z/)
+        contextual_numeric ||= key_name.match?(/\A(?:configured_copr|configured_scm|copr)_build\z/) &&
+                              nested.to_s.match?(/\A#?\d{7,}\z/)
+        contextual_state = key_name.match?(/(?:\A|_)(?:result|status|state|build|job|run|execution|pipeline|artifact)(?:_|\z)/) &&
+                           nested.to_s.match?(/\A(?:passed|success|succeeded|failed|failure|running|pending|queued|cancelled|complete|completed)\z/i)
+        state_key || numeric_result_key || contextual_numeric || contextual_state || dynamic_build_result_state?(nested)
       end
     when Array
       value.any? { |nested| dynamic_build_result_state?(nested) }
@@ -4299,6 +4381,225 @@ module Agentlab
     else
       false
     end
+  end
+
+  def validate_lol_html_build_contract(package, spec, readme)
+    unless package.respond_to?(:data) && package.data.is_a?(Hash) &&
+           package.data["name"].is_a?(String) && spec.is_a?(String) && readme.is_a?(String)
+      return ["lol-html: validation inputs are malformed"]
+    end
+    return [] unless package.data["name"] == "lol-html"
+
+    errors = []
+    upstream = package.data["upstream"]
+    unless upstream.is_a?(Hash)
+      return ["lol-html: upstream metadata is malformed"]
+    end
+    errors << "lol-html: validation contract does not match" unless package.data["validation_contract"] == lol_html_validation_contract
+    errors << "lol-html: historical manifest snapshot contract does not match" unless package.data["historical_manifest_snapshot"] == lol_html_historical_manifest_snapshot
+    errors << "lol-html: package README is missing" if readme.strip.empty?
+    errors << "lol-html: validation matrix does not match configured chroots" unless package.data.dig("copr", "chroots") == lol_html_validation_contract["required_targets"]
+    reserved_result_key = lambda do |value|
+      case value
+      when Hash
+        value.any? do |key, nested|
+          key.to_s.downcase.match?(/\A(?:build_validation|historical_build(?:_validation)?|current_build_validation|results?|current_result|historical_results?|artifact_results?)\z/) ||
+            reserved_result_key.call(nested)
+        end
+      when Array
+        value.any? { |nested| reserved_result_key.call(nested) }
+      else
+        false
+      end
+    end
+    errors << "lol-html: active package metadata retains result-state sections" if reserved_result_key.call(package.data)
+
+    contract = lol_html_validation_contract
+    live_metadata_bound = upstream.values_at("current_version", "source_commit", "source_sha256") == [
+      "3.0.1",
+      contract.dig("source", "commit"),
+      contract.dig("source", "archive_sha256")
+    ] &&
+      package.data.dig("source_closure", "network_builds") == contract.dig("source", "network_builds") &&
+      package.data.dig("source_closure", "cargo_lock_packages") == contract.dig("cargo", "cargo_lock_packages") &&
+      package.data.dig("source_closure", "registry_crates") == contract.dig("cargo", "registry_crates") &&
+      package.data.dig("source_closure", "git_sources") == contract.dig("cargo", "git_sources") &&
+      package.data.dig("source_closure", "build_mode") == contract.dig("cargo", "build_mode") &&
+      package.data.dig("source_closure", "compatibility_providers") == contract.dig("cargo", "compatibility_providers") &&
+      package.data.dig("source_closure", "dynamic_buildrequires") == "Root production dependencies and C API dependencies are generated separately because cargo2rpm does not recurse through the local path dependency." &&
+      package.data.dig("patches", "c_api_license", "sha256") == contract.dig("source", "patch_sha256") &&
+      package.data.dig("c_api", "rust_version").to_s == contract.dig("cargo", "rust_version_floor") &&
+      package.data.dig("c_api", "cargo_c_version").to_s == contract.dig("cargo", "cargo_c_version") &&
+      package.data.dig("c_api", "crate_version") == contract.dig("c_api", "crate_version") &&
+      package.data.dig("c_api", "library") == contract.dig("c_api", "library") &&
+      package.data.dig("c_api", "soname") == contract.dig("c_api", "soname") &&
+      package.data.dig("c_api", "pkgconfig") == contract.dig("c_api", "pkgconfig") &&
+      package.data.dig("c_api", "header") == contract.dig("c_api", "header") &&
+      package.data.dig("c_api", "exported_symbols") == contract.dig("c_api", "exported_symbols") &&
+      package.data.dig("c_api", "static_library_shipped") == contract.dig("c_api", "static_library_shipped") &&
+      package.data.dig("consumer_contract", "source_abi") == "lol_html_memory_settings_t includes #{contract.dig('c_api', 'source_abi')}" &&
+      package.data.dig("license_audit", "aggregate_expression") == contract.dig("license", "aggregate_expression") &&
+      package.data.dig("license_audit", "linked_license_entries") == contract.dig("license", "linked_license_entries") &&
+      package.data.dig("license_audit", "license_dependencies_sha256") == contract.dig("license", "dependencies_sha256") &&
+      package.data.dig("license_audit", "provider_license_corpora_copied") == contract.dig("license", "provider_license_corpora_copied") &&
+      package.data.dig("license_audit", "bundled_crate_provides") == contract.dig("license", "bundled_crate_provides") &&
+      package.data.dig("license_audit", "fedora_spdx_review_complete") == contract.dig("license", "fedora_spdx_review_complete")
+    errors << "lol-html: live package metadata differs from static validation contract" unless live_metadata_bound
+
+    snapshot = lol_html_historical_manifest_snapshot
+    snapshot_path = File.join(ROOT, snapshot["path"])
+    snapshot_valid = File.file?(snapshot_path) &&
+                     !File.symlink?(snapshot_path) &&
+                     File.realpath(snapshot_path) == snapshot_path &&
+                     File.size(snapshot_path) == snapshot["size_bytes"] &&
+                     Digest::SHA256.file(snapshot_path).hexdigest == snapshot["sha256"]
+    errors << "lol-html: immutable historical manifest snapshot differs" unless snapshot_valid
+
+    plain_build_id = /\bbuilds?(?:\s+IDs?\s*:?)?\s+`?\d{7,}`?\b/i
+    dynamic = [package.data, spec, readme].any? do |value|
+      dynamic_build_result_identity?(value) ||
+        dynamic_build_result_state?(value) ||
+        (value.is_a?(String) && value.match?(plain_build_id))
+    end
+    errors << "lol-html: active package inputs contain dynamic build result identity" if dynamic
+
+    prep = spec[/^%prep\n(.*?)(?=^%(?:generate_buildrequires|build|install|check|files|changelog)\b)/m, 1].to_s
+    generate = spec[/^%generate_buildrequires\n(.*?)(?=^%(?:build|install|check|files|changelog)\b)/m, 1].to_s
+    build = spec[/^%build\n(.*?)(?=^%(?:install|check|files|changelog)\b)/m, 1].to_s
+    install = spec[/^%install\n(.*?)(?=^%if %\{with check\}$)/m, 1].to_s
+    check = spec[/^%check\n(.*?)(?=^%endif$)/m, 1].to_s
+    runtime_files = spec[/^%files\n(.*?)(?=^%files devel$)/m, 1].to_s
+    devel_files = spec[/^%files devel\n(.*?)(?=^%changelog\b)/m, 1].to_s
+    expected_heredocs = [
+      "cat > c-api-smoke.c <<'EOF'",
+      "cat > c-api-tests-main.c <<'EOF'"
+    ]
+    heredoc_declarations = check.lines(chomp: true).grep(/<</)
+    check_shell = check.gsub(/^cat > .*? <<'EOF'\n.*?^EOF$\n?/m, "")
+    conditional_shell = check_shell.lines.any? do |line|
+      line.match?(/(?:^|;)\s*(?:if|elif|else|fi|case|esac|for|while|until|select)\b/) ||
+        line.match?(/^\s*(?:function\s+[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*\s*\(\))\s*\{/)
+    end
+    conditional_build_section = [prep, generate, build, install].any? do |section|
+      section.lines.any? { |line| line.match?(/^%(?:if|else|endif)\b/) }
+    end
+    conditional_check_section = check.lines.any? { |line| line.match?(/^%(?:if|else|endif)\b/) }
+    shell_control_build_section = [prep, generate, build, install].any? do |section|
+      section.lines.any? do |line|
+        line.match?(/(?:^|;)\s*(?:if|elif|else|fi|case|esac|for|while|until|select)\b/) ||
+          line.match?(/(?:^|;)\s*(?:function\s+[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*\s*\(\))\s*\{/) ||
+          line.match?(/&&|\|\||\$\(/)
+      end
+    end
+    errexit_disabled = [prep, generate, build, install, check_shell].any? do |section|
+      section.lines.any? do |line|
+        line.match?(/(?:^|;)\s*set\s+\+(?:e|o\s+errexit)(?:\s|$)/) ||
+          line.match?(/(?:^|;)\s*trap\s+-\s+ERR(?:\s|$)/)
+      end
+    end
+    expected_generate = <<~SPEC.strip
+      %global lol_html_with_check %{?with_check}
+      %undefine with_check
+      %cargo_generate_buildrequires
+      %global with_check %{lol_html_with_check}
+      pushd c-api >/dev/null
+      %cargo_generate_buildrequires
+      popd >/dev/null
+    SPEC
+    expected_buildrequires = [
+      /^BuildRequires:\s+binutils$/,
+      /^BuildRequires:\s+cargo >= 1\.89$/,
+      /^BuildRequires:\s+cargo-c$/,
+      /^BuildRequires:\s+cargo-rpm-macros >= 24$/,
+      /^BuildRequires:\s+gcc$/,
+      /^BuildRequires:\s+pkgconf-pkg-config$/,
+      /^BuildRequires:\s+rust >= 1\.89$/,
+      /^BuildRequires:\s+ruby$/
+    ]
+    expected_checks = [
+      'test -f "$library"',
+      'test "$(readlink %{buildroot}%{_libdir}/liblolhtml.so)" = "liblolhtml.so.%{c_api_version}"',
+      'test "$(readlink %{buildroot}%{_libdir}/liblolhtml.so.1)" = "liblolhtml.so.%{c_api_version}"',
+      'readelf -d "$library" > c-api.dynamic',
+      "grep -Fq 'Library soname: [liblolhtml.so.1]' c-api.dynamic",
+      "! grep -Eq 'RPATH|RUNPATH' c-api.dynamic",
+      "test \"$(nm -D --defined-only \"$library\" | grep -Ec ' (lol_html_|unstable_lol_html_)')\" -eq 97",
+      "PKG_CONFIG_PATH=%{buildroot}%{_libdir}/pkgconfig pkg-config --exact-version=%{c_api_version} lol-html",
+      "grep -Fq 'graceful_bail_out_on_memory_limit_exceeded' %{buildroot}%{_includedir}/lol_html.h",
+      'LD_LIBRARY_PATH=%{buildroot}%{_libdir} ./c-api-smoke',
+      'LD_LIBRARY_PATH=%{buildroot}%{_libdir} ./c-api-tests',
+      'ldd -r "$library"'
+    ]
+    check_lines = check_shell.lines(chomp: true)
+    identity_patterns = [
+      /^Name:\s+lol-html$/,
+      /^Version:\s+3\.0\.1$/,
+      /^%global c_api_version 1\.4\.0$/,
+      /^%global source_sha256 #{contract.dig("source", "archive_sha256")}$/,
+      /^%global license_patch_sha256 #{contract.dig("source", "patch_sha256")}$/,
+      %r{^URL:\s+https://github\.com/cloudflare/lol-html$},
+      %r{^Source0:\s+https://github\.com/cloudflare/lol-html/archive/refs/tags/v%\{version\}\.tar\.gz#/%\{name\}-%\{version\}\.tar\.gz$},
+      /^Patch0:\s+lol-html-c-api-license\.patch$/
+    ]
+    identity_tag_patterns = [
+      /^Name:/,
+      /^Version:/,
+      /^URL:/,
+      /^Source\d*:/,
+      /^Patch\d*:/,
+      /^%global c_api_version\b/,
+      /^%global source_sha256\b/,
+      /^%global license_patch_sha256\b/
+    ]
+    spec_identity_complete = identity_patterns.all? { |pattern| spec.scan(pattern).length == 1 } &&
+                             identity_tag_patterns.all? { |pattern| spec.scan(pattern).length == 1 }
+    sections_complete = spec_identity_complete &&
+                        heredoc_declarations == expected_heredocs &&
+                        !check_shell.include?("<<") &&
+                        !conditional_shell &&
+                        !conditional_build_section &&
+                         !conditional_check_section &&
+                         !shell_control_build_section &&
+                         !errexit_disabled &&
+                        spec.scan(/^%check$/).length == 1 &&
+                        spec.scan(/^%if %\{with check\}$/).length == 1 &&
+                        spec.match?(/^%bcond check 1$/) &&
+                        spec.match?(/^Release:\s+0\.4%\{\?dist\}$/) &&
+                        spec.match?(/^License:\s+BSD-3-Clause AND \(Apache-2\.0 OR MIT\) AND MIT AND MPL-2\.0 AND \(Unlicense OR MIT\) AND Zlib$/) &&
+                        expected_buildrequires.all? { |pattern| spec.match?(pattern) } &&
+                        spec.scan(/^%package\s+devel$/).length == 1 &&
+                        spec.scan(/^%package\s+/).length == 1 &&
+                        spec.match?(/^%if %\{with check\}\n%check\n.*?^%endif$/m) &&
+                        prep.match?(/^echo "%\{source_sha256\}  %\{SOURCE0\}" \| sha256sum -c -$/) &&
+                        prep.match?(/^echo "%\{license_patch_sha256\}  %\{PATCH0\}" \| sha256sum -c -$/) &&
+                        prep.match?(/^%autosetup -n lol-html-%\{version\} -N$/) &&
+                        prep.match?(/^%patch -P 0 -p1 -F 0$/) &&
+                        prep.match?(/^%cargo_prep$/) &&
+                        prep.match?(/^echo "11a173c126f925a466a2554925207c377c6ba78863dd8f0a5f31a0bb46b78e8e  c-api\/Cargo\.toml" \| sha256sum -c -$/) &&
+                        prep.match?(/^echo "b1cd65ca6c2e059d5eee018201dbaed845b12e185d3763b4b87751b5b99e408f  c-api\/Cargo\.lock" \| sha256sum -c -$/) &&
+                        prep.match?(/^echo "7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293  c-api\/include\/lol_html\.h" \| sha256sum -c -$/) &&
+                         generate.strip == expected_generate &&
+                        build.match?(/^\s*%\{__cargo\} cbuild %\{__cargo_common_opts\} \\\n  --profile rpm \\\n  --offline \\\n  --library-type cdylib$/m) &&
+                        build.match?(/^%\{cargo_license_summary\}$/) &&
+                        build.match?(/^%\{cargo_license\} > \.\.\/LICENSE\.dependencies$/) &&
+                        build.lines(chomp: true).include?("ruby-mri -e 'path = ARGV.fetch(0); text = File.read(path); changed = text.sub!(/^BSD-3-Clause: lol_html v3\\.0\\.1 .*$/, \"BSD-3-Clause: lol_html v3.0.1\"); abort \"missing local lol_html license record\" unless changed; File.write(path, text)' ../LICENSE.dependencies") &&
+                        install.match?(/^\s*%\{__cargo\} cinstall %\{__cargo_common_opts\} \\\n  --profile rpm \\\n  --offline \\\n  --library-type cdylib \\/m) &&
+                        install.lines(chomp: true).include?("  --destdir %{buildroot} \\") &&
+                        install.lines(chomp: true).include?("  --prefix %{_prefix} \\") &&
+                        install.lines(chomp: true).include?("  --libdir %{_libdir} \\") &&
+                        install.lines(chomp: true).include?("  --includedir %{_includedir} \\") &&
+                        install.lines(chomp: true).include?("  --pkgconfigdir %{_libdir}/pkgconfig") &&
+                        install.match?(/^test ! -e %\{buildroot\}%\{_libdir\}\/liblolhtml\.a$/) &&
+                        expected_checks.all? { |line| check_lines.include?(line) } &&
+                        check.include?("c-api/c-tests/src/deps/picotest/picotest.c c-api/c-tests/src/*.c") &&
+                        runtime_files.match?(/^%license LICENSE LICENSE\.dependencies$/) &&
+                        runtime_files.match?(/^%\{_libdir\}\/liblolhtml\.so\.1$/) &&
+                        runtime_files.match?(/^%\{_libdir\}\/liblolhtml\.so\.%\{c_api_version\}$/) &&
+                        devel_files.match?(/^%\{_includedir\}\/lol_html\.h$/) &&
+                        devel_files.match?(/^%\{_libdir\}\/liblolhtml\.so$/) &&
+                        devel_files.match?(/^%\{_libdir\}\/pkgconfig\/lol-html\.pc$/)
+    errors << "lol-html: static spec validation contract is incomplete" unless sections_complete
+    errors
   end
 
   def validate_ast_grep_build_contract(package)

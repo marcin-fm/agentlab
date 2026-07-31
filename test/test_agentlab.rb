@@ -2399,6 +2399,8 @@ class AgentlabTest < Minitest::Test
     assert(Agentlab.dynamic_build_result_identity?({ "fedora_43_build_id" => 12_345_678 }))
     assert(Agentlab.dynamic_build_result_identity?({ "status" => "passed in configured-SCM build 12345678" }))
     assert(Agentlab.dynamic_build_result_identity?({ "status" => "COPR builds 12345678" }))
+    assert(Agentlab.dynamic_build_result_identity?({ "status" => "COPR build #12345678" }))
+    assert(Agentlab.dynamic_build_result_identity?({ "status" => "configured-SCM build #12345678" }))
     refute(Agentlab.dynamic_build_result_identity?({ "toolchain_build_id" => "clang-22", "configured_matrix" => "passed" }))
     assert(Agentlab.dynamic_build_result_state?({ "result" => "succeeded" }))
     assert(Agentlab.dynamic_build_result_state?({ "status" => "failed" }))
@@ -2406,11 +2408,16 @@ class AgentlabTest < Minitest::Test
     assert(Agentlab.dynamic_build_result_state?("configured-SCM run #12345678"))
     assert(Agentlab.dynamic_build_result_state?({ "build_state" => "queued" }))
     assert(Agentlab.dynamic_build_result_state?({ "copr_job_number" => 12_345_678 }))
+    assert(Agentlab.dynamic_build_result_state?({ "execution_id" => 12_345_678 }))
+    assert(Agentlab.dynamic_build_result_state?({ "pipeline_number" => 12_345_678 }))
+    assert(Agentlab.dynamic_build_result_state?({ "artifact_id" => 12_345_678 }))
+    assert(Agentlab.dynamic_build_result_state?({ "configured_copr_build" => 12_345_678 }))
     assert(Agentlab.dynamic_build_result_state?({ "result_state" => "complete" }))
     assert(Agentlab.dynamic_build_result_state?({ "pipeline" => { "execution" => 12_345_678 } }))
     assert(Agentlab.dynamic_build_result_state?("build status: succeeded"))
     assert(Agentlab.dynamic_build_result_state?("result: failed"))
     refute(Agentlab.dynamic_build_result_state?({ "status" => "enabled", "toolchain_build_id" => "clang-22" }))
+    refute(Agentlab.dynamic_build_result_state?({ "artifact_count" => 12_345_678 }))
   end
 
   def test_validates_ast_grep_build_contract
@@ -2423,6 +2430,180 @@ class AgentlabTest < Minitest::Test
     errors = Agentlab.validate_ast_grep_build_contract(package)
     assert_includes(errors, "ast-grep: validation contract does not match")
     assert_includes(errors, "ast-grep: active package metadata contains dynamic build result identity")
+  end
+
+  def test_validates_lol_html_build_contract
+    source_package = Agentlab.package_named("lol-html")
+    spec = File.read(source_package.spec_path)
+    readme = File.read(File.join(source_package.directory, "README.md"))
+    validate = lambda do |package: source_package, spec_text: spec, readme_text: readme|
+      Agentlab.validate_lol_html_build_contract(package, spec_text, readme_text)
+    end
+
+    assert_empty(validate.call)
+    assert_equal(Agentlab.lol_html_validation_contract, source_package.data.fetch("validation_contract"))
+    assert_equal(Agentlab.lol_html_historical_manifest_snapshot, source_package.data.fetch("historical_manifest_snapshot"))
+    snapshot = Agentlab.lol_html_historical_manifest_snapshot
+    snapshot_path = File.join(Agentlab::ROOT, snapshot.fetch("path"))
+    assert_equal(3945, File.size(snapshot_path))
+    assert_equal("c8bab9f03901bf2378b64aead63cee5217c733fcb46e23876d53c075507dd2e2", Digest::SHA256.file(snapshot_path).hexdigest)
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("validation_contract").fetch("c_api")["soname"] = "liblolhtml.so.2"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: validation contract does not match")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("upstream")["source_commit"] = "0" * 40
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: live package metadata differs from static validation contract")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("patches").fetch("c_api_license")["sha256"] = "0" * 64
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: live package metadata differs from static validation contract")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("license_audit")["linked_license_entries"] = 28
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: live package metadata differs from static validation contract")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("c_api")["rust_version"] = "1.88"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: live package metadata differs from static validation contract")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("source_closure")["dynamic_buildrequires"] = "Generate all requirements together."
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: live package metadata differs from static validation contract")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("consumer_contract")["source_abi"] += " plus another field"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: live package metadata differs from static validation contract")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("copr").fetch("chroots").delete("fedora-rawhide-aarch64")
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: validation matrix does not match configured chroots")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("copr").delete("chroots")
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: validation matrix does not match configured chroots")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.delete("upstream")
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_equal(["lol-html: upstream metadata is malformed"], validate.call(package: package))
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data["build_validation"] = { "configured_copr_build" => 12_345_678 }
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    errors = validate.call(package: package)
+    assert_includes(errors, "lol-html: active package metadata retains result-state sections")
+    assert_includes(errors, "lol-html: active package inputs contain dynamic build result identity")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data["results"] = { "status" => "succeeded" }
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    errors = validate.call(package: package)
+    assert_includes(errors, "lol-html: active package metadata retains result-state sections")
+    assert_includes(errors, "lol-html: active package inputs contain dynamic build result identity")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("historical_manifest_snapshot")["sha256"] = "0" * 64
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "lol-html: historical manifest snapshot contract does not match")
+
+    assert_includes(
+      validate.call(spec_text: "#{spec}\n# configured-SCM build 12345678\n"),
+      "lol-html: active package inputs contain dynamic build result identity"
+    )
+    assert_includes(
+      validate.call(readme_text: "result NVR must not be retained\n"),
+      "lol-html: active package inputs contain dynamic build result identity"
+    )
+    assert_includes(validate.call(readme_text: ""), "lol-html: package README is missing")
+    assert_includes(
+      validate.call(spec_text: spec.sub("-F 0", "-F 1")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%bcond check 1", "%bcond check 0")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub('ldd -r "$library"', '# ldd -r "$library"')),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%cargo_generate_buildrequires", "# %cargo_generate_buildrequires")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("11a173c126f925a466a2554925207c377c6ba78863dd8f0a5f31a0bb46b78e8e", "0" * 64)),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("ruby-mri -e", "# ruby-mri -e")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("  --pkgconfigdir %{_libdir}/pkgconfig", "  --pkgconfigdir /wrong")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%cargo_prep", "%if 0\n%cargo_prep\n%endif")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub('test -f "$library"', "%if 0\ntest -f \"$library\"\n%endif")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%cargo_prep", "false && %cargo_prep")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%cargo_prep", "set +e\n%cargo_prep")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%cargo_prep", ":; if false; then\n%cargo_prep\n:; fi")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%cargo_prep", ":; set +e\n%cargo_prep")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub('test -f "$library"', "set +o errexit\ntest -f \"$library\"")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub(/^Source0:.*$/, "\\0\nSource0: duplicate")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub('test -f "$library"', "cat > hidden-checks <<'EOF'\ntest -f \"$library\"\nEOF")),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub('test -f "$library"', ':; if false; then\ntest -f "$library"\nfi')),
+      "lol-html: static spec validation contract is incomplete"
+    )
+    assert_includes(validate.call(readme_text: " \n"), "lol-html: package README is missing")
+    assert_equal(["lol-html: validation inputs are malformed"], Agentlab.validate_lol_html_build_contract(source_package, nil, readme))
+    malformed_package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: nil)
+    assert_equal(["lol-html: validation inputs are malformed"], Agentlab.validate_lol_html_build_contract(malformed_package, spec, readme))
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data["toolchain_build_id"] = "rust-1.89"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_empty(validate.call(package: package))
+    assert_equal(["lol-html: validation inputs are malformed"], Agentlab.validate_lol_html_build_contract(nil, spec, readme))
   end
 
   def test_validates_conventional_rust_leaf_contracts
@@ -3760,22 +3941,19 @@ class AgentlabTest < Minitest::Test
     stages = plan.fetch("stages")
     spec = File.read(File.join(source_package.directory, "bun.spec"))
     provider = Agentlab.package_named("lol-html")
-    current_validation = provider.data.dig("build_validation", "current")
-    historical_validation = provider.data.dig("build_validation", "historical")
+    validation_contract = provider.data.fetch("validation_contract")
+    snapshot = provider.data.fetch("historical_manifest_snapshot")
 
     assert_equal("3.0.0", lolhtml.fetch("version"))
     assert_equal("3.0.1", provider.upstream.fetch("current_version"))
-    assert_equal("3.0.1", current_validation.fetch("provider_version"))
-    assert_equal("current_provider_pending", current_validation.fetch("evidence_role"))
-    assert(current_validation.except("provider_version", "release", "evidence_role", "mock_matrix").values.all? { |value| value == false })
-    assert_equal(["pending"], current_validation.fetch("mock_matrix").values.uniq)
-    assert_equal("3.0.0", historical_validation.fetch("provider_version"))
-    assert_equal("3.0.0-0.9", historical_validation.fetch("provider_release"))
-    assert_equal("immutable_historical_provider_proof", historical_validation.fetch("evidence_role"))
+    assert_equal(Agentlab.lol_html_validation_contract, validation_contract)
+    assert_equal(Agentlab.lol_html_historical_manifest_snapshot, snapshot)
+    refute(provider.data.key?("build_validation"))
+    assert_equal("3.0.0", snapshot.fetch("provider_version"))
+    assert_equal("immutable_historical_consumer_input", snapshot.fetch("evidence_role"))
     final_license_path = File.join(source_package.directory, "bun-1.3.14-final-linked-license-closure.json")
     final_license = JSON.parse(File.read(final_license_path))
     historical_input = final_license.dig("inputs", "lolhtml_package")
-    snapshot = historical_validation.fetch("manifest_snapshot")
     snapshot_path = File.join(Agentlab::ROOT, snapshot.fetch("path"))
     assert_equal(historical_input.fetch("path"), snapshot.fetch("source_path"))
     assert_equal(historical_input.fetch("size_bytes"), File.size(snapshot_path))
@@ -3789,14 +3967,60 @@ class AgentlabTest < Minitest::Test
     refute(Agentlab.valid_bun_lolhtml_historical_manifest_snapshot?(live_input, provider.data))
     assert_empty(Agentlab.validate_bun_system_lolhtml(source_package, lolhtml, stages, "1.3.14", spec))
 
-    relabeled_data = Marshal.load(Marshal.dump(provider.data))
-    relabeled_data.fetch("build_validation")["current"] = Marshal.load(Marshal.dump(historical_validation))
-    relabeled_provider = Agentlab::Package.new(
+    invalid_provider_data = Marshal.load(Marshal.dump(provider.data))
+    invalid_provider_data.fetch("validation_contract").fetch("c_api")["soname"] = "liblolhtml.so.2"
+    invalid_provider = Agentlab::Package.new(
       directory: provider.directory,
       manifest_path: "unused",
-      data: relabeled_data
+      data: invalid_provider_data
     )
-    refute(Agentlab.valid_bun_lolhtml_provider_evidence_boundary?(relabeled_provider, lolhtml))
+    refute(Agentlab.valid_bun_lolhtml_provider_evidence_boundary?(invalid_provider, lolhtml))
+
+    legacy_provider_data = Marshal.load(Marshal.dump(provider.data))
+    legacy_provider_data["build_validation"] = { "current" => { "status" => "pending" } }
+    legacy_provider = Agentlab::Package.new(
+      directory: provider.directory,
+      manifest_path: "unused",
+      data: legacy_provider_data
+    )
+    refute(Agentlab.valid_bun_lolhtml_provider_evidence_boundary?(legacy_provider, lolhtml))
+
+    {
+      "status" => "blocked",
+      "upstream.current_version" => "3.0.0",
+      "c_api.crate_version" => "1.3.0",
+      "c_api.soname" => "liblolhtml.so.2",
+      "c_api.static_library_shipped" => true
+    }.each do |field, value|
+      mutated_data = Marshal.load(Marshal.dump(provider.data))
+      case field
+      when "status"
+        mutated_data["status"] = value
+      when "upstream.current_version"
+        mutated_data.dig("upstream")["current_version"] = value
+      else
+        mutated_data.dig("c_api")[field.split(".").last] = value
+      end
+      mutated_provider = Agentlab::Package.new(directory: provider.directory, manifest_path: "unused", data: mutated_data)
+      refute(Agentlab.valid_bun_lolhtml_provider_evidence_boundary?(mutated_provider, lolhtml), field)
+    end
+
+    %w[provider_version evidence_role path source_path size_bytes sha256].each do |key|
+      mutated_data = Marshal.load(Marshal.dump(provider.data))
+      mutated_data.fetch("historical_manifest_snapshot")[key] = key == "size_bytes" ? 1 : "invalid"
+      mutated_provider = Agentlab::Package.new(
+        directory: provider.directory,
+        manifest_path: "unused",
+        data: mutated_data
+      )
+      refute(Agentlab.valid_bun_lolhtml_provider_evidence_boundary?(mutated_provider, lolhtml), key)
+    end
+
+    %w[path size_bytes sha256].each do |key|
+      mutated_receipt = Marshal.load(Marshal.dump(final_license))
+      mutated_receipt.dig("inputs", "lolhtml_package")[key] = key == "size_bytes" ? 1 : "invalid"
+      refute(Agentlab.valid_bun_lolhtml_historical_manifest_snapshot?(mutated_receipt, provider.data), key)
+    end
 
     invalid_lolhtml = Marshal.load(Marshal.dump(lolhtml))
     invalid_lolhtml["provider_matrix_verified"] = false

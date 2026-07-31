@@ -6,7 +6,7 @@
 
 Name:           lol-html
 Version:        3.0.1
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Streaming HTML parser and transformation C library
 
 License:        BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib
@@ -39,7 +39,8 @@ The lol-html C header, linker name, and pkg-config metadata.
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{license_patch_sha256}  %{PATCH0}" | sha256sum -c -
-%autosetup -n lol-html-%{version} -p1
+%autosetup -n lol-html-%{version} -N
+%patch -P 0 -p1 -F 0
 echo "11a173c126f925a466a2554925207c377c6ba78863dd8f0a5f31a0bb46b78e8e  c-api/Cargo.toml" | sha256sum -c -
 echo "b1cd65ca6c2e059d5eee018201dbaed845b12e185d3763b4b87751b5b99e408f  c-api/Cargo.lock" | sha256sum -c -
 echo "7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293  c-api/include/lol_html.h" | sha256sum -c -
@@ -87,8 +88,9 @@ library=%{buildroot}%{_libdir}/liblolhtml.so.%{c_api_version}
 test -f "$library"
 test "$(readlink %{buildroot}%{_libdir}/liblolhtml.so)" = "liblolhtml.so.%{c_api_version}"
 test "$(readlink %{buildroot}%{_libdir}/liblolhtml.so.1)" = "liblolhtml.so.%{c_api_version}"
-readelf -d "$library" | grep -Fq 'Library soname: [liblolhtml.so.1]'
-! readelf -d "$library" | grep -Eq 'RPATH|RUNPATH'
+readelf -d "$library" > c-api.dynamic
+grep -Fq 'Library soname: [liblolhtml.so.1]' c-api.dynamic
+! grep -Eq 'RPATH|RUNPATH' c-api.dynamic
 test "$(nm -D --defined-only "$library" | grep -Ec ' (lol_html_|unstable_lol_html_)')" -eq 97
 PKG_CONFIG_PATH=%{buildroot}%{_libdir}/pkgconfig pkg-config --exact-version=%{c_api_version} lol-html
 grep -Fq 'graceful_bail_out_on_memory_limit_exceeded' %{buildroot}%{_includedir}/lol_html.h
@@ -141,6 +143,10 @@ ldd -r "$library"
 %{_libdir}/pkgconfig/lol-html.pc
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 3.0.1-0.4
+- Replace transient build results with a static provider validation contract.
+- Apply the retained C API metadata patch with zero fuzz.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 3.0.1-0.3
 - Bind Bun's historical license proof to the retained 3.0.0 manifest bytes.
 
