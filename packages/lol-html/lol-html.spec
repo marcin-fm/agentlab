@@ -1,12 +1,12 @@
 %bcond check 1
 
 %global c_api_version 1.4.0
-%global source_sha256 41ed4231fd05b1c73c0664f1f05f18b0d96a34aabf488e6cb601c3bdc7306af9
+%global source_sha256 76b29b987ede8ea8971edf4a07a0e2edf5a1dfe21a8d2c073f6534d01b2f5c9f
 %global license_patch_sha256 03b853b37f75dbd8c35f3c8a920163c198c45ad6cca1b6f819f9d85c960a6594
 
 Name:           lol-html
-Version:        3.0.0
-Release:        0.10%{?dist}
+Version:        3.0.1
+Release:        0.1%{?dist}
 Summary:        Streaming HTML parser and transformation C library
 
 License:        BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib
@@ -41,7 +41,7 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{license_patch_sha256}  %{PATCH0}" | sha256sum -c -
 %autosetup -n lol-html-%{version} -p1
 echo "11a173c126f925a466a2554925207c377c6ba78863dd8f0a5f31a0bb46b78e8e  c-api/Cargo.toml" | sha256sum -c -
-echo "4fbb6a7b50b9e139fe44a8c652d6acbcbd4f93f2f127cf7b85b59dc5b59705ec  c-api/Cargo.lock" | sha256sum -c -
+echo "b1cd65ca6c2e059d5eee018201dbaed845b12e185d3763b4b87751b5b99e408f  c-api/Cargo.lock" | sha256sum -c -
 echo "7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293  c-api/include/lol_html.h" | sha256sum -c -
 pushd c-api >/dev/null
 %cargo_prep
@@ -64,7 +64,7 @@ pushd c-api >/dev/null
   --library-type cdylib
 %{cargo_license_summary}
 %{cargo_license} > ../LICENSE.dependencies
-ruby-mri -e 'path = ARGV.fetch(0); text = File.read(path); changed = text.sub!(/^BSD-3-Clause: lol_html v3\.0\.0 .*$/, "BSD-3-Clause: lol_html v3.0.0"); abort "missing local lol_html license record" unless changed; File.write(path, text)' ../LICENSE.dependencies
+ruby-mri -e 'path = ARGV.fetch(0); text = File.read(path); changed = text.sub!(/^BSD-3-Clause: lol_html v3\.0\.1 .*$/, "BSD-3-Clause: lol_html v3.0.1"); abort "missing local lol_html license record" unless changed; File.write(path, text)' ../LICENSE.dependencies
 popd >/dev/null
 
 %install
@@ -141,6 +141,9 @@ ldd -r "$library"
 %{_libdir}/pkgconfig/lol-html.pc
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 3.0.1-0.1
+- Update to lol-html 3.0.1 while preserving the stable C API contract.
+
 * Mon Jul 20 2026 Marcin FM <marcin@lgic.pl> - 3.0.0-0.10
 - Record successful system-registry matrix validation.
 

@@ -3188,6 +3188,8 @@ class AgentlabTest < Minitest::Test
     stages = plan.fetch("stages")
     spec = File.read(File.join(source_package.directory, "bun.spec"))
 
+    assert_equal("3.0.0", lolhtml.fetch("version"))
+    assert_equal("3.0.1", Agentlab.package_named("lol-html").upstream.fetch("current_version"))
     assert_empty(Agentlab.validate_bun_system_lolhtml(source_package, lolhtml, stages, "1.3.14", spec))
 
     invalid_lolhtml = Marshal.load(Marshal.dump(lolhtml))

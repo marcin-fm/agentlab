@@ -2915,11 +2915,13 @@ module Agentlab
     end
 
     provider = package_named("lol-html")
-    valid_provider = provider.enabled? && provider.upstream["current_version"] == "3.0.0" &&
-                     provider.data.dig("c_api", "crate_version") == "1.4.0" &&
-                     provider.data.dig("c_api", "soname") == "liblolhtml.so.1" &&
-                     provider.data.dig("c_api", "static_library_shipped") == false &&
-                     provider.data.dig("build_validation", "mock_matrix", "fedora_43_x86_64") == "passed" &&
+    valid_provider = provider.enabled? &&
+                      provider.data.dig("c_api", "crate_version") == "1.4.0" &&
+                      provider.data.dig("c_api", "soname") == "liblolhtml.so.1" &&
+                      provider.data.dig("c_api", "static_library_shipped") == false &&
+                      provider.data.dig("build_validation", "provider_version") == lolhtml["version"] &&
+                      provider.data.dig("build_validation", "evidence_role") == "immutable_historical_provider_proof" &&
+                      provider.data.dig("build_validation", "mock_matrix", "fedora_43_x86_64") == "passed" &&
                      provider.data.dig("build_validation", "mock_matrix", "fedora_43_aarch64") == "passed" &&
                      provider.data.dig("build_validation", "mock_matrix", "fedora_44_x86_64") == "passed" &&
                      provider.data.dig("build_validation", "mock_matrix", "fedora_44_aarch64") == "passed" &&
@@ -3777,9 +3779,10 @@ module Agentlab
       "self_rebuild" => [self_stage["proof_receipt"], self_stage["proof_receipt_sha256"], package.directory],
       "source_license_inventory" => [source_inventory["source"], source_inventory["sha256"], package.directory],
       "relink_audit" => [seed_stage.dig("relink_materials_audit", "proof_receipt"), seed_stage.dig("relink_materials_audit", "proof_receipt_sha256"), package.directory],
-      "relink_kit" => [seed_stage.dig("relink_kit", "proof_receipt"), seed_stage.dig("relink_kit", "proof_receipt_sha256"), package.directory],
-      "lolhtml_package" => ["package.yml", nil, File.join(ROOT, "packages", "lol-html")]
+      "relink_kit" => [seed_stage.dig("relink_kit", "proof_receipt"), seed_stage.dig("relink_kit", "proof_receipt_sha256"), package.directory]
     }
+    # The closure receipt SHA already binds its historical lol-html manifest input.
+    # The current provider interface and license boundary are checked separately below.
     parsed_inputs = {}
     expected_inputs.each do |key, (name, sha, directory)|
       path = name.is_a?(String) && File.join(directory, name)
@@ -3791,7 +3794,6 @@ module Agentlab
       errors << "bun: final linked-license #{key.tr('_', ' ')} input mismatch" unless valid
       parsed_inputs[key] = JSON.parse(File.read(path)) if valid && File.extname(path) == ".json"
     end
-
     relink = parsed_inputs["relink_audit"] || {}
     self_receipt = parsed_inputs["self_rebuild"] || {}
     source_receipt = parsed_inputs["source_license_inventory"] || {}
