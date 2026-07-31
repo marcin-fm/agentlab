@@ -1,10 +1,43 @@
 # RTK License Review
 
-RTK `0.44.1` has a checked source-license candidate based on the upstream lock
-and exact Fedora manifest adaptations. The source contract deliberately does
-not claim a current resolved target graph. Configured target builds must
-regenerate the exact linked `LICENSE.dependencies` inventory and confirm the
-aggregate expression before the update is accepted.
+RTK `0.44.1` has an exact expected cargo2rpm target-summary contract. The first
+target attempt emitted the same 17 sorted raw declarations on Fedora 43,
+Fedora 44, and Rawhide for both architectures, but failed because the spec
+incorrectly compared that framed summary with a simplified aggregate.
+
+## Current 0.44.1 Contract
+
+The checked raw declarations are:
+
+```text
+(MIT OR Apache-2.0) AND Unicode-DFS-2016
+0BSD OR MIT OR Apache-2.0
+Apache 2.0
+Apache-2.0 AND ISC AND (MIT OR Apache-2.0)
+Apache-2.0 OR ISC OR MIT
+Apache-2.0 OR MIT
+Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
+BSD-3-Clause
+CDLA-Permissive-2.0
+ISC
+MIT
+MIT OR Apache-2.0
+MIT OR Zlib OR Apache-2.0
+MPL-2.0
+Unicode-3.0
+Unlicense OR MIT
+Zlib
+```
+
+Normalize the exact raw `Apache 2.0` declaration to `Apache-2.0`, preserve
+every `OR` choice, parenthesize each compound expression, and join all selected
+expressions with `AND`. The resulting RPM expression is:
+
+`((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC AND (MIT OR Apache-2.0)) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND (MIT OR Apache-2.0) AND (MIT OR Zlib OR Apache-2.0) AND MPL-2.0 AND Unicode-3.0 AND (Unlicense OR MIT) AND Zlib`
+
+All identifiers are Fedora-allowed. The summary is expected output, not final
+payload proof: a successful target build must still reproduce it, generate and
+install `LICENSE.dependencies`, and pass the complete package/runtime matrix.
 
 ## Historical 0.43.0 Evidence
 

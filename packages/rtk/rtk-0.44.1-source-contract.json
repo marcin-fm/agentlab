@@ -50,9 +50,31 @@
     },
     "which": "8"
   },
-  "license_candidate": {
-    "expression": "Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib",
-    "basis": "upstream lock plus exact Fedora manifest adaptations; target LICENSE.dependencies must confirm the final linked expression",
+  "license_contract": {
+    "expression": "((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC AND (MIT OR Apache-2.0)) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND (MIT OR Apache-2.0) AND (MIT OR Zlib OR Apache-2.0) AND MPL-2.0 AND Unicode-3.0 AND (Unlicense OR MIT) AND Zlib",
+    "raw_summary_file": "rtk-0.44.1-license-summary.txt",
+    "raw_summary_sha256": "e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832",
+    "raw_summary_expressions": [
+      "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+      "0BSD OR MIT OR Apache-2.0",
+      "Apache 2.0",
+      "Apache-2.0 AND ISC AND (MIT OR Apache-2.0)",
+      "Apache-2.0 OR ISC OR MIT",
+      "Apache-2.0 OR MIT",
+      "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "BSD-3-Clause",
+      "CDLA-Permissive-2.0",
+      "ISC",
+      "MIT",
+      "MIT OR Apache-2.0",
+      "MIT OR Zlib OR Apache-2.0",
+      "MPL-2.0",
+      "Unicode-3.0",
+      "Unlicense OR MIT",
+      "Zlib"
+    ],
+    "normalization": "normalize the exact raw Apache 2.0 declaration to Apache-2.0, parenthesize compound expressions, and join every selected expression with AND without effective-license simplification",
+    "basis": "exact cargo2rpm all-target summary observed identically across Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64; future target builds must reproduce the checked summary and LICENSE.dependencies inventory",
     "final_linked_license": false
   },
   "duplicate_check": {

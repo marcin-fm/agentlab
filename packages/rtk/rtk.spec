@@ -2,20 +2,22 @@
 
 %global crate rtk
 %global source_sha256 735623ee670483216bc5fe7ca0885f1f1358d8f9facf22782a6ea8e8a44f3b3a
-%global source_contract_sha256 116106bef8d568217ca25f986912b1a2b75818288efac02c548addbec8e568ae
+%global source_contract_sha256 e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a
+%global license_summary_sha256 e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832
 %global system_sqlite_patch_sha256 2496b4395840cc4ed84ba4e39124250336b10d03b321fbda2c62d7601b16f080
 %global dirs6_patch_sha256 826e2cd42dd4b70e6f8b50a178e5305c6946d81e219f1dd17e0cabe4d0e839b5
-%global rtk_source_license_expression Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib
+%global rtk_license_expression ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC AND (MIT OR Apache-2.0)) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND (MIT OR Apache-2.0) AND (MIT OR Zlib OR Apache-2.0) AND MPL-2.0 AND Unicode-3.0 AND (Unlicense OR MIT) AND Zlib
 
 Name:           rtk
 Version:        0.44.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        CLI proxy that reduces command output sent to language models
 
-License:        %{rtk_source_license_expression}
+License:        %{rtk_license_expression}
 URL:            https://github.com/rtk-ai/rtk
 Source0:        https://github.com/rtk-ai/rtk/archive/refs/tags/v%{version}.tar.gz
 Source1:        rtk-%{version}-source-contract.json
+Source2:        rtk-%{version}-license-summary.txt
 # Link RTK against Fedora system SQLite instead of compiling rusqlite's bundled copy.
 # Upstream PR https://github.com/rtk-ai/rtk/pull/2404 at commit
 # d0a922f1cd04e343957b9b0b9603438677ad6353 is unreleased and retains the
@@ -41,6 +43,7 @@ agent, reducing repetitive context while preserving actionable failures.
 %prep
 echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 echo "%{source_contract_sha256}  %{SOURCE1}" | sha256sum -c -
+echo "%{license_summary_sha256}  %{SOURCE2}" | sha256sum -c -
 echo "%{system_sqlite_patch_sha256}  %{PATCH0}" | sha256sum -c -
 echo "%{dirs6_patch_sha256}  %{PATCH1}" | sha256sum -c -
 %autosetup -n %{crate}-%{version} -N
@@ -57,8 +60,10 @@ echo "%{dirs6_patch_sha256}  %{PATCH1}" | sha256sum -c -
 %check
 %cargo_test
 test -s LICENSE.dependencies
-target_license_expression="$(%cargo_license_summary)"
-test "$target_license_expression" = "%{rtk_source_license_expression}"
+{
+%cargo_license_summary
+} > rtk-license-summary.actual
+cmp -s %{SOURCE2} rtk-license-summary.actual
 readelf -d target/rpm/%{name} > rtk-smoke.dynamic
 grep -Eq '\(NEEDED\).*\[libsqlite3\.so\.0\]' rtk-smoke.dynamic
 ! grep -Eq '\((RPATH|RUNPATH)\)' rtk-smoke.dynamic
@@ -100,6 +105,10 @@ install -Dpm0644 LICENSE.dependencies \
 %{_bindir}/rtk
 
 %changelog
+* Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.44.1-0.2
+- Bind the exact cargo2rpm target license summary separately from the normalized
+  aggregate RPM license expression.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.44.1-0.1
 - Update to RTK 0.44.1.
 - Rebase the system SQLite and Fedora dirs 6 dependency patches.

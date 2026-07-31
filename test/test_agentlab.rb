@@ -1045,11 +1045,36 @@ class AgentlabTest < Minitest::Test
     contract = JSON.parse(File.read(contract_path))
     reproducibility = Agentlab.load_yaml(File.join(rtk.directory, "reproducibility.yml"))
     validator = File.read(File.expand_path("../scripts/check-packages", __dir__))
+    expected_license_summary = [
+      "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+      "0BSD OR MIT OR Apache-2.0",
+      "Apache 2.0",
+      "Apache-2.0 AND ISC AND (MIT OR Apache-2.0)",
+      "Apache-2.0 OR ISC OR MIT",
+      "Apache-2.0 OR MIT",
+      "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "BSD-3-Clause",
+      "CDLA-Permissive-2.0",
+      "ISC",
+      "MIT",
+      "MIT OR Apache-2.0",
+      "MIT OR Zlib OR Apache-2.0",
+      "MPL-2.0",
+      "Unicode-3.0",
+      "Unlicense OR MIT",
+      "Zlib"
+    ]
+    expected_license_expression = expected_license_summary.map do |expression|
+      normalized = expression == "Apache 2.0" ? "Apache-2.0" : expression
+      normalized.match?(/\s(?:AND|OR)\s/) ? "(#{normalized})" : normalized
+    end.join(" AND ")
+    expected_license_summary_text = "### BEGIN LICENSE SUMMARY ###\n#{expected_license_summary.map { |expression| "# #{expression}\n" }.join}###  END LICENSE SUMMARY  ###\n"
+    license_summary_path = File.join(rtk.directory, contract.dig("license_contract", "raw_summary_file"))
 
     assert_equal("0.44.1", rtk.upstream.fetch("current_version"))
     assert_equal("735623ee670483216bc5fe7ca0885f1f1358d8f9facf22782a6ea8e8a44f3b3a", rtk.upstream.fetch("source_sha256"))
-    assert_equal("0.44.1-0.1", rtk.data.dig("build_validation", "release"))
-    assert_equal("116106bef8d568217ca25f986912b1a2b75818288efac02c548addbec8e568ae", Digest::SHA256.file(contract_path).hexdigest)
+    assert_equal("0.44.1-0.2", rtk.data.dig("build_validation", "release"))
+    assert_equal("e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a", Digest::SHA256.file(contract_path).hexdigest)
     assert_equal("agentlab-rtk-source-contract/v1", contract.fetch("schema"))
     assert_equal({ "name" => "rtk", "version" => "0.44.1", "tag" => "v0.44.1", "commit" => "36591fb00d650bf987b57483c0b3a395a35a8dc1" }, contract.fetch("release").slice("name", "version", "tag", "commit"))
     assert_equal("8f31137e18556611e1ad93fa6f551899f3533aa7b38fd9413fe0157519a558f9", contract.dig("release", "source_archive_tree_sha256"))
@@ -1059,8 +1084,11 @@ class AgentlabTest < Minitest::Test
     assert_equal(%w[2496b4395840cc4ed84ba4e39124250336b10d03b321fbda2c62d7601b16f080 826e2cd42dd4b70e6f8b50a178e5305c6946d81e219f1dd17e0cabe4d0e839b5], contract.fetch("fedora_patches").map { |patch| patch.fetch("sha256") })
     assert_equal({ "version" => "0.31", "default_features" => true, "features" => [] }, contract.dig("post_patch_manifest", "rusqlite"))
     assert_equal("6", contract.dig("post_patch_manifest", "dirs"))
-    assert_equal("Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib", contract.dig("license_candidate", "expression"))
-    assert_equal(false, contract.dig("license_candidate", "final_linked_license"))
+    assert_equal(expected_license_summary, contract.dig("license_contract", "raw_summary_expressions"))
+    assert_equal(expected_license_expression, contract.dig("license_contract", "expression"))
+    assert_equal(expected_license_summary_text, File.read(license_summary_path))
+    assert_equal("e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832", Digest::SHA256.file(license_summary_path).hexdigest)
+    assert_equal(false, contract.dig("license_contract", "final_linked_license"))
     assert_equal(%w[commands parse_failures], contract.dig("runtime_contract", "tables"))
     assert_equal(%w[id timestamp original_cmd rtk_cmd input_tokens output_tokens saved_tokens savings_pct exec_time_ms project_path], contract.dig("runtime_contract", "columns", "commands"))
     assert_equal(%w[id timestamp raw_command error_message fallback_succeeded], contract.dig("runtime_contract", "columns", "parse_failures"))
@@ -1072,24 +1100,26 @@ class AgentlabTest < Minitest::Test
     assert(rtk.data.dig("build_validation", "target").values.all? { |value| value == false })
     assert(%w[fedora_43 fedora_44 rawhide].all? { |family| rtk.data.dig("dependency_status", family, "current_release_verified") == false })
     assert_equal([false, false], rtk.data.dig("dependency_status", "system_sqlite").values_at("target_linkage_verified", "target_schema_verified"))
-    assert_equal(["pending target LICENSE.dependencies verification", false], rtk.data.fetch("license_audit").values_at("final_target_expression", "target_inventory_verified"))
+    assert_equal(["pending successful target LICENSE.dependencies verification", false], rtk.data.fetch("license_audit").values_at("final_target_expression", "target_inventory_verified"))
     assert_equal(false, rtk.data.dig("license_audit", "target_inventory_verified"))
     assert_equal(false, rtk.data.dig("architecture_audit", "current_matrix_verified"))
     assert_equal({ "release" => "0.43.0-0.6", "build_id" => 10749341, "status" => "succeeded", "scope" => "Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64" }, rtk.data.fetch("historical_build"))
     assert_equal(Digest::SHA256.file(rtk.spec_path).hexdigest, reproducibility.fetch("current_spec_sha256"))
-    assert_equal("116106bef8d568217ca25f986912b1a2b75818288efac02c548addbec8e568ae", reproducibility.dig("source_inputs", "source_contract", "sha256"))
+    assert_equal("e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a", reproducibility.dig("source_inputs", "source_contract", "sha256"))
     assert_equal("immutable historical result; not current 0.44.1 proof", reproducibility.dig("validation", "historical_0_43_0", "evidence_role"))
 
     assert_includes(spec, "Source1:        rtk-%{version}-source-contract.json")
-    assert_includes(spec, "%global source_contract_sha256 116106bef8d568217ca25f986912b1a2b75818288efac02c548addbec8e568ae")
-    assert_includes(spec, "%global rtk_source_license_expression Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib")
-    assert_includes(spec, "License:        %{rtk_source_license_expression}")
+    assert_includes(spec, "Source2:        rtk-%{version}-license-summary.txt")
+    assert_includes(spec, "%global source_contract_sha256 e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a")
+    assert_includes(spec, "%global license_summary_sha256 e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832")
+    assert_includes(spec, "%global rtk_license_expression #{expected_license_expression}")
+    assert_includes(spec, "License:        %{rtk_license_expression}")
     assert_includes(spec, "%autosetup -n %{crate}-%{version} -N")
     assert_includes(spec, "%autopatch -p1")
     assert_includes(spec, "%cargo_test")
     assert_includes(spec, "test -s LICENSE.dependencies")
-    assert_includes(spec, 'target_license_expression="$(%cargo_license_summary)"')
-    assert_includes(spec, 'test "$target_license_expression" = "%{rtk_source_license_expression}"')
+    assert_includes(spec, "{\n%cargo_license_summary\n} > rtk-license-summary.actual")
+    assert_includes(spec, "cmp -s %{SOURCE2} rtk-license-summary.actual")
     assert_includes(spec, "grep -Eq '\\(NEEDED\\).*\\[libsqlite3\\.so\\.0\\]' rtk-smoke.dynamic")
     assert_includes(spec, "! grep -Eq '\\((RPATH|RUNPATH)\\)' rtk-smoke.dynamic")
     assert_includes(spec, "select name from sqlite_master where type = 'table' order by name")

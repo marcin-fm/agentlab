@@ -1339,6 +1339,32 @@ packages.each do |package|
         release = contract.fetch("release")
         target = contract.fetch("target_validation")
         expected_matrix = %w[fedora-43-x86_64 fedora-43-aarch64 fedora-44-x86_64 fedora-44-aarch64 fedora-rawhide-x86_64 fedora-rawhide-aarch64]
+        expected_license_summary = [
+          "(MIT OR Apache-2.0) AND Unicode-DFS-2016",
+          "0BSD OR MIT OR Apache-2.0",
+          "Apache 2.0",
+          "Apache-2.0 AND ISC AND (MIT OR Apache-2.0)",
+          "Apache-2.0 OR ISC OR MIT",
+          "Apache-2.0 OR MIT",
+          "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+          "BSD-3-Clause",
+          "CDLA-Permissive-2.0",
+          "ISC",
+          "MIT",
+          "MIT OR Apache-2.0",
+          "MIT OR Zlib OR Apache-2.0",
+          "MPL-2.0",
+          "Unicode-3.0",
+          "Unlicense OR MIT",
+          "Zlib"
+        ]
+        normalized_license_expressions = expected_license_summary.map do |expression|
+          expression == "Apache 2.0" ? "Apache-2.0" : expression
+        end
+        expected_license_expression = normalized_license_expressions.map do |expression|
+          expression.match?(/\s(?:AND|OR)\s/) ? "(#{expression})" : expression
+        end.join(" AND ")
+        expected_license_summary_text = "### BEGIN LICENSE SUMMARY ###\n#{expected_license_summary.map { |expression| "# #{expression}\n" }.join}###  END LICENSE SUMMARY  ###\n"
 
         errors << "rtk: source contract schema or release differs" unless contract["schema"] == "agentlab-rtk-source-contract/v1" && release.slice("name", "version", "tag", "commit") == { "name" => "rtk", "version" => "0.44.1", "tag" => "v0.44.1", "commit" => "36591fb00d650bf987b57483c0b3a395a35a8dc1" }
         errors << "rtk: source archive contract differs" unless release.slice("source_url", "source_sha256", "source_archive_tree_sha256", "source_archive_tree_files", "source_archive_tree_directories", "source_archive_tree_bytes", "tag_commit_tree_sha256") == { "source_url" => "https://github.com/rtk-ai/rtk/archive/refs/tags/v0.44.1.tar.gz", "source_sha256" => "735623ee670483216bc5fe7ca0885f1f1358d8f9facf22782a6ea8e8a44f3b3a", "source_archive_tree_sha256" => "8f31137e18556611e1ad93fa6f551899f3533aa7b38fd9413fe0157519a558f9", "source_archive_tree_files" => 76, "source_archive_tree_directories" => 8, "source_archive_tree_bytes" => 4_845_176, "tag_commit_tree_sha256" => "8f31137e18556611e1ad93fa6f551899f3533aa7b38fd9413fe0157519a558f9" }
@@ -1350,7 +1376,23 @@ packages.each do |package|
           { "order" => 1, "file" => "rtk-use-dirs6.patch", "sha256" => "826e2cd42dd4b70e6f8b50a178e5305c6946d81e219f1dd17e0cabe4d0e839b5", "purpose" => "select Fedora dirs 6 instead of dirs 5", "upstream_status" => "Fedora-specific; no upstream issue, pull request, or commit found as of 2026-07-31" }
         ]
         errors << "rtk: post-patch manifest contract differs" unless contract["post_patch_manifest"] == { "rusqlite" => { "version" => "0.31", "default_features" => true, "features" => [] }, "dirs" => "6", "colored" => "3", "which" => "8" }
-        errors << "rtk: source-license candidate contract differs" unless contract["license_candidate"] == { "expression" => "Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib", "basis" => "upstream lock plus exact Fedora manifest adaptations; target LICENSE.dependencies must confirm the final linked expression", "final_linked_license" => false } && package.data.dig("license_audit", "source_candidate_expression") == contract.dig("license_candidate", "expression")
+        license_contract = contract.fetch("license_contract")
+        license_summary_path = File.join(package.directory, license_contract.fetch("raw_summary_file"))
+        errors << "rtk: target-license contract differs" unless license_contract == {
+          "expression" => expected_license_expression,
+          "raw_summary_file" => "rtk-0.44.1-license-summary.txt",
+          "raw_summary_sha256" => "e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832",
+          "raw_summary_expressions" => expected_license_summary,
+          "normalization" => "normalize the exact raw Apache 2.0 declaration to Apache-2.0, parenthesize compound expressions, and join every selected expression with AND without effective-license simplification",
+          "basis" => "exact cargo2rpm all-target summary observed identically across Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64; future target builds must reproduce the checked summary and LICENSE.dependencies inventory",
+          "final_linked_license" => false
+        }
+        errors << "rtk: target-license summary file is missing" unless File.file?(license_summary_path)
+        if File.file?(license_summary_path)
+          errors << "rtk: target-license summary text differs" unless File.read(license_summary_path) == expected_license_summary_text
+          errors << "rtk: target-license summary SHA-256 differs" unless Digest::SHA256.file(license_summary_path).hexdigest == license_contract["raw_summary_sha256"]
+        end
+        errors << "rtk: target-license metadata differs" unless package.data.dig("license_audit", "expected_target_summary_file") == license_contract["raw_summary_file"] && package.data.dig("license_audit", "expected_target_summary_sha256") == license_contract["raw_summary_sha256"] && package.data.dig("license_audit", "normalized_aggregate_expression") == expected_license_expression
         errors << "rtk: duplicate contract differs" unless contract["duplicate_check"] == { "checked_on" => "2026-07-31", "fedora_43" => "absent", "fedora_44" => "absent", "rawhide" => "absent", "rpm_fusion_free" => "absent", "rpm_fusion_nonfree" => "absent", "path_provider" => "/usr/bin/rtk absent" }
         errors << "rtk: target providers differ" unless contract["target_providers"] == { "fedora_43" => { "rust" => "1.97.1-1.fc43", "cargo" => "1.97.1-1.fc43", "sqlite" => "3.50.2-2.fc43" }, "fedora_44" => { "rust" => "1.97.1-1.fc44", "cargo" => "1.97.1-1.fc44", "sqlite" => "3.51.2-1.fc44" }, "rawhide" => { "rust" => "1.97.1-2.fc45", "cargo" => "1.97.1-2.fc45", "sqlite" => "3.53.4-1.fc45" } }
         errors << "rtk: runtime source contract differs" unless contract["runtime_contract"] == { "system_sqlite_needed" => "libsqlite3.so.0", "forbid_rpath_runpath" => true, "tables" => %w[commands parse_failures], "columns" => { "commands" => %w[id timestamp original_cmd rtk_cmd input_tokens output_tokens saved_tokens savings_pct exec_time_ms project_path], "parse_failures" => %w[id timestamp raw_command error_message fallback_succeeded] }, "indexes" => %w[idx_pf_timestamp idx_project_path_timestamp idx_timestamp], "proxy_smoke" => { "command" => "true", "expected_total_records" => 1, "expected_matching_records" => 1, "input_tokens" => 0, "output_tokens" => 0, "saved_tokens" => 0 } }
@@ -1361,27 +1403,29 @@ packages.each do |package|
     end
 
     errors << "rtk: reproducibility spec or source contract hash differs" unless reproducibility["current_spec_sha256"] == Digest::SHA256.file(package.spec_path).hexdigest && reproducibility.dig("source_inputs", "source_contract", "sha256") == contract_config["sha256"]
-    errors << "rtk: active release or upstream source differs" unless package.data.dig("build_validation", "release") == "0.44.1-0.1" && package.upstream.values_at("current_version", "source_sha256") == ["0.44.1", "735623ee670483216bc5fe7ca0885f1f1358d8f9facf22782a6ea8e8a44f3b3a"]
+    errors << "rtk: active release or upstream source differs" unless package.data.dig("build_validation", "release") == "0.44.1-0.2" && package.upstream.values_at("current_version", "source_sha256") == ["0.44.1", "735623ee670483216bc5fe7ca0885f1f1358d8f9facf22782a6ea8e8a44f3b3a"]
     current_family_flags = %w[fedora_43 fedora_44 rawhide].map { |family| package.data.dig("dependency_status", family, "current_release_verified") }
     system_sqlite_flags = package.data.dig("dependency_status", "system_sqlite").values_at("target_linkage_verified", "target_schema_verified")
     license_flags = package.data.fetch("license_audit").values_at("final_target_expression", "target_inventory_verified")
-    errors << "rtk: active target gates are not fail-closed" unless package.data.dig("build_validation", "target").values.all? { |value| value == false } && current_family_flags.all? { |value| value == false } && system_sqlite_flags == [false, false] && license_flags == ["pending target LICENSE.dependencies verification", false] && package.data.dig("architecture_audit", "current_matrix_verified") == false
+    errors << "rtk: active target gates are not fail-closed" unless package.data.dig("build_validation", "target").values.all? { |value| value == false } && current_family_flags.all? { |value| value == false } && system_sqlite_flags == [false, false] && license_flags == ["pending successful target LICENSE.dependencies verification", false] && package.data.dig("architecture_audit", "current_matrix_verified") == false
     errors << "rtk: historical build evidence was relabeled current" unless package.data["historical_build"] == { "release" => "0.43.0-0.6", "build_id" => 10749341, "status" => "succeeded", "scope" => "Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64" }
-    errors << "rtk: current target validation is not pending" unless reproducibility.dig("validation", "current_release").values_at("nvr", "system_sqlite", "dirs6", "dependency_resolution", "generated_license_inventory", "final_linked_license", "cargo_tests", "payload", "sqlite_elf_linkage", "sqlite_schema_smoke", "cli_smoke", "proxy_smoke", "database_smoke", "matrix") == ["0.44.1-0.1", false, false, false, false, false, false, false, false, false, false, false, false, false]
+    errors << "rtk: current target validation is not pending" unless reproducibility.dig("validation", "current_release").values_at("nvr", "system_sqlite", "dirs6", "dependency_resolution", "generated_license_inventory", "final_linked_license", "cargo_tests", "payload", "sqlite_elf_linkage", "sqlite_schema_smoke", "cli_smoke", "proxy_smoke", "database_smoke", "matrix") == ["0.44.1-0.2", false, false, false, false, false, false, false, false, false, false, false, false, false]
 
     expected_spec_fragments = [
       "Source1:        rtk-%{version}-source-contract.json",
-      "%global source_contract_sha256 116106bef8d568217ca25f986912b1a2b75818288efac02c548addbec8e568ae",
+      "Source2:        rtk-%{version}-license-summary.txt",
+      "%global source_contract_sha256 e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a",
+      "%global license_summary_sha256 e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832",
       "%global system_sqlite_patch_sha256 2496b4395840cc4ed84ba4e39124250336b10d03b321fbda2c62d7601b16f080",
       "%global dirs6_patch_sha256 826e2cd42dd4b70e6f8b50a178e5305c6946d81e219f1dd17e0cabe4d0e839b5",
-      "%global rtk_source_license_expression Apache-2.0 AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND MPL-2.0 AND Unicode-3.0 AND Unicode-DFS-2016 AND Zlib",
-      "License:        %{rtk_source_license_expression}",
+      "%global rtk_license_expression #{expected_license_expression}",
+      "License:        %{rtk_license_expression}",
       "%autosetup -n %{crate}-%{version} -N",
       "%autopatch -p1",
       "%cargo_test",
       "test -s LICENSE.dependencies",
-      "target_license_expression=\"$(%cargo_license_summary)\"",
-      "test \"$target_license_expression\" = \"%{rtk_source_license_expression}\"",
+      "{\n%cargo_license_summary\n} > rtk-license-summary.actual",
+      "cmp -s %{SOURCE2} rtk-license-summary.actual",
       "grep -Eq '\\(NEEDED\\).*\\[libsqlite3\\.so\\.0\\]' rtk-smoke.dynamic",
       "! grep -Eq '\\((RPATH|RUNPATH)\\)' rtk-smoke.dynamic",
       "select name from sqlite_master where type = 'table' order by name",

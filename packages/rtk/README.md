@@ -16,11 +16,19 @@ The patches disable rusqlite's bundled SQLite feature and select Fedora's dirs
 no upstream dirs6 change was found. The pre-patch Cargo.lock remains source
 identity only. Fedora's target registry determines the final linked graph.
 
-Configured-SCM target builds must regenerate `LICENSE.dependencies`, confirm
-the candidate aggregate, run the complete Cargo suite, prove dynamic
+The first `0.44.1` target attempt compiled and passed the complete test suite,
+but exposed an incomplete local license candidate: cargo2rpm emitted the same
+17 raw selected expressions on all six targets, including 0BSD,
+Apache-2.0 WITH LLVM-exception, and Unlicense branches. The checked
+`rtk-0.44.1-license-summary.txt` now preserves that exact framed output, while
+the spec `License:` separately uses the complete Fedora-normalized conjunction.
+
+Configured-SCM target builds must reproduce the exact summary, regenerate
+`LICENSE.dependencies`, run the complete Cargo suite, prove dynamic
 `libsqlite3.so.0` linkage, query the exact SQLite schema, exercise an RTK proxy
 path with telemetry disabled, and complete Fedora 43, Fedora 44, and Rawhide on
-both architectures. All current target flags remain false until that proof.
+both architectures. All current target flags remain false until a successful
+build provides that proof.
 
 Historical `0.43.0-0.6` F43/F44 binaries reported RTK `0.43.0`, dynamically
 required `libsqlite3.so.0`, and passed the database and isolated-home smokes.
