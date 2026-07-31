@@ -46,7 +46,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | Package | Version | State | Reason |
 |---|---:|---|---|
 | OpenCode | 1.18.5 | blocked | Updating to 1.18.8 requires a release-matched standalone binary-embedding receipt and refreshed source closure |
-| OpenChamber | 1.16.1 | blocked | Web CLI draft requires Bun, an audited Node/native closure, and the OpenCode provider |
+| OpenChamber | 1.16.3 | blocked | Current evidence remains behind upstream 1.17.1; Bun/offline assembly, legal/native payload, generated-asset licensing, and the OpenCode provider remain unresolved |
 | Bun | 1.3.14 | blocked | First isolated source build works; immutable RPM inputs, self-rebuild, relink, and final audits remain |
 | RTK | 0.43.0 | enabled | Current configured-SCM matrix passed; the 0.44.1 update is deferred until the Fedora 43 Rust 1.91 toolchain boundary is resolved |
 | codex-cli | 0.145.0 | blocked | Final static-consumer licensing and configured offline proof builds remain |
@@ -76,6 +76,14 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | python-mcp | 1.28.1 | enabled | Full-matrix dependency provider selected by python-headroom-ai 0.33.0 |
 
 Blocked specs are reviewable drafts. Automation will not create a COPR package or submit a build until `package.yml` has both `status: enabled` and `copr.enabled: true`.
+
+OpenChamber release audit, 2026-07-31: upstream `v1.17.1` was published
+2026-07-29 from commit `1b1640ae08cfc86e9ebffeb90c073acaa81e62f9`;
+the tag archive has SHA-256
+`31a767ec735c9c351333c9774699e76b204c9b0a0220e3531a437622985a5ead`.
+The checked package remains the blocked, COPR-disabled `1.16.3-0.18` evidence
+set; advancing it requires a release-matched lock/source/license review rather
+than relabeling the existing receipts.
 
 ## Commands
 
