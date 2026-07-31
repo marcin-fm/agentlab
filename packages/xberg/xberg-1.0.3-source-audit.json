@@ -1,7 +1,7 @@
 {
   "schema": "agentlab-xberg-source-audit/v1",
   "release": "1.0.3",
-  "current_package_version": "1.0.3-0.7",
+  "current_package_version": "1.0.3-0.8",
   "source": {
     "tag": "v1.0.3",
     "commit": "37b9fee5762450351e9303243a00e51184a1f24b",
@@ -36,6 +36,10 @@
     "native_source_contract": {
       "filename": "xberg-1.0.3-native-source-contract.json",
       "sha256": "5452aea15ca061086f821e1688e20e9fb3b38226a88757660eb327e4ab384ab7"
+    },
+    "lightweight_model_source": {
+      "filename": "xberg-1.0.3-lightweight-model-source.json",
+      "sha256": "21290f58d78f1492d3f34283139a590796dcc5f12e9a3dae1de05749511ef524"
     }
   },
   "selected_root_surface": {

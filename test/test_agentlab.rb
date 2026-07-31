@@ -1486,7 +1486,7 @@ class AgentlabTest < Minitest::Test
     system_ort_receipt = JSON.parse(File.read(system_ort_receipt_path))
     provider_proof_path = File.join(package.directory, package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "file"))
     provider_proof = JSON.parse(File.read(provider_proof_path))
-    assert_equal("a698e53ae96f1a944e74afce5a39f54ffe59830130422cc330f52c61c1dcef15", package.data.dig("source_audit_receipt", "sha256"))
+    assert_equal("e5f373bd6fae4b925aec1ba8e937ed3e6d64f1f905ccc675725fefcb33f3aea9", package.data.dig("source_audit_receipt", "sha256"))
     assert_equal("baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d", package.data.dig("source_link_filter", "sha256"))
     assert_equal("68327b502bfc978d754aa75c99ddd2e7b378fe1fdcee601fe3837df3f18a59f7", package.data.dig("system_ort_audit_receipt", "sha256"))
     assert_equal("a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667", package.data.dig("cargo_source_contract", "cargo_lock_sha256"))
@@ -1497,6 +1497,8 @@ class AgentlabTest < Minitest::Test
     assert_equal("151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32", package.data.dig("cargo_source_contract", "source_evidence", "source_license_receipt", "sha256"))
     assert_equal("d69fca803d1b6c654af3d6ae8c0bab16f08f016f372851383bf2812b5e6394dd", package.data.dig("cargo_source_contract", "source_evidence", "provider_proof", "sha256"))
     assert_equal("9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0", package.data.dig("cargo_source_contract", "source_evidence", "fedora_allowlist", "sha256"))
+    assert_equal("21290f58d78f1492d3f34283139a590796dcc5f12e9a3dae1de05749511ef524", package.data.dig("cargo_source_contract", "source_evidence", "lightweight_model_source", "sha256"))
+    assert_equal("04ac37cd5b1c198438024eb69a82970d6f1872431c280327828b79be689f464e", package.data.dig("cargo_source_contract", "source_evidence", "model_source_auditor", "sha256"))
     assert_equal({ "xberg-dynamic-tesseract.patch" => "4e710a29f273b2cfa542ed8d6ee1f93a57c21168d49e7aa8b2cf5835ae297634", "xberg-selected-workspace.patch" => "054d4fa336f1a823babaa26eaad3c223fc0d54e6d4e898009aeec77e0301f0b2", "xberg-fedora-system-tessdata.patch" => "a27928a78f6f51296c0af68e82e9481e972a17c7e004b320d4bda600af9bcc20" }, package.data.dig("cargo_source_contract", "patches"))
 
     refute_includes(makefile, "kreuzberg.spec)")
@@ -1505,7 +1507,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Name:           xberg")
     assert_includes(spec, "Version:        1.0.3")
     assert_includes(spec, "%global source_sha256 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e")
-    assert_includes(spec, "Release:        0.7%{?dist}")
+    assert_includes(spec, "Release:        0.8%{?dist}")
     assert_includes(spec, "# Select the six-member Fedora workspace")
     assert_includes(spec, "Source1:        %{name}-%{version}-source-audit.json")
     assert_includes(spec, "Source2:        %{name}-%{version}-system-ort-audit.json")
@@ -1519,6 +1521,8 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "Source16:       %{name}-%{version}-native-source-contract.json")
     assert_includes(spec, "Source17:       audit-xberg-native-source")
     assert_includes(spec, "Source18:       LICENSE.boost-1.0")
+    assert_includes(spec, "Source19:       %{name}-%{version}-lightweight-model-source.json")
+    assert_includes(spec, "Source20:       audit-xberg-model-source")
     assert_includes(spec, "%setup -q -n xberg-%{version}")
     assert_includes(spec, "--sanitize-only --source . --filter %{SOURCE9}")
     dynamic_tesseract_check = 'echo "%{dynamic_tesseract_patch_sha256}  %{PATCH2}" | sha256sum -c -'
@@ -1595,6 +1599,17 @@ class AgentlabTest < Minitest::Test
     assert_equal(false, native_receipt.dig("claims", "final_link_observed"))
     assert_equal(native_source.dig("native_source_contract", "sha256"), Digest::SHA256.file(File.join(package.directory, native_source.dig("native_source_contract", "file"))).hexdigest)
     assert_equal(native_source.dig("native_source_auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-native-source", __dir__)).hexdigest)
+    model_receipt = JSON.parse(File.read(File.join(package.directory, native_source.dig("lightweight_model_source", "file"))))
+    assert_equal("agentlab-xberg-model-source/v1", model_receipt.fetch("schema"))
+    assert_equal("bf8b056651a2c21b8d2565580b8569da283cab23", model_receipt.dig("upstream", "revision"))
+    assert_equal(3, model_receipt.dig("upstream", "files").count { |file| file.fetch("runtime_required") })
+    assert_equal(true, model_receipt.dig("claims", "released_manifest_files_byte_identical"))
+    assert_equal(false, model_receipt.dig("upstream", "license", "license_text_present"))
+    assert_equal(false, model_receipt.dig("claims", "model_license_provenance_complete"))
+    assert_equal(false, model_receipt.dig("claims", "offline_runtime_proof_complete"))
+    assert_equal(false, model_receipt.dig("claims", "rpm_payload_observed"))
+    assert_equal(false, model_receipt.dig("claims", "final_linked_license_complete"))
+    assert_equal(native_source.dig("model_source_auditor", "sha256"), Digest::SHA256.file(File.expand_path("../scripts/audit-xberg-model-source", __dir__)).hexdigest)
     closure = JSON.parse(File.read(File.join(package.directory, contract.dig("source_evidence", "closure", "file"))))
     assert_equal("agentlab-xberg-cargo-closure/v2", closure.fetch("schema"))
     assert_equal("selected-Fedora-workspace-lock-complete", closure.dig("resolver_model", "kind"))
@@ -1663,7 +1678,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(auditor, "File.link(source, target)")
     assert_includes(spec, "exit 1")
     assert_equal(package.data.dig("source_audit_receipt", "sha256"), Digest::SHA256.file(receipt_path).hexdigest)
-    assert_equal("1.0.3-0.7", receipt.fetch("current_package_version"))
+    assert_equal("1.0.3-0.8", receipt.fetch("current_package_version"))
     assert_equal("v1.0.3", receipt.dig("source", "tag"))
     assert_equal("37b9fee5762450351e9303243a00e51184a1f24b", receipt.dig("source", "commit"))
     assert_equal("2a5341953d531c886f8713c6f86c6aac2836ac82", receipt.dig("source", "tree"))
@@ -1673,7 +1688,8 @@ class AgentlabTest < Minitest::Test
       "cargo_closure" => { "filename" => "xberg-1.0.3-cargo-closure.json", "sha256" => "3882ffdd756c9d65921934afb59c8c546abc5da1753fbfa378fc42c2df5f7907", "cargo_lock_sha256" => "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667" },
       "source_license" => { "filename" => "xberg-1.0.3-source-license-receipt.json", "sha256" => "151db6184d9e3bab63aa60a8976345b3d6bf29f3f4483564ebc01ea67a4cce32" },
       "provider_proof" => { "filename" => "xberg-1.0.3-provider-proof.json", "sha256" => "d69fca803d1b6c654af3d6ae8c0bab16f08f016f372851383bf2812b5e6394dd" },
-      "native_source_contract" => { "filename" => "xberg-1.0.3-native-source-contract.json", "sha256" => "5452aea15ca061086f821e1688e20e9fb3b38226a88757660eb327e4ab384ab7" }
+      "native_source_contract" => { "filename" => "xberg-1.0.3-native-source-contract.json", "sha256" => "5452aea15ca061086f821e1688e20e9fb3b38226a88757660eb327e4ab384ab7" },
+      "lightweight_model_source" => { "filename" => "xberg-1.0.3-lightweight-model-source.json", "sha256" => "21290f58d78f1492d3f34283139a590796dcc5f12e9a3dae1de05749511ef524" }
     }, receipt.fetch("source_receipts"))
     assert_equal({ "total" => 75, "selected_normal" => 22, "resolver_only" => 53, "distribution_text_required" => 74 }, receipt.dig("source_license_accounting", "missing_text_gaps"))
     assert_equal({ "fedora_xberg_provider_absent" => true, "rpm_fusion_duplicate_absence_established" => true }, receipt.fetch("distribution_duplicate_audit"))

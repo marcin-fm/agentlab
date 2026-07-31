@@ -1,0 +1,173 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "optparse"
+
+module XbergModelSource
+  VERSION = "1.0.3"
+  SOURCE_COMMIT = "37b9fee5762450351e9303243a00e51184a1f24b"
+  SOURCE_SHA256 = "238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e"
+  MIRROR_REVISION = "4b127809f88a5aa1569d1238032b5ff40e5879bc"
+  UPSTREAM_REPOSITORY = "minishlab/potion-base-8M"
+  UPSTREAM_REVISION = "bf8b056651a2c21b8d2565580b8569da283cab23"
+  README_SHA256 = "de8ec91bf63c5f4c0e20751c227b2d049953e1cab5f8d5d44211c59a44795bdd"
+  FILES = {
+    "model.safetensors" => "f65d0f325faadc1e121c319e2faa41170d3fa07d8c89abd48ca5358d9a223de2",
+    "tokenizer.json" => "e67e803f624fb4d67dea1c730d06e1067e1b14d830e2c2202569e3ef0f70bb50",
+    "config.json" => "2a6ac0e9aaa356a68a5688070db78fc3a464fefe85d2f06a1905ce3718687553",
+    "tokenizer_config.json" => "6725995e3ab3039857ff5bd99178a7cdf42863abb04449e7bb31feb1f55fe567",
+    "special_tokens_map.json" => "a9e8fb6f99fb0b8803f0e6942fdf4d95d6645204620b67dc3310a1024bcbac59",
+    "vocab.txt" => "1394523a67ddd404a825428018c0582a6998bcfa044ecbcbf1f4d71adb94c61c"
+  }.freeze
+  RUNTIME_FILES = %w[model.safetensors tokenizer.json config.json].freeze
+
+  module_function
+
+  def ensure!(condition, message)
+    raise ArgumentError, message unless condition
+  end
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def released_source_record(source_dir)
+    module_path = File.join(source_dir, "crates/xberg/src/embeddings/mod.rs")
+    engine_path = File.join(source_dir, "crates/xberg/src/embeddings/static_engine.rs")
+    manifest_path = File.join(source_dir, "crates/xberg/src/embeddings/presets.sha256sum")
+    [module_path, engine_path, manifest_path].each { |path| ensure!(File.file?(path), "missing released source file: #{path}") }
+
+    module_text = File.binread(module_path)
+    engine_text = File.binread(engine_path)
+    ensure!(module_text.include?("EMBEDDING_MODEL_REVISION: &str = \"#{MIRROR_REVISION}\""), "released mirror revision differs")
+    ensure!(module_text.include?("model_file: \"potion-base-8m/model.safetensors\".to_string()"), "released lightweight preset differs")
+    ensure!(engine_text.include?("Some(super::super::EMBEDDING_MODEL_REVISION)"), "released static-model revision use differs")
+    ensure!(engine_text.include?("verify_sha256(local, sha256, repo_path)"), "released static-model checksum verification differs")
+
+    manifest = File.readlines(manifest_path, chomp: true).filter_map do |line|
+      hash, path = line.split(/\s+/, 2)
+      [path, hash] if path&.start_with?("potion-base-8m/")
+    end.to_h
+    expected_manifest = FILES.to_h { |path, hash| ["potion-base-8m/#{path}", hash] }
+    ensure!(manifest == expected_manifest, "released Potion manifest differs")
+
+    {
+      "embedding_module" => file_record(module_path, source_dir),
+      "static_engine" => file_record(engine_path, source_dir),
+      "checksum_manifest" => file_record(manifest_path, source_dir)
+    }
+  end
+
+  def file_record(path, root = nil)
+    {
+      "path" => root ? path.delete_prefix("#{root}/") : File.basename(path),
+      "bytes" => File.size(path),
+      "sha256" => sha256(path)
+    }
+  end
+
+  def upstream_tree_record(tree_path)
+    rows = JSON.parse(File.binread(tree_path))
+    files = rows.select { |row| row["type"] == "file" }
+    paths = files.map { |row| row.fetch("path") }.sort
+    license_paths = paths.select { |path| File.basename(path).match?(/\A(?:license|copying|notice)(?:[._-].*)?\z/i) }
+    ensure!(license_paths.empty?, "upstream revision unexpectedly contains license text: #{license_paths.join(', ')}")
+    ensure!((FILES.keys - paths).empty?, "upstream revision lacks selected Potion files")
+
+    {
+      "api_url" => "https://huggingface.co/api/models/#{UPSTREAM_REPOSITORY}/tree/#{UPSTREAM_REVISION}?recursive=true&expand=true",
+      "regular_files" => paths.length,
+      "paths" => paths,
+      "license_text_paths" => license_paths
+    }
+  rescue JSON::ParserError => e
+    raise ArgumentError, "invalid upstream tree JSON: #{e.message}"
+  end
+
+  def build(source_dir:, upstream_dir:, tree_path:)
+    source = released_source_record(source_dir)
+    readme_path = File.join(upstream_dir, "README.md")
+    ensure!(File.file?(readme_path), "missing upstream README.md")
+    ensure!(sha256(readme_path) == README_SHA256, "upstream README.md checksum mismatch")
+    front_matter = File.binread(readme_path).split(/^---\s*$/, 3)[1]
+    ensure!(front_matter&.match?(/^license:\s*mit\s*$/i), "upstream model card does not declare MIT")
+
+    files = FILES.map do |path, expected_hash|
+      upstream_path = File.join(upstream_dir, path)
+      ensure!(File.file?(upstream_path), "missing upstream model file: #{path}")
+      ensure!(sha256(upstream_path) == expected_hash, "upstream model file checksum mismatch: #{path}")
+      {
+        "path" => path,
+        "mirror_path" => "potion-base-8m/#{path}",
+        "bytes" => File.size(upstream_path),
+        "sha256" => expected_hash,
+        "runtime_required" => RUNTIME_FILES.include?(path),
+        "identity" => "byte-identical upstream and released Xberg mirror manifest"
+      }
+    end.sort_by { |record| record.fetch("path") }
+
+    {
+      "schema" => "agentlab-xberg-model-source/v1",
+      "xberg" => {
+        "version" => VERSION,
+        "tag" => "v#{VERSION}",
+        "commit" => SOURCE_COMMIT,
+        "archive_sha256" => SOURCE_SHA256,
+        "mirror_repository" => "xberg-io/embedding-models",
+        "mirror_revision" => MIRROR_REVISION,
+        "released_source" => source
+      },
+      "preset" => {
+        "name" => "lightweight",
+        "backend" => "static",
+        "dimensions" => 256,
+        "model_id" => "potion-base-8m/model.safetensors"
+      },
+      "upstream" => {
+        "repository" => UPSTREAM_REPOSITORY,
+        "revision" => UPSTREAM_REVISION,
+        "tree" => upstream_tree_record(tree_path),
+        "files" => files,
+        "license" => {
+          "declared_spdx" => "MIT",
+          "declaration_source" => {
+            "path" => "README.md",
+            "bytes" => File.size(readme_path),
+            "sha256" => README_SHA256
+          },
+          "license_text_present" => false,
+          "license_text_resolution_complete" => false
+        }
+      },
+      "claims" => {
+        "released_source_binding_complete" => true,
+        "lightweight_preset_source_identity_complete" => true,
+        "released_manifest_files_byte_identical" => true,
+        "conversion_required" => false,
+        "training_data_provenance_complete" => false,
+        "model_license_provenance_complete" => false,
+        "runtime_download_proof_complete" => false,
+        "offline_runtime_proof_complete" => false,
+        "rpm_payload_observed" => false,
+        "final_linked_license_complete" => false
+      }
+    }
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  options = {}
+  OptionParser.new do |parser|
+    parser.banner = "Usage: audit-xberg-model-source --released-source DIR --upstream-dir DIR --upstream-tree PATH --output PATH"
+    parser.on("--released-source DIR") { |value| options[:source_dir] = value }
+    parser.on("--upstream-dir DIR") { |value| options[:upstream_dir] = value }
+    parser.on("--upstream-tree PATH") { |value| options[:tree_path] = value }
+    parser.on("--output PATH") { |value| options[:output] = value }
+  end.parse!
+  missing = %i[source_dir upstream_dir tree_path output].reject { |key| options[key] }
+  abort("missing options: #{missing.join(', ')}") unless missing.empty?
+
+  File.write(options.fetch(:output), JSON.generate(XbergModelSource.build(**options.slice(:source_dir, :upstream_dir, :tree_path))) + "\n")
+end
