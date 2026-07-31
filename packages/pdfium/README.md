@@ -28,16 +28,15 @@ selected system image/font libraries. The Chromium release build files contain
 two flags supported only by its newer bundled Clang; the Fedora toolchain patch
 removes those flags while retaining array-bounds instrumentation and traps.
 Local and clean Fedora 43 and 44 x86_64 builds passed with FPDF export, C API,
-pkg-config, and extracted-payload consumer tests. Exact-current transient COPR
-build `10737741` passed natively on Fedora 43 and 44 aarch64 with the same
-checks, including the architecture-specific Clang target and compiler-rt path.
+pkg-config, and extracted-payload consumer tests. Native Fedora 43 and 44
+aarch64 validation passed with the same checks, including the
+architecture-specific Clang target and compiler-rt path.
 
 ICU data is embedded in the private ICU component rather than shipped as an
 unlocated `icudtl.dat` file. The RPM installs PDFium, ICU, AGG, and consolidated
 third-party license notices. The final embedded-data revision passed clean
 Fedora 43 and 44 builds and extracted-payload validation. On July 20, 2026, the
 maintainer accepted the private component names, versioned SONAMEs, and embedded
-ICU-data ownership for the current package. Primary configured-SCM build
-`10751721` then succeeded as release `0.0.7` in Fedora 43, Fedora 44, and Rawhide
-on both supported architectures. Release `0.0.8` enables the accepted package
-for the same six-cell matrix.
+ICU-data ownership for the current package. Primary configured-SCM validation
+then passed in Fedora 43, Fedora 44, and Rawhide on both supported architectures.
+The accepted package remains enabled for the same six-cell matrix.

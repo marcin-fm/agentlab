@@ -11,7 +11,7 @@
   },
   "source_policy": {
     "path": "source-closure.yml",
-    "sha256": "9ff235c6e1046ee586def0a3bcba89ef19ed7097053d1c451d7350bc4f7df5d7"
+    "sha256": "e80e1a092ed94d658a7d31d112f73621b01426d7cfd0822ba8a7a79b7f19fd34"
   },
   "selected_sources": [
     {
@@ -96,7 +96,7 @@
   },
   "generator": {
     "path": "prepare-pdfium-srpm-sources",
-    "sha256": "d0ffbd3024ce88bdf902d4e47ef30c8a856952f10c6f9b54b17b11559116cb02"
+    "sha256": "0264f12c8a602198df00daf4d02e2f13b14d130e622d9a6cc4c394576158cfc7"
   },
   "archive_normalization": {
     "sort": "name",

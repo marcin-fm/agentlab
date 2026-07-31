@@ -4188,6 +4188,9 @@ module Agentlab
     makefile_path = File.join(ROOT, ".copr", "Makefile")
     closure = YAML.safe_load_file(policy_path)
     receipt = JSON.parse(File.read(receipt_path))
+    readme = File.read(File.join(package.directory, "README.md"))
+    generator = File.read(generator_path)
+    request = YAML.safe_load_file(request_path) if File.file?(request_path)
     prepared = closure.fetch("source_preparation")
     pdfium_commit = closure.fetch("pdfium").fetch("commit")
     tag = "pdfium-sources-#{version}-pdfium-#{pdfium_commit[0, 12]}"
@@ -4203,6 +4206,27 @@ module Agentlab
     errors << "pdfium: source release URL mismatch" unless policy["release_url"] == release_url
     errors << "pdfium: immutable release is not required" unless policy["immutable_release_required"] == true
     errors << "pdfium: artifact attestation is not required" unless policy["artifact_attestation_required"] == true
+
+    dynamic_result_identity = lambda do |value|
+      case value
+      when Hash
+        value.any? do |key, nested|
+          key.to_s.match?(/(?:\A|_)(?:copr_build_id|result_nvr|builder_log_(?:sha256|hash))\z/) ||
+            dynamic_result_identity.call(nested)
+        end
+      when Array
+        value.any? { |nested| dynamic_result_identity.call(nested) }
+      when String
+        value.match?(/\b(?:COPR|configured-SCM)\s+build(?:\s+ID)?\s+`?\d{7,}`?\b/i) ||
+          value.match?(/\b(?:result\s+NVR|builder[- ]log\s+(?:SHA-256|hash))\b/i)
+      else
+        false
+      end
+    end
+    active_inputs = [package.data, closure, receipt, readme, spec, generator, request]
+    if active_inputs.any? { |input| dynamic_result_identity.call(input) }
+      errors << "pdfium: active package metadata contains dynamic build result identity"
+    end
 
     expected_archive_sha256 = source.fetch("output_sha256")
     expected_archive_size = source.fetch("output_size_bytes")
@@ -4240,8 +4264,7 @@ module Agentlab
     errors << "pdfium: COPR source builder still generates Source0" if makefile.include?("prepare-pdfium-srpm-sources\" --spec")
     expected_generator_copy = 'install -pm0755 "$(repo_root)/scripts/prepare-pdfium-srpm-sources" "$$(dirname "$(spec)")/prepare-pdfium-srpm-sources";'
     errors << "pdfium: COPR source builder does not retain the Source3 verifier" unless makefile.include?(expected_generator_copy)
-    if File.file?(request_path)
-      request = YAML.safe_load_file(request_path)
+    if request
       errors.concat(validate_pdfium_source_release_request(package, closure, request).map { |error| "pdfium: #{error}" })
     else
       errors << "pdfium: source-release request is missing"

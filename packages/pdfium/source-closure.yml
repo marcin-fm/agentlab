@@ -156,7 +156,6 @@ verification:
   fedora_43_aarch64_build: true
   fedora_44_aarch64_build: true
   official_archive_fedora_44_x86_64_build: true
-  aarch64_copr_build_id: 10737741
   exported_fpdf_symbols: true
   c_api_smoke: true
   licenses_verified: true

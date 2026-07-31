@@ -2221,6 +2221,32 @@ class AgentlabTest < Minitest::Test
 
     errors = Agentlab.validate_pdfium_source(source_package, spec.sub("releases/download/%{source_tag}", "releases/download/wrong-tag"))
     assert_includes(errors, "pdfium: spec does not use the hosted Source0")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("build_validation")["fedora_43_aarch64"] = "passed in COPR build 12345678"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    errors = Agentlab.validate_pdfium_source(package, spec)
+    assert_includes(errors, "pdfium: active package metadata contains dynamic build result identity")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("build_validation")["aarch64_copr_build_id"] = 12345678
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    errors = Agentlab.validate_pdfium_source(package, spec)
+    assert_includes(errors, "pdfium: active package metadata contains dynamic build result identity")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("build_validation")["result_nvr"] = "pdfium-146.0.7678.0-0.0.9.fc44"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    errors = Agentlab.validate_pdfium_source(package, spec)
+    assert_includes(errors, "pdfium: active package metadata contains dynamic build result identity")
+
+    errors = Agentlab.validate_pdfium_source(source_package, "#{spec}\n# configured-SCM build 12345678\n")
+    assert_includes(errors, "pdfium: active package metadata contains dynamic build result identity")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("build_validation")["toolchain_build_id"] = "static-source-identity"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_empty(Agentlab.validate_pdfium_source(package, spec))
   end
 
   def test_validates_pdfium_source_release_request
