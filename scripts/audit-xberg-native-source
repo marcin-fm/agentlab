@@ -17,6 +17,28 @@ module XbergNativeSource
   LIBZ_VERSION = "1.1.29"
   LIBZ_CHECKSUM = "85bc9657773828b90eeb625adff10eeac83cc21bbfd8e23a03eaa8a33c9e28d9"
   BOOST_LICENSE_SHA256 = "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+  BOOST_SOURCE_PREFIX = "boost/boost/"
+  BOOST_SOURCE_FILES = 9_599
+  BOOST_SOURCE_PATH_SHA256 = "4c1dc888bc29f6cf9b8d812f54ad4dbecf4d08f9da37b66000e0a4dc45550d68"
+  BOOST_BSL_MARKER_FILES = 4_565
+  BOOST_BSL_MARKER_PATH_SHA256 = "9e762cb67bb492ebeed8fa8be45b877d9aef6cec4e30f4b1ee4ec094a35c545f"
+  BOOST_UNMARKED_FILES = 5_034
+  BOOST_UNMARKED_PATH_SHA256 = "f9392b82ca4ce9a92f9340d7571a6c356b455cd6b2dbf35927f2555840e698e4"
+  BOOST_METADATA = {
+    "._boost" => { "bytes" => 163, "sha256" => "ccfb97a21226bf7f83ca118cfd47f11b0d94ef9466c555f48204f7a1a5c7578a" },
+    "boost/._boost" => { "bytes" => 163, "sha256" => "ccfb97a21226bf7f83ca118cfd47f11b0d94ef9466c555f48204f7a1a5c7578a" }
+  }.freeze
+  BOOST_BSL_MARKER = /Boost Software License|boost\.org\/LICENSE_1_0/i
+  BOOST_LEGAL_SIGNAL = /copyright|licen[cs]e|permission|redistribution|warranty|notice|SPDX|public domain|all rights reserved|terms and conditions|patent grant|waiver/i
+  BOOST_ALTERNATE_LICENSE_MARKERS = {
+    "Apache" => /Apache License/i,
+    "BSD" => /Redistribution and use in source and binary forms/i,
+    "GPL" => /GNU (?:General|Lesser) Public License/i,
+    "MIT" => /Permission is hereby granted, free of charge/i,
+    "MPL" => /Mozilla Public License/i,
+    "SPDX" => /SPDX-License-Identifier/i,
+    "Zlib" => /This software is provided .as-is./i
+  }.freeze
   ARCHIVES = {
     "librevenge-0.0.6.tar.gz" => {
       sha256: "686cc36be3196a0a808761cfd3951a46ff809cb0e028b0902c787261a1389d0f",
@@ -60,6 +82,10 @@ module XbergNativeSource
       [record.fetch("path"), record.fetch("bytes"), record.fetch("sha256")].join("\t")
     end.join("\n")
     Digest::SHA256.hexdigest(body.empty? ? body : "#{body}\n")
+  end
+
+  def path_digest(paths)
+    Digest::SHA256.hexdigest(paths.sort.join("\n") + (paths.empty? ? "" : "\n"))
   end
 
   def tree_record(root)
@@ -174,6 +200,78 @@ module XbergNativeSource
     )
   end
 
+  def boost_bsl_marker?(bytes)
+    bytes.match?(BOOST_BSL_MARKER)
+  end
+
+  def validate_boost_license_signals!(path, bytes)
+    additional = BOOST_ALTERNATE_LICENSE_MARKERS.filter_map { |name, marker| name if bytes.match?(marker) }
+    fail!("additional Boost subset license markers in #{path}: #{additional.join(', ')}") unless additional.empty?
+
+    marked = boost_bsl_marker?(bytes)
+    fail!("unmapped Boost subset legal signal in #{path}") if !marked && bytes.match?(BOOST_LEGAL_SIGNAL)
+    marked
+  end
+
+  def boost_license_mapping(path, canonical_license)
+    fail!("Boost subset checksum mismatch") unless Digest::SHA256.file(path).hexdigest == ARCHIVES.fetch("boost-subset.tar.gz").fetch(:sha256)
+
+    source_paths = []
+    marked_paths = []
+    unmarked_paths = []
+    metadata = {}
+    seen = {}
+    Zlib::GzipReader.open(path) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          next if %w[x g].include?(entry.header.typeflag) || !entry.file?
+
+          name = clean_tar_path(entry.full_name)
+          fail!("duplicate Boost subset path: #{name}") if seen.key?(name)
+          seen[name] = true
+          bytes = entry.read
+          if name.start_with?(BOOST_SOURCE_PREFIX)
+            source_paths << name
+            if validate_boost_license_signals!(name, bytes)
+              marked_paths << name
+            else
+              unmarked_paths << name
+            end
+          elsif BOOST_METADATA.key?(name)
+            record = { "bytes" => bytes.bytesize, "sha256" => Digest::SHA256.hexdigest(bytes) }
+            fail!("Boost subset metadata mismatch: #{name}") unless record == BOOST_METADATA.fetch(name)
+            metadata[name] = record
+          else
+            fail!("unmapped Boost subset file: #{name}")
+          end
+        end
+      end
+    end
+
+    expected_sets = [
+      ["source", source_paths, BOOST_SOURCE_FILES, BOOST_SOURCE_PATH_SHA256],
+      ["BSL-marked", marked_paths, BOOST_BSL_MARKER_FILES, BOOST_BSL_MARKER_PATH_SHA256],
+      ["unmarked", unmarked_paths, BOOST_UNMARKED_FILES, BOOST_UNMARKED_PATH_SHA256]
+    ]
+    expected_sets.each do |label, paths, count, digest|
+      fail!("unexpected Boost subset #{label} file count") unless paths.length == count
+      fail!("unexpected Boost subset #{label} path digest") unless path_digest(paths) == digest
+    end
+    fail!("missing Boost subset metadata") unless metadata.keys.sort == BOOST_METADATA.keys.sort
+
+    {
+      "spdx" => "BSL-1.0",
+      "canonical_text_sha256" => canonical_license.fetch("sha256"),
+      "mapping_basis" => "exact Boost include-tree membership with all detected legal signals paired to embedded BSL markers",
+      "source_files" => { "path_prefix" => BOOST_SOURCE_PREFIX, "count" => source_paths.length, "path_sha256" => path_digest(source_paths) },
+      "embedded_bsl_markers" => { "count" => marked_paths.length, "path_sha256" => path_digest(marked_paths) },
+      "unmarked_source_files" => { "count" => unmarked_paths.length, "path_sha256" => path_digest(unmarked_paths), "legal_signals_detected" => 0 },
+      "non_source_metadata" => metadata.sort.map { |name, record| record.merge("path" => name) },
+      "additional_license_obligations" => [],
+      "complete" => true
+    }
+  end
+
   def generate(source, vendor_dir, boost_license)
     source = File.realpath(source)
     vendor_dir = File.realpath(vendor_dir)
@@ -202,6 +300,8 @@ module XbergNativeSource
     archives = ARCHIVES.map do |name, contract|
       archive_record(File.join(crate, "vendor", name), contract)
     end
+    boost_archive = archives.find { |archive| archive.fetch("path") == "boost-subset.tar.gz" }
+    boost_archive["license_mapping"] = boost_license_mapping(File.join(crate, "vendor/boost-subset.tar.gz"), boost_license)
     shim = file_record(File.join(crate, "src/shim.cpp"), root: source)
     cpp_records = archives.flat_map do |archive|
       count = archive.fetch("selected_cpp").fetch("count")

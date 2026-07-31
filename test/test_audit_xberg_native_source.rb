@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "open3"
+require "rbconfig"
 require "rubygems/package"
 require "stringio"
 require "tempfile"
@@ -42,6 +44,46 @@ class TestAuditXbergNativeSource < Minitest::Test
 
       error = assert_raises(ArgumentError) { XbergNativeSource.boost_license_record(file.path) }
       assert_match(/checksum mismatch/, error.message)
+    end
+  end
+
+  def test_boost_license_signals_reject_additional_obligations
+    text = "Copyright 2026 Example\nPermission is hereby granted, free of charge\n"
+
+    error = assert_raises(ArgumentError) do
+      XbergNativeSource.validate_boost_license_signals!("boost/boost/example.hpp", text)
+    end
+    assert_match(/additional Boost subset license markers.*MIT/, error.message)
+  end
+
+  def test_boost_license_signals_reject_unmapped_notice
+    error = assert_raises(ArgumentError) do
+      XbergNativeSource.validate_boost_license_signals!("boost/boost/example.hpp", "NOTICE: retain this file\n")
+    end
+    assert_match(/unmapped Boost subset legal signal/, error.message)
+  end
+
+  def test_regenerates_checked_contract_from_prepared_tree
+    source = ENV["AGENTLAB_XBERG_PREPARED_SOURCE"]
+    vendor = ENV["AGENTLAB_XBERG_VENDOR_DIR"]
+    assert(source && vendor, "set both AGENTLAB_XBERG_PREPARED_SOURCE and AGENTLAB_XBERG_VENDOR_DIR") if source || vendor
+    skip("prepared Xberg source and vendor tree are not available") unless source && vendor
+
+    package_dir = File.expand_path("../packages/xberg", __dir__)
+    expected = File.join(package_dir, "xberg-1.0.3-native-source-contract.json")
+    Tempfile.create(["xberg-native-source-contract", ".json"]) do |output|
+      command = [
+        RbConfig.ruby,
+        File.expand_path("../scripts/audit-xberg-native-source", __dir__),
+        "--prepared-source", source,
+        "--vendor-dir", vendor,
+        "--boost-license", File.join(package_dir, "LICENSE.boost-1.0"),
+        "--output", output.path
+      ]
+      _stdout, stderr, status = Open3.capture3(*command)
+
+      assert(status.success?, stderr)
+      assert_equal(File.binread(expected), File.binread(output.path))
     end
   end
 end

@@ -1079,7 +1079,7 @@ packages.each do |package|
         errors << "xberg: source audit release does not match" unless audit["release"] == manifest_version
         errors << "xberg: source audit commit does not match" unless audit.dig("source", "commit") == package.upstream["source_commit"]
         errors << "xberg: source audit tree does not match" unless audit.dig("source", "tree") == package.upstream["source_tree"]
-        errors << "xberg: source audit current package version is invalid" unless audit["current_package_version"] == "#{manifest_version}-0.5"
+        errors << "xberg: source audit current package version is invalid" unless audit["current_package_version"] == "#{manifest_version}-0.6"
         errors << "xberg: source audit source identity is invalid" unless audit.dig("source", "tag") == package.upstream["source_tag"] && audit.dig("source", "commit") == package.upstream["source_commit"] && audit.dig("source", "tree") == package.upstream["source_tree"] && audit.dig("source", "archive", "sha256") == manifest_sha256
         errors << "xberg: package metadata exposes prior audit counts as current evidence" unless audit_config.keys.sort == %w[file schema sha256]
         expected_receipts = {
@@ -1186,9 +1186,21 @@ packages.each do |package|
       errors << "xberg: license text gaps are not retained" unless license["counts"] == { "present" => 959, "absent" => 75 } && license.dig("validation", "source_text_presence_verified") == true && license.dig("validation", "final_linked_license_complete") == false
       errors << "xberg: Cargo source contract license-gap roles differ" unless cargo["license_text_presence"] == { "present" => 959, "absent" => 75, "selected_normal_gaps" => 22, "resolver_only_gaps" => 53, "required_text_count" => 74, "final_linked_license_complete" => false }
       boost_license = { "path" => "LICENSE.boost-1.0", "bytes" => 1_338, "sha256" => "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566", "spdx" => "BSL-1.0", "upstream_url" => "https://www.boost.org/LICENSE_1_0.txt", "fedora_precedent" => "boost-atomic-1.90.0-7.fc44" }
+      boost_mapping = {
+        "spdx" => "BSL-1.0",
+        "canonical_text_sha256" => boost_license.fetch("sha256"),
+        "mapping_basis" => "exact Boost include-tree membership with all detected legal signals paired to embedded BSL markers",
+        "source_files" => { "path_prefix" => "boost/boost/", "count" => 9_599, "path_sha256" => "4c1dc888bc29f6cf9b8d812f54ad4dbecf4d08f9da37b66000e0a4dc45550d68" },
+        "embedded_bsl_markers" => { "count" => 4_565, "path_sha256" => "9e762cb67bb492ebeed8fa8be45b877d9aef6cec4e30f4b1ee4ec094a35c545f" },
+        "unmarked_source_files" => { "count" => 5_034, "path_sha256" => "f9392b82ca4ce9a92f9340d7571a6c356b455cd6b2dbf35927f2555840e698e4", "legal_signals_detected" => 0 },
+        "non_source_metadata" => ["._boost", "boost/._boost"].map { |path| { "bytes" => 163, "sha256" => "ccfb97a21226bf7f83ca118cfd47f11b0d94ef9466c555f48204f7a1a5c7578a", "path" => path } },
+        "additional_license_obligations" => [],
+        "complete" => true
+      }
+      boost_archive = native_source.dig("xberg_libwpd", "archives")&.find { |archive| archive["path"] == "boost-subset.tar.gz" }
       native_claims = { "native_source_inventory_complete" => true, "native_license_source_complete" => true, "compilation_observed" => false, "native_archives_observed" => false, "libz_sys_static_environment_observed" => false, "final_link_observed" => false, "elf_evidence_observed" => false, "rpm_payload_observed" => false, "native_license_payload_complete" => false, "final_linked_license_complete" => false }
-      errors << "xberg: native source receipt is incomplete" unless native_source["schema"] == "agentlab-xberg-native-source-contract/v1" && native_source["xberg_version"] == manifest_version && native_source.dig("inputs", "cargo_lock", "sha256") == cargo["cargo_lock_sha256"] && native_source.dig("inputs", "libz_sys") == { "name" => "libz-sys", "version" => "1.1.29", "checksum" => "85bc9657773828b90eeb625adff10eeac83cc21bbfd8e23a03eaa8a33c9e28d9" } && native_source.dig("inputs", "boost_license") == boost_license && native_source.dig("xberg_libwpd", "boost_license_text_present") == true && native_source["claims"] == native_claims
-      errors << "xberg: native source package gate is incomplete" unless package.data["native_source_contract"] == { "schema" => "agentlab-xberg-native-source-contract/v1", "scope" => "xberg-libwpd embedded C++ source and the selected libz-sys static-zlib build intent", "source_inventory_complete" => true, "native_license_source_complete" => true, "expected_archives" => %w[libxberg_libwpd.a libz.a], "linked" => false, "compilation_observed" => false, "libz_sys_static_environment_observed" => false, "rpm_payload_observed" => false, "native_license_payload_complete" => false, "final_linked_license_complete" => false }
+      errors << "xberg: native source receipt is incomplete" unless native_source["schema"] == "agentlab-xberg-native-source-contract/v1" && native_source["xberg_version"] == manifest_version && native_source.dig("inputs", "cargo_lock", "sha256") == cargo["cargo_lock_sha256"] && native_source.dig("inputs", "libz_sys") == { "name" => "libz-sys", "version" => "1.1.29", "checksum" => "85bc9657773828b90eeb625adff10eeac83cc21bbfd8e23a03eaa8a33c9e28d9" } && native_source.dig("inputs", "boost_license") == boost_license && native_source.dig("xberg_libwpd", "boost_license_text_present") == true && boost_archive&.fetch("license_mapping", nil) == boost_mapping && native_source["claims"] == native_claims
+      errors << "xberg: native source package gate is incomplete" unless package.data["native_source_contract"] == { "schema" => "agentlab-xberg-native-source-contract/v1", "scope" => "xberg-libwpd embedded C++ source and the selected libz-sys static-zlib build intent", "source_inventory_complete" => true, "native_license_source_complete" => true, "boost_subset_license_mapping_complete" => true, "expected_archives" => %w[libxberg_libwpd.a libz.a], "linked" => false, "compilation_observed" => false, "libz_sys_static_environment_observed" => false, "rpm_payload_observed" => false, "native_license_payload_complete" => false, "final_linked_license_complete" => false }
       compile_contract = package.data["compile_proof_contract"]
       expected_compile_contract = {
          "package" => "xberg-cli",

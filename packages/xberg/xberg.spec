@@ -1,5 +1,5 @@
 %global source_sha256 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e
-%global source_audit_sha256 7d811167aee6b00c37ccbca6a8f3593fa3c39946e7bcfdac6e48843e3e2e982e
+%global source_audit_sha256 a4c5589e4b40a62ceea2695f836f1108b6d9817c8b80a188a81007f0c0f1ad6e
 %global system_ort_audit_sha256 68327b502bfc978d754aa75c99ddd2e7b378fe1fdcee601fe3837df3f18a59f7
 %global system_onnxruntime_patch_sha256 8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab
 %global fedora_onnxruntime_path_patch_sha256 b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
@@ -18,14 +18,14 @@
 %global proof_auditor_sha256 94005bcab4a60d17c65e1eee9f73e3a46a0bee60d3f70009081e46102b22eb74
 %global source_filter_sha256 baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d
 %global cargo_license_writer_sha256 7dd6a505e65900dceded74405d586459180e2a701806b31ac24452e37acd1a51
-%global native_source_contract_sha256 020587faa23c287075a42bc283c059540ddc384968e7725bfee0a4e4e8ad803f
-%global native_source_auditor_sha256 af747882a50bf3194220958843d71feec9bebf206bb7a5e467b5dffa96933d17
+%global native_source_contract_sha256 0eceed2a80c6132f0efd14ba44b5277e54fb5182328bfe71189246e92d406f52
+%global native_source_auditor_sha256 8c70080815d302f932a06c728b675242e76fa475a103fd640fccb84f454a21b3
 %global boost_license_sha256 c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566
 %global xberg_cli_features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers
 
 Name:           xberg
 Version:        1.0.3
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        Document intelligence toolkit
 
 %global xberg_source_license_expression ((Apache-2.0 OR MIT) AND BSD-3-Clause) AND ((MIT OR Apache-2.0) AND Apache-2.0) AND ((MIT OR Apache-2.0) AND ISC) AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR CC0-1.0) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC) AND (Apache-2.0 AND MIT) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 OR MIT OR Zlib) AND Apache-2.0 WITH LLVM-exception AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-3-Clause AND (BSD-3-Clause AND MIT) AND (BSD-3-Clause OR Apache-2.0) AND (BSD-3-Clause OR MIT) AND BSL-1.0 AND (BlueOak-1.0.0 OR MIT OR Apache-2.0) AND CC0-1.0 AND (CC0-1.0 OR Apache-2.0) AND (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception) AND (CC0-1.0 OR MIT-0) AND (CC0-1.0 OR MIT-0 OR Apache-2.0) AND CDDL-1.0 AND CDLA-Permissive-2.0 AND GPL-2.0-or-later AND ISC AND (ISC AND (Apache-2.0 OR ISC)) AND (ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)) AND MIT AND (MIT AND BSD-3-Clause) AND (MIT OR Apache-2.0) AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND MIT-0 AND MPL-2.0 AND (MPL-2.0 OR LGPL-2.1-or-later) AND Unicode-3.0 AND (Unlicense OR MIT) AND (Unlicense OR MIT OR Apache-2.0 OR CC0-1.0) AND Zlib AND (Zlib OR Apache-2.0 OR MIT) AND bzip2-1.0.6
@@ -167,6 +167,9 @@ echo 'xberg remains blocked after the deliberate post-build integration gate: fi
 exit 1
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.6
+- Audit the exact Boost subset license mapping and regeneration path.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.5
 - Bind Fedora's canonical Boost Software License text for the native source.
 

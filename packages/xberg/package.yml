@@ -23,7 +23,7 @@ upstream:
 source_audit_receipt:
   file: xberg-1.0.3-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: 7d811167aee6b00c37ccbca6a8f3593fa3c39946e7bcfdac6e48843e3e2e982e
+  sha256: a4c5589e4b40a62ceea2695f836f1108b6d9817c8b80a188a81007f0c0f1ad6e
 source_link_filter:
   file: xberg-1.0.3-source-filter.json
   schema: agentlab-xberg-source-filter/v1
@@ -70,8 +70,8 @@ cargo_source_contract:
     fedora_allowlist: { file: xberg-1.0.3-fedora-license-allowlist.json, sha256: 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0 }
     proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: 94005bcab4a60d17c65e1eee9f73e3a46a0bee60d3f70009081e46102b22eb74 }
     license_writer: { file: scripts/write-xberg-cargo-license-receipts, sha256: 7dd6a505e65900dceded74405d586459180e2a701806b31ac24452e37acd1a51 }
-    native_source_contract: { file: xberg-1.0.3-native-source-contract.json, sha256: 020587faa23c287075a42bc283c059540ddc384968e7725bfee0a4e4e8ad803f }
-    native_source_auditor: { file: scripts/audit-xberg-native-source, sha256: af747882a50bf3194220958843d71feec9bebf206bb7a5e467b5dffa96933d17 }
+    native_source_contract: { file: xberg-1.0.3-native-source-contract.json, sha256: 0eceed2a80c6132f0efd14ba44b5277e54fb5182328bfe71189246e92d406f52 }
+    native_source_auditor: { file: scripts/audit-xberg-native-source, sha256: 8c70080815d302f932a06c728b675242e76fa475a103fd640fccb84f454a21b3 }
     boost_license: { file: LICENSE.boost-1.0, sha256: c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566 }
   vendor_tree: { sha256: fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917, files: 51213, directories: 9444, symlinks: 0, bytes: 1099639051 }
   resolver_only_registry_identities: 437
@@ -82,6 +82,7 @@ native_source_contract:
   scope: xberg-libwpd embedded C++ source and the selected libz-sys static-zlib build intent
   source_inventory_complete: true
   native_license_source_complete: true
+  boost_subset_license_mapping_complete: true
   expected_archives: [libxberg_libwpd.a, libz.a]
   linked: false
   compilation_observed: false
