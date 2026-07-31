@@ -1,5 +1,13 @@
 # RTK License Review
 
+RTK `0.44.1` has a checked source-license candidate based on the upstream lock
+and exact Fedora manifest adaptations. The source contract deliberately does
+not claim a current resolved target graph. Configured target builds must
+regenerate the exact linked `LICENSE.dependencies` inventory and confirm the
+aggregate expression before the update is accepted.
+
+## Historical 0.43.0 Evidence
+
 RTK `0.43.0-0.6` was clean-built on Fedora 44 with Fedora's `dirs 6.0.0` and
 `dirs-sys 0.5.0` providers. The build produced a 114-record linked dependency
 inventory. The retained historical
@@ -23,7 +31,7 @@ for Fedora 44. Every inventory crate/version pair has a matching provider row.
 These receipts remain audit evidence in the repository and are not installed in
 the runtime RPM.
 
-Release `0.43.0-0.5` removes the custom collector, `CARGO-PROVIDERS.tsv`, and
+Release `0.43.0-0.5` removed the custom collector, `CARGO-PROVIDERS.tsv`, and
 `THIRD-PARTY-LICENSES` from the runtime payload. No selected linked license was
 identified as requiring a package-specific copy of a system provider's license
 directory. The package retains the upstream `LICENSE`, the aggregate SPDX
@@ -31,8 +39,8 @@ expression, and Fedora's standard macro-generated `LICENSE.dependencies`.
 
 Fedora's `dirs 6` and `dirs-sys 0.5` packages provide the same MIT and
 Apache-2.0 license classes already represented by RTK's aggregate expression.
-The current Fedora 44 build passed 2,245 tests with eight ignored. Artifact
+The historical Fedora 44 build passed 2,245 tests with eight ignored. Artifact
 `rpmlint` reports zero errors and only the expected missing-man-page warning;
 the extracted binary retains system SQLite linkage and passes the runtime and
 isolated-home directory API smokes. Full configured-matrix results remain the
-publication and compatibility-package retirement gate.
+publication and compatibility-package retirement gate for the current release.
