@@ -1,0 +1,113 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require "rubygems/package"
+require "yaml"
+require "zlib"
+
+module OpenCodeUpstreamReleaseAudit
+  module_function
+
+  RELEASE_SENSITIVE_PATHS = [
+    "bun.lock",
+    "package.json",
+    "packages/opencode/package.json",
+  ].freeze
+
+  def git(repo, *arguments)
+    output, error, status = Open3.capture3("git", "-C", repo, *arguments)
+    raise "git #{arguments.join(' ')} failed: #{error.strip}" unless status.success?
+
+    output.strip
+  end
+
+  def archive_member(archive, suffix)
+    Zlib::GzipReader.open(archive) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        entry = tar.find { |candidate| candidate.file? && candidate.full_name.end_with?(suffix) }
+        raise "archive is missing #{suffix}" unless entry
+
+        return entry.read
+      end
+    end
+  end
+
+  def audit(package_manifest:, repo:, archive:, latest_version:)
+    package = YAML.safe_load_file(package_manifest, aliases: false)
+    upstream = package.fetch("upstream")
+    packaged_version = upstream.fetch("current_version").to_s
+    packaged_tag = upstream.fetch("source_tag")
+    packaged_commit = upstream.fetch("source_commit")
+    latest_tag = "#{upstream.fetch('tag_prefix')}#{latest_version}"
+
+    raise "OpenCode package must remain blocked" unless package.fetch("status") == "blocked"
+    raise "OpenCode COPR package must remain disabled" unless package.dig("copr", "enabled") == false
+    raise "latest release must be newer than packaged release" unless Gem::Version.new(latest_version) > Gem::Version.new(packaged_version)
+
+    actual_packaged_commit = git(repo, "rev-parse", "#{packaged_tag}^{commit}")
+    raise "packaged tag commit does not match package.yml" unless actual_packaged_commit == packaged_commit
+
+    latest_commit = git(repo, "rev-parse", "#{latest_tag}^{commit}")
+    changed_paths = git(repo, "diff", "--name-only", packaged_tag, latest_tag).lines.map(&:strip).reject(&:empty?).sort
+    archive_manifest = JSON.parse(archive_member(archive, "/packages/opencode/package.json"))
+    raise "archive OpenCode version does not match #{latest_version}" unless archive_manifest.fetch("version") == latest_version
+
+    path_changes = RELEASE_SENSITIVE_PATHS.to_h do |path|
+      [path, git(repo, "rev-parse", "#{packaged_tag}:#{path}") != git(repo, "rev-parse", "#{latest_tag}:#{path}")]
+    end
+    patch_inputs_changed = changed_paths.any? { |path| path.start_with?("patches/") }
+    refresh_required = path_changes.values.any? || patch_inputs_changed
+
+    {
+      "schema" => "agentlab-opencode-upstream-release-audit/v1",
+      "package" => "opencode",
+      "packaged_release" => {
+        "version" => packaged_version,
+        "tag" => packaged_tag,
+        "commit" => actual_packaged_commit,
+        "archive_sha256" => upstream.fetch("source_sha256"),
+      },
+      "latest_release" => {
+        "version" => latest_version,
+        "tag" => latest_tag,
+        "commit" => latest_commit,
+        "archive_sha256" => Digest::SHA256.file(archive).hexdigest,
+      },
+      "delta" => {
+        "changed_paths" => changed_paths.length,
+        "release_sensitive_paths" => path_changes,
+        "patch_inputs_changed" => patch_inputs_changed,
+        "selected_source_evidence_refresh_required" => refresh_required,
+      },
+      "package_state" => {
+        "status" => package.fetch("status"),
+        "copr_enabled" => package.dig("copr", "enabled"),
+        "blocked_state_preserved" => true,
+      },
+    }
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  options = {
+    package_manifest: File.expand_path("../packages/opencode/package.yml", __dir__),
+  }
+
+  OptionParser.new do |parser|
+    parser.banner = "Usage: scripts/audit-opencode-upstream-release --repo PATH --archive PATH --latest-version VERSION"
+    parser.on("--package-manifest PATH", "OpenCode package.yml path") { |value| options[:package_manifest] = value }
+    parser.on("--repo PATH", "Local upstream Git repository") { |value| options[:repo] = value }
+    parser.on("--archive PATH", "Downloaded latest release archive") { |value| options[:archive] = value }
+    parser.on("--latest-version VERSION", "Latest released version") { |value| options[:latest_version] = value }
+  end.parse!
+
+  %i[repo archive latest_version].each do |key|
+    raise OptionParser::MissingArgument, "--#{key.to_s.tr('_', '-')}" unless options[key]
+  end
+
+  puts JSON.pretty_generate(OpenCodeUpstreamReleaseAudit.audit(**options))
+end
