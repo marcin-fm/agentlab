@@ -15,7 +15,7 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
     with_release_fixture do |fixture|
       result = OpenCodeUpstreamReleaseAudit.audit(**fixture.fetch(:audit))
 
-      assert_equal("agentlab-opencode-upstream-release-audit/v5", result.fetch("schema"))
+      assert_equal("agentlab-opencode-upstream-release-audit/v6", result.fetch("schema"))
       assert_equal(fixture.fetch(:witness_sha256), result.dig("immutable_witness", "sha256"))
       assert_equal(fixture.fetch(:new_commit), result.dig("latest_release", "commit"))
       assert_equal("opencode-1.0.1", result.dig("latest_release", "archive_root"))
@@ -53,7 +53,56 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
         "evidence/opencode/upstream-release-audit.json",
         result.dig("reproduction", "receipt_path"),
       )
+      assert_includes(
+        result.dig("reproduction", "steps"),
+        "cmp --silent #{result.dig('reproduction', 'generated_witness_path')} evidence/opencode/upstream-release-witness.json",
+      )
       assert_empty(receipt_errors(fixture, result))
+    end
+  end
+
+  def test_generates_witness_independently_from_pinned_tag_refs
+    with_release_fixture do |fixture|
+      generated = OpenCodeUpstreamReleaseAudit.generate_witness(**fixture.fetch(:witness_generation))
+
+      assert_equal(JSON.parse(File.read(fixture.fetch(:witness))), generated)
+      assert_equal(
+        fixture.fetch(:witness_sha256),
+        Digest::SHA256.hexdigest(OpenCodeUpstreamReleaseAudit.canonical_json(generated)),
+      )
+    end
+  end
+
+  def test_bounds_and_caches_caller_selected_git_blob_reads
+    with_release_fixture do |fixture|
+      error = assert_raises(RuntimeError) do
+        OpenCodeUpstreamReleaseAudit.generate_witness(
+          **fixture.fetch(:witness_generation),
+          git_blob_limits: { package_manifest_bytes: 8 },
+        )
+      end
+      assert_match(%r{Git blob exceeds size limit: v1\.0\.0:packages/opencode/package\.json}, error.message)
+
+      error = assert_raises(RuntimeError) do
+        OpenCodeUpstreamReleaseAudit.generate_witness(
+          **fixture.fetch(:witness_generation),
+          git_blob_limits: { bun_lock_bytes: 8 },
+        )
+      end
+      assert_match(/Git blob exceeds size limit: v1\.0\.0:bun\.lock/, error.message)
+
+      original_capture3 = Open3.method(:capture3)
+      blob_captures = 0
+      Open3.singleton_class.define_method(:capture3) do |*arguments, **keywords|
+        blob_captures += 1 if arguments.include?("cat-file") && arguments.include?("blob")
+        original_capture3.call(*arguments, **keywords)
+      end
+      begin
+        OpenCodeUpstreamReleaseAudit.generate_witness(**fixture.fetch(:witness_generation))
+      ensure
+        Open3.singleton_class.define_method(:capture3, original_capture3)
+      end
+      assert_equal(4, blob_captures)
     end
   end
 
@@ -348,6 +397,14 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
         new_lock_blob: git(repo, "rev-parse", "v1.0.1:bun.lock"),
         witness: witness,
         witness_sha256: witness_sha256,
+        witness_generation: {
+          repo: repo,
+          repository: "example/opencode",
+          packaged_version: "1.0.0",
+          packaged_tag: "v1.0.0",
+          latest_version: "1.0.1",
+          latest_tag: "v1.0.1",
+        },
         integrities: integrities,
         audit: {
           package_manifest: manifest,

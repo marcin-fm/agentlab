@@ -26,12 +26,16 @@ module OpenCodeUpstreamReleaseAudit
     total_bytes: 512 * 1024 * 1024,
     path_bytes: 4096,
   }.freeze
+  DEFAULT_GIT_BLOB_LIMITS = {
+    package_manifest_bytes: 1024 * 1024,
+    bun_lock_bytes: 32 * 1024 * 1024,
+  }.freeze
   MCP_DEPENDENCIES = [
     "@modelcontextprotocol/client",
     "@modelcontextprotocol/server",
     "@modelcontextprotocol/sdk",
   ].freeze
-  RECEIPT_SCHEMA = "agentlab-opencode-upstream-release-audit/v5"
+  RECEIPT_SCHEMA = "agentlab-opencode-upstream-release-audit/v6"
   RECEIPT_RELATIVE_PATH = "evidence/opencode/upstream-release-audit.json"
   WITNESS_SCHEMA = "agentlab-opencode-upstream-release-witness/v1"
   WITNESS_RELATIVE_PATH = "evidence/opencode/upstream-release-witness.json"
@@ -61,8 +65,26 @@ module OpenCodeUpstreamReleaseAudit
     end
   end
 
-  def git_file(repo, revision, path)
-    git_output(repo, "show", "#{revision}:#{path}")
+  def git_blob(repo, revision, path, max_bytes:, cache:)
+    object_id = git(repo, "rev-parse", "#{revision}:#{path}")
+    cached = cache[object_id]
+    if cached
+      raise "Git blob exceeds size limit: #{revision}:#{path}" if cached.bytesize > max_bytes
+
+      return cached
+    end
+
+    type = git(repo, "cat-file", "-t", object_id)
+    raise "Git object is not a blob: #{revision}:#{path}" unless type == "blob"
+
+    size = Integer(git(repo, "cat-file", "-s", object_id), 10)
+    raise "Git blob exceeds size limit: #{revision}:#{path}" if size > max_bytes
+
+    content = git_output(repo, "cat-file", "blob", object_id)
+    raise "Git blob size changed while reading: #{revision}:#{path}" unless content.bytesize == size
+    raise "Git blob exceeds size limit: #{revision}:#{path}" if content.bytesize > max_bytes
+
+    cache[object_id] = content
   end
 
   def default_witness_path
@@ -80,8 +102,7 @@ module OpenCodeUpstreamReleaseAudit
     witness
   end
 
-  def package_requirement(repo, revision, package)
-    manifest = JSON.parse(git_file(repo, revision, "packages/opencode/package.json"))
+  def package_requirement(manifest, revision, package)
     requirements = %w[dependencies devDependencies].filter_map do |group|
       manifest.fetch(group, {})[package]
     end.uniq
@@ -120,11 +141,11 @@ module OpenCodeUpstreamReleaseAudit
     false
   end
 
-  def lock_source(repo, revision, package)
+  def lock_source(lock, revision, package)
     matches = []
     packages_map = false
     packages_map_seen = false
-    git_file(repo, revision, "bun.lock").lines.each do |line|
+    lock.lines.each do |line|
       if line.match?(/^  "packages": \{\s*$/)
         raise "duplicate Bun packages map in #{revision}" if packages_map_seen
 
@@ -149,12 +170,42 @@ module OpenCodeUpstreamReleaseAudit
     matches.first
   end
 
-  def mcp_dependency_transition(repo, packaged_tag, latest_tag)
+  def mcp_dependency_transition(repo, packaged_tag, latest_tag, blob_cache: {}, git_blob_limits: DEFAULT_GIT_BLOB_LIMITS)
+    limits = DEFAULT_GIT_BLOB_LIMITS.merge(git_blob_limits)
+    packaged_manifest = JSON.parse(git_blob(
+      repo,
+      packaged_tag,
+      "packages/opencode/package.json",
+      max_bytes: limits.fetch(:package_manifest_bytes),
+      cache: blob_cache,
+    ))
+    latest_manifest = JSON.parse(git_blob(
+      repo,
+      latest_tag,
+      "packages/opencode/package.json",
+      max_bytes: limits.fetch(:package_manifest_bytes),
+      cache: blob_cache,
+    ))
+    packaged_lock = git_blob(
+      repo,
+      packaged_tag,
+      "bun.lock",
+      max_bytes: limits.fetch(:bun_lock_bytes),
+      cache: blob_cache,
+    )
+    latest_lock = git_blob(
+      repo,
+      latest_tag,
+      "bun.lock",
+      max_bytes: limits.fetch(:bun_lock_bytes),
+      cache: blob_cache,
+    )
+
     MCP_DEPENDENCIES.map do |package|
-      packaged_requirement = package_requirement(repo, packaged_tag, package)
-      latest_requirement = package_requirement(repo, latest_tag, package)
-      packaged_source = lock_source(repo, packaged_tag, package) if packaged_requirement
-      latest_source = lock_source(repo, latest_tag, package) if latest_requirement
+      packaged_requirement = package_requirement(packaged_manifest, packaged_tag, package)
+      latest_requirement = package_requirement(latest_manifest, latest_tag, package)
+      packaged_source = lock_source(packaged_lock, packaged_tag, package) if packaged_requirement
+      latest_source = lock_source(latest_lock, latest_tag, package) if latest_requirement
       if (packaged_requirement && !packaged_source) || (latest_requirement && !latest_source)
         raise "missing root lock source for #{package} dependency transition"
       end
@@ -173,6 +224,43 @@ module OpenCodeUpstreamReleaseAudit
         "latest_source" => latest_source,
       }
     end
+  end
+
+  def generate_witness(repo:, repository:, packaged_version:, packaged_tag:, latest_version:, latest_tag:,
+                       git_blob_limits: DEFAULT_GIT_BLOB_LIMITS)
+    packaged_commit = git(repo, "rev-parse", "#{packaged_tag}^{commit}")
+    latest_commit = git(repo, "rev-parse", "#{latest_tag}^{commit}")
+    blob_cache = {}
+    releases = {
+      "packaged" => [packaged_version, packaged_tag, packaged_commit],
+      "latest" => [latest_version, latest_tag, latest_commit],
+    }.to_h do |release, (version, tag, commit)|
+      [release, {
+        "version" => version,
+        "tag" => tag,
+        "commit" => commit,
+        "release_sensitive_blobs" => RELEASE_SENSITIVE_PATHS.to_h do |path|
+          [path, git(repo, "rev-parse", "#{tag}:#{path}")]
+        end,
+      }]
+    end
+
+    {
+      "schema" => WITNESS_SCHEMA,
+      "repository" => repository,
+      "releases" => releases,
+      "mcp_dependency_transition" => mcp_dependency_transition(
+        repo,
+        packaged_tag,
+        latest_tag,
+        blob_cache: blob_cache,
+        git_blob_limits: git_blob_limits,
+      ),
+    }
+  end
+
+  def canonical_json(data)
+    JSON.pretty_generate(data) + "\n"
   end
 
   def safe_archive_path(name, expected_root, path_limit)
@@ -368,11 +456,12 @@ module OpenCodeUpstreamReleaseAudit
     }
   end
 
-  def reproduction(upstream, latest_version)
+  def reproduction(upstream, packaged_version, packaged_tag, latest_version)
     repository = upstream.fetch("repository")
     tag = "#{upstream.fetch('tag_prefix')}#{latest_version}"
     repository_path = "/srv/tmp/agentlab-opencode-upstream"
     archive_path = "/srv/tmp/opencode-#{tag}.tar.gz"
+    generated_witness_path = "/srv/tmp/opencode-#{packaged_tag}-#{tag}-release-witness.json"
     generated_receipt_path = "/srv/tmp/opencode-#{tag}-release-audit.json"
     archive_url = upstream.fetch("source_url_template").gsub("{version}", latest_version)
 
@@ -381,11 +470,17 @@ module OpenCodeUpstreamReleaseAudit
       "archive_url" => archive_url,
       "repository_path" => repository_path,
       "archive_path" => archive_path,
+      "generated_witness_path" => generated_witness_path,
+      "witness_path" => WITNESS_RELATIVE_PATH,
+      "witness_sha256" => WITNESS_SHA256,
       "generated_receipt_path" => generated_receipt_path,
       "receipt_path" => RECEIPT_RELATIVE_PATH,
       "steps" => [
         "git clone --mirror https://github.com/#{repository}.git #{repository_path}",
         "curl --fail --location --output #{archive_path} #{archive_url}",
+        "scripts/audit-opencode-upstream-release --generate-witness --repo #{repository_path} --repository #{repository} --packaged-version #{packaged_version} --packaged-tag #{packaged_tag} --latest-version #{latest_version} --latest-tag #{tag} > #{generated_witness_path}",
+        "printf '#{WITNESS_SHA256}  #{WITNESS_RELATIVE_PATH}\\n' | sha256sum --check --strict",
+        "cmp --silent #{generated_witness_path} #{WITNESS_RELATIVE_PATH}",
         "scripts/audit-opencode-upstream-release --repo #{repository_path} --archive #{archive_path} --latest-version #{latest_version} > #{generated_receipt_path}",
         "cmp --silent #{generated_receipt_path} #{RECEIPT_RELATIVE_PATH}",
       ],
@@ -411,7 +506,8 @@ module OpenCodeUpstreamReleaseAudit
       "path" => WITNESS_RELATIVE_PATH,
       "sha256" => expected_witness_sha256,
     }
-    errors << "receipt reproduction contract mismatch" unless data["reproduction"] == reproduction(upstream, latest_version)
+    errors << "receipt reproduction contract mismatch" unless
+      data["reproduction"] == reproduction(upstream, packaged_version, packaged.fetch("tag"), latest_version)
     errors << "receipt packaged tag is inconsistent" unless packaged["tag"] == "#{tag_prefix}#{packaged_version}"
     errors << "receipt latest tag is inconsistent" unless latest["tag"] == "#{tag_prefix}#{latest_version}"
     errors << "receipt latest archive root is inconsistent" unless latest["archive_root"] == "opencode-#{latest_version}"
@@ -498,7 +594,8 @@ module OpenCodeUpstreamReleaseAudit
   end
 
   def audit(package_manifest:, repo:, archive:, latest_version:, package_spec: nil, archive_limits: DEFAULT_ARCHIVE_LIMITS,
-            witness_path: default_witness_path, expected_witness_sha256: WITNESS_SHA256)
+             witness_path: default_witness_path, expected_witness_sha256: WITNESS_SHA256,
+             git_blob_limits: DEFAULT_GIT_BLOB_LIMITS)
     package = YAML.safe_load_file(package_manifest, aliases: false)
     upstream = package.fetch("upstream")
     packaged_version = upstream.fetch("current_version").to_s
@@ -516,15 +613,16 @@ module OpenCodeUpstreamReleaseAudit
     raise "packaged tag commit does not match package.yml" unless actual_packaged_commit == packaged_commit
 
     latest_commit = git(repo, "rev-parse", "#{latest_tag}^{commit}")
-    unless witness["repository"] == upstream.fetch("repository") &&
-           witness.dig("releases", "packaged", "version") == packaged_version &&
-           witness.dig("releases", "packaged", "tag") == packaged_tag &&
-           witness.dig("releases", "packaged", "commit") == actual_packaged_commit &&
-           witness.dig("releases", "latest", "version") == latest_version &&
-           witness.dig("releases", "latest", "tag") == latest_tag &&
-           witness.dig("releases", "latest", "commit") == latest_commit
-      raise "OpenCode release witness does not match immutable tag commits"
-    end
+    generated_witness = generate_witness(
+      repo: repo,
+      repository: upstream.fetch("repository"),
+      packaged_version: packaged_version,
+      packaged_tag: packaged_tag,
+      latest_version: latest_version,
+      latest_tag: latest_tag,
+      git_blob_limits: git_blob_limits,
+    )
+    raise "OpenCode release witness does not match immutable tag sources" unless witness == generated_witness
     expected_root = "opencode-#{latest_version}"
     archive_manifest = JSON.parse(
       verify_archive_identity(archive, repo, latest_commit, expected_root, limits: archive_limits),
@@ -532,24 +630,16 @@ module OpenCodeUpstreamReleaseAudit
     raise "archive OpenCode version does not match #{latest_version}" unless archive_manifest.fetch("version") == latest_version
 
     changed_paths = git(repo, "diff", "--name-only", packaged_tag, latest_tag).lines.map(&:strip).reject(&:empty?).sort
-    path_changes = RELEASE_SENSITIVE_PATHS.to_h do |path|
-      [path, git(repo, "rev-parse", "#{packaged_tag}:#{path}") != git(repo, "rev-parse", "#{latest_tag}:#{path}")]
-    end
     sensitive_blobs = RELEASE_SENSITIVE_PATHS.to_h do |path|
       [path, {
-        "packaged" => git(repo, "rev-parse", "#{packaged_tag}:#{path}"),
-        "latest" => git(repo, "rev-parse", "#{latest_tag}:#{path}"),
+        "packaged" => generated_witness.dig("releases", "packaged", "release_sensitive_blobs", path),
+        "latest" => generated_witness.dig("releases", "latest", "release_sensitive_blobs", path),
       }]
     end
-    expected_sensitive_blobs = RELEASE_SENSITIVE_PATHS.to_h do |path|
-      [path, {
-        "packaged" => witness.dig("releases", "packaged", "release_sensitive_blobs", path),
-        "latest" => witness.dig("releases", "latest", "release_sensitive_blobs", path),
-      }]
+    path_changes = sensitive_blobs.transform_values do |blobs|
+      blobs.fetch("packaged") != blobs.fetch("latest")
     end
-    raise "release-sensitive Git blobs do not match immutable witness" unless sensitive_blobs == expected_sensitive_blobs
-    dependency_transition = mcp_dependency_transition(repo, packaged_tag, latest_tag)
-    raise "MCP dependency sources do not match immutable witness" unless dependency_transition == witness["mcp_dependency_transition"]
+    dependency_transition = generated_witness.fetch("mcp_dependency_transition")
     patch_inputs = packaging_patch_inputs(package_spec)
 
     {
@@ -587,7 +677,7 @@ module OpenCodeUpstreamReleaseAudit
         "copr_enabled" => package.dig("copr", "enabled"),
         "blocked_state_preserved" => true,
       },
-      "reproduction" => reproduction(upstream, latest_version),
+      "reproduction" => reproduction(upstream, packaged_version, packaged_tag, latest_version),
     }
   end
 end
@@ -600,6 +690,11 @@ if $PROGRAM_NAME == __FILE__
 
   OptionParser.new do |parser|
     parser.banner = "Usage: scripts/audit-opencode-upstream-release --repo PATH --archive PATH --latest-version VERSION"
+    parser.on("--generate-witness", "Generate the immutable witness from pinned tag refs") { options[:generate_witness] = true }
+    parser.on("--repository OWNER/REPO", "Canonical upstream repository identity") { |value| options[:repository] = value }
+    parser.on("--packaged-version VERSION", "Packaged release version for witness generation") { |value| options[:packaged_version] = value }
+    parser.on("--packaged-tag TAG", "Pinned packaged release tag") { |value| options[:packaged_tag] = value }
+    parser.on("--latest-tag TAG", "Pinned latest release tag") { |value| options[:latest_tag] = value }
     parser.on("--package-manifest PATH", "OpenCode package.yml path") { |value| options[:package_manifest] = value }
     parser.on("--package-spec PATH", "OpenCode spec path") { |value| options[:package_spec] = value }
     parser.on("--repo PATH", "Local upstream Git repository") { |value| options[:repo] = value }
@@ -607,9 +702,17 @@ if $PROGRAM_NAME == __FILE__
     parser.on("--latest-version VERSION", "Latest released version") { |value| options[:latest_version] = value }
   end.parse!
 
-  %i[repo archive latest_version].each do |key|
-    raise OptionParser::MissingArgument, "--#{key.to_s.tr('_', '-')}" unless options[key]
+  if options.delete(:generate_witness)
+    options.delete(:package_manifest)
+    options.delete(:package_spec)
+    %i[repo repository packaged_version packaged_tag latest_version latest_tag].each do |key|
+      raise OptionParser::MissingArgument, "--#{key.to_s.tr('_', '-')}" unless options[key]
+    end
+    print OpenCodeUpstreamReleaseAudit.canonical_json(OpenCodeUpstreamReleaseAudit.generate_witness(**options))
+  else
+    %i[repo archive latest_version].each do |key|
+      raise OptionParser::MissingArgument, "--#{key.to_s.tr('_', '-')}" unless options[key]
+    end
+    puts JSON.pretty_generate(OpenCodeUpstreamReleaseAudit.audit(**options))
   end
-
-  puts JSON.pretty_generate(OpenCodeUpstreamReleaseAudit.audit(**options))
 end

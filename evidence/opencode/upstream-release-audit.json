@@ -1,5 +1,5 @@
 {
-  "schema": "agentlab-opencode-upstream-release-audit/v5",
+  "schema": "agentlab-opencode-upstream-release-audit/v6",
   "package": "opencode",
   "immutable_witness": {
     "path": "evidence/opencode/upstream-release-witness.json",
@@ -131,11 +131,17 @@
     "archive_url": "https://github.com/anomalyco/opencode/archive/refs/tags/v1.18.10.tar.gz",
     "repository_path": "/srv/tmp/agentlab-opencode-upstream",
     "archive_path": "/srv/tmp/opencode-v1.18.10.tar.gz",
+    "generated_witness_path": "/srv/tmp/opencode-v1.18.8-v1.18.10-release-witness.json",
+    "witness_path": "evidence/opencode/upstream-release-witness.json",
+    "witness_sha256": "f873723f7c0ff2496f3e7fd947abf402ee86ba66c1ced93b10452ad169fc74ee",
     "generated_receipt_path": "/srv/tmp/opencode-v1.18.10-release-audit.json",
     "receipt_path": "evidence/opencode/upstream-release-audit.json",
     "steps": [
       "git clone --mirror https://github.com/anomalyco/opencode.git /srv/tmp/agentlab-opencode-upstream",
       "curl --fail --location --output /srv/tmp/opencode-v1.18.10.tar.gz https://github.com/anomalyco/opencode/archive/refs/tags/v1.18.10.tar.gz",
+      "scripts/audit-opencode-upstream-release --generate-witness --repo /srv/tmp/agentlab-opencode-upstream --repository anomalyco/opencode --packaged-version 1.18.8 --packaged-tag v1.18.8 --latest-version 1.18.10 --latest-tag v1.18.10 > /srv/tmp/opencode-v1.18.8-v1.18.10-release-witness.json",
+      "printf 'f873723f7c0ff2496f3e7fd947abf402ee86ba66c1ced93b10452ad169fc74ee  evidence/opencode/upstream-release-witness.json\\n' | sha256sum --check --strict",
+      "cmp --silent /srv/tmp/opencode-v1.18.8-v1.18.10-release-witness.json evidence/opencode/upstream-release-witness.json",
       "scripts/audit-opencode-upstream-release --repo /srv/tmp/agentlab-opencode-upstream --archive /srv/tmp/opencode-v1.18.10.tar.gz --latest-version 1.18.10 > /srv/tmp/opencode-v1.18.10-release-audit.json",
       "cmp --silent /srv/tmp/opencode-v1.18.10-release-audit.json evidence/opencode/upstream-release-audit.json"
     ]
