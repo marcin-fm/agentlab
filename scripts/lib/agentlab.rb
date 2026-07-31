@@ -2851,6 +2851,27 @@ module Agentlab
     ["bun: invalid npm-install proof receipt: #{e.message}"]
   end
 
+  def valid_bun_lolhtml_provider_evidence_boundary?(provider, lolhtml)
+    current_validation = provider.data.dig("build_validation", "current") || {}
+    current_matrix = current_validation["mock_matrix"] || {}
+    historical_validation = provider.data.dig("build_validation", "historical") || {}
+    historical_matrix = historical_validation["mock_matrix"] || {}
+    current_pending = current_validation["provider_version"] == provider.upstream["current_version"] &&
+                      current_validation["evidence_role"] == "current_provider_pending" &&
+                      %w[provider_gate_verified target_matrix_verified artifacts_verified soname_probe_verified pkgconfig_probe_verified c_api_symbol_probe_verified upstream_c_suites_verified rpm_installed].all? { |key| current_validation[key] == false } &&
+                      current_matrix["configured_copr_build"] == "pending" &&
+                      %w[fedora_43_x86_64 fedora_43_aarch64 fedora_44_x86_64 fedora_44_aarch64 fedora_rawhide_x86_64 fedora_rawhide_aarch64].all? { |target| current_matrix[target] == "pending" }
+    historical_proof = historical_validation["provider_version"] == lolhtml["version"] &&
+                       historical_validation["provider_release"] == "3.0.0-0.9" &&
+                       historical_validation["evidence_role"] == "immutable_historical_provider_proof" &&
+                       %w[fedora_43_x86_64 fedora_43_aarch64 fedora_44_x86_64 fedora_44_aarch64 fedora_rawhide_x86_64 fedora_rawhide_aarch64].all? { |target| historical_matrix[target] == "passed" }
+    provider.enabled? &&
+      provider.data.dig("c_api", "crate_version") == "1.4.0" &&
+      provider.data.dig("c_api", "soname") == "liblolhtml.so.1" &&
+      provider.data.dig("c_api", "static_library_shipped") == false &&
+      current_pending && historical_proof
+  end
+
   def validate_bun_system_lolhtml(package, lolhtml, stages, version, spec)
     return [] unless package.name == "bun"
     return [] unless lolhtml.is_a?(Hash) && lolhtml["relationship"] == "fedora_system_provider"
@@ -2915,20 +2936,7 @@ module Agentlab
     end
 
     provider = package_named("lol-html")
-    valid_provider = provider.enabled? &&
-                      provider.data.dig("c_api", "crate_version") == "1.4.0" &&
-                      provider.data.dig("c_api", "soname") == "liblolhtml.so.1" &&
-                      provider.data.dig("c_api", "static_library_shipped") == false &&
-                      provider.data.dig("build_validation", "provider_version") == lolhtml["version"] &&
-                      provider.data.dig("build_validation", "evidence_role") == "immutable_historical_provider_proof" &&
-                      provider.data.dig("build_validation", "mock_matrix", "fedora_43_x86_64") == "passed" &&
-                     provider.data.dig("build_validation", "mock_matrix", "fedora_43_aarch64") == "passed" &&
-                     provider.data.dig("build_validation", "mock_matrix", "fedora_44_x86_64") == "passed" &&
-                     provider.data.dig("build_validation", "mock_matrix", "fedora_44_aarch64") == "passed" &&
-                     provider.data.dig("build_validation", "mock_matrix", "fedora_rawhide_x86_64") == "passed" &&
-                     provider.data.dig("build_validation", "mock_matrix", "fedora_rawhide_aarch64") == "passed"
-    errors << "bun: system lol-html provider package contract mismatch" unless valid_provider
-
+    errors << "bun: system lol-html provider evidence boundary mismatch" unless valid_bun_lolhtml_provider_evidence_boundary?(provider, lolhtml)
     source_license_inventory = package.data.dig("build_plan", "source_inputs", "source_license_inventory")
     valid_license_boundary = source_license_inventory.is_a?(Hash) &&
                               source_license_inventory["historical_lolhtml_graph_retained"] == false &&

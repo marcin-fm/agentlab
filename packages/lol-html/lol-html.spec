@@ -6,7 +6,7 @@
 
 Name:           lol-html
 Version:        3.0.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Streaming HTML parser and transformation C library
 
 License:        BSD-3-Clause AND (Apache-2.0 OR MIT) AND MIT AND MPL-2.0 AND (Unlicense OR MIT) AND Zlib
@@ -141,6 +141,9 @@ ldd -r "$library"
 %{_libdir}/pkgconfig/lol-html.pc
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 3.0.1-0.2
+- Keep current provider proof pending and historical evidence version-bound.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 3.0.1-0.1
 - Update to lol-html 3.0.1 while preserving the stable C API contract.
 

@@ -3187,10 +3187,29 @@ class AgentlabTest < Minitest::Test
     lolhtml = plan.fetch("source_inputs").fetch("lolhtml")
     stages = plan.fetch("stages")
     spec = File.read(File.join(source_package.directory, "bun.spec"))
+    provider = Agentlab.package_named("lol-html")
+    current_validation = provider.data.dig("build_validation", "current")
+    historical_validation = provider.data.dig("build_validation", "historical")
 
     assert_equal("3.0.0", lolhtml.fetch("version"))
-    assert_equal("3.0.1", Agentlab.package_named("lol-html").upstream.fetch("current_version"))
+    assert_equal("3.0.1", provider.upstream.fetch("current_version"))
+    assert_equal("3.0.1", current_validation.fetch("provider_version"))
+    assert_equal("current_provider_pending", current_validation.fetch("evidence_role"))
+    assert(current_validation.except("provider_version", "release", "evidence_role", "mock_matrix").values.all? { |value| value == false })
+    assert_equal(["pending"], current_validation.fetch("mock_matrix").values.uniq)
+    assert_equal("3.0.0", historical_validation.fetch("provider_version"))
+    assert_equal("3.0.0-0.9", historical_validation.fetch("provider_release"))
+    assert_equal("immutable_historical_provider_proof", historical_validation.fetch("evidence_role"))
     assert_empty(Agentlab.validate_bun_system_lolhtml(source_package, lolhtml, stages, "1.3.14", spec))
+
+    relabeled_data = Marshal.load(Marshal.dump(provider.data))
+    relabeled_data.fetch("build_validation")["current"] = Marshal.load(Marshal.dump(historical_validation))
+    relabeled_provider = Agentlab::Package.new(
+      directory: provider.directory,
+      manifest_path: "unused",
+      data: relabeled_data
+    )
+    refute(Agentlab.valid_bun_lolhtml_provider_evidence_boundary?(relabeled_provider, lolhtml))
 
     invalid_lolhtml = Marshal.load(Marshal.dump(lolhtml))
     invalid_lolhtml["provider_matrix_verified"] = false
