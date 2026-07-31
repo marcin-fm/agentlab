@@ -1,0 +1,280 @@
+#!/usr/bin/ruby
+# frozen_string_literal: true
+
+require "digest"
+require "fileutils"
+require "json"
+require "optparse"
+require "pathname"
+require "rubygems/package"
+require "zlib"
+
+load File.join(__dir__, "audit-xberg-cargo-closure")
+
+module XbergNativeSource
+  VERSION = "1.0.3"
+  LOCK_SHA256 = "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667"
+  LIBZ_VERSION = "1.1.29"
+  LIBZ_CHECKSUM = "85bc9657773828b90eeb625adff10eeac83cc21bbfd8e23a03eaa8a33c9e28d9"
+  ARCHIVES = {
+    "librevenge-0.0.6.tar.gz" => {
+      sha256: "686cc36be3196a0a808761cfd3951a46ff809cb0e028b0902c787261a1389d0f",
+      source_prefix: "librevenge-0.0.6/src/lib/",
+      expected_cpp: 30,
+      license_files: %w[librevenge-0.0.6/COPYING.MPL librevenge-0.0.6/COPYING.LGPL]
+    },
+    "libwpd-0.10.3.tar.gz" => {
+      sha256: "ca3575282acff8c952c12160433ad7e73e803ff3f070b8442c7ffa1f3a19f9ae",
+      source_prefix: "libwpd-0.10.3/src/lib/",
+      expected_cpp: 170,
+      license_files: %w[libwpd-0.10.3/COPYING.MPL libwpd-0.10.3/COPYING.LGPL]
+    },
+    "boost-subset.tar.gz" => {
+      sha256: "802ee17c5e380efbcbb696468ee3c7090aa409db89c2063b4c9b8d3e3aff1e08",
+      source_prefix: nil,
+      expected_cpp: 0,
+      license_files: []
+    }
+  }.freeze
+  ZLIB_UNITS = %w[
+    adler32.c compress.c crc32.c deflate.c infback.c inffast.c inflate.c
+    inftrees.c trees.c uncompr.c zutil.c gzclose.c gzlib.c gzread.c gzwrite.c
+  ].freeze
+
+  module_function
+
+  def fail!(message)
+    raise ArgumentError, message
+  end
+
+  def file_record(path, root: nil)
+    fail!("missing file: #{path}") unless File.file?(path)
+
+    display = root ? Pathname(path).relative_path_from(Pathname(root)).to_s : File.basename(path)
+    { "path" => display, "bytes" => File.size(path), "sha256" => Digest::SHA256.file(path).hexdigest }
+  end
+
+  def canonical_digest(records)
+    body = records.sort_by { |record| record.fetch("path") }.map do |record|
+      [record.fetch("path"), record.fetch("bytes"), record.fetch("sha256")].join("\t")
+    end.join("\n")
+    Digest::SHA256.hexdigest(body.empty? ? body : "#{body}\n")
+  end
+
+  def tree_record(root)
+    root = File.realpath(root)
+    files = Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+      next if [".", ".."].include?(File.basename(path))
+      fail!("native source tree must not contain symlinks: #{path}") if File.symlink?(path)
+      next unless File.file?(path)
+
+      file_record(path, root: root)
+    end
+    {
+      "files" => files.length,
+      "bytes" => files.sum { |record| record.fetch("bytes") },
+      "sha256" => canonical_digest(files)
+    }
+  end
+
+  def clean_tar_path(raw)
+    path = raw.sub(%r{\A\./}, "").sub(%r{/\z}, "")
+    clean = Pathname(path).cleanpath.to_s
+    fail!("unsafe archive path: #{raw}") if path.empty? || clean == ".." || clean.start_with?("../") || Pathname(path).absolute?
+    clean
+  end
+
+  def archive_record(path, contract)
+    fail!("archive checksum mismatch: #{path}") unless Digest::SHA256.file(path).hexdigest == contract.fetch(:sha256)
+
+    entries = []
+    seen = {}
+    selected = []
+    licenses = {}
+    Zlib::GzipReader.open(path) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          next if %w[x g].include?(entry.header.typeflag)
+
+          name = clean_tar_path(entry.full_name)
+          fail!("duplicate archive path: #{name}") if seen.key?(name)
+          seen[name] = true
+
+          type = if entry.file?
+                   "file"
+                 elsif entry.directory?
+                   "directory"
+                 else
+                   fail!("unsupported archive entry type: #{name}")
+                 end
+          bytes = entry.file? ? entry.read : ""
+          record = {
+            "path" => name,
+            "type" => type,
+            "bytes" => bytes.bytesize,
+            "sha256" => entry.file? ? Digest::SHA256.hexdigest(bytes) : nil
+          }
+          entries << record
+          if contract[:source_prefix] && name.start_with?(contract.fetch(:source_prefix)) && name.end_with?(".cpp")
+            selected << record.slice("path", "bytes", "sha256")
+          end
+          licenses[name] = record.slice("path", "bytes", "sha256") if contract.fetch(:license_files).include?(name)
+        end
+      end
+    end
+
+    fail!("unexpected selected C++ count for #{path}") unless selected.length == contract.fetch(:expected_cpp)
+    missing_licenses = contract.fetch(:license_files) - licenses.keys
+    fail!("missing archive license files: #{missing_licenses.join(', ')}") unless missing_licenses.empty?
+    tree_lines = entries.sort_by { |record| record.fetch("path") }.map do |record|
+      [record.fetch("type"), record.fetch("path"), record.fetch("bytes"), record["sha256"] || "-"].join("\t")
+    end
+
+    {
+      "path" => File.basename(path),
+      "sha256" => contract.fetch(:sha256),
+      "members" => entries.length,
+      "regular_files" => entries.count { |record| record.fetch("type") == "file" },
+      "tree_sha256" => Digest::SHA256.hexdigest("#{tree_lines.join("\n")}\n"),
+      "selected_cpp" => {
+        "count" => selected.length,
+        "sha256" => canonical_digest(selected)
+      },
+      "license_files" => licenses.values.sort_by { |record| record.fetch("path") }
+    }
+  end
+
+  def require_markers!(path, markers)
+    text = File.read(path)
+    missing = markers.reject { |marker| text.include?(marker) }
+    fail!("missing required markers in #{path}: #{missing.join(', ')}") unless missing.empty?
+  end
+
+  def locked_libz!(lock_path)
+    fail!("Cargo.lock checksum mismatch") unless Digest::SHA256.file(lock_path).hexdigest == LOCK_SHA256
+    package = XbergCargoClosure.lock_packages(File.read(lock_path)).find do |candidate|
+      candidate.fetch("name") == "libz-sys" && candidate.fetch("version") == LIBZ_VERSION
+    end
+    fail!("missing locked libz-sys #{LIBZ_VERSION}") unless package
+    fail!("libz-sys checksum mismatch in Cargo.lock") unless package.fetch("checksum") == LIBZ_CHECKSUM
+    package
+  end
+
+  def generate(source, vendor_dir)
+    source = File.realpath(source)
+    vendor_dir = File.realpath(vendor_dir)
+    crate = File.join(source, "crates/xberg-libwpd")
+    libz = File.join(vendor_dir, "libz-sys-#{LIBZ_VERSION}")
+    fail!("missing prepared xberg-libwpd source") unless File.directory?(crate)
+    fail!("missing vendored libz-sys source") unless File.directory?(libz)
+
+    build_rs = File.join(crate, "build.rs")
+    crate_toml = File.join(crate, "Cargo.toml")
+    workspace_toml = File.join(source, "Cargo.toml")
+    libz_build = File.join(libz, "build.rs")
+    require_markers!(build_rs, [
+      'build.compile("xberg_libwpd")', 'cargo:rustc-link-lib=static=z',
+      '.std("c++17")', 'build.file("src/shim.cpp")'
+    ])
+    require_markers!(crate_toml, ['links = "xberg_libwpd"', 'libz-sys = { workspace = true }'])
+    require_markers!(workspace_toml, ['libz-sys = { version = "1.1", features = ["static"] }'])
+    require_markers!(libz_build, [
+      'let want_static = should_link_static();', 'return build_zlib(&mut cfg, &target);',
+      'cfg.compile("z")', 'option_env!("LIBZ_SYS_STATIC")', 'cfg!(feature = "static")'
+    ])
+
+    lock = locked_libz!(File.join(source, "Cargo.lock"))
+    archives = ARCHIVES.map do |name, contract|
+      archive_record(File.join(crate, "vendor", name), contract)
+    end
+    shim = file_record(File.join(crate, "src/shim.cpp"), root: source)
+    cpp_records = archives.flat_map do |archive|
+      count = archive.fetch("selected_cpp").fetch("count")
+      [{ "path" => archive.fetch("path"), "bytes" => count, "sha256" => archive.fetch("selected_cpp").fetch("sha256") }]
+    end + [shim]
+
+    zlib_root = File.join(libz, "src/zlib")
+    zlib_units = ZLIB_UNITS.map { |name| file_record(File.join(zlib_root, name), root: libz) }
+    zlib_header = File.read(File.join(zlib_root, "zlib.h"))
+    zlib_version = zlib_header[/#define\s+ZLIB_VERSION\s+"([^"]+)"/, 1]
+    fail!("unexpected stock zlib version: #{zlib_version.inspect}") unless zlib_version == "1.3.2"
+
+    {
+      "schema" => "agentlab-xberg-native-source-contract/v1",
+      "xberg_version" => VERSION,
+      "target_scope" => "Linux source/build intent for the selected xberg-cli surface",
+      "inputs" => {
+        "cargo_lock" => { "sha256" => LOCK_SHA256 },
+        "libz_sys" => { "name" => lock.fetch("name"), "version" => lock.fetch("version"), "checksum" => lock.fetch("checksum") }
+      },
+      "xberg_libwpd" => {
+        "source_tree" => tree_record(crate),
+        "build_script" => file_record(build_rs, root: source),
+        "manifest" => file_record(crate_toml, root: source),
+        "expected_archive" => "libxberg_libwpd.a",
+        "cpp_standard" => "c++17",
+        "archives" => archives,
+        "unix_translation_units" => {
+          "count" => archives.sum { |archive| archive.fetch("selected_cpp").fetch("count") } + 1,
+          "aggregate_sha256" => canonical_digest(cpp_records)
+        },
+        "shim" => shim,
+        "unix_zlib_link_directive" => "static=z",
+        "boost_license_text_present" => false
+      },
+      "libz_sys" => {
+        "source_tree" => tree_record(libz),
+        "build_script" => file_record(libz_build, root: libz),
+        "manifest" => file_record(File.join(libz, "Cargo.toml"), root: libz),
+        "selected_features" => %w[default static stock-zlib],
+        "stock_zlib_version" => zlib_version,
+        "expected_archive" => "libz.a",
+        "stock_zlib_translation_units" => {
+          "count" => zlib_units.length,
+          "sha256" => canonical_digest(zlib_units)
+        },
+        "license_files" => [
+          file_record(File.join(libz, "LICENSE-APACHE"), root: libz),
+          file_record(File.join(libz, "LICENSE-MIT"), root: libz),
+          file_record(File.join(zlib_root, "LICENSE"), root: libz)
+        ]
+      },
+      "claims" => {
+        "native_source_inventory_complete" => true,
+        "compilation_observed" => false,
+        "native_archives_observed" => false,
+        "libz_sys_static_environment_observed" => false,
+        "final_link_observed" => false,
+        "elf_evidence_observed" => false,
+        "rpm_payload_observed" => false,
+        "native_license_payload_complete" => false,
+        "final_linked_license_complete" => false
+      },
+      "blockers" => [
+        "The embedded Boost subset has no bundled BSL-1.0 text; only upstream provenance records the license.",
+        "No compilation witness binds libxberg_libwpd.a or libz.a to these source digests.",
+        "No build observation proves LIBZ_SYS_STATIC was unset or did not override Cargo's static feature.",
+        "No linker map, ELF symbol/archive evidence, RPM payload, or final linked-license accounting is bound."
+      ]
+    }
+  end
+
+  def run(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.on("--prepared-source PATH") { |value| options[:source] = value }
+      parser.on("--vendor-dir PATH") { |value| options[:vendor] = value }
+      parser.on("--output PATH") { |value| options[:output] = value }
+    end.parse!(argv)
+    %i[source vendor output].each { |key| fail!("missing --#{key.to_s.tr('_', '-')}") unless options[key] }
+
+    receipt = generate(options.fetch(:source), options.fetch(:vendor))
+    FileUtils.mkdir_p(File.dirname(options.fetch(:output)))
+    File.write(options.fetch(:output), "#{JSON.generate(receipt)}\n")
+  rescue ArgumentError, OptionParser::ParseError => e
+    warn e.message
+    exit 1
+  end
+end
+
+XbergNativeSource.run(ARGV) if $PROGRAM_NAME == __FILE__

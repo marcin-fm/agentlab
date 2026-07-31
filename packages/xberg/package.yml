@@ -23,7 +23,7 @@ upstream:
 source_audit_receipt:
   file: xberg-1.0.3-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: 21b6cf73308d8e09df04987fcfb7b706021a78ad3219d8edf5d122666a637803
+  sha256: 91d622076841f5bc9cfce09a3c452bf5f7ad02ef089dcd526d214db50bb3b07f
 source_link_filter:
   file: xberg-1.0.3-source-filter.json
   schema: agentlab-xberg-source-filter/v1
@@ -70,10 +70,23 @@ cargo_source_contract:
     fedora_allowlist: { file: xberg-1.0.3-fedora-license-allowlist.json, sha256: 9594bfb8b0426fe8f0329606d0fcbf6a2a744ce7a4099c60887491b4dc5619c0 }
     proof_auditor: { file: scripts/audit-xberg-proof-receipts, sha256: 94005bcab4a60d17c65e1eee9f73e3a46a0bee60d3f70009081e46102b22eb74 }
     license_writer: { file: scripts/write-xberg-cargo-license-receipts, sha256: 7dd6a505e65900dceded74405d586459180e2a701806b31ac24452e37acd1a51 }
+    native_source_contract: { file: xberg-1.0.3-native-source-contract.json, sha256: 466078fcd743503575ef48760e4fb6f86ff15fd87c5e18583170b7fb0458d03e }
+    native_source_auditor: { file: scripts/audit-xberg-native-source, sha256: 6c019b1681c4f8058b9c7a659399a9abaf76bba6f49b9bbbb5674b5fa6714ee4 }
   vendor_tree: { sha256: fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917, files: 51213, directories: 9444, symlinks: 0, bytes: 1099639051 }
   resolver_only_registry_identities: 437
   license_text_presence: { present: 959, absent: 75, selected_normal_gaps: 22, resolver_only_gaps: 53, required_text_count: 74, final_linked_license_complete: false }
   intel_sources: absent
+native_source_contract:
+  schema: agentlab-xberg-native-source-contract/v1
+  scope: xberg-libwpd embedded C++ source and the selected libz-sys static-zlib build intent
+  source_inventory_complete: true
+  expected_archives: [libxberg_libwpd.a, libz.a]
+  linked: false
+  compilation_observed: false
+  libz_sys_static_environment_observed: false
+  rpm_payload_observed: false
+  native_license_payload_complete: false
+  final_linked_license_complete: false
 compile_proof_contract:
   package: xberg-cli
   no_default_features: true

@@ -33,6 +33,17 @@ opted into outside the RPM payload, but their provenance, offline behavior,
 runtime smoke, final linked-license completeness, enablement, matrix proof,
 and COPR publication remain incomplete.
 
+## Native Source Boundary
+
+The checked native-source contract binds the exact embedded librevenge 0.0.6,
+libwpd 0.10.3, and Boost-subset archives used by `xberg-libwpd`, plus its 201
+selected C++ translation units and expected `libxberg_libwpd.a` output. It also
+binds `libz-sys` 1.1.29 and the selected stock zlib 1.3.2 sources for the
+expected static `libz.a` path. This is source and build-intent evidence only:
+compilation, archive production, `LIBZ_SYS_STATIC` observation, final ELF/link
+evidence, RPM payload, native license payload, and final linked-license proof
+remain false. The embedded Boost subset still lacks its BSL-1.0 text.
+
 ## License Boundary
 
 The tracked source-license receipt covers Source0 and the 1,034-source vendor
@@ -55,9 +66,10 @@ scope while retaining the checked lock and offline vendor configuration. That
 inventory is not final Linux linked-license or RPM payload evidence.
 
 All `1.0.1` configured-SCM results and receipts are historical evidence only.
-Release `1.0.3-0.3` regenerates the exact default-minus-tree-sitter source,
+Release `1.0.3-0.4` retains the exact default-minus-tree-sitter source,
 lock, vendor, provider, and license contracts; disables mutable tessdata
-downloads; and retains only explicit opt-in immutable model downloads. Build
+downloads; retains only explicit opt-in immutable model downloads; and adds
+the deterministic native-source contract without claiming link proof. Build
 `10791299` exposed upstream's incomplete dynamic-Tesseract API gating before
 linking; `0.3` extends that existing feature path without enabling source
 downloads. No successful `1.0.3` compile proof exists yet. Xberg remains
