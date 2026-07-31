@@ -4,6 +4,7 @@
 require "json"
 require "fileutils"
 require "optparse"
+require "tmpdir"
 require_relative "lib/agentlab"
 
 selected_name = nil
@@ -108,19 +109,25 @@ def validate_patch_preimage_zero_fuzz!(package, fixture:, fixture_sha256:, patch
     return
   end
 
-  workdir = "/srv/tmp/agentlab-check-#{package.name}-preimage-#{Process.pid}"
-  FileUtils.rm_rf(workdir)
-  FileUtils.mkdir_p(workdir)
-  FileUtils.cp(fixture_path, File.join(workdir, "pyproject.toml"))
-  _stdout, stderr, status = Agentlab.capture(["patch", "--dry-run", "--fuzz=0", "-p1", "-i", patch_path], chdir: workdir)
-  unless status.success?
-    errors << "#{package.name}: #{patch} does not apply with zero fuzz to the checked preimage: #{stderr.strip}"
+  tmp_parent = "/srv/tmp" if File.directory?("/srv/tmp") && File.writable?("/srv/tmp") && File.executable?("/srv/tmp")
+  runner_temp = ENV["RUNNER_TEMP"]
+  tmp_parent ||= runner_temp if runner_temp && File.directory?(runner_temp) && File.writable?(runner_temp) && File.executable?(runner_temp)
+  tmp_parent ||= Dir.tmpdir
+  unless File.directory?(tmp_parent) && File.writable?(tmp_parent) && File.executable?(tmp_parent)
+    errors << "#{package.name}: no writable temporary directory is available for Patch0 preimage validation"
     return
   end
-  _stdout, stderr, status = Agentlab.capture(["patch", "--fuzz=0", "-p1", "-i", patch_path], chdir: workdir)
-  errors << "#{package.name}: #{patch} failed on the checked preimage: #{stderr.strip}" unless status.success?
-ensure
-  FileUtils.rm_rf(workdir) if workdir
+
+  Dir.mktmpdir("agentlab-check-#{package.name}-preimage-", tmp_parent) do |workdir|
+    FileUtils.cp(fixture_path, File.join(workdir, "pyproject.toml"))
+    _stdout, stderr, status = Agentlab.capture(["patch", "--dry-run", "--fuzz=0", "-p1", "-i", patch_path], chdir: workdir)
+    unless status.success?
+      errors << "#{package.name}: #{patch} does not apply with zero fuzz to the checked preimage: #{stderr.strip}"
+      return
+    end
+    _stdout, stderr, status = Agentlab.capture(["patch", "--fuzz=0", "-p1", "-i", patch_path], chdir: workdir)
+    errors << "#{package.name}: #{patch} failed on the checked preimage: #{stderr.strip}" unless status.success?
+  end
 end
 
 Agentlab.copr_chroot_matrix_errors(project_chroots, require_all_stable_releases: true).each do |error|
