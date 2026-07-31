@@ -22,6 +22,7 @@ SOURCE_WORKDIR_PREFIX = ENV.fetch("AGENTLAB_NODE_SOURCE_WORKDIR", "/srv/tmp/agen
 SOURCE_OUTPUT_PREFIX = ENV.fetch("AGENTLAB_NODE_SOURCE_OUTPUT", "opencode").freeze
 SOURCE_MARKER = ENV.fetch("AGENTLAB_NODE_SOURCE_MARKER", ".agentlab-opencode-source-acquisition").freeze
 SOURCE_LABEL = ENV.fetch("AGENTLAB_NODE_SOURCE_LABEL", "OpenCode").freeze
+SOURCE_SELECTED_FILE_KEY = ENV.fetch("AGENTLAB_NODE_SELECTED_LOCK_FILE_KEY", "selected_lock_audit").freeze
 
 ROLE_RANK = { "test" => 0, "build" => 1, "runtime" => 2 }.freeze
 LICENSE_BASENAME = /\A(?:licen[cs]e|copying|notice|copyright)(?:[._-].*)?\z/i
@@ -286,7 +287,10 @@ end
 package = Agentlab.package_named(SOURCE_PACKAGE_NAME)
 dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
 version = package.upstream.fetch("current_version").to_s
-selected_filename = dependencies.dig("source_closure_files", "selected_lock_audit")
+selected_filename = dependencies.fetch("source_closure_files")[SOURCE_SELECTED_FILE_KEY]
+unless selected_filename
+  raise Agentlab::Error, "source closure file key is missing: #{SOURCE_SELECTED_FILE_KEY}"
+end
 selected_path = File.join(package.directory, selected_filename)
 selected_config = dependencies.fetch("selected_lock_receipt")
 workdir = "#{SOURCE_WORKDIR_PREFIX}-#{version}"

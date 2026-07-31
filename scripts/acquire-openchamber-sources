@@ -8,5 +8,6 @@ ENV["AGENTLAB_NODE_SOURCE_WORKDIR"] = "/srv/tmp/agentlab-openchamber/source-acqu
 ENV["AGENTLAB_NODE_SOURCE_OUTPUT"] = "openchamber"
 ENV["AGENTLAB_NODE_SOURCE_MARKER"] = ".agentlab-openchamber-source-acquisition"
 ENV["AGENTLAB_NODE_SOURCE_LABEL"] = "OpenChamber"
+ENV["AGENTLAB_NODE_SELECTED_LOCK_FILE_KEY"] = "current_selected_lock_audit"
 
 load File.expand_path("acquire-opencode-sources", __dir__)
