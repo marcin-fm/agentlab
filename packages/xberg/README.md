@@ -42,12 +42,14 @@ binds `libz-sys` 1.1.29 and the selected stock zlib 1.3.2 sources for the
 expected static `libz.a` path. This is source and build-intent evidence only:
 compilation, archive production, `LIBZ_SYS_STATIC` observation, final ELF/link
 evidence, RPM payload, native license payload, and final linked-license proof
-remain false. The source contract maps all 9,599 exact Boost include-tree files
-to the canonical BSL-1.0 text shipped by Fedora's Boost packages, records the
-4,565 files with embedded BSL markers and the 5,034 files without legal
-signals, and rejects any additional license or notice obligation. The two
-remaining archive files are exact non-source AppleDouble metadata records. No
-RPM license payload is claimed.
+remain false. The source contract binds all 9,599 exact Boost include-tree
+paths, the canonical BSL-1.0 candidate text shipped by Fedora's Boost packages,
+4,565 files with detected embedded BSL markers, 5,034 files without that
+specific marker, 469 directories, 5,035 PAX headers, and two exact non-source
+AppleDouble metadata records. It rejects links and unexpected special entries,
+but does not treat finite marker scanning as exhaustive legal classification.
+Boost-only and native license-source completeness remain false pending an
+authoritative exhaustive source. No RPM license payload is claimed.
 
 ## License Boundary
 
@@ -71,11 +73,11 @@ scope while retaining the checked lock and offline vendor configuration. That
 inventory is not final Linux linked-license or RPM payload evidence.
 
 All `1.0.1` configured-SCM results and receipts are historical evidence only.
-Release `1.0.3-0.6` retains the exact default-minus-tree-sitter source,
+Release `1.0.3-0.7` retains the exact default-minus-tree-sitter source,
 lock, vendor, provider, and license contracts; disables mutable tessdata
 downloads; retains only explicit opt-in immutable model downloads; and adds
-the deterministic native-source contract and its exact Boost subset license
-mapping without claiming link or license-payload proof. Build
+the deterministic native-source contract and exact Boost subset inventory
+without claiming exhaustive Boost licensing, link, or license-payload proof. Build
 `10791299` exposed upstream's incomplete dynamic-Tesseract API gating before
 linking; `0.3` extends that existing feature path without enabling source
 downloads. No successful `1.0.3` compile proof exists yet. Xberg remains

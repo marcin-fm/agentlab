@@ -47,20 +47,14 @@ class TestAuditXbergNativeSource < Minitest::Test
     end
   end
 
-  def test_boost_license_signals_reject_additional_obligations
-    text = "Copyright 2026 Example\nPermission is hereby granted, free of charge\n"
+  def test_boost_entry_kind_rejects_links_and_special_entries
+    entry = Struct.new(:header, :full_name) do
+      def file? = false
+      def directory? = false
+    end.new(Struct.new(:typeflag).new("2"), "boost/boost/link")
 
-    error = assert_raises(ArgumentError) do
-      XbergNativeSource.validate_boost_license_signals!("boost/boost/example.hpp", text)
-    end
-    assert_match(/additional Boost subset license markers.*MIT/, error.message)
-  end
-
-  def test_boost_license_signals_reject_unmapped_notice
-    error = assert_raises(ArgumentError) do
-      XbergNativeSource.validate_boost_license_signals!("boost/boost/example.hpp", "NOTICE: retain this file\n")
-    end
-    assert_match(/unmapped Boost subset legal signal/, error.message)
+    error = assert_raises(ArgumentError) { XbergNativeSource.boost_entry_kind!(entry) }
+    assert_match(/unsupported Boost subset archive entry type/, error.message)
   end
 
   def test_regenerates_checked_contract_from_prepared_tree

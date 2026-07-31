@@ -24,21 +24,15 @@ module XbergNativeSource
   BOOST_BSL_MARKER_PATH_SHA256 = "9e762cb67bb492ebeed8fa8be45b877d9aef6cec4e30f4b1ee4ec094a35c545f"
   BOOST_UNMARKED_FILES = 5_034
   BOOST_UNMARKED_PATH_SHA256 = "f9392b82ca4ce9a92f9340d7571a6c356b455cd6b2dbf35927f2555840e698e4"
+  BOOST_DIRECTORY_ENTRIES = 469
+  BOOST_DIRECTORY_PATH_SHA256 = "fb5ce8f562e8ce62cfdfb63c1b3720e7676a7e3a53346c041f311a3240f52cc4"
+  BOOST_PAX_ENTRIES = 5_035
+  BOOST_PAX_PATH_SHA256 = "222daa7b535a58aca4c6edc042df8af9be5425e30484f7c99fcdf448bdf3642f"
   BOOST_METADATA = {
     "._boost" => { "bytes" => 163, "sha256" => "ccfb97a21226bf7f83ca118cfd47f11b0d94ef9466c555f48204f7a1a5c7578a" },
     "boost/._boost" => { "bytes" => 163, "sha256" => "ccfb97a21226bf7f83ca118cfd47f11b0d94ef9466c555f48204f7a1a5c7578a" }
   }.freeze
   BOOST_BSL_MARKER = /Boost Software License|boost\.org\/LICENSE_1_0/i
-  BOOST_LEGAL_SIGNAL = /copyright|licen[cs]e|permission|redistribution|warranty|notice|SPDX|public domain|all rights reserved|terms and conditions|patent grant|waiver/i
-  BOOST_ALTERNATE_LICENSE_MARKERS = {
-    "Apache" => /Apache License/i,
-    "BSD" => /Redistribution and use in source and binary forms/i,
-    "GPL" => /GNU (?:General|Lesser) Public License/i,
-    "MIT" => /Permission is hereby granted, free of charge/i,
-    "MPL" => /Mozilla Public License/i,
-    "SPDX" => /SPDX-License-Identifier/i,
-    "Zlib" => /This software is provided .as-is./i
-  }.freeze
   ARCHIVES = {
     "librevenge-0.0.6.tar.gz" => {
       sha256: "686cc36be3196a0a808761cfd3951a46ff809cb0e028b0902c787261a1389d0f",
@@ -204,13 +198,12 @@ module XbergNativeSource
     bytes.match?(BOOST_BSL_MARKER)
   end
 
-  def validate_boost_license_signals!(path, bytes)
-    additional = BOOST_ALTERNATE_LICENSE_MARKERS.filter_map { |name, marker| name if bytes.match?(marker) }
-    fail!("additional Boost subset license markers in #{path}: #{additional.join(', ')}") unless additional.empty?
+  def boost_entry_kind!(entry)
+    return "regular_file" if entry.file?
+    return "directory" if entry.directory?
+    return "pax_extended_header" if entry.header.typeflag == "x"
 
-    marked = boost_bsl_marker?(bytes)
-    fail!("unmapped Boost subset legal signal in #{path}") if !marked && bytes.match?(BOOST_LEGAL_SIGNAL)
-    marked
+    fail!("unsupported Boost subset archive entry type #{entry.header.typeflag.inspect}: #{entry.full_name}")
   end
 
   def boost_license_mapping(path, canonical_license)
@@ -219,20 +212,30 @@ module XbergNativeSource
     source_paths = []
     marked_paths = []
     unmarked_paths = []
+    directory_paths = []
+    pax_paths = []
     metadata = {}
     seen = {}
     Zlib::GzipReader.open(path) do |gzip|
       Gem::Package::TarReader.new(gzip) do |tar|
         tar.each do |entry|
-          next if %w[x g].include?(entry.header.typeflag) || !entry.file?
-
           name = clean_tar_path(entry.full_name)
-          fail!("duplicate Boost subset path: #{name}") if seen.key?(name)
-          seen[name] = true
+          kind = boost_entry_kind!(entry)
+          identity = [kind, name]
+          fail!("duplicate Boost subset entry: #{kind} #{name}") if seen.key?(identity)
+          seen[identity] = true
+          if kind == "directory"
+            directory_paths << name
+            next
+          elsif kind == "pax_extended_header"
+            pax_paths << name
+            next
+          end
+
           bytes = entry.read
           if name.start_with?(BOOST_SOURCE_PREFIX)
             source_paths << name
-            if validate_boost_license_signals!(name, bytes)
+            if boost_bsl_marker?(bytes)
               marked_paths << name
             else
               unmarked_paths << name
@@ -251,7 +254,9 @@ module XbergNativeSource
     expected_sets = [
       ["source", source_paths, BOOST_SOURCE_FILES, BOOST_SOURCE_PATH_SHA256],
       ["BSL-marked", marked_paths, BOOST_BSL_MARKER_FILES, BOOST_BSL_MARKER_PATH_SHA256],
-      ["unmarked", unmarked_paths, BOOST_UNMARKED_FILES, BOOST_UNMARKED_PATH_SHA256]
+      ["without detected BSL marker", unmarked_paths, BOOST_UNMARKED_FILES, BOOST_UNMARKED_PATH_SHA256],
+      ["directory", directory_paths, BOOST_DIRECTORY_ENTRIES, BOOST_DIRECTORY_PATH_SHA256],
+      ["PAX", pax_paths, BOOST_PAX_ENTRIES, BOOST_PAX_PATH_SHA256]
     ]
     expected_sets.each do |label, paths, count, digest|
       fail!("unexpected Boost subset #{label} file count") unless paths.length == count
@@ -260,15 +265,25 @@ module XbergNativeSource
     fail!("missing Boost subset metadata") unless metadata.keys.sort == BOOST_METADATA.keys.sort
 
     {
-      "spdx" => "BSL-1.0",
-      "canonical_text_sha256" => canonical_license.fetch("sha256"),
-      "mapping_basis" => "exact Boost include-tree membership with all detected legal signals paired to embedded BSL markers",
+      "canonical_bsl_candidate" => {
+        "spdx" => "BSL-1.0",
+        "text_sha256" => canonical_license.fetch("sha256")
+      },
+      "scope" => "exact archive membership and observed embedded BSL markers; not exhaustive legal classification",
       "source_files" => { "path_prefix" => BOOST_SOURCE_PREFIX, "count" => source_paths.length, "path_sha256" => path_digest(source_paths) },
       "embedded_bsl_markers" => { "count" => marked_paths.length, "path_sha256" => path_digest(marked_paths) },
-      "unmarked_source_files" => { "count" => unmarked_paths.length, "path_sha256" => path_digest(unmarked_paths), "legal_signals_detected" => 0 },
+      "without_detected_bsl_marker" => { "count" => unmarked_paths.length, "path_sha256" => path_digest(unmarked_paths) },
+      "archive_structure" => {
+        "regular_files" => source_paths.length + metadata.length,
+        "directories" => { "count" => directory_paths.length, "path_sha256" => path_digest(directory_paths) },
+        "pax_extended_headers" => { "count" => pax_paths.length, "path_sha256" => path_digest(pax_paths) },
+        "links_or_special_entries" => 0
+      },
       "non_source_metadata" => metadata.sort.map { |name, record| record.merge("path" => name) },
-      "additional_license_obligations" => [],
-      "complete" => true
+      "additional_license_obligations_complete" => false,
+      "bsl_only_complete" => false,
+      "complete" => false,
+      "pending" => "exhaustive source-level license and notice classification for all 9,599 Boost subset files"
     }
   end
 
@@ -357,7 +372,7 @@ module XbergNativeSource
       },
       "claims" => {
         "native_source_inventory_complete" => true,
-        "native_license_source_complete" => true,
+        "native_license_source_complete" => false,
         "compilation_observed" => false,
         "native_archives_observed" => false,
         "libz_sys_static_environment_observed" => false,
@@ -368,6 +383,7 @@ module XbergNativeSource
         "final_linked_license_complete" => false
       },
       "blockers" => [
+        "The exact Boost subset inventory is bound, but exhaustive native license and notice classification is not established.",
         "No compilation witness binds libxberg_libwpd.a or libz.a to these source digests.",
         "No build observation proves LIBZ_SYS_STATIC was unset or did not override Cargo's static feature.",
         "No linker map, ELF symbol/archive evidence, RPM payload, or final linked-license accounting is bound."
