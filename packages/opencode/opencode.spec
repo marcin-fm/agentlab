@@ -60,7 +60,7 @@
 %global binary_embedding_auditor_sha256 9f77823c4ef29d38bb1a09f0a322d337765de9b3e284e5b6d370fea3d0ff8451
 %global binary_embedding_receipt_sha256 b04eb9b2c13eff831d49786f6615480573f52a18b9f6e1880338bb9090431451
 %global final_license_auditor_sha256 7819935eba043fb30ff261ced64b7bf5b60c01021f881eedd632cbc61bdfdc20
-%global final_license_receipt_sha256 0bbd4941e700d0e94833c8c6174e01fd624b8e3834dedcf805e6c511332e60dc
+%global final_license_receipt_sha256 b464f04e5b9fdba776db89363700ba5512642115e59b84f10c0af2b62e109760
 %global bundle_metafile_patch_sha256 1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4
 %global license_review_sha256 55e27e81cd0811723c42631f0c72c753b54c158f97b02d06740e816242f36868
 %global aws_sdk_license_sha256 edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d
@@ -88,7 +88,7 @@
 
 Name:           opencode
 Version:        1.18.8
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Open-source AI coding agent
 
 # MIT covers OpenCode itself. Final license metadata must reflect OpenCode and
@@ -1381,6 +1381,10 @@ install -Dpm0755 \
 %{_bindir}/opencode
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.18.8-0.2
+- Refresh the final-license preflight for Bun's supplemental peechy MIT text.
+- Preserve blocked status and all remaining license, build, and publication holds.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 1.18.8-0.1
 - Refresh the exact released source graph and source-side evidence.
 - Preserve blocked status and all unresolved binary, license, and publication holds.

@@ -251,18 +251,15 @@ binary_embedding_proof:
   rpm_license_payload_complete: false
 final_license_preflight:
   schema: agentlab-opencode-final-license-closure/v1
-  audit_date: "2026-07-28"
-  receipt_sha256: 0bbd4941e700d0e94833c8c6174e01fd624b8e3834dedcf805e6c511332e60dc
+  audit_date: "2026-07-31"
+  receipt_sha256: b464f04e5b9fdba776db89363700ba5512642115e59b84f10c0af2b62e109760
   auditor_sha256: 7819935eba043fb30ff261ced64b7bf5b60c01021f881eedd632cbc61bdfdc20
-  bun_final_linked_license_sha256: b2236a6aefbc898f1e3f32ae3db56aa498c4e8e8f82f98f59149643629f9f1db
+  bun_final_linked_license_sha256: 31ce9f7da56bfa78195dc35ce73541499ddbf68dcc4850a9230689781c881835
   opencode_notice_holds: 3
   bun_webkit_headerless_holds: 6
   native_wasm_source_mappings_verified: 14
   final_aggregate_license_expression_verified: false
   rpm_license_payload_complete: false
-  source_rpm_nvr: opencode-1.18.8-0.1.fc44
-  source_rpm_sha256:
-  source_members: 53
   configured_scm_generation_verified: false
   binary_build_performed: false
   rpm_installed: false

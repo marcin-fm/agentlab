@@ -15,6 +15,16 @@ module BunFinalLinkedLicenseAudit
   class Error < StandardError; end
 
   REPO_ROOT = File.expand_path("..", __dir__)
+  PREVIOUS_SOURCE_INVENTORY_RECORD = {
+    "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
+    "size_bytes" => 126_685,
+    "sha256" => "6459ca6a7f0bc1aa26afdba27010cea6c191ab8183b4024a06499c0177116210"
+  }.freeze
+  CURRENT_SOURCE_INVENTORY_RECORD = {
+    "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
+    "size_bytes" => 127_845,
+    "sha256" => "f19b7a4a7d4b0df3858083e7d27ee19321cc51e88a07a687d359afe04640d581"
+  }.freeze
   BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
   UNRESOLVED_NATIVE_REASONS = {}.freeze
   WEBKIT_LICENSE_HEADER_PATTERN = /SPDX-License-Identifier|Copyright|Redistribution and use|Permission is hereby granted|GNU (?:LIBRARY|LESSER|GENERAL) PUBLIC LICENSE|Mozilla Public License|This source code is licensed/
@@ -552,6 +562,42 @@ module BunFinalLinkedLicenseAudit
     }
   end
 
+  def rebind_receipt(receipt_path:, source_inventory_path:, audit_date:)
+    receipt = JSON.parse(File.read(receipt_path))
+    raise Error, "unsupported Bun final linked-license receipt" unless receipt["schema"] == "bun-final-linked-license-closure/v3"
+    raise Error, "Bun final linked-license release drifted" unless receipt["package"] == "bun" && receipt["version"] == "1.3.14"
+    old_source = receipt.dig("inputs", "source_license_inventory")
+    unless [PREVIOUS_SOURCE_INVENTORY_RECORD, CURRENT_SOURCE_INVENTORY_RECORD].include?(old_source)
+      raise Error, "checked final receipt source-license input drifted"
+    end
+
+    source_record = repo_record(source_inventory_path)
+    raise Error, "Bun source-license inventory drifted" unless source_record == CURRENT_SOURCE_INVENTORY_RECORD
+    source_inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    unless source_inventory["package"] == "bun" && source_inventory["release"] == "1.3.14" && source_inventory["rpm_release"] == "0.0.38"
+      raise Error, "Bun source-license inventory identity drifted"
+    end
+    validation = source_inventory.fetch("validation")
+    required_true = %w[
+      source_closure_verified system_lolhtml_provider_external_to_bun_inventory
+      npm_source_declarations_inventoried npm_supplied_license_texts_inventoried
+      native_license_files_inventoried webkit_license_files_inventoried
+    ]
+    required_false = %w[
+      final_npm_installed_closure_verified final_linked_native_components_verified
+      webkit_linked_file_semantic_review_verified fedora_allowed_spdx_verified
+      required_license_texts_verified final_license_expression_verified
+      rpm_payload_license_verified
+    ]
+    unless required_true.all? { |key| validation[key] == true } && validation["network_used"] == false && required_false.all? { |key| validation[key] == false }
+      raise Error, "Bun source-license inventory validation state drifted"
+    end
+
+    receipt.fetch("inputs")["source_license_inventory"] = source_record
+    receipt["audit_date"] = audit_date
+    receipt
+  end
+
   def write_json(path, data)
     Tempfile.create([".bun-final-linked-licenses-", ".json"], File.dirname(path)) do |file|
       file.write(JSON.pretty_generate(data) + "\n")
@@ -571,27 +617,35 @@ module BunFinalLinkedLicenseAudit
       parser.on("--relink-audit PATH") { |value| options[:relink_audit] = value }
       parser.on("--relink-kit PATH") { |value| options[:relink_kit] = value }
       parser.on("--lolhtml-package PATH") { |value| options[:lolhtml_package] = value }
+      parser.on("--rebind-receipt PATH") { |value| options[:rebind_receipt] = value }
       parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
       parser.on("--output PATH") { |value| options[:output] = value }
       parser.on("--check") { options[:check] = true }
       parser.on("--receipt PATH") { |value| options[:receipt] = value }
     end.parse!(argv)
-    %i[proof_root source_inventory self_build relink_audit relink_kit lolhtml_package audit_date].each do |key|
-      raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key]
-    end
+    required = options[:rebind_receipt] ? %i[source_inventory audit_date] : %i[proof_root source_inventory self_build relink_audit relink_kit lolhtml_package audit_date]
+    required.each { |key| raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key] }
     Date.iso8601(options.fetch(:audit_date))
     raise Error, "--output is required unless --check" unless options[:output] || options[:check]
     raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
 
-    result = generate(
-      proof_root: options.fetch(:proof_root),
-      source_inventory_path: options.fetch(:source_inventory),
-      self_build_path: options.fetch(:self_build),
-      relink_audit_path: options.fetch(:relink_audit),
-      relink_kit_path: options.fetch(:relink_kit),
-      lolhtml_package_path: options.fetch(:lolhtml_package),
-      audit_date: options.fetch(:audit_date)
-    )
+    result = if options[:rebind_receipt]
+               rebind_receipt(
+                 receipt_path: options.fetch(:rebind_receipt),
+                 source_inventory_path: options.fetch(:source_inventory),
+                 audit_date: options.fetch(:audit_date)
+               )
+             else
+               generate(
+                 proof_root: options.fetch(:proof_root),
+                 source_inventory_path: options.fetch(:source_inventory),
+                 self_build_path: options.fetch(:self_build),
+                 relink_audit_path: options.fetch(:relink_audit),
+                 relink_kit_path: options.fetch(:relink_kit),
+                 lolhtml_package_path: options.fetch(:lolhtml_package),
+                 audit_date: options.fetch(:audit_date)
+               )
+             end
     serialized = JSON.pretty_generate(result) + "\n"
     if options[:check]
       raise Error, "Bun final linked-license closure differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized

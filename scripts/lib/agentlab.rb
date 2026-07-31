@@ -3077,8 +3077,8 @@ module Agentlab
     expected_counts = {
       "direct_sources" => 22,
       "generated_sources" => 1,
-      "packaging_sources" => 9,
-      "declared_sources" => 32,
+      "packaging_sources" => 10,
+      "declared_sources" => 33,
       "patches" => spec.scan(/^Patch\d+:\s+/).length
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
@@ -3141,6 +3141,13 @@ module Agentlab
       "sha256" => npm_codegen["audit_script_sha256"]
     }
     errors << "bun: source-delivery npm code-generation audit script mismatch" unless generation["npm_code_generation_audit_script"] == expected_npm_codegen_script
+    peechy_license = package.data.dig("build_plan", "source_inputs", "supplemental_license_texts", "peechy_0_4_34") || {}
+    expected_peechy_license = {
+      "filename" => peechy_license["source"],
+      "size_bytes" => File.file?(File.join(package.directory, peechy_license["source"].to_s)) ? File.size(File.join(package.directory, peechy_license["source"])) : nil,
+      "sha256" => peechy_license["sha256"]
+    }
+    errors << "bun: source-delivery peechy license text mismatch" unless generation["peechy_license_text"] == expected_peechy_license
 
     srpm = receipt.fetch("srpm", {})
     errors << "bun: source-delivery SRPM filename mismatch" unless srpm["filename"] == "bun-#{version}-#{spec_release}.fc44.src.rpm"
@@ -3170,7 +3177,7 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source31 layout" unless source_indexes == (0..31).to_a
+    errors << "bun: spec does not declare the complete Source0-Source32 layout" unless source_indexes == (0..32).to_a
     npm_spec_filename = staging.dig("npm_union", "filename").to_s.sub(version, "%{version}")
     errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source22:\s+#{Regexp.escape(npm_spec_filename)}$/)
     staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
@@ -3183,6 +3190,7 @@ module Agentlab
     errors << "bun: spec npm code-generation closure filename mismatch" unless spec.match?(/^Source29:\s+#{Regexp.escape(npm_codegen["source"].to_s.gsub(version, "%{version}"))}$/)
     errors << "bun: spec npm code-generation audit script mismatch" unless spec.match?(/^Source30:\s+#{Regexp.escape(npm_codegen["audit_script_source"].to_s)}$/)
     errors << "bun: spec arm64 closure source mismatch" unless spec.match?(/^Source31:\s+bun-%\{version\}-release-local-source-closure-arm64\.json$/)
+    errors << "bun: spec peechy license source mismatch" unless spec.match?(/^Source32:\s+#{Regexp.escape(peechy_license["source"].to_s.gsub(version, "%{version}"))}$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -3392,6 +3400,27 @@ module Agentlab
     ["bun: invalid dependency-staging proof receipt: #{e.message}"]
   end
 
+  def bun_peechy_supplemental_license_text
+    {
+      "source_archive_sha256" => "135dcdcd42984756d18a31aedcb9a1b670261522542c6dc7c3fca6e1aa42534d",
+      "declared_license" => "MIT",
+      "repository" => "https://github.com/jarred-sumner/peechy",
+      "registry_git_head" => "069e5cfcbf1dff9a738be759671ef0d15c2c9da4",
+      "repository_license_commit" => "dba47f9680fdf7886fddaf6fc3589b845241eb83",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+      "normalized_text_sha256" => "7e74f1d97feb9e6aa3affbefa74ef914361fe0f0e9a167c961913e7e9d7895be",
+      "upstream_request" => { "attempted" => true, "available" => false, "reason" => "issues_disabled" },
+      "npm_archive_text_present" => false,
+      "exact_release_source_correspondence_verified" => false,
+      "text" => {
+        "path" => "packages/bun/bun-1.3.14-peechy-0.4.34-LICENSE.md",
+        "size_bytes" => 1_062,
+        "sha256" => "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e"
+      }
+    }
+  end
+
   def validate_bun_source_license_inventory(package, inventory, dependency_stage, version, spec)
     return [] unless package.name == "bun" && inventory.is_a?(Hash)
 
@@ -3514,7 +3543,9 @@ module Agentlab
                            constants["license_text_resolution"] == constants_text
     errors << "bun: source-license constants-browserify license text resolution mismatch" unless valid_constants_text
     peechy = npm_records.find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
-    errors << "bun: source-license peechy text hold mismatch" unless peechy && peechy["license"] == "MIT" && Array(peechy["license_files"]).empty? && peechy["license_text_resolution"].nil?
+    valid_peechy_text = peechy && peechy["license"] == "MIT" && Array(peechy["license_files"]).empty? &&
+                        peechy["license_text_resolution"].nil? && peechy["supplemental_license_text"] == bun_peechy_supplemental_license_text
+    errors << "bun: source-license peechy supplemental text mismatch" unless valid_peechy_text
     errors << "bun: source-license npm declaration-gap count mismatch" unless Array(npm["missing_license_field"]).length == inventory["npm_missing_license_fields"]
     errors << "bun: source-license npm declaration gaps lack supplied texts" unless Array(npm["missing_license_field"]).all? { |record| Array(record["license_files"]).any? }
     errors << "bun: source-license npm declaration gaps mismatch" unless Array(npm["missing_license_field"]).map { |record| record["name"] }.sort == %w[bun-tracestrings console-browserify]
@@ -3571,6 +3602,7 @@ module Agentlab
       "ruby %{SOURCE26}",
       "--rpm-release #{spec_release}",
       "--date #{receipt['audit_date']}",
+      "--peechy-license \"%{SOURCE32}\"",
       "--check",
       "--receipt \"%{SOURCE25}\""
     ]
@@ -3755,16 +3787,7 @@ module Agentlab
         !record["selected_expression"].empty? && Array(record["license_files"]).all? { |file| file["path"].is_a?(String) && file["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) }
     end
     errors << "bun: npm code-generation package records mismatch" unless valid_packages
-    missing_texts = Array(npm["packages_missing_required_text"])
-    expected_missing = [["peechy", "0.4.34"]]
-    actual_missing = missing_texts.map { |record| [record["name"], record["version"]] }.sort
-    errors << "bun: npm code-generation missing-text inventory mismatch" unless actual_missing == expected_missing
-    valid_missing = missing_texts.all? do |record|
-      evidence = record["evidence"] || {}
-      evidence["repository"].to_s.start_with?("https://github.com/") && evidence["commit"].to_s.match?(/\A[0-9a-f]{40}\z/) &&
-        evidence["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) && evidence["exact_release_source_correspondence_verified"] == false
-    end
-    errors << "bun: npm code-generation missing-text evidence mismatch" unless valid_missing
+    errors << "bun: npm code-generation missing-text inventory mismatch" unless Array(npm["packages_missing_required_text"]).empty?
     constants_text = {
       "source_archive_sha256" => "ea9307fd609ddce9497e3ca6b49e6102d7326bd337f66c10143b7b326f931f59",
       "repository" => "https://github.com/juliangruber/constants-browserify",
@@ -3787,6 +3810,11 @@ module Agentlab
                            constants["license_files"] == [constants_text.fetch("package_text")] && constants["license_text_resolution"] == constants_text &&
                            constants["missing_text_evidence"].nil?
     errors << "bun: npm code-generation constants-browserify license text resolution mismatch" unless valid_constants_text
+    peechy = package_records.find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
+    valid_peechy_text = peechy && peechy["selected_expression"] == "MIT" && peechy["required_text_present"] == true &&
+                        Array(peechy["license_files"]).empty? && peechy["supplemental_license_text"] == bun_peechy_supplemental_license_text &&
+                        peechy["missing_text_evidence"].nil?
+    errors << "bun: npm code-generation peechy supplemental text mismatch" unless valid_peechy_text
 
     true_validation = %w[
       source_built_npm_receipts_verified
@@ -3794,13 +3822,13 @@ module Agentlab
       linked_generated_output_mapping_verified
       undeclared_header_generator_side_effects_verified
       selected_package_license_expressions_verified
+      all_selected_package_license_texts_verified
     ]
     false_validation = %w[
       network_used
       package_manager_invoked
       build_invoked
       generated_output_producer_edges_verified
-      all_selected_package_license_texts_verified
       final_npm_codegen_closure_verified
       final_license_expression_verified
       rpm_payload_license_verified
@@ -3810,8 +3838,8 @@ module Agentlab
     valid_metadata = metadata["undeclared_header_generator_side_effects_verified"] == true &&
                      metadata["generated_output_producer_edges_verified"] == false &&
                      metadata["generator_execution_reproduced"] == false &&
-                     metadata["final_npm_codegen_closure_verified"] == false &&
-                     metadata["all_selected_package_license_texts_verified"] == false
+                      metadata["final_npm_codegen_closure_verified"] == false &&
+                      metadata["all_selected_package_license_texts_verified"] == true
     errors << "bun: npm code-generation metadata overclaims completion" unless valid_metadata
 
     required_spec_fragments = [
@@ -6215,7 +6243,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.1%{?dist}",
+            "Release:        0.2%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       %{name}-%{version}-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -6501,7 +6529,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.1%{?dist}",
+        "Release:        0.2%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -7044,9 +7072,6 @@ module Agentlab
           "native_wasm_source_mappings_verified" => final_license.dig("native_and_wasm", "source_mappings_verified"),
           "final_aggregate_license_expression_verified" => false,
           "rpm_license_payload_complete" => false,
-          "source_rpm_nvr" => "opencode-#{release}-0.1.fc44",
-          "source_rpm_sha256" => nil,
-          "source_members" => 53,
           "configured_scm_generation_verified" => false,
           "binary_build_performed" => false,
           "rpm_installed" => false,
@@ -7072,7 +7097,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.1%{?dist}",
+          "Release:        0.2%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

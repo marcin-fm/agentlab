@@ -4,7 +4,7 @@ blockers:
   - Fedora Packaging Committee approval is required before the upstream Bun seed may drive the initial source build.
   - The external lol-html 3.0.0 package and Bun system-link patch require target Mock proof.
   - The complete LGPL relink kit is proven locally but lacks approved immutable delivery and final RPM integration.
-  - Six Bun WebKit fork files lack explicit terms, and peechy 0.4.34 omits the required MIT text from its exact npm archive. constants-browserify 1.0.0 carries the complete notice in its exact release README.
+  - Six Bun WebKit fork files lack explicit terms. Pechy 0.4.34 omits the required MIT text from its exact npm archive, but Source32 now supplies the canonical upstream text while exact release-source correspondence remains unverified.
   - Final bundled-license accounting, the aarch64 Bun build chain, RPM acceptance, and COPR acceptance are incomplete.
 upstream:
   provider: github
@@ -155,13 +155,13 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: 6459ca6a7f0bc1aa26afdba27010cea6c191ab8183b4024a06499c0177116210
+      sha256: f19b7a4a7d4b0df3858083e7d27ee19321cc51e88a07a687d359afe04640d581
       audit_script: scripts/audit-bun-source-licenses
-      audit_script_sha256: 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
+      audit_script_sha256: 581d10dd37231ae455122275ded7d3fe241ba61a1c380b2d89c19b54a7861c94
       audit_script_source: audit-bun-source-licenses
       npm_cache_entries: 236
-      npm_entries_with_license_text: 222
-      npm_entries_without_license_text: 14
+      npm_entries_with_license_text: 223
+      npm_entries_without_license_text: 13
       npm_missing_license_fields: 2
       native_components: 18
       picohttpparser_selected_license: MIT
@@ -175,12 +175,29 @@ build_plan:
       final_linked_closure_verified: false
       final_license_expression_verified: false
       required_license_texts_verified: false
+    supplemental_license_texts:
+      peechy_0_4_34:
+        relationship: canonical_upstream_text_for_textless_signed_npm_archive
+        source: bun-1.3.14-peechy-0.4.34-LICENSE.md
+        sha256: a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e
+        source_archive_sha256: 135dcdcd42984756d18a31aedcb9a1b670261522542c6dc7c3fca6e1aa42534d
+        declared_license: MIT
+        repository: https://github.com/jarred-sumner/peechy
+        registry_git_head: 069e5cfcbf1dff9a738be759671ef0d15c2c9da4
+        repository_license_commit: dba47f9680fdf7886fddaf6fc3589b845241eb83
+        repository_license_path: LICENSE.md
+        upstream_request:
+          attempted: true
+          available: false
+          reason: issues_disabled
+        npm_archive_text_present: false
+        exact_release_source_correspondence_verified: false
     npm_code_generation_closure:
       relationship: current_codegen_package_linked_output_and_side_effect_mapping
       source: bun-1.3.14-npm-code-generation-closure.json
-      sha256: 4046d67c4ca5d3dbc3cfd9c80258bb3168cb20d3cb3d9274b01b1b54e928b9cc
+      sha256: 9e756483322f437eb0847acc54354068142966e8b1f609ce8f5c444b6b742f98
       audit_script: scripts/audit-bun-npm-code-generation
-      audit_script_sha256: 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
+      audit_script_sha256: 8615f5412a8f56388a852fb68b7d96376e260fa30b613d21b15b89c7ece6f993
       audit_script_source: audit-bun-npm-code-generation
       build_ninja_size_bytes: 2469137
       build_ninja_sha256: 9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3
@@ -188,22 +205,21 @@ build_plan:
       objects_consuming_generated_code: 37
       generated_output_count: 30
       selected_package_manifest_count: 38
-      packages_with_required_text: 37
-      unresolved_required_text_packages:
-        - peechy@0.4.34
+      packages_with_required_text: 38
+      unresolved_required_text_packages: []
       declared_codegen_package_manifest_mapping_verified: true
       linked_generated_output_mapping_verified: true
       undeclared_header_generator_side_effects_verified: true
       generated_output_producer_edges_verified: false
       generator_execution_reproduced: false
-      all_selected_package_license_texts_verified: false
+      all_selected_package_license_texts_verified: true
       final_npm_codegen_closure_verified: false
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: b2236a6aefbc898f1e3f32ae3db56aa498c4e8e8f82f98f59149643629f9f1db
+      sha256: 31ce9f7da56bfa78195dc35ce73541499ddbf68dcc4850a9230689781c881835
       audit_script: scripts/audit-bun-final-linked-licenses
-      audit_script_sha256: 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
+      audit_script_sha256: c9a6413f1901f02fba289613aabbf69eb8d78a69357214b0505cbc666aa709c3
       audit_script_source: audit-bun-final-linked-licenses
       direct_object_count: 1162
       direct_archive_count: 3
@@ -455,7 +471,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: d77b69d9773727b8e0fdd9b4622ba68be1a49df65de08825281a33a9cddfcfd6
+      proof_receipt_sha256: 017c2726da78813d796a5c735c8b3f64b96f0a77ad387b2d56b476ebbc75a3c5
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -489,7 +505,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: 29dde7bad566aa722cdf77a03fff4f0ad38890f102e487de541b77501a3734f2
+      proof_receipt_sha256: c4c226f9a1b76f3a22a936e9f9d56a7d64d7638d8818d5a9c32293bcf3c7fc93
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true

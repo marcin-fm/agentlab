@@ -16,12 +16,18 @@ module BunNpmCodeGenerationAudit
   REPO_ROOT = File.expand_path("..", __dir__)
   NPM_PACKAGE_JSON_PATTERN = %r{\.\./\.\./source/(?:node_modules|packages/bun-error/node_modules|src/node-fallbacks/node_modules)/[^\s:|]+/package\.json}
   LICENSE_PATTERN = /\A(?:licen[cs]e|copying|notice|copyright)(?:[-._].*)?\z/i
-  MISSING_TEXT_EVIDENCE = {
+  SUPPLEMENTAL_TEXT_EVIDENCE = {
     ["peechy", "0.4.34"] => {
+      "source_archive_sha256" => "135dcdcd42984756d18a31aedcb9a1b670261522542c6dc7c3fca6e1aa42534d",
+      "declared_license" => "MIT",
       "repository" => "https://github.com/jarred-sumner/peechy",
-      "commit" => "11a618c2fb2d0e05bb0edf1a871d131dedc779ee",
-      "path" => "LICENSE.md",
-      "sha256" => "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+      "registry_git_head" => "069e5cfcbf1dff9a738be759671ef0d15c2c9da4",
+      "repository_license_commit" => "dba47f9680fdf7886fddaf6fc3589b845241eb83",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+      "normalized_text_sha256" => "7e74f1d97feb9e6aa3affbefa74ef914361fe0f0e9a167c961913e7e9d7895be",
+      "upstream_request" => { "attempted" => true, "available" => false, "reason" => "issues_disabled" },
+      "npm_archive_text_present" => false,
       "exact_release_source_correspondence_verified" => false
     }
   }.freeze
@@ -254,7 +260,31 @@ module BunNpmCodeGenerationAudit
     CGI.unescapeHTML(text[start..]).gsub(/\s+/, " ").strip
   end
 
-  def package_records(source_root, manifest_paths)
+  def supplemental_license_text(name, version, declaration, path, expected_directory:)
+    evidence = SUPPLEMENTAL_TEXT_EVIDENCE[[name, version]]
+    return unless evidence
+
+    raise Error, "missing supplemental npm license text: #{name}@#{version}" unless path && File.file?(path)
+    raise Error, "unexpected supplemental npm license text filename: #{name}@#{version}" unless File.basename(path) == "bun-1.3.14-peechy-0.4.34-LICENSE.md"
+    unless File.dirname(File.realpath(path)) == File.realpath(expected_directory)
+      raise Error, "supplemental npm license text is outside the checked source directory: #{name}@#{version}"
+    end
+    raise Error, "npm license declaration drifted: #{name}@#{version}" unless declaration == evidence.fetch("declared_license")
+    raise Error, "supplemental npm license text drifted: #{name}@#{version}" unless sha256(path) == evidence.fetch("repository_license_sha256")
+    unless Digest::SHA256.hexdigest(normalized_license_text(path)) == evidence.fetch("normalized_text_sha256")
+      raise Error, "normalized supplemental npm license text drifted: #{name}@#{version}"
+    end
+
+    evidence.merge(
+      "text" => {
+        "path" => "packages/bun/#{File.basename(path)}",
+        "size_bytes" => File.size(path),
+        "sha256" => sha256(path)
+      }
+    )
+  end
+
+  def package_records(source_root, manifest_paths, supplemental_license_text_path:, supplemental_license_text_directory:)
     records = manifest_paths.map do |manifest_path|
       package_root = File.dirname(manifest_path)
       package_json = JSON.parse(File.read(manifest_path))
@@ -274,6 +304,13 @@ module BunNpmCodeGenerationAudit
       end
       expression = selected_expression(package_json, license_paths)
       raise Error, "npm package has no selected license expression: #{name}@#{version}" unless expression
+      supplemental = supplemental_license_text(
+        name,
+        version,
+        package_json["license"],
+        supplemental_license_text_path,
+        expected_directory: supplemental_license_text_directory
+      )
 
       record = {
         "name" => name,
@@ -281,10 +318,9 @@ module BunNpmCodeGenerationAudit
         "manifest" => file_record(manifest_path, source_root),
         "selected_expression" => expression,
         "license_files" => license_paths.map { |path| file_record(path, source_root) },
-        "required_text_present" => license_paths.any?
+        "required_text_present" => license_paths.any? || !supplemental.nil?
       }
-      evidence = MISSING_TEXT_EVIDENCE[[name, version]]
-      record["missing_text_evidence"] = evidence if evidence
+      record["supplemental_license_text"] = supplemental if supplemental
       if resolution
         record["license_text_resolution"] = resolution.reject { |key, _value| key == "package_text_path" || key == "package_text_sha256" }.merge(
           "package_text" => file_record(File.join(package_root, resolution.fetch("package_text_path")), source_root)
@@ -298,7 +334,7 @@ module BunNpmCodeGenerationAudit
     records.sort_by { |record| [record.fetch("name"), record.fetch("version").to_s, record.dig("manifest", "path")] }
   end
 
-  def generate(proof_root:, source_inventory_path:, first_npm_path:, self_npm_path:, audit_date:)
+  def generate(proof_root:, source_inventory_path:, first_npm_path:, self_npm_path:, supplemental_license_text_path:, audit_date:)
     root = File.realpath(proof_root)
     source_root = File.join(root, "source")
     build_root = File.join(root, "build", "release-local")
@@ -329,12 +365,14 @@ module BunNpmCodeGenerationAudit
     undeclared_outputs = generated_outputs.reject { |record| record["producer_edge_declared"] }
     producer_provenance = side_effect_provenance(source_root, build_root, edges, undeclared_outputs)
     package_manifests = selected_package_manifests(source_root, ninja)
-    packages = package_records(source_root, package_manifests)
+    packages = package_records(
+      source_root,
+      package_manifests,
+      supplemental_license_text_path: supplemental_license_text_path,
+      supplemental_license_text_directory: File.dirname(File.realpath(source_inventory_path))
+    )
     missing_texts = packages.reject { |record| record["required_text_present"] }
-    expected_missing = [["peechy", "0.4.34"]]
-    actual_missing = missing_texts.map { |record| [record["name"], record["version"]] }.sort
-    raise Error, "unexpected npm license-text gaps: #{actual_missing.inspect}" unless actual_missing == expected_missing
-    raise Error, "npm license-text gap lacks exact repository evidence" unless missing_texts.all? { |record| record.dig("missing_text_evidence", "sha256").to_s.match?(/\A[0-9a-f]{64}\z/) }
+    raise Error, "unexpected npm license-text gaps: #{missing_texts.map { |record| [record['name'], record['version']] }.inspect}" unless missing_texts.empty?
 
     {
       "schema" => "bun-npm-code-generation-closure/v2",
@@ -377,7 +415,7 @@ module BunNpmCodeGenerationAudit
         "undeclared_header_generator_side_effects_verified" => true,
         "generated_output_producer_edges_verified" => undeclared_outputs.empty?,
         "selected_package_license_expressions_verified" => true,
-        "all_selected_package_license_texts_verified" => false,
+        "all_selected_package_license_texts_verified" => true,
         "final_npm_codegen_closure_verified" => false,
         "final_license_expression_verified" => false,
         "rpm_payload_license_verified" => false
@@ -387,6 +425,35 @@ module BunNpmCodeGenerationAudit
         "excluded" => "distinct Ninja output edges for the nine headers, clean generator re-execution, unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
       }
     }
+  end
+
+  def refresh_receipt(receipt_path:, source_inventory_path:, supplemental_license_text_path:, audit_date:)
+    receipt = load_json(receipt_path, "bun-npm-code-generation-closure/v2")
+    inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    raise Error, "Bun release drifted while refreshing npm code-generation evidence" unless receipt.fetch("version") == inventory.fetch("release")
+
+    peechy = receipt.dig("npm", "selected_packages").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
+    raise Error, "checked receipt lacks the unresolved peechy record" unless peechy && peechy["required_text_present"] == false && peechy["missing_text_evidence"].is_a?(Hash)
+    source_peechy = inventory.dig("npm", "records").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
+    supplemental = supplemental_license_text(
+      "peechy",
+      "0.4.34",
+      "MIT",
+      supplemental_license_text_path,
+      expected_directory: File.dirname(File.realpath(source_inventory_path))
+    )
+    raise Error, "source inventory peechy supplemental text mismatch" unless source_peechy && source_peechy["supplemental_license_text"] == supplemental
+
+    peechy.delete("missing_text_evidence")
+    peechy["supplemental_license_text"] = supplemental
+    peechy["required_text_present"] = true
+    receipt["rpm_release"] = inventory.fetch("rpm_release")
+    receipt["audit_date"] = audit_date
+    receipt.fetch("inputs")["source_license_inventory"] = repo_record(source_inventory_path)
+    receipt.fetch("npm")["packages_with_required_text"] = receipt.dig("npm", "selected_packages").count { |record| record["required_text_present"] }
+    receipt.fetch("npm")["packages_missing_required_text"] = []
+    receipt.fetch("validation")["all_selected_package_license_texts_verified"] = true
+    receipt
   end
 
   def write_json(path, receipt)
@@ -408,25 +475,36 @@ module BunNpmCodeGenerationAudit
       parser.on("--source-inventory PATH") { |value| options[:source_inventory] = value }
       parser.on("--first-npm PATH") { |value| options[:first_npm] = value }
       parser.on("--self-npm PATH") { |value| options[:self_npm] = value }
+      parser.on("--peechy-license PATH") { |value| options[:supplemental_license_text] = value }
+      parser.on("--refresh-receipt PATH") { |value| options[:refresh_receipt] = value }
       parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
       parser.on("--output PATH") { |value| options[:output] = value }
       parser.on("--check") { options[:check] = true }
       parser.on("--receipt PATH") { |value| options[:receipt] = value }
     end.parse!(argv)
-    %i[proof_root source_inventory first_npm self_npm audit_date].each do |key|
-      raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key]
-    end
+    required = options[:refresh_receipt] ? %i[source_inventory supplemental_license_text audit_date] : %i[proof_root source_inventory first_npm self_npm supplemental_license_text audit_date]
+    required.each { |key| raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key] }
     Date.iso8601(options.fetch(:audit_date))
     raise Error, "--output is required unless --check" unless options[:output] || options[:check]
     raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
 
-    receipt = generate(
-      proof_root: options.fetch(:proof_root),
-      source_inventory_path: options.fetch(:source_inventory),
-      first_npm_path: options.fetch(:first_npm),
-      self_npm_path: options.fetch(:self_npm),
-      audit_date: options.fetch(:audit_date)
-    )
+    receipt = if options[:refresh_receipt]
+                refresh_receipt(
+                  receipt_path: options.fetch(:refresh_receipt),
+                  source_inventory_path: options.fetch(:source_inventory),
+                  supplemental_license_text_path: options.fetch(:supplemental_license_text),
+                  audit_date: options.fetch(:audit_date)
+                )
+              else
+                generate(
+                  proof_root: options.fetch(:proof_root),
+                  source_inventory_path: options.fetch(:source_inventory),
+                  first_npm_path: options.fetch(:first_npm),
+                  self_npm_path: options.fetch(:self_npm),
+                  supplemental_license_text_path: options.fetch(:supplemental_license_text),
+                  audit_date: options.fetch(:audit_date)
+                )
+              end
     serialized = JSON.pretty_generate(receipt) + "\n"
     if options[:check]
       raise Error, "Bun npm code-generation closure differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized

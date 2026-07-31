@@ -3,7 +3,7 @@
   "package": "bun",
   "version": "1.3.14",
   "target": "fedora-44-x86_64-glibc-system-lolhtml",
-  "audit_date": "2026-07-28",
+  "audit_date": "2026-07-31",
   "inputs": {
     "self_rebuild": {
       "path": "packages/bun/self-rebuild-proof.json",
@@ -12,8 +12,8 @@
     },
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
-      "size_bytes": 126685,
-      "sha256": "6459ca6a7f0bc1aa26afdba27010cea6c191ab8183b4024a06499c0177116210"
+      "size_bytes": 127845,
+      "sha256": "f19b7a4a7d4b0df3858083e7d27ee19321cc51e88a07a687d359afe04640d581"
     },
     "relink_audit": {
       "path": "packages/bun/relink-materials-proof.json",

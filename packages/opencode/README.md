@@ -8,6 +8,8 @@ The 745 integrity-checked registry archives now reproduce deterministic producti
 
 A network-isolated standalone build reports `1.18.8` and produces the checked 492-identity compiler map. The later full local rpmbuild was interrupted during Binaryen compilation and produced no source or binary RPM. Current configured-SCM source delivery, clean buildroot availability, RPM payload validation, and COPR proof therefore remain false.
 
+Release `1.18.8-0.2` refreshes the fail-closed final-license preflight against Bun `0.0.38`. Bun now supplies checked canonical upstream MIT text for selected `peechy 0.4.34`, while exact release-source correspondence remains false. The three OpenCode notice holds, six Bun WebKit fork-file holds, final aggregate expression, RPM license payload, clean target builds, and COPR remain unresolved.
+
 ## Historical 1.18.5 Evidence
 
 The first complete repository-backed source job produces `opencode-1.18.5-0.9.fc44.src.rpm`, SHA-256 `476f5a0c12578694dc88bb3c3fc0a1bcce0410cb49a0910aca9522f8cf505992`, with all 38 declared source members and valid RPM digests. This proves source delivery only; no OpenCode binary was built or installed.

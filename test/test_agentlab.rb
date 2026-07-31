@@ -3778,7 +3778,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.37", "--rpm-release 0.0.36")
+        spec.sub("--rpm-release 0.0.38", "--rpm-release 0.0.37")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -3788,7 +3788,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--date 2026-07-28", "--date 2026-07-27")
+        spec.sub("--date 2026-07-31", "--date 2026-07-30")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -3800,6 +3800,10 @@ class AgentlabTest < Minitest::Test
       FileUtils.cp(File.join(package.directory, copied_inventory.fetch("source")), receipt_path)
       closure_name = data.fetch("build_plan").fetch("stages").fetch("dependency_closure").fetch("proof_receipt")
       FileUtils.cp(File.join(package.directory, closure_name), File.join(directory, closure_name))
+      FileUtils.cp(
+        File.join(package.directory, "bun-1.3.14-peechy-0.4.34-LICENSE.md"),
+        File.join(directory, "bun-1.3.14-peechy-0.4.34-LICENSE.md")
+      )
       mutated = JSON.parse(File.read(receipt_path))
       mutated.fetch("validation")["final_license_expression_verified"] = true
       mutated.fetch("webkit").fetch("candidate_license_files").first["path"] = "../escape"
@@ -3807,6 +3811,8 @@ class AgentlabTest < Minitest::Test
       mutated.fetch("npm").fetch("records").first["version"] = "0.0.0"
       constants = mutated.fetch("npm").fetch("records").find { |record| record["name"] == "constants-browserify" }
       constants.fetch("license_text_resolution")["repository_license_sha256"] = "0" * 64
+      peechy = mutated.fetch("npm").fetch("records").find { |record| record["name"] == "peechy" }
+      peechy.fetch("supplemental_license_text").fetch("text")["sha256"] = "0" * 64
       File.write(receipt_path, JSON.pretty_generate(mutated) + "\n")
       copied_inventory["sha256"] = Digest::SHA256.file(receipt_path).hexdigest
       copied_package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -3823,6 +3829,7 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: source-license native identities do not match the source closure")
       assert_includes(errors, "bun: source-license npm identities do not match the source closure")
       assert_includes(errors, "bun: source-license constants-browserify license text resolution mismatch")
+      assert_includes(errors, "bun: source-license peechy supplemental text mismatch")
     end
   end
 
@@ -3916,7 +3923,8 @@ class AgentlabTest < Minitest::Test
       copied_metadata = data.dig("build_plan", "source_inputs", "npm_code_generation_closure")
       %w[
         bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-source-license-inventory.json
-        source-built-npm-install-proof.json source-built-self-npm-install-proof.json
+        bun-1.3.14-peechy-0.4.34-LICENSE.md source-built-npm-install-proof.json
+        source-built-self-npm-install-proof.json
       ].each do |name|
         FileUtils.cp(File.join(package.directory, name), File.join(directory, name))
       end
@@ -3932,6 +3940,8 @@ class AgentlabTest < Minitest::Test
       receipt.fetch("npm")["packages_with_required_text"] -= 1
       constants = receipt.fetch("npm").fetch("selected_packages").find { |record| record["name"] == "constants-browserify" }
       constants.fetch("license_text_resolution")["repository_license_sha256"] = "0" * 64
+      peechy = receipt.fetch("npm").fetch("selected_packages").find { |record| record["name"] == "peechy" }
+      peechy.fetch("supplemental_license_text").fetch("text")["sha256"] = "0" * 64
       receipt.fetch("validation")["undeclared_header_generator_side_effects_verified"] = false
       receipt.fetch("validation")["final_npm_codegen_closure_verified"] = true
       File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
@@ -3952,6 +3962,7 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: npm code-generation undeclared output semantics mismatch")
       assert_includes(errors, "bun: npm code-generation package counts mismatch")
       assert_includes(errors, "bun: npm code-generation constants-browserify license text resolution mismatch")
+      assert_includes(errors, "bun: npm code-generation peechy supplemental text mismatch")
       assert_includes(errors, "bun: npm code-generation mapping validation is incomplete")
       assert_includes(errors, "bun: npm code-generation closure overclaims completion")
     end
@@ -4071,7 +4082,7 @@ class AgentlabTest < Minitest::Test
     errors = Agentlab.validate_bun_multi_arch_source_delivery(source_package, mutated, "1.3.14", spec)
     assert_includes(errors, "bun: multi-architecture npm union metadata mismatch")
 
-    errors = Agentlab.validate_bun_multi_arch_source_delivery(source_package, staging, "1.3.14", spec.sub("Source31:       bun", "Source32:       bun"))
+    errors = Agentlab.validate_bun_multi_arch_source_delivery(source_package, staging, "1.3.14", spec.sub("Source31:       bun", "Source33:       bun"))
     assert_includes(errors, "bun: spec does not declare the checked multi-architecture source delivery")
   end
 

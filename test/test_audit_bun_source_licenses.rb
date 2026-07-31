@@ -82,8 +82,33 @@ class BunSourceLicenseAuditTest < Minitest::Test
     assert_equal(2, BunSourceLicenseAudit::EXPECTED_NPM_DECLARATIONS.fetch("<missing>"))
   end
 
+  def test_supplemental_text_must_share_the_checked_source_directory
+    Dir.mktmpdir("agentlab-bun-license-test-", "/srv/tmp") do |root|
+      checked = File.join(root, "checked")
+      outside = File.join(root, "outside")
+      FileUtils.mkdir_p([checked, outside])
+      license = File.join(outside, "bun-1.3.14-peechy-0.4.34-LICENSE.md")
+      FileUtils.cp(File.expand_path("../packages/bun/bun-1.3.14-peechy-0.4.34-LICENSE.md", __dir__), license)
+      source = { "sha256" => "135dcdcd42984756d18a31aedcb9a1b670261522542c6dc7c3fca6e1aa42534d" }
+      manifest = { "name" => "peechy", "version" => "0.4.34", "license" => "MIT" }
+
+      error = assert_raises(BunSourceLicenseAudit::Error) do
+        BunSourceLicenseAudit.npm_supplemental_license_text(source, manifest, license, expected_directory: checked)
+      end
+      assert_match(/outside the checked source directory/, error.message)
+    end
+  end
+
   def test_checked_inventory_keeps_final_license_claims_false
     receipt = JSON.parse(File.read(File.expand_path("../packages/bun/bun-1.3.14-source-license-inventory.json", __dir__)))
+    peechy = receipt.fetch("npm").fetch("records").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
+
+    assert_equal([], peechy.fetch("license_files"))
+    assert_equal(
+      "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+      peechy.dig("supplemental_license_text", "text", "sha256")
+    )
+    assert_equal(false, peechy.dig("supplemental_license_text", "exact_release_source_correspondence_verified"))
 
     %w[
       final_npm_installed_closure_verified

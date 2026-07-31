@@ -31,12 +31,13 @@
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a
 %global arm64_release_local_closure_sha256 d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a
-%global source_license_inventory_sha256 6459ca6a7f0bc1aa26afdba27010cea6c191ab8183b4024a06499c0177116210
-%global source_license_audit_script_sha256 773d8197137808a63821abf58add2615478e4197f6fc5e3d1f84d693a55a68f2
-%global final_linked_license_closure_sha256 b2236a6aefbc898f1e3f32ae3db56aa498c4e8e8f82f98f59149643629f9f1db
-%global final_linked_license_audit_script_sha256 274e6e196d601b514e6519ada78376e1fe839e5bf99b3f5c8689d806aabc343a
-%global npm_code_generation_closure_sha256 4046d67c4ca5d3dbc3cfd9c80258bb3168cb20d3cb3d9274b01b1b54e928b9cc
-%global npm_code_generation_audit_script_sha256 116a118601c5d7700db01be0ab77344eb516f437ca75b3838838464a306e18b5
+%global source_license_inventory_sha256 f19b7a4a7d4b0df3858083e7d27ee19321cc51e88a07a687d359afe04640d581
+%global source_license_audit_script_sha256 581d10dd37231ae455122275ded7d3fe241ba61a1c380b2d89c19b54a7861c94
+%global final_linked_license_closure_sha256 31ce9f7da56bfa78195dc35ce73541499ddbf68dcc4850a9230689781c881835
+%global final_linked_license_audit_script_sha256 c9a6413f1901f02fba289613aabbf69eb8d78a69357214b0505cbc666aa709c3
+%global npm_code_generation_closure_sha256 9e756483322f437eb0847acc54354068142966e8b1f609ce8f5c444b6b742f98
+%global npm_code_generation_audit_script_sha256 8615f5412a8f56388a852fb68b7d96376e260fa30b613d21b15b89c7ece6f993
+%global peechy_license_sha256 a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
 %global npm_cache_files 3855
@@ -45,7 +46,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.37%{?dist}
+Release:        0.0.38%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -96,6 +97,9 @@ Source29:       bun-%{version}-npm-code-generation-closure.json
 Source30:       audit-bun-npm-code-generation
 # Checked arm64 closure for deterministic Source22 union generation. %prep remains x64-only.
 Source31:       bun-%{version}-release-local-source-closure-arm64.json
+# Canonical upstream MIT text for peechy 0.4.34, whose signed npm archive omits it.
+# Exact release-source correspondence remains unverified because the registry gitHead is unavailable.
+Source32:       bun-%{version}-peechy-0.4.34-LICENSE.md
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -205,6 +209,7 @@ echo "%{final_linked_license_audit_script_sha256}  %{SOURCE28}" | sha256sum -c -
 echo "%{npm_code_generation_closure_sha256}  %{SOURCE29}" | sha256sum -c -
 echo "%{npm_code_generation_audit_script_sha256}  %{SOURCE30}" | sha256sum -c -
 echo "%{arm64_release_local_closure_sha256}  %{SOURCE31}" | sha256sum -c -
+echo "%{peechy_license_sha256}  %{SOURCE32}" | sha256sum -c -
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -243,8 +248,9 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.37 \
-  --date 2026-07-28 \
+  --rpm-release 0.0.38 \
+  --date 2026-07-31 \
+  --peechy-license "%{SOURCE32}" \
   --check \
   --receipt "%{SOURCE25}"
 
@@ -388,6 +394,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.38
+- Add canonical supplemental MIT text for peechy 0.4.34 without claiming exact release-source correspondence.
+
 * Tue Jul 28 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.37
 - Generate the checked x64 and arm64 source union during configured-SCM SRPM delivery.
 

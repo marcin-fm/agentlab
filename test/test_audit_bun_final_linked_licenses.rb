@@ -61,4 +61,33 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
       assert_equal(false, receipt.dig("validation", key), key)
     end
   end
+
+  def test_rebind_validates_the_checked_source_inventory
+    root = File.expand_path("..", __dir__)
+    receipt = File.join(root, "packages", "bun", "bun-1.3.14-final-linked-license-closure.json")
+    inventory = File.join(root, "packages", "bun", "bun-1.3.14-source-license-inventory.json")
+
+    rebound = BunFinalLinkedLicenseAudit.rebind_receipt(
+      receipt_path: receipt,
+      source_inventory_path: inventory,
+      audit_date: "2026-07-31"
+    )
+    assert_equal("packages/bun/bun-1.3.14-source-license-inventory.json", rebound.dig("inputs", "source_license_inventory", "path"))
+
+    drifted = JSON.parse(JSON.generate(BunFinalLinkedLicenseAudit::CURRENT_SOURCE_INVENTORY_RECORD))
+    drifted["sha256"] = "0" * 64
+    refute_includes(
+      [BunFinalLinkedLicenseAudit::PREVIOUS_SOURCE_INVENTORY_RECORD, BunFinalLinkedLicenseAudit::CURRENT_SOURCE_INVENTORY_RECORD],
+      drifted
+    )
+
+    unrelated = File.join(root, "packages", "bun", "bun-1.3.14-npm-code-generation-closure.json")
+    assert_raises(BunFinalLinkedLicenseAudit::Error) do
+      BunFinalLinkedLicenseAudit.rebind_receipt(
+        receipt_path: receipt,
+        source_inventory_path: unrelated,
+        audit_date: "2026-07-31"
+      )
+    end
+  end
 end

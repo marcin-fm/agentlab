@@ -104,6 +104,7 @@ license_inventory = source_inputs.fetch("source_license_inventory")
 final_linked_license = source_inputs.fetch("final_linked_license_closure")
 npm_code_generation = source_inputs.fetch("npm_code_generation_closure")
 arm64_closure_metadata = source_inputs.fetch("aarch64_preflight").fetch("source_closure")
+peechy_license = source_inputs.fetch("supplemental_license_texts").fetch("peechy_0_4_34")
 closure_path = File.join(package.directory, dependency_stage.fetch("proof_receipt"))
 closure_bytes = File.binread(closure_path)
 unless Digest::SHA256.hexdigest(closure_bytes) == dependency_stage.fetch("proof_receipt_sha256")
@@ -137,6 +138,7 @@ expected_sources[28] = final_linked_license.fetch("audit_script_source")
 expected_sources[29] = npm_code_generation.fetch("source")
 expected_sources[30] = npm_code_generation.fetch("audit_script_source")
 expected_sources[31] = arm64_closure_metadata.fetch("source")
+expected_sources[32] = peechy_license.fetch("source")
 actual_sources = expanded_sources(spec)
 unless actual_sources == expected_sources
   raise Agentlab::Error, "bun.spec Source declarations do not match the checked SRPM source layout"
@@ -159,6 +161,7 @@ direct_identities << [28, final_linked_license.fetch("audit_script_sha256"), nil
 direct_identities << [29, npm_code_generation.fetch("sha256"), nil]
 direct_identities << [30, npm_code_generation.fetch("audit_script_sha256"), nil]
 direct_identities << [31, arm64_closure_metadata.fetch("sha256"), nil]
+direct_identities << [32, peechy_license.fetch("sha256"), nil]
 direct_identities.each do |index, sha256, size_bytes|
   verify_file!(
     File.join(specdir, source_filename(actual_sources.fetch(index))),
