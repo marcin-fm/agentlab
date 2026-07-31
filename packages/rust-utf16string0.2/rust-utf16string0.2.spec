@@ -7,7 +7,7 @@
 
 Name:           rust-utf16string0.2
 Version:        0.2.0
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        String types to work directly with UTF-16 encoded strings
 
 License:        MIT OR Apache-2.0
@@ -68,6 +68,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.6
+- Replace transient build-result metadata with a static validation contract.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.2.0-0.5
 - Include Rawhide where Kreuzberg consumes this dependency.
 

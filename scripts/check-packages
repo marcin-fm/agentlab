@@ -485,6 +485,8 @@ packages.each do |package|
 
   errors.concat(Agentlab.validate_bun_build_plan(package, spec))
 
+  errors.concat(Agentlab.validate_conventional_rust_leaf_contract(package, spec))
+
   errors.concat(Agentlab.validate_pdfium_source(package, spec))
 
   if package.name == "python-headroom-ai"

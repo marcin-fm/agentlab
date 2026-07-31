@@ -7,7 +7,7 @@
 
 Name:           rust-maybe-owned0.3
 Version:        0.3.4
-Release:        0.5%{?dist}
+Release:        0.6%{?dist}
 Summary:        MaybeOwned
 
 License:        MIT OR Apache-2.0
@@ -82,6 +82,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %endif
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 0.3.4-0.6
+- Replace transient build-result metadata with a static validation contract.
+
 * Sat Jul 18 2026 Marcin FM <marcin@lgic.pl> - 0.3.4-0.5
 - Include Rawhide where Kreuzberg consumes this dependency.
 

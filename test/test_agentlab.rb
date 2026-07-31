@@ -2391,7 +2391,10 @@ class AgentlabTest < Minitest::Test
   def test_detects_dynamic_build_result_identity
     assert(Agentlab.dynamic_build_result_identity?({ "build_validation" => { "configured_build_id" => 12_345_678 } }))
     assert(Agentlab.dynamic_build_result_identity?({ "results" => [{ "aarch64_copr_build_id" => 12_345_678 }] }))
+    assert(Agentlab.dynamic_build_result_identity?({ "build_id" => 12_345_678 }))
+    assert(Agentlab.dynamic_build_result_identity?({ "fedora_43_build_id" => 12_345_678 }))
     assert(Agentlab.dynamic_build_result_identity?({ "status" => "passed in configured-SCM build 12345678" }))
+    assert(Agentlab.dynamic_build_result_identity?({ "status" => "COPR builds 12345678" }))
     refute(Agentlab.dynamic_build_result_identity?({ "toolchain_build_id" => "clang-22", "configured_matrix" => "passed" }))
   end
 
@@ -2405,6 +2408,61 @@ class AgentlabTest < Minitest::Test
     errors = Agentlab.validate_ast_grep_build_contract(package)
     assert_includes(errors, "ast-grep: validation contract does not match")
     assert_includes(errors, "ast-grep: active package metadata contains dynamic build result identity")
+  end
+
+  def test_validates_conventional_rust_leaf_contracts
+    %w[rust-maybe-owned0.3 rust-utf16string0.2].each do |name|
+      source_package = Agentlab.package_named(name)
+      spec = File.read(source_package.spec_path)
+      assert_empty(Agentlab.validate_conventional_rust_leaf_contract(source_package, spec), name)
+
+      data = Marshal.load(Marshal.dump(source_package.data))
+      data.fetch("validation_contract").fetch("matrix")["rawhide_x86_64"] = "optional"
+      package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+      errors = Agentlab.validate_conventional_rust_leaf_contract(package, spec)
+      assert_includes(errors, "#{name}: validation contract does not match")
+
+      data = Marshal.load(Marshal.dump(source_package.data))
+      data.fetch("copr").fetch("chroots").delete("fedora-rawhide-aarch64")
+      package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+      errors = Agentlab.validate_conventional_rust_leaf_contract(package, spec)
+      assert_includes(errors, "#{name}: validation matrix does not match copr.chroots")
+
+      data = Marshal.load(Marshal.dump(source_package.data))
+      data["historical_result"] = { "build_id" => 12_345_678 }
+      package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+      errors = Agentlab.validate_conventional_rust_leaf_contract(package, spec)
+      assert_includes(errors, "#{name}: active package metadata contains dynamic build result identity")
+
+      errors = Agentlab.validate_conventional_rust_leaf_contract(source_package, "#{spec}\n# build 12345678\n")
+      assert_includes(errors, "#{name}: active package metadata contains dynamic build result identity")
+
+      errors = Agentlab.validate_conventional_rust_leaf_contract(source_package, spec.sub("%cargo_test", ""))
+      assert_includes(errors, "#{name}: static Rust leaf spec contract is incomplete")
+
+      errors = Agentlab.validate_conventional_rust_leaf_contract(source_package, spec.sub("sha256sum -c -", "true"))
+      assert_includes(errors, "#{name}: static Rust leaf spec contract is incomplete")
+
+      errors = Agentlab.validate_conventional_rust_leaf_contract(source_package, spec.sub("%bcond check 1", "%bcond check 0"))
+      assert_includes(errors, "#{name}: static Rust leaf spec contract is incomplete")
+
+      errors = Agentlab.validate_conventional_rust_leaf_contract(source_package, spec.sub(/^%package\s+-n %\{name\}\+default-devel\n/, ""))
+      assert_includes(errors, "#{name}: static Rust leaf spec contract is incomplete")
+
+      extra_package = "%package -n %{name}+unexpected-devel\nSummary: Unexpected output\n\n"
+      errors = Agentlab.validate_conventional_rust_leaf_contract(source_package, spec.sub("%prep\n", "#{extra_package}%prep\n"))
+      assert_includes(errors, "#{name}: static Rust leaf spec contract is incomplete")
+
+      Dir.mktmpdir("agentlab-rust-leaf-test-", "/srv/tmp") do |directory|
+        package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: source_package.data)
+        errors = Agentlab.validate_conventional_rust_leaf_contract(package, spec)
+        assert_includes(errors, "#{name}: package README is missing")
+
+        File.write(File.join(directory, "README.md"), "result NVR must not be retained\n")
+        errors = Agentlab.validate_conventional_rust_leaf_contract(package, spec)
+        assert_includes(errors, "#{name}: active package metadata contains dynamic build result identity")
+      end
+    end
   end
 
   def test_validates_pdfium_hosted_source

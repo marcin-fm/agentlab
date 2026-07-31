@@ -10,19 +10,10 @@ matching RPM Fusion repositories provide no `crate(utf16string)` package.
 Configured SCM publication targets Fedora 43, Fedora 44, and Rawhide on x86_64
 and aarch64, matching Kreuzberg's intended publication scope.
 
-Exact `0.2.0-0.1` transient builds `10737893` and `10737927` succeeded on
-Fedora 43 and Fedora 44 for both x86_64 and aarch64. Downloaded SRPM specs were
-byte-identical to the pre-evidence-bump repository spec, their source archives
-matched SHA-256 `0b62a1e85e12d5d712bf47a85f426b73d303e2d00a90de5f3004df3596e9d216`,
-and fresh artifact `rpmlint` checks reported zero errors and zero warnings after
-filtering only the transient COPR signing key absent from the host keyring. RPM
-digests verified independently. Releases `0.2` and `0.3` changed only retained
-evidence, publication status, release, and changelog; package build behavior was
-unchanged. Current live build results are retained in the project playbook.
-
-Before this package's first live submission, the identical `%{crates_source}`
-transport failed before SRPM creation in `rust-maybe-owned0.3` build `10740215`
-with HTTP 403 from the crates.io API redirect. Release `0.4` uses the immutable
-`static.crates.io` archive directly with the same pinned source hash; crate
-build behavior is unchanged. Release `0.5` corrects the target scope to include
-Rawhide after the maintainer confirmed Kreuzberg will publish there too.
+Release `0.6` binds a static validation contract instead of embedding transient
+COPR result identities. The contract requires the immutable `static.crates.io`
+source with its pinned SHA-256, the standard Fedora Cargo build/install/test
+flow, both upstream license texts, zero `rpmlint` errors or warnings, and the
+full Fedora 43, Fedora 44, and Rawhide matrix on x86_64 and aarch64. Live and
+historical build results remain in the project playbook and COPR rather than
+active package inputs.

@@ -4261,13 +4261,16 @@ module Agentlab
     case value
     when Hash
       value.any? do |key, nested|
-        key.to_s.match?(/(?:\A|_)(?:(?:copr|configured)_build_id|result_nvr|builder_log_(?:sha256|hash))\z/) ||
+        key_name = key.to_s
+        key_name == "build_id" ||
+          (key_name.end_with?("_build_id") && key_name != "toolchain_build_id") ||
+          key_name.match?(/(?:\A|_)(?:result_nvr|builder_log_(?:sha256|hash))\z/) ||
           dynamic_build_result_identity?(nested)
       end
     when Array
       value.any? { |nested| dynamic_build_result_identity?(nested) }
     when String
-      value.match?(/\b(?:COPR|configured-SCM)\s+build(?:\s+ID)?\s+`?\d{7,}`?\b/i) ||
+      value.match?(/\b(?:COPR|configured-SCM)\s+builds?(?:\s+IDs?\s*:?)?\s+`?\d{7,}`?\b/i) ||
         value.match?(/\b(?:result\s+NVR|builder[- ]log\s+(?:SHA-256|hash))\b/i)
     else
       false
@@ -4306,6 +4309,95 @@ module Agentlab
     if dynamic_build_result_identity?(package.data)
       errors << "ast-grep: active package metadata contains dynamic build result identity"
     end
+    errors
+  end
+
+  def validate_conventional_rust_leaf_contract(package, spec)
+    return [] unless %w[rust-maybe-owned0.3 rust-utf16string0.2].include?(package.name)
+
+    expected = {
+      "matrix" => %w[
+        fedora_43_x86_64
+        fedora_43_aarch64
+        fedora_44_x86_64
+        fedora_44_aarch64
+        rawhide_x86_64
+        rawhide_aarch64
+      ].to_h { |target| [target, "required"] },
+      "source" => {
+        "transport" => "static-crates-io",
+        "checksum" => "required"
+      },
+      "cargo" => {
+        "build" => "required",
+        "install" => "required",
+        "test" => "required"
+      },
+      "license" => {
+        "expression" => "MIT OR Apache-2.0",
+        "texts" => %w[LICENSE-APACHE LICENSE-MIT]
+      },
+      "packages" => {
+        "build_arch" => "noarch",
+        "subpackages" => package.name == "rust-maybe-owned0.3" ? %w[devel +default-devel +serde-devel] : %w[devel +default-devel]
+      },
+      "rpmlint" => {
+        "expected_errors" => 0,
+        "expected_warnings" => 0
+      }
+    }
+    errors = []
+    errors << "#{package.name}: validation contract does not match" unless package.data["validation_contract"] == expected
+    expected_chroots = %w[
+      fedora-43-x86_64
+      fedora-43-aarch64
+      fedora-44-x86_64
+      fedora-44-aarch64
+      fedora-rawhide-x86_64
+      fedora-rawhide-aarch64
+    ]
+    errors << "#{package.name}: validation matrix does not match copr.chroots" unless package.data.dig("copr", "chroots") == expected_chroots
+    crate = package.upstream.fetch("crate")
+    required_spec = [
+      /^%bcond check 1$/,
+      /^%global crate\s+#{Regexp.escape(crate)}$/,
+      /^License:\s+MIT OR Apache-2\.0$/,
+      %r{^Source0:\s+https://static\.crates\.io/crates/%\{crate\}/%\{crate\}-%\{version\}\.crate$},
+      /^echo "%\{source_sha256\}  %\{SOURCE0\}" \| sha256sum -c -$/,
+      /^%cargo_build$/,
+      /^%cargo_install$/,
+      %r{^%license %\{crate_instdir\}/LICENSE-APACHE$},
+      %r{^%license %\{crate_instdir\}/LICENSE-MIT$},
+      /^%if %\{with check\}\n%check\n%cargo_test\n%endif$/m
+    ]
+    expected_subpackages = expected.dig("packages", "subpackages")
+    declared_subpackages = spec.scan(/^%package\s+(.+)$/).map do |declaration|
+      argument = declaration.fetch(0).strip
+      if argument == "devel"
+        "devel"
+      elsif (match = argument.match(/\A-n %\{name\}(\+[^\s]+-devel)\z/))
+        match[1]
+      else
+        argument
+      end
+    end
+    spec_complete = required_spec.all? { |pattern| spec.match?(pattern) } &&
+                    declared_subpackages == expected_subpackages &&
+                    spec.scan(/^BuildArch:\s+noarch$/).length == expected_subpackages.length
+    errors << "#{package.name}: static Rust leaf spec contract is incomplete" unless spec_complete
+    readme_path = File.join(package.directory, "README.md")
+    unless File.file?(readme_path)
+      errors << "#{package.name}: package README is missing"
+      return errors
+    end
+    readme = File.read(readme_path)
+    plain_build_id = /\bbuilds?(?:\s+IDs?\s*:?)?\s+`?\d{7,}`?\b/i
+    dynamic = dynamic_build_result_identity?(package.data) ||
+              dynamic_build_result_identity?(spec) ||
+              dynamic_build_result_identity?(readme) ||
+              spec.match?(plain_build_id) ||
+              readme.match?(plain_build_id)
+    errors << "#{package.name}: active package metadata contains dynamic build result identity" if dynamic
     errors
   end
 

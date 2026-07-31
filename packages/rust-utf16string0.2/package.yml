@@ -1,25 +1,30 @@
 name: rust-utf16string0.2
 status: enabled
 blockers: []
-validation:
-  proof_release: 0.1
-  evidence_release_delta: Release 0.2 changed only the release, changelog, and retained evidence records; prep, build, install, and check behavior remained unchanged.
-  enablement_release: Release 0.3 removes the assistant-authored parent-only hold and enables configured SCM publication without changing package build behavior; live results are retained in the project playbook.
-  scm_source_release: Release 0.4 replaces the crates.io API redirect with the immutable static registry archive after the identical transport failed before SRPM creation in rust-maybe-owned0.3 build 10740215; the pinned source hash and package build behavior are unchanged.
-  target_scope_release: Release 0.5 includes Rawhide after the maintainer confirmed Kreuzberg will publish there; absence of earlier Rawhide proof was not evidence that the dependency was unnecessary.
-  downloaded_srpm_spec_sha256: 1867a1d70e57fb0b328e4839cc2630f329e8da57738edd2d2d61963bb08eaf55
-  source_identity: Fedora 43 and Fedora 44 SRPMs contain the pinned crates.io archive with the recorded source SHA-256.
-  duplicate_audit: No crate(utf16string) provider was found in Fedora 43, Fedora 44, Rawhide, or matching RPM Fusion repositories on 2026-07-18.
-  fedora_43:
-    build_id: 10737893
-    chroots: [fedora-43-x86_64, fedora-43-aarch64]
-    result: succeeded
-    rpmlint: zero errors and zero warnings on the downloaded SRPM and noarch RPMs after filtering only the transient COPR signing key absent from the host keyring; RPM digests verified.
-  fedora_44:
-    build_id: 10737927
-    chroots: [fedora-44-x86_64, fedora-44-aarch64]
-    result: succeeded
-    rpmlint: zero errors and zero warnings on the downloaded SRPM and noarch RPMs after filtering only the transient COPR signing key absent from the host keyring; RPM digests verified.
+validation_contract:
+  matrix:
+    fedora_43_x86_64: required
+    fedora_43_aarch64: required
+    fedora_44_x86_64: required
+    fedora_44_aarch64: required
+    rawhide_x86_64: required
+    rawhide_aarch64: required
+  source:
+    transport: static-crates-io
+    checksum: required
+  cargo:
+    build: required
+    install: required
+    test: required
+  license:
+    expression: MIT OR Apache-2.0
+    texts: [LICENSE-APACHE, LICENSE-MIT]
+  packages:
+    build_arch: noarch
+    subpackages: [devel, +default-devel]
+  rpmlint:
+    expected_errors: 0
+    expected_warnings: 0
 upstream:
   provider: crates_io
   crate: utf16string
