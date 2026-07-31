@@ -10,7 +10,8 @@
     "tag": "v1.17.1",
     "tag_commit": "1b1640ae08cfc86e9ebffeb90c073acaa81e62f9",
     "worktree_clean": true,
-    "untracked_files_included": true
+    "untracked_files_included": true,
+    "ignored_files_included": true
   },
   "source_archive": {
     "url": "https://github.com/openchamber/openchamber/archive/refs/tags/v1.17.1.tar.gz",

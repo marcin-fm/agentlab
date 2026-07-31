@@ -242,6 +242,34 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_openchamber_source_identity_rejects_ignored_input
+    Dir.mktmpdir do |directory|
+      File.write(File.join(directory, ".gitignore"), "ignored\n")
+      File.write(File.join(directory, "fixture"), "content\n")
+      _stdout, stderr, status = Open3.capture3("git", "init", "--quiet", directory)
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3("git", "-C", directory, "add", ".gitignore", "fixture")
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3(
+        "git", "-C", directory,
+        "-c", "user.name=Agentlab Test",
+        "-c", "user.email=agentlab-test@example.invalid",
+        "commit", "--quiet", "-m", "fixture"
+      )
+      assert(status.success?, stderr)
+      commit, stderr, status = Open3.capture3("git", "-C", directory, "rev-parse", "HEAD")
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3("git", "-C", directory, "tag", "v1.17.1")
+      assert(status.success?, stderr)
+      File.write(File.join(directory, "ignored"), "unexpected\n")
+
+      error = assert_raises(Agentlab::Error) do
+        OpenChamberLockAudit.verify_source_identity(directory, commit.strip, "v1.17.1")
+      end
+      assert_match(/source checkout is not fully clean/, error.message)
+    end
+  end
+
   def test_openchamber_lock_selector_rejects_bun_pty_on_selected_node_path
     workspaces = {
       "packages/web" => {
@@ -383,6 +411,25 @@ class AgentlabTest < Minitest::Test
       root.fetch("usages").pop
     end
     assert_includes(errors, "openchamber: current Remix importers drifted")
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_replaced_remix_importer_source_record
+    errors = openchamber_selected_lock_errors do |receipt|
+      record = receipt.dig("source_import_graph", "files").find do |entry|
+        entry["path"] == "packages/ui/src/apps/MobileFilesSurface.tsx"
+      end
+      record["path"] = "packages/ui/src/apps/Replacement.tsx"
+    end
+    assert_includes(errors, "openchamber: current Remix importer source records are missing or drifted")
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_removed_remix_importer_source_record
+    errors = openchamber_selected_lock_errors do |receipt|
+      receipt.dig("source_import_graph", "files").reject! do |entry|
+        entry["path"] == "packages/ui/src/apps/MobileFilesSurface.tsx"
+      end
+    end
+    assert_includes(errors, "openchamber: current Remix importer source records are missing or drifted")
   end
 
   def test_openchamber_selected_lock_validator_rejects_remix_sprite_drift

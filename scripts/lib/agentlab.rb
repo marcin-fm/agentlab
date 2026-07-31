@@ -618,7 +618,7 @@ module Agentlab
     errors << "openchamber: selected lock receipt lock SHA-256 mismatch" unless receipt.dig("lockfile", "sha256") == metadata["lock_sha256"]
     source_identity = receipt.fetch("source_identity")
     errors << "openchamber: selected lock source identity mismatch" unless source_identity == metadata.fetch("source_identity")
-    errors << "openchamber: selected lock source checkout is not fully clean" unless source_identity["method"] == "clean_exact_tag_checkout" && source_identity["worktree_clean"] == true && source_identity["untracked_files_included"] == true
+    errors << "openchamber: selected lock source checkout is not fully clean" unless source_identity["method"] == "clean_exact_tag_checkout" && source_identity["worktree_clean"] == true && source_identity["untracked_files_included"] == true && source_identity["ignored_files_included"] == true
     source_archive = receipt.fetch("source_archive")
     errors << "openchamber: selected lock source archive URL mismatch" unless source_archive["url"] == Agentlab.source_url(package, package.upstream.fetch("current_version"))
     errors << "openchamber: selected lock source archive SHA-256 mismatch" unless source_archive["sha256"] == package.upstream.fetch("source_sha256")
@@ -680,6 +680,7 @@ module Agentlab
     remix_root = roots.find { |record| record["name"] == "@remixicon/react" }
     errors << "openchamber: current Remix package root is missing or drifted" unless remix["package_root"] == "@remixicon/react" && remix_root
     errors << "openchamber: current Remix importers drifted" unless remix["package_usages"] == expected_remix_usages && remix_root&.fetch("usages", nil) == expected_remix_usages
+    errors << "openchamber: current Remix importer source records are missing or drifted" unless expected_remix_usages.all? { |usage| file_hashes.key?(usage.fetch("importer")) }
     sprite = remix.fetch("sprite")
     errors << "openchamber: current Remix sprite path drifted" unless sprite["path"] == "packages/ui/src/components/icon/sprite.ts"
     errors << "openchamber: current Remix sprite hash mismatch" unless file_hashes[sprite["path"]] == sprite["sha256"]

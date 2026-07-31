@@ -67,7 +67,8 @@ direct package roots,
 then retains each selected root's complete transitive `bun.lock` closure.
 
 Generation requires a fully clean exact `v1.17.1` checkout, including no
-untracked files, at commit `1b1640ae08cfc86e9ebffeb90c073acaa81e62f9`.
+tracked changes, untracked files, or ignored files, at commit
+`1b1640ae08cfc86e9ebffeb90c073acaa81e62f9`.
 The receipt also binds the released archive URL and SHA-256
 `31a767ec735c9c351333c9774699e76b204c9b0a0220e3531a437622985a5ead`.
 

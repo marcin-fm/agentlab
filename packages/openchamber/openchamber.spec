@@ -4,7 +4,7 @@
 
 Name:           openchamber
 Version:        1.17.1
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -42,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.17.1-0.3
+- Reject ignored source inputs and require hashed Remix importer records.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.17.1-0.2
 - Derive and validate exact source, patch, and Remix receipt evidence.
 

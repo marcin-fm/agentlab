@@ -154,7 +154,7 @@ selected_lock_audit:
   git_sources: {}
 selected_lock_receipt:
   schema: openchamber-selected-lock-audit/v2
-  sha256: ebd68e138edc7e8f75a2e0331dc2140000b29c84823f313570a3999f6cefc61a
+  sha256: 300d731456d15de1d21feaaf6f932812d4b9d809dd14e1d6d00ade8fc143e01b
   lock_sha256: 6e6e8db922cc9abd9b582f21eb9890888217ee9181a5cd42147fb0d3c0377c7d
   selected_workspaces: 3
   selected_packages: 832
@@ -175,6 +175,7 @@ selected_lock_receipt:
     tag_commit: 1b1640ae08cfc86e9ebffeb90c073acaa81e62f9
     worktree_clean: true
     untracked_files_included: true
+    ignored_files_included: true
   patched_dependencies:
   - identity: "@tanstack/virtual-core@3.17.3"
     path: bun-patches/@tanstack+virtual-core+3.17.3.patch
