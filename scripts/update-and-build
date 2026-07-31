@@ -4,6 +4,7 @@
 require "digest"
 require "optparse"
 require "rbconfig"
+require "tempfile"
 require_relative "lib/agentlab"
 
 begin
@@ -74,7 +75,33 @@ updates = if build_current
               puts "#{package.name}: #{current} -> #{version}"
               puts "  source: #{url}"
               puts "  sha256: #{sha256}"
-              { package: package, version: version, source_url: release[:source_url], sha256: sha256 }
+              upstream_release_audit = nil
+              if package.name == "opencode"
+                repo = ENV["AGENTLAB_OPENCODE_UPSTREAM_REPO"]
+                unless repo && File.directory?(repo)
+                  raise Agentlab::Error,
+                        "OpenCode update requires AGENTLAB_OPENCODE_UPSTREAM_REPO pointing to a local upstream Git repository"
+                end
+                Tempfile.create(["opencode-v#{version}-", ".tar.gz"], "/srv/tmp") do |archive|
+                  archive.binmode
+                  archive.write(source)
+                  archive.flush
+                  upstream_release_audit = OpenCodeUpstreamReleaseAudit.audit(
+                    package_manifest: package.manifest_path,
+                    package_spec: package.spec_path,
+                    repo: repo,
+                    archive: archive.path,
+                    latest_version: version,
+                  )
+                end
+              end
+              {
+                package: package,
+                version: version,
+                source_url: release[:source_url],
+                sha256: sha256,
+                upstream_release_audit: upstream_release_audit,
+              }
             end
 end
 
@@ -113,7 +140,8 @@ updates.each do |update|
     version: update.fetch(:version),
     sha256: update.fetch(:sha256),
     source_url: update[:source_url],
-    changelog_message: "Update the #{state} to released version #{update.fetch(:version)}."
+    changelog_message: "Update the #{state} to released version #{update.fetch(:version)}.",
+    upstream_release_audit: update[:upstream_release_audit],
   )
 end
 

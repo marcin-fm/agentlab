@@ -13,6 +13,7 @@ require "uri"
 require "yaml"
 require_relative "openchamber_licenses"
 load File.expand_path("../audit-opencode-final-licenses", __dir__) unless defined?(OpenCodeFinalLicenseAudit)
+load File.expand_path("../audit-opencode-upstream-release", __dir__) unless defined?(OpenCodeUpstreamReleaseAudit)
 
 module Agentlab
   ROOT = File.expand_path("../..", __dir__)
@@ -5292,8 +5293,25 @@ module Agentlab
     errors
   end
 
-  def update_package_files(package, version:, sha256:, source_url: nil, changelog_message:)
+  def update_package_files(package, version:, sha256:, source_url: nil, changelog_message:, upstream_release_audit: nil)
     manifest_data = Marshal.load(Marshal.dump(package.data))
+    if package.name == "opencode"
+      raise Error, "OpenCode update requires an audited upstream release receipt" unless upstream_release_audit
+
+      audit_errors = OpenCodeUpstreamReleaseAudit.receipt_errors(
+        package_manifest: package.manifest_path,
+        package_spec: package.spec_path,
+        receipt: upstream_release_audit,
+      )
+      raise Error, "OpenCode upstream release audit is invalid: #{audit_errors.join('; ')}" unless audit_errors.empty?
+
+      latest = upstream_release_audit.fetch("latest_release")
+      unless latest.fetch("version").to_s == version.to_s && latest.fetch("archive_sha256") == sha256
+        raise Error, "OpenCode upstream release audit does not match requested update"
+      end
+      manifest_data.fetch("upstream")["source_tag"] = latest.fetch("tag")
+      manifest_data.fetch("upstream")["source_commit"] = latest.fetch("commit")
+    end
     manifest_data.fetch("upstream")["current_version"] = version
     manifest_data.fetch("upstream")["source_sha256"] = sha256
     manifest_data.fetch("upstream")["source_url"] = source_url if source_url
@@ -5313,8 +5331,34 @@ module Agentlab
     }
     dependency_change = updated_dependency_audit(package, version)
     changes[dependency_change.fetch(:path)] = dependency_change.fetch(:content) if dependency_change
+    if package.name == "opencode"
+      receipt_path = File.join(ROOT, OpenCodeUpstreamReleaseAudit::RECEIPT_RELATIVE_PATH)
+      raise Error, "OpenCode upstream release audit receipt path is missing: #{receipt_path}" unless File.file?(receipt_path)
+
+      final_audit = Marshal.load(Marshal.dump(upstream_release_audit))
+      final_audit["packaging_patch_inputs"] = OpenCodeUpstreamReleaseAudit.packaging_patch_inputs(
+        package.spec_path,
+        content: spec,
+      )
+      changes[receipt_path] = "#{JSON.pretty_generate(final_audit)}\n"
+    end
     write_transaction(changes)
     package.data.replace(manifest_data)
+  end
+
+  def validate_opencode_upstream_release_audit(package)
+    return [] unless package.name == "opencode"
+
+    receipt_path = File.join(ROOT, OpenCodeUpstreamReleaseAudit::RECEIPT_RELATIVE_PATH)
+    unless File.file?(receipt_path)
+      return ["opencode: upstream release audit receipt is missing at #{OpenCodeUpstreamReleaseAudit::RECEIPT_RELATIVE_PATH}"]
+    end
+
+    OpenCodeUpstreamReleaseAudit.receipt_errors(
+      package_manifest: package.manifest_path,
+      package_spec: package.spec_path,
+      receipt: receipt_path,
+    ).map { |error| "opencode: upstream release audit #{error}" }
   end
 
   def invalidate_bun_build_plan!(manifest_data, version)

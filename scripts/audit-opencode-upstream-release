@@ -25,6 +25,8 @@ module OpenCodeUpstreamReleaseAudit
     total_bytes: 512 * 1024 * 1024,
     path_bytes: 4096,
   }.freeze
+  RECEIPT_SCHEMA = "agentlab-opencode-upstream-release-audit/v3"
+  RECEIPT_RELATIVE_PATH = "evidence/opencode/upstream-release-audit.json"
 
   def git(repo, *arguments)
     git_output(repo, *arguments).strip
@@ -194,8 +196,8 @@ module OpenCodeUpstreamReleaseAudit
     path
   end
 
-  def packaging_patch_inputs(package_spec)
-    content = File.binread(package_spec)
+  def packaging_patch_inputs(package_spec, content: nil)
+    content ||= File.binread(package_spec)
     declarations = content.lines.each_with_index.filter_map do |line, index|
       match = line.match(/^Patch(?<number>\d*):\s+(?<path>\S+)\s*$/)
       next unless match
@@ -243,6 +245,90 @@ module OpenCodeUpstreamReleaseAudit
     }
   end
 
+  def reproduction(upstream, latest_version)
+    repository = upstream.fetch("repository")
+    tag = "#{upstream.fetch('tag_prefix')}#{latest_version}"
+    repository_path = "/srv/tmp/agentlab-opencode-upstream"
+    archive_path = "/srv/tmp/opencode-#{tag}.tar.gz"
+    generated_receipt_path = "/srv/tmp/opencode-#{tag}-release-audit.json"
+    archive_url = upstream.fetch("source_url_template").gsub("{version}", latest_version)
+
+    {
+      "repository_url" => "https://github.com/#{repository}.git",
+      "archive_url" => archive_url,
+      "repository_path" => repository_path,
+      "archive_path" => archive_path,
+      "generated_receipt_path" => generated_receipt_path,
+      "receipt_path" => RECEIPT_RELATIVE_PATH,
+      "steps" => [
+        "git clone --mirror https://github.com/#{repository}.git #{repository_path}",
+        "curl --fail --location --output #{archive_path} #{archive_url}",
+        "scripts/audit-opencode-upstream-release --repo #{repository_path} --archive #{archive_path} --latest-version #{latest_version} > #{generated_receipt_path}",
+        "cmp --silent #{generated_receipt_path} #{RECEIPT_RELATIVE_PATH}",
+      ],
+    }
+  end
+
+  def receipt_errors(package_manifest:, package_spec:, receipt:)
+    package = YAML.safe_load_file(package_manifest, aliases: false)
+    upstream = package.fetch("upstream")
+    data = receipt.is_a?(Hash) ? receipt : JSON.parse(File.read(receipt))
+    current_version = upstream.fetch("current_version").to_s
+    packaged = data.fetch("packaged_release")
+    latest = data.fetch("latest_release")
+    errors = []
+    packaged_version = packaged.fetch("version").to_s
+    latest_version = latest.fetch("version").to_s
+    tag_prefix = upstream.fetch("tag_prefix")
+
+    errors << "unsupported receipt schema" unless data["schema"] == RECEIPT_SCHEMA
+    errors << "receipt package mismatch" unless data["package"] == "opencode"
+    errors << "receipt reproduction contract mismatch" unless data["reproduction"] == reproduction(upstream, latest_version)
+    errors << "receipt packaged tag is inconsistent" unless packaged["tag"] == "#{tag_prefix}#{packaged_version}"
+    errors << "receipt latest tag is inconsistent" unless latest["tag"] == "#{tag_prefix}#{latest_version}"
+    errors << "receipt latest archive root is inconsistent" unless latest["archive_root"] == "opencode-#{latest_version}"
+    errors << "receipt packaged commit is invalid" unless packaged["commit"].to_s.match?(/\A[0-9a-f]{40}\z/)
+    errors << "receipt latest commit is invalid" unless latest["commit"].to_s.match?(/\A[0-9a-f]{40}\z/)
+    errors << "receipt packaged archive SHA-256 is invalid" unless packaged["archive_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors << "receipt latest archive SHA-256 is invalid" unless latest["archive_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    errors << "receipt latest release is not newer than packaged release" unless Gem::Version.new(latest_version) > Gem::Version.new(packaged_version)
+    errors << "receipt does not preserve blocked package state" unless
+      data.dig("package_state", "status") == "blocked" &&
+      data.dig("package_state", "copr_enabled") == false &&
+      data.dig("package_state", "blocked_state_preserved") == true
+    errors << "package must remain blocked" unless package["status"] == "blocked"
+    errors << "package COPR must remain disabled" unless package.dig("copr", "enabled") == false
+    errors << "receipt does not require selected-source evidence refresh" unless data.dig("delta", "selected_source_evidence_refresh_required") == true
+    errors << "receipt does not require downstream patch revalidation" unless data.dig("delta", "downstream_patch_revalidation_required") == true
+    errors << "receipt latest archive is not tree-verified" unless latest["archive_matches_commit_tree"] == true
+    errors << "receipt changed-path count is invalid" unless data.dig("delta", "changed_paths").is_a?(Integer) && data.dig("delta", "changed_paths").positive?
+    sensitive_paths = data.dig("delta", "release_sensitive_paths")
+    errors << "receipt release-sensitive path audit is incomplete" unless
+      sensitive_paths.is_a?(Hash) &&
+      sensitive_paths.keys.sort == RELEASE_SENSITIVE_PATHS.sort &&
+      sensitive_paths.values.all? { |changed| changed == true || changed == false }
+
+    if current_version == packaged_version
+      errors << "receipt packaged tag mismatch" unless packaged["tag"] == upstream["source_tag"]
+      errors << "receipt packaged commit mismatch" unless packaged["commit"] == upstream["source_commit"]
+      errors << "receipt packaged archive SHA-256 mismatch" unless packaged["archive_sha256"] == upstream["source_sha256"]
+    elsif current_version == latest_version
+      errors << "receipt latest tag mismatch" unless latest["tag"] == upstream["source_tag"]
+      errors << "receipt latest commit mismatch" unless latest["commit"] == upstream["source_commit"]
+      errors << "receipt latest archive SHA-256 mismatch" unless latest["archive_sha256"] == upstream["source_sha256"]
+    else
+      errors << "receipt does not cover packaged version #{current_version}"
+    end
+
+    actual_patches = packaging_patch_inputs(package_spec)
+    recorded_patches = data.fetch("packaging_patch_inputs")
+    errors << "receipt packaging patch inputs mismatch" unless recorded_patches == actual_patches
+
+    errors
+  rescue JSON::ParserError, KeyError, Psych::SyntaxError, ArgumentError => error
+    ["invalid receipt: #{error.message}"]
+  end
+
   def audit(package_manifest:, repo:, archive:, latest_version:, package_spec: nil, archive_limits: DEFAULT_ARCHIVE_LIMITS)
     package = YAML.safe_load_file(package_manifest, aliases: false)
     upstream = package.fetch("upstream")
@@ -273,7 +359,7 @@ module OpenCodeUpstreamReleaseAudit
     patch_inputs = packaging_patch_inputs(package_spec)
 
     {
-      "schema" => "agentlab-opencode-upstream-release-audit/v2",
+      "schema" => RECEIPT_SCHEMA,
       "package" => "opencode",
       "packaged_release" => {
         "version" => packaged_version,
@@ -301,6 +387,7 @@ module OpenCodeUpstreamReleaseAudit
         "copr_enabled" => package.dig("copr", "enabled"),
         "blocked_state_preserved" => true,
       },
+      "reproduction" => reproduction(upstream, latest_version),
     }
   end
 end

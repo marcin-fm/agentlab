@@ -1,0 +1,90 @@
+{
+  "schema": "agentlab-opencode-upstream-release-audit/v3",
+  "package": "opencode",
+  "packaged_release": {
+    "version": "1.18.8",
+    "tag": "v1.18.8",
+    "commit": "3c81a5d1ddceab377d9ad71c14899e6935333fdd",
+    "archive_sha256": "1a998288639d9e8d5df4b6ad37762b9ccacac9f18d95651071e51fa97c76c720"
+  },
+  "latest_release": {
+    "version": "1.18.10",
+    "tag": "v1.18.10",
+    "commit": "7902e04c3a67f7c69726bc955efb46e29214c797",
+    "archive_root": "opencode-1.18.10",
+    "archive_sha256": "3df0c573473d3492990bdeb69e6653eaab485394f95ad1c1a897329f4209f430",
+    "archive_matches_commit_tree": true
+  },
+  "packaging_patch_inputs": {
+    "spec": "opencode.spec",
+    "spec_sha256": "85039ba42c471317a9148292a229a8a5d61741e666d6c86070d11eff268df6a8",
+    "patches": [
+      {
+        "number": "0",
+        "path": "opencode-disable-fff.patch",
+        "line": 159,
+        "sha256": "47b06ecf7652b4be11c194c96e81fcbddd1669f5e802d91dfc80228f989e5013",
+        "applications": [
+          {
+            "line": 763,
+            "root": "Source0"
+          }
+        ]
+      },
+      {
+        "number": "1",
+        "path": "opencode-zig-fedora-lib64.patch",
+        "line": 164,
+        "sha256": "77be015e0b2a83e6d287cfa832fa190dcfe7296320d111e0b129e11a418161fc",
+        "applications": [
+          {
+            "line": 929,
+            "root": ".build-tools/zig"
+          }
+        ]
+      },
+      {
+        "number": "2",
+        "path": "opencode-record-bundle-metafile.patch",
+        "line": 169,
+        "sha256": "1bc11636ab26929ce0dfaa9d1ae93f35f3f4aecabd8f7b72a3b2ed3fe52932b4",
+        "applications": [
+          {
+            "line": 764,
+            "root": "Source0"
+          }
+        ]
+      }
+    ],
+    "source0_revalidation_required": true
+  },
+  "delta": {
+    "changed_paths": 141,
+    "release_sensitive_paths": {
+      "bun.lock": true,
+      "package.json": true,
+      "packages/opencode/package.json": true
+    },
+    "downstream_patch_revalidation_required": true,
+    "selected_source_evidence_refresh_required": true
+  },
+  "package_state": {
+    "status": "blocked",
+    "copr_enabled": false,
+    "blocked_state_preserved": true
+  },
+  "reproduction": {
+    "repository_url": "https://github.com/anomalyco/opencode.git",
+    "archive_url": "https://github.com/anomalyco/opencode/archive/refs/tags/v1.18.10.tar.gz",
+    "repository_path": "/srv/tmp/agentlab-opencode-upstream",
+    "archive_path": "/srv/tmp/opencode-v1.18.10.tar.gz",
+    "generated_receipt_path": "/srv/tmp/opencode-v1.18.10-release-audit.json",
+    "receipt_path": "evidence/opencode/upstream-release-audit.json",
+    "steps": [
+      "git clone --mirror https://github.com/anomalyco/opencode.git /srv/tmp/agentlab-opencode-upstream",
+      "curl --fail --location --output /srv/tmp/opencode-v1.18.10.tar.gz https://github.com/anomalyco/opencode/archive/refs/tags/v1.18.10.tar.gz",
+      "scripts/audit-opencode-upstream-release --repo /srv/tmp/agentlab-opencode-upstream --archive /srv/tmp/opencode-v1.18.10.tar.gz --latest-version 1.18.10 > /srv/tmp/opencode-v1.18.10-release-audit.json",
+      "cmp --silent /srv/tmp/opencode-v1.18.10-release-audit.json evidence/opencode/upstream-release-audit.json"
+    ]
+  }
+}

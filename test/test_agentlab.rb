@@ -2085,6 +2085,20 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_opencode_update_package_files_requires_upstream_release_audit
+    package = Agentlab.package_named("opencode")
+
+    error = assert_raises(Agentlab::Error) do
+      Agentlab.update_package_files(
+        package,
+        version: "1.18.10",
+        sha256: "3df0c573473d3492990bdeb69e6653eaab485394f95ad1c1a897329f4209f430",
+        changelog_message: "Update the blocked draft to released version 1.18.10.",
+      )
+    end
+    assert_equal("OpenCode update requires an audited upstream release receipt", error.message)
+  end
+
   def test_static_release_provider_uses_recorded_version
     package = Agentlab::Package.new(
       directory: Dir.tmpdir,

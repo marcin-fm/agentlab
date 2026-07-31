@@ -15,7 +15,7 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
     with_release_fixture do |fixture|
       result = OpenCodeUpstreamReleaseAudit.audit(**fixture.fetch(:audit))
 
-      assert_equal("agentlab-opencode-upstream-release-audit/v2", result.fetch("schema"))
+      assert_equal("agentlab-opencode-upstream-release-audit/v3", result.fetch("schema"))
       assert_equal(fixture.fetch(:new_commit), result.dig("latest_release", "commit"))
       assert_equal("opencode-1.0.1", result.dig("latest_release", "archive_root"))
       assert(result.dig("latest_release", "archive_matches_commit_tree"))
@@ -30,6 +30,73 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
       assert_equal(Digest::SHA256.file(fixture.fetch(:patch)).hexdigest, patches.first.fetch("sha256"))
       assert_equal(["Source0"], patches.first.fetch("applications").map { |application| application.fetch("root") })
       refute(result.fetch("delta").key?("patch_inputs_changed"))
+      assert_equal(
+        "evidence/opencode/upstream-release-audit.json",
+        result.dig("reproduction", "receipt_path"),
+      )
+      assert_empty(OpenCodeUpstreamReleaseAudit.receipt_errors(
+        package_manifest: fixture.fetch(:manifest),
+        package_spec: fixture.dig(:audit, :package_spec),
+        receipt: result,
+      ))
+    end
+  end
+
+  def test_receipt_rejects_an_uncovered_package_update
+    with_release_fixture do |fixture|
+      result = OpenCodeUpstreamReleaseAudit.audit(**fixture.fetch(:audit))
+      package = YAML.safe_load_file(fixture.fetch(:manifest), aliases: false)
+      package.fetch("upstream")["current_version"] = "1.0.2"
+      package.fetch("upstream")["source_tag"] = "v1.0.2"
+      package.fetch("upstream")["source_commit"] = "f" * 40
+      package.fetch("upstream")["source_sha256"] = "f" * 64
+      File.write(fixture.fetch(:manifest), YAML.dump(package))
+
+      errors = OpenCodeUpstreamReleaseAudit.receipt_errors(
+        package_manifest: fixture.fetch(:manifest),
+        package_spec: fixture.dig(:audit, :package_spec),
+        receipt: result,
+      )
+      assert_includes(errors, "receipt does not cover packaged version 1.0.2")
+    end
+  end
+
+  def test_receipt_rejects_tampered_release_identity_and_spec_hash
+    with_release_fixture do |fixture|
+      result = OpenCodeUpstreamReleaseAudit.audit(**fixture.fetch(:audit))
+      result.fetch("latest_release")["tag"] = "v9.9.9"
+      result.fetch("latest_release")["archive_root"] = "wrong-root"
+      result.fetch("latest_release")["commit"] = "not-a-commit"
+      result.fetch("packaging_patch_inputs")["spec_sha256"] = "0" * 64
+
+      errors = OpenCodeUpstreamReleaseAudit.receipt_errors(
+        package_manifest: fixture.fetch(:manifest),
+        package_spec: fixture.dig(:audit, :package_spec),
+        receipt: result,
+      )
+      assert_includes(errors, "receipt latest tag is inconsistent")
+      assert_includes(errors, "receipt latest archive root is inconsistent")
+      assert_includes(errors, "receipt latest commit is invalid")
+      assert_includes(errors, "receipt packaging patch inputs mismatch")
+    end
+  end
+
+  def test_receipt_covers_the_exact_audited_release_after_update
+    with_release_fixture do |fixture|
+      result = OpenCodeUpstreamReleaseAudit.audit(**fixture.fetch(:audit))
+      package = YAML.safe_load_file(fixture.fetch(:manifest), aliases: false)
+      latest = result.fetch("latest_release")
+      package.fetch("upstream")["current_version"] = latest.fetch("version")
+      package.fetch("upstream")["source_tag"] = latest.fetch("tag")
+      package.fetch("upstream")["source_commit"] = latest.fetch("commit")
+      package.fetch("upstream")["source_sha256"] = latest.fetch("archive_sha256")
+      File.write(fixture.fetch(:manifest), YAML.dump(package))
+
+      assert_empty(OpenCodeUpstreamReleaseAudit.receipt_errors(
+        package_manifest: fixture.fetch(:manifest),
+        package_spec: fixture.dig(:audit, :package_spec),
+        receipt: result,
+      ))
     end
   end
 
@@ -142,8 +209,10 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
         "name" => "opencode",
         "status" => "blocked",
         "upstream" => {
+          "repository" => "example/opencode",
           "current_version" => "1.0.0",
           "tag_prefix" => "v",
+          "source_url_template" => "https://github.com/example/opencode/archive/refs/tags/v{version}.tar.gz",
           "source_tag" => "v1.0.0",
           "source_commit" => old_commit,
           "source_sha256" => "0" * 64,
