@@ -48,8 +48,8 @@ api:
     - error and protocol behavior tests
 protocol:
   compatible_without_consumer_changes: false
-  legacy: initialize handshake and push-capable sessions
-  mcp_2026_07_28: server/discover replaces initialization and modern sessions remove server push
+  legacy: initialize handshake; servers can issue server-initiated requests and server-to-client notifications
+  mcp_2026_07_28: server/discover replaces initialization; server-initiated requests are removed, while server-to-client notifications and Streamable HTTP streaming remain
   websocket_transport: removed in 2.0.0
 dependencies:
   selected_1_28_1:
@@ -83,6 +83,12 @@ decision:
   candidate_version: 2.0.0
   reason: upstream reports a Headroom 0.33.0 server startup failure with MCP 2 and the release explicitly requires mcp <2
   fedora_outcome: retain the compatible security-fixed provider; do not carry a downstream MCP 2 product migration
+  mcp_2_gates:
+    adoption: false
+    provider_packaging: false
+    runtime_validation: false
+    build_validation: false
+    matrix_validation: false
 validation:
   kind: static released-source audit
   runtime_or_build_claim: false

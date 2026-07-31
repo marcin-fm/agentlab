@@ -3,7 +3,7 @@
 
 Name:           python-mcp
 Version:        1.28.1
-Release:        0.3%{?dist}
+Release:        0.4%{?dist}
 Summary:        Model Context Protocol SDK
 License:        MIT
 URL:            https://modelcontextprotocol.io
@@ -69,6 +69,9 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %{_bindir}/mcp
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.28.1-0.4
+- Bind the complete MCP 2 rejection contract and package release metadata.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.28.1-0.3
 - Make the MCP 2 compatibility evidence fail closed under repository validation.
 

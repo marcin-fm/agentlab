@@ -31,12 +31,14 @@ context. Its existing `StreamableHTTPSessionManager(app=server.server)`
 construction is not removed by MCP 2, but a handler migration still requires
 session-lifecycle and HTTP regression validation.
 
-MCP 2 additionally changes the protocol handshake and server-push model,
-removes WebSocket transport, replaces `httpx`/`httpx-sse` with `httpx2`, and
-splits the wire models into the exact-version `mcp-types` distribution. Both
-MCP distributions remain MIT, but `mcp-types` would require separate Fedora
-source and license accounting. A coherent upgrade therefore requires an
-upstream Headroom migration rather than a downstream dependency-bound edit.
+MCP 2 additionally changes the protocol handshake and removes server-initiated
+requests. Server-to-client notifications and Streamable HTTP streaming remain.
+It also removes WebSocket transport, replaces `httpx`/`httpx-sse` with
+`httpx2`, and splits the wire models into the exact-version `mcp-types`
+distribution. Both MCP distributions remain MIT, but `mcp-types` would require
+separate Fedora source and license accounting. A coherent upgrade therefore
+requires an upstream Headroom migration rather than a downstream
+dependency-bound edit.
 
 `mcp-2.0.0-compatibility.yml` binds the exact released sources, API call sites,
 dependency delta, protocol boundary, license result, and fail-closed decision.

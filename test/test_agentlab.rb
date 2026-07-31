@@ -1254,7 +1254,8 @@ class AgentlabTest < Minitest::Test
     mcp_2_audit_path = File.join(mcp.directory, "mcp-2.0.0-compatibility.yml")
     mcp_2_audit = Agentlab.load_yaml(mcp_2_audit_path)
     assert_equal(targets, mcp.chroots(targets))
-    assert_equal("1.28.1-0.3", mcp.data.dig("validation", "release"))
+    assert_equal("1.28.1-0.4", mcp.data.dig("validation", "release"))
+    assert_equal("1.28.1-0.4", mcp_reproducibility.fetch("version"))
     assert_equal("mcp-2.0.0-compatibility.yml", mcp.data.dig("upgrade_audit", "evidence"))
     assert_equal("mcp-2.0.0-compatibility.yml", mcp_reproducibility.dig("validation", "current", "mcp_2_compatibility_audit"))
     assert_equal("python-mcp-major-compatibility-audit/v1", mcp_2_audit.fetch("schema"))
@@ -1272,6 +1273,11 @@ class AgentlabTest < Minitest::Test
     assert_equal("1.28.1", mcp_2_audit.dig("decision", "retain_version"))
     assert_equal("not_evaluated", mcp_2_audit.dig("dependencies", "provider_availability", "status"))
     assert_equal(false, mcp_2_audit.dig("api", "streamable_http", "constructor_removed"))
+    assert_equal(false, mcp_2_audit.dig("decision", "mcp_2_gates", "adoption"))
+    assert_equal(false, mcp_2_audit.dig("decision", "mcp_2_gates", "provider_packaging"))
+    assert_equal(false, mcp_2_audit.dig("decision", "mcp_2_gates", "runtime_validation"))
+    assert_equal(false, mcp_2_audit.dig("decision", "mcp_2_gates", "build_validation"))
+    assert_equal(false, mcp_2_audit.dig("decision", "mcp_2_gates", "matrix_validation"))
     assert_equal([], Agentlab.validate_python_mcp_compatibility_audit(mcp))
     assert_equal(Digest::SHA256.file(mcp_2_audit_path).hexdigest, mcp.data.dig("upgrade_audit", "evidence_sha256"))
     assert_equal(Digest::SHA256.file(mcp_2_audit_path).hexdigest, mcp_reproducibility.dig("validation", "current", "mcp_2_compatibility_audit_sha256"))
@@ -4854,6 +4860,28 @@ class AgentlabTest < Minitest::Test
 
   def test_python_mcp_compatibility_audit_rejects_pointer_and_semantic_drift
     source_package = Agentlab.package_named("python-mcp")
+    validate_copy = lambda do |audit_change: nil, reproducibility_change: nil, data_change: nil|
+      Dir.mktmpdir do |directory|
+        audit_filename = "mcp-2.0.0-compatibility.yml"
+        audit = Agentlab.load_yaml(File.join(source_package.directory, audit_filename))
+        audit_change&.call(audit)
+        File.write(File.join(directory, audit_filename), YAML.dump(audit))
+        audit_sha256 = Digest::SHA256.file(File.join(directory, audit_filename)).hexdigest
+
+        data = Marshal.load(Marshal.dump(source_package.data))
+        data.fetch("upgrade_audit")["evidence_sha256"] = audit_sha256
+        data_change&.call(data)
+        reproducibility = Agentlab.load_yaml(File.join(source_package.directory, "reproducibility.yml"))
+        reproducibility.dig("validation", "current")["mcp_2_compatibility_audit_sha256"] = audit_sha256
+        reproducibility_change&.call(reproducibility)
+        File.write(File.join(directory, "reproducibility.yml"), YAML.dump(reproducibility))
+        FileUtils.cp(source_package.spec_path, File.join(directory, "python-mcp.spec"))
+
+        package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+        Agentlab.validate_python_mcp_compatibility_audit(package)
+      end
+    end
+
     bad_pointer_data = Marshal.load(Marshal.dump(source_package.data))
     bad_pointer_data.fetch("upgrade_audit")["evidence"] = "other.yml"
     bad_pointer_package = Agentlab::Package.new(
@@ -4866,24 +4894,25 @@ class AgentlabTest < Minitest::Test
       "python-mcp: package audit filename pointer does not match"
     )
 
-    Dir.mktmpdir do |directory|
-      audit_filename = "mcp-2.0.0-compatibility.yml"
-      audit = Agentlab.load_yaml(File.join(source_package.directory, audit_filename))
-      audit.fetch("consumer")["repository"] = "wrong/headroom"
-      File.write(File.join(directory, audit_filename), YAML.dump(audit))
-      audit_sha256 = Digest::SHA256.file(File.join(directory, audit_filename)).hexdigest
-
-      data = Marshal.load(Marshal.dump(source_package.data))
-      data.fetch("upgrade_audit")["evidence_sha256"] = audit_sha256
-      reproducibility = Agentlab.load_yaml(File.join(source_package.directory, "reproducibility.yml"))
-      reproducibility.dig("validation", "current")["mcp_2_compatibility_audit_sha256"] = audit_sha256
-      File.write(File.join(directory, "reproducibility.yml"), YAML.dump(reproducibility))
-      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
-
-      assert_includes(
-        Agentlab.validate_python_mcp_compatibility_audit(package),
-        "python-mcp: Headroom consumer identity does not match"
-      )
+    semantic_tampers = [
+      [->(audit) { audit.dig("consumer")["repository"] = "wrong/headroom" }, "python-mcp: Headroom consumer identity does not match"],
+      [->(audit) { audit.dig("api", "mcp_2_replacements")["list_tools"] = "tampered" }, "python-mcp: API compatibility contract does not match"],
+      [->(audit) { audit.dig("api")["migration_scope"] = [] }, "python-mcp: API compatibility contract does not match"],
+      [->(audit) { audit.dig("protocol")["mcp_2026_07_28"] = "tampered" }, "python-mcp: protocol compatibility contract does not match"],
+      [->(audit) { audit.dig("dependencies", "candidate_2_0_0")["httpx2"] = ">=99" }, "python-mcp: dependency compatibility contract does not match"],
+      [->(audit) { audit.dig("decision", "mcp_2_gates")["adoption"] = true }, "python-mcp: compatibility decision does not fail closed"]
+    ]
+    semantic_tampers.each do |audit_change, expected_error|
+      assert_includes(validate_copy.call(audit_change: audit_change), expected_error)
     end
+
+    assert_includes(
+      validate_copy.call(data_change: ->(data) { data.dig("validation")["release"] = "1.28.1-0.99" }),
+      "python-mcp: package validation release does not match the spec"
+    )
+    assert_includes(
+      validate_copy.call(reproducibility_change: ->(metadata) { metadata["version"] = "1.28.1-0.99" }),
+      "python-mcp: reproducibility version does not match the spec"
+    )
   end
 end

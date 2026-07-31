@@ -5371,6 +5371,21 @@ module Agentlab
     return ["#{prefix} reproducibility metadata is missing"] unless File.file?(reproducibility_path)
 
     reproducibility = load_yaml(reproducibility_path)
+    return ["#{prefix} spec is missing"] unless File.file?(package.spec_path)
+
+    spec = File.read(package.spec_path)
+    spec_version = spec[/^Version:\s+(\S+)/, 1]
+    spec_release = spec[/^Release:\s+([^%\s]+)/, 1]
+    unless spec_version && spec_release
+      return ["#{prefix} spec Version/Release is invalid"]
+    end
+
+    expected_release = "#{spec_version}-#{spec_release}"
+    errors << "#{prefix} package validation release does not match the spec" unless package.data.dig("validation", "release") == expected_release
+    errors << "#{prefix} reproducibility version does not match the spec" unless reproducibility["version"] == expected_release
+    errors << "#{prefix} reproducibility spec SHA-256 does not match" unless
+      reproducibility.dig("validation", "current", "spec_sha256") == Digest::SHA256.hexdigest(spec)
+
     package_filename = package.data.dig("upgrade_audit", "evidence")
     reproducibility_filename = reproducibility.dig("validation", "current", "mcp_2_compatibility_audit")
     errors << "#{prefix} package audit filename pointer does not match" unless package_filename == expected_filename
@@ -5421,23 +5436,83 @@ module Agentlab
       "headroom/memory/mcp_server.py:228 @server.list_tools()",
       "headroom/memory/mcp_server.py:235 @server.call_tool()"
     ]
-    errors << "#{prefix} released Headroom call-site inventory does not match" unless audit.dig("api", "headroom_legacy_calls") == expected_calls
-    errors << "#{prefix} streamable HTTP evidence overclaims removal" unless audit.dig("api", "streamable_http", "constructor_removed") == false
-    errors << "#{prefix} streamable HTTP migration validation is missing" unless audit.dig("api", "streamable_http", "migration_requirement").to_s.include?("lifecycle")
-    errors << "#{prefix} API compatibility decision does not fail closed" unless audit.dig("api", "compatible") == false
-    errors << "#{prefix} protocol compatibility decision does not fail closed" unless audit.dig("protocol", "compatible_without_consumer_changes") == false
-    errors << "#{prefix} dependency-provider review must remain explicitly unevaluated" unless
-      audit.dig("dependencies", "provider_availability", "status") == "not_evaluated" &&
-      !audit.dig("dependencies").key?("agentlab_provider_gaps")
+    expected_api = {
+      "compatible" => false,
+      "headroom_legacy_calls" => expected_calls,
+      "mcp_2_replacements" => {
+        "list_tools" => "on_list_tools(ctx: ServerRequestContext, params: PaginatedRequestParams | None) -> ListToolsResult",
+        "call_tool" => "on_call_tool(ctx: ServerRequestContext, params: CallToolRequestParams) -> CallToolResult | InputRequiredResult",
+        "result_wrapping" => "low-level automatic handler result wrapping was removed"
+      },
+      "streamable_http" => {
+        "constructor_removed" => false,
+        "migration_requirement" => "verify session-manager lifecycle and HTTP regressions with the migrated low-level server handlers"
+      },
+      "migration_scope" => [
+        "both released Headroom MCP server implementations",
+        "handler registration, parameters, and result models",
+        "request-context field names and access",
+        "streamable HTTP session-manager integration",
+        "error and protocol behavior tests"
+      ]
+    }
+    errors << "#{prefix} API compatibility contract does not match" unless audit["api"] == expected_api
+
+    expected_protocol = {
+      "compatible_without_consumer_changes" => false,
+      "legacy" => "initialize handshake; servers can issue server-initiated requests and server-to-client notifications",
+      "mcp_2026_07_28" => "server/discover replaces initialization; server-initiated requests are removed, while server-to-client notifications and Streamable HTTP streaming remain",
+      "websocket_transport" => "removed in 2.0.0"
+    }
+    errors << "#{prefix} protocol compatibility contract does not match" unless audit["protocol"] == expected_protocol
+
+    expected_dependencies = {
+      "selected_1_28_1" => {
+        "anyio" => ">=4.5",
+        "httpx" => ">=0.27.1,<1.0.0",
+        "httpx-sse" => ">=0.4",
+        "pydantic" => ">=2.11.0,<3.0.0",
+        "sse-starlette" => ">=1.6.1",
+        "typing-extensions" => ">=4.9.0",
+        "websocket_extra" => "websockets>=15.0.1"
+      },
+      "candidate_2_0_0" => {
+        "anyio" => ">=4.9; >=4.10 on Python 3.14+",
+        "httpx2" => ">=2.5.0",
+        "mcp-types" => "==2.0.0",
+        "pydantic" => ">=2.12.0",
+        "sse-starlette" => ">=3.0.0",
+        "typing-extensions" => ">=4.13.0",
+        "opentelemetry-api" => ">=1.28.0",
+        "websocket_extra" => "removed"
+      },
+      "provider_availability" => {
+        "status" => "not_evaluated",
+        "reason" => "migration was already rejected on the released consumer API and declared dependency boundary"
+      }
+    }
+    errors << "#{prefix} dependency compatibility contract does not match" unless audit["dependencies"] == expected_dependencies
     errors << "#{prefix} split mcp-types license accounting does not match" unless audit["license"] == {
       "candidate_sdk" => "MIT",
       "split_mcp_types_distribution" => "MIT",
       "compatible" => true,
       "packaging_effect" => "mcp-types requires separate source, dependency, and license accounting"
     }
-    errors << "#{prefix} compatibility decision does not retain MCP 1.28.1" unless
-      audit.dig("decision", "status") == "rejected" && audit.dig("decision", "retain_version") == "1.28.1" &&
-      audit.dig("decision", "candidate_version") == "2.0.0"
+    expected_decision = {
+      "status" => "rejected",
+      "retain_version" => "1.28.1",
+      "candidate_version" => "2.0.0",
+      "reason" => "upstream reports a Headroom 0.33.0 server startup failure with MCP 2 and the release explicitly requires mcp <2",
+      "fedora_outcome" => "retain the compatible security-fixed provider; do not carry a downstream MCP 2 product migration",
+      "mcp_2_gates" => {
+        "adoption" => false,
+        "provider_packaging" => false,
+        "runtime_validation" => false,
+        "build_validation" => false,
+        "matrix_validation" => false
+      }
+    }
+    errors << "#{prefix} compatibility decision does not fail closed" unless audit["decision"] == expected_decision
     errors << "#{prefix} audit validation overclaims local runtime reproduction" unless audit["validation"] == {
       "kind" => "static released-source audit",
       "runtime_or_build_claim" => false,
