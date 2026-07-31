@@ -4229,6 +4229,58 @@ module Agentlab
     ["source-release request metadata is incomplete: #{e.message}"]
   end
 
+  def dynamic_build_result_identity?(value)
+    case value
+    when Hash
+      value.any? do |key, nested|
+        key.to_s.match?(/(?:\A|_)(?:(?:copr|configured)_build_id|result_nvr|builder_log_(?:sha256|hash))\z/) ||
+          dynamic_build_result_identity?(nested)
+      end
+    when Array
+      value.any? { |nested| dynamic_build_result_identity?(nested) }
+    when String
+      value.match?(/\b(?:COPR|configured-SCM)\s+build(?:\s+ID)?\s+`?\d{7,}`?\b/i) ||
+        value.match?(/\b(?:result\s+NVR|builder[- ]log\s+(?:SHA-256|hash))\b/i)
+    else
+      false
+    end
+  end
+
+  def validate_ast_grep_build_contract(package)
+    return [] unless package.name == "ast-grep"
+
+    expected = {
+      "matrix" => %w[
+        fedora_43_x86_64
+        fedora_43_aarch64
+        fedora_44_x86_64
+        fedora_44_aarch64
+        rawhide_x86_64
+        rawhide_aarch64
+      ].to_h { |target| [target, "required"] },
+      "tests" => {
+        "expected_passed" => 189,
+        "expected_ignored" => 1
+      },
+      "cli_smokes" => {
+        "version" => "required",
+        "structural_search" => "required"
+      },
+      "expected_license_report_sha256" => "c35a5ee31817fab13313debc26a751ac5d8ed86710e19dae7c5f30861aa635ec",
+      "rpath_runpath_absent" => "required",
+      "rpmlint" => {
+        "expected_errors" => 0,
+        "expected_warning" => "no-manual-page-for-binary"
+      }
+    }
+    errors = []
+    errors << "ast-grep: validation contract does not match" unless package.data["validation_contract"] == expected
+    if dynamic_build_result_identity?(package.data)
+      errors << "ast-grep: active package metadata contains dynamic build result identity"
+    end
+    errors
+  end
+
   def validate_pdfium_source(package, spec)
     return [] unless package.name == "pdfium"
 
@@ -4263,24 +4315,8 @@ module Agentlab
     errors << "pdfium: immutable release is not required" unless policy["immutable_release_required"] == true
     errors << "pdfium: artifact attestation is not required" unless policy["artifact_attestation_required"] == true
 
-    dynamic_result_identity = lambda do |value|
-      case value
-      when Hash
-        value.any? do |key, nested|
-          key.to_s.match?(/(?:\A|_)(?:copr_build_id|result_nvr|builder_log_(?:sha256|hash))\z/) ||
-            dynamic_result_identity.call(nested)
-        end
-      when Array
-        value.any? { |nested| dynamic_result_identity.call(nested) }
-      when String
-        value.match?(/\b(?:COPR|configured-SCM)\s+build(?:\s+ID)?\s+`?\d{7,}`?\b/i) ||
-          value.match?(/\b(?:result\s+NVR|builder[- ]log\s+(?:SHA-256|hash))\b/i)
-      else
-        false
-      end
-    end
     active_inputs = [package.data, closure, receipt, readme, spec, generator, request]
-    if active_inputs.any? { |input| dynamic_result_identity.call(input) }
+    if active_inputs.any? { |input| dynamic_build_result_identity?(input) }
       errors << "pdfium: active package metadata contains dynamic build result identity"
     end
 

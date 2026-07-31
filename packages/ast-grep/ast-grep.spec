@@ -4,7 +4,7 @@
 
 Name:           ast-grep
 Version:        0.45.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Structural code search, linting, and rewriting tool
 
 License:        MIT AND Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT-0 AND Unicode-DFS-2016 AND LicenseRef-Fedora-Public-Domain
@@ -77,6 +77,9 @@ install -d %{buildroot}%{fish_completions_dir}
 %{fish_completions_dir}/ast-grep.fish
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 0.45.0-0.3
+- Remove transient build-result identities from active package metadata.
+
 * Sat Jul 25 2026 Marcin FM <marcin@lgic.pl> - 0.45.0-0.2
 - Record the completed configured matrix and promoted artifact evidence.
 

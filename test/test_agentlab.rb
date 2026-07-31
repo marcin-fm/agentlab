@@ -2388,6 +2388,25 @@ class AgentlabTest < Minitest::Test
     assert_equal("146.0.7678.0", Agentlab.latest_upstream_version(package))
   end
 
+  def test_detects_dynamic_build_result_identity
+    assert(Agentlab.dynamic_build_result_identity?({ "build_validation" => { "configured_build_id" => 12_345_678 } }))
+    assert(Agentlab.dynamic_build_result_identity?({ "results" => [{ "aarch64_copr_build_id" => 12_345_678 }] }))
+    assert(Agentlab.dynamic_build_result_identity?({ "status" => "passed in configured-SCM build 12345678" }))
+    refute(Agentlab.dynamic_build_result_identity?({ "toolchain_build_id" => "clang-22", "configured_matrix" => "passed" }))
+  end
+
+  def test_validates_ast_grep_build_contract
+    source_package = Agentlab.package_named("ast-grep")
+    assert_empty(Agentlab.validate_ast_grep_build_contract(source_package))
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("validation_contract")["configured_build_id"] = 12_345_678
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    errors = Agentlab.validate_ast_grep_build_contract(package)
+    assert_includes(errors, "ast-grep: validation contract does not match")
+    assert_includes(errors, "ast-grep: active package metadata contains dynamic build result identity")
+  end
+
   def test_validates_pdfium_hosted_source
     source_package = Agentlab.package_named("pdfium")
     spec = File.read(File.join(source_package.directory, "pdfium.spec"))

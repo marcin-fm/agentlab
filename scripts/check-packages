@@ -158,6 +158,8 @@ packages.each do |package|
     errors << "#{package.name}: enabled package still has blockers"
   end
 
+  errors.concat(Agentlab.validate_ast_grep_build_contract(package))
+
   package_chroots = package.data.dig("copr", "chroots")
   if package_chroots
     unless package_chroots.is_a?(Array) && package_chroots.any? && package_chroots.all? { |chroot| chroot.is_a?(String) && !chroot.empty? }
