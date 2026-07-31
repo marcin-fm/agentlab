@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "base64"
 require "json"
 require "open3"
 require "optparse"
@@ -30,8 +31,11 @@ module OpenCodeUpstreamReleaseAudit
     "@modelcontextprotocol/server",
     "@modelcontextprotocol/sdk",
   ].freeze
-  RECEIPT_SCHEMA = "agentlab-opencode-upstream-release-audit/v4"
+  RECEIPT_SCHEMA = "agentlab-opencode-upstream-release-audit/v5"
   RECEIPT_RELATIVE_PATH = "evidence/opencode/upstream-release-audit.json"
+  WITNESS_SCHEMA = "agentlab-opencode-upstream-release-witness/v1"
+  WITNESS_RELATIVE_PATH = "evidence/opencode/upstream-release-witness.json"
+  WITNESS_SHA256 = "f873723f7c0ff2496f3e7fd947abf402ee86ba66c1ced93b10452ad169fc74ee"
 
   def git(repo, *arguments)
     git_output(repo, *arguments).strip
@@ -61,6 +65,21 @@ module OpenCodeUpstreamReleaseAudit
     git_output(repo, "show", "#{revision}:#{path}")
   end
 
+  def default_witness_path
+    File.expand_path("../#{WITNESS_RELATIVE_PATH}", __dir__)
+  end
+
+  def load_witness(path, expected_sha256)
+    content = File.binread(path)
+    actual_sha256 = Digest::SHA256.hexdigest(content)
+    raise "OpenCode release witness SHA-256 mismatch" unless actual_sha256 == expected_sha256
+
+    witness = JSON.parse(content)
+    raise "unsupported OpenCode release witness schema" unless witness["schema"] == WITNESS_SCHEMA
+
+    witness
+  end
+
   def package_requirement(repo, revision, package)
     manifest = JSON.parse(git_file(repo, revision, "packages/opencode/package.json"))
     requirements = %w[dependencies devDependencies].filter_map do |group|
@@ -74,6 +93,11 @@ module OpenCodeUpstreamReleaseAudit
   def npm_source(identity, integrity)
     name, version = identity.match(/\A(?<name>@[^@]+|[^@]+)@(?<version>[^@]+)\z/)&.captures
     raise "invalid npm lock identity #{identity}" unless name && version
+    encoded = integrity.delete_prefix("sha512-")
+    raise "invalid npm SHA-512 integrity #{integrity}" if encoded == integrity
+
+    digest = Base64.strict_decode64(encoded)
+    raise "invalid npm SHA-512 digest length for #{identity}" unless digest.bytesize == 64
 
     basename = name.split("/").last
     {
@@ -81,13 +105,45 @@ module OpenCodeUpstreamReleaseAudit
       "integrity" => integrity,
       "source_url" => "https://registry.npmjs.org/#{name}/-/#{basename}-#{version}.tgz",
     }
+  rescue ArgumentError
+    raise "invalid npm SHA-512 integrity #{integrity}"
+  end
+
+  def valid_npm_source?(package, requirement, source)
+    return false unless source.is_a?(Hash)
+    return false unless source["identity"].is_a?(String) && source["integrity"].is_a?(String)
+
+    expected_identity = "#{package}@#{requirement}"
+    npm_source(source["identity"], source["integrity"]) == source &&
+      source["identity"] == expected_identity
+  rescue RuntimeError
+    false
   end
 
   def lock_source(repo, revision, package)
-    matches = git_file(repo, revision, "bun.lock").lines.filter_map do |line|
-      match = line.match(/^\s*"#{Regexp.escape(package)}":\s*\["(?<identity>[^"]+)".*"(?<integrity>sha512-[A-Za-z0-9+\/=]+)"\],?\s*$/)
-      npm_source(match[:identity], match[:integrity]) if match
+    matches = []
+    packages_map = false
+    packages_map_seen = false
+    git_file(repo, revision, "bun.lock").lines.each do |line|
+      if line.match?(/^  "packages": \{\s*$/)
+        raise "duplicate Bun packages map in #{revision}" if packages_map_seen
+
+        packages_map = true
+        packages_map_seen = true
+        next
+      elsif packages_map && line.match?(/^  \},?\s*$/)
+        packages_map = false
+        next
+      end
+      next unless packages_map
+      next unless line.match?(/^    "#{Regexp.escape(package)}":/)
+
+      match = line.match(/^    "#{Regexp.escape(package)}": \["(?<identity>[^"]+)".*"(?<integrity>sha512-[A-Za-z0-9+\/=]+)"\],?\s*$/)
+      raise "malformed Bun packages map record for #{package} in #{revision}" unless match
+
+      matches << npm_source(match[:identity], match[:integrity])
     end
+    raise "Bun lock is missing packages map in #{revision}" unless packages_map_seen
     raise "duplicate root lock records for #{package} in #{revision}" if matches.length > 1
 
     matches.first
@@ -97,10 +153,16 @@ module OpenCodeUpstreamReleaseAudit
     MCP_DEPENDENCIES.map do |package|
       packaged_requirement = package_requirement(repo, packaged_tag, package)
       latest_requirement = package_requirement(repo, latest_tag, package)
-      packaged_source = lock_source(repo, packaged_tag, package)
-      latest_source = lock_source(repo, latest_tag, package)
+      packaged_source = lock_source(repo, packaged_tag, package) if packaged_requirement
+      latest_source = lock_source(repo, latest_tag, package) if latest_requirement
       if (packaged_requirement && !packaged_source) || (latest_requirement && !latest_source)
         raise "missing root lock source for #{package} dependency transition"
+      end
+      if packaged_source && packaged_source.fetch("identity") != "#{package}@#{packaged_requirement}"
+        raise "Bun lock identity does not match #{package} requirement in #{packaged_tag}"
+      end
+      if latest_source && latest_source.fetch("identity") != "#{package}@#{latest_requirement}"
+        raise "Bun lock identity does not match #{package} requirement in #{latest_tag}"
       end
 
       {
@@ -330,13 +392,14 @@ module OpenCodeUpstreamReleaseAudit
     }
   end
 
-  def receipt_errors(package_manifest:, package_spec:, receipt:)
+  def receipt_errors(package_manifest:, package_spec:, receipt:, witness_path: default_witness_path, expected_witness_sha256: WITNESS_SHA256)
     package = YAML.safe_load_file(package_manifest, aliases: false)
     upstream = package.fetch("upstream")
     data = receipt.is_a?(Hash) ? receipt : JSON.parse(File.read(receipt))
     current_version = upstream.fetch("current_version").to_s
     packaged = data.fetch("packaged_release")
     latest = data.fetch("latest_release")
+    witness = load_witness(witness_path, expected_witness_sha256)
     errors = []
     packaged_version = packaged.fetch("version").to_s
     latest_version = latest.fetch("version").to_s
@@ -344,6 +407,10 @@ module OpenCodeUpstreamReleaseAudit
 
     errors << "unsupported receipt schema" unless data["schema"] == RECEIPT_SCHEMA
     errors << "receipt package mismatch" unless data["package"] == "opencode"
+    errors << "receipt immutable witness mismatch" unless data["immutable_witness"] == {
+      "path" => WITNESS_RELATIVE_PATH,
+      "sha256" => expected_witness_sha256,
+    }
     errors << "receipt reproduction contract mismatch" unless data["reproduction"] == reproduction(upstream, latest_version)
     errors << "receipt packaged tag is inconsistent" unless packaged["tag"] == "#{tag_prefix}#{packaged_version}"
     errors << "receipt latest tag is inconsistent" unless latest["tag"] == "#{tag_prefix}#{latest_version}"
@@ -371,15 +438,14 @@ module OpenCodeUpstreamReleaseAudit
           requirement = entry["#{release}_requirement"]
           source = entry["#{release}_source"]
           if requirement
-            source.is_a?(Hash) &&
-              source["identity"] == "#{entry.fetch('package')}@#{requirement}" &&
-              source["integrity"].to_s.match?(/\Asha512-[A-Za-z0-9+\/=]+\z/) &&
-              source["source_url"] == "https://registry.npmjs.org/#{entry.fetch('package')}/-/#{entry.fetch('package').split('/').last}-#{requirement}.tgz"
+            valid_npm_source?(entry.fetch("package"), requirement, source)
           else
             source.nil?
           end
         end
       end
+    errors << "receipt MCP dependency transition does not match immutable witness" unless
+      transition == witness["mcp_dependency_transition"]
     sensitive_blobs = data.dig("delta", "release_sensitive_blobs")
     errors << "receipt release-sensitive blob mapping is incomplete" unless
       sensitive_blobs.is_a?(Hash) &&
@@ -389,6 +455,19 @@ module OpenCodeUpstreamReleaseAudit
           blobs.keys.sort == %w[latest packaged] &&
           blobs.values.all? { |object_id| object_id.to_s.match?(/\A[0-9a-f]{40}\z/) } &&
           sensitive_paths[path] == (blobs["packaged"] != blobs["latest"])
+      end
+    expected_blobs = RELEASE_SENSITIVE_PATHS.to_h do |path|
+      [path, {
+        "packaged" => witness.dig("releases", "packaged", "release_sensitive_blobs", path),
+        "latest" => witness.dig("releases", "latest", "release_sensitive_blobs", path),
+      }]
+    end
+    errors << "receipt release-sensitive blobs do not match immutable witness" unless sensitive_blobs == expected_blobs
+    errors << "receipt releases do not match immutable witness" unless
+      %w[packaged latest].all? do |release|
+        receipt_release = release == "packaged" ? packaged : latest
+        witness_release = witness.dig("releases", release)
+        %w[version tag commit].all? { |field| receipt_release[field] == witness_release[field] }
       end
     errors << "receipt latest archive is not tree-verified" unless latest["archive_matches_commit_tree"] == true
     errors << "receipt changed-path count is invalid" unless data.dig("delta", "changed_paths").is_a?(Integer) && data.dig("delta", "changed_paths").positive?
@@ -414,11 +493,12 @@ module OpenCodeUpstreamReleaseAudit
     errors << "receipt packaging patch inputs mismatch" unless recorded_patches == actual_patches
 
     errors
-  rescue JSON::ParserError, KeyError, Psych::SyntaxError, ArgumentError => error
+  rescue JSON::ParserError, KeyError, Psych::SyntaxError, ArgumentError, RuntimeError, Errno::ENOENT => error
     ["invalid receipt: #{error.message}"]
   end
 
-  def audit(package_manifest:, repo:, archive:, latest_version:, package_spec: nil, archive_limits: DEFAULT_ARCHIVE_LIMITS)
+  def audit(package_manifest:, repo:, archive:, latest_version:, package_spec: nil, archive_limits: DEFAULT_ARCHIVE_LIMITS,
+            witness_path: default_witness_path, expected_witness_sha256: WITNESS_SHA256)
     package = YAML.safe_load_file(package_manifest, aliases: false)
     upstream = package.fetch("upstream")
     packaged_version = upstream.fetch("current_version").to_s
@@ -426,6 +506,7 @@ module OpenCodeUpstreamReleaseAudit
     packaged_commit = upstream.fetch("source_commit")
     latest_tag = "#{upstream.fetch('tag_prefix')}#{latest_version}"
     package_spec ||= File.join(File.dirname(package_manifest), "opencode.spec")
+    witness = load_witness(witness_path, expected_witness_sha256)
 
     raise "OpenCode package must remain blocked" unless package.fetch("status") == "blocked"
     raise "OpenCode COPR package must remain disabled" unless package.dig("copr", "enabled") == false
@@ -435,6 +516,15 @@ module OpenCodeUpstreamReleaseAudit
     raise "packaged tag commit does not match package.yml" unless actual_packaged_commit == packaged_commit
 
     latest_commit = git(repo, "rev-parse", "#{latest_tag}^{commit}")
+    unless witness["repository"] == upstream.fetch("repository") &&
+           witness.dig("releases", "packaged", "version") == packaged_version &&
+           witness.dig("releases", "packaged", "tag") == packaged_tag &&
+           witness.dig("releases", "packaged", "commit") == actual_packaged_commit &&
+           witness.dig("releases", "latest", "version") == latest_version &&
+           witness.dig("releases", "latest", "tag") == latest_tag &&
+           witness.dig("releases", "latest", "commit") == latest_commit
+      raise "OpenCode release witness does not match immutable tag commits"
+    end
     expected_root = "opencode-#{latest_version}"
     archive_manifest = JSON.parse(
       verify_archive_identity(archive, repo, latest_commit, expected_root, limits: archive_limits),
@@ -451,11 +541,24 @@ module OpenCodeUpstreamReleaseAudit
         "latest" => git(repo, "rev-parse", "#{latest_tag}:#{path}"),
       }]
     end
+    expected_sensitive_blobs = RELEASE_SENSITIVE_PATHS.to_h do |path|
+      [path, {
+        "packaged" => witness.dig("releases", "packaged", "release_sensitive_blobs", path),
+        "latest" => witness.dig("releases", "latest", "release_sensitive_blobs", path),
+      }]
+    end
+    raise "release-sensitive Git blobs do not match immutable witness" unless sensitive_blobs == expected_sensitive_blobs
+    dependency_transition = mcp_dependency_transition(repo, packaged_tag, latest_tag)
+    raise "MCP dependency sources do not match immutable witness" unless dependency_transition == witness["mcp_dependency_transition"]
     patch_inputs = packaging_patch_inputs(package_spec)
 
     {
       "schema" => RECEIPT_SCHEMA,
       "package" => "opencode",
+      "immutable_witness" => {
+        "path" => WITNESS_RELATIVE_PATH,
+        "sha256" => expected_witness_sha256,
+      },
       "packaged_release" => {
         "version" => packaged_version,
         "tag" => packaged_tag,
@@ -475,7 +578,7 @@ module OpenCodeUpstreamReleaseAudit
         "changed_paths" => changed_paths.length,
         "release_sensitive_paths" => path_changes,
         "release_sensitive_blobs" => sensitive_blobs,
-        "mcp_dependency_transition" => mcp_dependency_transition(repo, packaged_tag, latest_tag),
+        "mcp_dependency_transition" => dependency_transition,
         "downstream_patch_revalidation_required" => patch_inputs.fetch("source0_revalidation_required"),
         "selected_source_evidence_refresh_required" => true,
       },

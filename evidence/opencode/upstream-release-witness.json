@@ -1,0 +1,61 @@
+{
+  "schema": "agentlab-opencode-upstream-release-witness/v1",
+  "repository": "anomalyco/opencode",
+  "releases": {
+    "packaged": {
+      "version": "1.18.8",
+      "tag": "v1.18.8",
+      "commit": "3c81a5d1ddceab377d9ad71c14899e6935333fdd",
+      "release_sensitive_blobs": {
+        "bun.lock": "b4571f1314a0a04ce6f7cc217a6cd7e27d80ef51",
+        "package.json": "662f9a4c3c23698f79f9d71992eec015f27c7283",
+        "packages/opencode/package.json": "293a678e9bb5c8735414f439513c9789d23cecc4"
+      }
+    },
+    "latest": {
+      "version": "1.18.10",
+      "tag": "v1.18.10",
+      "commit": "7902e04c3a67f7c69726bc955efb46e29214c797",
+      "release_sensitive_blobs": {
+        "bun.lock": "160958f8da2c355cf4f3817cafbbc6e3f494a199",
+        "package.json": "2a8eef63568796981aab83af6720db742d78ea2e",
+        "packages/opencode/package.json": "84f03d88abee544e06562cfe04b1f8dbf794b06e"
+      }
+    }
+  },
+  "mcp_dependency_transition": [
+    {
+      "package": "@modelcontextprotocol/client",
+      "packaged_requirement": "2.0.0-beta.5",
+      "latest_requirement": null,
+      "packaged_source": {
+        "identity": "@modelcontextprotocol/client@2.0.0-beta.5",
+        "integrity": "sha512-YuuNm5f2TMoFQRje1UqVP8TJRjijCXMz4ckvoVpx1cUXuBEmykWQ2d8R536pek6UKcXT41T5nWc4qR1JFIbEmg==",
+        "source_url": "https://registry.npmjs.org/@modelcontextprotocol/client/-/client-2.0.0-beta.5.tgz"
+      },
+      "latest_source": null
+    },
+    {
+      "package": "@modelcontextprotocol/server",
+      "packaged_requirement": "2.0.0-beta.5",
+      "latest_requirement": null,
+      "packaged_source": {
+        "identity": "@modelcontextprotocol/server@2.0.0-beta.5",
+        "integrity": "sha512-i1E5l75rQKsgY/AKAIspgMBH1vEL7dqiK7tHr0L+raYcb0SWOziqNGJXGIG6NY4AlXDWIKGJQGB7Nqfs3oUi5g==",
+        "source_url": "https://registry.npmjs.org/@modelcontextprotocol/server/-/server-2.0.0-beta.5.tgz"
+      },
+      "latest_source": null
+    },
+    {
+      "package": "@modelcontextprotocol/sdk",
+      "packaged_requirement": null,
+      "latest_requirement": "1.29.0",
+      "packaged_source": null,
+      "latest_source": {
+        "identity": "@modelcontextprotocol/sdk@1.29.0",
+        "integrity": "sha512-zo37mZA9hJWpULgkRpowewez1y6ML5GsXJPY8FI0tBBCd77HEvza4jDqRKOXgHNn867PVGCyTdzqpz0izu5ZjQ==",
+        "source_url": "https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.29.0.tgz"
+      }
+    }
+  ]
+}

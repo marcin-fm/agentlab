@@ -1,6 +1,10 @@
 {
-  "schema": "agentlab-opencode-upstream-release-audit/v4",
+  "schema": "agentlab-opencode-upstream-release-audit/v5",
   "package": "opencode",
+  "immutable_witness": {
+    "path": "evidence/opencode/upstream-release-witness.json",
+    "sha256": "f873723f7c0ff2496f3e7fd947abf402ee86ba66c1ced93b10452ad169fc74ee"
+  },
   "packaged_release": {
     "version": "1.18.8",
     "tag": "v1.18.8",
