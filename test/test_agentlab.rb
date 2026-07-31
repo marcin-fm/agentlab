@@ -3200,6 +3200,21 @@ class AgentlabTest < Minitest::Test
     assert_equal("3.0.0", historical_validation.fetch("provider_version"))
     assert_equal("3.0.0-0.9", historical_validation.fetch("provider_release"))
     assert_equal("immutable_historical_provider_proof", historical_validation.fetch("evidence_role"))
+    final_license_path = File.join(source_package.directory, "bun-1.3.14-final-linked-license-closure.json")
+    final_license = JSON.parse(File.read(final_license_path))
+    historical_input = final_license.dig("inputs", "lolhtml_package")
+    snapshot = historical_validation.fetch("manifest_snapshot")
+    snapshot_path = File.join(Agentlab::ROOT, snapshot.fetch("path"))
+    assert_equal(historical_input.fetch("path"), snapshot.fetch("source_path"))
+    assert_equal(historical_input.fetch("size_bytes"), File.size(snapshot_path))
+    assert_equal(historical_input.fetch("sha256"), Digest::SHA256.file(snapshot_path).hexdigest)
+    assert(Agentlab.valid_bun_lolhtml_historical_manifest_snapshot?(final_license, provider.data))
+
+    live_input = Marshal.load(Marshal.dump(final_license))
+    live_manifest_path = File.join(provider.directory, "package.yml")
+    live_input.dig("inputs", "lolhtml_package")["size_bytes"] = File.size(live_manifest_path)
+    live_input.dig("inputs", "lolhtml_package")["sha256"] = Digest::SHA256.file(live_manifest_path).hexdigest
+    refute(Agentlab.valid_bun_lolhtml_historical_manifest_snapshot?(live_input, provider.data))
     assert_empty(Agentlab.validate_bun_system_lolhtml(source_package, lolhtml, stages, "1.3.14", spec))
 
     relabeled_data = Marshal.load(Marshal.dump(provider.data))

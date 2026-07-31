@@ -2872,6 +2872,20 @@ module Agentlab
       current_pending && historical_proof
   end
 
+  def valid_bun_lolhtml_historical_manifest_snapshot?(receipt, lolhtml_data)
+    record = receipt.dig("inputs", "lolhtml_package") || {}
+    snapshot = lolhtml_data.dig("build_validation", "historical", "manifest_snapshot") || {}
+    snapshot_path = File.join(ROOT, snapshot["path"].to_s)
+    record["path"] == "packages/lol-html/package.yml" &&
+      snapshot["path"] == "packages/lol-html/lol-html-3.0.0-package.yml" &&
+      snapshot["source_path"] == record["path"] &&
+      snapshot["size_bytes"] == record["size_bytes"] &&
+      snapshot["sha256"] == record["sha256"] &&
+      File.file?(snapshot_path) &&
+      File.size(snapshot_path) == record["size_bytes"] &&
+      Digest::SHA256.file(snapshot_path).hexdigest == record["sha256"]
+  end
+
   def validate_bun_system_lolhtml(package, lolhtml, stages, version, spec)
     return [] unless package.name == "bun"
     return [] unless lolhtml.is_a?(Hash) && lolhtml["relationship"] == "fedora_system_provider"
@@ -3774,6 +3788,8 @@ module Agentlab
     errors << "bun: final linked-license closure package mismatch" unless receipt["package"] == "bun"
     errors << "bun: final linked-license closure release mismatch" unless receipt["version"] == version
     errors << "bun: final linked-license closure target mismatch" unless receipt["target"] == "fedora-44-x86_64-glibc-system-lolhtml"
+    lolhtml_data = YAML.safe_load(File.read(File.join(ROOT, "packages", "lol-html", "package.yml")), aliases: false)
+    errors << "bun: final linked-license historical lol-html manifest mismatch" unless valid_bun_lolhtml_historical_manifest_snapshot?(receipt, lolhtml_data)
 
     script_path = File.join(ROOT, metadata["audit_script"].to_s)
     unless File.file?(script_path) && metadata["audit_script_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
@@ -3789,8 +3805,6 @@ module Agentlab
       "relink_audit" => [seed_stage.dig("relink_materials_audit", "proof_receipt"), seed_stage.dig("relink_materials_audit", "proof_receipt_sha256"), package.directory],
       "relink_kit" => [seed_stage.dig("relink_kit", "proof_receipt"), seed_stage.dig("relink_kit", "proof_receipt_sha256"), package.directory]
     }
-    # The closure receipt SHA already binds its historical lol-html manifest input.
-    # The current provider interface and license boundary are checked separately below.
     parsed_inputs = {}
     expected_inputs.each do |key, (name, sha, directory)|
       path = name.is_a?(String) && File.join(directory, name)
@@ -3903,7 +3917,6 @@ module Agentlab
     unresolved_valid = unresolved_headerless.all? { |record| record["selected_expression"].nil? && record["introducing_commit"].to_s.match?(/\A[0-9a-f]{40}\z/) && record["introducing_author"].to_s.include?("<") && record["introducing_date"].to_s.match?(/\A\d{4}-\d{2}-\d{2}T/) && record["introducing_subject"].to_s != "" && record["upstream_repository"] == "https://github.com/oven-sh/WebKit" && record["upstream_issue_tracker_enabled"] == false }
     errors << "bun: final linked-license WebKit headerless review mismatch" unless resolved_valid && unresolved_valid && transitive["mapping_verified"] == true && transitive["headerless_review_verified"] == true && transitive["semantic_license_selection_verified"] == false
 
-    lolhtml_data = YAML.safe_load(File.read(File.join(ROOT, "packages", "lol-html", "package.yml")), aliases: false)
     provider = receipt["external_lolhtml_provider"] || {}
     expected_provider = self_receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider") || {}
     provider_license = lolhtml_data["license_audit"] || {}
