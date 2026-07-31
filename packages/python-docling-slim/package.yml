@@ -5,6 +5,7 @@ source_policy:
   packaged_surface: Base modules plus the service-client extra; upstream command wrappers are removed.
   cli_exclusion: The wrappers import the excluded pypdfium2-backed local conversion path even for --help; docling-mcp consumes the Python service-client API instead.
   service_client_metadata_patch: Removes Typer, Rich, and python-dotenv from the service-client extra because only the omitted command wrappers import them; the client API imports only httpx and websockets.
+  upstream_empty_targets_limitation: Release 2.117.0 accepts targets=[] because only None is rejected and the request model has no minimum length; the client then submits an empty targets list. This package does not patch that upstream behavior and claims only export and signature coverage for the targets parameter.
   upstream_scipy_guard: Release 2.117.0 includes upstream commit 9b51f4f857176cdd95cef53e2ec7f5f32ffbc6a5, so the downstream backport remains unnecessary.
   excluded_extras:
     - Local PDF parser and pypdfium2 branches.
@@ -24,10 +25,17 @@ validation:
   package_manifest: passed
   required_copr_matrix: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
   upstream_tests: unavailable; sdist excludes the test tree
-  installed_smokes: base import, expanded service-client exports, chunking option and multi-target signatures, client construction, and local HTTP health response
+  installed_smokes: base import, expanded service-client exports, chunking option and sync/async targets parameter signatures, client construction, and local HTTP health response
 artifacts:
-  spec_sha256: 158d568eefd1c7241458a17b11ea09397266e840e62392ece297c72ab8ad12e5
-  service_client_patch_sha256: 89a19e07fe9c16eed200da92c5aeb41db376c0554ddf83760d6028a404b84f47
+  spec_sha256: c57b9fbe21711b0a520e8737a28b0efc75679868af98f692b42f70e5d869b52a
+  service_client_patch_sha256: 81c8ae93225d75981a11bc6c77177570a4acadbd08bb5324ac67192d77251316
+  patch0_preimage:
+    path: docling-slim-2.117.0-pyproject-patch0-preimage.toml
+    sha256: d9f89801e00e9f8972ed60ba08daca18df65e92bc43da859bf02e7266b01c5da
+    upstream_path: pyproject.toml
+    upstream_sha256: 956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a
+    upstream_lines: 254-269
+    identity: Exact bytes in both the 2.117.0 PyPI sdist and tag v2.117.0.
 upstream:
   provider: pypi
   project: docling-slim

@@ -30,9 +30,11 @@ tests:
   upstream: The sdist contains no tests.
   installed:
     - Import the base package and service client.
-    - Verify the chunking option export and synchronous/asynchronous multi-target batch signatures.
+    - Verify the chunking option export and synchronous/asynchronous targets parameter signatures.
     - Call the service client's health method against a local HTTP fixture.
 cli_policy:
   packaged: false
   reason: The upstream wrappers import pypdfium2-backed local conversion at startup, outside the declared service-client closure.
 offline_build: required
+upstream_limitations:
+  empty_batch_targets: Release 2.117.0 accepts targets=[] and submits the empty list; no downstream behavior patch is carried.

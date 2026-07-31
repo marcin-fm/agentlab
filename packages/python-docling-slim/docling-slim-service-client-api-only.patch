@@ -1,6 +1,6 @@
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -250,11 +250,6 @@ feat-chunking = [
+@@ -6,11 +6,6 @@
  service-client = [
    'httpx>=0.28,<1.0.0',
    'websockets>=14.0,<17.0',

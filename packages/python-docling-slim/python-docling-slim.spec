@@ -2,7 +2,7 @@
 
 Name:           python-docling-slim
 Version:        2.117.0
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
@@ -69,8 +69,12 @@ assert InputFormat.DOCX.value == "docx"
 assert ChunkingOptionType is not None
 assert hasattr(DoclingServiceClient, "submit_batch")
 assert hasattr(AsyncDoclingServiceClient, "submit_batch")
-assert "targets" in inspect.signature(DoclingServiceClient.submit_batch).parameters
-assert "targets" in inspect.signature(AsyncDoclingServiceClient.submit_batch).parameters
+sync_targets = inspect.signature(DoclingServiceClient.submit_batch).parameters["targets"]
+async_targets = inspect.signature(AsyncDoclingServiceClient.submit_batch).parameters["targets"]
+assert sync_targets.kind is inspect.Parameter.KEYWORD_ONLY
+assert async_targets.kind is inspect.Parameter.KEYWORD_ONLY
+assert sync_targets.default is None
+assert async_targets.default is None
 DoclingServiceClient("http://127.0.0.1:1")
 PY
 
@@ -123,8 +127,12 @@ trap - EXIT
 %doc packages/docling-slim/README.md
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 2.117.0-0.2
+- Bind zero-fuzz patch validation to an exact upstream preimage fixture.
+- Document the upstream empty-target limitation without downstream behavior changes.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 2.117.0-0.1
-- Update to upstream 2.117.0 and verify the expanded chunking and batch-target API.
+- Update to upstream 2.117.0 and verify the expanded chunking and batch-target signatures.
 
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.116.0-0.2
 - Remove dynamic COPR result state from the static package contract.
