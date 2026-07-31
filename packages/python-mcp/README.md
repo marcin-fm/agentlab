@@ -19,3 +19,22 @@ relaxation is not retained; Fedora 43 instead receives the selected source-built
 RPM Fusion Free and Nonfree release/update metadata for Fedora 43, Fedora 44,
 and Rawhide on x86_64/aarch64 was checked on 2026-07-30; no MCP SDK package or
 `python3dist(mcp)` provider is present there.
+
+## MCP 2.0.0 boundary
+
+The released `mcp 2.0.0` candidate is intentionally not selected. Headroom
+`0.33.0` declares `mcp >=1.28.1, <2.0.0`, and its upstream guard records an
+immediate startup failure because MCP 2 removed the low-level `Server`
+`list_tools()` and `call_tool()` decorators. Headroom uses those decorators in
+both its compression and memory MCP servers and also depends on legacy request
+context and streamable HTTP integration.
+
+MCP 2 additionally changes the protocol handshake and server-push model,
+removes WebSocket transport, replaces `httpx`/`httpx-sse` with `httpx2`, and
+splits the wire models into the exact-version `mcp-types` distribution. Both
+MCP distributions remain MIT, but `mcp-types` would require separate Fedora
+source and license accounting. A coherent upgrade therefore requires an
+upstream Headroom migration rather than a downstream dependency-bound edit.
+
+`mcp-2.0.0-compatibility.yml` binds the exact released sources, API call sites,
+dependency delta, protocol boundary, license result, and fail-closed decision.

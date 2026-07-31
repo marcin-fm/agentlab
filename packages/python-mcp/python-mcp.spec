@@ -3,7 +3,7 @@
 
 Name:           python-mcp
 Version:        1.28.1
-Release:        0.1%{?dist}
+Release:        0.2%{?dist}
 Summary:        Model Context Protocol SDK
 License:        MIT
 URL:            https://modelcontextprotocol.io
@@ -69,5 +69,8 @@ echo "%{source_sha256}  %{SOURCE0}" | sha256sum -c -
 %{_bindir}/mcp
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.28.1-0.2
+- Record the fail-closed MCP 2.0.0 compatibility audit for Headroom 0.33.0.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 1.28.1-0.1
 - Add the released MCP SDK required by python-headroom-ai 0.33.0.
