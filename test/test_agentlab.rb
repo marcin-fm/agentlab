@@ -2453,7 +2453,10 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_conventional_rust_leaf_contract(source_package, spec.sub("%prep\n", "#{extra_package}%prep\n"))
       assert_includes(errors, "#{name}: static Rust leaf spec contract is incomplete")
 
-      Dir.mktmpdir("agentlab-rust-leaf-test-", "/srv/tmp") do |directory|
+      temp_parent = ["/srv/tmp", ENV["RUNNER_TEMP"], Dir.tmpdir].compact.find do |path|
+        File.directory?(path) && File.writable?(path)
+      end
+      Dir.mktmpdir("agentlab-rust-leaf-test-", temp_parent) do |directory|
         package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: source_package.data)
         errors = Agentlab.validate_conventional_rust_leaf_contract(package, spec)
         assert_includes(errors, "#{name}: package README is missing")
