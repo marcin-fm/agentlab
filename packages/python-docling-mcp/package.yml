@@ -8,7 +8,7 @@ blockers:
 dependency_status:
   completed_reusable_packages:
     - python-docling-core 2.88.0
-    - python-docling-slim 2.116.0 service-client API
+    - python-docling-slim 2.117.0 service-client API
     - python-doclang 0.7.3
     - python-latex2mathml 3.81.0
   upstream_runtime:
@@ -37,7 +37,7 @@ upstream_surface:
     - directory conversion and URL sources
     - RAG and local-model extras
 build_validation:
-  release: 2.1.0-0.5
+  release: 2.1.0-0.6
   status: blocked-source-review-validated
   sdist_source: verified
   substantive_patches_removed: true

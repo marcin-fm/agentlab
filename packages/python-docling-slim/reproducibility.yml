@@ -1,11 +1,11 @@
 schema: python-docling-slim-reproducibility/v1
 package: python-docling-slim
-version: 2.116.0-0.2
+version: 2.117.0-0.1
 source:
-  url: https://files.pythonhosted.org/packages/34/61/a92577403bd8ac709701fa90d72ef56d4b5a174448b5562b3885d9da0a98/docling_slim-2.116.0.tar.gz
-  sha256: f64500b4f42e772994ca83547e1bd6a9a41eda421313b3072028206950c12068
-  release_tag: v2.116.0
-  release_commit: ec8571900ae57a4e398db72e280b8046c4768f57
+  url: https://files.pythonhosted.org/packages/79/ea/ebd5c810f257b5ba6daa4a2d5f2161e69aba0dce0aa454a5d0b62374353b/docling_slim-2.117.0.tar.gz
+  sha256: 7c2b8ce1700b7dcc235b9839d85e83e21d89cbb43b593a3e2fdb4e880e56c483
+  release_tag: v2.117.0
+  release_commit: f2683c0b5aa14a53b74373b0640260891cdbc1b0
 patches:
   service_client_api_only:
     path: docling-slim-service-client-api-only.patch
@@ -29,7 +29,7 @@ validation:
     - fedora-rawhide-x86_64
     - fedora-rawhide-aarch64
 artifacts:
-  spec_sha256: a048cfe2f45cd27cebef0b35ee1970a94f9ed48663731c5d75f17d5d9c705daa
+  spec_sha256: 158d568eefd1c7241458a17b11ea09397266e840e62392ece297c72ab8ad12e5
 limitations:
   - The PyPI sdist excludes the upstream test tree.
   - The service client is useful only when an administrator explicitly configures a remote Docling service.

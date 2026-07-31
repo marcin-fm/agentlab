@@ -1,6 +1,6 @@
 schema: python-docling-mcp-reproducibility/v1
 package: python-docling-mcp
-version: 2.1.0-0.5
+version: 2.1.0-0.6
 source:
   url: https://files.pythonhosted.org/packages/e3/bc/59f74a19ac66ddebfe2bee76f8f5c6b208f9dd1fe96fff5d020720985f5d/docling_mcp-2.1.0.tar.gz
   sha256: 46ea64354ae6b7e5956e5f93da62b4329906766cf1f130314ace8eefb4c058c7
@@ -10,7 +10,7 @@ substantive_patches:
 validation:
   status: blocked-source-review-validated
   source_sha256: verified
-  spec_sha256: a34d5f5cf9a3f81d8c85604355076b14ce3d40a65df15f6866c9431d07159343
+  spec_sha256: b495148b148d576f3f164a6eda221860d75b26fa3ca00595e65378c69d3d2562
   spec_parse: passed
   package_manifest: passed
   binary_build: prohibited

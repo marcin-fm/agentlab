@@ -1,5 +1,5 @@
 schema: python-docling-slim-dependencies/v1
-target_release: 2.116.0
+target_release: 2.117.0
 packaged_extra: service-client
 base_runtime:
   - pydantic >= 2, < 3
@@ -30,6 +30,7 @@ tests:
   upstream: The sdist contains no tests.
   installed:
     - Import the base package and service client.
+    - Verify the chunking option export and synchronous/asynchronous multi-target batch signatures.
     - Call the service client's health method against a local HTTP fixture.
 cli_policy:
   packaged: false

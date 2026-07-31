@@ -883,21 +883,21 @@ packages.each do |package|
       "package_manifest" => "passed",
       "required_copr_matrix" => "Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64",
       "upstream_tests" => "unavailable; sdist excludes the test tree",
-      "installed_smokes" => "base import, expanded service-client exports, client construction, and local HTTP health response"
+      "installed_smokes" => "base import, expanded service-client exports, chunking option and multi-target signatures, client construction, and local HTTP health response"
     }
     patch_name = "docling-slim-service-client-api-only.patch"
     patch_sha256 = "89a19e07fe9c16eed200da92c5aeb41db376c0554ddf83760d6028a404b84f47"
     errors << "python-docling-slim: current static validation contract is incomplete" unless package.data["validation"] == expected_validation
     errors << "python-docling-slim: dynamic historical results remain in package inputs" if package.data.key?("historical_validation") || reproducibility.key?("historical_validation")
     errors << "python-docling-slim: obsolete SciPy backport remains" if File.exist?(File.join(package.directory, "docling-slim-guard-scipy-import.patch")) || spec.include?("docling-slim-guard-scipy-import.patch")
-    errors << "python-docling-slim: reproducibility release is stale" unless reproducibility["version"] == "#{manifest_version}-0.2"
+    errors << "python-docling-slim: reproducibility release is stale" unless reproducibility["version"] == "#{manifest_version}-0.1"
     errors << "python-docling-slim: reproducibility source identity is stale" unless reproducibility["source"] == { "url" => package.upstream["source_url"], "sha256" => manifest_sha256, "release_tag" => package.upstream["release_tag"], "release_commit" => package.upstream["release_commit"] }
     errors << "python-docling-slim: service-client patch hash is stale" unless reproducibility.dig("patches", "service_client_api_only", "sha256") == patch_sha256 && Digest::SHA256.file(File.join(package.directory, patch_name)).hexdigest == patch_sha256
     errors << "python-docling-slim: reproducibility spec hash is stale" unless reproducibility.dig("artifacts", "spec_sha256") == Digest::SHA256.file(package.spec_path).hexdigest
     errors << "python-docling-slim: reproducibility static validation is incomplete" unless reproducibility.dig("validation", "static") == { "source_sha256" => "verified", "patch_fuzz_zero" => "required", "spec_parse" => "passed", "package_manifest" => "passed" } && reproducibility.dig("validation", "required_copr_targets") == project_chroots && !reproducibility.fetch("validation").key?("current_release_copr")
     declared_patches = Agentlab.spec_patch_files(spec)
     errors << "python-docling-slim: spec patch order differs from the checked contract" unless declared_patches == [patch_name]
-    slim_fragments = [patch_name, "%autosetup -n docling_slim-%{version} -p1", "%pyproject_buildrequires -x service-client", "rm -f %{buildroot}%{_bindir}/docling", "rm -f %{buildroot}%{_bindir}/docling-tools", "BatchSourceRequestInput", "BatchTargetRequestInput", "GenericSourceRequest", "GenericTargetRequest", "DoclingServiceClient(f\"http://127.0.0.1:{port}\").health()"]
+    slim_fragments = [patch_name, "%autosetup -n docling_slim-%{version} -p1", "%pyproject_buildrequires -x service-client", "rm -f %{buildroot}%{_bindir}/docling", "rm -f %{buildroot}%{_bindir}/docling-tools", "BatchSourceRequestInput", "BatchTargetRequestInput", "GenericSourceRequest", "GenericTargetRequest", "ChunkingOptionType", "inspect.signature(DoclingServiceClient.submit_batch)", "inspect.signature(AsyncDoclingServiceClient.submit_batch)", "DoclingServiceClient(f\"http://127.0.0.1:{port}\").health()"]
     errors << "python-docling-slim: spec does not enforce the selected API-only smoke contract" unless slim_fragments.all? { |fragment| spec.include?(fragment) }
     validate_patches_zero_fuzz!(
       package,
@@ -911,11 +911,11 @@ packages.each do |package|
 
   if package.name == "python-docling-mcp"
     reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
-    expected_providers = ["python-docling-core 2.88.0", "python-docling-slim 2.116.0 service-client API", "python-doclang 0.7.3", "python-latex2mathml 3.81.0"]
+    expected_providers = ["python-docling-core 2.88.0", "python-docling-slim 2.117.0 service-client API", "python-doclang 0.7.3", "python-latex2mathml 3.81.0"]
     errors << "python-docling-mcp: completed provider references are stale" unless package.data.dig("dependency_status", "completed_reusable_packages") == expected_providers && dependencies["completed_reusable_packages"] == expected_providers
-    errors << "python-docling-mcp: current blocked validation contract is incomplete" unless package.data["build_validation"] == { "release" => "2.1.0-0.5", "status" => "blocked-source-review-validated", "sdist_source" => "verified", "substantive_patches_removed" => true, "spec_parse" => "passed", "package_manifest" => "passed", "binary_build" => "prohibited" }
+    errors << "python-docling-mcp: current blocked validation contract is incomplete" unless package.data["build_validation"] == { "release" => "2.1.0-0.6", "status" => "blocked-source-review-validated", "sdist_source" => "verified", "substantive_patches_removed" => true, "spec_parse" => "passed", "package_manifest" => "passed", "binary_build" => "prohibited" }
     errors << "python-docling-mcp: dynamic historical results remain in package inputs" if package.data.key?("historical_validation") || reproducibility.key?("historical_validation")
-    errors << "python-docling-mcp: reproducibility release is stale" unless reproducibility["version"] == "2.1.0-0.5"
+    errors << "python-docling-mcp: reproducibility release is stale" unless reproducibility["version"] == "2.1.0-0.6"
     errors << "python-docling-mcp: reproducibility static validation is incomplete" unless reproducibility["validation"] == { "status" => "blocked-source-review-validated", "source_sha256" => "verified", "spec_sha256" => Digest::SHA256.file(package.spec_path).hexdigest, "spec_parse" => "passed", "package_manifest" => "passed", "binary_build" => "prohibited" }
     errors << "python-docling-mcp: fail-closed spec contract is incomplete" unless spec.include?("python-docling-mcp is blocked: see package.yml and dependencies.yml") && spec.include?("exit 1") && !spec.match?(/^%build\b|^%install\b/m)
   end

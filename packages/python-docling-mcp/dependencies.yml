@@ -22,7 +22,7 @@ upstream_runtime_optional:
     - mellea
 completed_reusable_packages:
   - python-docling-core 2.88.0
-  - python-docling-slim 2.116.0 service-client API
+  - python-docling-slim 2.117.0 service-client API
   - python-doclang 0.7.3
   - python-latex2mathml 3.81.0
 selected_surface:

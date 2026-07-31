@@ -1336,9 +1336,9 @@ class AgentlabTest < Minitest::Test
     slim = Agentlab.package_named("python-docling-slim")
     slim_spec = File.read(slim.spec_path)
     slim_reproducibility = Agentlab.load_yaml(File.join(slim.directory, "reproducibility.yml"))
-    assert_equal("2.116.0", slim.upstream.fetch("current_version"))
-    assert_equal("f64500b4f42e772994ca83547e1bd6a9a41eda421313b3072028206950c12068", slim.upstream.fetch("source_sha256"))
-    assert_equal("2.116.0-0.2", slim_reproducibility.fetch("version"))
+    assert_equal("2.117.0", slim.upstream.fetch("current_version"))
+    assert_equal("7c2b8ce1700b7dcc235b9839d85e83e21d89cbb43b593a3e2fdb4e880e56c483", slim.upstream.fetch("source_sha256"))
+    assert_equal("2.117.0-0.1", slim_reproducibility.fetch("version"))
     assert_equal("required", slim.data.dig("validation", "patch_zero_fuzz"))
     refute(slim.data.fetch("validation").key?("current_release_copr"))
     assert_equal(targets, slim_reproducibility.dig("validation", "required_copr_targets"))
@@ -1352,6 +1352,9 @@ class AgentlabTest < Minitest::Test
       BatchTargetRequestInput
       GenericSourceRequest
       GenericTargetRequest
+      ChunkingOptionType
+      inspect.signature(DoclingServiceClient.submit_batch)
+      inspect.signature(AsyncDoclingServiceClient.submit_batch)
     ].each { |fragment| assert_includes(slim_spec, fragment) }
     assert_includes(slim_spec, "%pyproject_buildrequires -x service-client")
     assert_includes(slim_spec, "DoclingServiceClient(f\"http://127.0.0.1:{port}\").health()")
@@ -1364,7 +1367,7 @@ class AgentlabTest < Minitest::Test
     reproducibility = Agentlab.load_yaml(File.join(package.directory, "reproducibility.yml"))
     providers = [
       "python-docling-core 2.88.0",
-      "python-docling-slim 2.116.0 service-client API",
+      "python-docling-slim 2.117.0 service-client API",
       "python-doclang 0.7.3",
       "python-latex2mathml 3.81.0"
     ]
@@ -1373,9 +1376,9 @@ class AgentlabTest < Minitest::Test
     assert_equal(false, package.data.dig("copr", "enabled"))
     assert_equal(providers, package.data.dig("dependency_status", "completed_reusable_packages"))
     assert_equal(providers, dependencies.fetch("completed_reusable_packages"))
-    assert_equal("2.1.0-0.5", package.data.dig("build_validation", "release"))
+    assert_equal("2.1.0-0.6", package.data.dig("build_validation", "release"))
     assert_equal("blocked-source-review-validated", package.data.dig("build_validation", "status"))
-    assert_equal("2.1.0-0.5", reproducibility.fetch("version"))
+    assert_equal("2.1.0-0.6", reproducibility.fetch("version"))
     assert_equal("prohibited", reproducibility.dig("validation", "binary_build"))
     refute(package.data.key?("historical_validation"))
     refute(reproducibility.key?("historical_validation"))

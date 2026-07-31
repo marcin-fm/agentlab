@@ -1,12 +1,12 @@
-%global source_sha256 f64500b4f42e772994ca83547e1bd6a9a41eda421313b3072028206950c12068
+%global source_sha256 7c2b8ce1700b7dcc235b9839d85e83e21d89cbb43b593a3e2fdb4e880e56c483
 
 Name:           python-docling-slim
-Version:        2.116.0
-Release:        0.2%{?dist}
+Version:        2.117.0
+Release:        0.1%{?dist}
 Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
-Source0:        https://files.pythonhosted.org/packages/34/61/a92577403bd8ac709701fa90d72ef56d4b5a174448b5562b3885d9da0a98/docling_slim-%{version}.tar.gz
+Source0:        https://files.pythonhosted.org/packages/79/ea/ebd5c810f257b5ba6daa4a2d5f2161e69aba0dce0aa454a5d0b62374353b/docling_slim-%{version}.tar.gz
 # Keep the selected service-client extra API-only by omitting command-only dependencies.
 # Fedora-specific package split; upstream CLI design is https://github.com/docling-project/docling/pull/3622.
 Patch0:         docling-slim-service-client-api-only.patch
@@ -53,7 +53,9 @@ rm -f %{buildroot}%{_bindir}/docling-tools
 export PYTHONPATH=%{buildroot}%{python3_sitelib}
 python3 - <<'PY'
 import docling
+import inspect
 from docling.datamodel.base_models import InputFormat
+from docling.datamodel.service import ChunkingOptionType
 from docling.service_client import (
     AsyncDoclingServiceClient,
     BatchSourceRequestInput,
@@ -64,8 +66,11 @@ from docling.service_client import (
 )
 
 assert InputFormat.DOCX.value == "docx"
+assert ChunkingOptionType is not None
 assert hasattr(DoclingServiceClient, "submit_batch")
 assert hasattr(AsyncDoclingServiceClient, "submit_batch")
+assert "targets" in inspect.signature(DoclingServiceClient.submit_batch).parameters
+assert "targets" in inspect.signature(AsyncDoclingServiceClient.submit_batch).parameters
 DoclingServiceClient("http://127.0.0.1:1")
 PY
 
@@ -118,6 +123,9 @@ trap - EXIT
 %doc packages/docling-slim/README.md
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 2.117.0-0.1
+- Update to upstream 2.117.0 and verify the expanded chunking and batch-target API.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 2.116.0-0.2
 - Remove dynamic COPR result state from the static package contract.
 
