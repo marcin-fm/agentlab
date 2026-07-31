@@ -61,7 +61,7 @@ scripts/update-and-build          update releases and request pushed SCM builds
 | python-doclang | 0.7.3 | enabled | Reusable Docling prerequisite; clean F43/F44 builds and installed schema/CLI smokes passed |
 | python-latex2mathml | 3.81.0 | enabled | Reusable Docling prerequisite; hatchling substitution and F43/F44 conversion smokes passed |
 | python-docling-core | 2.88.0 | enabled | Base Docling model/serialization update; static source and patch validation precedes the required six-cell matrix |
-| python-docling-slim | 2.117.0 | enabled | API-only service-client update; Core 2.88 remains compatible, exports/signatures and a source-bound zero-fuzz patch fixture are checked, upstream empty-target behavior is unchanged, and the six-cell matrix remains required |
+| python-docling-slim | 2.117.0 | enabled | API-only service-client update; Core 2.88 remains compatible, exports/signatures and a full-source-bound zero-fuzz patch fixture are checked, upstream empty-target failure remains unpatched, and the six-cell matrix remains required |
 | playwright-mcp | 0.0.78 | blocked | All wrapper files match source and the exact stdio MCP works with Fedora Chromium 150; full generated monorepo closure, source-built esbuild, and licenses remain |
 | python-serena-agent | 1.6.0 | enabled | Headless stdio/LSP package; clean F43/F44 MCP smokes and download-denial checks passed |
 | python-sensai-utils | 1.6.0 | enabled | Repaired published sdist metadata; F44 Mock and 16 tests passed |

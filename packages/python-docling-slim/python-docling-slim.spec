@@ -2,7 +2,7 @@
 
 Name:           python-docling-slim
 Version:        2.117.0
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        Modular Docling framework with remote service client
 License:        MIT
 URL:            https://github.com/docling-project/docling
@@ -127,6 +127,10 @@ trap - EXIT
 %doc packages/docling-slim/README.md
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 2.117.0-0.3
+- Bind zero-fuzz patch validation to the complete released pyproject source.
+- Correct the documented upstream empty-target failure boundary.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 2.117.0-0.2
 - Bind zero-fuzz patch validation to an exact upstream preimage fixture.
 - Document the upstream empty-target limitation without downstream behavior changes.

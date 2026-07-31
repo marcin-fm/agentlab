@@ -37,21 +37,22 @@ the sync/async `targets` parameter signatures, and the local health call. These
 are static API checks, not a claim that every accepted argument value works.
 
 In particular, upstream 2.117.0 checks whether `targets` is `None`, but not
-whether the list is empty. `targets=[]` therefore reaches the request model,
-whose field has no minimum length, and the client submits an empty `targets`
-list. Agentlab does not carry a downstream product-behavior patch for this
+whether the list is empty. `targets=[]` therefore passes that guard, then raises
+`IndexError` while the client selects `first_target`, before any request is
+sent. Agentlab does not carry a downstream product-behavior patch for this
 case. The package records the limitation and leaves its resolution upstream.
 
 Normal repository validation applies Patch0 with `--fuzz=0` to
-`docling-slim-2.117.0-pyproject-patch0-preimage.toml`. That fixture is the exact
-`pyproject.toml` lines 254-269 from both the 2.117.0 PyPI sdist and tag; the full
-upstream file SHA-256 is
+`docling-slim-2.117.0-pyproject-patch0-preimage.toml`. That fixture is the
+complete exact `pyproject.toml` from both the 2.117.0 PyPI sdist and tag; its
+SHA-256 is
 `956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a`.
 Validation still supports applying the patch to the complete checked Source0
 archive when `AGENTLAB_DOCLING_SLIM_SOURCE0` is supplied.
 
 The package provides `python3dist(docling-slim[service-client]) = 2.117.0`,
 owns no command wrapper under `/usr/bin`, and does not require Typer, Rich, or
-python-dotenv. Current Fedora 43, Fedora 44, and Rawhide results on both
-architectures are tracked in COPR and the Agentlab wiki rather than embedded
-as package inputs. Generated RPMs are never installed on the host.
+python-dotenv. No `2.117.0` COPR matrix is accepted yet; future Fedora 43,
+Fedora 44, and Rawhide results on both architectures will be tracked in COPR
+and the Agentlab wiki rather than embedded as package inputs. Generated RPMs
+are never installed on the host.

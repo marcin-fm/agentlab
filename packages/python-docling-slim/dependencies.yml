@@ -37,4 +37,4 @@ cli_policy:
   reason: The upstream wrappers import pypdfium2-backed local conversion at startup, outside the declared service-client closure.
 offline_build: required
 upstream_limitations:
-  empty_batch_targets: Release 2.117.0 accepts targets=[] and submits the empty list; no downstream behavior patch is carried.
+  empty_batch_targets: Release 2.117.0 accepts targets=[] past the None guard, then raises IndexError while selecting first_target before any request is sent; no downstream behavior patch is carried.

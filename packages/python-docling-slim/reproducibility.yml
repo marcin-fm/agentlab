@@ -1,6 +1,6 @@
 schema: python-docling-slim-reproducibility/v1
 package: python-docling-slim
-version: 2.117.0-0.2
+version: 2.117.0-0.3
 source:
   url: https://files.pythonhosted.org/packages/79/ea/ebd5c810f257b5ba6daa4a2d5f2161e69aba0dce0aa454a5d0b62374353b/docling_slim-2.117.0.tar.gz
   sha256: 7c2b8ce1700b7dcc235b9839d85e83e21d89cbb43b593a3e2fdb4e880e56c483
@@ -9,15 +9,15 @@ source:
 patches:
   service_client_api_only:
     path: docling-slim-service-client-api-only.patch
-    sha256: 81c8ae93225d75981a11bc6c77177570a4acadbd08bb5324ac67192d77251316
+    sha256: eb66184c27742793ad2acfe00b7b96fabc1eb8570eff62c73fc12b5c6a0dcbea
     purpose: Remove command-only Typer, Rich, and dotenv dependencies from the service-client extra.
     preimage:
       path: docling-slim-2.117.0-pyproject-patch0-preimage.toml
-      sha256: d9f89801e00e9f8972ed60ba08daca18df65e92bc43da859bf02e7266b01c5da
+      sha256: 956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a
       upstream_path: pyproject.toml
       upstream_sha256: 956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a
-      upstream_lines: 254-269
-      identity: Exact bytes in both the 2.117.0 PyPI sdist and tag v2.117.0.
+      upstream_lines: full-file
+      identity: Complete exact pyproject.toml bytes from both the 2.117.0 PyPI sdist and tag v2.117.0.
 prerequisites:
   python-docling-core:
     version: 2.88.0-0.2
@@ -36,14 +36,14 @@ validation:
     - fedora-rawhide-x86_64
     - fedora-rawhide-aarch64
 artifacts:
-  spec_sha256: c57b9fbe21711b0a520e8737a28b0efc75679868af98f692b42f70e5d869b52a
+  spec_sha256: 08a3b5924f5e8ecd90648754ad8d5a715857b5d2147525c6316b190c80317be7
 limitations:
   - The PyPI sdist excludes the upstream test tree.
   - The service client is useful only when an administrator explicitly configures a remote Docling service.
   - Local conversion, model execution, and parser branches are deliberately not provided.
   - Upstream command wrappers are removed because they import the excluded local PDF backend at startup.
   - The service-client extra is patched to represent its API-only imports; the omitted CLI remains a separate unsupported surface.
-  - Release 2.117.0 accepts an empty targets list and submits it to the service; this package does not change that upstream behavior and validates only the exported types and sync/async targets parameter signatures.
+  - Release 2.117.0 accepts an empty targets list past the None guard, then raises IndexError while selecting first_target before any request is sent; this package does not change that upstream behavior and validates only the exported types and sync/async targets parameter signatures.
 host_policy:
   produced_rpms_installed: false
   copr_mutated: false

@@ -1401,10 +1401,10 @@ class AgentlabTest < Minitest::Test
     slim_patch_path = File.join(slim.directory, "docling-slim-service-client-api-only.patch")
     slim_patch = File.read(slim_patch_path)
     preimage_path = File.join(slim.directory, "docling-slim-2.117.0-pyproject-patch0-preimage.toml")
-    preimage_sha256 = "d9f89801e00e9f8972ed60ba08daca18df65e92bc43da859bf02e7266b01c5da"
+    preimage_sha256 = "956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a"
     assert_equal("2.117.0", slim.upstream.fetch("current_version"))
     assert_equal("7c2b8ce1700b7dcc235b9839d85e83e21d89cbb43b593a3e2fdb4e880e56c483", slim.upstream.fetch("source_sha256"))
-    assert_equal("2.117.0-0.2", slim_reproducibility.fetch("version"))
+    assert_equal("2.117.0-0.3", slim_reproducibility.fetch("version"))
     assert_equal("required", slim.data.dig("validation", "patch_zero_fuzz"))
     refute(slim.data.fetch("validation").key?("current_release_copr"))
     assert_equal(targets, slim_reproducibility.dig("validation", "required_copr_targets"))
@@ -1415,8 +1415,11 @@ class AgentlabTest < Minitest::Test
     assert_equal(preimage_sha256, Digest::SHA256.file(preimage_path).hexdigest)
     assert_equal(preimage_sha256, slim.data.dig("artifacts", "patch0_preimage", "sha256"))
     assert_equal("956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a", slim.data.dig("artifacts", "patch0_preimage", "upstream_sha256"))
+    assert_equal("full-file", slim.data.dig("artifacts", "patch0_preimage", "upstream_lines"))
     assert_equal(slim.data.dig("artifacts", "patch0_preimage"), slim_reproducibility.dig("patches", "service_client_api_only", "preimage"))
     assert_includes(slim.data.dig("source_policy", "upstream_empty_targets_limitation"), "targets=[]")
+    assert_includes(slim.data.dig("source_policy", "upstream_empty_targets_limitation"), "raises IndexError")
+    assert_includes(slim.data.dig("source_policy", "upstream_empty_targets_limitation"), "before any request is sent")
     assert_equal(["--- a/pyproject.toml", "+++ b/pyproject.toml"], slim_patch.lines.first(2).map(&:chomp))
     refute_includes(slim_patch, "service_client/client.py")
     Dir.mktmpdir("docling-slim-patch0-") do |directory|
@@ -1426,8 +1429,11 @@ class AgentlabTest < Minitest::Test
       _stdout, stderr, status = Open3.capture3("patch", "--fuzz=0", "-p1", "-i", slim_patch_path, chdir: directory)
       assert(status.success?, stderr)
       patched = File.read(File.join(directory, "pyproject.toml"))
-      assert_includes(patched, "'httpx>=0.28,<1.0.0'")
-      refute_includes(patched, "'typer>=0.12.5,<0.27.0'")
+      service_client = patched[/^service-client = \[\n.*?^\]/m]
+      refute_nil(service_client)
+      assert_includes(service_client, "'httpx>=0.28,<1.0.0'")
+      refute_includes(service_client, "'typer>=0.12.5,<0.27.0'")
+      assert_includes(patched, "cli = [\n  'typer>=0.12.5,<0.27.0'")
     end
     %w[
       docling-slim-service-client-api-only.patch

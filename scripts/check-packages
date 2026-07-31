@@ -911,21 +911,21 @@ packages.each do |package|
       "installed_smokes" => "base import, expanded service-client exports, chunking option and sync/async targets parameter signatures, client construction, and local HTTP health response"
     }
     patch_name = "docling-slim-service-client-api-only.patch"
-    patch_sha256 = "81c8ae93225d75981a11bc6c77177570a4acadbd08bb5324ac67192d77251316"
+    patch_sha256 = "eb66184c27742793ad2acfe00b7b96fabc1eb8570eff62c73fc12b5c6a0dcbea"
     preimage_name = "docling-slim-2.117.0-pyproject-patch0-preimage.toml"
-    preimage_sha256 = "d9f89801e00e9f8972ed60ba08daca18df65e92bc43da859bf02e7266b01c5da"
+    preimage_sha256 = "956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a"
     preimage_contract = {
       "path" => preimage_name,
       "sha256" => preimage_sha256,
       "upstream_path" => "pyproject.toml",
       "upstream_sha256" => "956d05d8ae1de1c5a6816cbfd4f69fdf2d107f356ed49fdf8835cde5a85d300a",
-      "upstream_lines" => "254-269",
-      "identity" => "Exact bytes in both the 2.117.0 PyPI sdist and tag v2.117.0."
+      "upstream_lines" => "full-file",
+      "identity" => "Complete exact pyproject.toml bytes from both the 2.117.0 PyPI sdist and tag v2.117.0."
     }
     errors << "python-docling-slim: current static validation contract is incomplete" unless package.data["validation"] == expected_validation
     errors << "python-docling-slim: dynamic historical results remain in package inputs" if package.data.key?("historical_validation") || reproducibility.key?("historical_validation")
     errors << "python-docling-slim: obsolete SciPy backport remains" if File.exist?(File.join(package.directory, "docling-slim-guard-scipy-import.patch")) || spec.include?("docling-slim-guard-scipy-import.patch")
-    errors << "python-docling-slim: reproducibility release is stale" unless reproducibility["version"] == "#{manifest_version}-0.2"
+    errors << "python-docling-slim: reproducibility release is stale" unless reproducibility["version"] == "#{manifest_version}-0.3"
     errors << "python-docling-slim: reproducibility source identity is stale" unless reproducibility["source"] == { "url" => package.upstream["source_url"], "sha256" => manifest_sha256, "release_tag" => package.upstream["release_tag"], "release_commit" => package.upstream["release_commit"] }
     errors << "python-docling-slim: service-client patch hash is stale" unless reproducibility.dig("patches", "service_client_api_only", "sha256") == patch_sha256 && Digest::SHA256.file(File.join(package.directory, patch_name)).hexdigest == patch_sha256
     errors << "python-docling-slim: Patch0 preimage contract is stale" unless package.data.dig("artifacts", "patch0_preimage") == preimage_contract && reproducibility.dig("patches", "service_client_api_only", "preimage") == preimage_contract

@@ -1,6 +1,6 @@
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -6,11 +6,6 @@
+@@ -259,11 +259,6 @@
  service-client = [
    'httpx>=0.28,<1.0.0',
    'websockets>=14.0,<17.0',
