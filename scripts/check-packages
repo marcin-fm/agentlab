@@ -458,6 +458,8 @@ packages.each do |package|
   errors.concat(Agentlab.validate_opencode_review_evidence(package, dependencies, manifest_version)) if dependencies
   errors.concat(Agentlab.validate_opencode_upstream_release_audit(package))
 
+  errors.concat(Agentlab.validate_python_mcp_compatibility_audit(package))
+
   errors.concat(Agentlab.validate_openchamber_selected_lock(package, dependencies)) if dependencies
 
   errors.concat(Agentlab.validate_openchamber_source_acquisition(package, dependencies)) if dependencies

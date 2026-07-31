@@ -1254,11 +1254,15 @@ class AgentlabTest < Minitest::Test
     mcp_2_audit_path = File.join(mcp.directory, "mcp-2.0.0-compatibility.yml")
     mcp_2_audit = Agentlab.load_yaml(mcp_2_audit_path)
     assert_equal(targets, mcp.chroots(targets))
-    assert_equal("1.28.1-0.2", mcp.data.dig("validation", "release"))
+    assert_equal("1.28.1-0.3", mcp.data.dig("validation", "release"))
+    assert_equal("mcp-2.0.0-compatibility.yml", mcp.data.dig("upgrade_audit", "evidence"))
+    assert_equal("mcp-2.0.0-compatibility.yml", mcp_reproducibility.dig("validation", "current", "mcp_2_compatibility_audit"))
     assert_equal("python-mcp-major-compatibility-audit/v1", mcp_2_audit.fetch("schema"))
     assert_equal("0f440e735c13ece8bb19bc62cf0b86f4313448432fbb77d35e14034f4e050728", mcp_2_audit.dig("candidate", "source_sha256"))
     assert_equal("6f69a3758ebf2ee55ce050f58b470ce11af71133", mcp_2_audit.dig("candidate", "commit"))
     assert_equal("mcp>=1.28.1,<2.0.0", mcp_2_audit.dig("consumer", "declared_requirement"))
+    assert_equal("chopratejas/headroom", mcp_2_audit.dig("consumer", "repository"))
+    assert_equal("upstream-reported", mcp_2_audit.dig("consumer", "upstream_guard", "evidence"))
     assert_equal("AttributeError: 'Server' object has no attribute 'list_tools'", mcp_2_audit.dig("consumer", "upstream_guard", "failure"))
     assert_equal(false, mcp_2_audit.dig("api", "compatible"))
     assert_equal(false, mcp_2_audit.dig("protocol", "compatible_without_consumer_changes"))
@@ -1266,6 +1270,9 @@ class AgentlabTest < Minitest::Test
     assert_equal(true, mcp_2_audit.dig("license", "compatible"))
     assert_equal("rejected", mcp_2_audit.dig("decision", "status"))
     assert_equal("1.28.1", mcp_2_audit.dig("decision", "retain_version"))
+    assert_equal("not_evaluated", mcp_2_audit.dig("dependencies", "provider_availability", "status"))
+    assert_equal(false, mcp_2_audit.dig("api", "streamable_http", "constructor_removed"))
+    assert_equal([], Agentlab.validate_python_mcp_compatibility_audit(mcp))
     assert_equal(Digest::SHA256.file(mcp_2_audit_path).hexdigest, mcp.data.dig("upgrade_audit", "evidence_sha256"))
     assert_equal(Digest::SHA256.file(mcp_2_audit_path).hexdigest, mcp_reproducibility.dig("validation", "current", "mcp_2_compatibility_audit_sha256"))
     assert_equal(Digest::SHA256.file(mcp.spec_path).hexdigest, mcp_reproducibility.dig("validation", "current", "spec_sha256"))
@@ -4842,6 +4849,41 @@ class AgentlabTest < Minitest::Test
         HeadroomFixtureSource.generate!(spec:, source:, output: second)
       end
       assert_includes(error.message, "upstream source SHA-256 mismatch")
+    end
+  end
+
+  def test_python_mcp_compatibility_audit_rejects_pointer_and_semantic_drift
+    source_package = Agentlab.package_named("python-mcp")
+    bad_pointer_data = Marshal.load(Marshal.dump(source_package.data))
+    bad_pointer_data.fetch("upgrade_audit")["evidence"] = "other.yml"
+    bad_pointer_package = Agentlab::Package.new(
+      directory: source_package.directory,
+      manifest_path: source_package.manifest_path,
+      data: bad_pointer_data
+    )
+    assert_includes(
+      Agentlab.validate_python_mcp_compatibility_audit(bad_pointer_package),
+      "python-mcp: package audit filename pointer does not match"
+    )
+
+    Dir.mktmpdir do |directory|
+      audit_filename = "mcp-2.0.0-compatibility.yml"
+      audit = Agentlab.load_yaml(File.join(source_package.directory, audit_filename))
+      audit.fetch("consumer")["repository"] = "wrong/headroom"
+      File.write(File.join(directory, audit_filename), YAML.dump(audit))
+      audit_sha256 = Digest::SHA256.file(File.join(directory, audit_filename)).hexdigest
+
+      data = Marshal.load(Marshal.dump(source_package.data))
+      data.fetch("upgrade_audit")["evidence_sha256"] = audit_sha256
+      reproducibility = Agentlab.load_yaml(File.join(source_package.directory, "reproducibility.yml"))
+      reproducibility.dig("validation", "current")["mcp_2_compatibility_audit_sha256"] = audit_sha256
+      File.write(File.join(directory, "reproducibility.yml"), YAML.dump(reproducibility))
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+
+      assert_includes(
+        Agentlab.validate_python_mcp_compatibility_audit(package),
+        "python-mcp: Headroom consumer identity does not match"
+      )
     end
   end
 end

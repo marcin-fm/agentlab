@@ -5361,6 +5361,93 @@ module Agentlab
     ).map { |error| "opencode: upstream release audit #{error}" }
   end
 
+  def validate_python_mcp_compatibility_audit(package)
+    return [] unless package.name == "python-mcp"
+
+    errors = []
+    prefix = "python-mcp:"
+    expected_filename = "mcp-2.0.0-compatibility.yml"
+    reproducibility_path = File.join(package.directory, "reproducibility.yml")
+    return ["#{prefix} reproducibility metadata is missing"] unless File.file?(reproducibility_path)
+
+    reproducibility = load_yaml(reproducibility_path)
+    package_filename = package.data.dig("upgrade_audit", "evidence")
+    reproducibility_filename = reproducibility.dig("validation", "current", "mcp_2_compatibility_audit")
+    errors << "#{prefix} package audit filename pointer does not match" unless package_filename == expected_filename
+    errors << "#{prefix} reproducibility audit filename pointer does not match" unless reproducibility_filename == expected_filename
+
+    audit_path = File.join(package.directory, expected_filename)
+    unless File.file?(audit_path)
+      errors << "#{prefix} MCP 2 compatibility audit is missing"
+      return errors
+    end
+
+    audit_sha256 = Digest::SHA256.file(audit_path).hexdigest
+    errors << "#{prefix} package audit SHA-256 does not match" unless package.data.dig("upgrade_audit", "evidence_sha256") == audit_sha256
+    errors << "#{prefix} reproducibility audit SHA-256 does not match" unless reproducibility.dig("validation", "current", "mcp_2_compatibility_audit_sha256") == audit_sha256
+
+    audit = load_yaml(audit_path)
+    errors << "#{prefix} compatibility audit schema does not match" unless audit["schema"] == "python-mcp-major-compatibility-audit/v1"
+    errors << "#{prefix} MCP 2 candidate identity does not match" unless audit["candidate"] == {
+      "version" => "2.0.0",
+      "source_url" => "https://files.pythonhosted.org/packages/74/33/32d4dff2c95bb5d897c3ef4c83649a08996b17b58f0a326d2495d4c81179/mcp-2.0.0.tar.gz",
+      "source_sha256" => "0f440e735c13ece8bb19bc62cf0b86f4313448432fbb77d35e14034f4e050728",
+      "source_size" => 1_662_284,
+      "repository" => "modelcontextprotocol/python-sdk",
+      "tag" => "v2.0.0",
+      "commit" => "6f69a3758ebf2ee55ce050f58b470ce11af71133",
+      "license" => "MIT"
+    }
+    errors << "#{prefix} selected provider identity does not match" unless audit["selected_provider"] == {
+      "version" => package.upstream["current_version"],
+      "source_sha256" => package.upstream["source_sha256"],
+      "commit" => package.upstream["commit"]
+    }
+    errors << "#{prefix} Headroom consumer identity does not match" unless audit.dig("consumer", "package") == "python-headroom-ai" &&
+      audit.dig("consumer", "version") == "0.33.0" && audit.dig("consumer", "repository") == "chopratejas/headroom" &&
+      audit.dig("consumer", "tag") == "v0.33.0" && audit.dig("consumer", "commit") == "28aa53dc7ca51e687cc719c3fe160f3be50c6570" &&
+      audit.dig("consumer", "declared_requirement") == "mcp>=1.28.1,<2.0.0"
+    errors << "#{prefix} upstream-reported failure evidence does not match" unless audit.dig("consumer", "upstream_guard") == {
+      "commit" => "b3f016b866375cfe2ff8518055ab93844e11ec27",
+      "evidence" => "upstream-reported",
+      "failure" => "AttributeError: 'Server' object has no attribute 'list_tools'",
+      "client_failure" => "headroom MCP error -32000: Connection closed"
+    }
+    expected_calls = [
+      "headroom/ccr/mcp_server.py:612 @self.server.list_tools()",
+      "headroom/ccr/mcp_server.py:707 @self.server.call_tool()",
+      "headroom/ccr/mcp_server.py:805 self.server.request_context.session.client_params",
+      "headroom/ccr/mcp_http.py:34 StreamableHTTPSessionManager(app=server.server)",
+      "headroom/memory/mcp_server.py:228 @server.list_tools()",
+      "headroom/memory/mcp_server.py:235 @server.call_tool()"
+    ]
+    errors << "#{prefix} released Headroom call-site inventory does not match" unless audit.dig("api", "headroom_legacy_calls") == expected_calls
+    errors << "#{prefix} streamable HTTP evidence overclaims removal" unless audit.dig("api", "streamable_http", "constructor_removed") == false
+    errors << "#{prefix} streamable HTTP migration validation is missing" unless audit.dig("api", "streamable_http", "migration_requirement").to_s.include?("lifecycle")
+    errors << "#{prefix} API compatibility decision does not fail closed" unless audit.dig("api", "compatible") == false
+    errors << "#{prefix} protocol compatibility decision does not fail closed" unless audit.dig("protocol", "compatible_without_consumer_changes") == false
+    errors << "#{prefix} dependency-provider review must remain explicitly unevaluated" unless
+      audit.dig("dependencies", "provider_availability", "status") == "not_evaluated" &&
+      !audit.dig("dependencies").key?("agentlab_provider_gaps")
+    errors << "#{prefix} split mcp-types license accounting does not match" unless audit["license"] == {
+      "candidate_sdk" => "MIT",
+      "split_mcp_types_distribution" => "MIT",
+      "compatible" => true,
+      "packaging_effect" => "mcp-types requires separate source, dependency, and license accounting"
+    }
+    errors << "#{prefix} compatibility decision does not retain MCP 1.28.1" unless
+      audit.dig("decision", "status") == "rejected" && audit.dig("decision", "retain_version") == "1.28.1" &&
+      audit.dig("decision", "candidate_version") == "2.0.0"
+    errors << "#{prefix} audit validation overclaims local runtime reproduction" unless audit["validation"] == {
+      "kind" => "static released-source audit",
+      "runtime_or_build_claim" => false,
+      "failures_locally_reproduced" => false
+    }
+    errors
+  rescue Error => e
+    ["python-mcp: invalid MCP 2 compatibility audit: #{e.message}"]
+  end
+
   def invalidate_bun_build_plan!(manifest_data, version)
     plan = manifest_data["build_plan"]
     return unless plan.is_a?(Hash)

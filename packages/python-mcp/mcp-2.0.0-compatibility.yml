@@ -15,12 +15,13 @@ selected_provider:
 consumer:
   package: python-headroom-ai
   version: 0.33.0
-  repository: headroomlabs-ai/headroom
+  repository: chopratejas/headroom
   tag: v0.33.0
   commit: 28aa53dc7ca51e687cc719c3fe160f3be50c6570
   declared_requirement: mcp>=1.28.1,<2.0.0
   upstream_guard:
     commit: b3f016b866375cfe2ff8518055ab93844e11ec27
+    evidence: upstream-reported
     failure: "AttributeError: 'Server' object has no attribute 'list_tools'"
     client_failure: "headroom MCP error -32000: Connection closed"
 api:
@@ -29,13 +30,16 @@ api:
     - headroom/ccr/mcp_server.py:612 @self.server.list_tools()
     - headroom/ccr/mcp_server.py:707 @self.server.call_tool()
     - headroom/ccr/mcp_server.py:805 self.server.request_context.session.client_params
-    - headroom/ccr/mcp_http.py:35 StreamableHTTPSessionManager(app=server.server)
+    - headroom/ccr/mcp_http.py:34 StreamableHTTPSessionManager(app=server.server)
     - headroom/memory/mcp_server.py:228 @server.list_tools()
-    - headroom/memory/mcp_server.py:232 @server.call_tool()
+    - headroom/memory/mcp_server.py:235 @server.call_tool()
   mcp_2_replacements:
     list_tools: "on_list_tools(ctx: ServerRequestContext, params: PaginatedRequestParams | None) -> ListToolsResult"
     call_tool: "on_call_tool(ctx: ServerRequestContext, params: CallToolRequestParams) -> CallToolResult | InputRequiredResult"
     result_wrapping: low-level automatic handler result wrapping was removed
+  streamable_http:
+    constructor_removed: false
+    migration_requirement: verify session-manager lifecycle and HTTP regressions with the migrated low-level server handlers
   migration_scope:
     - both released Headroom MCP server implementations
     - handler registration, parameters, and result models
@@ -65,9 +69,9 @@ dependencies:
     typing-extensions: ">=4.13.0"
     opentelemetry-api: ">=1.28.0"
     websocket_extra: removed
-  agentlab_provider_gaps:
-    - python-httpx2
-    - python-mcp-types
+  provider_availability:
+    status: not_evaluated
+    reason: migration was already rejected on the released consumer API and declared dependency boundary
 license:
   candidate_sdk: MIT
   split_mcp_types_distribution: MIT
@@ -77,8 +81,9 @@ decision:
   status: rejected
   retain_version: 1.28.1
   candidate_version: 2.0.0
-  reason: released Headroom 0.33.0 fails at server startup and explicitly requires mcp <2
+  reason: upstream reports a Headroom 0.33.0 server startup failure with MCP 2 and the release explicitly requires mcp <2
   fedora_outcome: retain the compatible security-fixed provider; do not carry a downstream MCP 2 product migration
 validation:
   kind: static released-source audit
   runtime_or_build_claim: false
+  failures_locally_reproduced: false
