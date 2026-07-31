@@ -12,6 +12,29 @@ load File.expand_path("../scripts/write-xberg-cargo-license-receipts", __dir__)
 load File.expand_path("../scripts/prepare-headroom-fixture-source", __dir__)
 
 class AgentlabTest < Minitest::Test
+  def openchamber_selected_lock_errors
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    receipt_path = File.join(package.directory, dependencies.dig("source_closure_files", "current_selected_lock_audit"))
+    receipt = JSON.parse(File.read(receipt_path))
+    yield receipt
+
+    Dir.mktmpdir do |directory|
+      temporary_receipt = File.join(directory, "receipt.json")
+      File.write(temporary_receipt, JSON.pretty_generate(receipt) + "\n")
+      temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
+      temporary_dependencies.fetch("source_closure_files")["current_selected_lock_audit"] = "receipt.json"
+      temporary_dependencies.fetch("selected_lock_receipt")["sha256"] = Digest::SHA256.file(temporary_receipt).hexdigest
+      temporary_package = Struct.new(:name, :directory, :upstream, :data).new(
+        package.name,
+        directory,
+        package.upstream,
+        package.data
+      )
+      return Agentlab.validate_openchamber_selected_lock(temporary_package, temporary_dependencies)
+    end
+  end
+
   def registry_entry(overrides = {})
     {
       "npm_name" => "zod",
@@ -192,6 +215,33 @@ class AgentlabTest < Minitest::Test
     end
   end
 
+  def test_openchamber_source_identity_rejects_untracked_input
+    Dir.mktmpdir do |directory|
+      File.write(File.join(directory, "fixture"), "content\n")
+      _stdout, stderr, status = Open3.capture3("git", "init", "--quiet", directory)
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3("git", "-C", directory, "add", "fixture")
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3(
+        "git", "-C", directory,
+        "-c", "user.name=Agentlab Test",
+        "-c", "user.email=agentlab-test@example.invalid",
+        "commit", "--quiet", "-m", "fixture"
+      )
+      assert(status.success?, stderr)
+      commit, stderr, status = Open3.capture3("git", "-C", directory, "rev-parse", "HEAD")
+      assert(status.success?, stderr)
+      _stdout, stderr, status = Open3.capture3("git", "-C", directory, "tag", "v1.17.1")
+      assert(status.success?, stderr)
+      File.write(File.join(directory, "untracked"), "unexpected\n")
+
+      error = assert_raises(Agentlab::Error) do
+        OpenChamberLockAudit.verify_source_identity(directory, commit.strip, "v1.17.1")
+      end
+      assert_match(/source checkout is not fully clean/, error.message)
+    end
+  end
+
   def test_openchamber_lock_selector_rejects_bun_pty_on_selected_node_path
     workspaces = {
       "packages/web" => {
@@ -309,14 +359,44 @@ class AgentlabTest < Minitest::Test
     assert_includes(errors, "openchamber: historical release evidence matches the current release")
   end
 
-  def test_openchamber_selected_lock_validator_rejects_current_remix_drift
-    package = Agentlab.package_named("openchamber")
-    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
-    dependencies.dig("selected_lock_receipt", "remix_icon_boundary")["sprite_sha256"] = "0" * 64
+  def test_openchamber_selected_lock_validator_rejects_removed_and_tampered_patch_records
+    errors = openchamber_selected_lock_errors { |receipt| receipt["patched_dependencies"] = [] }
+    assert_includes(errors, "openchamber: selected patched dependencies mismatch")
 
-    errors = Agentlab.validate_openchamber_selected_lock(package, dependencies)
-    assert_includes(errors, "openchamber: current Remix sprite hash mismatch")
-    assert_includes(errors, "openchamber: package current Remix sprite hash mismatch")
+    errors = openchamber_selected_lock_errors do |receipt|
+      receipt.fetch("patched_dependencies").first["sha256"] = "0" * 64
+    end
+    assert_includes(errors, "openchamber: selected patched dependencies mismatch")
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_remix_package_root_drift
+    errors = openchamber_selected_lock_errors do |receipt|
+      root = receipt.dig("source_import_graph", "package_roots").find { |record| record["name"] == "@remixicon/react" }
+      root["name"] = "@remixicon/drift"
+    end
+    assert_includes(errors, "openchamber: current Remix package root is missing or drifted")
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_remix_importer_drift
+    errors = openchamber_selected_lock_errors do |receipt|
+      root = receipt.dig("source_import_graph", "package_roots").find { |record| record["name"] == "@remixicon/react" }
+      root.fetch("usages").pop
+    end
+    assert_includes(errors, "openchamber: current Remix importers drifted")
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_remix_sprite_drift
+    errors = openchamber_selected_lock_errors do |receipt|
+      receipt.dig("remix_icon_boundary", "sprite")["path_records"] = 235
+    end
+    assert_includes(errors, "openchamber: current Remix sprite path count drifted")
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_remix_mobile_input_drift
+    errors = openchamber_selected_lock_errors do |receipt|
+      receipt.dig("remix_icon_boundary", "mobile_input")["unconditional_literal"] = false
+    end
+    assert_includes(errors, "openchamber: current Remix mobile input drifted")
   end
 
   def test_openchamber_source_acquisition_validator_rejects_package_path_drift

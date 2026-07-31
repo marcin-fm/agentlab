@@ -616,6 +616,12 @@ module Agentlab
     errors << "openchamber: selected lock receipt source tag mismatch" unless receipt["source_tag"] == package.upstream.fetch("source_tag")
     errors << "openchamber: selected lock receipt source commit mismatch" unless receipt["source_commit"] == package.upstream.fetch("source_commit")
     errors << "openchamber: selected lock receipt lock SHA-256 mismatch" unless receipt.dig("lockfile", "sha256") == metadata["lock_sha256"]
+    source_identity = receipt.fetch("source_identity")
+    errors << "openchamber: selected lock source identity mismatch" unless source_identity == metadata.fetch("source_identity")
+    errors << "openchamber: selected lock source checkout is not fully clean" unless source_identity["method"] == "clean_exact_tag_checkout" && source_identity["worktree_clean"] == true && source_identity["untracked_files_included"] == true
+    source_archive = receipt.fetch("source_archive")
+    errors << "openchamber: selected lock source archive URL mismatch" unless source_archive["url"] == Agentlab.source_url(package, package.upstream.fetch("current_version"))
+    errors << "openchamber: selected lock source archive SHA-256 mismatch" unless source_archive["sha256"] == package.upstream.fetch("source_sha256")
 
     expected_counts = {
       "selected_workspaces" => receipt.dig("selection", "selected_workspaces"),
@@ -662,21 +668,40 @@ module Agentlab
       errors << "openchamber: invalid source-import SHA-256 for #{source_path.inspect}" unless record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
     file_hashes = files.to_h { |record| [record["path"], record["sha256"]] }
-    remix = metadata.fetch("remix_icon_boundary")
-    errors << "openchamber: current Remix sprite hash mismatch" unless file_hashes[remix["sprite_path"]] == remix["sprite_sha256"]
-    direct_imports = Array(remix["direct_import_paths"])
-    errors << "openchamber: current Remix direct-import paths are not sorted or unique" unless direct_imports == direct_imports.sort.uniq
-    errors << "openchamber: current Remix direct-import path is outside the source graph" unless direct_imports.all? { |source_path| file_hashes.key?(source_path) }
-    errors << "openchamber: current Remix mobile entry is not fail-closed" unless remix["mobile_html_unconditional"] == true
-    errors << "openchamber: current Remix Fedora license mismatch" unless remix["fedora_license"] == "LicenseRef-Remix-icon-license-1.0" && remix["fedora_status"] == "not-allowed"
-    errors << "openchamber: current source-license inventory is overclaimed" unless remix["current_source_license_inventory_complete"] == false
-    errors << "openchamber: package current Remix sprite hash mismatch" unless source_policy["current_remix_icon_sprite_sha256"] == remix["sprite_sha256"]
-    errors << "openchamber: package current Remix sprite count mismatch" unless source_policy["current_remix_icon_sprite_icons"] == remix["sprite_path_records"]
-    errors << "openchamber: package current Remix import count mismatch" unless source_policy["current_remix_icon_direct_imports"] == direct_imports.length
-    errors << "openchamber: package current Remix mobile entry mismatch" unless source_policy["current_remix_icon_mobile_html_unconditional"] == remix["mobile_html_unconditional"]
-    errors << "openchamber: package current Remix Fedora status mismatch" unless source_policy["current_remix_icon_fedora_status"] == remix["fedora_status"]
     errors << "openchamber: package overclaims current source-license inventory" unless source_policy["current_source_license_inventory_complete"] == false
-    %w[entrypoints_resolved local_imports_resolved literal_dynamic_imports_only literal_globs_only glob_matches_recorded source_files_hashed].each do |flag|
+
+    expected_remix_usages = %w[
+      packages/ui/src/apps/MobileFilesSurface.tsx
+      packages/ui/src/apps/MobileProjectEditSurface.tsx
+      packages/ui/src/apps/MobileSessionsSheet.tsx
+      packages/ui/src/apps/MobileSurfaceShell.tsx
+    ].map { |importer| { "importer" => importer, "specifier" => "@remixicon/react" } }
+    remix = receipt.fetch("remix_icon_boundary")
+    remix_root = roots.find { |record| record["name"] == "@remixicon/react" }
+    errors << "openchamber: current Remix package root is missing or drifted" unless remix["package_root"] == "@remixicon/react" && remix_root
+    errors << "openchamber: current Remix importers drifted" unless remix["package_usages"] == expected_remix_usages && remix_root&.fetch("usages", nil) == expected_remix_usages
+    sprite = remix.fetch("sprite")
+    errors << "openchamber: current Remix sprite path drifted" unless sprite["path"] == "packages/ui/src/components/icon/sprite.ts"
+    errors << "openchamber: current Remix sprite hash mismatch" unless file_hashes[sprite["path"]] == sprite["sha256"]
+    errors << "openchamber: current Remix sprite path count drifted" unless sprite["path_records"] == 236
+    mobile = remix.fetch("mobile_input")
+    errors << "openchamber: current Remix mobile input drifted" unless mobile["vite_config_path"] == "packages/web/vite.config.ts" && mobile["path"] == "mobile.html" && mobile["unconditional_literal"] == true
+    errors << "openchamber: current Remix Vite configuration hash mismatch" unless file_hashes[mobile["vite_config_path"]] == mobile["vite_config_sha256"]
+    errors << "openchamber: current Remix Vite configuration is not graph evidence" unless Array(source_graph["evidence_files"]).include?(mobile["vite_config_path"])
+
+    expected_patches = metadata.fetch("patched_dependencies")
+    patches = receipt.fetch("patched_dependencies")
+    errors << "openchamber: selected patched dependencies mismatch" unless patches == expected_patches
+    patches.each do |patch|
+      selected_paths = Array(receipt["packages"]).select do |record|
+        "#{record['npm_name']}@#{record['version']}" == patch["identity"]
+      end.map { |record| record["package_path"] }.sort
+      errors << "openchamber: selected patched dependency package paths mismatch" unless patch["selected_package_paths"] == selected_paths && !selected_paths.empty?
+      errors << "openchamber: selected patched dependency path is invalid" unless patch["path"].is_a?(String) && !Pathname.new(patch["path"]).absolute? && !Pathname.new(patch["path"]).each_filename.include?("..")
+      errors << "openchamber: selected patched dependency SHA-256 is invalid" unless patch["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
+    end
+
+    %w[entrypoints_resolved local_imports_resolved literal_dynamic_imports_only literal_globs_only glob_matches_recorded source_files_hashed evidence_files_hashed].each do |flag|
       errors << "openchamber: source-import validation #{flag} is not true" unless source_graph.dig("validation", flag) == true
     end
 

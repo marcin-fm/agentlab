@@ -31,13 +31,8 @@ source_policy:
   selected_lock_authoritative: true
   downstream_release_evidence: 1.16.3
   downstream_release_evidence_current: false
-  source_import_files: 890
+  source_import_files: 891
   source_import_package_roots: 59
-  current_remix_icon_sprite_sha256: 96a6108fd6387eb23f7db23cb612c2dd34a053ec24dfa3826d392c76cb23086d
-  current_remix_icon_sprite_icons: 236
-  current_remix_icon_direct_imports: 4
-  current_remix_icon_mobile_html_unconditional: true
-  current_remix_icon_fedora_status: not-allowed
   current_source_license_inventory_complete: false
   source_acquisition_receipt: openchamber-1.16.3-source-audit.json
   source_acquisition_sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff

@@ -50,8 +50,8 @@ released `bun.lock` by `scripts/audit-openchamber-lock-closure`; it performs no
 dependency resolution. For the Linux x86_64 glibc Node target it records 832
 selected packages: 221 runtime, 564 build, and 47 test records. All selected
 sources are registry records, 76 incompatible platform records are excluded,
-and the checked `@tanstack/virtual-core@3.17.3` patch is linked to its selected
-package record.
+and the checked `@tanstack/virtual-core@3.17.3` patch is bound by identity,
+path, SHA-256, and selected package path.
 
 The receipt enforces the Node PTY boundary: `node-pty` is selected once and
 `bun-pty` is present only as an explicit policy exclusion. It also verifies
@@ -62,8 +62,14 @@ The package-identity closure is authoritative for the selected release surface.
 The audit starts at the web, mobile, mini-chat, and PWA service-worker entries;
 resolves the exact Vite aliases, relative/static imports, literal dynamic
 imports, CSS imports, and Vite query suffixes; and expands the checked provider
-logo `import.meta.glob`. It reaches 890 local files and 59 direct package roots,
+logo `import.meta.glob`. It reaches 891 hashed source/evidence files and 59
+direct package roots,
 then retains each selected root's complete transitive `bun.lock` closure.
+
+Generation requires a fully clean exact `v1.17.1` checkout, including no
+untracked files, at commit `1b1640ae08cfc86e9ebffeb90c073acaa81e62f9`.
+The receipt also binds the released archive URL and SHA-256
+`31a767ec735c9c351333c9774699e76b204c9b0a0220e3531a437622985a5ead`.
 
 The lock still omits the root importer version and reports `1.17.0` for both
 `packages/web` and `packages/ui`, while all three manifests report `1.17.1`.
@@ -73,9 +79,10 @@ does not claim that upstream corrected the importer versions. Immutable source
 acquisition, native rebuilds, generated browser output, licenses, final binary
 inclusion, bundled Provides, and offline builds remain fail-closed.
 
-The current source graph also binds the unresolved Remix Icon boundary. Four
-mobile components still import `@remixicon/react`, `mobile.html` remains an
-unconditional Vite input, and the generated sprite now contains 236 paths at
+The current source/import graph derives the unresolved Remix Icon boundary:
+the `@remixicon/react` package root has exactly four mobile importers,
+`mobile.html` is one unconditional literal Vite input, and the generated sprite
+contains 236 paths at
 SHA-256 `96a6108fd6387eb23f7db23cb612c2dd34a053ec24dfa3826d392c76cb23086d`.
 The selected terms remain Fedora-not-allowed; the `1.17.1` source-license
 inventory is explicitly incomplete.

@@ -139,16 +139,17 @@ module OpenChamberLockAudit
       raise Agentlab::Error, "source tag #{expected_tag.inspect} resolves to #{tag_commit.inspect}, expected #{expected_commit}"
     end
 
-    stdout, stderr, status = Open3.capture3("git", "-C", source_dir, "status", "--porcelain=v1", "--untracked-files=no")
+    stdout, stderr, status = Open3.capture3("git", "-C", source_dir, "status", "--porcelain=v1", "--untracked-files=all")
     raise Agentlab::Error, "cannot verify source checkout cleanliness: #{stderr.strip}" unless status.success?
-    raise Agentlab::Error, "source checkout has tracked modifications" unless stdout.empty?
+    raise Agentlab::Error, "source checkout is not fully clean" unless stdout.empty?
 
     {
-      "method" => "clean_git_checkout",
+      "method" => "clean_exact_tag_checkout",
       "commit" => commit,
       "tag" => expected_tag,
       "tag_commit" => tag_commit,
-      "tracked_worktree_clean" => true
+      "worktree_clean" => true,
+      "untracked_files_included" => true
     }
   end
 
@@ -159,6 +160,7 @@ module OpenChamberLockAudit
       @source_dir = File.realpath(source_dir)
       @configuration = configuration
       @entrypoints = Array(configuration.fetch("entrypoints"))
+      @evidence_files = Array(configuration.fetch("evidence_files", []))
       @aliases = Hash(configuration.fetch("aliases")).sort_by { |name, _path| -name.length }
       @package_aliases = Hash(configuration.fetch("package_aliases", {})).sort_by { |name, _package| -name.length }
       @extensions = Array(configuration.fetch("extensions"))
@@ -173,11 +175,13 @@ module OpenChamberLockAudit
 
     def run
       @entrypoints.each { |path| enqueue(resolve_entrypoint(path), importer: nil, specifier: path, kind: "entrypoint") }
+      @evidence_files.each { |path| record_evidence_file(path) }
       process_queue until @queue.empty?
 
       {
         "schema" => @configuration.fetch("schema"),
         "entrypoints" => @entrypoints.sort,
+        "evidence_files" => @evidence_files.sort,
         "aliases" => Hash[@aliases.sort],
         "package_aliases" => Hash[@package_aliases.sort],
         "files" => @files.values.sort_by { |record| record.fetch("path") },
@@ -194,12 +198,23 @@ module OpenChamberLockAudit
           "literal_dynamic_imports_only" => true,
           "literal_globs_only" => true,
           "glob_matches_recorded" => true,
-          "source_files_hashed" => true
+          "source_files_hashed" => true,
+          "evidence_files_hashed" => true
         }
       }
     end
 
     private
+
+    def record_evidence_file(path)
+      real = resolve_file(File.join(@source_dir, path), "evidence file #{path.inspect}")
+      relative = relative_path(real)
+      @files[relative] = {
+        "path" => relative,
+        "sha256" => Digest::SHA256.file(real).hexdigest,
+        "kind" => "evidence"
+      }
+    end
 
     def resolve_entrypoint(path)
       resolve_file(File.join(@source_dir, path), "entrypoint #{path.inspect}")
@@ -372,6 +387,42 @@ module OpenChamberLockAudit
     def relative_path(path)
       Pathname.new(path).relative_path_from(Pathname.new(@source_dir)).to_s
     end
+  end
+
+  def derive_remix_icon_boundary(source_dir, source_graph, configuration)
+    package_root = configuration.fetch("package_root")
+    root = source_graph.fetch("package_roots").find { |record| record.fetch("name") == package_root }
+    raise Agentlab::Error, "missing Remix package root #{package_root.inspect}" unless root
+
+    files = source_graph.fetch("files").to_h { |record| [record.fetch("path"), record] }
+    sprite_path = configuration.fetch("sprite_path")
+    sprite = files.fetch(sprite_path) { raise Agentlab::Error, "Remix sprite is outside the source graph: #{sprite_path}" }
+    sprite_content = File.binread(File.join(source_dir, sprite_path))
+
+    vite_config_path = configuration.fetch("vite_config_path")
+    vite_config = files.fetch(vite_config_path) { raise Agentlab::Error, "Vite configuration is outside the source graph: #{vite_config_path}" }
+    mobile_input_path = configuration.fetch("mobile_input_path")
+    vite_content = File.read(File.join(source_dir, vite_config_path), mode: "r:BOM|UTF-8")
+    mobile_matches = vite_content.scan(/^\s*mobile:\s*path\.resolve\(__dirname,\s*(['"])#{Regexp.escape(mobile_input_path)}\1\),?\s*$/)
+    unless mobile_matches.length == 1
+      raise Agentlab::Error, "Vite mobile input is not one unconditional literal #{mobile_input_path.inspect}"
+    end
+
+    {
+      "package_root" => package_root,
+      "package_usages" => root.fetch("usages"),
+      "sprite" => {
+        "path" => sprite_path,
+        "sha256" => sprite.fetch("sha256"),
+        "path_records" => sprite_content.scan(/<path\b/).length
+      },
+      "mobile_input" => {
+        "vite_config_path" => vite_config_path,
+        "vite_config_sha256" => vite_config.fetch("sha256"),
+        "path" => mobile_input_path,
+        "unconditional_literal" => true
+      }
+    }
   end
 
   def root_names(workspace, group, specification, source_package_roots: Set.new)
@@ -636,6 +687,11 @@ module OpenChamberLockAudit
       source_dir: source_dir,
       configuration: selection.fetch("source_import_graph")
     ).run
+    remix_icon_boundary = derive_remix_icon_boundary(
+      source_dir,
+      source_graph,
+      selection.fetch("remix_icon_boundary")
+    )
     source_package_roots = Set.new(source_graph.fetch("package_roots").map { |record| record.fetch("name") })
 
     policy_exclusions = Array(selection.fetch("policy_exclusions"))
@@ -802,6 +858,10 @@ module OpenChamberLockAudit
       "source_tag" => package.upstream.fetch("source_tag"),
       "source_commit" => package.upstream.fetch("source_commit"),
       "source_identity" => source_identity,
+      "source_archive" => {
+        "url" => Agentlab.source_url(package, version),
+        "sha256" => package.upstream.fetch("source_sha256")
+      },
       "lockfile" => {
         "path" => "bun.lock",
         "sha256" => Digest::SHA256.file(lock_path).hexdigest,
@@ -829,6 +889,7 @@ module OpenChamberLockAudit
         "records" => observed_mismatches
       },
       "source_import_graph" => source_graph,
+      "remix_icon_boundary" => remix_icon_boundary,
       "roots" => root_records.sort_by { |record| [record.fetch("workspace_path"), record.fetch("dependency_group"), record.fetch("dependency_name"), record.fetch("role")] },
       "workspaces" => workspace_records,
       "packages" => package_records,

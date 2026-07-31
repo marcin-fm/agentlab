@@ -63,6 +63,8 @@ selected_lock_audit:
     - packages/web/src/mobile-main.tsx
     - packages/web/src/mini-chat-main.tsx
     - packages/web/src/sw.ts
+    evidence_files:
+    - packages/web/vite.config.ts
     aliases:
       "@openchamber/ui": packages/ui/src
       "@web": packages/web/src
@@ -80,6 +82,11 @@ selected_lock_audit:
     - .css
     - .json
     - .svg
+  remix_icon_boundary:
+    package_root: "@remixicon/react"
+    sprite_path: packages/ui/src/components/icon/sprite.ts
+    vite_config_path: packages/web/vite.config.ts
+    mobile_input_path: mobile.html
   dependency_roots:
     runtime:
       packages/web:
@@ -147,7 +154,7 @@ selected_lock_audit:
   git_sources: {}
 selected_lock_receipt:
   schema: openchamber-selected-lock-audit/v2
-  sha256: 3126f8fcdb27e6c7f22fc3878106185ba6b869d11f1ed73ff5e0a60105c901a1
+  sha256: ebd68e138edc7e8f75a2e0331dc2140000b29c84823f313570a3999f6cefc61a
   lock_sha256: 6e6e8db922cc9abd9b582f21eb9890888217ee9181a5cd42147fb0d3c0377c7d
   selected_workspaces: 3
   selected_packages: 832
@@ -158,28 +165,22 @@ selected_lock_receipt:
   github_packages: 0
   platform_excluded: 76
   policy_excluded: 1
-  source_import_files: 890
+  source_import_files: 891
   source_import_package_roots: 59
   source_import_globs: 1
   source_identity:
-    method: clean_git_checkout
+    method: clean_exact_tag_checkout
     commit: 1b1640ae08cfc86e9ebffeb90c073acaa81e62f9
     tag: v1.17.1
     tag_commit: 1b1640ae08cfc86e9ebffeb90c073acaa81e62f9
-    tracked_worktree_clean: true
-  remix_icon_boundary:
-    sprite_path: packages/ui/src/components/icon/sprite.ts
-    sprite_sha256: 96a6108fd6387eb23f7db23cb612c2dd34a053ec24dfa3826d392c76cb23086d
-    sprite_path_records: 236
-    direct_import_paths:
-    - packages/ui/src/apps/MobileFilesSurface.tsx
-    - packages/ui/src/apps/MobileProjectEditSurface.tsx
-    - packages/ui/src/apps/MobileSessionsSheet.tsx
-    - packages/ui/src/apps/MobileSurfaceShell.tsx
-    mobile_html_unconditional: true
-    fedora_license: LicenseRef-Remix-icon-license-1.0
-    fedora_status: not-allowed
-    current_source_license_inventory_complete: false
+    worktree_clean: true
+    untracked_files_included: true
+  patched_dependencies:
+  - identity: "@tanstack/virtual-core@3.17.3"
+    path: bun-patches/@tanstack+virtual-core+3.17.3.patch
+    sha256: 3a6ff842ba0efd76b7535cf65776794509ae173436b5ff40a9f3844893b529e5
+    selected_package_paths:
+    - "@tanstack/virtual-core"
   validation:
     source_identity_verified: true
     manifest_dependency_groups_match: true

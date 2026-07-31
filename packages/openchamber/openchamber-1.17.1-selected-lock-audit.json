@@ -5,11 +5,16 @@
   "source_tag": "v1.17.1",
   "source_commit": "1b1640ae08cfc86e9ebffeb90c073acaa81e62f9",
   "source_identity": {
-    "method": "clean_git_checkout",
+    "method": "clean_exact_tag_checkout",
     "commit": "1b1640ae08cfc86e9ebffeb90c073acaa81e62f9",
     "tag": "v1.17.1",
     "tag_commit": "1b1640ae08cfc86e9ebffeb90c073acaa81e62f9",
-    "tracked_worktree_clean": true
+    "worktree_clean": true,
+    "untracked_files_included": true
+  },
+  "source_archive": {
+    "url": "https://github.com/openchamber/openchamber/archive/refs/tags/v1.17.1.tar.gz",
+    "sha256": "31a767ec735c9c351333c9774699e76b204c9b0a0220e3531a437622985a5ead"
   },
   "lockfile": {
     "path": "bun.lock",
@@ -19,7 +24,7 @@
     "package_records": 1892
   },
   "selection": {
-    "config_sha256": "c9c9f23a667d69a7cf268933eb8a113a4ce175a5a67d1f53b2ec0cb2dfcea603",
+    "config_sha256": "a759ca8bf3a28349ad2b2b2d818e17cfe2f358ff2ddad82ef1366bda7a1caafc",
     "target": {
       "os": "linux",
       "cpu": "x64",
@@ -123,6 +128,9 @@
       "packages/web/src/mini-chat-main.tsx",
       "packages/web/src/mobile-main.tsx",
       "packages/web/src/sw.ts"
+    ],
+    "evidence_files": [
+      "packages/web/vite.config.ts"
     ],
     "aliases": {
       "@": "packages/ui/src",
@@ -4583,6 +4591,11 @@
         "path": "packages/web/src/sw.ts",
         "sha256": "1f0341647514604243151727b83b9b0a7d84fed8465b62916be30d2d9c3291b1",
         "kind": "entrypoint"
+      },
+      {
+        "path": "packages/web/vite.config.ts",
+        "sha256": "570a4ef7cc05029b190157562fbc8f8fd1f077a99268f91628a8f6c9a7e3186a",
+        "kind": "evidence"
       }
     ],
     "package_roots": [
@@ -8114,7 +8127,40 @@
       "literal_dynamic_imports_only": true,
       "literal_globs_only": true,
       "glob_matches_recorded": true,
-      "source_files_hashed": true
+      "source_files_hashed": true,
+      "evidence_files_hashed": true
+    }
+  },
+  "remix_icon_boundary": {
+    "package_root": "@remixicon/react",
+    "package_usages": [
+      {
+        "importer": "packages/ui/src/apps/MobileFilesSurface.tsx",
+        "specifier": "@remixicon/react"
+      },
+      {
+        "importer": "packages/ui/src/apps/MobileProjectEditSurface.tsx",
+        "specifier": "@remixicon/react"
+      },
+      {
+        "importer": "packages/ui/src/apps/MobileSessionsSheet.tsx",
+        "specifier": "@remixicon/react"
+      },
+      {
+        "importer": "packages/ui/src/apps/MobileSurfaceShell.tsx",
+        "specifier": "@remixicon/react"
+      }
+    ],
+    "sprite": {
+      "path": "packages/ui/src/components/icon/sprite.ts",
+      "sha256": "96a6108fd6387eb23f7db23cb612c2dd34a053ec24dfa3826d392c76cb23086d",
+      "path_records": 236
+    },
+    "mobile_input": {
+      "vite_config_path": "packages/web/vite.config.ts",
+      "vite_config_sha256": "570a4ef7cc05029b190157562fbc8f8fd1f077a99268f91628a8f6c9a7e3186a",
+      "path": "mobile.html",
+      "unconditional_literal": true
     }
   },
   "roots": [
