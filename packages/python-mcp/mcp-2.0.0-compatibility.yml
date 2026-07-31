@@ -18,6 +18,8 @@ consumer:
   repository: chopratejas/headroom
   tag: v0.33.0
   commit: 28aa53dc7ca51e687cc719c3fe160f3be50c6570
+  source_url: https://files.pythonhosted.org/packages/87/2c/d3aeeb62d8f61430c9cf5b84c1bd0227362e43eaaaf710d6bb1759fec153/headroom_ai-0.33.0.tar.gz
+  source_sha256: 97d817e5923903d72bed24f75e0424e9cb7f86b3ddde0fc1acec4f3f85deeb5a
   declared_requirement: mcp>=1.28.1,<2.0.0
   upstream_guard:
     commit: b3f016b866375cfe2ff8518055ab93844e11ec27

@@ -5361,9 +5361,10 @@ module Agentlab
     ).map { |error| "opencode: upstream release audit #{error}" }
   end
 
-  def validate_python_mcp_compatibility_audit(package)
+  def validate_python_mcp_compatibility_audit(package, headroom_package: nil)
     return [] unless package.name == "python-mcp"
 
+    headroom_package ||= package_named("python-headroom-ai")
     errors = []
     prefix = "python-mcp:"
     expected_filename = "mcp-2.0.0-compatibility.yml"
@@ -5371,6 +5372,16 @@ module Agentlab
     return ["#{prefix} reproducibility metadata is missing"] unless File.file?(reproducibility_path)
 
     reproducibility = load_yaml(reproducibility_path)
+    headroom_dependencies_path = File.join(headroom_package.directory, "dependencies.yml")
+    return ["#{prefix} Headroom dependency metadata is missing"] unless File.file?(headroom_dependencies_path)
+
+    headroom_dependencies = load_yaml(headroom_dependencies_path)
+    headroom_requirement = Array(headroom_dependencies.dig("production_runtime", "python")).find do |requirement|
+      requirement.start_with?("mcp ")
+    end
+    return ["#{prefix} Headroom MCP requirement is missing"] unless headroom_requirement
+
+    normalized_headroom_requirement = headroom_requirement.sub(/\s+with .*/, "").gsub(/\s+/, "")
     return ["#{prefix} spec is missing"] unless File.file?(package.spec_path)
 
     spec = File.read(package.spec_path)
@@ -5418,16 +5429,24 @@ module Agentlab
       "source_sha256" => package.upstream["source_sha256"],
       "commit" => package.upstream["commit"]
     }
-    errors << "#{prefix} Headroom consumer identity does not match" unless audit.dig("consumer", "package") == "python-headroom-ai" &&
-      audit.dig("consumer", "version") == "0.33.0" && audit.dig("consumer", "repository") == "chopratejas/headroom" &&
-      audit.dig("consumer", "tag") == "v0.33.0" && audit.dig("consumer", "commit") == "28aa53dc7ca51e687cc719c3fe160f3be50c6570" &&
-      audit.dig("consumer", "declared_requirement") == "mcp>=1.28.1,<2.0.0"
-    errors << "#{prefix} upstream-reported failure evidence does not match" unless audit.dig("consumer", "upstream_guard") == {
+    expected_upstream_guard = {
       "commit" => "b3f016b866375cfe2ff8518055ab93844e11ec27",
       "evidence" => "upstream-reported",
       "failure" => "AttributeError: 'Server' object has no attribute 'list_tools'",
       "client_failure" => "headroom MCP error -32000: Connection closed"
     }
+    expected_consumer = {
+      "package" => headroom_package.name,
+      "version" => headroom_package.upstream["current_version"],
+      "repository" => headroom_package.upstream["repository"],
+      "tag" => "v#{headroom_package.upstream["current_version"]}",
+      "commit" => headroom_package.upstream["released_source_commit"],
+      "source_url" => headroom_package.upstream["source_url"],
+      "source_sha256" => headroom_package.upstream["source_sha256"],
+      "declared_requirement" => normalized_headroom_requirement,
+      "upstream_guard" => expected_upstream_guard
+    }
+    errors << "#{prefix} Headroom consumer package evidence does not match" unless audit["consumer"] == expected_consumer
     expected_calls = [
       "headroom/ccr/mcp_server.py:612 @self.server.list_tools()",
       "headroom/ccr/mcp_server.py:707 @self.server.call_tool()",

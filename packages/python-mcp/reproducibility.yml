@@ -1,6 +1,6 @@
 schema: python-mcp-reproducibility/v1
 package: python-mcp
-version: 1.28.1-0.4
+version: 1.28.1-0.5
 source:
   url: https://files.pythonhosted.org/packages/6e/77/9450b8f251a13affb6281997d0523c4615f8a8b35d0b21ff30db3a5aac9d/mcp-1.28.1.tar.gz
   sha256: d51e36a5f5644faea4f85ea649bfffa6bc6c26770d42798ad6a3de3d2ba69683
@@ -10,9 +10,9 @@ patches:
   pass-pythonpath-for-subprocess.diff: 1ced136934911bd249d4b583972b767cf7c0b679de03a7723e747f13d4a14a05
 validation:
   current:
-    spec_sha256: 5c80a0221579615ae82c5b46fc3a30d94e056adf5fe4c8fbcea9ada409f7d8a5
+    spec_sha256: 9802571a480510374af7c85af1413938d075144d2e4df6a5fcc62e9a402b5127
     mcp_2_compatibility_audit: mcp-2.0.0-compatibility.yml
-    mcp_2_compatibility_audit_sha256: 4519bb34ea8ba3a9cec23925727c3c47d0fe5572a7bbfd1f73f7d8c0bc81431e
+    mcp_2_compatibility_audit_sha256: 7d0f8fed9725050bea97426b6d832818ae30f31547bd3240b79836fc7e63e87a
     exact_patch_apply: required
     fedora_43_backend_proof: exact patched sdist produced mcp-1.28.1-py3-none-any.whl without Git metadata through hatch-vcs fallback_version
     targets:

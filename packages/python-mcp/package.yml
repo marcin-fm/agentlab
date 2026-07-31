@@ -29,7 +29,7 @@ patches:
     purpose: propagate Fedora buildroot PYTHONPATH to a temporary stdio-server subprocess
     upstream_issue: https://github.com/modelcontextprotocol/python-sdk/issues/1027
 validation:
-  release: 1.28.1-0.4
+  release: 1.28.1-0.5
   status: static source and patch validation complete; configured-SCM six-cell build required
   source_sha256_verified: true
   source_size: 638501
@@ -40,7 +40,7 @@ upgrade_audit:
   candidate: 2.0.0
   status: rejected
   evidence: mcp-2.0.0-compatibility.yml
-  evidence_sha256: 4519bb34ea8ba3a9cec23925727c3c47d0fe5572a7bbfd1f73f7d8c0bc81431e
+  evidence_sha256: 7d0f8fed9725050bea97426b6d832818ae30f31547bd3240b79836fc7e63e87a
   reason: upstream reports that released Headroom 0.33.0 fails at startup with MCP 2, and the release declares mcp <2
 upstream:
   provider: pypi

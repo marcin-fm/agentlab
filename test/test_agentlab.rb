@@ -1254,8 +1254,8 @@ class AgentlabTest < Minitest::Test
     mcp_2_audit_path = File.join(mcp.directory, "mcp-2.0.0-compatibility.yml")
     mcp_2_audit = Agentlab.load_yaml(mcp_2_audit_path)
     assert_equal(targets, mcp.chroots(targets))
-    assert_equal("1.28.1-0.4", mcp.data.dig("validation", "release"))
-    assert_equal("1.28.1-0.4", mcp_reproducibility.fetch("version"))
+    assert_equal("1.28.1-0.5", mcp.data.dig("validation", "release"))
+    assert_equal("1.28.1-0.5", mcp_reproducibility.fetch("version"))
     assert_equal("mcp-2.0.0-compatibility.yml", mcp.data.dig("upgrade_audit", "evidence"))
     assert_equal("mcp-2.0.0-compatibility.yml", mcp_reproducibility.dig("validation", "current", "mcp_2_compatibility_audit"))
     assert_equal("python-mcp-major-compatibility-audit/v1", mcp_2_audit.fetch("schema"))
@@ -1263,6 +1263,8 @@ class AgentlabTest < Minitest::Test
     assert_equal("6f69a3758ebf2ee55ce050f58b470ce11af71133", mcp_2_audit.dig("candidate", "commit"))
     assert_equal("mcp>=1.28.1,<2.0.0", mcp_2_audit.dig("consumer", "declared_requirement"))
     assert_equal("chopratejas/headroom", mcp_2_audit.dig("consumer", "repository"))
+    assert_equal("https://files.pythonhosted.org/packages/87/2c/d3aeeb62d8f61430c9cf5b84c1bd0227362e43eaaaf710d6bb1759fec153/headroom_ai-0.33.0.tar.gz", mcp_2_audit.dig("consumer", "source_url"))
+    assert_equal("97d817e5923903d72bed24f75e0424e9cb7f86b3ddde0fc1acec4f3f85deeb5a", mcp_2_audit.dig("consumer", "source_sha256"))
     assert_equal("upstream-reported", mcp_2_audit.dig("consumer", "upstream_guard", "evidence"))
     assert_equal("AttributeError: 'Server' object has no attribute 'list_tools'", mcp_2_audit.dig("consumer", "upstream_guard", "failure"))
     assert_equal(false, mcp_2_audit.dig("api", "compatible"))
@@ -4860,7 +4862,7 @@ class AgentlabTest < Minitest::Test
 
   def test_python_mcp_compatibility_audit_rejects_pointer_and_semantic_drift
     source_package = Agentlab.package_named("python-mcp")
-    validate_copy = lambda do |audit_change: nil, reproducibility_change: nil, data_change: nil|
+    validate_copy = lambda do |audit_change: nil, reproducibility_change: nil, data_change: nil, headroom_package: Agentlab.package_named("python-headroom-ai")|
       Dir.mktmpdir do |directory|
         audit_filename = "mcp-2.0.0-compatibility.yml"
         audit = Agentlab.load_yaml(File.join(source_package.directory, audit_filename))
@@ -4878,7 +4880,7 @@ class AgentlabTest < Minitest::Test
         FileUtils.cp(source_package.spec_path, File.join(directory, "python-mcp.spec"))
 
         package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
-        Agentlab.validate_python_mcp_compatibility_audit(package)
+        Agentlab.validate_python_mcp_compatibility_audit(package, headroom_package: headroom_package)
       end
     end
 
@@ -4895,7 +4897,8 @@ class AgentlabTest < Minitest::Test
     )
 
     semantic_tampers = [
-      [->(audit) { audit.dig("consumer")["repository"] = "wrong/headroom" }, "python-mcp: Headroom consumer identity does not match"],
+      [->(audit) { audit.dig("consumer")["repository"] = "wrong/headroom" }, "python-mcp: Headroom consumer package evidence does not match"],
+      [->(audit) { audit.dig("consumer")["source_sha256"] = "0" * 64 }, "python-mcp: Headroom consumer package evidence does not match"],
       [->(audit) { audit.dig("api", "mcp_2_replacements")["list_tools"] = "tampered" }, "python-mcp: API compatibility contract does not match"],
       [->(audit) { audit.dig("api")["migration_scope"] = [] }, "python-mcp: API compatibility contract does not match"],
       [->(audit) { audit.dig("protocol")["mcp_2026_07_28"] = "tampered" }, "python-mcp: protocol compatibility contract does not match"],
@@ -4913,6 +4916,19 @@ class AgentlabTest < Minitest::Test
     assert_includes(
       validate_copy.call(reproducibility_change: ->(metadata) { metadata["version"] = "1.28.1-0.99" }),
       "python-mcp: reproducibility version does not match the spec"
+    )
+
+    headroom_package = Agentlab.package_named("python-headroom-ai")
+    changed_headroom_data = Marshal.load(Marshal.dump(headroom_package.data))
+    changed_headroom_data.fetch("upstream")["source_sha256"] = "f" * 64
+    changed_headroom_package = Agentlab::Package.new(
+      directory: headroom_package.directory,
+      manifest_path: headroom_package.manifest_path,
+      data: changed_headroom_data
+    )
+    assert_includes(
+      validate_copy.call(headroom_package: changed_headroom_package),
+      "python-mcp: Headroom consumer package evidence does not match"
     )
   end
 end
