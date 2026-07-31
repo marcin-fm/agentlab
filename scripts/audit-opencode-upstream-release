@@ -6,6 +6,7 @@ require "json"
 require "open3"
 require "optparse"
 require "rubygems/package"
+require "set"
 require "yaml"
 require "zlib"
 
@@ -17,32 +18,239 @@ module OpenCodeUpstreamReleaseAudit
     "package.json",
     "packages/opencode/package.json",
   ].freeze
+  DEFAULT_ARCHIVE_LIMITS = {
+    archive_bytes: 128 * 1024 * 1024,
+    members: 50_000,
+    member_bytes: 32 * 1024 * 1024,
+    total_bytes: 512 * 1024 * 1024,
+    path_bytes: 4096,
+  }.freeze
 
   def git(repo, *arguments)
-    output, error, status = Open3.capture3("git", "-C", repo, *arguments)
-    raise "git #{arguments.join(' ')} failed: #{error.strip}" unless status.success?
-
-    output.strip
+    git_output(repo, *arguments).strip
   end
 
-  def archive_member(archive, suffix)
-    Zlib::GzipReader.open(archive) do |gzip|
-      Gem::Package::TarReader.new(gzip) do |tar|
-        entry = tar.find { |candidate| candidate.file? && candidate.full_name.end_with?(suffix) }
-        raise "archive is missing #{suffix}" unless entry
+  def git_output(repo, *arguments)
+    output, error, status = Open3.capture3("git", "-C", repo, *arguments, binmode: true)
+    raise "git #{arguments.join(' ')} failed: #{error.strip}" unless status.success?
 
-        return entry.read
-      end
+    output
+  end
+
+  def git_tree(repo, commit)
+    object_format = git(repo, "rev-parse", "--show-object-format")
+    raise "unsupported Git object format #{object_format}" unless object_format == "sha1"
+
+    git_output(repo, "ls-tree", "-rz", "--full-tree", commit).split("\0").reject(&:empty?).to_h do |record|
+      metadata, path = record.split("\t", 2)
+      mode, type, object_id = metadata.split(" ", 3)
+      raise "unsupported Git tree entry #{type} at #{path}" unless type == "blob"
+
+      [path, { "mode" => mode, "object_id" => object_id }]
     end
   end
 
-  def audit(package_manifest:, repo:, archive:, latest_version:)
+  def safe_archive_path(name, expected_root, path_limit)
+    normalized = name.end_with?("/") ? name.delete_suffix("/") : name
+    raise "archive member path is empty" if normalized.empty?
+    raise "archive member path exceeds limit" if normalized.bytesize > path_limit
+    raise "archive member path is not portable: #{name}" if normalized.start_with?("/") || normalized.include?("\\")
+
+    segments = normalized.split("/", -1)
+    if segments.any? { |segment| segment.empty? || segment == "." || segment == ".." }
+      raise "archive member path is unsafe: #{name}"
+    end
+    unless normalized == expected_root || normalized.start_with?("#{expected_root}/")
+      raise "archive member is outside exact root #{expected_root}: #{name}"
+    end
+
+    normalized
+  end
+
+  def git_blob_id(content)
+    Digest::SHA1.hexdigest("blob #{content.bytesize}\0#{content}")
+  end
+
+  def archive_tree(archive, expected_root, expected_commit: nil, limits: DEFAULT_ARCHIVE_LIMITS)
+    limits = DEFAULT_ARCHIVE_LIMITS.merge(limits)
+    raise "archive exceeds compressed size limit" if File.size(archive) > limits.fetch(:archive_bytes)
+
+    seen = Set.new
+    blobs = {}
+    manifest = nil
+    root_seen = false
+    members = 0
+    total_bytes = 0
+    pax_commit = nil
+
+    Zlib::GzipReader.open(archive) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          members += 1
+          raise "archive exceeds member count limit" if members > limits.fetch(:members)
+
+          if entry.full_name == "pax_global_header"
+            raise "archive PAX identity header must be first" unless members == 1
+            raise "archive PAX identity header has wrong type" unless entry.header.typeflag == "g"
+            raise "archive contains duplicate PAX identity header" if pax_commit
+            raise "archive PAX identity header exceeds size limit" if entry.header.size > limits.fetch(:member_bytes)
+
+            total_bytes += entry.header.size
+            raise "archive exceeds expanded size limit" if total_bytes > limits.fetch(:total_bytes)
+
+            content = entry.read
+            match = content.match(/\A(?<length>\d+) comment=(?<commit>[0-9a-f]{40})\n\z/)
+            unless match && match[:length].to_i == content.bytesize
+              raise "archive PAX identity header is malformed"
+            end
+
+            pax_commit = match[:commit]
+            next
+          end
+
+          name = safe_archive_path(entry.full_name, expected_root, limits.fetch(:path_bytes))
+          raise "archive contains duplicate member #{name}" unless seen.add?(name)
+
+          if name == expected_root
+            raise "archive root must be a directory" unless entry.directory?
+            raise "archive root directory has payload" unless entry.header.size.zero?
+
+            root_seen = true
+            next
+          end
+
+          relative_path = name.delete_prefix("#{expected_root}/")
+          if entry.directory?
+            raise "archive directory has payload: #{relative_path}" unless entry.header.size.zero?
+
+            next
+          elsif entry.file?
+            size = entry.header.size
+            raise "archive member exceeds size limit: #{relative_path}" if size > limits.fetch(:member_bytes)
+
+            total_bytes += size
+            raise "archive exceeds expanded size limit" if total_bytes > limits.fetch(:total_bytes)
+
+            content = entry.read
+            raise "archive member size changed while reading: #{relative_path}" unless content.bytesize == size
+
+            mode = entry.header.mode & 0o111 == 0 ? "100644" : "100755"
+            blobs[relative_path] = { "mode" => mode, "object_id" => git_blob_id(content) }
+            manifest = content if relative_path == "packages/opencode/package.json"
+          elsif entry.header.typeflag == "2"
+            raise "archive symlink has payload: #{relative_path}" unless entry.header.size.zero?
+
+            content = entry.header.linkname.to_s.b
+            raise "archive symlink target exceeds size limit: #{relative_path}" if content.bytesize > limits.fetch(:member_bytes)
+
+            total_bytes += content.bytesize
+            raise "archive exceeds expanded size limit" if total_bytes > limits.fetch(:total_bytes)
+
+            blobs[relative_path] = { "mode" => "120000", "object_id" => git_blob_id(content) }
+          else
+            raise "archive contains unsupported member type at #{relative_path}"
+          end
+        end
+      end
+    end
+
+    raise "archive is missing exact root directory #{expected_root}" unless root_seen
+    raise "archive is missing packages/opencode/package.json" unless manifest
+    if expected_commit && pax_commit != expected_commit
+      raise "archive PAX identity does not match resolved release commit"
+    end
+
+    { blobs: blobs, manifest: manifest }
+  rescue Zlib::GzipFile::Error, Gem::Package::TarInvalidError => error
+    raise "invalid release archive: #{error.message}"
+  end
+
+  def verify_archive_identity(archive, repo, latest_commit, expected_root, limits: DEFAULT_ARCHIVE_LIMITS)
+    actual = archive_tree(archive, expected_root, expected_commit: latest_commit, limits: limits)
+    expected = git_tree(repo, latest_commit)
+    missing = expected.keys - actual.fetch(:blobs).keys
+    extra = actual.fetch(:blobs).keys - expected.keys
+    mismatched = (expected.keys & actual.fetch(:blobs).keys).select do |path|
+      expected.fetch(path) != actual.fetch(:blobs).fetch(path)
+    end
+    unless missing.empty? && extra.empty? && mismatched.empty?
+      details = []
+      details << "missing=#{missing.first(3).join(',')}" unless missing.empty?
+      details << "extra=#{extra.first(3).join(',')}" unless extra.empty?
+      details << "mismatched=#{mismatched.first(3).join(',')}" unless mismatched.empty?
+      raise "archive tree does not match resolved release commit: #{details.join(' ')}"
+    end
+
+    actual.fetch(:manifest)
+  end
+
+  def safe_patch_path(path)
+    segments = path.split("/", -1)
+    if path.empty? || path.start_with?("/") || path.include?("\\") || path.include?("%") ||
+       segments.any? { |segment| segment.empty? || segment == "." || segment == ".." }
+      raise "unsafe or non-literal packaging patch path #{path}"
+    end
+
+    path
+  end
+
+  def packaging_patch_inputs(package_spec)
+    content = File.binread(package_spec)
+    declarations = content.lines.each_with_index.filter_map do |line, index|
+      match = line.match(/^Patch(?<number>\d*):\s+(?<path>\S+)\s*$/)
+      next unless match
+
+      number = match[:number].empty? ? "0" : match[:number]
+      { "number" => number, "path" => safe_patch_path(match[:path]), "line" => index + 1 }
+    end
+    raise "OpenCode spec declares no packaging patches" if declarations.empty?
+    raise "OpenCode spec has duplicate Patch numbers" unless declarations.map { |item| item.fetch("number") }.uniq.length == declarations.length
+
+    applications = Hash.new { |hash, key| hash[key] = [] }
+    content.lines.each_with_index do |line, index|
+      match = line.match(/^patch\s+(?<arguments>.*?)<\s*%\{PATCH(?<number>\d*)\}\s*$/)
+      next unless match
+
+      number = match[:number].empty? ? "0" : match[:number]
+      workdir = match[:arguments].match(/(?:^|\s)-d\s+(\S+)/)&.captures&.first
+      applications[number] << {
+        "line" => index + 1,
+        "root" => workdir || "Source0",
+      }
+    end
+
+    spec_directory = File.dirname(package_spec)
+    patches = declarations.map do |declaration|
+      path = File.join(spec_directory, declaration.fetch("path"))
+      raise "declared packaging patch is missing: #{declaration.fetch('path')}" unless File.file?(path)
+
+      patch_applications = applications.fetch(declaration.fetch("number"), [])
+      raise "declared packaging patch is not applied: Patch#{declaration.fetch('number')}" if patch_applications.empty?
+
+      declaration.merge(
+        "sha256" => Digest::SHA256.file(path).hexdigest,
+        "applications" => patch_applications,
+      )
+    end
+
+    {
+      "spec" => File.basename(package_spec),
+      "spec_sha256" => Digest::SHA256.hexdigest(content),
+      "patches" => patches,
+      "source0_revalidation_required" => patches.any? do |patch|
+        patch.fetch("applications").any? { |application| application.fetch("root") == "Source0" }
+      end,
+    }
+  end
+
+  def audit(package_manifest:, repo:, archive:, latest_version:, package_spec: nil, archive_limits: DEFAULT_ARCHIVE_LIMITS)
     package = YAML.safe_load_file(package_manifest, aliases: false)
     upstream = package.fetch("upstream")
     packaged_version = upstream.fetch("current_version").to_s
     packaged_tag = upstream.fetch("source_tag")
     packaged_commit = upstream.fetch("source_commit")
     latest_tag = "#{upstream.fetch('tag_prefix')}#{latest_version}"
+    package_spec ||= File.join(File.dirname(package_manifest), "opencode.spec")
 
     raise "OpenCode package must remain blocked" unless package.fetch("status") == "blocked"
     raise "OpenCode COPR package must remain disabled" unless package.dig("copr", "enabled") == false
@@ -52,18 +260,20 @@ module OpenCodeUpstreamReleaseAudit
     raise "packaged tag commit does not match package.yml" unless actual_packaged_commit == packaged_commit
 
     latest_commit = git(repo, "rev-parse", "#{latest_tag}^{commit}")
-    changed_paths = git(repo, "diff", "--name-only", packaged_tag, latest_tag).lines.map(&:strip).reject(&:empty?).sort
-    archive_manifest = JSON.parse(archive_member(archive, "/packages/opencode/package.json"))
+    expected_root = "opencode-#{latest_version}"
+    archive_manifest = JSON.parse(
+      verify_archive_identity(archive, repo, latest_commit, expected_root, limits: archive_limits),
+    )
     raise "archive OpenCode version does not match #{latest_version}" unless archive_manifest.fetch("version") == latest_version
 
+    changed_paths = git(repo, "diff", "--name-only", packaged_tag, latest_tag).lines.map(&:strip).reject(&:empty?).sort
     path_changes = RELEASE_SENSITIVE_PATHS.to_h do |path|
       [path, git(repo, "rev-parse", "#{packaged_tag}:#{path}") != git(repo, "rev-parse", "#{latest_tag}:#{path}")]
     end
-    patch_inputs_changed = changed_paths.any? { |path| path.start_with?("patches/") }
-    refresh_required = path_changes.values.any? || patch_inputs_changed
+    patch_inputs = packaging_patch_inputs(package_spec)
 
     {
-      "schema" => "agentlab-opencode-upstream-release-audit/v1",
+      "schema" => "agentlab-opencode-upstream-release-audit/v2",
       "package" => "opencode",
       "packaged_release" => {
         "version" => packaged_version,
@@ -75,13 +285,16 @@ module OpenCodeUpstreamReleaseAudit
         "version" => latest_version,
         "tag" => latest_tag,
         "commit" => latest_commit,
+        "archive_root" => expected_root,
         "archive_sha256" => Digest::SHA256.file(archive).hexdigest,
+        "archive_matches_commit_tree" => true,
       },
+      "packaging_patch_inputs" => patch_inputs,
       "delta" => {
         "changed_paths" => changed_paths.length,
         "release_sensitive_paths" => path_changes,
-        "patch_inputs_changed" => patch_inputs_changed,
-        "selected_source_evidence_refresh_required" => refresh_required,
+        "downstream_patch_revalidation_required" => patch_inputs.fetch("source0_revalidation_required"),
+        "selected_source_evidence_refresh_required" => true,
       },
       "package_state" => {
         "status" => package.fetch("status"),
@@ -95,11 +308,13 @@ end
 if $PROGRAM_NAME == __FILE__
   options = {
     package_manifest: File.expand_path("../packages/opencode/package.yml", __dir__),
+    package_spec: File.expand_path("../packages/opencode/opencode.spec", __dir__),
   }
 
   OptionParser.new do |parser|
     parser.banner = "Usage: scripts/audit-opencode-upstream-release --repo PATH --archive PATH --latest-version VERSION"
     parser.on("--package-manifest PATH", "OpenCode package.yml path") { |value| options[:package_manifest] = value }
+    parser.on("--package-spec PATH", "OpenCode spec path") { |value| options[:package_spec] = value }
     parser.on("--repo PATH", "Local upstream Git repository") { |value| options[:repo] = value }
     parser.on("--archive PATH", "Downloaded latest release archive") { |value| options[:archive] = value }
     parser.on("--latest-version VERSION", "Latest released version") { |value| options[:latest_version] = value }
