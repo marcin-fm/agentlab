@@ -42,7 +42,8 @@ binds `libz-sys` 1.1.29 and the selected stock zlib 1.3.2 sources for the
 expected static `libz.a` path. This is source and build-intent evidence only:
 compilation, archive production, `LIBZ_SYS_STATIC` observation, final ELF/link
 evidence, RPM payload, native license payload, and final linked-license proof
-remain false. The embedded Boost subset still lacks its BSL-1.0 text.
+remain false. The source contract now binds the canonical BSL-1.0 text shipped
+by Fedora's Boost packages, but no RPM license payload is claimed.
 
 ## License Boundary
 
@@ -66,10 +67,11 @@ scope while retaining the checked lock and offline vendor configuration. That
 inventory is not final Linux linked-license or RPM payload evidence.
 
 All `1.0.1` configured-SCM results and receipts are historical evidence only.
-Release `1.0.3-0.4` retains the exact default-minus-tree-sitter source,
+Release `1.0.3-0.5` retains the exact default-minus-tree-sitter source,
 lock, vendor, provider, and license contracts; disables mutable tessdata
 downloads; retains only explicit opt-in immutable model downloads; and adds
-the deterministic native-source contract without claiming link proof. Build
+the deterministic native-source contract and its Boost license text without
+claiming link or license-payload proof. Build
 `10791299` exposed upstream's incomplete dynamic-Tesseract API gating before
 linking; `0.3` extends that existing feature path without enabling source
 downloads. No successful `1.0.3` compile proof exists yet. Xberg remains

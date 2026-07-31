@@ -1,5 +1,5 @@
 %global source_sha256 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e
-%global source_audit_sha256 91d622076841f5bc9cfce09a3c452bf5f7ad02ef089dcd526d214db50bb3b07f
+%global source_audit_sha256 7d811167aee6b00c37ccbca6a8f3593fa3c39946e7bcfdac6e48843e3e2e982e
 %global system_ort_audit_sha256 68327b502bfc978d754aa75c99ddd2e7b378fe1fdcee601fe3837df3f18a59f7
 %global system_onnxruntime_patch_sha256 8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab
 %global fedora_onnxruntime_path_patch_sha256 b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
@@ -18,13 +18,14 @@
 %global proof_auditor_sha256 94005bcab4a60d17c65e1eee9f73e3a46a0bee60d3f70009081e46102b22eb74
 %global source_filter_sha256 baf0efc96f735fbda22cad3fb22d08a79dc9a8e9286aa1f150972dbc3bbc5a0d
 %global cargo_license_writer_sha256 7dd6a505e65900dceded74405d586459180e2a701806b31ac24452e37acd1a51
-%global native_source_contract_sha256 466078fcd743503575ef48760e4fb6f86ff15fd87c5e18583170b7fb0458d03e
-%global native_source_auditor_sha256 6c019b1681c4f8058b9c7a659399a9abaf76bba6f49b9bbbb5674b5fa6714ee4
+%global native_source_contract_sha256 020587faa23c287075a42bc283c059540ddc384968e7725bfee0a4e4e8ad803f
+%global native_source_auditor_sha256 af747882a50bf3194220958843d71feec9bebf206bb7a5e467b5dffa96933d17
+%global boost_license_sha256 c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566
 %global xberg_cli_features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers
 
 Name:           xberg
 Version:        1.0.3
-Release:        0.4%{?dist}
+Release:        0.5%{?dist}
 Summary:        Document intelligence toolkit
 
 %global xberg_source_license_expression ((Apache-2.0 OR MIT) AND BSD-3-Clause) AND ((MIT OR Apache-2.0) AND Apache-2.0) AND ((MIT OR Apache-2.0) AND ISC) AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR CC0-1.0) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC) AND (Apache-2.0 AND MIT) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 OR MIT OR Zlib) AND Apache-2.0 WITH LLVM-exception AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-3-Clause AND (BSD-3-Clause AND MIT) AND (BSD-3-Clause OR Apache-2.0) AND (BSD-3-Clause OR MIT) AND BSL-1.0 AND (BlueOak-1.0.0 OR MIT OR Apache-2.0) AND CC0-1.0 AND (CC0-1.0 OR Apache-2.0) AND (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception) AND (CC0-1.0 OR MIT-0) AND (CC0-1.0 OR MIT-0 OR Apache-2.0) AND CDDL-1.0 AND CDLA-Permissive-2.0 AND GPL-2.0-or-later AND ISC AND (ISC AND (Apache-2.0 OR ISC)) AND (ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)) AND MIT AND (MIT AND BSD-3-Clause) AND (MIT OR Apache-2.0) AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND MIT-0 AND MPL-2.0 AND (MPL-2.0 OR LGPL-2.1-or-later) AND Unicode-3.0 AND (Unlicense OR MIT) AND (Unlicense OR MIT OR Apache-2.0 OR CC0-1.0) AND Zlib AND (Zlib OR Apache-2.0 OR MIT) AND bzip2-1.0.6
@@ -48,6 +49,7 @@ Source14:       audit-xberg-proof-receipts
 Source15:       write-xberg-cargo-license-receipts
 Source16:       %{name}-%{version}-native-source-contract.json
 Source17:       audit-xberg-native-source
+Source18:       LICENSE.boost-1.0
 # Fedora system ONNX Runtime: select Xberg's released dynamic feature path for
 # the selected CLI ML surface. Fedora-specific; local upstream history has no
 # released default-Linux feature-edge equivalent.
@@ -116,6 +118,7 @@ echo "%{proof_auditor_sha256}  %{SOURCE14}" | sha256sum -c -
 echo "%{cargo_license_writer_sha256}  %{SOURCE15}" | sha256sum -c -
 echo "%{native_source_contract_sha256}  %{SOURCE16}" | sha256sum -c -
 echo "%{native_source_auditor_sha256}  %{SOURCE17}" | sha256sum -c -
+echo "%{boost_license_sha256}  %{SOURCE18}" | sha256sum -c -
 %setup -q -n xberg-%{version}
 install -Dm0755 %{SOURCE8} .agentlab-source/audit-xberg-cargo-closure
 install -Dm0755 %{SOURCE14} .agentlab-source/audit-xberg-proof-receipts
@@ -135,7 +138,7 @@ install -d -m0700 .agentlab-proof-output .agentlab-proof-work
 ruby .agentlab-source/audit-xberg-proof-receipts --prepared-source "$PWD" --vendor-dir "$PWD/cargo-vendor" --patch-dir .agentlab-source --closure %{SOURCE3} --presence %{SOURCE5} --allowlist %{SOURCE13} --provider %{SOURCE11} --output-dir .agentlab-proof-output --workdir .agentlab-proof-work
 cmp .agentlab-proof-output/xberg-%{version}-source-license-receipt.json %{SOURCE12}
 cmp .agentlab-proof-output/xberg-%{version}-provider-proof.json %{SOURCE11}
-ruby .agentlab-source/audit-xberg-native-source --prepared-source "$PWD" --vendor-dir "$PWD/cargo-vendor" --output .agentlab-proof-output/xberg-%{version}-native-source-contract.json
+ruby .agentlab-source/audit-xberg-native-source --prepared-source "$PWD" --vendor-dir "$PWD/cargo-vendor" --boost-license %{SOURCE18} --output .agentlab-proof-output/xberg-%{version}-native-source-contract.json
 cmp .agentlab-proof-output/xberg-%{version}-native-source-contract.json %{SOURCE16}
 
 %build
@@ -164,6 +167,9 @@ echo 'xberg remains blocked after the deliberate post-build integration gate: fi
 exit 1
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.5
+- Bind Fedora's canonical Boost Software License text for the native source.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.4
 - Bind the deterministic xberg-libwpd and static-zlib source contract.
 

@@ -34,4 +34,14 @@ class TestAuditXbergNativeSource < Minitest::Test
       assert_match(/unsafe archive path/, error.message)
     end
   end
+
+  def test_boost_license_record_rejects_noncanonical_text
+    Tempfile.create("boost-license") do |file|
+      file.write("not the Boost license\n")
+      file.flush
+
+      error = assert_raises(ArgumentError) { XbergNativeSource.boost_license_record(file.path) }
+      assert_match(/checksum mismatch/, error.message)
+    end
+  end
 end

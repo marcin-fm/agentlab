@@ -16,6 +16,7 @@ module XbergNativeSource
   LOCK_SHA256 = "a8e11cce6425868975b00b13db98acf21a7bc2cb8e7fe143a80aa5ebfeddf667"
   LIBZ_VERSION = "1.1.29"
   LIBZ_CHECKSUM = "85bc9657773828b90eeb625adff10eeac83cc21bbfd8e23a03eaa8a33c9e28d9"
+  BOOST_LICENSE_SHA256 = "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
   ARCHIVES = {
     "librevenge-0.0.6.tar.gz" => {
       sha256: "686cc36be3196a0a808761cfd3951a46ff809cb0e028b0902c787261a1389d0f",
@@ -160,7 +161,20 @@ module XbergNativeSource
     package
   end
 
-  def generate(source, vendor_dir)
+  def boost_license_record(path)
+    fail!("Boost license checksum mismatch") unless Digest::SHA256.file(path).hexdigest == BOOST_LICENSE_SHA256
+    require_markers!(path, [
+      "Boost Software License - Version 1.0 - August 17th, 2003",
+      "must be included in all copies of the Software, in whole or in part"
+    ])
+    file_record(path).merge(
+      "spdx" => "BSL-1.0",
+      "upstream_url" => "https://www.boost.org/LICENSE_1_0.txt",
+      "fedora_precedent" => "boost-atomic-1.90.0-7.fc44"
+    )
+  end
+
+  def generate(source, vendor_dir, boost_license)
     source = File.realpath(source)
     vendor_dir = File.realpath(vendor_dir)
     crate = File.join(source, "crates/xberg-libwpd")
@@ -184,6 +198,7 @@ module XbergNativeSource
     ])
 
     lock = locked_libz!(File.join(source, "Cargo.lock"))
+    boost_license = boost_license_record(boost_license)
     archives = ARCHIVES.map do |name, contract|
       archive_record(File.join(crate, "vendor", name), contract)
     end
@@ -205,7 +220,8 @@ module XbergNativeSource
       "target_scope" => "Linux source/build intent for the selected xberg-cli surface",
       "inputs" => {
         "cargo_lock" => { "sha256" => LOCK_SHA256 },
-        "libz_sys" => { "name" => lock.fetch("name"), "version" => lock.fetch("version"), "checksum" => lock.fetch("checksum") }
+        "libz_sys" => { "name" => lock.fetch("name"), "version" => lock.fetch("version"), "checksum" => lock.fetch("checksum") },
+        "boost_license" => boost_license
       },
       "xberg_libwpd" => {
         "source_tree" => tree_record(crate),
@@ -220,7 +236,7 @@ module XbergNativeSource
         },
         "shim" => shim,
         "unix_zlib_link_directive" => "static=z",
-        "boost_license_text_present" => false
+        "boost_license_text_present" => true
       },
       "libz_sys" => {
         "source_tree" => tree_record(libz),
@@ -241,6 +257,7 @@ module XbergNativeSource
       },
       "claims" => {
         "native_source_inventory_complete" => true,
+        "native_license_source_complete" => true,
         "compilation_observed" => false,
         "native_archives_observed" => false,
         "libz_sys_static_environment_observed" => false,
@@ -251,7 +268,6 @@ module XbergNativeSource
         "final_linked_license_complete" => false
       },
       "blockers" => [
-        "The embedded Boost subset has no bundled BSL-1.0 text; only upstream provenance records the license.",
         "No compilation witness binds libxberg_libwpd.a or libz.a to these source digests.",
         "No build observation proves LIBZ_SYS_STATIC was unset or did not override Cargo's static feature.",
         "No linker map, ELF symbol/archive evidence, RPM payload, or final linked-license accounting is bound."
@@ -264,11 +280,12 @@ module XbergNativeSource
     OptionParser.new do |parser|
       parser.on("--prepared-source PATH") { |value| options[:source] = value }
       parser.on("--vendor-dir PATH") { |value| options[:vendor] = value }
+      parser.on("--boost-license PATH") { |value| options[:boost_license] = value }
       parser.on("--output PATH") { |value| options[:output] = value }
     end.parse!(argv)
-    %i[source vendor output].each { |key| fail!("missing --#{key.to_s.tr('_', '-')}") unless options[key] }
+    %i[source vendor boost_license output].each { |key| fail!("missing --#{key.to_s.tr('_', '-')}") unless options[key] }
 
-    receipt = generate(options.fetch(:source), options.fetch(:vendor))
+    receipt = generate(options.fetch(:source), options.fetch(:vendor), options.fetch(:boost_license))
     FileUtils.mkdir_p(File.dirname(options.fetch(:output)))
     File.write(options.fetch(:output), "#{JSON.generate(receipt)}\n")
   rescue ArgumentError, OptionParser::ParseError => e
