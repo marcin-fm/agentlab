@@ -43,3 +43,8 @@ Release `0.16` removes dynamic COPR IDs, result NVRs, and log hashes from packag
 inputs. The spec retains deterministic source, license, payload, ELF, wrapper,
 and runtime checks, while current matrix identities remain in COPR and the
 canonical wiki.
+
+Release `0.17` preserves upstream's optional boolean semantics for
+`--headed false`, keeping the default Fedora headless browser instead of
+requiring the optional full Chromium package. Its static wrapper probes also
+cover explicit true and external-engine routing after the false override.

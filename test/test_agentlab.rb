@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "fileutils"
+require "open3"
 require "tmpdir"
 require "yaml"
 require_relative "../scripts/lib/agentlab"
@@ -1676,7 +1677,7 @@ class AgentlabTest < Minitest::Test
     assert_equal(true, package.data.dig("copr", "enabled"))
     assert_equal("0.33.1", package.upstream.fetch("current_version"))
     assert_includes(spec, "Version:        0.33.1")
-    assert_includes(spec, "Release:        0.16%{?dist}")
+    assert_includes(spec, "Release:        0.17%{?dist}")
     assert_includes(spec, "%global source_sha256 313e7706485c246b818a2138dabc6f8784f91bfa25cae7db445e6ca14c730022")
     dependencies = YAML.safe_load_file(File.join(package.directory, "dependencies.yml"))
     contract_path = File.join(package.directory, "agent-browser-0.33.1-fedora-contract.json")
@@ -1731,7 +1732,28 @@ class AgentlabTest < Minitest::Test
     assert_includes(spec, "AGENT_BROWSER_EXECUTABLE_PATH=/usr/lib64/chromium-browser/headless_shell")
     assert_includes(spec, "AGENT_BROWSER_PRIVATE_BINARY")
     assert_includes(spec, "AGENT_BROWSER_ENGINE=lightpanda")
+    assert_includes(spec, '"$public" --headed false)" = /usr/lib64/chromium-browser/headless_shell')
+    assert_includes(spec, '"$public" --headed false --engine lightpanda)')
+    assert_includes(spec, '"$public" --headed true)" = /usr/bin/chromium-browser')
     assert_includes(spec, "--headed requires the optional chromium package")
+    wrapper_source = spec[/<<'AGENT_BROWSER_WRAPPER'\n(.*?)\nAGENT_BROWSER_WRAPPER/m, 1]
+    refute_nil(wrapper_source)
+    Dir.mktmpdir("agent-browser-wrapper-") do |directory|
+      wrapper = File.join(directory, "agent-browser")
+      probe = File.join(directory, "probe")
+      File.write(wrapper, wrapper_source)
+      File.write(probe, "#!/usr/bin/sh\nprintf '%s\\n' \"${AGENT_BROWSER_EXECUTABLE_PATH-}\"\n")
+      FileUtils.chmod(0o755, [wrapper, probe])
+      environment = { "AGENT_BROWSER_EXECUTABLE_PATH" => nil, "AGENT_BROWSER_PRIVATE_BINARY" => probe }
+
+      stdout, stderr, status = Open3.capture3(environment, wrapper, "--headed", "false")
+      assert(status.success?, stderr)
+      assert_equal("/usr/lib64/chromium-browser/headless_shell\n", stdout)
+
+      stdout, stderr, status = Open3.capture3(environment, wrapper, "--headed", "false", "--engine", "lightpanda")
+      assert(status.success?, stderr)
+      assert_equal("\n", stdout)
+    end
     assert_includes(spec, "AGENT_BROWSER_HEADLESS_COMPATIBILITY_BEGIN")
     assert_includes(spec, 'browser_version=$(rpm -q --qf \'%%{VERSION}\' chromium-headless)')
     assert_includes(spec, "snapshot -i --json")
@@ -1787,6 +1809,9 @@ class AgentlabTest < Minitest::Test
       "AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium-browser",
       "AGENT_BROWSER_EXECUTABLE_PATH=/custom/browser",
       "AGENT_BROWSER_ENGINE=lightpanda",
+      '"$public" --headed false)" = /usr/lib64/chromium-browser/headless_shell',
+      '"$public" --headed false --engine lightpanda)',
+      '"$public" --headed true)" = /usr/bin/chromium-browser',
       '"$public" --session copr-check --json open',
       '"$public" --session copr-check snapshot -i --json',
       '"$public" --session copr-check --json eval \'navigator.userAgent\'',

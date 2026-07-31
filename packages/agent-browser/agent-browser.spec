@@ -8,7 +8,7 @@
 
 Name:           agent-browser
 Version:        0.33.1
-Release:        0.16%{?dist}
+Release:        0.17%{?dist}
 Summary:        Browser automation CLI for AI agents
 
 # The aggregate combines the cargo2rpm linked-license summary with the project,
@@ -88,11 +88,29 @@ if [ "${AGENT_BROWSER_EXECUTABLE_PATH+x}" != x ]; then
   for agent_browser_arg in "$@"; do
     if [ -n "$agent_browser_next" ]; then
       case "$agent_browser_next:$agent_browser_arg" in
-        engine:chrome|engine:chromium) ;;
-        *) agent_browser_external_engine=true ;;
+        headed:true)
+          agent_browser_headed=true
+          agent_browser_next=
+          continue
+          ;;
+        headed:false)
+          agent_browser_headed=false
+          agent_browser_next=
+          continue
+          ;;
+        headed:*)
+          agent_browser_next=
+          ;;
+        engine:chrome|engine:chromium)
+          agent_browser_next=
+          continue
+          ;;
+        *)
+          agent_browser_external_engine=true
+          agent_browser_next=
+          continue
+          ;;
       esac
-      agent_browser_next=
-      continue
     fi
     case "$agent_browser_arg" in
       --engine|--executable-path|--provider|--cdp)
@@ -105,6 +123,7 @@ if [ "${AGENT_BROWSER_EXECUTABLE_PATH+x}" != x ]; then
         ;;
       --headed)
         agent_browser_headed=true
+        agent_browser_next=headed
         ;;
     esac
   done
@@ -168,8 +187,11 @@ test "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrap
 test "$(AGENT_BROWSER_EXECUTABLE_PATH=/custom/browser AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public")" = /custom/browser
 test -z "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_ENGINE=lightpanda AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public")"
 test -z "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --engine lightpanda)"
+test "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --headed false)" = /usr/lib64/chromium-browser/headless_shell
+test -z "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --headed false --engine lightpanda)"
 if [ -x /usr/bin/chromium-browser ]; then
   test "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --headed)" = /usr/bin/chromium-browser
+  test "$(env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --headed true)" = /usr/bin/chromium-browser
 else
   if env -u AGENT_BROWSER_EXECUTABLE_PATH AGENT_BROWSER_PRIVATE_BINARY="$wrapper_probe" "$public" --headed >"$PWD/.agentlab-headed.out" 2>"$PWD/.agentlab-headed.err"; then
     echo 'agent-browser wrapper unexpectedly accepted headed mode without full Chromium' >&2
@@ -236,6 +258,9 @@ popd >/dev/null
 %{_libexecdir}/agent-browser
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.17
+- Preserve upstream's explicit --headed false wrapper behavior.
+
 * Wed Jul 29 2026 Marcin FM <marcin@lgic.pl> - 0.33.1-0.16
 - Separate static build checks from dynamic COPR result evidence.
 - Reject unresolved dynamic symbols in the ELF proof.
