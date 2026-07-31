@@ -33,15 +33,20 @@ opted into outside the RPM payload, but their provenance, offline behavior,
 runtime smoke, final linked-license completeness, enablement, matrix proof,
 and COPR publication remain incomplete.
 
-The `lightweight` preset now has one resolved source-identity chain. Released
-Xberg pins mirror revision `4b127809f88a5aa1569d1238032b5ff40e5879bc`,
-and its six checked Potion files are byte-identical to
-`minishlab/potion-base-8M@bf8b056651a2c21b8d2565580b8569da283cab23`.
-Those are original safetensors, tokenizer, and configuration files, so this
-preset needs no conversion receipt. The immutable upstream model card declares
-MIT, but that revision contains no license text; training-data provenance,
-model-license completeness, runtime/offline proof, RPM payload, and final
-license gates therefore remain false.
+The `lightweight` preset has a fail-closed partial source-identity chain.
+Released Xberg pins mirror revision
+`4b127809f88a5aa1569d1238032b5ff40e5879bc`. The checked mirror-tree witness
+binds only `config.json`, `model.safetensors`, and `special_tokens_map.json`.
+The immutable upstream revision
+`minishlab/potion-base-8M@bf8b056651a2c21b8d2565580b8569da283cab23`
+also binds `tokenizer.json`, `tokenizer_config.json`, and `vocab.txt`, but those
+three files are upstream-direct evidence, not mirror evidence. Released Xberg
+does not establish an upstream-direct fallback, and its static engine requires
+`tokenizer.json`; complete preset source identity and runtime availability
+therefore remain false. The mirror model bytes require no conversion receipt.
+The immutable upstream model card declares MIT but supplies no license text, so
+training-data provenance, model-license and redistribution completeness,
+runtime/offline proof, RPM payload, and final-license gates remain false.
 
 ## Native Source Boundary
 
@@ -83,13 +88,13 @@ scope while retaining the checked lock and offline vendor configuration. That
 inventory is not final Linux linked-license or RPM payload evidence.
 
 All `1.0.1` configured-SCM results and receipts are historical evidence only.
-Release `1.0.3-0.8` retains the exact default-minus-tree-sitter source,
+Release `1.0.3-0.9` retains the exact default-minus-tree-sitter source,
 lock, vendor, provider, and license contracts; disables mutable tessdata
 downloads; retains only explicit opt-in immutable model downloads; and adds
 the deterministic native-source contract and exact Boost subset inventory
 without claiming exhaustive Boost licensing, link, or license-payload proof. It
-also binds the lightweight embedding preset to byte-identical immutable Potion
-sources without claiming complete model licensing or runtime proof. Build
+also binds exact mirror and upstream tree witnesses for the lightweight preset
+while rejecting a complete source/runtime claim. Build
 `10791299` exposed upstream's incomplete dynamic-Tesseract API gating before
 linking; `0.3` extends that existing feature path without enabling source
 downloads. No successful `1.0.3` compile proof exists yet. Xberg remains

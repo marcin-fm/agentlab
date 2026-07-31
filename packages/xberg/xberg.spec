@@ -1,5 +1,5 @@
 %global source_sha256 238b8087a398b7753562b341abf082c8305a0359786424976909dc59b251058e
-%global source_audit_sha256 e5f373bd6fae4b925aec1ba8e937ed3e6d64f1f905ccc675725fefcb33f3aea9
+%global source_audit_sha256 5351df360176c53ba3ac2cf618939b4c1408a5dd58945bbf9f66df0cc4709b76
 %global system_ort_audit_sha256 68327b502bfc978d754aa75c99ddd2e7b378fe1fdcee601fe3837df3f18a59f7
 %global system_onnxruntime_patch_sha256 8b2e12741c26338aba679514262171fa2dfe2772a771255372df8d70144606ab
 %global fedora_onnxruntime_path_patch_sha256 b254d883cc4c0f15411eff83db7e0c072098b69fdd57e9aceaf99956e0e2121c
@@ -21,13 +21,17 @@
 %global native_source_contract_sha256 5452aea15ca061086f821e1688e20e9fb3b38226a88757660eb327e4ab384ab7
 %global native_source_auditor_sha256 660ac0b6c4b89225c8e67f6049b8003e32d5ff64f54e86db7598afb282333e4b
 %global boost_license_sha256 c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566
-%global lightweight_model_source_sha256 21290f58d78f1492d3f34283139a590796dcc5f12e9a3dae1de05749511ef524
-%global model_source_auditor_sha256 04ac37cd5b1c198438024eb69a82970d6f1872431c280327828b79be689f464e
+%global lightweight_model_source_sha256 e35f9270a14928db8271c7712af4fbc26395670f5f68543858ea20cb8532f2c4
+%global model_source_auditor_sha256 0f99bf2a4adc592838b4a446c89f0a35f75b68a21ef5d7a70b83be510586919b
+%global model_released_witness_sha256 ca8b4e16be0c1bdee3f9d61b39f281503c9ca430da5075616d190eed38c053ef
+%global model_mirror_tree_sha256 c89ffc17e03f0da7e14647d24101eb0ff3894bbdf8185e41de1ee1df3ce674e1
+%global model_upstream_tree_sha256 f8fa3acf4134b56b6d1b1f6facc60ac8b94266fc2fa5e2d3e79152101938e75e
+%global model_upstream_readme_sha256 ef2bf6196b9229e9313c6aac805a903fdd96b140a6540629d013ac790ef1b298
 %global xberg_cli_features formats,analysis,core-cli,embeddings,html,url-ingestion,liter-llm,ocr,paddle-ocr,layout-detection,chunking-tokenizers
 
 Name:           xberg
 Version:        1.0.3
-Release:        0.8%{?dist}
+Release:        0.9%{?dist}
 Summary:        Document intelligence toolkit
 
 %global xberg_source_license_expression ((Apache-2.0 OR MIT) AND BSD-3-Clause) AND ((MIT OR Apache-2.0) AND Apache-2.0) AND ((MIT OR Apache-2.0) AND ISC) AND ((MIT OR Apache-2.0) AND NCSA) AND ((MIT OR Apache-2.0) AND Unicode-3.0) AND ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR CC0-1.0) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC) AND (Apache-2.0 AND MIT) AND (Apache-2.0 OR BSL-1.0) AND (Apache-2.0 OR BSL-1.0 OR MIT) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 OR MIT OR Zlib) AND Apache-2.0 WITH LLVM-exception AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-2-Clause AND (BSD-2-Clause OR Apache-2.0 OR MIT) AND BSD-3-Clause AND (BSD-3-Clause AND MIT) AND (BSD-3-Clause OR Apache-2.0) AND (BSD-3-Clause OR MIT) AND BSL-1.0 AND (BlueOak-1.0.0 OR MIT OR Apache-2.0) AND CC0-1.0 AND (CC0-1.0 OR Apache-2.0) AND (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception) AND (CC0-1.0 OR MIT-0) AND (CC0-1.0 OR MIT-0 OR Apache-2.0) AND CDDL-1.0 AND CDLA-Permissive-2.0 AND GPL-2.0-or-later AND ISC AND (ISC AND (Apache-2.0 OR ISC)) AND (ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)) AND MIT AND (MIT AND BSD-3-Clause) AND (MIT OR Apache-2.0) AND (MIT OR Apache-2.0 OR LGPL-2.1-or-later) AND (MIT OR Apache-2.0 OR Zlib) AND (MIT OR Zlib OR Apache-2.0) AND MIT-0 AND MPL-2.0 AND (MPL-2.0 OR LGPL-2.1-or-later) AND Unicode-3.0 AND (Unlicense OR MIT) AND (Unlicense OR MIT OR Apache-2.0 OR CC0-1.0) AND Zlib AND (Zlib OR Apache-2.0 OR MIT) AND bzip2-1.0.6
@@ -54,6 +58,10 @@ Source17:       audit-xberg-native-source
 Source18:       LICENSE.boost-1.0
 Source19:       %{name}-%{version}-lightweight-model-source.json
 Source20:       audit-xberg-model-source
+Source21:       %{name}-%{version}-lightweight-released-source.json
+Source22:       %{name}-embedding-models-4b127809-potion-tree.json
+Source23:       minishlab-potion-base-8M-bf8b0566-tree.json
+Source24:       minishlab-potion-base-8M-bf8b0566-README.md
 # Fedora system ONNX Runtime: select Xberg's released dynamic feature path for
 # the selected CLI ML surface. Fedora-specific; local upstream history has no
 # released default-Linux feature-edge equivalent.
@@ -125,12 +133,19 @@ echo "%{native_source_auditor_sha256}  %{SOURCE17}" | sha256sum -c -
 echo "%{boost_license_sha256}  %{SOURCE18}" | sha256sum -c -
 echo "%{lightweight_model_source_sha256}  %{SOURCE19}" | sha256sum -c -
 echo "%{model_source_auditor_sha256}  %{SOURCE20}" | sha256sum -c -
+echo "%{model_released_witness_sha256}  %{SOURCE21}" | sha256sum -c -
+echo "%{model_mirror_tree_sha256}  %{SOURCE22}" | sha256sum -c -
+echo "%{model_upstream_tree_sha256}  %{SOURCE23}" | sha256sum -c -
+echo "%{model_upstream_readme_sha256}  %{SOURCE24}" | sha256sum -c -
 %setup -q -n xberg-%{version}
 install -Dm0755 %{SOURCE8} .agentlab-source/audit-xberg-cargo-closure
 install -Dm0755 %{SOURCE14} .agentlab-source/audit-xberg-proof-receipts
 install -Dm0755 %{SOURCE15} .agentlab-source/write-xberg-cargo-license-receipts
 install -Dm0755 %{SOURCE17} .agentlab-source/audit-xberg-native-source
 install -Dm0755 %{SOURCE20} .agentlab-source/audit-xberg-model-source
+install -d -m0700 .agentlab-model-proof
+ruby .agentlab-source/audit-xberg-model-source --released-witness %{SOURCE21} --mirror-tree %{SOURCE22} --upstream-tree %{SOURCE23} --upstream-readme %{SOURCE24} --output .agentlab-model-proof/%{name}-%{version}-lightweight-model-source.json
+cmp .agentlab-model-proof/%{name}-%{version}-lightweight-model-source.json %{SOURCE19}
 ruby .agentlab-source/audit-xberg-cargo-closure --sanitize-only --source . --filter %{SOURCE9}
 %autopatch -p1
 install -pm0644 %{PATCH0} %{PATCH1} %{PATCH2} %{PATCH3} %{PATCH4} .agentlab-source/
@@ -174,6 +189,10 @@ echo 'xberg remains blocked after the deliberate post-build integration gate: fi
 exit 1
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.9
+- Bind exact mirror and upstream model-tree witnesses and fail closed on the
+  unestablished upstream-direct runtime path.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.0.3-0.8
 - Bind the lightweight preset to byte-identical immutable upstream Potion sources.
 - Keep model licensing, runtime, payload, and final-license gates unresolved.

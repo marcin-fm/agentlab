@@ -1,59 +1,88 @@
 # frozen_string_literal: true
 
+require "json"
 require "minitest/autorun"
 require "open3"
 require "rbconfig"
 require "tempfile"
+require "tmpdir"
 
 load File.expand_path("../scripts/audit-xberg-model-source", __dir__)
 
 class TestAuditXbergModelSource < Minitest::Test
-  def test_file_record_binds_content
-    Tempfile.create("xberg-model") do |file|
-      file.write("model bytes")
-      file.flush
+  ROOT = File.expand_path("..", __dir__)
+  PACKAGE_DIR = File.join(ROOT, "packages/xberg")
+  WITNESS_DIR = PACKAGE_DIR
+  INPUTS = {
+    released_witness: File.join(WITNESS_DIR, "xberg-1.0.3-lightweight-released-source.json"),
+    mirror_tree: File.join(WITNESS_DIR, "xberg-embedding-models-4b127809-potion-tree.json"),
+    upstream_tree: File.join(WITNESS_DIR, "minishlab-potion-base-8M-bf8b0566-tree.json"),
+    upstream_readme: File.join(WITNESS_DIR, "minishlab-potion-base-8M-bf8b0566-README.md")
+  }.freeze
 
-      assert_equal(
-        { "path" => File.basename(file.path), "bytes" => 11, "sha256" => "9cb7487000bc86ac36ce83c4acfabe8878552be99572a6770f65ab1d048a5c48" },
-        XbergModelSource.file_record(file.path)
-      )
-    end
-  end
-
-  def test_upstream_tree_rejects_license_text_claim
-    Tempfile.create(["potion-tree", ".json"]) do |file|
-      rows = XbergModelSource::FILES.keys.map { |path| { "type" => "file", "path" => path } }
-      rows << { "type" => "file", "path" => "LICENSE" }
-      file.write(JSON.generate(rows))
-      file.flush
-
-      error = assert_raises(ArgumentError) { XbergModelSource.upstream_tree_record(file.path) }
-      assert_match(/unexpectedly contains license text/, error.message)
-    end
-  end
-
-  def test_regenerates_checked_receipt_from_exact_sources
-    source = ENV["AGENTLAB_XBERG_RELEASED_SOURCE"]
-    upstream = ENV["AGENTLAB_XBERG_POTION_SOURCE"]
-    tree = ENV["AGENTLAB_XBERG_POTION_TREE"]
-    assert(source && upstream && tree, "set all Xberg model-source fixture variables") if source || upstream || tree
-    skip("exact Xberg and Potion sources are not available") unless source && upstream && tree
-
-    package_dir = File.expand_path("../packages/xberg", __dir__)
-    expected = File.join(package_dir, "xberg-1.0.3-lightweight-model-source.json")
+  def test_regenerates_checked_receipt_from_tracked_witnesses
     Tempfile.create(["xberg-model-source", ".json"]) do |output|
       command = [
         RbConfig.ruby,
-        File.expand_path("../scripts/audit-xberg-model-source", __dir__),
-        "--released-source", source,
-        "--upstream-dir", upstream,
-        "--upstream-tree", tree,
+        File.join(ROOT, "scripts/audit-xberg-model-source"),
+        "--released-witness", INPUTS.fetch(:released_witness),
+        "--mirror-tree", INPUTS.fetch(:mirror_tree),
+        "--upstream-tree", INPUTS.fetch(:upstream_tree),
+        "--upstream-readme", INPUTS.fetch(:upstream_readme),
         "--output", output.path
       ]
       _stdout, stderr, status = Open3.capture3(*command)
 
       assert(status.success?, stderr)
-      assert_equal(File.binread(expected), File.binread(output.path))
+      assert_equal(File.binread(File.join(PACKAGE_DIR, "xberg-1.0.3-lightweight-model-source.json")), File.binread(output.path))
     end
+  end
+
+  def test_rejects_tampered_tree_response
+    Dir.mktmpdir("xberg-model-source") do |directory|
+      tampered = File.join(directory, "mirror-tree.json")
+      rows = JSON.parse(File.binread(INPUTS.fetch(:mirror_tree)))
+      rows.first["oid"] = "0" * 40
+      File.write(tampered, JSON.generate(rows) + "\n")
+
+      error = assert_raises(ArgumentError) do
+        XbergModelSource.build(**INPUTS.merge(mirror_tree: tampered))
+      end
+      assert_match(/mirror object id differs/, error.message)
+    end
+  end
+
+  def test_rejects_absent_upstream_only_file
+    Dir.mktmpdir("xberg-model-source") do |directory|
+      incomplete = File.join(directory, "upstream-tree.json")
+      rows = JSON.parse(File.binread(INPUTS.fetch(:upstream_tree)))
+      rows.reject! { |row| row["path"] == "tokenizer.json" }
+      File.write(incomplete, JSON.generate(rows) + "\n")
+
+      error = assert_raises(ArgumentError) do
+        XbergModelSource.build(**INPUTS.merge(upstream_tree: incomplete))
+      end
+      assert_match(/upstream tree file set differs/, error.message)
+    end
+  end
+
+  def test_rejects_reencoded_tree_response
+    Dir.mktmpdir("xberg-model-source") do |directory|
+      reencoded = File.join(directory, "mirror-tree.json")
+      rows = JSON.parse(File.binread(INPUTS.fetch(:mirror_tree)))
+      File.write(reencoded, JSON.pretty_generate(rows) + "\n")
+
+      error = assert_raises(ArgumentError) do
+        XbergModelSource.build(**INPUTS.merge(mirror_tree: reencoded))
+      end
+      assert_match(/mirror tree response checksum differs/, error.message)
+    end
+  end
+
+  def test_rejects_missing_tree_response
+    error = assert_raises(ArgumentError) do
+      XbergModelSource.build(**INPUTS.merge(mirror_tree: File.join(WITNESS_DIR, "missing.json")))
+    end
+    assert_match(/missing mirror tree response/, error.message)
   end
 end

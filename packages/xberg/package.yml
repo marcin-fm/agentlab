@@ -23,7 +23,7 @@ upstream:
 source_audit_receipt:
   file: xberg-1.0.3-source-audit.json
   schema: agentlab-xberg-source-audit/v1
-  sha256: e5f373bd6fae4b925aec1ba8e937ed3e6d64f1f905ccc675725fefcb33f3aea9
+  sha256: 5351df360176c53ba3ac2cf618939b4c1408a5dd58945bbf9f66df0cc4709b76
 source_link_filter:
   file: xberg-1.0.3-source-filter.json
   schema: agentlab-xberg-source-filter/v1
@@ -73,8 +73,12 @@ cargo_source_contract:
     native_source_contract: { file: xberg-1.0.3-native-source-contract.json, sha256: 5452aea15ca061086f821e1688e20e9fb3b38226a88757660eb327e4ab384ab7 }
     native_source_auditor: { file: scripts/audit-xberg-native-source, sha256: 660ac0b6c4b89225c8e67f6049b8003e32d5ff64f54e86db7598afb282333e4b }
     boost_license: { file: LICENSE.boost-1.0, sha256: c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566 }
-    lightweight_model_source: { file: xberg-1.0.3-lightweight-model-source.json, sha256: 21290f58d78f1492d3f34283139a590796dcc5f12e9a3dae1de05749511ef524 }
-    model_source_auditor: { file: scripts/audit-xberg-model-source, sha256: 04ac37cd5b1c198438024eb69a82970d6f1872431c280327828b79be689f464e }
+    lightweight_model_source: { file: xberg-1.0.3-lightweight-model-source.json, sha256: e35f9270a14928db8271c7712af4fbc26395670f5f68543858ea20cb8532f2c4 }
+    model_source_auditor: { file: scripts/audit-xberg-model-source, sha256: 0f99bf2a4adc592838b4a446c89f0a35f75b68a21ef5d7a70b83be510586919b }
+    model_released_witness: { file: xberg-1.0.3-lightweight-released-source.json, sha256: ca8b4e16be0c1bdee3f9d61b39f281503c9ca430da5075616d190eed38c053ef }
+    model_mirror_tree: { file: xberg-embedding-models-4b127809-potion-tree.json, sha256: c89ffc17e03f0da7e14647d24101eb0ff3894bbdf8185e41de1ee1df3ce674e1 }
+    model_upstream_tree: { file: minishlab-potion-base-8M-bf8b0566-tree.json, sha256: f8fa3acf4134b56b6d1b1f6facc60ac8b94266fc2fa5e2d3e79152101938e75e }
+    model_upstream_readme: { file: minishlab-potion-base-8M-bf8b0566-README.md, sha256: ef2bf6196b9229e9313c6aac805a903fdd96b140a6540629d013ac790ef1b298 }
   vendor_tree: { sha256: fb5abc63d34135752002719a3910f4ecacb049c5292b5e0f5776d7350eea2917, files: 51213, directories: 9444, symlinks: 0, bytes: 1099639051 }
   resolver_only_registry_identities: 437
   license_text_presence: { present: 959, absent: 75, selected_normal_gaps: 22, resolver_only_gaps: 53, required_text_count: 74, final_linked_license_complete: false }
@@ -136,11 +140,16 @@ runtime_model_policy:
     preset: lightweight
     upstream: minishlab/potion-base-8M@bf8b056651a2c21b8d2565580b8569da283cab23
     mirror: xberg-io/embedding-models@4b127809f88a5aa1569d1238032b5ff40e5879bc
-    released_manifest_files_byte_identical: true
-    conversion_required: false
+    mirror_provided_files: [config.json, model.safetensors, special_tokens_map.json]
+    upstream_direct_files: [tokenizer.json, tokenizer_config.json, vocab.txt]
+    released_runtime_file_set_available_at_mirror_revision: false
+    released_upstream_direct_fallback_established: false
+    lightweight_preset_source_identity_complete: false
+    conversion_required_for_mirror_model: false
     declared_spdx: MIT
     upstream_license_text_present: false
     model_license_provenance_complete: false
+    redistribution_review_complete: false
 tree_sitter:
   selected_feature: false
   omitted_from_initial_rpm: true
