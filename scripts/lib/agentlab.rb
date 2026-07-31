@@ -4277,6 +4277,30 @@ module Agentlab
     end
   end
 
+  def dynamic_build_result_state?(value)
+    case value
+    when Hash
+      value.any? do |key, nested|
+        key_name = key.to_s.downcase
+        state_key = key_name.match?(/\A(?:result|status|state|build_result|build_state|copr_result)\z/) &&
+                    nested.to_s.match?(/\A(?:passed|success|succeeded|failed|failure|running|pending|queued|cancelled|complete|completed)\z/i)
+        numeric_result_key = key_name.match?(/\A(?:build|job|run|copr_job|configured_scm_run)(?:_id|_number)?\z/) &&
+                             nested.to_s.match?(/\A#?\d{7,}\z/)
+        contextual_result = key_name.match?(/(?:result|status|state|build|job|run|execution|pipeline|artifact)/) &&
+                            (nested.to_s.match?(/\A#?\d{7,}\z/) ||
+                             nested.to_s.match?(/\A(?:passed|success|succeeded|failed|failure|running|pending|queued|cancelled|complete|completed)\z/i))
+        state_key || numeric_result_key || contextual_result || dynamic_build_result_state?(nested)
+      end
+    when Array
+      value.any? { |nested| dynamic_build_result_state?(nested) }
+    when String
+      value.match?(/\b(?:COPR|configured-SCM)\s+(?:build|job|run)s?\s+#?`?\d{7,}`?\b/i) ||
+        value.match?(/\b(?:build\s+status|result|state)\s*:\s*(?:passed|success|succeeded|failed|failure|running|pending|queued|cancelled|complete|completed)\b/i)
+    else
+      false
+    end
+  end
+
   def validate_ast_grep_build_contract(package)
     return [] unless package.name == "ast-grep"
 
@@ -4398,6 +4422,173 @@ module Agentlab
               spec.match?(plain_build_id) ||
               readme.match?(plain_build_id)
     errors << "#{package.name}: active package metadata contains dynamic build result identity" if dynamic
+    errors
+  end
+
+  def validate_rtk_build_contract(package, spec, reproducibility, source_contract, readme, license_review)
+    return [] unless package.name == "rtk"
+
+    expected = {
+      "matrix" => %w[
+        fedora_43_x86_64
+        fedora_43_aarch64
+        fedora_44_x86_64
+        fedora_44_aarch64
+        rawhide_x86_64
+        rawhide_aarch64
+      ].to_h { |target| [target, "required"] },
+      "source" => {
+        "checksum" => "required",
+        "contract" => "required",
+        "patches_zero_fuzz" => "required"
+      },
+      "cargo" => {
+        "rust_version_floor" => 1.91,
+        "dependency_resolution" => "required",
+        "tests" => "required"
+      },
+      "license" => {
+        "target_summary" => "required",
+        "dependencies_inventory" => "required",
+        "payload" => %w[LICENSE LICENSE.dependencies]
+      },
+      "runtime" => {
+        "sqlite_elf_needed" => "libsqlite3.so.0",
+        "rpath_runpath_absent" => "required",
+        "sqlite_schema_smoke" => "required",
+        "proxy_smoke" => "required",
+        "telemetry_disabled" => "required"
+      },
+      "packages" => {
+        "outputs" => %w[source rtk rtk-debuginfo rtk-debugsource]
+      }
+    }
+    errors = []
+    errors << "rtk: validation contract does not match" unless package.data["validation_contract"] == expected
+    errors << "rtk: package README is missing" if readme.empty?
+    errors << "rtk: package license review is missing" if license_review.empty?
+    expected_chroots = %w[
+      fedora-43-x86_64
+      fedora-43-aarch64
+      fedora-44-x86_64
+      fedora-44-aarch64
+      fedora-rawhide-x86_64
+      fedora-rawhide-aarch64
+    ]
+    errors << "rtk: validation matrix does not match configured chroots" unless package.chroots(config.fetch("chroots")) == expected_chroots
+    errors << "rtk: active package metadata retains result-state sections" if package.data.key?("build_validation") || package.data.key?("historical_build")
+    expected_reproducibility_keys = %w[
+      schema
+      release
+      source_inputs
+      patches
+      current_spec_sha256
+      source_contract
+      license_policy
+    ]
+    expected_reproducibility_source_contract = {
+      "dependency_resolution" => "target-only",
+      "final_linked_license" => "target-only",
+      "expected_license_summary_file" => "rtk-0.44.1-license-summary.txt",
+      "expected_license_summary_sha256" => "e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832",
+      "normalized_aggregate_expression" => package.data.dig("license_audit", "normalized_aggregate_expression")
+    }
+    if reproducibility.keys.sort != expected_reproducibility_keys.sort ||
+       reproducibility.dig("source_inputs", "source_contract") != {
+         "file" => "rtk-0.44.1-source-contract.json",
+         "sha256" => package.data.dig("source_contract", "sha256")
+       } ||
+       reproducibility["source_contract"] != expected_reproducibility_source_contract ||
+       reproducibility.key?("validation") ||
+       reproducibility.key?("host_policy")
+      errors << "rtk: reproducibility metadata retains result-state sections"
+    end
+    errors << "rtk: reproducibility spec SHA-256 differs" unless reproducibility["current_spec_sha256"] == Digest::SHA256.hexdigest(spec)
+    expected_contract_keys = %w[
+      schema
+      release
+      upstream_lock
+      rust_contract
+      fedora_patches
+      post_patch_manifest
+      license_contract
+      duplicate_check
+      target_providers
+      runtime_contract
+    ]
+    expected_release_keys = %w[
+      name
+      version
+      tag
+      commit
+      source_url
+      source_sha256
+      source_archive_tree_sha256
+      source_archive_tree_files
+      source_archive_tree_directories
+      source_archive_tree_bytes
+      tag_commit_tree_sha256
+      tree_manifest_method
+    ]
+    if source_contract.keys.sort != expected_contract_keys.sort ||
+       source_contract.fetch("release", {}).keys.sort != expected_release_keys.sort ||
+       source_contract.key?("target_validation") ||
+       source_contract.dig("license_contract", "final_linked_license") == false
+      errors << "rtk: source contract retains result-state gates"
+    end
+
+    plain_build_id = /\bbuilds?(?:\s+IDs?\s*:?)?\s+`?\d{7,}`?\b/i
+    dynamic = [package.data, reproducibility, source_contract, spec, readme, license_review].any? do |value|
+      dynamic_build_result_identity?(value) ||
+        dynamic_build_result_state?(value) ||
+        (value.is_a?(String) && value.match?(plain_build_id))
+    end
+    errors << "rtk: active package inputs contain dynamic build result identity" if dynamic
+
+    prep = spec[/^%prep\n(.*?)(?=^%(?:generate_buildrequires|build|check|install|files|changelog)\b)/m, 1].to_s
+    build = spec[/^%build\n(.*?)(?=^%(?:check|install|files|changelog)\b)/m, 1].to_s
+    check = spec[/^%check\n(.*?)(?=^%endif$)/m, 1].to_s
+    check_lines = check.lines(chomp: true)
+    install = spec[/^%install\n(.*?)(?=^%(?:files|changelog)\b)/m, 1].to_s
+    files = spec[/^%files\n(.*?)(?=^%changelog\b)/m, 1].to_s
+    proxy_command = /^RTK_TELEMETRY_DISABLED=1 RTK_DB_PATH="\$PWD\/rtk-smoke\.db" \\\n  target\/rpm\/%\{name\} proxy true >\/dev\/null$/
+    table_query = /^sqlite3 -noheader rtk-smoke\.db \\\n  "select name from sqlite_master where type = 'table' order by name" \\\n  > rtk-smoke\.tables$/
+    conditional_shell = check.lines.any? do |line|
+      line.match?(/^\s*(?:if|elif|else|fi|case|esac|for|while|until|select)\b/) ||
+        line.match?(/^\s*(?:function\s+[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*\s*\(\))\s*\{/)
+    end
+    sections_complete = !conditional_shell &&
+                        spec.scan(/^%check$/).length == 1 &&
+                        spec.scan(/^%if %\{with check\}$/).length == 1 &&
+                        spec.match?(/^%bcond check 1$/) &&
+                        spec.match?(/^Release:\s+0\.3%\{\?dist\}$/) &&
+                        spec.match?(/^%if %\{with check\}\n%check\n.*?^%endif$/m) &&
+                        prep.match?(/^echo "%\{source_sha256\}  %\{SOURCE0\}" \| sha256sum -c -$/) &&
+                        prep.match?(/^echo "%\{source_contract_sha256\}  %\{SOURCE1\}" \| sha256sum -c -$/) &&
+                        prep.match?(/^echo "%\{license_summary_sha256\}  %\{SOURCE2\}" \| sha256sum -c -$/) &&
+                        prep.match?(/^%autosetup -n %\{crate\}-%\{version\} -N$/) &&
+                        prep.match?(/^%autopatch -p1$/) &&
+                        prep.match?(/^%cargo_prep$/) &&
+                        build.match?(/^%cargo_build_crate$/) &&
+                        check.match?(/^%cargo_test$/) &&
+                        check.match?(/^test -s LICENSE\.dependencies$/) &&
+                        check.match?(/^cmp -s %\{SOURCE2\} rtk-license-summary\.actual$/) &&
+                        check_lines.include?("grep -Eq '\\(NEEDED\\).*\\[libsqlite3\\.so\\.0\\]' rtk-smoke.dynamic") &&
+                        check_lines.include?("! grep -Eq '\\((RPATH|RUNPATH)\\)' rtk-smoke.dynamic") &&
+                        check.match?(proxy_command) &&
+                        check.match?(table_query) &&
+                        check.match?(/^printf '%s\\n' commands parse_failures \\\n  > rtk-smoke\.expected-tables$/) &&
+                        check.match?(/^cmp -s rtk-smoke\.expected-tables rtk-smoke\.tables$/) &&
+                        check.match?(/^test "\$commands_columns" = "id timestamp original_cmd rtk_cmd input_tokens output_tokens saved_tokens savings_pct exec_time_ms project_path"$/) &&
+                        check.match?(/^test "\$parse_failure_columns" = "id timestamp raw_command error_message fallback_succeeded"$/) &&
+                        check.match?(/^test "\$indexes" = "idx_pf_timestamp idx_project_path_timestamp idx_timestamp"$/) &&
+                        check.match?(/^test "\$command_records" = "1"$/) &&
+                        check.match?(/^test "\$proxy_records" = "1"$/) &&
+                        install.match?(/^%cargo_install$/) &&
+                        install.include?("%{_licensedir}/%{name}/LICENSE.dependencies") &&
+                        files.match?(/^%license LICENSE$/) &&
+                        files.match?(/^%license %\{_licensedir\}\/\%\{name\}\/LICENSE\.dependencies$/)
+    errors << "rtk: static spec validation contract is incomplete" unless sections_complete
     errors
   end
 

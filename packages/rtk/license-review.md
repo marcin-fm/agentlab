@@ -41,9 +41,9 @@ install `LICENSE.dependencies`, and pass the complete package/runtime matrix.
 
 ## Historical 0.43.0 Evidence
 
-RTK `0.43.0-0.6` was clean-built on Fedora 44 with Fedora's `dirs 6.0.0` and
-`dirs-sys 0.5.0` providers. The build produced a 114-record linked dependency
-inventory. The retained historical
+The retained RTK `0.43.0-0.6` inventory records Fedora's `dirs 6.0.0` and
+`dirs-sys 0.5.0` providers and contains 114 linked dependency records. The
+retained historical
 repository-side provider receipt contains 370 rows: one RTK workspace row and
 369 owning Fedora binary-package rows. Those rows resolve to 117 source RPMs on
 Fedora 43 and 116 on Fedora 44; those receipts predate the `dirs 6` migration
@@ -72,8 +72,6 @@ expression, and Fedora's standard macro-generated `LICENSE.dependencies`.
 
 Fedora's `dirs 6` and `dirs-sys 0.5` packages provide the same MIT and
 Apache-2.0 license classes already represented by RTK's aggregate expression.
-The historical Fedora 44 build passed 2,245 tests with eight ignored. Artifact
-`rpmlint` reports zero errors and only the expected missing-man-page warning;
-the extracted binary retains system SQLite linkage and passes the runtime and
-isolated-home directory API smokes. Full configured-matrix results remain the
-publication and compatibility-package retirement gate for the current release.
+Build-result identities, target outcomes, artifact lint, and runtime-result
+evidence remain in the project wiki and COPR rather than this package-local
+license review.

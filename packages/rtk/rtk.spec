@@ -2,7 +2,7 @@
 
 %global crate rtk
 %global source_sha256 735623ee670483216bc5fe7ca0885f1f1358d8f9facf22782a6ea8e8a44f3b3a
-%global source_contract_sha256 e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a
+%global source_contract_sha256 9df97d9fd13db45599927aad93f69763102e4e77bd897b31ecb57038e1907f23
 %global license_summary_sha256 e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832
 %global system_sqlite_patch_sha256 2496b4395840cc4ed84ba4e39124250336b10d03b321fbda2c62d7601b16f080
 %global dirs6_patch_sha256 826e2cd42dd4b70e6f8b50a178e5305c6946d81e219f1dd17e0cabe4d0e839b5
@@ -10,7 +10,7 @@
 
 Name:           rtk
 Version:        0.44.1
-Release:        0.2%{?dist}
+Release:        0.3%{?dist}
 Summary:        CLI proxy that reduces command output sent to language models
 
 License:        %{rtk_license_expression}
@@ -105,6 +105,9 @@ install -Dpm0644 LICENSE.dependencies \
 %{_bindir}/rtk
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 0.44.1-0.3
+- Replace transient build-result metadata with a static validation contract.
+
 * Thu Jul 30 2026 Marcin FM <marcin@lgic.pl> - 0.44.1-0.2
 - Bind the exact cargo2rpm target license summary separately from the normalized
   aggregate RPM license expression.

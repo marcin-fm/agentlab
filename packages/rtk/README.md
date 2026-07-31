@@ -23,13 +23,12 @@ Apache-2.0 WITH LLVM-exception, and Unlicense branches. The checked
 `rtk-0.44.1-license-summary.txt` now preserves that exact framed output, while
 the spec `License:` separately uses the complete Fedora-normalized conjunction.
 
-Configured-SCM target builds must reproduce the exact summary, regenerate
-`LICENSE.dependencies`, run the complete Cargo suite, prove dynamic
-`libsqlite3.so.0` linkage, query the exact SQLite schema, exercise an RTK proxy
-path with telemetry disabled, and complete Fedora 43, Fedora 44, and Rawhide on
-both architectures. All current target flags remain false until a successful
-build provides that proof.
-
-Historical `0.43.0-0.6` F43/F44 binaries reported RTK `0.43.0`, dynamically
-required `libsqlite3.so.0`, and passed the database and isolated-home smokes.
-Those results remain evidence only and are not active `0.44.1` package inputs.
+Release `0.3` replaces transient build-result fields with a static validation
+contract. Configured-SCM target builds must reproduce the exact summary,
+regenerate `LICENSE.dependencies`, run the complete Cargo suite, prove dynamic
+`libsqlite3.so.0` linkage without RPATH or RUNPATH, query the exact SQLite
+schema, exercise an RTK proxy path with telemetry disabled, emit the required
+source, binary, debuginfo, and debugsource packages, and complete Fedora 43,
+Fedora 44, and Rawhide on both architectures. Dynamic build identities, NVRs,
+and log hashes remain in the project wiki and COPR. The package-local license
+review retains only repository-side historical inventory rationale and hashes.

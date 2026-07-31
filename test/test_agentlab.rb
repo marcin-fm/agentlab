@@ -1224,8 +1224,8 @@ class AgentlabTest < Minitest::Test
 
     assert_equal("0.44.1", rtk.upstream.fetch("current_version"))
     assert_equal("735623ee670483216bc5fe7ca0885f1f1358d8f9facf22782a6ea8e8a44f3b3a", rtk.upstream.fetch("source_sha256"))
-    assert_equal("0.44.1-0.2", rtk.data.dig("build_validation", "release"))
-    assert_equal("e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a", Digest::SHA256.file(contract_path).hexdigest)
+    assert_includes(spec, "Release:        0.3%{?dist}")
+    assert_equal("9df97d9fd13db45599927aad93f69763102e4e77bd897b31ecb57038e1907f23", Digest::SHA256.file(contract_path).hexdigest)
     assert_equal("agentlab-rtk-source-contract/v1", contract.fetch("schema"))
     assert_equal({ "name" => "rtk", "version" => "0.44.1", "tag" => "v0.44.1", "commit" => "36591fb00d650bf987b57483c0b3a395a35a8dc1" }, contract.fetch("release").slice("name", "version", "tag", "commit"))
     assert_equal("8f31137e18556611e1ad93fa6f551899f3533aa7b38fd9413fe0157519a558f9", contract.dig("release", "source_archive_tree_sha256"))
@@ -1239,29 +1239,33 @@ class AgentlabTest < Minitest::Test
     assert_equal(expected_license_expression, contract.dig("license_contract", "expression"))
     assert_equal(expected_license_summary_text, File.read(license_summary_path))
     assert_equal("e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832", Digest::SHA256.file(license_summary_path).hexdigest)
-    assert_equal(false, contract.dig("license_contract", "final_linked_license"))
+    refute(contract.fetch("license_contract").key?("final_linked_license"))
     assert_equal(%w[commands parse_failures], contract.dig("runtime_contract", "tables"))
     assert_equal(%w[id timestamp original_cmd rtk_cmd input_tokens output_tokens saved_tokens savings_pct exec_time_ms project_path], contract.dig("runtime_contract", "columns", "commands"))
     assert_equal(%w[id timestamp raw_command error_message fallback_succeeded], contract.dig("runtime_contract", "columns", "parse_failures"))
     assert_equal(%w[idx_pf_timestamp idx_project_path_timestamp idx_timestamp], contract.dig("runtime_contract", "indexes"))
     assert_equal({ "command" => "true", "expected_total_records" => 1, "expected_matching_records" => 1, "input_tokens" => 0, "output_tokens" => 0, "saved_tokens" => 0 }, contract.dig("runtime_contract", "proxy_smoke"))
-    assert(contract.fetch("target_validation").except("matrix").values.all? { |value| value == false })
-    assert_equal(6, contract.dig("target_validation", "matrix").length)
-    assert(contract.dig("target_validation", "matrix").values.all? { |value| value == false })
-    assert(rtk.data.dig("build_validation", "target").values.all? { |value| value == false })
-    assert(%w[fedora_43 fedora_44 rawhide].all? { |family| rtk.data.dig("dependency_status", family, "current_release_verified") == false })
-    assert_equal([false, false], rtk.data.dig("dependency_status", "system_sqlite").values_at("target_linkage_verified", "target_schema_verified"))
-    assert_equal(["pending successful target LICENSE.dependencies verification", false], rtk.data.fetch("license_audit").values_at("final_target_expression", "target_inventory_verified"))
-    assert_equal(false, rtk.data.dig("license_audit", "target_inventory_verified"))
-    assert_equal(false, rtk.data.dig("architecture_audit", "current_matrix_verified"))
-    assert_equal({ "release" => "0.43.0-0.6", "build_id" => 10749341, "status" => "succeeded", "scope" => "Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64" }, rtk.data.fetch("historical_build"))
+    refute(contract.key?("target_validation"))
+    refute(rtk.data.key?("build_validation"))
+    refute(rtk.data.key?("historical_build"))
     assert_equal(Digest::SHA256.file(rtk.spec_path).hexdigest, reproducibility.fetch("current_spec_sha256"))
-    assert_equal("e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a", reproducibility.dig("source_inputs", "source_contract", "sha256"))
-    assert_equal("immutable historical result; not current 0.44.1 proof", reproducibility.dig("validation", "historical_0_43_0", "evidence_role"))
+    assert_equal("9df97d9fd13db45599927aad93f69763102e4e77bd897b31ecb57038e1907f23", reproducibility.dig("source_inputs", "source_contract", "sha256"))
+    refute(reproducibility.key?("validation"))
+    refute(reproducibility.key?("host_policy"))
+    assert_empty(
+      Agentlab.validate_rtk_build_contract(
+        rtk,
+        spec,
+        reproducibility,
+        contract,
+        File.read(File.join(rtk.directory, "README.md")),
+        File.read(File.join(rtk.directory, "license-review.md"))
+      )
+    )
 
     assert_includes(spec, "Source1:        rtk-%{version}-source-contract.json")
     assert_includes(spec, "Source2:        rtk-%{version}-license-summary.txt")
-    assert_includes(spec, "%global source_contract_sha256 e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a")
+    assert_includes(spec, "%global source_contract_sha256 9df97d9fd13db45599927aad93f69763102e4e77bd897b31ecb57038e1907f23")
     assert_includes(spec, "%global license_summary_sha256 e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832")
     assert_includes(spec, "%global rtk_license_expression #{expected_license_expression}")
     assert_includes(spec, "License:        %{rtk_license_expression}")
@@ -1291,7 +1295,7 @@ class AgentlabTest < Minitest::Test
     assert_includes(validator, 'source_env: "AGENTLAB_RTK_SOURCE0"')
     assert_includes(validator, 'patches: %w[rtk-use-system-sqlite.patch rtk-use-dirs6.patch]')
     assert_includes(validator, 'errors << "rtk: source contract SHA-256 differs"')
-    assert_includes(validator, 'errors << "rtk: target validation gates are not fail-closed"')
+    assert_includes(validator, "Agentlab.validate_rtk_build_contract")
   end
 
   def test_headroom_mcp_and_jwt_current_static_contracts
@@ -2396,6 +2400,17 @@ class AgentlabTest < Minitest::Test
     assert(Agentlab.dynamic_build_result_identity?({ "status" => "passed in configured-SCM build 12345678" }))
     assert(Agentlab.dynamic_build_result_identity?({ "status" => "COPR builds 12345678" }))
     refute(Agentlab.dynamic_build_result_identity?({ "toolchain_build_id" => "clang-22", "configured_matrix" => "passed" }))
+    assert(Agentlab.dynamic_build_result_state?({ "result" => "succeeded" }))
+    assert(Agentlab.dynamic_build_result_state?({ "status" => "failed" }))
+    assert(Agentlab.dynamic_build_result_state?({ "result" => { "build" => 12_345_678 } }))
+    assert(Agentlab.dynamic_build_result_state?("configured-SCM run #12345678"))
+    assert(Agentlab.dynamic_build_result_state?({ "build_state" => "queued" }))
+    assert(Agentlab.dynamic_build_result_state?({ "copr_job_number" => 12_345_678 }))
+    assert(Agentlab.dynamic_build_result_state?({ "result_state" => "complete" }))
+    assert(Agentlab.dynamic_build_result_state?({ "pipeline" => { "execution" => 12_345_678 } }))
+    assert(Agentlab.dynamic_build_result_state?("build status: succeeded"))
+    assert(Agentlab.dynamic_build_result_state?("result: failed"))
+    refute(Agentlab.dynamic_build_result_state?({ "status" => "enabled", "toolchain_build_id" => "clang-22" }))
   end
 
   def test_validates_ast_grep_build_contract
@@ -2466,6 +2481,143 @@ class AgentlabTest < Minitest::Test
         assert_includes(errors, "#{name}: active package metadata contains dynamic build result identity")
       end
     end
+  end
+
+  def test_validates_rtk_build_contract
+    source_package = Agentlab.package_named("rtk")
+    spec = File.read(source_package.spec_path)
+    reproducibility = Agentlab.load_yaml(File.join(source_package.directory, "reproducibility.yml"))
+    source_contract = JSON.parse(File.read(File.join(source_package.directory, source_package.data.dig("source_contract", "file"))))
+    readme = File.read(File.join(source_package.directory, "README.md"))
+    license_review = File.read(File.join(source_package.directory, "license-review.md"))
+    validate = lambda do |package: source_package, spec_text: spec, reproducibility_data: reproducibility,
+                         contract_data: source_contract, readme_text: readme, license_review_text: license_review|
+      Agentlab.validate_rtk_build_contract(
+        package,
+        spec_text,
+        reproducibility_data,
+        contract_data,
+        readme_text,
+        license_review_text
+      )
+    end
+
+    assert_empty(validate.call)
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("validation_contract").fetch("matrix")["rawhide_x86_64"] = "optional"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "rtk: validation contract does not match")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("validation_contract").fetch("matrix").delete("rawhide_x86_64")
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "rtk: validation contract does not match")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("validation_contract").fetch("matrix")["unexpected_x86_64"] = "required"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "rtk: validation contract does not match")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data.fetch("copr")["chroots"] = ["fedora-44-x86_64"]
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "rtk: validation matrix does not match configured chroots")
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data["historical_result"] = { "build_id" => 12_345_678 }
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_includes(validate.call(package: package), "rtk: active package inputs contain dynamic build result identity")
+
+    mutated_reproducibility = Marshal.load(Marshal.dump(reproducibility))
+    mutated_reproducibility["validation"] = { "nvr" => "rtk-0.44.1-0.3" }
+    errors = validate.call(reproducibility_data: mutated_reproducibility)
+    assert_includes(errors, "rtk: reproducibility metadata retains result-state sections")
+
+    mutated_reproducibility = Marshal.load(Marshal.dump(reproducibility))
+    mutated_reproducibility["result"] = "succeeded"
+    errors = validate.call(reproducibility_data: mutated_reproducibility)
+    assert_includes(errors, "rtk: reproducibility metadata retains result-state sections")
+    assert_includes(errors, "rtk: active package inputs contain dynamic build result identity")
+
+    mutated_reproducibility = Marshal.load(Marshal.dump(reproducibility))
+    mutated_reproducibility["historical_0_43_0"] = { "dependency_inventory_records" => 114 }
+    assert_includes(
+      validate.call(reproducibility_data: mutated_reproducibility),
+      "rtk: reproducibility metadata retains result-state sections"
+    )
+
+    mutated_reproducibility = Marshal.load(Marshal.dump(reproducibility))
+    mutated_reproducibility["current_spec_sha256"] = "0" * 64
+    assert_includes(
+      validate.call(reproducibility_data: mutated_reproducibility),
+      "rtk: reproducibility spec SHA-256 differs"
+    )
+
+    mutated_contract = Marshal.load(Marshal.dump(source_contract))
+    mutated_contract["target_validation"] = { "matrix" => {} }
+    assert_includes(validate.call(contract_data: mutated_contract), "rtk: source contract retains result-state gates")
+
+    mutated_contract = Marshal.load(Marshal.dump(source_contract))
+    mutated_contract["stale_gate"] = { "matrix" => false }
+    assert_includes(validate.call(contract_data: mutated_contract), "rtk: source contract retains result-state gates")
+
+    mutated_contract = Marshal.load(Marshal.dump(source_contract))
+    mutated_contract.fetch("license_contract")["final_linked_license"] = false
+    assert_includes(validate.call(contract_data: mutated_contract), "rtk: source contract retains result-state gates")
+
+    assert_includes(
+      validate.call(spec_text: "#{spec}\n# configured-SCM build 12345678\n"),
+      "rtk: active package inputs contain dynamic build result identity"
+    )
+    assert_includes(
+      validate.call(readme_text: "result NVR must not be retained\n"),
+      "rtk: active package inputs contain dynamic build result identity"
+    )
+    assert_includes(
+      validate.call(license_review_text: "builder-log hash must not be retained\n"),
+      "rtk: active package inputs contain dynamic build result identity"
+    )
+    assert_includes(validate.call(readme_text: ""), "rtk: package README is missing")
+    assert_includes(validate.call(license_review_text: ""), "rtk: package license review is missing")
+
+    commented_test = spec.sub(/^%cargo_test$/, "# %cargo_test")
+    assert_includes(
+      validate.call(spec_text: commented_test),
+      "rtk: static spec validation contract is incomplete"
+    )
+    assert_includes(
+      validate.call(spec_text: spec.sub("%bcond check 1", "%bcond check 0")),
+      "rtk: static spec validation contract is incomplete"
+    )
+    commented_runtime = spec.sub(
+      "grep -Eq '\\(NEEDED\\).*\\[libsqlite3\\.so\\.0\\]' rtk-smoke.dynamic",
+      "# grep -Eq '\\(NEEDED\\).*\\[libsqlite3\\.so\\.0\\]' rtk-smoke.dynamic"
+    )
+    assert_includes(
+      validate.call(spec_text: commented_runtime),
+      "rtk: static spec validation contract is incomplete"
+    )
+    duplicate_check = "#{spec}\n%if %{with check}\n%check\n%cargo_test\n%endif\n"
+    assert_includes(
+      validate.call(spec_text: duplicate_check),
+      "rtk: static spec validation contract is incomplete"
+    )
+    inert_check = spec.sub("%cargo_test", "if false; then\n%cargo_test\nfi")
+    assert_includes(
+      validate.call(spec_text: inert_check),
+      "rtk: static spec validation contract is incomplete"
+    )
+    function_check = spec.sub("%cargo_test", "disabled_check() {\n%cargo_test\n}")
+    assert_includes(
+      validate.call(spec_text: function_check),
+      "rtk: static spec validation contract is incomplete"
+    )
+
+    data = Marshal.load(Marshal.dump(source_package.data))
+    data["toolchain_build_id"] = "rust-1.91"
+    package = Agentlab::Package.new(directory: source_package.directory, manifest_path: "unused", data: data)
+    assert_empty(validate.call(package: package))
   end
 
   def test_validates_pdfium_hosted_source

@@ -10,58 +10,20 @@ source_inputs:
     upstream_lock_sha256: 0e360b52a271c90275a73d56f016abdf60d80096a6cfdfb2767228b054b8fd45
   source_contract:
     file: rtk-0.44.1-source-contract.json
-    sha256: e8def35cf06f71dd38a77116abcf9d1702f2c37c1fea3324e32d440b5ec46f2a
+    sha256: 9df97d9fd13db45599927aad93f69763102e4e77bd897b31ecb57038e1907f23
 patches:
   rtk-use-system-sqlite.patch: 2496b4395840cc4ed84ba4e39124250336b10d03b321fbda2c62d7601b16f080
   rtk-use-dirs6.patch: 826e2cd42dd4b70e6f8b50a178e5305c6946d81e219f1dd17e0cabe4d0e839b5
-current_spec_sha256: cdfd238844fb17ebef3116da49963fa61fe002fdb6e21bcbf42b98a6f61f82ec
+current_spec_sha256: bb2e31fa95391c617f551ac295a5adf85e9e9c974ff5362b7645010e62ffbdf6
 source_contract:
   dependency_resolution: target-only
   final_linked_license: target-only
   expected_license_summary_file: rtk-0.44.1-license-summary.txt
   expected_license_summary_sha256: e511f9dc9f99a54e0746a392423f28718d5ea42a3d2f4995befc97c658c53832
   normalized_aggregate_expression: ((MIT OR Apache-2.0) AND Unicode-DFS-2016) AND (0BSD OR MIT OR Apache-2.0) AND Apache-2.0 AND (Apache-2.0 AND ISC AND (MIT OR Apache-2.0)) AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR MIT) AND (Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT) AND BSD-3-Clause AND CDLA-Permissive-2.0 AND ISC AND MIT AND (MIT OR Apache-2.0) AND (MIT OR Zlib OR Apache-2.0) AND MPL-2.0 AND Unicode-3.0 AND (Unlicense OR MIT) AND Zlib
-historical_0_43_0:
-  dependency_inventory_records: 114
-  dependency_inventory_sha256: 4a9661effe7b75e05207d312e9dd4c4b789037a580194b4b2b3bdbbbe221ccaf
-  fedora_43_provider_manifest_sha256: f119ad6c076946bb224edf08d53095e318d08298f5a01233fe4b2c815b76b6be
-  fedora_44_provider_manifest_sha256: 3394d9f72b0d552a051dcf068cdbdf73073f55ce9083fe2c6fae875107e10c53
 license_policy:
   runtime_payload:
     - LICENSE
     - LICENSE.dependencies
   copied_system_provider_license_corpus: false
   provider_receipts: repository-only historical evidence
-validation:
-  current_release:
-    nvr: 0.44.1-0.2
-    status: static source and exact expected target-license summary contracts complete; successful target graph, LICENSE.dependencies, payload, runtime, and matrix proof required
-    rust_version_floor: 1.91
-    system_sqlite: false
-    dirs6: false
-    dependency_resolution: false
-    generated_license_inventory: false
-    final_linked_license: false
-    cargo_tests: false
-    payload: false
-    sqlite_elf_linkage: false
-    sqlite_schema_smoke: false
-    cli_smoke: false
-    proxy_smoke: false
-    database_smoke: false
-    matrix: false
-  historical_0_43_0:
-    release: 0.43.0-0.6
-    build_id: 10749341
-    result: succeeded
-    scope: Fedora 43, Fedora 44, and Rawhide on x86_64 and aarch64
-    dirs: 6.0.0
-    dirs_sys: 0.5.0
-    sqlite_elf_needed: libsqlite3.so.0
-    evidence_role: immutable historical result; not current 0.44.1 proof
-host_policy:
-  produced_rpms_installed: false
-  copr_mutated: false
-  configured_architectures:
-    - x86_64
-    - aarch64
