@@ -549,7 +549,7 @@ module OpenChamberLockAudit
     selection = dependencies.fetch("selected_lock_audit")
     source_dir = nil
     check = false
-    output = File.join(package.directory, dependencies.dig("source_closure_files", "selected_lock_audit"))
+    output = File.join(package.directory, dependencies.dig("source_closure_files", "current_selected_lock_audit"))
 
     OptionParser.new do |parser|
       parser.banner = "Usage: scripts/audit-openchamber-lock-closure --source-dir PATH [--output PATH] [--check]"

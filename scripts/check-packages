@@ -367,7 +367,8 @@ packages.each do |package|
   end
 
   if dependencies && (receipt_config = dependencies["selected_lock_receipt"])
-    receipt_filename = dependencies.dig("source_closure_files", "selected_lock_audit")
+    receipt_filename = dependencies.dig("source_closure_files", "current_selected_lock_audit") ||
+                       dependencies.dig("source_closure_files", "selected_lock_audit")
     receipt_path = receipt_filename.is_a?(String) && File.join(package.directory, receipt_filename)
     unless receipt_path && File.file?(receipt_path)
       errors << "#{package.name}: selected lock receipt is missing"
@@ -425,7 +426,8 @@ packages.each do |package|
 
       begin
         receipt = JSON.parse(File.read(source_path))
-        errors << "#{package.name}: source acquisition receipt release does not match" unless receipt["release"].to_s == manifest_version
+        evidence_release = dependencies.dig("historical_release_evidence", "release") || manifest_version
+        errors << "#{package.name}: source acquisition receipt release does not match" unless receipt["release"].to_s == evidence_release.to_s
         expected_schema = source_config.fetch("schema", "opencode-source-acquisition/v1")
         errors << "#{package.name}: source acquisition receipt schema is invalid" unless receipt["schema"] == expected_schema
         errors << "#{package.name}: source acquisition receipt selected-lock SHA-256 does not match" unless receipt["selected_lock_receipt_sha256"] == source_config["selected_lock_receipt_sha256"]

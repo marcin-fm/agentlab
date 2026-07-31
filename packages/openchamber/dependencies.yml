@@ -1,11 +1,11 @@
-target_release: 1.16.3
+target_release: 1.17.1
 selected_scope:
   workspace: packages/web
   npm_name: "@openchamber/web"
   executable: packages/web/bin/cli.js
   package_manifest: packages/web/package.json
-  package_manifest_sha256: 60e45e38f8e408b962d47c8d88698ca3c7a719804100a66075ecfc67c40e30f4
-  executable_sha256: 27db143b5c4a2415a45103aa308f2836a72f8c4ce50918699324893f16558f6c
+  package_manifest_sha256: 893db0e13d5d70f431e9fa31da0cea7bcaf4868297c8093338669915843d8e00
+  executable_sha256: f81f22c7705f59cea15afc1fe2f0f3ebe237c311b6fb9770a31f799a5b07ade9
   runtime_engine: node
   pty_backend: node-pty
   bun_pty_selected: false
@@ -15,11 +15,11 @@ selected_scope:
   mobile_workspace_included: false
   vscode_workspace_included: false
 current_lock_snapshot:
-  release: 1.16.3
+  release: 1.17.1
   lockfile: bun.lock
   lockfile_version: 1
   bun: 1.3.14
-  sha256: 19113bdcdfd6babb0a2966fbf6d9bdfd56c13bc7ca312adb6723bb0eb445c881
+  sha256: 6e6e8db922cc9abd9b582f21eb9890888217ee9181a5cd42147fb0d3c0377c7d
   workspace_records: 6
   package_records: 1892
   selected_production_closure: true
@@ -45,16 +45,16 @@ selected_lock_audit:
   known_workspace_version_mismatches:
     "":
       lock:
-      manifest: 1.16.3
-      release: 1.16.3
+      manifest: 1.17.1
+      release: 1.17.1
     packages/ui:
-      lock: 1.16.2
-      manifest: 1.16.3
-      release: 1.16.3
+      lock: 1.17.0
+      manifest: 1.17.1
+      release: 1.17.1
     packages/web:
-      lock: 1.16.2
-      manifest: 1.16.3
-      release: 1.16.3
+      lock: 1.17.0
+      manifest: 1.17.1
+      release: 1.17.1
   source_import_graph:
     schema: openchamber-source-import-graph/v1
     absolute_root: packages/web
@@ -147,8 +147,8 @@ selected_lock_audit:
   git_sources: {}
 selected_lock_receipt:
   schema: openchamber-selected-lock-audit/v2
-  sha256: 649c0734f1a68aca4a832e32c8906824e1ccd8fb9fa78287236eaff83fb808cc
-  lock_sha256: 19113bdcdfd6babb0a2966fbf6d9bdfd56c13bc7ca312adb6723bb0eb445c881
+  sha256: 3126f8fcdb27e6c7f22fc3878106185ba6b869d11f1ed73ff5e0a60105c901a1
+  lock_sha256: 6e6e8db922cc9abd9b582f21eb9890888217ee9181a5cd42147fb0d3c0377c7d
   selected_workspaces: 3
   selected_packages: 832
   runtime_packages: 221
@@ -158,15 +158,28 @@ selected_lock_receipt:
   github_packages: 0
   platform_excluded: 76
   policy_excluded: 1
-  source_import_files: 845
+  source_import_files: 890
   source_import_package_roots: 59
   source_import_globs: 1
   source_identity:
     method: clean_git_checkout
-    commit: 8040d43b251a015eb06d96135a442abd4d2f2e27
-    tag: v1.16.3
-    tag_commit: 8040d43b251a015eb06d96135a442abd4d2f2e27
+    commit: 1b1640ae08cfc86e9ebffeb90c073acaa81e62f9
+    tag: v1.17.1
+    tag_commit: 1b1640ae08cfc86e9ebffeb90c073acaa81e62f9
     tracked_worktree_clean: true
+  remix_icon_boundary:
+    sprite_path: packages/ui/src/components/icon/sprite.ts
+    sprite_sha256: 96a6108fd6387eb23f7db23cb612c2dd34a053ec24dfa3826d392c76cb23086d
+    sprite_path_records: 236
+    direct_import_paths:
+    - packages/ui/src/apps/MobileFilesSurface.tsx
+    - packages/ui/src/apps/MobileProjectEditSurface.tsx
+    - packages/ui/src/apps/MobileSessionsSheet.tsx
+    - packages/ui/src/apps/MobileSurfaceShell.tsx
+    mobile_html_unconditional: true
+    fedora_license: LicenseRef-Remix-icon-license-1.0
+    fedora_status: not-allowed
+    current_source_license_inventory_complete: false
   validation:
     source_identity_verified: true
     manifest_dependency_groups_match: true
@@ -176,6 +189,11 @@ selected_lock_receipt:
     node_runtime_exclusions_enforced: true
     source_import_reachability_verified: true
     authoritative_closure_verified: true
+historical_release_evidence:
+  release: 1.16.3
+  source_tag: v1.16.3
+  source_commit: 8040d43b251a015eb06d96135a442abd4d2f2e27
+  current_release: false
 source_acquisition_receipt:
   schema: openchamber-source-acquisition/v1
   sha256: ac30211d1f54a2d4290303415887fc0049095be45a4dafa57fde5b23150cfbff
@@ -314,6 +332,7 @@ source_closure_files:
   ghostty_wasm_proof: openchamber-1.16.3-ghostty-wasm-proof.json
   lightningcss_proof: openchamber-1.16.3-lightningcss-proof.json
   sherpa_onnx_proof: openchamber-1.16.3-sherpa-onnx-proof.json
+  current_selected_lock_audit: openchamber-1.17.1-selected-lock-audit.json
   selected_lock_audit: openchamber-1.16.3-selected-lock-audit.json
   source_audit: openchamber-1.16.3-source-audit.json
 runtime_provider:

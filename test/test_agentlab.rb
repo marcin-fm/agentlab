@@ -273,7 +273,7 @@ class AgentlabTest < Minitest::Test
   def test_openchamber_selected_lock_validator_rejects_reachability_overclaim
     package = Agentlab.package_named("openchamber")
     dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
-    receipt_path = File.join(package.directory, dependencies.dig("source_closure_files", "selected_lock_audit"))
+    receipt_path = File.join(package.directory, dependencies.dig("source_closure_files", "current_selected_lock_audit"))
     receipt = JSON.parse(File.read(receipt_path))
 
     Dir.mktmpdir do |directory|
@@ -281,7 +281,7 @@ class AgentlabTest < Minitest::Test
       temporary_receipt = File.join(directory, "receipt.json")
       File.write(temporary_receipt, JSON.pretty_generate(receipt) + "\n")
       temporary_dependencies = Marshal.load(Marshal.dump(dependencies))
-      temporary_dependencies.fetch("source_closure_files")["selected_lock_audit"] = "receipt.json"
+      temporary_dependencies.fetch("source_closure_files")["current_selected_lock_audit"] = "receipt.json"
       temporary_dependencies.fetch("selected_lock_receipt")["sha256"] = Digest::SHA256.file(temporary_receipt).hexdigest
       temporary_package = Struct.new(:name, :directory, :upstream, :data).new(
         package.name,
@@ -293,6 +293,30 @@ class AgentlabTest < Minitest::Test
       errors = Agentlab.validate_openchamber_selected_lock(temporary_package, temporary_dependencies)
       assert_includes(errors, "openchamber: selected lock validation source_import_reachability_verified is not true")
     end
+  end
+
+  def test_openchamber_historical_release_evidence_cannot_be_relabeled_current
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    dependencies.fetch("historical_release_evidence")["current_release"] = true
+
+    errors = Agentlab.validate_openchamber_source_acquisition(package, dependencies)
+    assert_includes(errors, "openchamber: historical release evidence is not marked non-current")
+
+    dependencies.fetch("historical_release_evidence")["current_release"] = false
+    dependencies.fetch("historical_release_evidence")["release"] = package.upstream.fetch("current_version")
+    errors = Agentlab.validate_openchamber_source_acquisition(package, dependencies)
+    assert_includes(errors, "openchamber: historical release evidence matches the current release")
+  end
+
+  def test_openchamber_selected_lock_validator_rejects_current_remix_drift
+    package = Agentlab.package_named("openchamber")
+    dependencies = Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))
+    dependencies.dig("selected_lock_receipt", "remix_icon_boundary")["sprite_sha256"] = "0" * 64
+
+    errors = Agentlab.validate_openchamber_selected_lock(package, dependencies)
+    assert_includes(errors, "openchamber: current Remix sprite hash mismatch")
+    assert_includes(errors, "openchamber: package current Remix sprite hash mismatch")
   end
 
   def test_openchamber_source_acquisition_validator_rejects_package_path_drift

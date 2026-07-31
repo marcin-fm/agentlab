@@ -1,10 +1,10 @@
 # Disabled by package.yml. This spec deliberately aborts before unpacking or
 # building until the selected web closure and OpenCode runtime are proven.
-%global source_sha256 54a1724c872de6ba64955ca98fc8eeef73bc2e49739be1b27ba89deb10c5b115
+%global source_sha256 31a767ec735c9c351333c9774699e76b204c9b0a0220e3531a437622985a5ead
 
 Name:           openchamber
-Version:        1.16.3
-Release:        0.18%{?dist}
+Version:        1.17.1
+Release:        0.1%{?dist}
 Summary:        Web interface and server for OpenCode
 
 # MIT covers OpenChamber itself. Final metadata must include the audited
@@ -42,6 +42,9 @@ echo 'openchamber is blocked: see package.yml and dependencies.yml' >&2
 exit 1
 
 %changelog
+* Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.17.1-0.1
+- Regenerate the released selected lock and import receipt while retaining all blocked gates.
+
 * Sun Jul 26 2026 Marcin FM <marcin@lgic.pl> - 1.16.3-0.18
 - Record the embedded Remix Icon runtime payload and upstream request blocker.
 

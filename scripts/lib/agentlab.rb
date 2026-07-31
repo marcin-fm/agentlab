@@ -600,7 +600,7 @@ module Agentlab
 
     errors = []
     metadata = dependencies.fetch("selected_lock_receipt")
-    filename = dependencies.dig("source_closure_files", "selected_lock_audit")
+    filename = dependencies.dig("source_closure_files", "current_selected_lock_audit")
     path = filename.is_a?(String) && File.join(package.directory, filename)
     unless path && File.file?(path)
       return ["openchamber: selected lock receipt is missing: #{filename.inspect}"]
@@ -661,6 +661,21 @@ module Agentlab
       errors << "openchamber: invalid source-import path #{source_path.inspect}" unless source_path.is_a?(String) && !source_path.empty? && !Pathname.new(source_path).absolute? && !Pathname.new(source_path).each_filename.include?("..")
       errors << "openchamber: invalid source-import SHA-256 for #{source_path.inspect}" unless record["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/)
     end
+    file_hashes = files.to_h { |record| [record["path"], record["sha256"]] }
+    remix = metadata.fetch("remix_icon_boundary")
+    errors << "openchamber: current Remix sprite hash mismatch" unless file_hashes[remix["sprite_path"]] == remix["sprite_sha256"]
+    direct_imports = Array(remix["direct_import_paths"])
+    errors << "openchamber: current Remix direct-import paths are not sorted or unique" unless direct_imports == direct_imports.sort.uniq
+    errors << "openchamber: current Remix direct-import path is outside the source graph" unless direct_imports.all? { |source_path| file_hashes.key?(source_path) }
+    errors << "openchamber: current Remix mobile entry is not fail-closed" unless remix["mobile_html_unconditional"] == true
+    errors << "openchamber: current Remix Fedora license mismatch" unless remix["fedora_license"] == "LicenseRef-Remix-icon-license-1.0" && remix["fedora_status"] == "not-allowed"
+    errors << "openchamber: current source-license inventory is overclaimed" unless remix["current_source_license_inventory_complete"] == false
+    errors << "openchamber: package current Remix sprite hash mismatch" unless source_policy["current_remix_icon_sprite_sha256"] == remix["sprite_sha256"]
+    errors << "openchamber: package current Remix sprite count mismatch" unless source_policy["current_remix_icon_sprite_icons"] == remix["sprite_path_records"]
+    errors << "openchamber: package current Remix import count mismatch" unless source_policy["current_remix_icon_direct_imports"] == direct_imports.length
+    errors << "openchamber: package current Remix mobile entry mismatch" unless source_policy["current_remix_icon_mobile_html_unconditional"] == remix["mobile_html_unconditional"]
+    errors << "openchamber: package current Remix Fedora status mismatch" unless source_policy["current_remix_icon_fedora_status"] == remix["fedora_status"]
+    errors << "openchamber: package overclaims current source-license inventory" unless source_policy["current_source_license_inventory_complete"] == false
     %w[entrypoints_resolved local_imports_resolved literal_dynamic_imports_only literal_globs_only glob_matches_recorded source_files_hashed].each do |flag|
       errors << "openchamber: source-import validation #{flag} is not true" unless source_graph.dig("validation", flag) == true
     end
@@ -679,6 +694,17 @@ module Agentlab
     ["openchamber: invalid selected lock evidence: #{e.message}"]
   end
 
+  def openchamber_historical_release_evidence(package, dependencies, errors)
+    evidence = dependencies.fetch("historical_release_evidence")
+    current_version = package.upstream.fetch("current_version").to_s
+    errors << "openchamber: historical release evidence is not marked non-current" unless evidence["current_release"] == false
+    errors << "openchamber: historical release evidence matches the current release" if evidence["release"].to_s == current_version
+    source_policy = package.data.fetch("source_policy")
+    errors << "openchamber: package historical release evidence mismatch" unless source_policy["downstream_release_evidence"].to_s == evidence["release"].to_s
+    errors << "openchamber: package overclaims historical release evidence" unless source_policy["downstream_release_evidence_current"] == false
+    evidence
+  end
+
   def validate_openchamber_source_acquisition(package, dependencies)
     return [] unless package.name == "openchamber"
 
@@ -694,9 +720,10 @@ module Agentlab
     receipt = JSON.parse(File.read(path))
     errors << "openchamber: source acquisition receipt schema mismatch" unless receipt["schema"] == "openchamber-source-acquisition/v1" && metadata["schema"] == receipt["schema"]
     errors << "openchamber: source acquisition package mismatch" unless receipt["package"] == package.name
-    errors << "openchamber: source acquisition release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
-    errors << "openchamber: source acquisition tag mismatch" unless receipt["source_tag"] == package.upstream.fetch("source_tag")
-    errors << "openchamber: source acquisition commit mismatch" unless receipt["source_commit"] == package.upstream.fetch("source_commit")
+    historical = openchamber_historical_release_evidence(package, dependencies, errors)
+    errors << "openchamber: source acquisition release mismatch" unless receipt["release"].to_s == historical.fetch("release").to_s
+    errors << "openchamber: source acquisition tag mismatch" unless receipt["source_tag"] == historical.fetch("source_tag")
+    errors << "openchamber: source acquisition commit mismatch" unless receipt["source_commit"] == historical.fetch("source_commit")
 
     selected_filename = dependencies.dig("source_closure_files", "selected_lock_audit")
     selected_path = selected_filename.is_a?(String) && File.join(package.directory, selected_filename)
@@ -783,7 +810,8 @@ module Agentlab
     receipt = JSON.parse(File.read(path))
     errors << "openchamber: source materialization schema mismatch" unless receipt["schema"] == "openchamber-source-materialization/v1" && metadata["schema"] == receipt["schema"]
     errors << "openchamber: source materialization package mismatch" unless receipt["package"] == package.name
-    errors << "openchamber: source materialization release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
+    historical = openchamber_historical_release_evidence(package, dependencies, errors)
+    errors << "openchamber: source materialization release mismatch" unless receipt["release"].to_s == historical.fetch("release").to_s
 
     source_filename = dependencies.dig("source_closure_files", "source_audit")
     source_path = source_filename.is_a?(String) && File.join(package.directory, source_filename)
@@ -880,7 +908,8 @@ module Agentlab
     receipt = JSON.parse(File.read(path))
     errors << "openchamber: source-license inventory schema mismatch" unless receipt["schema"] == "openchamber-source-license-inventory/v2" && metadata["schema"] == receipt["schema"]
     errors << "openchamber: source-license inventory package mismatch" unless receipt["package"] == package.name
-    errors << "openchamber: source-license inventory release mismatch" unless receipt["release"].to_s == package.upstream.fetch("current_version").to_s
+    historical = openchamber_historical_release_evidence(package, dependencies, errors)
+    errors << "openchamber: source-license inventory release mismatch" unless receipt["release"].to_s == historical.fetch("release").to_s
 
     bindings = {
       "selected_lock" => ["selected_lock_audit", "selected_lock_receipt_sha256"],
@@ -1013,7 +1042,8 @@ module Agentlab
     errors << "openchamber: native review SHA-256 mismatch" unless metadata["sha256"] == actual_sha256
     review = load_yaml(path)
     errors << "openchamber: native review schema mismatch" unless review["schema"] == "openchamber-native-review/v1" && metadata["schema"] == review["schema"]
-    errors << "openchamber: native review release mismatch" unless review["release"].to_s == package.upstream.fetch("current_version").to_s
+    historical = openchamber_historical_release_evidence(package, dependencies, errors)
+    errors << "openchamber: native review release mismatch" unless review["release"].to_s == historical.fetch("release").to_s
 
     receipt_files = {
       "selected_lock_audit" => dependencies.dig("source_closure_files", "selected_lock_audit"),

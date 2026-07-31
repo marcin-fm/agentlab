@@ -1,13 +1,12 @@
 # OpenChamber Packaging Status
 
-OpenChamber `1.16.3` is not enabled for COPR. This draft packages the released
+OpenChamber `1.17.1` is not enabled for COPR. This draft packages the released
 `@openchamber/web` CLI/PWA server, which is upstream's practical Linux path,
-rather than the Electron desktop shell. Upstream disables the release's Linux
-desktop build and publish jobs, and `v1.16.3` contains no Linux desktop asset.
+rather than the Electron desktop shell.
 
-The immutable `v1.16.3` tag resolves to commit
-`8040d43b251a015eb06d96135a442abd4d2f2e27`. Its source archive has SHA-256
-`54a1724c872de6ba64955ca98fc8eeef73bc2e49739be1b27ba89deb10c5b115`.
+The immutable `v1.17.1` tag resolves to commit
+`1b1640ae08cfc86e9ebffeb90c073acaa81e62f9`. Its source archive has SHA-256
+`31a767ec735c9c351333c9774699e76b204c9b0a0220e3531a437622985a5ead`.
 The project is MIT-licensed, uses Bun `1.3.14` for workspace management and
 builds, and requires Node.js 22 or newer.
 
@@ -46,7 +45,7 @@ Electron bundles, npm installs, or platform-native package binaries.
 
 ## Deterministic Lock Selection
 
-`openchamber-1.16.3-selected-lock-audit.json` is generated directly from the
+`openchamber-1.17.1-selected-lock-audit.json` is generated directly from the
 released `bun.lock` by `scripts/audit-openchamber-lock-closure`; it performs no
 dependency resolution. For the Linux x86_64 glibc Node target it records 832
 selected packages: 221 runtime, 564 build, and 47 test records. All selected
@@ -63,18 +62,30 @@ The package-identity closure is authoritative for the selected release surface.
 The audit starts at the web, mobile, mini-chat, and PWA service-worker entries;
 resolves the exact Vite aliases, relative/static imports, literal dynamic
 imports, CSS imports, and Vite query suffixes; and expands the checked provider
-logo `import.meta.glob`. It reaches 845 local files and 59 direct package roots,
+logo `import.meta.glob`. It reaches 890 local files and 59 direct package roots,
 then retains each selected root's complete transitive `bun.lock` closure.
 
-The lock still omits the root importer version and reports `1.16.2` for both
-`packages/web` and `packages/ui`, while all three manifests report `1.16.3`.
+The lock still omits the root importer version and reports `1.17.0` for both
+`packages/web` and `packages/ui`, while all three manifests report `1.17.1`.
 Those original bytes and values remain visible. The receipt records an explicit
 package-identity normalization based only on exact dependency-map equality; it
 does not claim that upstream corrected the importer versions. Immutable source
 acquisition, native rebuilds, generated browser output, licenses, final binary
 inclusion, bundled Provides, and offline builds remain fail-closed.
 
+The current source graph also binds the unresolved Remix Icon boundary. Four
+mobile components still import `@remixicon/react`, `mobile.html` remains an
+unconditional Vite input, and the generated sprite now contains 236 paths at
+SHA-256 `96a6108fd6387eb23f7db23cb612c2dd34a053ec24dfa3826d392c76cb23086d`.
+The selected terms remain Fedora-not-allowed; the `1.17.1` source-license
+inventory is explicitly incomplete.
+
 ## Immutable Source Acquisition
+
+The source acquisition, materialization, license, and native receipts below are
+immutable `1.16.3` evidence. They remain validated against their original
+selected-lock receipt and are explicitly non-current for `1.17.1`; none of
+their completed findings is relabeled as proof of the new release.
 
 `openchamber-1.16.3-source-audit.json` binds the selected-lock receipt to 818
 unique npm registry archives for the 832 selected package records. The
