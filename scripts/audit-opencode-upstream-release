@@ -25,7 +25,12 @@ module OpenCodeUpstreamReleaseAudit
     total_bytes: 512 * 1024 * 1024,
     path_bytes: 4096,
   }.freeze
-  RECEIPT_SCHEMA = "agentlab-opencode-upstream-release-audit/v3"
+  MCP_DEPENDENCIES = [
+    "@modelcontextprotocol/client",
+    "@modelcontextprotocol/server",
+    "@modelcontextprotocol/sdk",
+  ].freeze
+  RECEIPT_SCHEMA = "agentlab-opencode-upstream-release-audit/v4"
   RECEIPT_RELATIVE_PATH = "evidence/opencode/upstream-release-audit.json"
 
   def git(repo, *arguments)
@@ -49,6 +54,62 @@ module OpenCodeUpstreamReleaseAudit
       raise "unsupported Git tree entry #{type} at #{path}" unless type == "blob"
 
       [path, { "mode" => mode, "object_id" => object_id }]
+    end
+  end
+
+  def git_file(repo, revision, path)
+    git_output(repo, "show", "#{revision}:#{path}")
+  end
+
+  def package_requirement(repo, revision, package)
+    manifest = JSON.parse(git_file(repo, revision, "packages/opencode/package.json"))
+    requirements = %w[dependencies devDependencies].filter_map do |group|
+      manifest.fetch(group, {})[package]
+    end.uniq
+    raise "conflicting #{package} requirements in #{revision}" if requirements.length > 1
+
+    requirements.first
+  end
+
+  def npm_source(identity, integrity)
+    name, version = identity.match(/\A(?<name>@[^@]+|[^@]+)@(?<version>[^@]+)\z/)&.captures
+    raise "invalid npm lock identity #{identity}" unless name && version
+
+    basename = name.split("/").last
+    {
+      "identity" => identity,
+      "integrity" => integrity,
+      "source_url" => "https://registry.npmjs.org/#{name}/-/#{basename}-#{version}.tgz",
+    }
+  end
+
+  def lock_source(repo, revision, package)
+    matches = git_file(repo, revision, "bun.lock").lines.filter_map do |line|
+      match = line.match(/^\s*"#{Regexp.escape(package)}":\s*\["(?<identity>[^"]+)".*"(?<integrity>sha512-[A-Za-z0-9+\/=]+)"\],?\s*$/)
+      npm_source(match[:identity], match[:integrity]) if match
+    end
+    raise "duplicate root lock records for #{package} in #{revision}" if matches.length > 1
+
+    matches.first
+  end
+
+  def mcp_dependency_transition(repo, packaged_tag, latest_tag)
+    MCP_DEPENDENCIES.map do |package|
+      packaged_requirement = package_requirement(repo, packaged_tag, package)
+      latest_requirement = package_requirement(repo, latest_tag, package)
+      packaged_source = lock_source(repo, packaged_tag, package)
+      latest_source = lock_source(repo, latest_tag, package)
+      if (packaged_requirement && !packaged_source) || (latest_requirement && !latest_source)
+        raise "missing root lock source for #{package} dependency transition"
+      end
+
+      {
+        "package" => package,
+        "packaged_requirement" => packaged_requirement,
+        "latest_requirement" => latest_requirement,
+        "packaged_source" => packaged_source,
+        "latest_source" => latest_source,
+      }
     end
   end
 
@@ -300,9 +361,37 @@ module OpenCodeUpstreamReleaseAudit
     errors << "package COPR must remain disabled" unless package.dig("copr", "enabled") == false
     errors << "receipt does not require selected-source evidence refresh" unless data.dig("delta", "selected_source_evidence_refresh_required") == true
     errors << "receipt does not require downstream patch revalidation" unless data.dig("delta", "downstream_patch_revalidation_required") == true
+    sensitive_paths = data.dig("delta", "release_sensitive_paths")
+    transition = data.dig("delta", "mcp_dependency_transition")
+    errors << "receipt MCP dependency source mapping is incomplete" unless
+      transition.is_a?(Array) &&
+      transition.map { |entry| entry["package"] } == MCP_DEPENDENCIES &&
+      transition.all? do |entry|
+        %w[packaged latest].all? do |release|
+          requirement = entry["#{release}_requirement"]
+          source = entry["#{release}_source"]
+          if requirement
+            source.is_a?(Hash) &&
+              source["identity"] == "#{entry.fetch('package')}@#{requirement}" &&
+              source["integrity"].to_s.match?(/\Asha512-[A-Za-z0-9+\/=]+\z/) &&
+              source["source_url"] == "https://registry.npmjs.org/#{entry.fetch('package')}/-/#{entry.fetch('package').split('/').last}-#{requirement}.tgz"
+          else
+            source.nil?
+          end
+        end
+      end
+    sensitive_blobs = data.dig("delta", "release_sensitive_blobs")
+    errors << "receipt release-sensitive blob mapping is incomplete" unless
+      sensitive_blobs.is_a?(Hash) &&
+      sensitive_blobs.keys.sort == RELEASE_SENSITIVE_PATHS.sort &&
+      sensitive_blobs.all? do |path, blobs|
+        blobs.is_a?(Hash) &&
+          blobs.keys.sort == %w[latest packaged] &&
+          blobs.values.all? { |object_id| object_id.to_s.match?(/\A[0-9a-f]{40}\z/) } &&
+          sensitive_paths[path] == (blobs["packaged"] != blobs["latest"])
+      end
     errors << "receipt latest archive is not tree-verified" unless latest["archive_matches_commit_tree"] == true
     errors << "receipt changed-path count is invalid" unless data.dig("delta", "changed_paths").is_a?(Integer) && data.dig("delta", "changed_paths").positive?
-    sensitive_paths = data.dig("delta", "release_sensitive_paths")
     errors << "receipt release-sensitive path audit is incomplete" unless
       sensitive_paths.is_a?(Hash) &&
       sensitive_paths.keys.sort == RELEASE_SENSITIVE_PATHS.sort &&
@@ -356,6 +445,12 @@ module OpenCodeUpstreamReleaseAudit
     path_changes = RELEASE_SENSITIVE_PATHS.to_h do |path|
       [path, git(repo, "rev-parse", "#{packaged_tag}:#{path}") != git(repo, "rev-parse", "#{latest_tag}:#{path}")]
     end
+    sensitive_blobs = RELEASE_SENSITIVE_PATHS.to_h do |path|
+      [path, {
+        "packaged" => git(repo, "rev-parse", "#{packaged_tag}:#{path}"),
+        "latest" => git(repo, "rev-parse", "#{latest_tag}:#{path}"),
+      }]
+    end
     patch_inputs = packaging_patch_inputs(package_spec)
 
     {
@@ -379,6 +474,8 @@ module OpenCodeUpstreamReleaseAudit
       "delta" => {
         "changed_paths" => changed_paths.length,
         "release_sensitive_paths" => path_changes,
+        "release_sensitive_blobs" => sensitive_blobs,
+        "mcp_dependency_transition" => mcp_dependency_transition(repo, packaged_tag, latest_tag),
         "downstream_patch_revalidation_required" => patch_inputs.fetch("source0_revalidation_required"),
         "selected_source_evidence_refresh_required" => true,
       },

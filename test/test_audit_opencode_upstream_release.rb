@@ -15,13 +15,31 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
     with_release_fixture do |fixture|
       result = OpenCodeUpstreamReleaseAudit.audit(**fixture.fetch(:audit))
 
-      assert_equal("agentlab-opencode-upstream-release-audit/v3", result.fetch("schema"))
+      assert_equal("agentlab-opencode-upstream-release-audit/v4", result.fetch("schema"))
       assert_equal(fixture.fetch(:new_commit), result.dig("latest_release", "commit"))
       assert_equal("opencode-1.0.1", result.dig("latest_release", "archive_root"))
       assert(result.dig("latest_release", "archive_matches_commit_tree"))
       assert(result.dig("delta", "release_sensitive_paths", "bun.lock"))
       assert(result.dig("delta", "downstream_patch_revalidation_required"))
       assert(result.dig("delta", "selected_source_evidence_refresh_required"))
+      assert_equal(
+        [
+          ["@modelcontextprotocol/client", "2.0.0-beta.5", nil],
+          ["@modelcontextprotocol/server", "2.0.0-beta.5", nil],
+          ["@modelcontextprotocol/sdk", nil, "1.29.0"],
+        ],
+        result.dig("delta", "mcp_dependency_transition").map do |entry|
+          [entry.fetch("package"), entry["packaged_requirement"], entry["latest_requirement"]]
+        end,
+      )
+      assert_equal(
+        "https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.29.0.tgz",
+        result.dig("delta", "mcp_dependency_transition", 2, "latest_source", "source_url"),
+      )
+      assert_equal(
+        fixture.fetch(:new_lock_blob),
+        result.dig("delta", "release_sensitive_blobs", "bun.lock", "latest"),
+      )
       assert(result.dig("package_state", "blocked_state_preserved"))
       refute(result.dig("package_state", "copr_enabled"))
 
@@ -78,6 +96,22 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
       assert_includes(errors, "receipt latest archive root is inconsistent")
       assert_includes(errors, "receipt latest commit is invalid")
       assert_includes(errors, "receipt packaging patch inputs mismatch")
+    end
+  end
+
+  def test_receipt_rejects_incomplete_mcp_source_mapping
+    with_release_fixture do |fixture|
+      result = OpenCodeUpstreamReleaseAudit.audit(**fixture.fetch(:audit))
+      result.dig("delta", "mcp_dependency_transition", 2, "latest_source")["integrity"] = nil
+      result.dig("delta", "release_sensitive_blobs", "bun.lock")["latest"] = "invalid"
+
+      errors = OpenCodeUpstreamReleaseAudit.receipt_errors(
+        package_manifest: fixture.fetch(:manifest),
+        package_spec: fixture.dig(:audit, :package_spec),
+        receipt: result,
+      )
+      assert_includes(errors, "receipt MCP dependency source mapping is incomplete")
+      assert_includes(errors, "receipt release-sensitive blob mapping is incomplete")
     end
   end
 
@@ -190,13 +224,13 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
       git(repo, "config", "user.name", "Test")
       git(repo, "config", "user.email", "test@example.invalid")
 
-      write_release(repo, "1.0.0", "old-lock", "old-upstream-patch")
+      write_release(repo, "1.0.0", :packaged, "old-upstream-patch")
       git(repo, "add", ".")
       git(repo, "commit", "--quiet", "-m", "old release")
       git(repo, "tag", "v1.0.0")
       old_commit = git(repo, "rev-parse", "HEAD")
 
-      write_release(repo, "1.0.1", "new-lock", "new-upstream-patch")
+      write_release(repo, "1.0.1", :latest, "new-upstream-patch")
       git(repo, "add", ".")
       git(repo, "commit", "--quiet", "-m", "new release")
       git(repo, "tag", "v1.0.1")
@@ -236,6 +270,7 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
         manifest: manifest,
         patch: patch,
         new_commit: new_commit,
+        new_lock_blob: git(repo, "rev-parse", "v1.0.1:bun.lock"),
         audit: {
           package_manifest: manifest,
           package_spec: spec,
@@ -254,10 +289,35 @@ class AuditOpenCodeUpstreamReleaseTest < Minitest::Test
     output.strip
   end
 
-  def write_release(repo, version, lock, upstream_patch)
-    File.write(File.join(repo, "bun.lock"), lock)
+  def write_release(repo, version, release, upstream_patch)
+    packaged = release == :packaged
+    lock_records = if packaged
+                     <<~LOCK
+                       {
+                         "packages": {
+                           "@modelcontextprotocol/client": ["@modelcontextprotocol/client@2.0.0-beta.5", "", {}, "sha512-Y2xpZW50"],
+                           "@modelcontextprotocol/server": ["@modelcontextprotocol/server@2.0.0-beta.5", "", {}, "sha512-c2VydmVy"],
+                         },
+                       }
+                     LOCK
+                   else
+                     <<~LOCK
+                       {
+                         "packages": {
+                           "@modelcontextprotocol/sdk": ["@modelcontextprotocol/sdk@1.29.0", "", {}, "sha512-c2Rr"],
+                         },
+                       }
+                     LOCK
+                   end
+    dependencies = packaged ? { "@modelcontextprotocol/client" => "2.0.0-beta.5" } : { "@modelcontextprotocol/sdk" => "1.29.0" }
+    dev_dependencies = packaged ? { "@modelcontextprotocol/server" => "2.0.0-beta.5" } : {}
+    File.write(File.join(repo, "bun.lock"), lock_records)
     File.write(File.join(repo, "package.json"), JSON.generate({ "version" => version }))
-    File.write(File.join(repo, "packages", "opencode", "package.json"), JSON.generate({ "version" => version }))
+    File.write(File.join(repo, "packages", "opencode", "package.json"), JSON.generate({
+      "version" => version,
+      "dependencies" => dependencies,
+      "devDependencies" => dev_dependencies,
+    }))
     File.write(File.join(repo, "patches", "dependency.patch"), upstream_patch)
   end
 
