@@ -5,8 +5,8 @@
   "audit_date": "2026-08-01",
   "auditor": {
     "path": "scripts/audit-opencode-final-licenses",
-    "size_bytes": 15548,
-    "sha256": "7819935eba043fb30ff261ced64b7bf5b60c01021f881eedd632cbc61bdfdc20"
+    "size_bytes": 17213,
+    "sha256": "a5c36b8beb7b09b08155e11aea9e691b2c60c5552d42e75aaa8866fcbabfe514"
   },
   "inputs": {
     "binary_embedding": {
@@ -31,8 +31,8 @@
     },
     "bun_final_linked_license_closure": {
       "path": "packages/bun/bun-1.3.14-final-linked-license-closure.json",
-      "size_bytes": 1978162,
-      "sha256": "f744160af861969b4fc15918bc3042851d20bdbb6c6065b662447cbb4e730e98"
+      "size_bytes": 1979768,
+      "sha256": "8794acac75c1c18525a265c849970732d813a1d3aaa43a89e38b0b9dc81a394f"
     }
   },
   "candidate_expressions": {
@@ -141,6 +141,12 @@
     "target": "fedora-44-x86_64-glibc-system-lolhtml",
     "linked_input_count": 1165,
     "native_license_selections_verified": true,
+    "selected_license_evidence": {
+      "bundled_native_component_count": 18,
+      "bundled_native_license_file_count": 23,
+      "npm_codegen_package_count": 38,
+      "npm_codegen_packages_with_required_text": 38
+    },
     "webkit_transitive_dependency_count": 5098,
     "unresolved_webkit_headerless_files": [
       "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp",

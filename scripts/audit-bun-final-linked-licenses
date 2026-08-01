@@ -18,12 +18,32 @@ module BunFinalLinkedLicenseAudit
   PREVIOUS_SOURCE_INVENTORY_RECORD = {
     "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
     "size_bytes" => 127_845,
-    "sha256" => "e8db5439dc13c05fc96917ccc35721333fde5f8ab273280c4fc96f8d91d2e130"
+    "sha256" => "bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25"
   }.freeze
   CURRENT_SOURCE_INVENTORY_RECORD = {
     "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
     "size_bytes" => 127_845,
-    "sha256" => "bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25"
+    "sha256" => "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb"
+  }.freeze
+  NATIVE_SELECTED_EXPRESSION_COUNTS = {
+    "Apache-2.0" => 2,
+    "BSD-2-Clause AND BSD-3-Clause AND CC0-1.0" => 1,
+    "BSD-2-Clause AND libpng-2.0" => 1,
+    "BSD-3-Clause OR GPL-2.0-only" => 1,
+    "BSD-3-Clause WITH Google-Patent-WebM" => 1,
+    "CC0-1.0 OR BSD-2-Clause" => 1,
+    "IJG AND BSD-3-Clause" => 1,
+    "LGPL-2.1-only" => 1,
+    "MIT" => 6,
+    "MIT AND BSD-2-Clause" => 1,
+    "MIT AND BSD-2-Clause AND BSD-3-Clause" => 1,
+    "Zlib" => 1
+  }.freeze
+  NPM_SELECTED_EXPRESSION_COUNTS = {
+    "Apache-2.0" => 1,
+    "Artistic-2.0" => 1,
+    "BSD-3-Clause" => 1,
+    "MIT" => 35
   }.freeze
   BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
   UNRESOLVED_NATIVE_REASONS = {}.freeze
@@ -414,19 +434,26 @@ module BunFinalLinkedLicenseAudit
     }
   end
 
-  def generate(proof_root:, source_inventory_path:, self_build_path:, relink_audit_path:, relink_kit_path:, lolhtml_package_path:, audit_date:)
+  def generate(proof_root:, source_inventory_path:, npm_codegen_path:, self_build_path:, relink_audit_path:, relink_kit_path:, lolhtml_package_path:, audit_date:)
     proof_root = File.realpath(proof_root)
     build_root = File.join(proof_root, "build", "release-local")
     ninja_path = File.join(build_root, "build.ninja")
     raise Error, "missing retained final build graph" unless File.file?(ninja_path)
 
     source_inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    npm_codegen = load_json(npm_codegen_path, "bun-npm-code-generation-closure/v2")
     self_build = load_json(self_build_path, "bun-self-rebuild-proof/v2")
     relink_audit = load_json(relink_audit_path, "bun-relink-materials-audit/v3")
     relink_kit = load_json(relink_kit_path, "bun-relink-kit/v2")
     lolhtml = YAML.safe_load(File.read(lolhtml_package_path), aliases: false)
 
     raise Error, "Bun release mismatch" unless source_inventory.fetch("release") == "1.3.14" && self_build.fetch("release") == "1.3.14"
+    raise Error, "npm code-generation release mismatch" unless npm_codegen["package"] == "bun" && npm_codegen["version"] == "1.3.14"
+    raise Error, "npm code-generation source inventory mismatch" unless npm_codegen.dig("inputs", "source_license_inventory") == repo_record(source_inventory_path)
+    raise Error, "npm code-generation selected expression mismatch" unless npm_codegen.dig("npm", "selected_expression_counts") == NPM_SELECTED_EXPRESSION_COUNTS
+    raise Error, "npm code-generation selected package mismatch" unless npm_codegen.dig("npm", "selected_package_manifest_count") == 38 && npm_codegen.dig("npm", "packages_with_required_text") == 38 && npm_codegen.dig("npm", "packages_missing_required_text") == []
+    raise Error, "npm code-generation selected license review incomplete" unless npm_codegen.dig("validation", "selected_package_license_expressions_verified") == true && npm_codegen.dig("validation", "all_selected_package_license_texts_verified") == true
+    raise Error, "npm code-generation closure unexpectedly complete" unless npm_codegen.dig("validation", "final_npm_codegen_closure_verified") == false
     raise Error, "relink audit does not bind the self-rebuild" unless relink_audit.dig("source_build", "receipt") == File.basename(self_build_path) &&
       relink_audit.dig("source_build", "receipt_sha256") == sha256(self_build_path)
     raise Error, "relink kit does not bind the relink audit" unless relink_kit.dig("source_audit", "sha256") == sha256(relink_audit_path)
@@ -456,6 +483,11 @@ module BunFinalLinkedLicenseAudit
         "license_selection_verified" => name == "bun" || !source["license_selection"].nil?
       }
     end
+    native_components = components.select { |component| component["kind"] == "bundled_native_source" }
+    native_expression_counts = native_components.group_by { |component| component.dig("license_selection", "selected_expression") }.transform_values(&:length).sort.to_h
+    native_license_file_count = native_components.sum { |component| Array(component["license_files"]).length }
+    raise Error, "selected native expression set mismatch" unless native_expression_counts == NATIVE_SELECTED_EXPRESSION_COUNTS
+    raise Error, "selected native license files are incomplete" unless native_license_file_count == 23 && native_components.all? { |component| Array(component["license_files"]).any? }
 
     provider_input = self_build.dig("inputs", "offline_inputs", "system_lolhtml_provider")
     provider_license = lolhtml.fetch("license_audit")
@@ -484,6 +516,8 @@ module BunFinalLinkedLicenseAudit
       source_inventory: source_inventory,
       self_build: self_build
     )
+    lolhtml_record = repo_record(lolhtml_package_path)
+    lolhtml_record["path"] = "packages/lol-html/package.yml"
 
     {
       "schema" => "bun-final-linked-license-closure/v3",
@@ -494,9 +528,10 @@ module BunFinalLinkedLicenseAudit
       "inputs" => {
         "self_rebuild" => repo_record(self_build_path),
         "source_license_inventory" => repo_record(source_inventory_path),
+        "npm_code_generation_closure" => repo_record(npm_codegen_path),
         "relink_audit" => repo_record(relink_audit_path),
         "relink_kit" => repo_record(relink_kit_path),
-        "lolhtml_package" => repo_record(lolhtml_package_path)
+        "lolhtml_package" => lolhtml_record
       },
       "final_link" => {
         "output" => relink_audit.dig("final_link", "output"),
@@ -510,6 +545,24 @@ module BunFinalLinkedLicenseAudit
         "system_link_libraries" => system_libraries
       },
       "components" => components,
+      "selected_license_evidence" => {
+        "bundled_native" => {
+          "component_count" => native_components.length,
+          "selected_expression_counts" => native_expression_counts,
+          "selected_license_file_count" => native_license_file_count,
+          "selected_expressions_fedora_allowed" => true,
+          "selected_license_files_verified" => true
+        },
+        "npm_codegen_inputs" => {
+          "package_count" => npm_codegen.dig("npm", "selected_package_manifest_count"),
+          "selected_expression_counts" => npm_codegen.dig("npm", "selected_expression_counts"),
+          "packages_with_required_text" => npm_codegen.dig("npm", "packages_with_required_text"),
+          "packages_missing_required_text" => npm_codegen.dig("npm", "packages_missing_required_text"),
+          "selected_expressions_fedora_allowed" => true,
+          "selected_required_texts_verified" => true,
+          "final_codegen_provenance_verified" => false
+        }
+      },
       "webkit" => webkit_mapping.merge(
         "source_commit" => self_build.dig("inputs", "webkit", "commit"),
         "source_archive_sha256" => self_build.dig("inputs", "webkit", "archive_sha256"),
@@ -547,6 +600,10 @@ module BunFinalLinkedLicenseAudit
         "native_license_selection_review_verified" => true,
         "network_used" => false,
         "native_license_selections_verified" => true,
+        "bundled_native_selected_spdx_verified" => true,
+        "bundled_native_selected_license_texts_verified" => true,
+        "npm_codegen_selected_spdx_verified" => true,
+        "npm_codegen_selected_license_texts_verified" => true,
         "webkit_member_source_mapping_verified" => true,
         "webkit_license_marker_inventory_verified" => true,
         "webkit_transitive_dependency_mapping_verified" => true,
@@ -562,7 +619,7 @@ module BunFinalLinkedLicenseAudit
     }
   end
 
-  def rebind_receipt(receipt_path:, source_inventory_path:, audit_date:)
+  def rebind_receipt(receipt_path:, source_inventory_path:, npm_codegen_path:, audit_date:)
     receipt = JSON.parse(File.read(receipt_path))
     raise Error, "unsupported Bun final linked-license receipt" unless receipt["schema"] == "bun-final-linked-license-closure/v3"
     raise Error, "Bun final linked-license release drifted" unless receipt["package"] == "bun" && receipt["version"] == "1.3.14"
@@ -572,9 +629,10 @@ module BunFinalLinkedLicenseAudit
     end
 
     source_record = repo_record(source_inventory_path)
+    npm_codegen_record = repo_record(npm_codegen_path)
     raise Error, "Bun source-license inventory drifted" unless source_record == CURRENT_SOURCE_INVENTORY_RECORD
     source_inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
-    unless source_inventory["package"] == "bun" && source_inventory["release"] == "1.3.14" && source_inventory["rpm_release"] == "0.0.39"
+    unless source_inventory["package"] == "bun" && source_inventory["release"] == "1.3.14" && source_inventory["rpm_release"] == "0.0.40"
       raise Error, "Bun source-license inventory identity drifted"
     end
     validation = source_inventory.fetch("validation")
@@ -592,8 +650,20 @@ module BunFinalLinkedLicenseAudit
     unless required_true.all? { |key| validation[key] == true } && validation["network_used"] == false && required_false.all? { |key| validation[key] == false }
       raise Error, "Bun source-license inventory validation state drifted"
     end
+    npm_codegen = load_json(npm_codegen_path, "bun-npm-code-generation-closure/v2")
+    unless npm_codegen["package"] == "bun" && npm_codegen["version"] == "1.3.14" && npm_codegen["rpm_release"] == "0.0.40" && npm_codegen.dig("inputs", "source_license_inventory") == source_record
+      raise Error, "Bun npm code-generation closure identity drifted"
+    end
+    unless npm_codegen.dig("npm", "selected_expression_counts") == NPM_SELECTED_EXPRESSION_COUNTS && npm_codegen.dig("npm", "selected_package_manifest_count") == 38 && npm_codegen.dig("npm", "packages_with_required_text") == 38 && npm_codegen.dig("npm", "packages_missing_required_text") == []
+      raise Error, "Bun npm code-generation selected license evidence drifted"
+    end
+    npm_validation = npm_codegen.fetch("validation")
+    unless npm_validation["selected_package_license_expressions_verified"] == true && npm_validation["all_selected_package_license_texts_verified"] == true && npm_validation["final_npm_codegen_closure_verified"] == false
+      raise Error, "Bun npm code-generation validation state drifted"
+    end
 
     receipt.fetch("inputs")["source_license_inventory"] = source_record
+    receipt.fetch("inputs")["npm_code_generation_closure"] = npm_codegen_record
     receipt["audit_date"] = audit_date
     receipt
   end
@@ -613,6 +683,7 @@ module BunFinalLinkedLicenseAudit
     OptionParser.new do |parser|
       parser.on("--proof-root PATH") { |value| options[:proof_root] = value }
       parser.on("--source-inventory PATH") { |value| options[:source_inventory] = value }
+      parser.on("--npm-codegen PATH") { |value| options[:npm_codegen] = value }
       parser.on("--self-build PATH") { |value| options[:self_build] = value }
       parser.on("--relink-audit PATH") { |value| options[:relink_audit] = value }
       parser.on("--relink-kit PATH") { |value| options[:relink_kit] = value }
@@ -623,7 +694,7 @@ module BunFinalLinkedLicenseAudit
       parser.on("--check") { options[:check] = true }
       parser.on("--receipt PATH") { |value| options[:receipt] = value }
     end.parse!(argv)
-    required = options[:rebind_receipt] ? %i[source_inventory audit_date] : %i[proof_root source_inventory self_build relink_audit relink_kit lolhtml_package audit_date]
+    required = options[:rebind_receipt] ? %i[source_inventory npm_codegen audit_date] : %i[proof_root source_inventory npm_codegen self_build relink_audit relink_kit lolhtml_package audit_date]
     required.each { |key| raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key] }
     Date.iso8601(options.fetch(:audit_date))
     raise Error, "--output is required unless --check" unless options[:output] || options[:check]
@@ -633,12 +704,14 @@ module BunFinalLinkedLicenseAudit
                rebind_receipt(
                  receipt_path: options.fetch(:rebind_receipt),
                  source_inventory_path: options.fetch(:source_inventory),
+                 npm_codegen_path: options.fetch(:npm_codegen),
                  audit_date: options.fetch(:audit_date)
                )
              else
                generate(
                  proof_root: options.fetch(:proof_root),
                  source_inventory_path: options.fetch(:source_inventory),
+                 npm_codegen_path: options.fetch(:npm_codegen),
                  self_build_path: options.fetch(:self_build),
                  relink_audit_path: options.fetch(:relink_audit),
                  relink_kit_path: options.fetch(:relink_kit),

@@ -45,12 +45,12 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
       **inputs,
       input_records: records,
       auditor_record: OpenCodeFinalLicenseAudit.repo_record(File.join(ROOT, "scripts", "audit-opencode-final-licenses")),
-      audit_date: "2026-07-31"
+      audit_date: "2026-08-01"
     )
   end
 
   def test_checked_receipt_matches_live_inputs_without_legal_overclaim
-    actual = OpenCodeFinalLicenseAudit.generate(**paths, audit_date: "2026-07-31")
+    actual = OpenCodeFinalLicenseAudit.generate(**paths, audit_date: "2026-08-01")
     checked = JSON.parse(File.read(File.join(OPENCODE, "opencode-1.18.8-final-license-closure.json")))
 
     assert_equal(checked, actual)
@@ -58,6 +58,10 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
     assert_equal(6, actual.dig("unresolved", "bun_webkit_headerless_files").length)
     assert_equal(true, actual.dig("validation", "native_wasm_source_mapping_verified"))
     assert_equal(true, actual.dig("validation", "bun_final_link_mapping_verified"))
+    assert_equal(18, actual.dig("bun_runtime", "selected_license_evidence", "bundled_native_component_count"))
+    assert_equal(23, actual.dig("bun_runtime", "selected_license_evidence", "bundled_native_license_file_count"))
+    assert_equal(38, actual.dig("bun_runtime", "selected_license_evidence", "npm_codegen_package_count"))
+    assert_equal(38, actual.dig("bun_runtime", "selected_license_evidence", "npm_codegen_packages_with_required_text"))
     %w[
       all_required_license_texts_verified final_aggregate_license_expression_verified
       rpm_license_payload_complete clean_fedora_build_matrix_verified copr_submission_verified
@@ -77,6 +81,21 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
     inputs = parsed_inputs
     inputs.dig(:bun_final_license, "validation")["final_license_expression_verified"] = true
 
+    assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
+  end
+
+  def test_rejects_incomplete_bun_selected_license_evidence
+    %w[
+      bundled_native_selected_spdx_verified bundled_native_selected_license_texts_verified
+      npm_codegen_selected_spdx_verified npm_codegen_selected_license_texts_verified
+    ].each do |flag|
+      inputs = parsed_inputs
+      inputs.dig(:bun_final_license, "validation")[flag] = false
+      assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
+    end
+
+    inputs = parsed_inputs
+    inputs.dig(:bun_final_license, "selected_license_evidence", "npm_codegen_inputs")["packages_with_required_text"] = 37
     assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
   end
 end

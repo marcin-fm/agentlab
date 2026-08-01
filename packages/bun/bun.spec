@@ -31,11 +31,11 @@
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a
 %global arm64_release_local_closure_sha256 d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a
-%global source_license_inventory_sha256 bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25
+%global source_license_inventory_sha256 c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb
 %global source_license_audit_script_sha256 cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1
-%global final_linked_license_closure_sha256 f744160af861969b4fc15918bc3042851d20bdbb6c6065b662447cbb4e730e98
-%global final_linked_license_audit_script_sha256 2c846075b5965676414c265823397e61d79f74e4bea2b8d8e7b7cb628249c38c
-%global npm_code_generation_closure_sha256 c9b96a6850dfaad1818054087c28fea879654edb6a97456b3c121dd71849fb79
+%global final_linked_license_closure_sha256 8794acac75c1c18525a265c849970732d813a1d3aaa43a89e38b0b9dc81a394f
+%global final_linked_license_audit_script_sha256 50443e28a67a833cff088e20722b469f96bd147a6f8fa8c6d3ca012ba3f1b7fc
+%global npm_code_generation_closure_sha256 1b80c19b2e32f527ce2d468a696b3c3f02866312c2a6ca40bdbb5c0f74f676e4
 %global npm_code_generation_audit_script_sha256 c29b2416b41dbfd2b809e3f23f2d16febaef5ec295ccb4bb49568b1b44a669f0
 %global peechy_license_sha256 a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
@@ -46,7 +46,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.39%{?dist}
+Release:        0.0.40%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -248,7 +248,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.39 \
+  --rpm-release 0.0.40 \
   --date 2026-07-31 \
   --peechy-license "%{SOURCE32}" \
   --check \
@@ -394,6 +394,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Aug 01 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.40
+- Bind selected native and npm license evidence into the final-link closure without final payload overclaims.
+
 * Sat Aug 01 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.39
 - Preserve the complete Fedora 44 aarch64 source-build and wrapper-free relink proof chain.
 

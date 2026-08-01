@@ -13,7 +13,12 @@
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
       "size_bytes": 127845,
-      "sha256": "bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25"
+      "sha256": "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb"
+    },
+    "npm_code_generation_closure": {
+      "path": "packages/bun/bun-1.3.14-npm-code-generation-closure.json",
+      "size_bytes": 51956,
+      "sha256": "1b80c19b2e32f527ce2d468a696b3c3f02866312c2a6ca40bdbb5c0f74f676e4"
     },
     "relink_audit": {
       "path": "packages/bun/relink-materials-proof.json",
@@ -460,6 +465,42 @@
       "license_selection_verified": true
     }
   ],
+  "selected_license_evidence": {
+    "bundled_native": {
+      "component_count": 18,
+      "selected_expression_counts": {
+        "Apache-2.0": 2,
+        "BSD-2-Clause AND BSD-3-Clause AND CC0-1.0": 1,
+        "BSD-2-Clause AND libpng-2.0": 1,
+        "BSD-3-Clause OR GPL-2.0-only": 1,
+        "BSD-3-Clause WITH Google-Patent-WebM": 1,
+        "CC0-1.0 OR BSD-2-Clause": 1,
+        "IJG AND BSD-3-Clause": 1,
+        "LGPL-2.1-only": 1,
+        "MIT": 6,
+        "MIT AND BSD-2-Clause": 1,
+        "MIT AND BSD-2-Clause AND BSD-3-Clause": 1,
+        "Zlib": 1
+      },
+      "selected_license_file_count": 23,
+      "selected_expressions_fedora_allowed": true,
+      "selected_license_files_verified": true
+    },
+    "npm_codegen_inputs": {
+      "package_count": 38,
+      "selected_expression_counts": {
+        "Apache-2.0": 1,
+        "Artistic-2.0": 1,
+        "BSD-3-Clause": 1,
+        "MIT": 35
+      },
+      "packages_with_required_text": 38,
+      "packages_missing_required_text": [],
+      "selected_expressions_fedora_allowed": true,
+      "selected_required_texts_verified": true,
+      "final_codegen_provenance_verified": false
+    }
+  },
   "webkit": {
     "build_ninja": {
       "path": "generated/build.ninja",
@@ -42085,6 +42126,10 @@
     "native_license_selection_review_verified": true,
     "network_used": false,
     "native_license_selections_verified": true,
+    "bundled_native_selected_spdx_verified": true,
+    "bundled_native_selected_license_texts_verified": true,
+    "npm_codegen_selected_spdx_verified": true,
+    "npm_codegen_selected_license_texts_verified": true,
     "webkit_member_source_mapping_verified": true,
     "webkit_license_marker_inventory_verified": true,
     "webkit_transitive_dependency_mapping_verified": true,

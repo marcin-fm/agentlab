@@ -106,6 +106,8 @@ module OpenCodeFinalLicenseAudit
     bun_validation = bun_final_license.fetch("validation")
     %w[
       input_receipts_verified final_link_inputs_mapped native_license_selections_verified
+      bundled_native_selected_spdx_verified bundled_native_selected_license_texts_verified
+      npm_codegen_selected_spdx_verified npm_codegen_selected_license_texts_verified
       webkit_member_source_mapping_verified webkit_transitive_dependency_mapping_verified
       system_lolhtml_provider_verified
     ].each do |flag|
@@ -116,6 +118,14 @@ module OpenCodeFinalLicenseAudit
     end
     ensure!(bun_validation["webkit_linked_file_semantic_review_verified"] == false, "Bun WebKit semantic review unexpectedly passed")
     ensure!(bun_validation["final_npm_codegen_closure_verified"] == false, "Bun npm/code-generation closure unexpectedly passed")
+
+    bun_selected = bun_final_license.fetch("selected_license_evidence")
+    bun_native_selected = bun_selected.fetch("bundled_native")
+    ensure!(bun_native_selected["component_count"] == 18 && bun_native_selected["selected_license_file_count"] == 23, "Bun selected native license evidence is incomplete")
+    ensure!(bun_native_selected["selected_expressions_fedora_allowed"] == true && bun_native_selected["selected_license_files_verified"] == true, "Bun selected native license review is incomplete")
+    bun_npm_selected = bun_selected.fetch("npm_codegen_inputs")
+    ensure!(bun_npm_selected["package_count"] == 38 && bun_npm_selected["packages_with_required_text"] == 38 && bun_npm_selected["packages_missing_required_text"] == [], "Bun selected npm license evidence is incomplete")
+    ensure!(bun_npm_selected["selected_expressions_fedora_allowed"] == true && bun_npm_selected["selected_required_texts_verified"] == true && bun_npm_selected["final_codegen_provenance_verified"] == false, "Bun selected npm license review is incomplete")
 
     bun_unresolved = bun_final_license.fetch("unresolved")
     webkit_holds = bun_unresolved.fetch("webkit_headerless_files")
@@ -170,6 +180,12 @@ module OpenCodeFinalLicenseAudit
         "target" => bun_final_license.fetch("target"),
         "linked_input_count" => bun_final_license.dig("final_link", "linked_input_count"),
         "native_license_selections_verified" => true,
+        "selected_license_evidence" => {
+          "bundled_native_component_count" => bun_native_selected.fetch("component_count"),
+          "bundled_native_license_file_count" => bun_native_selected.fetch("selected_license_file_count"),
+          "npm_codegen_package_count" => bun_npm_selected.fetch("package_count"),
+          "npm_codegen_packages_with_required_text" => bun_npm_selected.fetch("packages_with_required_text")
+        },
         "webkit_transitive_dependency_count" => bun_final_license.dig("webkit", "transitive_dependencies", "unique_dependency_count"),
         "unresolved_webkit_headerless_files" => webkit_holds,
         "external_lolhtml_provider" => bun_final_license.fetch("external_lolhtml_provider"),

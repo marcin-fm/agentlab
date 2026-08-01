@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.39",
+  "rpm_release": "0.0.40",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-08-01",
   "source_generation": {
@@ -19,16 +19,16 @@
     ],
     "unique_closure_inputs": 258,
     "npm_union": { "filename": "bun-1.3.14-npm-sources.tar.gz", "size_bytes": 41222363, "sha256": "c8f251509523fe27a648e496df9d5a7ee564c07a8afc5d67c712489df2fee7b4", "member_count": 239, "input_bytes": 41234414, "member_manifest_sha256": "9af8edcbeb8a83527fc005c0a74c8c71a1147afcaa55e2c97ba04e26e15b74a2", "receipt_sha256": "51818335f99656fdf315ef8c454fae0119af2ab46d3d9e21e4900435ab031884", "x64_selected_archives": 236, "arm64_selected_archives": 236 },
-    "source_license_inventory": { "filename": "bun-1.3.14-source-license-inventory.json", "size_bytes": 127845, "sha256": "bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25" },
+    "source_license_inventory": { "filename": "bun-1.3.14-source-license-inventory.json", "size_bytes": 127845, "sha256": "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb" },
     "source_license_audit_script": { "filename": "audit-bun-source-licenses", "size_bytes": 26898, "sha256": "cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1" },
-    "final_linked_license_closure": { "filename": "bun-1.3.14-final-linked-license-closure.json", "size_bytes": 1978162, "sha256": "f744160af861969b4fc15918bc3042851d20bdbb6c6065b662447cbb4e730e98" },
-    "final_linked_license_audit_script": { "filename": "audit-bun-final-linked-licenses", "size_bytes": 34556, "sha256": "2c846075b5965676414c265823397e61d79f74e4bea2b8d8e7b7cb628249c38c" },
-    "npm_code_generation_closure": { "filename": "bun-1.3.14-npm-code-generation-closure.json", "size_bytes": 51956, "sha256": "c9b96a6850dfaad1818054087c28fea879654edb6a97456b3c121dd71849fb79" },
+    "final_linked_license_closure": { "filename": "bun-1.3.14-final-linked-license-closure.json", "size_bytes": 1979768, "sha256": "8794acac75c1c18525a265c849970732d813a1d3aaa43a89e38b0b9dc81a394f" },
+    "final_linked_license_audit_script": { "filename": "audit-bun-final-linked-licenses", "size_bytes": 39968, "sha256": "50443e28a67a833cff088e20722b469f96bd147a6f8fa8c6d3ca012ba3f1b7fc" },
+    "npm_code_generation_closure": { "filename": "bun-1.3.14-npm-code-generation-closure.json", "size_bytes": 51956, "sha256": "1b80c19b2e32f527ce2d468a696b3c3f02866312c2a6ca40bdbb5c0f74f676e4" },
     "npm_code_generation_audit_script": { "filename": "audit-bun-npm-code-generation", "size_bytes": 25582, "sha256": "c29b2416b41dbfd2b809e3f23f2d16febaef5ec295ccb4bb49568b1b44a669f0" },
     "peechy_license_text": { "filename": "bun-1.3.14-peechy-0.4.34-LICENSE.md", "size_bytes": 1062, "sha256": "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e" },
     "retired_lolhtml_inputs_absent": true
   },
-  "spec": { "filename": "bun.spec", "size_bytes": 26695, "sha256": "9a836b20677d203abfcc3da49ce28c4c14da90274dd83ccb3f1356c17aeb825c" },
-  "srpm": { "filename": "bun-1.3.14-0.0.39.fc44.src.rpm", "size_bytes": 329438552, "sha256": "5ec122a3d497e0c73c7f02306d57d134dafd1d274d796fb88ea229e1cfa08326", "digest_check": "ok", "inventory_members": 41, "inventory_sha256": "5b220d19fd5e7aed9ddb31ac210f33d472421df2e25b5d95c383de5820de441d", "member_manifest_sha256": "b2fdd0fd238a74f00b7d04a454be70e5e5e13aaadb1053ebb35c1aab587ecf3b", "uncompressed_member_bytes": 335747537 },
+  "spec": { "filename": "bun.spec", "size_bytes": 26867, "sha256": "04e4f5e8dc016468418a1b2b9f6f1fa763cca67e14b713152836e80c183db663" },
+  "srpm": { "filename": "bun-1.3.14-0.0.40.fc44.src.rpm", "size_bytes": 329438070, "sha256": "3d82379c2ebee951df1c4f59daa4d87da19f87255550cdbe122213707fd2ed87", "digest_check": "ok", "inventory_members": 41, "inventory_sha256": "5b220d19fd5e7aed9ddb31ac210f33d472421df2e25b5d95c383de5820de441d", "member_manifest_sha256": "86c5ee982f2f21ac77b185a5fb1a6dcc5fe99c8136ba6eaea075b2086b621d13", "uncompressed_member_bytes": 335754727 },
   "validation": { "direct_source_checksums_verified": true, "source_closures_regenerated_byte_identically": true, "npm_union_deterministic": true, "generated_source_checksums_verified": true, "packaging_source_checksums_verified": true, "deterministic_materialization_verified": true, "retired_lolhtml_inputs_absent": true, "srpm_built": true, "srpm_inventory_verified": true, "source_members_byte_identical": true, "rpm_build_executed": false, "rpm_installed": false }
 }
