@@ -2,7 +2,7 @@
   "schema": "bun-srpm-source-delivery/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.41",
+  "rpm_release": "0.0.42",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-08-01",
   "source_generation": {
@@ -14,23 +14,113 @@
     "declared_sources": 35,
     "patches": 7,
     "source_closures": [
-      { "filename": "bun-1.3.14-release-local-source-closure.json", "sha256": "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080", "target": { "os": "linux", "cpu": "x64", "libc": "glibc" }, "input_count": 255 },
-      { "filename": "bun-1.3.14-release-local-source-closure-arm64.json", "sha256": "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a", "target": { "os": "linux", "cpu": "arm64", "libc": "glibc" }, "input_count": 255 }
+      {
+        "filename": "bun-1.3.14-release-local-source-closure.json",
+        "sha256": "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080",
+        "target": {
+          "os": "linux",
+          "cpu": "x64",
+          "libc": "glibc"
+        },
+        "input_count": 255
+      },
+      {
+        "filename": "bun-1.3.14-release-local-source-closure-arm64.json",
+        "sha256": "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a",
+        "target": {
+          "os": "linux",
+          "cpu": "arm64",
+          "libc": "glibc"
+        },
+        "input_count": 255
+      }
     ],
     "unique_closure_inputs": 258,
-    "npm_union": { "filename": "bun-1.3.14-npm-sources.tar.gz", "size_bytes": 41222363, "sha256": "c8f251509523fe27a648e496df9d5a7ee564c07a8afc5d67c712489df2fee7b4", "member_count": 239, "input_bytes": 41234414, "member_manifest_sha256": "9af8edcbeb8a83527fc005c0a74c8c71a1147afcaa55e2c97ba04e26e15b74a2", "receipt_sha256": "51818335f99656fdf315ef8c454fae0119af2ab46d3d9e21e4900435ab031884", "x64_selected_archives": 236, "arm64_selected_archives": 236 },
-    "source_license_inventory": { "filename": "bun-1.3.14-source-license-inventory.json", "size_bytes": 127845, "sha256": "2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9" },
-    "source_license_audit_script": { "filename": "audit-bun-source-licenses", "size_bytes": 26898, "sha256": "cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1" },
-    "final_linked_license_closure": { "filename": "bun-1.3.14-final-linked-license-closure.json", "size_bytes": 1979873, "sha256": "c086e54dc23f0fea2c59f454450729b9e3029388467c4ac1d04f45354f3aab20" },
-    "final_linked_license_audit_script": { "filename": "audit-bun-final-linked-licenses", "size_bytes": 40405, "sha256": "86886a72b4c3d9b763bb36e08c2832e2f9d5078914281805014c9bdec6ac5622" },
-    "npm_code_generation_closure": { "filename": "bun-1.3.14-npm-code-generation-closure.json", "size_bytes": 52223, "sha256": "9fef51b9e653a6327292c5d3cc5c03f3bfd554871620ea1351dd4e5220e1ca09" },
-    "npm_code_generation_audit_script": { "filename": "audit-bun-npm-code-generation", "size_bytes": 27173, "sha256": "bcf84a275c26e0943bc006dfce0ca92e022658cebc9926b49f0133acb194b6d2" },
-    "codegen_reexecution_proof": { "filename": "bun-1.3.14-codegen-reexecution-proof.json", "size_bytes": 22470, "sha256": "36860535b6e650a2f4cf23ab179929f4d5633d9a11eff440f6359b8e9e68e036" },
-    "codegen_reexecution_audit_script": { "filename": "audit-bun-codegen-reexecution", "size_bytes": 15959, "sha256": "2514b4a213d98615ffa8ef41d8289028cf0074efed58416db48b5ec0fce945f5" },
-    "peechy_license_text": { "filename": "bun-1.3.14-peechy-0.4.34-LICENSE.md", "size_bytes": 1062, "sha256": "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e" },
+    "npm_union": {
+      "filename": "bun-1.3.14-npm-sources.tar.gz",
+      "size_bytes": 41222363,
+      "sha256": "c8f251509523fe27a648e496df9d5a7ee564c07a8afc5d67c712489df2fee7b4",
+      "member_count": 239,
+      "input_bytes": 41234414,
+      "member_manifest_sha256": "9af8edcbeb8a83527fc005c0a74c8c71a1147afcaa55e2c97ba04e26e15b74a2",
+      "receipt_sha256": "51818335f99656fdf315ef8c454fae0119af2ab46d3d9e21e4900435ab031884",
+      "x64_selected_archives": 236,
+      "arm64_selected_archives": 236
+    },
+    "source_license_inventory": {
+      "filename": "bun-1.3.14-source-license-inventory.json",
+      "size_bytes": 127845,
+      "sha256": "0c2f6fd017655e88c14ef1cf109d856d9bdec413949882fbabd95484bd3ae82d"
+    },
+    "source_license_audit_script": {
+      "filename": "audit-bun-source-licenses",
+      "size_bytes": 26898,
+      "sha256": "cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1"
+    },
+    "final_linked_license_closure": {
+      "filename": "bun-1.3.14-final-linked-license-closure.json",
+      "size_bytes": 1980077,
+      "sha256": "1525c99effeaf93ff08c1e805619cd6425804a0d238c9ef8e41d37f2b1129b3a"
+    },
+    "final_linked_license_audit_script": {
+      "filename": "audit-bun-final-linked-licenses",
+      "size_bytes": 45279,
+      "sha256": "cc2db709ea834ccee30e18f0198a852c5369b4b316fe7391d318f8459547b246"
+    },
+    "npm_code_generation_closure": {
+      "filename": "bun-1.3.14-npm-code-generation-closure.json",
+      "size_bytes": 52193,
+      "sha256": "88fbf017ef36b00b69cfbbe39976724198206bdae87fc13c12adb94459d7a5f9"
+    },
+    "npm_code_generation_audit_script": {
+      "filename": "audit-bun-npm-code-generation",
+      "size_bytes": 27173,
+      "sha256": "bcf84a275c26e0943bc006dfce0ca92e022658cebc9926b49f0133acb194b6d2"
+    },
+    "codegen_reexecution_proof": {
+      "filename": "bun-1.3.14-codegen-reexecution-proof.json",
+      "size_bytes": 22470,
+      "sha256": "36860535b6e650a2f4cf23ab179929f4d5633d9a11eff440f6359b8e9e68e036"
+    },
+    "codegen_reexecution_audit_script": {
+      "filename": "audit-bun-codegen-reexecution",
+      "size_bytes": 15959,
+      "sha256": "2514b4a213d98615ffa8ef41d8289028cf0074efed58416db48b5ec0fce945f5"
+    },
+    "peechy_license_text": {
+      "filename": "bun-1.3.14-peechy-0.4.34-LICENSE.md",
+      "size_bytes": 1062,
+      "sha256": "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e"
+    },
     "retired_lolhtml_inputs_absent": true
   },
-  "spec": { "filename": "bun.spec", "size_bytes": 27728, "sha256": "463e94c6f66c744ae004c232ba20c6fbb1692a2e082a19c9d180124a95d576ca" },
-  "srpm": { "filename": "bun-1.3.14-0.0.41.fc44.src.rpm", "size_bytes": 329446383, "sha256": "b39630663360f4350d67cfab9e6eac3a5c65ee651644b4623149826bf0899237", "digest_check": "ok", "inventory_members": 43, "inventory_sha256": "311d899db8bc7a3b845a0d22a3e1afabffc09f60f3c73160e1e51c4a660e6160", "member_manifest_sha256": "075538159b33b6c85747ebdf2f358830546ca0996b1cf9c6f8fb1f4100b33a7f", "uncompressed_member_bytes": 335796417 },
-  "validation": { "direct_source_checksums_verified": true, "source_closures_regenerated_byte_identically": true, "npm_union_deterministic": true, "generated_source_checksums_verified": true, "packaging_source_checksums_verified": true, "deterministic_materialization_verified": true, "retired_lolhtml_inputs_absent": true, "srpm_built": true, "srpm_inventory_verified": true, "source_members_byte_identical": true, "rpm_build_executed": false, "rpm_installed": false }
+  "spec": {
+    "filename": "bun.spec",
+    "size_bytes": 27889,
+    "sha256": "56383802439a070061663e0fde7f47822449ab675d185b4236c0f1d1e64cab5a"
+  },
+  "srpm": {
+    "filename": "bun-1.3.14-0.0.42.fc44.src.rpm",
+    "size_bytes": 329447791,
+    "sha256": "f4110ca45ee2fd62cc8656920ea9d316b0d8cb758cc14336a48f0014dfd31616",
+    "digest_check": "ok",
+    "inventory_members": 43,
+    "inventory_sha256": "311d899db8bc7a3b845a0d22a3e1afabffc09f60f3c73160e1e51c4a660e6160",
+    "member_manifest_sha256": "aecbfaf9efadf27ad03fca9e87b2ae45379f876f7b10998bc1c485361a95893b",
+    "uncompressed_member_bytes": 335801626
+  },
+  "validation": {
+    "direct_source_checksums_verified": true,
+    "source_closures_regenerated_byte_identically": true,
+    "npm_union_deterministic": true,
+    "generated_source_checksums_verified": true,
+    "packaging_source_checksums_verified": true,
+    "deterministic_materialization_verified": true,
+    "retired_lolhtml_inputs_absent": true,
+    "srpm_built": true,
+    "srpm_inventory_verified": true,
+    "source_members_byte_identical": true,
+    "rpm_build_executed": false,
+    "rpm_installed": false
+  }
 }

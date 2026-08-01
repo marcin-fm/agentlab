@@ -4243,7 +4243,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.41", "--rpm-release 0.0.40")
+        spec.sub("--rpm-release 0.0.42", "--rpm-release 0.0.41")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -4337,6 +4337,7 @@ class AgentlabTest < Minitest::Test
       receipt = JSON.parse(File.read(receipt_path))
       receipt.fetch("components").first["linked_input_count"] -= 1
       receipt.fetch("validation")["final_license_expression_verified"] = true
+      receipt.fetch("validation")["generated_output_producer_edges_verified"] = true
       receipt.fetch("webkit")["archive_member_count"] -= 1
       receipt.fetch("validation")["webkit_member_source_mapping_verified"] = false
       receipt.dig("webkit", "transitive_dependencies")["unique_dependency_count"] -= 1
@@ -4367,6 +4368,28 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: final linked-license mapping validation is incomplete")
       assert_includes(errors, "bun: final linked-license closure overclaims completion")
     end
+  end
+
+  def test_rejects_bun_generated_header_provenance_metadata_drift
+    package = Agentlab.package_named("bun")
+    data = Marshal.load(Marshal.dump(package.data))
+    plan = data.fetch("build_plan")
+    metadata = plan.fetch("source_inputs").fetch("final_linked_license_closure")
+    metadata["generated_header_source_provenance_verified"] = false
+    drifted_package = Agentlab::Package.new(directory: package.directory, manifest_path: "unused", data: data)
+    spec = File.read(File.join(package.directory, "bun.spec"))
+
+    errors = Agentlab.validate_bun_final_linked_license_closure(
+      drifted_package,
+      metadata,
+      plan.fetch("source_inputs").fetch("source_license_inventory"),
+      plan.fetch("stages"),
+      plan.fetch("source_inputs").fetch("lolhtml"),
+      "1.3.14",
+      spec
+    )
+
+    assert_includes(errors, "bun: final linked-license metadata overclaims completion")
   end
 
   def test_validates_bun_npm_code_generation_closure
@@ -4413,6 +4436,12 @@ class AgentlabTest < Minitest::Test
       ].each do |name|
         FileUtils.cp(File.join(package.directory, name), File.join(directory, name))
       end
+      reexecution_path = File.join(directory, "bun-1.3.14-codegen-reexecution-proof.json")
+      reexecution = JSON.parse(File.read(reexecution_path))
+      reexecution.fetch("validation")["all_outputs_byte_identical_to_retained_proof"] = false
+      reexecution.fetch("validation")["independent_runs_byte_identical"] = false
+      reexecution.fetch("validation")["full_codegen_tree_byte_identical"] = false
+      File.write(reexecution_path, JSON.pretty_generate(reexecution) + "\n")
       receipt_path = File.join(directory, copied_metadata.fetch("source"))
       receipt = JSON.parse(File.read(receipt_path))
       receipt.fetch("final_link")["generated_output_count"] -= 1
@@ -4422,6 +4451,7 @@ class AgentlabTest < Minitest::Test
       receipt.dig("final_link", "undeclared_header_side_effects")["generator_execution_reproduced"] = false
       receipt.dig("final_link", "undeclared_header_side_effects", "producers", 0)["side_effect_outputs"].reverse!
       undeclared = receipt.fetch("final_link").fetch("generated_outputs").find { |record| record["producer_edge_declared"] == false }
+      undeclared["sha256"] = "0" * 64
       undeclared["producer_edge_declared"] = true
       undeclared["rule"] = "codegen"
       receipt.fetch("npm")["packages_with_required_text"] -= 1
@@ -4447,8 +4477,10 @@ class AgentlabTest < Minitest::Test
       assert_includes(errors, "bun: npm code-generation final-link counts mismatch")
       assert_includes(errors, "bun: npm code-generation build graph mismatch")
       assert_includes(errors, "bun: npm code-generation reexecution proof input mismatch")
+      assert_includes(errors, "bun: code-generation reexecution proof contract mismatch")
       assert_includes(errors, "bun: npm code-generation side-effect provenance mismatch")
       assert_includes(errors, "bun: npm code-generation undeclared output semantics mismatch")
+      assert_includes(errors, "bun: npm code-generation reexecution output identity mismatch")
       assert_includes(errors, "bun: npm code-generation package counts mismatch")
       assert_includes(errors, "bun: npm code-generation constants-browserify license text resolution mismatch")
       assert_includes(errors, "bun: npm code-generation peechy supplemental text mismatch")
@@ -4810,11 +4842,23 @@ class AgentlabTest < Minitest::Test
   def test_rejects_incomplete_opencode_source_delivery_proof
     package = Agentlab.package_named("opencode")
     dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
+    refute(dependencies.fetch("source_delivery_proof").key?("nvr"))
     dependencies.fetch("source_delivery_proof")["source_members"] -= 1
 
     errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
 
     assert_includes(errors, "opencode: source delivery proof does not match")
+  end
+
+  def test_rejects_dynamic_opencode_build_identity_metadata
+    package = Agentlab.package_named("opencode")
+    dependencies = Marshal.load(Marshal.dump(Agentlab.load_yaml(File.join(package.directory, "dependencies.yml"))))
+    refute(dependencies.fetch("binary_build_proof").key?("nvr"))
+    dependencies.fetch("binary_build_proof")["nvr"] = "opencode-1.18.8-0.1.fc44"
+
+    errors = Agentlab.validate_opencode_review_evidence(package, dependencies, dependencies.fetch("target_release"))
+
+    assert_includes(errors, "opencode: binary build proof does not match")
   end
 
   def test_rejects_incomplete_opencode_node_modules_proof

@@ -2,30 +2,113 @@
   "schema": "bun-release-local-source-staging-proof/v2",
   "package": "bun",
   "release": "1.3.14",
-  "rpm_release": "0.0.41",
+  "rpm_release": "0.0.42",
   "proof_platform": "fedora-44-x86_64",
   "proof_date": "2026-08-01",
   "proof_mode": "two network-isolated rpmbuild prep runs from the complete checked SRPM",
-  "production_spec": { "size_bytes": 27728, "sha256": "463e94c6f66c744ae004c232ba20c6fbb1692a2e082a19c9d180124a95d576ca" },
-  "inputs": {
-    "closure": { "filename": "bun-1.3.14-release-local-source-closure.json", "size_bytes": 411731, "sha256": "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080" },
-    "arm64_closure": { "filename": "bun-1.3.14-release-local-source-closure-arm64.json", "sha256": "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a" },
-    "helper": { "filename": "bun-stage-release-local-sources", "size_bytes": 23650, "sha256": "06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a" },
-    "npm_bundle": { "filename": "bun-1.3.14-npm-sources.tar.gz", "size_bytes": 41222363, "sha256": "c8f251509523fe27a648e496df9d5a7ee564c07a8afc5d67c712489df2fee7b4", "member_count": 239, "input_bytes": 41234414, "member_manifest_sha256": "9af8edcbeb8a83527fc005c0a74c8c71a1147afcaa55e2c97ba04e26e15b74a2", "receipt_sha256": "51818335f99656fdf315ef8c454fae0119af2ab46d3d9e21e4900435ab031884", "x64_selected_archives": 236, "arm64_selected_archives": 236 }
+  "production_spec": {
+    "size_bytes": 27889,
+    "sha256": "56383802439a070061663e0fde7f47822449ab675d185b4236c0f1d1e64cab5a"
   },
-  "srpm": { "filename": "bun-1.3.14-0.0.41.fc44.src.rpm", "size_bytes": 329446383, "sha256": "b39630663360f4350d67cfab9e6eac3a5c65ee651644b4623149826bf0899237", "digest_check": "ok", "inventory_members": 43 },
+  "inputs": {
+    "closure": {
+      "filename": "bun-1.3.14-release-local-source-closure.json",
+      "size_bytes": 411731,
+      "sha256": "f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080"
+    },
+    "arm64_closure": {
+      "filename": "bun-1.3.14-release-local-source-closure-arm64.json",
+      "sha256": "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a"
+    },
+    "helper": {
+      "filename": "bun-stage-release-local-sources",
+      "size_bytes": 23650,
+      "sha256": "06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a"
+    },
+    "npm_bundle": {
+      "filename": "bun-1.3.14-npm-sources.tar.gz",
+      "size_bytes": 41222363,
+      "sha256": "c8f251509523fe27a648e496df9d5a7ee564c07a8afc5d67c712489df2fee7b4",
+      "member_count": 239,
+      "input_bytes": 41234414,
+      "member_manifest_sha256": "9af8edcbeb8a83527fc005c0a74c8c71a1147afcaa55e2c97ba04e26e15b74a2",
+      "receipt_sha256": "51818335f99656fdf315ef8c454fae0119af2ab46d3d9e21e4900435ab031884",
+      "x64_selected_archives": 236,
+      "arm64_selected_archives": 236
+    }
+  },
+  "srpm": {
+    "filename": "bun-1.3.14-0.0.42.fc44.src.rpm",
+    "size_bytes": 329447791,
+    "sha256": "f4110ca45ee2fd62cc8656920ea9d316b0d8cb758cc14336a48f0014dfd31616",
+    "digest_check": "ok",
+    "inventory_members": 43
+  },
   "prep": {
     "network_namespace": true,
-    "log_size_bytes": 15708,
-    "log_sha256": "cec072b882f0b5d6f5171e7c1b9ae4b65adeb9d3c708be1d2227c482f9681f93",
-    "staging_receipt": { "path": ".build-tools/release-local-source-staging.json", "size_bytes": 3897, "sha256": "1b2d6e87d190ff69167dae4395c689af56fcbb20b1032cec9ed6f1bd8517c477" },
-    "native": { "source_count": 18, "staged_count": 18, "tarball_cache_count": 18, "prefetch_entry_count": 19, "source_identity_manifest_sha256": "388f2fe99d30738ea960031e9736dc0e52092465f546687c8ef54eed3a105fe8" },
-    "node_headers": { "version": "24.3.0", "abi": "137", "identity": "24.3.0", "removed_paths": 3 },
-    "npm_cache": { "entries": 4613, "files": 3855, "directories": 758, "symlinks": 0, "file_bytes": 121972064, "cache_entries": 236, "semver_hashes": { "0": "b8f8325b21a8a1e5", "cjs.1": "ec7b5e1ef906f68d", "cjs.2": "0e40aeb971250b85", "patch.1": "505c8ed44add284c" }, "manifest_size_bytes": 558378, "manifest_lines": 4613, "manifest_sha256": "50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214", "tree_sha256": "50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214" },
+    "log_size_bytes": 15556,
+    "log_sha256": "febcfe0d794335ec4a931c6d7f7bf09b3a446bb1c31a9493b85a586254c148f0",
+    "staging_receipt": {
+      "path": ".build-tools/release-local-source-staging.json",
+      "size_bytes": 3897,
+      "sha256": "1b2d6e87d190ff69167dae4395c689af56fcbb20b1032cec9ed6f1bd8517c477"
+    },
+    "native": {
+      "source_count": 18,
+      "staged_count": 18,
+      "tarball_cache_count": 18,
+      "prefetch_entry_count": 19,
+      "source_identity_manifest_sha256": "388f2fe99d30738ea960031e9736dc0e52092465f546687c8ef54eed3a105fe8"
+    },
+    "node_headers": {
+      "version": "24.3.0",
+      "abi": "137",
+      "identity": "24.3.0",
+      "removed_paths": 3
+    },
+    "npm_cache": {
+      "entries": 4613,
+      "files": 3855,
+      "directories": 758,
+      "symlinks": 0,
+      "file_bytes": 121972064,
+      "cache_entries": 236,
+      "semver_hashes": {
+        "0": "b8f8325b21a8a1e5",
+        "cjs.1": "ec7b5e1ef906f68d",
+        "cjs.2": "0e40aeb971250b85",
+        "patch.1": "505c8ed44add284c"
+      },
+      "manifest_size_bytes": 558378,
+      "manifest_lines": 4613,
+      "manifest_sha256": "50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214",
+      "tree_sha256": "50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214"
+    },
     "source_license_inventory_check": true,
     "final_linked_license_receipt_checksum_verified": true
   },
-  "reproduction": { "second_network_isolated_prep_log_sha256": "01dd065291f9db41ed91ca8b6e6221033a496edbdfe71f10cf805374e0a62114", "staging_receipt_byte_identical": true, "npm_cache_manifest_byte_identical": true },
-  "validation": { "production_spec_integration_verified": true, "srpm_inputs_verified": true, "direct_source_checksums_verified": true, "native_sources_staged_verified": true, "native_source_identities_verified": true, "node_headers_staged_verified": true, "node_headers_abi_verified": true, "npm_cache_materialized_verified": true, "npm_cache_tree_verified": true, "deterministic_staging_verified": true, "network_isolation_verified": true, "bootstrap_seed_used": false, "npm_install_run": false, "final_bun_build_run": false, "rpm_build_executed": false, "rpm_installed": false },
+  "reproduction": {
+    "second_network_isolated_prep_log_sha256": "00381e242f1a97cf689e541de0d47b5d7427dd3962970e9831df51e3e385a644",
+    "staging_receipt_byte_identical": true,
+    "npm_cache_manifest_byte_identical": true
+  },
+  "validation": {
+    "production_spec_integration_verified": true,
+    "srpm_inputs_verified": true,
+    "direct_source_checksums_verified": true,
+    "native_sources_staged_verified": true,
+    "native_source_identities_verified": true,
+    "node_headers_staged_verified": true,
+    "node_headers_abi_verified": true,
+    "npm_cache_materialized_verified": true,
+    "npm_cache_tree_verified": true,
+    "deterministic_staging_verified": true,
+    "network_isolation_verified": true,
+    "bootstrap_seed_used": false,
+    "npm_install_run": false,
+    "final_bun_build_run": false,
+    "rpm_build_executed": false,
+    "rpm_installed": false
+  },
   "scope": "Two network-isolated x86_64 production %prep proofs select the x64 closure from the checked union; no arm64 prep, build, payload, or COPR claim is made."
 }

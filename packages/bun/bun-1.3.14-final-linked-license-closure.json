@@ -13,12 +13,12 @@
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
       "size_bytes": 127845,
-      "sha256": "2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9"
+      "sha256": "0c2f6fd017655e88c14ef1cf109d856d9bdec413949882fbabd95484bd3ae82d"
     },
     "npm_code_generation_closure": {
       "path": "packages/bun/bun-1.3.14-npm-code-generation-closure.json",
-      "size_bytes": 52223,
-      "sha256": "9fef51b9e653a6327292c5d3cc5c03f3bfd554871620ea1351dd4e5220e1ca09"
+      "size_bytes": 52193,
+      "sha256": "88fbf017ef36b00b69cfbbe39976724198206bdae87fc13c12adb94459d7a5f9"
     },
     "relink_audit": {
       "path": "packages/bun/relink-materials-proof.json",
@@ -499,7 +499,8 @@
       "selected_expressions_fedora_allowed": true,
       "selected_required_texts_verified": true,
       "generator_execution_reproduced": true,
-      "final_codegen_provenance_verified": false
+      "generated_output_producer_edges_verified": false,
+      "final_codegen_provenance_verified": true
     }
   },
   "webkit": {
@@ -42132,6 +42133,7 @@
     "npm_codegen_selected_spdx_verified": true,
     "npm_codegen_selected_license_texts_verified": true,
     "generator_execution_reproduced": true,
+    "generated_output_producer_edges_verified": false,
     "webkit_member_source_mapping_verified": true,
     "webkit_license_marker_inventory_verified": true,
     "webkit_transitive_dependency_mapping_verified": true,
@@ -42143,5 +42145,5 @@
     "final_license_expression_verified": false,
     "rpm_payload_license_verified": false
   },
-  "scope": "current final-link mapping with all 18 native source-subset selections, exact WebKit archive-member sources, and the complete retained WebKit-local transitive dependency graph; six fork-authored headerless files, WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+  "scope": "current final-link mapping with all 18 native source-subset selections, exact WebKit archive-member sources, the complete retained WebKit-local transitive dependency graph, and verified generated-header source/byte provenance; six fork-authored headerless files, WebKit semantics, distinct Ninja output edges, broader npm/codegen final-payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
 }

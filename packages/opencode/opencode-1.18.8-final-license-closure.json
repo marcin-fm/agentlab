@@ -5,8 +5,8 @@
   "audit_date": "2026-08-01",
   "auditor": {
     "path": "scripts/audit-opencode-final-licenses",
-    "size_bytes": 17556,
-    "sha256": "1efe27557744afd06b4ff0676809b81b2823aa68adc19c9c6dcc4cff4ce5c19c"
+    "size_bytes": 17936,
+    "sha256": "eea872e8ab301df048840fd44a00fe17f1cd64fa45916e22d36adf1dd3f8e87c"
   },
   "inputs": {
     "binary_embedding": {
@@ -31,8 +31,8 @@
     },
     "bun_final_linked_license_closure": {
       "path": "packages/bun/bun-1.3.14-final-linked-license-closure.json",
-      "size_bytes": 1979873,
-      "sha256": "c086e54dc23f0fea2c59f454450729b9e3029388467c4ac1d04f45354f3aab20"
+      "size_bytes": 1980077,
+      "sha256": "1525c99effeaf93ff08c1e805619cd6425804a0d238c9ef8e41d37f2b1129b3a"
     }
   },
   "candidate_expressions": {
@@ -148,6 +148,8 @@
       "npm_codegen_packages_with_required_text": 38
     },
     "generator_execution_reproduced": true,
+    "generated_header_source_provenance_verified": true,
+    "generated_output_producer_edges_verified": false,
     "webkit_transitive_dependency_count": 5098,
     "unresolved_webkit_headerless_files": [
       "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp",
@@ -206,5 +208,5 @@
     "clean_fedora_build_matrix_verified": false,
     "copr_submission_verified": false
   },
-  "scope": "fail-closed final-license preflight for the exact OpenCode compiler graph, resolved native/WASM source mappings, and Bun runtime final-link evidence; three OpenCode notices, six Bun WebKit fork files, Bun npm/code-generation provenance, aggregate SPDX, required texts, RPM payload, clean target builds, and COPR remain unresolved"
+  "scope": "fail-closed final-license preflight for the exact OpenCode compiler graph, resolved native/WASM source mappings, and Bun runtime final-link evidence; Bun generated-header source/byte provenance is verified while three OpenCode notices, six Bun WebKit fork files, distinct Bun Ninja output edges, broader Bun npm/code-generation final-payload provenance, aggregate SPDX, required texts, RPM payload, clean target builds, and COPR remain unresolved"
 }

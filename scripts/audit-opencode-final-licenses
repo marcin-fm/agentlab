@@ -117,6 +117,7 @@ module OpenCodeFinalLicenseAudit
       ensure!(bun_validation[flag] == false, "Bun final-license receipt overclaims #{flag}")
     end
     ensure!(bun_validation["webkit_linked_file_semantic_review_verified"] == false, "Bun WebKit semantic review unexpectedly passed")
+    ensure!(bun_validation["generated_output_producer_edges_verified"] == false, "Bun generated-output producer edges unexpectedly passed")
     ensure!(bun_validation["final_npm_codegen_closure_verified"] == false, "Bun npm/code-generation closure unexpectedly passed")
     ensure!(bun_final_license.dig("selected_license_evidence", "npm_codegen_inputs", "generator_execution_reproduced") == true, "Bun generator-reexecution evidence is missing")
     ensure!(bun_validation["generator_execution_reproduced"] == true, "Bun generator execution was not reproduced")
@@ -127,7 +128,7 @@ module OpenCodeFinalLicenseAudit
     ensure!(bun_native_selected["selected_expressions_fedora_allowed"] == true && bun_native_selected["selected_license_files_verified"] == true, "Bun selected native license review is incomplete")
     bun_npm_selected = bun_selected.fetch("npm_codegen_inputs")
     ensure!(bun_npm_selected["package_count"] == 38 && bun_npm_selected["packages_with_required_text"] == 38 && bun_npm_selected["packages_missing_required_text"] == [], "Bun selected npm license evidence is incomplete")
-    ensure!(bun_npm_selected["selected_expressions_fedora_allowed"] == true && bun_npm_selected["selected_required_texts_verified"] == true && bun_npm_selected["final_codegen_provenance_verified"] == false, "Bun selected npm license review is incomplete")
+    ensure!(bun_npm_selected["selected_expressions_fedora_allowed"] == true && bun_npm_selected["selected_required_texts_verified"] == true && bun_npm_selected["final_codegen_provenance_verified"] == true, "Bun selected npm license review is incomplete")
 
     bun_unresolved = bun_final_license.fetch("unresolved")
     webkit_holds = bun_unresolved.fetch("webkit_headerless_files")
@@ -189,6 +190,8 @@ module OpenCodeFinalLicenseAudit
           "npm_codegen_packages_with_required_text" => bun_npm_selected.fetch("packages_with_required_text")
         },
         "generator_execution_reproduced" => true,
+        "generated_header_source_provenance_verified" => true,
+        "generated_output_producer_edges_verified" => false,
         "webkit_transitive_dependency_count" => bun_final_license.dig("webkit", "transitive_dependencies", "unique_dependency_count"),
         "unresolved_webkit_headerless_files" => webkit_holds,
         "external_lolhtml_provider" => bun_final_license.fetch("external_lolhtml_provider"),
@@ -218,7 +221,7 @@ module OpenCodeFinalLicenseAudit
         "clean_fedora_build_matrix_verified" => false,
         "copr_submission_verified" => false
       },
-      "scope" => "fail-closed final-license preflight for the exact OpenCode compiler graph, resolved native/WASM source mappings, and Bun runtime final-link evidence; three OpenCode notices, six Bun WebKit fork files, Bun npm/code-generation provenance, aggregate SPDX, required texts, RPM payload, clean target builds, and COPR remain unresolved"
+      "scope" => "fail-closed final-license preflight for the exact OpenCode compiler graph, resolved native/WASM source mappings, and Bun runtime final-link evidence; Bun generated-header source/byte provenance is verified while three OpenCode notices, six Bun WebKit fork files, distinct Bun Ninja output edges, broader Bun npm/code-generation final-payload provenance, aggregate SPDX, required texts, RPM payload, clean target builds, and COPR remain unresolved"
     }
   end
 

@@ -4,7 +4,7 @@ require "json"
 require "minitest/autorun"
 require "tmpdir"
 
-load File.expand_path("../scripts/audit-bun-codegen-reexecution", __dir__)
+load File.expand_path("../scripts/audit-bun-codegen-reexecution", __dir__) unless defined?(BunCodegenReexecutionAudit)
 
 class BunCodegenReexecutionAuditTest < Minitest::Test
   def setup

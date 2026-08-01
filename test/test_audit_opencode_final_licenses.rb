@@ -63,6 +63,8 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
     assert_equal(38, actual.dig("bun_runtime", "selected_license_evidence", "npm_codegen_package_count"))
     assert_equal(38, actual.dig("bun_runtime", "selected_license_evidence", "npm_codegen_packages_with_required_text"))
     assert_equal(true, actual.dig("bun_runtime", "generator_execution_reproduced"))
+    assert_equal(true, actual.dig("bun_runtime", "generated_header_source_provenance_verified"))
+    assert_equal(true, actual.dig("unresolved", "bun_npm_and_codegen_final_payload_provenance"))
     %w[
       all_required_license_texts_verified final_aggregate_license_expression_verified
       rpm_license_payload_complete clean_fedora_build_matrix_verified copr_submission_verified
@@ -93,6 +95,20 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
 
     inputs = parsed_inputs
     inputs.dig(:bun_final_license, "validation")["generator_execution_reproduced"] = false
+
+    assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
+  end
+
+  def test_rejects_missing_bun_generated_header_provenance
+    inputs = parsed_inputs
+    inputs.dig(:bun_final_license, "selected_license_evidence", "npm_codegen_inputs")["final_codegen_provenance_verified"] = false
+
+    assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
+  end
+
+  def test_rejects_completed_bun_generated_output_edges
+    inputs = parsed_inputs
+    inputs.dig(:bun_final_license, "validation")["generated_output_producer_edges_verified"] = true
 
     assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
   end

@@ -2,13 +2,13 @@
   "schema": "bun-npm-code-generation-closure/v2",
   "package": "bun",
   "version": "1.3.14",
-  "rpm_release": "0.0.41",
+  "rpm_release": "0.0.42",
   "audit_date": "2026-08-01",
   "inputs": {
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
       "size_bytes": 127845,
-      "sha256": "2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9"
+      "sha256": "0c2f6fd017655e88c14ef1cf109d856d9bdec413949882fbabd95484bd3ae82d"
     },
     "first_source_built_npm": {
       "path": "packages/bun/source-built-npm-install-proof.json",
@@ -20,15 +20,15 @@
       "size_bytes": 6904,
       "sha256": "eb408b61346dea80b81be7cff949bd3f2f9b1d7e434ea3ddb0ad68b0eb42691d"
     },
-    "build_ninja": {
-      "path": "build/release-local/build.ninja",
-      "size_bytes": 2469137,
-      "sha256": "9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3"
-    },
     "codegen_reexecution_proof": {
       "path": "packages/bun/bun-1.3.14-codegen-reexecution-proof.json",
       "size_bytes": 22470,
       "sha256": "36860535b6e650a2f4cf23ab179929f4d5633d9a11eff440f6359b8e9e68e036"
+    },
+    "build_ninja": {
+      "path": "build/release-local/build.ninja",
+      "size_bytes": 2469137,
+      "sha256": "9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3"
     }
   },
   "final_link": {
@@ -1287,16 +1287,16 @@
     "declared_codegen_package_manifest_mapping_verified": true,
     "linked_generated_output_mapping_verified": true,
     "undeclared_header_generator_side_effects_verified": true,
+    "generator_execution_reproduced": true,
     "generated_output_producer_edges_verified": false,
     "selected_package_license_expressions_verified": true,
     "all_selected_package_license_texts_verified": true,
     "final_npm_codegen_closure_verified": false,
     "final_license_expression_verified": false,
-    "rpm_payload_license_verified": false,
-    "generator_execution_reproduced": true
+    "rpm_payload_license_verified": false
   },
   "scope": {
     "included": "NPM package manifests declared by current code-generation install edges, generated outputs consumed by direct final-link objects, and exact upstream producer provenance for undeclared generated-header side effects",
-    "excluded": "distinct Ninja output edges for the nine headers, clean generator re-execution, unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
+    "excluded": "distinct Ninja output edges for the nine headers, unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
   }
 }

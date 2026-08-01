@@ -3775,8 +3775,18 @@ module Agentlab
                         reexecution.dig("expected", "side_effect_header_count") == 9 &&
                          reexecution.dig("expected", "codegen_tree_entry_count") == codegen_reexecution["full_codegen_tree_entry_count"] &&
                          reexecution.dig("expected", "codegen_tree_sha256") == codegen_reexecution["full_codegen_tree_sha256"] &&
-                        Array(reexecution["runs"]).length == 2 &&
-                        reexecution.dig("validation", "generator_execution_reproduced") == true &&
+                         Array(reexecution["runs"]).length == 2 &&
+                         reexecution.dig("validation", "independent_run_count") == 2 &&
+                         reexecution.dig("validation", "network_used") == false &&
+                         reexecution.dig("validation", "package_manager_invoked") == false &&
+                         reexecution.dig("validation", "build_invoked") == false &&
+                         reexecution.dig("validation", "provider_rpm_installed") == false &&
+                         reexecution.dig("validation", "all_declared_and_side_effect_outputs_removed_before_execution") == true &&
+                         reexecution.dig("validation", "all_outputs_byte_identical_to_retained_proof") == true &&
+                         reexecution.dig("validation", "independent_runs_byte_identical") == true &&
+                         reexecution.dig("validation", "full_codegen_tree_byte_identical") == true &&
+                         reexecution.dig("validation", "unexpected_output_files_present") == false &&
+                         reexecution.dig("validation", "generator_execution_reproduced") == true &&
                         reexecution.dig("validation", "generated_output_producer_edges_verified") == false &&
                         reexecution.dig("validation", "final_npm_codegen_closure_verified") == false
     errors << "bun: code-generation reexecution proof contract mismatch" unless valid_reexecution
@@ -3898,6 +3908,17 @@ module Agentlab
       record["producer_edge_declared"] == false && record["rule"].nil?
     end
     errors << "bun: npm code-generation undeclared output semantics mismatch" unless valid_undeclared_records
+
+    reexecution_outputs = Array(reexecution.dig("expected", "codegen_outputs"))
+    reexecution_output_paths = reexecution_outputs.map { |record| "codegen/#{record['path']}" }
+    reexecution_outputs_by_path = reexecution_outputs.to_h { |record| ["codegen/#{record['path']}", record] }
+    valid_reexecution_output_identity = reexecution_output_paths.uniq.length == reexecution_output_paths.length &&
+                                        undeclared_records.map { |record| record["path"] }.sort == expected_undeclared.sort &&
+                                        undeclared_records.all? do |record|
+                                          expected = reexecution_outputs_by_path[record["path"]]
+                                          expected && record["size_bytes"] == expected["size_bytes"] && record["sha256"] == expected["sha256"]
+                                        end
+    errors << "bun: npm code-generation reexecution output identity mismatch" unless valid_reexecution_output_identity
 
     npm = receipt["npm"] || {}
     expected_expressions = { "Apache-2.0" => 1, "Artistic-2.0" => 1, "BSD-3-Clause" => 1, "MIT" => 35 }
@@ -4106,7 +4127,7 @@ module Agentlab
     errors << "bun: final linked-license selected npm SPDX evidence mismatch" unless npm_codegen_receipt.dig("npm", "selected_expression_counts") == expected_npm_expression_counts && npm_codegen_receipt.dig("validation", "selected_package_license_expressions_verified") == true && npm_evidence["package_count"] == 38 && npm_evidence["selected_expression_counts"] == expected_npm_expression_counts && npm_evidence["selected_expressions_fedora_allowed"] == true
     errors << "bun: final linked-license selected npm text evidence mismatch" unless npm_codegen_receipt.dig("npm", "packages_with_required_text") == 38 && npm_codegen_receipt.dig("npm", "packages_missing_required_text") == [] && npm_codegen_receipt.dig("validation", "all_selected_package_license_texts_verified") == true && npm_evidence["packages_with_required_text"] == 38 && npm_evidence["packages_missing_required_text"] == [] && npm_evidence["selected_required_texts_verified"] == true
     errors << "bun: final linked-license generator execution evidence mismatch" unless npm_codegen_receipt.dig("validation", "generator_execution_reproduced") == true && npm_evidence["generator_execution_reproduced"] == true
-    errors << "bun: final linked-license npm code-generation scope overclaims completion" unless npm_codegen_receipt.dig("validation", "final_npm_codegen_closure_verified") == false && npm_evidence["final_codegen_provenance_verified"] == false
+    errors << "bun: final linked-license npm code-generation provenance mismatch" unless npm_codegen_receipt.dig("validation", "generated_output_producer_edges_verified") == false && npm_codegen_receipt.dig("validation", "final_npm_codegen_closure_verified") == false && npm_evidence["final_codegen_provenance_verified"] == true
 
     webkit = receipt["webkit"] || {}
     errors << "bun: final linked-license WebKit source mismatch" unless webkit["source_commit"] == self_receipt.dig("inputs", "webkit", "commit") && webkit["source_archive_sha256"] == self_receipt.dig("inputs", "webkit", "archive_sha256")
@@ -4175,12 +4196,12 @@ module Agentlab
     errors << "bun: final linked-license lol-html license boundary mismatch" unless provider["aggregate_expression"] == provider_license["aggregate_expression"] && provider["linked_license_entries"] == provider_license["linked_license_entries"] && provider["license_dependencies_sha256"] == provider_license["license_dependencies_sha256"] && provider["fedora_spdx_review_complete"] == true && provider["excluded_from_bun_bundled_aggregate"] == true
 
     true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified native_license_selection_review_verified native_license_selections_verified bundled_native_selected_spdx_verified bundled_native_selected_license_texts_verified npm_codegen_selected_spdx_verified npm_codegen_selected_license_texts_verified generator_execution_reproduced webkit_member_source_mapping_verified webkit_license_marker_inventory_verified webkit_transitive_dependency_mapping_verified webkit_headerless_dependency_review_verified]
-    false_validation = %w[network_used webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified final_license_expression_verified rpm_payload_license_verified]
+    false_validation = %w[network_used generated_output_producer_edges_verified webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified final_license_expression_verified rpm_payload_license_verified]
     errors << "bun: final linked-license mapping validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
     errors << "bun: final linked-license closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
     metadata_false = %w[webkit_semantic_license_selection_verified final_npm_codegen_closure_verified final_license_expression_verified required_license_texts_verified rpm_payload_license_verified]
     errors << "bun: final linked-license native review counts mismatch" unless metadata["selected_native_license_components"] == components.count { |component| component["name"] != "bun" && component["license_selection_verified"] == true } && metadata["unresolved_native_license_components"] == unresolved_native.length && metadata["unresolved_native_license_component_names"] == unresolved_native
-    errors << "bun: final linked-license metadata overclaims completion" unless metadata["all_link_inputs_mapped"] == true && metadata["system_lolhtml_provider_external"] == true && metadata["native_license_selection_review_verified"] == true && metadata["native_license_selections_verified"] == true && metadata["selected_native_license_expressions_fedora_allowed"] == true && metadata["selected_native_license_texts_verified"] == true && metadata["selected_npm_codegen_license_expressions_fedora_allowed"] == true && metadata["selected_npm_codegen_required_texts_verified"] == true && metadata["webkit_archive_member_source_mapping_verified"] == true && metadata["webkit_license_marker_inventory_verified"] == true && metadata["webkit_transitive_dependency_mapping_verified"] == true && metadata["webkit_headerless_dependency_review_verified"] == true && metadata_false.all? { |key| metadata[key] == false }
+    errors << "bun: final linked-license metadata overclaims completion" unless metadata["all_link_inputs_mapped"] == true && metadata["system_lolhtml_provider_external"] == true && metadata["native_license_selection_review_verified"] == true && metadata["native_license_selections_verified"] == true && metadata["selected_native_license_expressions_fedora_allowed"] == true && metadata["selected_native_license_texts_verified"] == true && metadata["selected_npm_codegen_license_expressions_fedora_allowed"] == true && metadata["selected_npm_codegen_required_texts_verified"] == true && metadata["generated_header_source_provenance_verified"] == true && metadata["webkit_archive_member_source_mapping_verified"] == true && metadata["webkit_license_marker_inventory_verified"] == true && metadata["webkit_transitive_dependency_mapping_verified"] == true && metadata["webkit_headerless_dependency_review_verified"] == true && metadata_false.all? { |key| metadata[key] == false }
 
     required_spec_fragments = [
       "%global final_linked_license_closure_sha256 #{expected_sha256}",
@@ -6806,7 +6827,6 @@ module Agentlab
     end
 
     expected_source_delivery = {
-        "nvr" => "opencode-#{release}-0.1.fc44",
         "srpm_sha256" => nil,
         "source_members" => File.read(File.file?(package.spec_path) ? package.spec_path : File.join(ROOT, "packages", "opencode", "opencode.spec")).lines.grep(/^Source\d+:/).length,
         "configured_scm_generation_verified" => false,
@@ -6842,7 +6862,6 @@ module Agentlab
       errors << "#{prefix} node_modules materialization proof does not match" unless dependencies["node_modules_materialization_proof"] == expected_node_modules
 
       expected_binary_build = {
-        "nvr" => "opencode-#{release}-0.1.fc44",
         "source_rpm_sha256" => nil,
         "source_members" => 53,
         "binary_rpm_sha256" => nil,
@@ -7077,7 +7096,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.5%{?dist}",
+            "Release:        0.6%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       %{name}-%{version}-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -7363,7 +7382,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.5%{?dist}",
+        "Release:        0.6%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -7931,7 +7950,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.5%{?dist}",
+          "Release:        0.6%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

@@ -47,6 +47,9 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
     assert_equal(38, receipt.dig("selected_license_evidence", "npm_codegen_inputs", "packages_with_required_text"))
     assert_equal([], receipt.dig("selected_license_evidence", "npm_codegen_inputs", "packages_missing_required_text"))
     assert_equal(true, receipt.dig("selected_license_evidence", "npm_codegen_inputs", "generator_execution_reproduced"))
+    assert_equal(true, receipt.dig("selected_license_evidence", "npm_codegen_inputs", "final_codegen_provenance_verified"))
+    assert_equal(BunFinalLinkedLicenseAudit::SCOPE, receipt.fetch("scope"))
+    assert_equal(true, receipt.dig("unresolved", "npm_and_codegen_final_payload_provenance"))
     assert_equal(true, receipt.dig("validation", "generator_execution_reproduced"))
     assert_equal(true, receipt.dig("validation", "webkit_member_source_mapping_verified"))
     assert_equal(true, receipt.dig("validation", "webkit_license_marker_inventory_verified"))
@@ -99,6 +102,8 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
         audit_date: "2026-08-01"
       )
       assert_equal(BunFinalLinkedLicenseAudit::CURRENT_SOURCE_INVENTORY_RECORD, transitioned.dig("inputs", "source_license_inventory"))
+      assert_equal(true, transitioned.dig("selected_license_evidence", "npm_codegen_inputs", "final_codegen_provenance_verified"))
+      assert_equal(BunFinalLinkedLicenseAudit::SCOPE, transitioned.fetch("scope"))
     end
 
     drifted = JSON.parse(JSON.generate(BunFinalLinkedLicenseAudit::CURRENT_SOURCE_INVENTORY_RECORD))
@@ -173,6 +178,62 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
           receipt_path: receipt,
           source_inventory_path: inventory,
           npm_codegen_path: file.path,
+          audit_date: "2026-08-01"
+        )
+      end
+    end
+
+    npm.fetch("validation")["generator_execution_reproduced"] = true
+    codegen_path = File.join(root, "packages", "bun", "bun-1.3.14-codegen-reexecution-proof.json")
+    codegen = JSON.parse(File.read(codegen_path))
+    codegen.fetch("validation")["independent_runs_byte_identical"] = false
+    Tempfile.create(["bun-codegen-reexecution-drifted-", ".json"]) do |file|
+      file.write(JSON.pretty_generate(codegen) + "\n")
+      file.flush
+      npm.fetch("inputs")["codegen_reexecution_proof"] = {
+        "path" => BunFinalLinkedLicenseAudit::CODEGEN_REEXECUTION_PATH,
+        "size_bytes" => File.size(file.path),
+        "sha256" => Digest::SHA256.file(file.path).hexdigest
+      }
+      assert_raises(BunFinalLinkedLicenseAudit::Error) do
+        BunFinalLinkedLicenseAudit.validate_codegen_reexecution!(npm, codegen_reexecution_path: file.path)
+      end
+    end
+
+    codegen = JSON.parse(File.read(codegen_path))
+    codegen.fetch("runs").first.fetch("commands").first.fetch("argv")[0] = "/forged/unshare"
+    Tempfile.create(["bun-codegen-reexecution-command-drifted-", ".json"]) do |file|
+      file.write(JSON.pretty_generate(codegen) + "\n")
+      file.flush
+      npm.fetch("inputs")["codegen_reexecution_proof"] = {
+        "path" => BunFinalLinkedLicenseAudit::CODEGEN_REEXECUTION_PATH,
+        "size_bytes" => File.size(file.path),
+        "sha256" => Digest::SHA256.file(file.path).hexdigest
+      }
+      assert_raises(BunFinalLinkedLicenseAudit::Error) do
+        BunFinalLinkedLicenseAudit.validate_codegen_reexecution!(npm, codegen_reexecution_path: file.path)
+      end
+    end
+
+    npm = JSON.parse(File.read(npm_codegen))
+    header = npm.fetch("final_link").fetch("generated_outputs").find do |record|
+      record["path"] == "codegen/GeneratedBunObject.h"
+    end
+    header["sha256"] = "0" * 64
+    assert_raises(BunFinalLinkedLicenseAudit::Error) do
+      BunFinalLinkedLicenseAudit.validate_codegen_reexecution!(npm)
+    end
+
+    contradictory = JSON.parse(File.read(receipt))
+    contradictory.fetch("validation")["final_npm_codegen_closure_verified"] = true
+    Tempfile.create(["bun-final-license-contradictory-", ".json"]) do |file|
+      file.write(JSON.pretty_generate(contradictory) + "\n")
+      file.flush
+      assert_raises(BunFinalLinkedLicenseAudit::Error) do
+        BunFinalLinkedLicenseAudit.rebind_receipt(
+          receipt_path: file.path,
+          source_inventory_path: inventory,
+          npm_codegen_path: npm_codegen,
           audit_date: "2026-08-01"
         )
       end

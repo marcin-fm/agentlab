@@ -31,11 +31,11 @@
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a
 %global arm64_release_local_closure_sha256 d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a
-%global source_license_inventory_sha256 2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9
+%global source_license_inventory_sha256 0c2f6fd017655e88c14ef1cf109d856d9bdec413949882fbabd95484bd3ae82d
 %global source_license_audit_script_sha256 cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1
-%global final_linked_license_closure_sha256 c086e54dc23f0fea2c59f454450729b9e3029388467c4ac1d04f45354f3aab20
-%global final_linked_license_audit_script_sha256 86886a72b4c3d9b763bb36e08c2832e2f9d5078914281805014c9bdec6ac5622
-%global npm_code_generation_closure_sha256 9fef51b9e653a6327292c5d3cc5c03f3bfd554871620ea1351dd4e5220e1ca09
+%global final_linked_license_closure_sha256 1525c99effeaf93ff08c1e805619cd6425804a0d238c9ef8e41d37f2b1129b3a
+%global final_linked_license_audit_script_sha256 cc2db709ea834ccee30e18f0198a852c5369b4b316fe7391d318f8459547b246
+%global npm_code_generation_closure_sha256 88fbf017ef36b00b69cfbbe39976724198206bdae87fc13c12adb94459d7a5f9
 %global npm_code_generation_audit_script_sha256 bcf84a275c26e0943bc006dfce0ca92e022658cebc9926b49f0133acb194b6d2
 %global codegen_reexecution_proof_sha256 36860535b6e650a2f4cf23ab179929f4d5633d9a11eff440f6359b8e9e68e036
 %global codegen_reexecution_audit_script_sha256 2514b4a213d98615ffa8ef41d8289028cf0074efed58416db48b5ec0fce945f5
@@ -48,7 +48,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.41%{?dist}
+Release:        0.0.42%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -257,7 +257,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.41 \
+  --rpm-release 0.0.42 \
   --date 2026-08-01 \
   --peechy-license "%{SOURCE32}" \
   --check \
@@ -403,6 +403,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Aug 01 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.42
+- Verify generated-header source and byte provenance without claiming distinct Ninja output edges.
+
 * Sat Aug 01 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.41
 - Preserve independent network-isolated code-generation reexecution proof
 

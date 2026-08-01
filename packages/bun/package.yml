@@ -155,7 +155,7 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: 2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9
+      sha256: 0c2f6fd017655e88c14ef1cf109d856d9bdec413949882fbabd95484bd3ae82d
       audit_script: scripts/audit-bun-source-licenses
       audit_script_sha256: cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1
       audit_script_source: audit-bun-source-licenses
@@ -195,7 +195,7 @@ build_plan:
     npm_code_generation_closure:
       relationship: current_codegen_package_linked_output_and_side_effect_mapping
       source: bun-1.3.14-npm-code-generation-closure.json
-      sha256: 9fef51b9e653a6327292c5d3cc5c03f3bfd554871620ea1351dd4e5220e1ca09
+      sha256: 88fbf017ef36b00b69cfbbe39976724198206bdae87fc13c12adb94459d7a5f9
       audit_script: scripts/audit-bun-npm-code-generation
       audit_script_sha256: bcf84a275c26e0943bc006dfce0ca92e022658cebc9926b49f0133acb194b6d2
       audit_script_source: audit-bun-npm-code-generation
@@ -233,9 +233,9 @@ build_plan:
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: c086e54dc23f0fea2c59f454450729b9e3029388467c4ac1d04f45354f3aab20
+      sha256: 1525c99effeaf93ff08c1e805619cd6425804a0d238c9ef8e41d37f2b1129b3a
       audit_script: scripts/audit-bun-final-linked-licenses
-      audit_script_sha256: 86886a72b4c3d9b763bb36e08c2832e2f9d5078914281805014c9bdec6ac5622
+      audit_script_sha256: cc2db709ea834ccee30e18f0198a852c5369b4b316fe7391d318f8459547b246
       audit_script_source: audit-bun-final-linked-licenses
       direct_object_count: 1162
       direct_archive_count: 3
@@ -272,6 +272,7 @@ build_plan:
       selected_native_license_texts_verified: true
       selected_npm_codegen_license_expressions_fedora_allowed: true
       selected_npm_codegen_required_texts_verified: true
+      generated_header_source_provenance_verified: true
       webkit_archive_member_source_mapping_verified: true
       webkit_license_marker_inventory_verified: true
       webkit_archive_member_count: 531
@@ -567,7 +568,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: e8d97eb5fcdec6a0ea0551764e9fd670d8e77e6440052ba036983c06dd00f43c
+      proof_receipt_sha256: a07497dac11ce191818d7f5e273efb57dedbf38ef88eb2cde22e215af43c7da1
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -601,7 +602,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: e24bd957eb673db10f7354dde5e2aa36137e7d9f2e9337346cefab0871092f97
+      proof_receipt_sha256: 97f827e7e6f2492a73842f113fb92600fece35a4250b0ea5ed60b6761172fc4d
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true
