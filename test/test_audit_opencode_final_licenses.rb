@@ -62,6 +62,7 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
     assert_equal(23, actual.dig("bun_runtime", "selected_license_evidence", "bundled_native_license_file_count"))
     assert_equal(38, actual.dig("bun_runtime", "selected_license_evidence", "npm_codegen_package_count"))
     assert_equal(38, actual.dig("bun_runtime", "selected_license_evidence", "npm_codegen_packages_with_required_text"))
+    assert_equal(true, actual.dig("bun_runtime", "generator_execution_reproduced"))
     %w[
       all_required_license_texts_verified final_aggregate_license_expression_verified
       rpm_license_payload_complete clean_fedora_build_matrix_verified copr_submission_verified
@@ -80,6 +81,18 @@ class OpenCodeFinalLicenseAuditTest < Minitest::Test
   def test_rejects_bun_final_license_overclaim
     inputs = parsed_inputs
     inputs.dig(:bun_final_license, "validation")["final_license_expression_verified"] = true
+
+    assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
+  end
+
+  def test_rejects_missing_bun_generator_reexecution
+    inputs = parsed_inputs
+    inputs.dig(:bun_final_license, "selected_license_evidence", "npm_codegen_inputs")["generator_execution_reproduced"] = false
+
+    assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
+
+    inputs = parsed_inputs
+    inputs.dig(:bun_final_license, "validation")["generator_execution_reproduced"] = false
 
     assert_raises(OpenCodeFinalLicenseAudit::Error) { build(inputs) }
   end

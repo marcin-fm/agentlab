@@ -1,0 +1,584 @@
+{
+  "schema": "bun-codegen-reexecution-proof/v1",
+  "package": "bun",
+  "version": "1.3.14",
+  "target": "fedora-44-x86_64",
+  "audit_date": "2026-08-01",
+  "inputs": {
+    "retained_proof_root": "/srv/tmp/agentlab-bun-self-rebuild-proof-11111",
+    "task_root": "/srv/tmp/agentlab-bun-codegen-reexecution-20260801",
+    "build_ninja": {
+      "path": "build/release-local/build.ninja",
+      "size_bytes": 2469137,
+      "sha256": "9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3"
+    },
+    "configure_proof": {
+      "path": "configure-proof.json",
+      "size_bytes": 7150,
+      "sha256": "1144489b7421806f5ff89bfdcbe74f9b0c6758cc94e1fd33bf14acba75007a5f"
+    },
+    "source_built_driver": {
+      "path": "bun",
+      "execution_path": "/srv/tmp/agentlab-bun-self-rebuild-proof-00000/build/release-local/bun",
+      "size_bytes": 66969072,
+      "sha256": "0d6abaaba9cf19248fe89afd7cd1c51e4d6dd17e56e89e5b62d71fe25b0a12e0"
+    },
+    "lol_html_provider_rpm": {
+      "path": "lol-html-3.0.1-0.4.fc44.x86_64.rpm",
+      "size_bytes": 440797,
+      "sha256": "9ab3db281325b4a6e231fec587284f0427dd571cf8ae9244f5f85f29d7b1171a"
+    },
+    "lol_html_runtime": {
+      "path": "liblolhtml.so.1",
+      "library_directory": "/srv/tmp/agentlab-bun-codegen-reexecution-20260801/lolhtml-runtime/usr/lib64",
+      "size_bytes": 889048,
+      "sha256": "ea38242373a7a9f098cc85820a0fdf1682bdbfb5eb4132bc0ce72ecfebf398dd"
+    }
+  },
+  "expected": {
+    "codegen_output_count": 25,
+    "source_output_count": 1,
+    "side_effect_header_count": 9,
+    "codegen_outputs": [
+      {
+        "path": "GeneratedALPNProtocols.h",
+        "size_bytes": 263,
+        "sha256": "ac3f5f9b38119e83cef30b9c53460736c7fae5b2ba314848f9201134b51c447a"
+      },
+      {
+        "path": "GeneratedBindings.cpp",
+        "size_bytes": 24442,
+        "sha256": "4d810ef53bde96de785e7323d44172b805464fa3d0de5062219a30a160a55351"
+      },
+      {
+        "path": "GeneratedBunObject.h",
+        "size_bytes": 642,
+        "sha256": "d24d6b012b927986d9c410f67db3bf6863dd50cbcfa75a485ed5223e99afaa78"
+      },
+      {
+        "path": "GeneratedFakeTimersConfig.cpp",
+        "size_bytes": 1788,
+        "sha256": "b0dad0ea478436a4c6181e83c5f6908f42ec86c95e6c5ca50330d9a42e2b5fb9"
+      },
+      {
+        "path": "GeneratedNodeModuleModule.h",
+        "size_bytes": 408,
+        "sha256": "028a5fdacdbb28ce3ae74eced99b7a09e0a0519713967e822c7b2a660dca823d"
+      },
+      {
+        "path": "GeneratedSSLConfig.cpp",
+        "size_bytes": 10902,
+        "sha256": "c1df4755207f75c90c709ce988d9dcb14f262fbe3e27072ef8c8fb7459e43ebd"
+      },
+      {
+        "path": "GeneratedSSLConfig.h",
+        "size_bytes": 7100,
+        "sha256": "8c83d75782c775fb0380ddeb016d4bd0bfe526251658c364d59e62ee71676ec2"
+      },
+      {
+        "path": "GeneratedSSLConfigFile.h",
+        "size_bytes": 463,
+        "sha256": "b2e36b7d99e3d15646d9fa993c5a801936392c9607be9af377a4dacaf2e69102"
+      },
+      {
+        "path": "GeneratedSSLConfigSingleFile.h",
+        "size_bytes": 309,
+        "sha256": "020c22e437908f15f4912a3aa555e34fe28b61cfa5a69fbf79db1ece7c422036"
+      },
+      {
+        "path": "GeneratedSocketConfig.cpp",
+        "size_bytes": 7613,
+        "sha256": "3e7b73c5fafc60bcdcdf742abcf8be8b32d923c6c4d96063a042020ed664c321"
+      },
+      {
+        "path": "GeneratedSocketConfigBinaryType.cpp",
+        "size_bytes": 2283,
+        "sha256": "3614dde1aa6fb1d66204c0b204089dff33333dba4311f6c8e66948d472ce287f"
+      },
+      {
+        "path": "GeneratedSocketConfigBinaryType.h",
+        "size_bytes": 1137,
+        "sha256": "5a9282bfa85ff67ef4d9326e4f21331082b11c7fa15fa7502be18fd5a9c5fdb1"
+      },
+      {
+        "path": "GeneratedSocketConfigHandlers.cpp",
+        "size_bytes": 6379,
+        "sha256": "79e7fa40ba75b9760f384954e2898c20fbbf9e42ea6fffab87a84204c67b037c"
+      },
+      {
+        "path": "GeneratedSocketConfigHandlers.h",
+        "size_bytes": 4766,
+        "sha256": "59ffa2ba8eac6f1a0ffd4e87b2d7ce154d1c64a8035f80a2c98dc94d9c105a37"
+      },
+      {
+        "path": "GeneratedSocketConfigTLS.h",
+        "size_bytes": 317,
+        "sha256": "0bca3d5ec7aabee3a5c573fe30002d8b413b593df7dd7b1af4fa6cf944f892bc"
+      },
+      {
+        "path": "bindgen_generated.zig",
+        "size_bytes": 2059,
+        "sha256": "e4aa110395ae45ce98024d2315c9608773d3f41e45883e64ca81109b4d3e16a4"
+      },
+      {
+        "path": "bindgen_generated/alpn_protocols.zig",
+        "size_bytes": 1239,
+        "sha256": "1f89f8e7798d9a2d1ae89a95e31d27643e1dd665f793c7fc85bff64bea6a0aed"
+      },
+      {
+        "path": "bindgen_generated/fake_timers_config.zig",
+        "size_bytes": 1544,
+        "sha256": "dca568f68fabcb222931397dae6f7dff8d1ee4003a68f9ac21b0b8ec927b0dbb"
+      },
+      {
+        "path": "bindgen_generated/socket_config.zig",
+        "size_bytes": 3843,
+        "sha256": "bb82ab403c739c3862cd126561072eb5da08b6a0b93c5f606b0379510fc6a133"
+      },
+      {
+        "path": "bindgen_generated/socket_config_binary_type.zig",
+        "size_bytes": 259,
+        "sha256": "6b34068f73e2a8f1abafc213f77b5273e04ea215b6d75a6aac65f8e1e9d72dc2"
+      },
+      {
+        "path": "bindgen_generated/socket_config_handlers.zig",
+        "size_bytes": 3666,
+        "sha256": "b8c46fe6b1ee9f1e91973fa8aa5cb04b1bc16c1e77d4cbcabcda4a4a1b60ef7e"
+      },
+      {
+        "path": "bindgen_generated/socket_config_tls.zig",
+        "size_bytes": 1241,
+        "sha256": "fe91c19fdf8d50db28d0b06decb33d1e9cf1f0b57e38f672ff09eaff1e1e5991"
+      },
+      {
+        "path": "bindgen_generated/ssl_config.zig",
+        "size_bytes": 5798,
+        "sha256": "47a8c97fecce2614b8678e32cf16020f24df564936adc9faf45c738e33d8ca37"
+      },
+      {
+        "path": "bindgen_generated/ssl_config_file.zig",
+        "size_bytes": 1711,
+        "sha256": "1235ac39fc3199af425276f3be8e85e464c709aa4a389a2e5be4ae14097e30ea"
+      },
+      {
+        "path": "bindgen_generated/ssl_config_single_file.zig",
+        "size_bytes": 1280,
+        "sha256": "691625363796c2c6d4bccc5ef9a659b21616b5d9473604d27754487dca01a290"
+      }
+    ],
+    "source_outputs": [
+      {
+        "path": "src/jsc/bindings/GeneratedBindings.zig",
+        "size_bytes": 20457,
+        "sha256": "56f9dde463bf1c8b3db837f7845ce89959c82434c85534c9324e3868fa2a48c6"
+      }
+    ],
+    "codegen_tree_entry_count": 118,
+    "codegen_tree_sha256": "0e29d3eb4797d830872caa038c4b97e83e5d13b5b8c5f84009fdd103986d09af"
+  },
+  "runs": [
+    {
+      "name": "run1",
+      "network_isolated": true,
+      "commands": [
+        {
+          "producer": "bindgenv2",
+          "argv": [
+            "unshare",
+            "--net",
+            "env",
+            "TARGET_PLATFORM=linux",
+            "TARGET_ARCH=x64",
+            "LD_LIBRARY_PATH=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/lolhtml-runtime/usr/lib64",
+            "/srv/tmp/agentlab-bun-self-rebuild-proof-00000/build/release-local/bun",
+            "run",
+            "/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run1/source/src/codegen/bindgenv2/script.ts",
+            "--command=generate",
+            "--codegen-path=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run1/codegen",
+            "--sources=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run1/source/src/runtime/socket/SocketConfig.bindv2.ts,/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run1/source/src/runtime/socket/SSLConfig.bindv2.ts,/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run1/source/src/test_runner/timers/FakeTimersConfig.bindv2.ts"
+          ],
+          "log": {
+            "path": "bindgenv2.log",
+            "size_bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "exit_status": 0
+          }
+        },
+        {
+          "producer": "bindgen",
+          "argv": [
+            "unshare",
+            "--net",
+            "env",
+            "TARGET_PLATFORM=linux",
+            "TARGET_ARCH=x64",
+            "LD_LIBRARY_PATH=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/lolhtml-runtime/usr/lib64",
+            "/srv/tmp/agentlab-bun-self-rebuild-proof-00000/build/release-local/bun",
+            "run",
+            "/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run1/source/src/codegen/bindgen.ts",
+            "--debug=OFF",
+            "--codegen-root=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run1/codegen"
+          ],
+          "log": {
+            "path": "bindgen.log",
+            "size_bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "exit_status": 0
+          }
+        }
+      ],
+      "codegen_output_count": 25,
+      "source_output_count": 1,
+      "codegen_tree_entry_count": 118,
+      "codegen_tree_sha256": "0e29d3eb4797d830872caa038c4b97e83e5d13b5b8c5f84009fdd103986d09af",
+      "outputs": [
+        {
+          "path": "GeneratedALPNProtocols.h",
+          "size_bytes": 263,
+          "sha256": "ac3f5f9b38119e83cef30b9c53460736c7fae5b2ba314848f9201134b51c447a"
+        },
+        {
+          "path": "GeneratedBindings.cpp",
+          "size_bytes": 24442,
+          "sha256": "4d810ef53bde96de785e7323d44172b805464fa3d0de5062219a30a160a55351"
+        },
+        {
+          "path": "GeneratedBunObject.h",
+          "size_bytes": 642,
+          "sha256": "d24d6b012b927986d9c410f67db3bf6863dd50cbcfa75a485ed5223e99afaa78"
+        },
+        {
+          "path": "GeneratedFakeTimersConfig.cpp",
+          "size_bytes": 1788,
+          "sha256": "b0dad0ea478436a4c6181e83c5f6908f42ec86c95e6c5ca50330d9a42e2b5fb9"
+        },
+        {
+          "path": "GeneratedNodeModuleModule.h",
+          "size_bytes": 408,
+          "sha256": "028a5fdacdbb28ce3ae74eced99b7a09e0a0519713967e822c7b2a660dca823d"
+        },
+        {
+          "path": "GeneratedSSLConfig.cpp",
+          "size_bytes": 10902,
+          "sha256": "c1df4755207f75c90c709ce988d9dcb14f262fbe3e27072ef8c8fb7459e43ebd"
+        },
+        {
+          "path": "GeneratedSSLConfig.h",
+          "size_bytes": 7100,
+          "sha256": "8c83d75782c775fb0380ddeb016d4bd0bfe526251658c364d59e62ee71676ec2"
+        },
+        {
+          "path": "GeneratedSSLConfigFile.h",
+          "size_bytes": 463,
+          "sha256": "b2e36b7d99e3d15646d9fa993c5a801936392c9607be9af377a4dacaf2e69102"
+        },
+        {
+          "path": "GeneratedSSLConfigSingleFile.h",
+          "size_bytes": 309,
+          "sha256": "020c22e437908f15f4912a3aa555e34fe28b61cfa5a69fbf79db1ece7c422036"
+        },
+        {
+          "path": "GeneratedSocketConfig.cpp",
+          "size_bytes": 7613,
+          "sha256": "3e7b73c5fafc60bcdcdf742abcf8be8b32d923c6c4d96063a042020ed664c321"
+        },
+        {
+          "path": "GeneratedSocketConfigBinaryType.cpp",
+          "size_bytes": 2283,
+          "sha256": "3614dde1aa6fb1d66204c0b204089dff33333dba4311f6c8e66948d472ce287f"
+        },
+        {
+          "path": "GeneratedSocketConfigBinaryType.h",
+          "size_bytes": 1137,
+          "sha256": "5a9282bfa85ff67ef4d9326e4f21331082b11c7fa15fa7502be18fd5a9c5fdb1"
+        },
+        {
+          "path": "GeneratedSocketConfigHandlers.cpp",
+          "size_bytes": 6379,
+          "sha256": "79e7fa40ba75b9760f384954e2898c20fbbf9e42ea6fffab87a84204c67b037c"
+        },
+        {
+          "path": "GeneratedSocketConfigHandlers.h",
+          "size_bytes": 4766,
+          "sha256": "59ffa2ba8eac6f1a0ffd4e87b2d7ce154d1c64a8035f80a2c98dc94d9c105a37"
+        },
+        {
+          "path": "GeneratedSocketConfigTLS.h",
+          "size_bytes": 317,
+          "sha256": "0bca3d5ec7aabee3a5c573fe30002d8b413b593df7dd7b1af4fa6cf944f892bc"
+        },
+        {
+          "path": "bindgen_generated.zig",
+          "size_bytes": 2059,
+          "sha256": "e4aa110395ae45ce98024d2315c9608773d3f41e45883e64ca81109b4d3e16a4"
+        },
+        {
+          "path": "bindgen_generated/alpn_protocols.zig",
+          "size_bytes": 1239,
+          "sha256": "1f89f8e7798d9a2d1ae89a95e31d27643e1dd665f793c7fc85bff64bea6a0aed"
+        },
+        {
+          "path": "bindgen_generated/fake_timers_config.zig",
+          "size_bytes": 1544,
+          "sha256": "dca568f68fabcb222931397dae6f7dff8d1ee4003a68f9ac21b0b8ec927b0dbb"
+        },
+        {
+          "path": "bindgen_generated/socket_config.zig",
+          "size_bytes": 3843,
+          "sha256": "bb82ab403c739c3862cd126561072eb5da08b6a0b93c5f606b0379510fc6a133"
+        },
+        {
+          "path": "bindgen_generated/socket_config_binary_type.zig",
+          "size_bytes": 259,
+          "sha256": "6b34068f73e2a8f1abafc213f77b5273e04ea215b6d75a6aac65f8e1e9d72dc2"
+        },
+        {
+          "path": "bindgen_generated/socket_config_handlers.zig",
+          "size_bytes": 3666,
+          "sha256": "b8c46fe6b1ee9f1e91973fa8aa5cb04b1bc16c1e77d4cbcabcda4a4a1b60ef7e"
+        },
+        {
+          "path": "bindgen_generated/socket_config_tls.zig",
+          "size_bytes": 1241,
+          "sha256": "fe91c19fdf8d50db28d0b06decb33d1e9cf1f0b57e38f672ff09eaff1e1e5991"
+        },
+        {
+          "path": "bindgen_generated/ssl_config.zig",
+          "size_bytes": 5798,
+          "sha256": "47a8c97fecce2614b8678e32cf16020f24df564936adc9faf45c738e33d8ca37"
+        },
+        {
+          "path": "bindgen_generated/ssl_config_file.zig",
+          "size_bytes": 1711,
+          "sha256": "1235ac39fc3199af425276f3be8e85e464c709aa4a389a2e5be4ae14097e30ea"
+        },
+        {
+          "path": "bindgen_generated/ssl_config_single_file.zig",
+          "size_bytes": 1280,
+          "sha256": "691625363796c2c6d4bccc5ef9a659b21616b5d9473604d27754487dca01a290"
+        }
+      ],
+      "source_outputs": [
+        {
+          "path": "src/jsc/bindings/GeneratedBindings.zig",
+          "size_bytes": 20457,
+          "sha256": "56f9dde463bf1c8b3db837f7845ce89959c82434c85534c9324e3868fa2a48c6"
+        }
+      ],
+      "full_codegen_tree_byte_identical": true,
+      "source_tree_shape_identical": true,
+      "unexpected_changed_source_files": [],
+      "source_tree_entry_count": 35656,
+      "source_tree_sha256": "4f4fb34a56f4b849c0785792fc76d39707114f93856fe7acfc8d0388ed00ad1e"
+    },
+    {
+      "name": "run2",
+      "network_isolated": true,
+      "commands": [
+        {
+          "producer": "bindgenv2",
+          "argv": [
+            "unshare",
+            "--net",
+            "env",
+            "TARGET_PLATFORM=linux",
+            "TARGET_ARCH=x64",
+            "LD_LIBRARY_PATH=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/lolhtml-runtime/usr/lib64",
+            "/srv/tmp/agentlab-bun-self-rebuild-proof-00000/build/release-local/bun",
+            "run",
+            "/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run2/source/src/codegen/bindgenv2/script.ts",
+            "--command=generate",
+            "--codegen-path=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run2/codegen",
+            "--sources=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run2/source/src/runtime/socket/SocketConfig.bindv2.ts,/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run2/source/src/runtime/socket/SSLConfig.bindv2.ts,/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run2/source/src/test_runner/timers/FakeTimersConfig.bindv2.ts"
+          ],
+          "log": {
+            "path": "bindgenv2.log",
+            "size_bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "exit_status": 0
+          }
+        },
+        {
+          "producer": "bindgen",
+          "argv": [
+            "unshare",
+            "--net",
+            "env",
+            "TARGET_PLATFORM=linux",
+            "TARGET_ARCH=x64",
+            "LD_LIBRARY_PATH=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/lolhtml-runtime/usr/lib64",
+            "/srv/tmp/agentlab-bun-self-rebuild-proof-00000/build/release-local/bun",
+            "run",
+            "/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run2/source/src/codegen/bindgen.ts",
+            "--debug=OFF",
+            "--codegen-root=/srv/tmp/agentlab-bun-codegen-reexecution-20260801/run2/codegen"
+          ],
+          "log": {
+            "path": "bindgen.log",
+            "size_bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "exit_status": 0
+          }
+        }
+      ],
+      "codegen_output_count": 25,
+      "source_output_count": 1,
+      "codegen_tree_entry_count": 118,
+      "codegen_tree_sha256": "0e29d3eb4797d830872caa038c4b97e83e5d13b5b8c5f84009fdd103986d09af",
+      "outputs": [
+        {
+          "path": "GeneratedALPNProtocols.h",
+          "size_bytes": 263,
+          "sha256": "ac3f5f9b38119e83cef30b9c53460736c7fae5b2ba314848f9201134b51c447a"
+        },
+        {
+          "path": "GeneratedBindings.cpp",
+          "size_bytes": 24442,
+          "sha256": "4d810ef53bde96de785e7323d44172b805464fa3d0de5062219a30a160a55351"
+        },
+        {
+          "path": "GeneratedBunObject.h",
+          "size_bytes": 642,
+          "sha256": "d24d6b012b927986d9c410f67db3bf6863dd50cbcfa75a485ed5223e99afaa78"
+        },
+        {
+          "path": "GeneratedFakeTimersConfig.cpp",
+          "size_bytes": 1788,
+          "sha256": "b0dad0ea478436a4c6181e83c5f6908f42ec86c95e6c5ca50330d9a42e2b5fb9"
+        },
+        {
+          "path": "GeneratedNodeModuleModule.h",
+          "size_bytes": 408,
+          "sha256": "028a5fdacdbb28ce3ae74eced99b7a09e0a0519713967e822c7b2a660dca823d"
+        },
+        {
+          "path": "GeneratedSSLConfig.cpp",
+          "size_bytes": 10902,
+          "sha256": "c1df4755207f75c90c709ce988d9dcb14f262fbe3e27072ef8c8fb7459e43ebd"
+        },
+        {
+          "path": "GeneratedSSLConfig.h",
+          "size_bytes": 7100,
+          "sha256": "8c83d75782c775fb0380ddeb016d4bd0bfe526251658c364d59e62ee71676ec2"
+        },
+        {
+          "path": "GeneratedSSLConfigFile.h",
+          "size_bytes": 463,
+          "sha256": "b2e36b7d99e3d15646d9fa993c5a801936392c9607be9af377a4dacaf2e69102"
+        },
+        {
+          "path": "GeneratedSSLConfigSingleFile.h",
+          "size_bytes": 309,
+          "sha256": "020c22e437908f15f4912a3aa555e34fe28b61cfa5a69fbf79db1ece7c422036"
+        },
+        {
+          "path": "GeneratedSocketConfig.cpp",
+          "size_bytes": 7613,
+          "sha256": "3e7b73c5fafc60bcdcdf742abcf8be8b32d923c6c4d96063a042020ed664c321"
+        },
+        {
+          "path": "GeneratedSocketConfigBinaryType.cpp",
+          "size_bytes": 2283,
+          "sha256": "3614dde1aa6fb1d66204c0b204089dff33333dba4311f6c8e66948d472ce287f"
+        },
+        {
+          "path": "GeneratedSocketConfigBinaryType.h",
+          "size_bytes": 1137,
+          "sha256": "5a9282bfa85ff67ef4d9326e4f21331082b11c7fa15fa7502be18fd5a9c5fdb1"
+        },
+        {
+          "path": "GeneratedSocketConfigHandlers.cpp",
+          "size_bytes": 6379,
+          "sha256": "79e7fa40ba75b9760f384954e2898c20fbbf9e42ea6fffab87a84204c67b037c"
+        },
+        {
+          "path": "GeneratedSocketConfigHandlers.h",
+          "size_bytes": 4766,
+          "sha256": "59ffa2ba8eac6f1a0ffd4e87b2d7ce154d1c64a8035f80a2c98dc94d9c105a37"
+        },
+        {
+          "path": "GeneratedSocketConfigTLS.h",
+          "size_bytes": 317,
+          "sha256": "0bca3d5ec7aabee3a5c573fe30002d8b413b593df7dd7b1af4fa6cf944f892bc"
+        },
+        {
+          "path": "bindgen_generated.zig",
+          "size_bytes": 2059,
+          "sha256": "e4aa110395ae45ce98024d2315c9608773d3f41e45883e64ca81109b4d3e16a4"
+        },
+        {
+          "path": "bindgen_generated/alpn_protocols.zig",
+          "size_bytes": 1239,
+          "sha256": "1f89f8e7798d9a2d1ae89a95e31d27643e1dd665f793c7fc85bff64bea6a0aed"
+        },
+        {
+          "path": "bindgen_generated/fake_timers_config.zig",
+          "size_bytes": 1544,
+          "sha256": "dca568f68fabcb222931397dae6f7dff8d1ee4003a68f9ac21b0b8ec927b0dbb"
+        },
+        {
+          "path": "bindgen_generated/socket_config.zig",
+          "size_bytes": 3843,
+          "sha256": "bb82ab403c739c3862cd126561072eb5da08b6a0b93c5f606b0379510fc6a133"
+        },
+        {
+          "path": "bindgen_generated/socket_config_binary_type.zig",
+          "size_bytes": 259,
+          "sha256": "6b34068f73e2a8f1abafc213f77b5273e04ea215b6d75a6aac65f8e1e9d72dc2"
+        },
+        {
+          "path": "bindgen_generated/socket_config_handlers.zig",
+          "size_bytes": 3666,
+          "sha256": "b8c46fe6b1ee9f1e91973fa8aa5cb04b1bc16c1e77d4cbcabcda4a4a1b60ef7e"
+        },
+        {
+          "path": "bindgen_generated/socket_config_tls.zig",
+          "size_bytes": 1241,
+          "sha256": "fe91c19fdf8d50db28d0b06decb33d1e9cf1f0b57e38f672ff09eaff1e1e5991"
+        },
+        {
+          "path": "bindgen_generated/ssl_config.zig",
+          "size_bytes": 5798,
+          "sha256": "47a8c97fecce2614b8678e32cf16020f24df564936adc9faf45c738e33d8ca37"
+        },
+        {
+          "path": "bindgen_generated/ssl_config_file.zig",
+          "size_bytes": 1711,
+          "sha256": "1235ac39fc3199af425276f3be8e85e464c709aa4a389a2e5be4ae14097e30ea"
+        },
+        {
+          "path": "bindgen_generated/ssl_config_single_file.zig",
+          "size_bytes": 1280,
+          "sha256": "691625363796c2c6d4bccc5ef9a659b21616b5d9473604d27754487dca01a290"
+        }
+      ],
+      "source_outputs": [
+        {
+          "path": "src/jsc/bindings/GeneratedBindings.zig",
+          "size_bytes": 20457,
+          "sha256": "56f9dde463bf1c8b3db837f7845ce89959c82434c85534c9324e3868fa2a48c6"
+        }
+      ],
+      "full_codegen_tree_byte_identical": true,
+      "source_tree_shape_identical": true,
+      "unexpected_changed_source_files": [],
+      "source_tree_entry_count": 35656,
+      "source_tree_sha256": "4f4fb34a56f4b849c0785792fc76d39707114f93856fe7acfc8d0388ed00ad1e"
+    }
+  ],
+  "validation": {
+    "independent_run_count": 2,
+    "network_used": false,
+    "package_manager_invoked": false,
+    "build_invoked": false,
+    "provider_rpm_installed": false,
+    "all_declared_and_side_effect_outputs_removed_before_execution": true,
+    "all_outputs_byte_identical_to_retained_proof": true,
+    "independent_runs_byte_identical": true,
+    "full_codegen_tree_byte_identical": true,
+    "unexpected_output_files_present": false,
+    "generator_execution_reproduced": true,
+    "generated_output_producer_edges_verified": false,
+    "final_npm_codegen_closure_verified": false
+  }
+}

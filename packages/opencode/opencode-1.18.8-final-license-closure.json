@@ -5,8 +5,8 @@
   "audit_date": "2026-08-01",
   "auditor": {
     "path": "scripts/audit-opencode-final-licenses",
-    "size_bytes": 17213,
-    "sha256": "a5c36b8beb7b09b08155e11aea9e691b2c60c5552d42e75aaa8866fcbabfe514"
+    "size_bytes": 17556,
+    "sha256": "1efe27557744afd06b4ff0676809b81b2823aa68adc19c9c6dcc4cff4ce5c19c"
   },
   "inputs": {
     "binary_embedding": {
@@ -31,8 +31,8 @@
     },
     "bun_final_linked_license_closure": {
       "path": "packages/bun/bun-1.3.14-final-linked-license-closure.json",
-      "size_bytes": 1979768,
-      "sha256": "8794acac75c1c18525a265c849970732d813a1d3aaa43a89e38b0b9dc81a394f"
+      "size_bytes": 1979873,
+      "sha256": "c086e54dc23f0fea2c59f454450729b9e3029388467c4ac1d04f45354f3aab20"
     }
   },
   "candidate_expressions": {
@@ -147,6 +147,7 @@
       "npm_codegen_package_count": 38,
       "npm_codegen_packages_with_required_text": 38
     },
+    "generator_execution_reproduced": true,
     "webkit_transitive_dependency_count": 5098,
     "unresolved_webkit_headerless_files": [
       "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp",

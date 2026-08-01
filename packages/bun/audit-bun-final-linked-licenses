@@ -1,0 +1,740 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "json"
+require "open3"
+require "optparse"
+require "pathname"
+require "shellwords"
+require "tempfile"
+require "yaml"
+
+module BunFinalLinkedLicenseAudit
+  class Error < StandardError; end
+
+  REPO_ROOT = File.expand_path("..", __dir__)
+  PREVIOUS_SOURCE_INVENTORY_RECORD = {
+    "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
+    "size_bytes" => 127_845,
+    "sha256" => "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb"
+  }.freeze
+  CURRENT_SOURCE_INVENTORY_RECORD = {
+    "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
+    "size_bytes" => 127_845,
+    "sha256" => "2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9"
+  }.freeze
+  NATIVE_SELECTED_EXPRESSION_COUNTS = {
+    "Apache-2.0" => 2,
+    "BSD-2-Clause AND BSD-3-Clause AND CC0-1.0" => 1,
+    "BSD-2-Clause AND libpng-2.0" => 1,
+    "BSD-3-Clause OR GPL-2.0-only" => 1,
+    "BSD-3-Clause WITH Google-Patent-WebM" => 1,
+    "CC0-1.0 OR BSD-2-Clause" => 1,
+    "IJG AND BSD-3-Clause" => 1,
+    "LGPL-2.1-only" => 1,
+    "MIT" => 6,
+    "MIT AND BSD-2-Clause" => 1,
+    "MIT AND BSD-2-Clause AND BSD-3-Clause" => 1,
+    "Zlib" => 1
+  }.freeze
+  NPM_SELECTED_EXPRESSION_COUNTS = {
+    "Apache-2.0" => 1,
+    "Artistic-2.0" => 1,
+    "BSD-3-Clause" => 1,
+    "MIT" => 35
+  }.freeze
+  BUN_OBJECT_PREFIXES = %w[obj/codegen/ obj/packages/ obj/src/ obj/unified/].freeze
+  UNRESOLVED_NATIVE_REASONS = {}.freeze
+  WEBKIT_LICENSE_HEADER_PATTERN = /SPDX-License-Identifier|Copyright|Redistribution and use|Permission is hereby granted|GNU (?:LIBRARY|LESSER|GENERAL) PUBLIC LICENSE|Mozilla Public License|This source code is licensed/
+  WEBKIT_HEADERLESS_PATHS = %w[
+    source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp
+    source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.h
+    source/Source/JavaScriptCore/runtime/InternalFieldTuple.cpp
+    source/Source/JavaScriptCore/runtime/InternalFieldTuple.h
+    source/Source/WTF/wtf/ForkExtras.h
+    source/Source/WTF/wtf/bun/RunLoopBun.cpp
+    source/Source/WTF/wtf/simdutf/simdutf_impl.cpp.h
+    source/Source/WTF/wtf/simdutf/simdutf_impl.h
+    source/Source/WTF/wtf/uv_get_constrained_memory.h
+  ].freeze
+  WEBKIT_UNRESOLVED_HEADERLESS_PROVENANCE = {
+    "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp" => ["d6c9c0a555252e0dc26810e4bfaf6a55e1047059", "Jarred Sumner <jarred@jarredsumner.com>", "2025-01-02T01:20:21-08:00", "Implement initial V8 Heap Snapshot support"],
+    "source/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.h" => ["d6c9c0a555252e0dc26810e4bfaf6a55e1047059", "Jarred Sumner <jarred@jarredsumner.com>", "2025-01-02T01:20:21-08:00", "Implement initial V8 Heap Snapshot support"],
+    "source/Source/JavaScriptCore/runtime/InternalFieldTuple.cpp" => ["5e65b9ae7756b6353cfeac5206f7076b00e9ecf5", "dave caruso <me@paperdave.net>", "2023-07-18T15:43:37-07:00", "Implement AsyncLocalStorage context tracking."],
+    "source/Source/JavaScriptCore/runtime/InternalFieldTuple.h" => ["5e65b9ae7756b6353cfeac5206f7076b00e9ecf5", "dave caruso <me@paperdave.net>", "2023-07-18T15:43:37-07:00", "Implement AsyncLocalStorage context tracking."],
+    "source/Source/WTF/wtf/ForkExtras.h" => ["32c485648ec871d9543e2073c73e664149c11c07", "Jarred Sumner <709451+Jarred-Sumner@users.noreply.github.com>", "2022-05-31T02:21:55-07:00", "Rope String iterator"],
+    "source/Source/WTF/wtf/bun/RunLoopBun.cpp" => ["53f934f0e93f499b35fd05d3c1416394e20f41d1", "Ben Grant <ben@bun.sh>", "2024-11-26T14:13:10-08:00", "Initial Bun-specific run loop"]
+  }.freeze
+
+  module_function
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def inventory_digest(records)
+    serialized = records.sort_by { |record| record.fetch("path") }.map do |record|
+      JSON.generate(record.sort.to_h)
+    end.join("\n") + "\n"
+    Digest::SHA256.hexdigest(serialized)
+  end
+
+  def path_set_digest(paths)
+    Digest::SHA256.hexdigest(paths.sort.join("\n") + "\n")
+  end
+
+  def ordered_list_digest(values)
+    Digest::SHA256.hexdigest(values.join("\n") + "\n")
+  end
+
+  def repo_record(path)
+    real = File.realpath(path)
+    root = File.realpath(REPO_ROOT)
+    raise Error, "input is outside the repository: #{path}" unless real.start_with?("#{root}/")
+
+    {
+      "path" => real.delete_prefix("#{root}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def build_record(path, proof_root)
+    real = File.realpath(path)
+    root = File.realpath(proof_root)
+    raise Error, "linked input escapes the proof root: #{path}" unless real.start_with?("#{root}/")
+
+    {
+      "path" => real.delete_prefix("#{root}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real),
+      "kind" => File.extname(real) == ".a" ? "archive" : "object"
+    }
+  end
+
+  def parse_final_link(text)
+    match = text.match(/^build bun-profile: link (.*?)(?=^  ldflags = )/m)
+    raise Error, "cannot find final bun-profile link edge" unless match
+
+    inputs = match[1].gsub(/\$\n\s*/, " ").split
+    inputs = inputs.take_while { |input| input != "|" }
+    ldflags_line = text.match(/^  ldflags = (.*)$/)&.captures&.first
+    raise Error, "cannot find final bun-profile ldflags" unless ldflags_line
+
+    {
+      "objects" => inputs.select { |input| input.end_with?(".o") },
+      "archives" => inputs.select { |input| input.end_with?(".a") },
+      "ldflags" => Shellwords.split(ldflags_line)
+    }
+  end
+
+  def classify_objects(objects, native_names)
+    groups = Hash.new { |hash, key| hash[key] = [] }
+    objects.each do |path|
+      component = if path == "obj/vendor/libjpeg-turbo/jbun_stubs.c.o"
+                    "bun"
+                  elsif path.start_with?("obj/vendor/")
+                    path.split("/").fetch(2)
+                  elsif BUN_OBJECT_PREFIXES.any? { |prefix| path.start_with?(prefix) } || path.match?(/\Abun-zig\.\d+\.o\z/)
+                    "bun"
+                  end
+      raise Error, "unmapped final-link object #{path}" unless component
+      raise Error, "unknown native final-link component #{component}" if component != "bun" && !native_names.include?(component)
+
+      groups[component] << path
+    end
+    missing = native_names - groups.keys
+    raise Error, "native components are absent from the final link: #{missing.join(', ')}" if missing.any?
+
+    groups.transform_values(&:sort).sort.to_h
+  end
+
+  def load_json(path, schema)
+    receipt = JSON.parse(File.read(path))
+    raise Error, "unexpected schema in #{path}" unless receipt.fetch("schema") == schema
+
+    receipt
+  end
+
+  def parse_ninja_edges(path)
+    edges = {}
+    File.read(path).gsub(/\$\n\s*/, " ").lines.grep(/^build /).each do |line|
+      outputs, rule_and_inputs = line.delete_prefix("build ").split(": ", 2)
+      next unless rule_and_inputs
+
+      rule, inputs = rule_and_inputs.split(" ", 2)
+      explicit_inputs = inputs.to_s.split(/ \|\|? /, 2).first.to_s.split
+      outputs.split.reject { |output| output == "|" }.each do |output|
+        raise Error, "duplicate WebKit Ninja output #{output}" if edges.key?(output)
+
+        edges[output] = { "rule" => rule, "inputs" => explicit_inputs }
+      end
+    end
+    edges
+  end
+
+  def webkit_file_record(path, source_root, build_root)
+    real = File.realpath(path)
+    source = File.realpath(source_root)
+    build = File.realpath(build_root)
+    canonical = if real.start_with?("#{source}/")
+                  "source/#{real.delete_prefix("#{source}/")}" 
+                elsif real.start_with?("#{build}/")
+                  "generated/#{real.delete_prefix("#{build}/")}" 
+                else
+                  raise Error, "WebKit source escapes retained roots: #{path}"
+                end
+    {
+      "path" => canonical,
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def resolve_unified_sources(unified_path, source_root, build_root)
+    includes = File.read(unified_path).scan(/^#include\s+"([^"]+)"/).flatten
+    raise Error, "WebKit unified source has no constituents: #{unified_path}" if includes.empty?
+
+    includes.map do |include_path|
+      candidates = [
+        File.join(File.dirname(unified_path), include_path),
+        File.join(build_root, "JavaScriptCore", "DerivedSources", include_path),
+        File.join(source_root, "Source", "JavaScriptCore", include_path),
+        File.join(source_root, "Source", "WTF", include_path),
+        File.join(source_root, "Source", "bmalloc", include_path)
+      ].select { |candidate| File.file?(candidate) }.map { |candidate| File.realpath(candidate) }.uniq
+      raise Error, "cannot uniquely resolve WebKit unified include #{include_path}" unless candidates.length == 1
+
+      webkit_file_record(candidates.first, source_root, build_root)
+    end
+  end
+
+  def webkit_transitive_dependency_mapping(archives:, source_inventory:, source_root:, build_root:)
+    object_archives = {}
+    archives.each do |archive|
+      archive.fetch("members").each do |member|
+        object_path = member.fetch("object_path")
+        raise Error, "duplicate WebKit dependency object #{object_path}" if object_archives.key?(object_path)
+
+        object_archives[object_path] = archive.fetch("name")
+      end
+    end
+
+    dependencies = Hash.new { |hash, key| hash[key] = {} }
+    seen_objects = {}
+    current_archive = nil
+    Open3.popen2e("ninja", "-C", build_root, "-t", "deps") do |_stdin, output, wait|
+      output.each_line do |line|
+        if line.start_with?("    ")
+          next unless current_archive
+
+          path = line.strip
+          next unless path.start_with?(source_root, build_root)
+
+          record = webkit_file_record(path, source_root, build_root)
+          dependencies[current_archive][record.fetch("path")] = record
+        else
+          object_path = line.split(": #deps ", 2).first
+          current_archive = object_archives[object_path]
+          seen_objects[object_path] = true if current_archive
+        end
+      end
+      raise Error, "cannot read retained WebKit dependency database" unless wait.value.success?
+    end
+    raise Error, "WebKit dependency database object set mismatch" unless seen_objects.keys.sort == object_archives.keys.sort
+
+    archive_records = archives.map do |archive|
+      records = dependencies.fetch(archive.fetch("name")).values.sort_by { |record| record.fetch("path") }
+      {
+        "name" => archive.fetch("name"),
+        "dependency_count" => records.length,
+        "dependency_path_set_sha256" => path_set_digest(records.map { |record| record.fetch("path") }),
+        "dependencies" => records
+      }
+    end
+    all_records = archive_records.flat_map { |archive| archive.fetch("dependencies") }.uniq { |record| record.fetch("path") }.sort_by { |record| record.fetch("path") }
+    source_records, generated_records = all_records.partition { |record| record.fetch("path").start_with?("source/") }
+    code_extensions = %w[.c .cc .cpp .h .hh .hpp .inc .inl .m .mm .s .S .asm]
+    headerless = source_records.select do |record|
+      next false unless code_extensions.include?(File.extname(record.fetch("path")))
+
+      path = File.join(source_root, record.fetch("path").delete_prefix("source/"))
+      !File.binread(path, 8192).match?(WEBKIT_LICENSE_HEADER_PATTERN)
+    end
+    raise Error, "WebKit headerless dependency set drifted" unless headerless.map { |record| record.fetch("path") } == WEBKIT_HEADERLESS_PATHS
+
+    candidate_markers = source_inventory.dig("webkit", "candidate_license_files").to_h { |record| [record.fetch("path"), record] }
+    simdutf_marker = candidate_markers.fetch("vendor/WebKit/Source/WTF/wtf/simdutf/LICENSE-simdutf.txt")
+    uv_implementation = webkit_file_record(File.join(source_root, "Source/WTF/wtf/uv_get_constrained_memory.cpp"), source_root, build_root)
+    uv_text = File.binread(File.join(source_root, "Source/WTF/wtf/uv_get_constrained_memory.cpp"), 4096)
+    raise Error, "libuv-derived WebKit implementation lost its MIT terms" unless uv_text.match?(/Copyright Joyent/) && uv_text.match?(/Permission is hereby granted/)
+
+    headerless_reviews = headerless.map do |record|
+      path = record.fetch("path")
+      if path.start_with?("source/Source/WTF/wtf/simdutf/")
+        record.merge(
+          "status" => "resolved_generated_subordinate",
+          "selected_expression" => "MIT",
+          "license_evidence" => simdutf_marker
+        )
+      elsif path == "source/Source/WTF/wtf/uv_get_constrained_memory.h"
+        record.merge(
+          "status" => "resolved_companion_implementation",
+          "selected_expression" => "MIT",
+          "license_evidence" => uv_implementation
+        )
+      else
+        commit, author, date, subject = WEBKIT_UNRESOLVED_HEADERLESS_PROVENANCE.fetch(path)
+        record.merge(
+          "status" => "unresolved_upstream_license_clarification",
+          "introducing_commit" => commit,
+          "introducing_author" => author,
+          "introducing_date" => date,
+          "introducing_subject" => subject,
+          "upstream_repository" => "https://github.com/oven-sh/WebKit",
+          "upstream_issue_tracker_enabled" => false,
+          "selected_expression" => nil
+        )
+      end
+    end
+
+    {
+      "object_count" => object_archives.length,
+      "archive_dependency_counts" => archive_records.to_h { |archive| [archive.fetch("name"), archive.fetch("dependency_count")] },
+      "archive_dependencies" => archive_records,
+      "unique_dependency_count" => all_records.length,
+      "dependency_path_set_sha256" => path_set_digest(all_records.map { |record| record.fetch("path") }),
+      "source_dependency_count" => source_records.length,
+      "generated_dependency_count" => generated_records.length,
+      "headerless_source_code_count" => headerless_reviews.length,
+      "resolved_headerless_source_code_count" => headerless_reviews.count { |record| record.fetch("status").start_with?("resolved_") },
+      "unresolved_headerless_source_code_count" => headerless_reviews.count { |record| record.fetch("status").start_with?("unresolved_") },
+      "headerless_source_code" => headerless_reviews,
+      "mapping_verified" => true,
+      "headerless_review_verified" => true,
+      "semantic_license_selection_verified" => false
+    }
+  end
+
+  def webkit_archive_mapping(proof_root:, archive_records:, source_inventory:, self_build:)
+    build_root = File.join(proof_root, "build", "release-local", "deps", "WebKit")
+    commit = self_build.dig("inputs", "webkit", "commit")
+    source_root = File.join(proof_root, "webkit", "WebKit-#{commit}")
+    ninja_path = File.join(build_root, "build.ninja")
+    compile_commands_path = File.join(build_root, "compile_commands.json")
+    raise Error, "missing retained WebKit source tree" unless File.directory?(source_root)
+    raise Error, "missing WebKit build graph" unless File.file?(ninja_path)
+    raise Error, "missing WebKit compilation database" unless File.file?(compile_commands_path)
+
+    edges = parse_ninja_edges(ninja_path)
+    compile_commands = JSON.parse(File.read(compile_commands_path))
+    compilation_sources = {}
+    compile_commands.each do |entry|
+      output = File.expand_path(entry.fetch("output"), entry.fetch("directory"))
+      source = File.realpath(entry.fetch("file"))
+      raise Error, "duplicate WebKit compilation output #{output}" if compilation_sources.key?(output)
+
+      compilation_sources[output] = source
+    end
+    candidate_markers = source_inventory.dig("webkit", "candidate_license_files")
+
+    archives = archive_records.map do |archive|
+      relative_archive = archive.fetch("path").delete_prefix("build/release-local/deps/WebKit/")
+      archive_edge = edges.fetch(relative_archive) { raise Error, "missing WebKit archive edge #{relative_archive}" }
+      object_paths = archive_edge.fetch("inputs")
+      member_output, status = Open3.capture2("ar", "t", File.join(proof_root, archive.fetch("path")))
+      raise Error, "cannot list WebKit archive #{relative_archive}" unless status.success?
+
+      members = member_output.lines.map(&:strip).reject(&:empty?)
+      raise Error, "WebKit archive member/input count mismatch for #{relative_archive}" unless members.length == object_paths.length
+      members.zip(object_paths).each do |member, object_path|
+        raise Error, "WebKit archive member order mismatch for #{relative_archive}" unless member == File.basename(object_path)
+      end
+
+      member_mappings = members.zip(object_paths).map do |member, object_path|
+        object_edge = edges.fetch(object_path) { raise Error, "missing WebKit object edge #{object_path}" }
+        compiled_source_path = object_edge.fetch("inputs").first
+        raise Error, "missing WebKit compiled source for #{object_path}" unless compiled_source_path
+
+        compiled_source_path = File.join(build_root, compiled_source_path) unless Pathname.new(compiled_source_path).absolute?
+        compiled_source_path = File.realpath(compiled_source_path)
+        object_output = File.expand_path(object_path, build_root)
+        raise Error, "WebKit Ninja/compilation database mismatch for #{object_path}" unless compilation_sources.fetch(object_output) == compiled_source_path
+
+        compiled_source = webkit_file_record(compiled_source_path, source_root, build_root)
+        unified = File.basename(compiled_source_path).start_with?("UnifiedSource-")
+        sources = unified ? resolve_unified_sources(compiled_source_path, source_root, build_root) : [compiled_source]
+        {
+          "member" => member,
+          "object_path" => object_path,
+          "compiled_source" => compiled_source,
+          "source_kind" => unified ? "unified" : (compiled_source.fetch("path").start_with?("generated/") ? "generated" : "direct"),
+          "sources" => sources
+        }
+      end
+
+      source_records = member_mappings.flat_map { |mapping| mapping.fetch("sources") }.uniq { |record| record.fetch("path") }.sort_by { |record| record.fetch("path") }
+      source_paths = source_records.map { |record| record.fetch("path") }
+      component = File.basename(relative_archive).delete_prefix("lib").delete_suffix(".a")
+      component_root = "Source/#{component}"
+      marker_records = candidate_markers.filter_map do |marker|
+        marker_path = marker.fetch("path").delete_prefix("vendor/WebKit/")
+        marker_directory = File.dirname(marker_path)
+        selected = source_paths.any? do |source_path|
+          next false unless source_path.start_with?("source/")
+
+          relative_source = source_path.delete_prefix("source/")
+          relative_source.start_with?("#{marker_directory}/") || marker_directory == component_root
+        end
+        next unless selected
+
+        actual = File.join(source_root, marker_path)
+        raise Error, "missing selected WebKit license marker #{marker_path}" unless File.file?(actual)
+        raise Error, "WebKit license marker size mismatch #{marker_path}" unless File.size(actual) == marker.fetch("size_bytes")
+        raise Error, "WebKit license marker hash mismatch #{marker_path}" unless sha256(actual) == marker.fetch("sha256")
+
+        marker
+      end.sort_by { |record| record.fetch("path") }
+
+      {
+        "name" => component,
+        "archive_path" => archive.fetch("path"),
+        "archive_sha256" => archive.fetch("sha256"),
+        "member_count" => members.length,
+        "member_list_sha256" => ordered_list_digest(members),
+        "object_path_set_sha256" => path_set_digest(object_paths),
+        "source_count" => source_records.length,
+        "source_path_set_sha256" => path_set_digest(source_paths),
+        "license_marker_count" => marker_records.length,
+        "license_markers" => marker_records,
+        "members" => member_mappings
+      }
+    end
+
+    transitive_dependencies = webkit_transitive_dependency_mapping(
+      archives: archives,
+      source_inventory: source_inventory,
+      source_root: source_root,
+      build_root: build_root
+    )
+
+    {
+      "build_ninja" => webkit_file_record(ninja_path, source_root, build_root),
+      "compile_commands" => webkit_file_record(compile_commands_path, source_root, build_root),
+      "archive_count" => archives.length,
+      "archive_member_count" => archives.sum { |archive| archive.fetch("member_count") },
+      "resolved_source_count" => archives.sum { |archive| archive.fetch("source_count") },
+      "archives" => archives,
+      "transitive_dependencies" => transitive_dependencies,
+      "member_source_mapping_verified" => true,
+      "license_marker_inventory_verified" => true,
+      "semantic_license_selection_verified" => false
+    }
+  end
+
+  def generate(proof_root:, source_inventory_path:, npm_codegen_path:, self_build_path:, relink_audit_path:, relink_kit_path:, lolhtml_package_path:, audit_date:)
+    proof_root = File.realpath(proof_root)
+    build_root = File.join(proof_root, "build", "release-local")
+    ninja_path = File.join(build_root, "build.ninja")
+    raise Error, "missing retained final build graph" unless File.file?(ninja_path)
+
+    source_inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    npm_codegen = load_json(npm_codegen_path, "bun-npm-code-generation-closure/v2")
+    self_build = load_json(self_build_path, "bun-self-rebuild-proof/v2")
+    relink_audit = load_json(relink_audit_path, "bun-relink-materials-audit/v3")
+    relink_kit = load_json(relink_kit_path, "bun-relink-kit/v2")
+    lolhtml = YAML.safe_load(File.read(lolhtml_package_path), aliases: false)
+
+    raise Error, "Bun release mismatch" unless source_inventory.fetch("release") == "1.3.14" && self_build.fetch("release") == "1.3.14"
+    raise Error, "npm code-generation release mismatch" unless npm_codegen["package"] == "bun" && npm_codegen["version"] == "1.3.14"
+    raise Error, "npm code-generation source inventory mismatch" unless npm_codegen.dig("inputs", "source_license_inventory") == repo_record(source_inventory_path)
+    raise Error, "npm code-generation selected expression mismatch" unless npm_codegen.dig("npm", "selected_expression_counts") == NPM_SELECTED_EXPRESSION_COUNTS
+    raise Error, "npm code-generation selected package mismatch" unless npm_codegen.dig("npm", "selected_package_manifest_count") == 38 && npm_codegen.dig("npm", "packages_with_required_text") == 38 && npm_codegen.dig("npm", "packages_missing_required_text") == []
+    raise Error, "npm code-generation selected license review incomplete" unless npm_codegen.dig("validation", "selected_package_license_expressions_verified") == true && npm_codegen.dig("validation", "all_selected_package_license_texts_verified") == true
+    raise Error, "npm code-generation execution was not reproduced" unless npm_codegen.dig("validation", "generator_execution_reproduced") == true
+    raise Error, "npm code-generation closure unexpectedly complete" unless npm_codegen.dig("validation", "final_npm_codegen_closure_verified") == false
+    raise Error, "relink audit does not bind the self-rebuild" unless relink_audit.dig("source_build", "receipt") == File.basename(self_build_path) &&
+      relink_audit.dig("source_build", "receipt_sha256") == sha256(self_build_path)
+    raise Error, "relink kit does not bind the relink audit" unless relink_kit.dig("source_audit", "sha256") == sha256(relink_audit_path)
+
+    parsed = parse_final_link(File.read(ninja_path))
+    raise Error, "system lol-html is absent from the final link" unless parsed.fetch("ldflags").include?("-llolhtml")
+    raise Error, "unexpected final-link object count" unless parsed.fetch("objects").length == relink_audit.dig("final_link", "direct_object_count")
+    raise Error, "unexpected final-link archive set" unless parsed.fetch("archives").sort == %w[deps/WebKit/lib/libJavaScriptCore.a deps/WebKit/lib/libWTF.a deps/WebKit/lib/libbmalloc.a].sort
+
+    object_records = parsed.fetch("objects").map { |path| build_record(File.join(build_root, path), proof_root) }
+    raise Error, "final-link object inventory does not match the relink audit" unless inventory_digest(object_records) == relink_audit.dig("final_link", "direct_object_inventory_sha256")
+    archive_records = parsed.fetch("archives").map { |path| build_record(File.join(build_root, path), proof_root) }.sort_by { |record| record.fetch("path") }
+    raise Error, "final-link archive inventory does not match the relink audit" unless archive_records == relink_audit.dig("final_link", "direct_archives")
+
+    native_inventory = source_inventory.fetch("native").to_h { |record| [record.fetch("name"), record] }
+    groups = classify_objects(parsed.fetch("objects"), native_inventory.keys)
+    components = groups.map do |name, paths|
+      source = name == "bun" ? nil : native_inventory.fetch(name)
+      {
+        "name" => name,
+        "kind" => name == "bun" ? "bun_source_and_generated_objects" : "bundled_native_source",
+        "source_identity" => name == "bun" ? self_build.dig("source_closure", "source_commit") : source.fetch("source_identity"),
+        "linked_input_count" => paths.length,
+        "linked_inputs_sha256" => path_set_digest(paths),
+        "license_files" => name == "bun" ? [source_inventory.fetch("bun_license")] : source.fetch("license_files"),
+        "license_selection" => name == "bun" ? { "selected_expression" => "MIT", "basis" => "Bun release license" } : source["license_selection"],
+        "license_selection_verified" => name == "bun" || !source["license_selection"].nil?
+      }
+    end
+    native_components = components.select { |component| component["kind"] == "bundled_native_source" }
+    native_expression_counts = native_components.group_by { |component| component.dig("license_selection", "selected_expression") }.transform_values(&:length).sort.to_h
+    native_license_file_count = native_components.sum { |component| Array(component["license_files"]).length }
+    raise Error, "selected native expression set mismatch" unless native_expression_counts == NATIVE_SELECTED_EXPRESSION_COUNTS
+    raise Error, "selected native license files are incomplete" unless native_license_file_count == 23 && native_components.all? { |component| Array(component["license_files"]).any? }
+
+    provider_input = self_build.dig("inputs", "offline_inputs", "system_lolhtml_provider")
+    provider_license = lolhtml.fetch("license_audit")
+    raise Error, "lol-html provider metadata mismatch" unless provider_input.fetch("package") == lolhtml.fetch("name") &&
+      provider_input.fetch("version") == lolhtml.dig("upstream", "current_version") &&
+      provider_input.fetch("c_api_version") == lolhtml.dig("c_api", "crate_version") &&
+      provider_input.fetch("soname") == lolhtml.dig("c_api", "soname") &&
+      provider_license.fetch("fedora_spdx_review_complete") == true
+
+    system_libraries = parsed.fetch("ldflags").select { |flag| flag.match?(/\A-l(?:[^-].*)?\z/) }.uniq.sort
+    unresolved_native = components.reject { |component| component.fetch("license_selection_verified") }.map { |component| component.fetch("name") }
+    raise Error, "unexpected unresolved native license set" unless unresolved_native.sort == UNRESOLVED_NATIVE_REASONS.keys.sort
+    unresolved_native_details = unresolved_native.sort.map do |name|
+      component = components.find { |record| record.fetch("name") == name }
+      {
+        "name" => name,
+        "reason" => UNRESOLVED_NATIVE_REASONS.fetch(name),
+        "license_files" => component.fetch("license_files")
+      }
+    end
+    linked_paths = parsed.fetch("objects") + parsed.fetch("archives")
+
+    webkit_mapping = webkit_archive_mapping(
+      proof_root: proof_root,
+      archive_records: archive_records,
+      source_inventory: source_inventory,
+      self_build: self_build
+    )
+    lolhtml_record = repo_record(lolhtml_package_path)
+
+    {
+      "schema" => "bun-final-linked-license-closure/v3",
+      "package" => "bun",
+      "version" => "1.3.14",
+      "target" => "fedora-44-x86_64-glibc-system-lolhtml",
+      "audit_date" => audit_date,
+      "inputs" => {
+        "self_rebuild" => repo_record(self_build_path),
+        "source_license_inventory" => repo_record(source_inventory_path),
+        "npm_code_generation_closure" => repo_record(npm_codegen_path),
+        "relink_audit" => repo_record(relink_audit_path),
+        "relink_kit" => repo_record(relink_kit_path),
+        "lolhtml_package" => lolhtml_record
+      },
+      "final_link" => {
+        "output" => relink_audit.dig("final_link", "output"),
+        "link_manifest_sha256" => relink_audit.dig("final_link", "link_manifest_sha256"),
+        "direct_object_count" => parsed.fetch("objects").length,
+        "direct_object_inventory_sha256" => relink_audit.dig("final_link", "direct_object_inventory_sha256"),
+        "direct_archive_count" => parsed.fetch("archives").length,
+        "linked_input_count" => linked_paths.length,
+        "linked_input_paths_sha256" => path_set_digest(linked_paths),
+        "direct_archives" => archive_records,
+        "system_link_libraries" => system_libraries
+      },
+      "components" => components,
+      "selected_license_evidence" => {
+        "bundled_native" => {
+          "component_count" => native_components.length,
+          "selected_expression_counts" => native_expression_counts,
+          "selected_license_file_count" => native_license_file_count,
+          "selected_expressions_fedora_allowed" => true,
+          "selected_license_files_verified" => true
+        },
+        "npm_codegen_inputs" => {
+          "package_count" => npm_codegen.dig("npm", "selected_package_manifest_count"),
+          "selected_expression_counts" => npm_codegen.dig("npm", "selected_expression_counts"),
+          "packages_with_required_text" => npm_codegen.dig("npm", "packages_with_required_text"),
+          "packages_missing_required_text" => npm_codegen.dig("npm", "packages_missing_required_text"),
+          "selected_expressions_fedora_allowed" => true,
+          "selected_required_texts_verified" => true,
+          "generator_execution_reproduced" => true,
+          "final_codegen_provenance_verified" => false
+        }
+      },
+      "webkit" => webkit_mapping.merge(
+        "source_commit" => self_build.dig("inputs", "webkit", "commit"),
+        "source_archive_sha256" => self_build.dig("inputs", "webkit", "archive_sha256"),
+        "direct_archives" => archive_records,
+        "candidate_license_files" => source_inventory.dig("webkit", "candidate_license_files")
+      ),
+      "external_lolhtml_provider" => {
+        "package" => provider_input.fetch("package"),
+        "version" => provider_input.fetch("version"),
+        "c_api_version" => provider_input.fetch("c_api_version"),
+        "soname" => provider_input.fetch("soname"),
+        "link_flag" => "-llolhtml",
+        "aggregate_expression" => provider_license.fetch("aggregate_expression"),
+        "linked_license_entries" => provider_license.fetch("linked_license_entries"),
+        "license_dependencies_sha256" => provider_license.fetch("license_dependencies_sha256"),
+        "fedora_spdx_review_complete" => true,
+        "excluded_from_bun_bundled_aggregate" => true
+      },
+      "unresolved" => {
+        "native_license_selections" => unresolved_native.sort,
+        "native_license_details" => unresolved_native_details,
+        "webkit_headerless_files" => webkit_mapping.dig("transitive_dependencies", "headerless_source_code").select { |record| record.fetch("status").start_with?("unresolved_") }.map { |record| record.fetch("path") },
+        "webkit_semantic_license_selection" => true,
+        "npm_and_codegen_final_payload_provenance" => true,
+        "required_license_text_payload" => true,
+        "aggregate_spdx_expression" => true,
+        "rpm_payload_validation" => true
+      },
+      "validation" => {
+        "input_receipts_verified" => true,
+        "final_link_inputs_mapped" => true,
+        "all_native_components_linked" => true,
+        "webkit_archives_verified" => true,
+        "system_lolhtml_provider_verified" => true,
+        "native_license_selection_review_verified" => true,
+        "network_used" => false,
+        "native_license_selections_verified" => true,
+        "bundled_native_selected_spdx_verified" => true,
+        "bundled_native_selected_license_texts_verified" => true,
+        "npm_codegen_selected_spdx_verified" => true,
+        "npm_codegen_selected_license_texts_verified" => true,
+        "generator_execution_reproduced" => true,
+        "webkit_member_source_mapping_verified" => true,
+        "webkit_license_marker_inventory_verified" => true,
+        "webkit_transitive_dependency_mapping_verified" => true,
+        "webkit_headerless_dependency_review_verified" => true,
+        "webkit_linked_file_semantic_review_verified" => false,
+        "final_npm_codegen_closure_verified" => false,
+        "fedora_allowed_spdx_verified" => false,
+        "required_license_texts_verified" => false,
+        "final_license_expression_verified" => false,
+        "rpm_payload_license_verified" => false
+      },
+      "scope" => "current final-link mapping with all 18 native source-subset selections, exact WebKit archive-member sources, and the complete retained WebKit-local transitive dependency graph; six fork-authored headerless files, WebKit semantics, npm/codegen payload provenance, aggregate SPDX, required texts, and RPM payload remain unresolved"
+    }
+  end
+
+  def rebind_receipt(receipt_path:, source_inventory_path:, npm_codegen_path:, audit_date:)
+    receipt = JSON.parse(File.read(receipt_path))
+    raise Error, "unsupported Bun final linked-license receipt" unless receipt["schema"] == "bun-final-linked-license-closure/v3"
+    raise Error, "Bun final linked-license release drifted" unless receipt["package"] == "bun" && receipt["version"] == "1.3.14"
+    old_source = receipt.dig("inputs", "source_license_inventory")
+    unless [PREVIOUS_SOURCE_INVENTORY_RECORD, CURRENT_SOURCE_INVENTORY_RECORD].include?(old_source)
+      raise Error, "checked final receipt source-license input drifted"
+    end
+
+    source_record = repo_record(source_inventory_path)
+    npm_codegen_record = repo_record(npm_codegen_path)
+    raise Error, "Bun source-license inventory drifted" unless source_record == CURRENT_SOURCE_INVENTORY_RECORD
+    source_inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    unless source_inventory["package"] == "bun" && source_inventory["release"] == "1.3.14" && source_inventory["rpm_release"] == "0.0.41"
+      raise Error, "Bun source-license inventory identity drifted"
+    end
+    validation = source_inventory.fetch("validation")
+    required_true = %w[
+      source_closure_verified system_lolhtml_provider_external_to_bun_inventory
+      npm_source_declarations_inventoried npm_supplied_license_texts_inventoried
+      native_license_files_inventoried webkit_license_files_inventoried
+    ]
+    required_false = %w[
+      final_npm_installed_closure_verified final_linked_native_components_verified
+      webkit_linked_file_semantic_review_verified fedora_allowed_spdx_verified
+      required_license_texts_verified final_license_expression_verified
+      rpm_payload_license_verified
+    ]
+    unless required_true.all? { |key| validation[key] == true } && validation["network_used"] == false && required_false.all? { |key| validation[key] == false }
+      raise Error, "Bun source-license inventory validation state drifted"
+    end
+    npm_codegen = load_json(npm_codegen_path, "bun-npm-code-generation-closure/v2")
+    unless npm_codegen["package"] == "bun" && npm_codegen["version"] == "1.3.14" && npm_codegen["rpm_release"] == "0.0.41" && npm_codegen.dig("inputs", "source_license_inventory") == source_record
+      raise Error, "Bun npm code-generation closure identity drifted"
+    end
+    unless npm_codegen.dig("npm", "selected_expression_counts") == NPM_SELECTED_EXPRESSION_COUNTS && npm_codegen.dig("npm", "selected_package_manifest_count") == 38 && npm_codegen.dig("npm", "packages_with_required_text") == 38 && npm_codegen.dig("npm", "packages_missing_required_text") == []
+      raise Error, "Bun npm code-generation selected license evidence drifted"
+    end
+    npm_validation = npm_codegen.fetch("validation")
+    unless npm_validation["selected_package_license_expressions_verified"] == true && npm_validation["all_selected_package_license_texts_verified"] == true && npm_validation["generator_execution_reproduced"] == true && npm_validation["final_npm_codegen_closure_verified"] == false
+      raise Error, "Bun npm code-generation validation state drifted"
+    end
+
+    receipt.fetch("inputs")["source_license_inventory"] = source_record
+    receipt.fetch("inputs")["npm_code_generation_closure"] = npm_codegen_record
+    receipt.fetch("selected_license_evidence").fetch("npm_codegen_inputs")["generator_execution_reproduced"] = true
+    receipt.fetch("validation")["generator_execution_reproduced"] = true
+    receipt["audit_date"] = audit_date
+    receipt
+  end
+
+  def write_json(path, data)
+    Tempfile.create([".bun-final-linked-licenses-", ".json"], File.dirname(path)) do |file|
+      file.write(JSON.pretty_generate(data) + "\n")
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+
+  def main(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.on("--proof-root PATH") { |value| options[:proof_root] = value }
+      parser.on("--source-inventory PATH") { |value| options[:source_inventory] = value }
+      parser.on("--npm-codegen PATH") { |value| options[:npm_codegen] = value }
+      parser.on("--self-build PATH") { |value| options[:self_build] = value }
+      parser.on("--relink-audit PATH") { |value| options[:relink_audit] = value }
+      parser.on("--relink-kit PATH") { |value| options[:relink_kit] = value }
+      parser.on("--lolhtml-package PATH") { |value| options[:lolhtml_package] = value }
+      parser.on("--rebind-receipt PATH") { |value| options[:rebind_receipt] = value }
+      parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
+      parser.on("--output PATH") { |value| options[:output] = value }
+      parser.on("--check") { options[:check] = true }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+    end.parse!(argv)
+    required = options[:rebind_receipt] ? %i[source_inventory npm_codegen audit_date] : %i[proof_root source_inventory npm_codegen self_build relink_audit relink_kit lolhtml_package audit_date]
+    required.each { |key| raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key] }
+    Date.iso8601(options.fetch(:audit_date))
+    raise Error, "--output is required unless --check" unless options[:output] || options[:check]
+    raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
+
+    result = if options[:rebind_receipt]
+               rebind_receipt(
+                 receipt_path: options.fetch(:rebind_receipt),
+                 source_inventory_path: options.fetch(:source_inventory),
+                 npm_codegen_path: options.fetch(:npm_codegen),
+                 audit_date: options.fetch(:audit_date)
+               )
+             else
+               generate(
+                 proof_root: options.fetch(:proof_root),
+                 source_inventory_path: options.fetch(:source_inventory),
+                 npm_codegen_path: options.fetch(:npm_codegen),
+                 self_build_path: options.fetch(:self_build),
+                 relink_audit_path: options.fetch(:relink_audit),
+                 relink_kit_path: options.fetch(:relink_kit),
+                 lolhtml_package_path: options.fetch(:lolhtml_package),
+                 audit_date: options.fetch(:audit_date)
+               )
+             end
+    serialized = JSON.pretty_generate(result) + "\n"
+    if options[:check]
+      raise Error, "Bun final linked-license closure differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized
+      puts "Verified Bun final linked-license closure #{options.fetch(:receipt)}."
+    else
+      write_json(options.fetch(:output), result)
+      puts "Wrote Bun final linked-license closure to #{options.fetch(:output)}."
+    end
+  rescue Date::Error, JSON::ParserError, KeyError, Errno::ENOENT, Error => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end
+
+BunFinalLinkedLicenseAudit.main(ARGV) if $PROGRAM_NAME == __FILE__

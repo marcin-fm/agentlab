@@ -2,13 +2,13 @@
   "schema": "bun-npm-code-generation-closure/v2",
   "package": "bun",
   "version": "1.3.14",
-  "rpm_release": "0.0.40",
-  "audit_date": "2026-07-31",
+  "rpm_release": "0.0.41",
+  "audit_date": "2026-08-01",
   "inputs": {
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
       "size_bytes": 127845,
-      "sha256": "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb"
+      "sha256": "2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9"
     },
     "first_source_built_npm": {
       "path": "packages/bun/source-built-npm-install-proof.json",
@@ -24,6 +24,11 @@
       "path": "build/release-local/build.ninja",
       "size_bytes": 2469137,
       "sha256": "9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3"
+    },
+    "codegen_reexecution_proof": {
+      "path": "packages/bun/bun-1.3.14-codegen-reexecution-proof.json",
+      "size_bytes": 22470,
+      "sha256": "36860535b6e650a2f4cf23ab179929f4d5633d9a11eff440f6359b8e9e68e036"
     }
   },
   "final_link": {
@@ -59,7 +64,7 @@
       "header_count": 9,
       "header_paths_sha256": "3425f9a8c6b16d4e45cefc3cbc1b73e63c5c768513aec0919e6d4b6b9379397b",
       "ninja_output_edges_declared": false,
-      "generator_execution_reproduced": false,
+      "generator_execution_reproduced": true,
       "producers": [
         {
           "name": "bindgen",
@@ -1287,7 +1292,8 @@
     "all_selected_package_license_texts_verified": true,
     "final_npm_codegen_closure_verified": false,
     "final_license_expression_verified": false,
-    "rpm_payload_license_verified": false
+    "rpm_payload_license_verified": false,
+    "generator_execution_reproduced": true
   },
   "scope": {
     "included": "NPM package manifests declared by current code-generation install edges, generated outputs consumed by direct final-link objects, and exact upstream producer provenance for undeclared generated-header side effects",

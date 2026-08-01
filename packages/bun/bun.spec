@@ -31,12 +31,14 @@
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a
 %global arm64_release_local_closure_sha256 d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a
-%global source_license_inventory_sha256 c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb
+%global source_license_inventory_sha256 2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9
 %global source_license_audit_script_sha256 cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1
-%global final_linked_license_closure_sha256 8794acac75c1c18525a265c849970732d813a1d3aaa43a89e38b0b9dc81a394f
-%global final_linked_license_audit_script_sha256 50443e28a67a833cff088e20722b469f96bd147a6f8fa8c6d3ca012ba3f1b7fc
-%global npm_code_generation_closure_sha256 1b80c19b2e32f527ce2d468a696b3c3f02866312c2a6ca40bdbb5c0f74f676e4
-%global npm_code_generation_audit_script_sha256 c29b2416b41dbfd2b809e3f23f2d16febaef5ec295ccb4bb49568b1b44a669f0
+%global final_linked_license_closure_sha256 c086e54dc23f0fea2c59f454450729b9e3029388467c4ac1d04f45354f3aab20
+%global final_linked_license_audit_script_sha256 86886a72b4c3d9b763bb36e08c2832e2f9d5078914281805014c9bdec6ac5622
+%global npm_code_generation_closure_sha256 9fef51b9e653a6327292c5d3cc5c03f3bfd554871620ea1351dd4e5220e1ca09
+%global npm_code_generation_audit_script_sha256 bcf84a275c26e0943bc006dfce0ca92e022658cebc9926b49f0133acb194b6d2
+%global codegen_reexecution_proof_sha256 36860535b6e650a2f4cf23ab179929f4d5633d9a11eff440f6359b8e9e68e036
+%global codegen_reexecution_audit_script_sha256 2514b4a213d98615ffa8ef41d8289028cf0074efed58416db48b5ec0fce945f5
 %global peechy_license_sha256 a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
@@ -46,7 +48,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.40%{?dist}
+Release:        0.0.41%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -100,6 +102,10 @@ Source31:       bun-%{version}-release-local-source-closure-arm64.json
 # Canonical upstream MIT text for peechy 0.4.34, whose signed npm archive omits it.
 # Exact release-source correspondence remains unverified because the registry gitHead is unavailable.
 Source32:       bun-%{version}-peechy-0.4.34-LICENSE.md
+# Checked proof that two network-isolated generator runs reproduced all retained outputs.
+Source33:       bun-%{version}-codegen-reexecution-proof.json
+# Fail-closed validator and optional live reexecutor for Source33. Distinct Ninja output edges remain unresolved.
+Source34:       audit-bun-codegen-reexecution
 # Resolve shared LLVM support libraries to Fedora's multilib paths for Bun's private Zig bootstrap.
 # Fedora-specific; not submitted upstream because it adapts the Bun-pinned fork to Fedora's shared LLVM layout.
 Patch0:         zig-fedora-lib64.patch
@@ -210,6 +216,9 @@ echo "%{npm_code_generation_closure_sha256}  %{SOURCE29}" | sha256sum -c -
 echo "%{npm_code_generation_audit_script_sha256}  %{SOURCE30}" | sha256sum -c -
 echo "%{arm64_release_local_closure_sha256}  %{SOURCE31}" | sha256sum -c -
 echo "%{peechy_license_sha256}  %{SOURCE32}" | sha256sum -c -
+echo "%{codegen_reexecution_proof_sha256}  %{SOURCE33}" | sha256sum -c -
+echo "%{codegen_reexecution_audit_script_sha256}  %{SOURCE34}" | sha256sum -c -
+ruby %{SOURCE34} --receipt "%{SOURCE33}"
 %autosetup -n bun-bun-v%{version} -N
 patch -p1 < %{PATCH2}
 patch -p1 < %{PATCH3}
@@ -248,8 +257,8 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.40 \
-  --date 2026-07-31 \
+  --rpm-release 0.0.41 \
+  --date 2026-08-01 \
   --peechy-license "%{SOURCE32}" \
   --check \
   --receipt "%{SOURCE25}"
@@ -394,6 +403,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Aug 01 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.41
+- Preserve independent network-isolated code-generation reexecution proof
+
 * Sat Aug 01 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.40
 - Bind selected native and npm license evidence into the final-link closure without final payload overclaims.
 

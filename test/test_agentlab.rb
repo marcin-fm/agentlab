@@ -3955,13 +3955,14 @@ class AgentlabTest < Minitest::Test
     final_license = JSON.parse(File.read(final_license_path))
     historical_input = final_license.dig("inputs", "lolhtml_package")
     snapshot_path = File.join(Agentlab::ROOT, snapshot.fetch("path"))
-    assert_equal(historical_input.fetch("path"), snapshot.fetch("source_path"))
+    assert_equal(historical_input.fetch("path"), snapshot.fetch("path"))
     assert_equal(historical_input.fetch("size_bytes"), File.size(snapshot_path))
     assert_equal(historical_input.fetch("sha256"), Digest::SHA256.file(snapshot_path).hexdigest)
     assert(Agentlab.valid_bun_lolhtml_historical_manifest_snapshot?(final_license, provider.data))
 
     live_input = Marshal.load(Marshal.dump(final_license))
     live_manifest_path = File.join(provider.directory, "package.yml")
+    live_input.dig("inputs", "lolhtml_package")["path"] = snapshot.fetch("source_path")
     live_input.dig("inputs", "lolhtml_package")["size_bytes"] = File.size(live_manifest_path)
     live_input.dig("inputs", "lolhtml_package")["sha256"] = Digest::SHA256.file(live_manifest_path).hexdigest
     refute(Agentlab.valid_bun_lolhtml_historical_manifest_snapshot?(live_input, provider.data))
@@ -4242,7 +4243,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.40", "--rpm-release 0.0.39")
+        spec.sub("--rpm-release 0.0.41", "--rpm-release 0.0.40")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -4252,7 +4253,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--date 2026-07-31", "--date 2026-07-30")
+        spec.sub("--date 2026-08-01", "--date 2026-07-31")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -4387,13 +4388,28 @@ class AgentlabTest < Minitest::Test
       "bun: npm code-generation closure is missing or has wrong SHA-256"
     )
 
+    stale_data = Marshal.load(Marshal.dump(package.data))
+    stale_data.dig("build_plan", "source_inputs", "codegen_reexecution_proof")["full_codegen_tree_sha256"] = "0" * 64
+    stale_package = Agentlab::Package.new(directory: package.directory, manifest_path: "unused", data: stale_data)
+    assert_includes(
+      Agentlab.validate_bun_npm_code_generation_closure(
+        stale_package,
+        stale_data.dig("build_plan", "source_inputs", "npm_code_generation_closure"),
+        stale_data.dig("build_plan", "source_inputs", "source_license_inventory"),
+        stale_data.dig("build_plan", "stages"),
+        "1.3.14",
+        spec
+      ),
+      "bun: code-generation reexecution package metadata mismatch"
+    )
+
     Dir.mktmpdir do |directory|
       data = Marshal.load(Marshal.dump(package.data))
       copied_metadata = data.dig("build_plan", "source_inputs", "npm_code_generation_closure")
       %w[
         bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-source-license-inventory.json
         bun-1.3.14-peechy-0.4.34-LICENSE.md source-built-npm-install-proof.json
-        source-built-self-npm-install-proof.json
+        source-built-self-npm-install-proof.json bun-1.3.14-codegen-reexecution-proof.json
       ].each do |name|
         FileUtils.cp(File.join(package.directory, name), File.join(directory, name))
       end
@@ -4401,7 +4417,9 @@ class AgentlabTest < Minitest::Test
       receipt = JSON.parse(File.read(receipt_path))
       receipt.fetch("final_link")["generated_output_count"] -= 1
       receipt.dig("inputs", "build_ninja")["sha256"] = "0" * 64
+      receipt.dig("inputs", "codegen_reexecution_proof")["sha256"] = "0" * 64
       receipt.dig("final_link", "undeclared_header_side_effects", "orchestrator")["sha256"] = "0" * 64
+      receipt.dig("final_link", "undeclared_header_side_effects")["generator_execution_reproduced"] = false
       receipt.dig("final_link", "undeclared_header_side_effects", "producers", 0)["side_effect_outputs"].reverse!
       undeclared = receipt.fetch("final_link").fetch("generated_outputs").find { |record| record["producer_edge_declared"] == false }
       undeclared["producer_edge_declared"] = true
@@ -4412,6 +4430,7 @@ class AgentlabTest < Minitest::Test
       peechy = receipt.fetch("npm").fetch("selected_packages").find { |record| record["name"] == "peechy" }
       peechy.fetch("supplemental_license_text").fetch("text")["sha256"] = "0" * 64
       receipt.fetch("validation")["undeclared_header_generator_side_effects_verified"] = false
+      receipt.fetch("validation")["generator_execution_reproduced"] = false
       receipt.fetch("validation")["final_npm_codegen_closure_verified"] = true
       File.write(receipt_path, JSON.pretty_generate(receipt) + "\n")
       copied_metadata["sha256"] = Digest::SHA256.file(receipt_path).hexdigest
@@ -4427,6 +4446,7 @@ class AgentlabTest < Minitest::Test
       )
       assert_includes(errors, "bun: npm code-generation final-link counts mismatch")
       assert_includes(errors, "bun: npm code-generation build graph mismatch")
+      assert_includes(errors, "bun: npm code-generation reexecution proof input mismatch")
       assert_includes(errors, "bun: npm code-generation side-effect provenance mismatch")
       assert_includes(errors, "bun: npm code-generation undeclared output semantics mismatch")
       assert_includes(errors, "bun: npm code-generation package counts mismatch")
@@ -4563,7 +4583,7 @@ class AgentlabTest < Minitest::Test
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources bun-system-lolhtml.patch first-source-build-proof.json first-source-build-proof-arm64.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-materials-proof-arm64.json relink-kit-proof.json relink-kit-proof-arm64.json self-rebuild-proof.json self-rebuild-proof-arm64-1.json self-rebuild-proof-arm64-2.json source-built-npm-install-proof.json source-built-npm-install-proof-arm64-1.json source-built-self-npm-install-proof.json source-built-self-npm-install-proof-arm64-2.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
+      %w[bun-1.3.14-codegen-reexecution-proof.json bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources bun-system-lolhtml.patch first-source-build-proof.json first-source-build-proof-arm64.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-materials-proof-arm64.json relink-kit-proof.json relink-kit-proof-arm64.json self-rebuild-proof.json self-rebuild-proof-arm64-1.json self-rebuild-proof-arm64-2.json source-built-npm-install-proof.json source-built-npm-install-proof-arm64-1.json source-built-self-npm-install-proof.json source-built-self-npm-install-proof-arm64-2.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -4618,7 +4638,7 @@ class AgentlabTest < Minitest::Test
         name = webkit.fetch(key)
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
-      %w[bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources first-source-build-proof-arm64.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof-arm64.json relink-kit-proof-arm64.json self-rebuild-proof.json self-rebuild-proof-arm64-1.json self-rebuild-proof-arm64-2.json source-built-npm-install-proof.json source-built-npm-install-proof-arm64-1.json source-built-self-npm-install-proof.json source-built-self-npm-install-proof-arm64-2.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
+      %w[bun-1.3.14-codegen-reexecution-proof.json bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources first-source-build-proof-arm64.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof-arm64.json relink-kit-proof-arm64.json self-rebuild-proof.json self-rebuild-proof-arm64-1.json self-rebuild-proof-arm64-2.json source-built-npm-install-proof.json source-built-npm-install-proof-arm64-1.json source-built-self-npm-install-proof.json source-built-self-npm-install-proof-arm64-2.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)

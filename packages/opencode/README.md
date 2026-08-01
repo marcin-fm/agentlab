@@ -8,7 +8,7 @@ The 745 integrity-checked registry archives now reproduce deterministic producti
 
 A network-isolated standalone build reports `1.18.8` and produces the checked 492-identity compiler map. The later full local rpmbuild was interrupted during Binaryen compilation and produced no source or binary RPM. Current configured-SCM source delivery, clean buildroot availability, RPM payload validation, and COPR proof therefore remain false.
 
-Release `1.18.8-0.4` refreshes the fail-closed final-license preflight against Bun `0.0.40`. Bun's exact 18-native/23-text and 38-npm/38-text selected license sets are now bound into the final-link receipt without claiming final generated-payload provenance or RPM architecture enablement. Exact peechy release-source correspondence, the three OpenCode notice holds, six Bun WebKit fork-file holds, final aggregate expression, RPM license payload, clean target builds, and COPR remain unresolved.
+Release `1.18.8-0.5` refreshes the fail-closed final-license preflight against Bun `0.0.41`. Bun's exact 18-native/23-text and 38-npm/38-text selected license sets remain bound, and two independent network-isolated source-built generator runs reproduce the complete retained codegen tree byte-for-byte. Distinct Ninja producer edges, final generated-payload provenance, RPM architecture enablement, exact peechy release-source correspondence, the three OpenCode notice holds, six Bun WebKit fork-file holds, final aggregate expression, RPM license payload, clean target builds, and COPR remain unresolved.
 
 ## Historical 1.18.5 Evidence
 

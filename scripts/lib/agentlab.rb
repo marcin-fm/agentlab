@@ -3010,9 +3010,9 @@ module Agentlab
     snapshot = lolhtml_data["historical_manifest_snapshot"] || {}
     snapshot_path = File.join(ROOT, snapshot["path"].to_s)
     snapshot == lol_html_historical_manifest_snapshot &&
-      record["path"] == "packages/lol-html/package.yml" &&
+      record["path"] == snapshot["path"] &&
       snapshot["path"] == "packages/lol-html/lol-html-3.0.0-package.yml" &&
-      snapshot["source_path"] == record["path"] &&
+      snapshot["source_path"] == "packages/lol-html/package.yml" &&
       snapshot["size_bytes"] == record["size_bytes"] &&
       snapshot["sha256"] == record["sha256"] &&
       File.file?(snapshot_path) &&
@@ -3156,8 +3156,8 @@ module Agentlab
     expected_counts = {
       "direct_sources" => 22,
       "generated_sources" => 1,
-      "packaging_sources" => 10,
-      "declared_sources" => 33,
+      "packaging_sources" => 12,
+      "declared_sources" => 35,
       "patches" => spec.scan(/^Patch\d+:\s+/).length
     }
     errors << "bun: source-delivery source counts mismatch" unless generation.slice(*expected_counts.keys) == expected_counts
@@ -3220,6 +3220,19 @@ module Agentlab
       "sha256" => npm_codegen["audit_script_sha256"]
     }
     errors << "bun: source-delivery npm code-generation audit script mismatch" unless generation["npm_code_generation_audit_script"] == expected_npm_codegen_script
+    codegen_reexecution = package.data.dig("build_plan", "source_inputs", "codegen_reexecution_proof") || {}
+    expected_codegen_reexecution = {
+      "filename" => codegen_reexecution["source"],
+      "size_bytes" => File.file?(File.join(package.directory, codegen_reexecution["source"].to_s)) ? File.size(File.join(package.directory, codegen_reexecution["source"])) : nil,
+      "sha256" => codegen_reexecution["sha256"]
+    }
+    errors << "bun: source-delivery code-generation reexecution proof mismatch" unless generation["codegen_reexecution_proof"] == expected_codegen_reexecution
+    expected_codegen_reexecution_script = {
+      "filename" => codegen_reexecution["audit_script_source"],
+      "size_bytes" => File.file?(script_path = File.join(ROOT, codegen_reexecution["audit_script"].to_s)) ? File.size(script_path) : nil,
+      "sha256" => codegen_reexecution["audit_script_sha256"]
+    }
+    errors << "bun: source-delivery code-generation reexecution auditor mismatch" unless generation["codegen_reexecution_audit_script"] == expected_codegen_reexecution_script
     peechy_license = package.data.dig("build_plan", "source_inputs", "supplemental_license_texts", "peechy_0_4_34") || {}
     expected_peechy_license = {
       "filename" => peechy_license["source"],
@@ -3256,7 +3269,7 @@ module Agentlab
     errors << "bun: source-delivery proof incorrectly claims RPM installation" unless receipt.dig("validation", "rpm_installed") == false
 
     source_indexes = spec.scan(/^Source(?<index>\d*):\s+/).map { |match| match.first.empty? ? 0 : Integer(match.first, 10) }
-    errors << "bun: spec does not declare the complete Source0-Source32 layout" unless source_indexes == (0..32).to_a
+    errors << "bun: spec does not declare the complete Source0-Source34 layout" unless source_indexes == (0..34).to_a
     npm_spec_filename = staging.dig("npm_union", "filename").to_s.sub(version, "%{version}")
     errors << "bun: spec npm source filename mismatch" unless spec.match?(/^Source22:\s+#{Regexp.escape(npm_spec_filename)}$/)
     staging = package.data.dig("build_plan", "source_inputs", "release_local_staging") || {}
@@ -3270,6 +3283,8 @@ module Agentlab
     errors << "bun: spec npm code-generation audit script mismatch" unless spec.match?(/^Source30:\s+#{Regexp.escape(npm_codegen["audit_script_source"].to_s)}$/)
     errors << "bun: spec arm64 closure source mismatch" unless spec.match?(/^Source31:\s+bun-%\{version\}-release-local-source-closure-arm64\.json$/)
     errors << "bun: spec peechy license source mismatch" unless spec.match?(/^Source32:\s+#{Regexp.escape(peechy_license["source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec code-generation reexecution proof mismatch" unless spec.match?(/^Source33:\s+#{Regexp.escape(codegen_reexecution["source"].to_s.gsub(version, "%{version}"))}$/)
+    errors << "bun: spec code-generation reexecution auditor mismatch" unless spec.match?(/^Source34:\s+#{Regexp.escape(codegen_reexecution["audit_script_source"].to_s)}$/)
     errors
   rescue JSON::ParserError, KeyError => e
     errors << "bun: invalid source-delivery proof receipt: #{e.message}"
@@ -3735,6 +3750,41 @@ module Agentlab
            metadata["build_ninja_sha256"] == expected_build_ninja["sha256"]
       errors << "bun: npm code-generation build graph metadata mismatch"
     end
+    codegen_reexecution = package.data.dig("build_plan", "source_inputs", "codegen_reexecution_proof") || {}
+    codegen_reexecution_path = File.join(package.directory, codegen_reexecution["source"].to_s)
+    unless File.file?(codegen_reexecution_path) && codegen_reexecution["sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(codegen_reexecution_path).hexdigest == codegen_reexecution["sha256"]
+      errors << "bun: code-generation reexecution proof is missing or has wrong SHA-256"
+    end
+    reexecution = File.file?(codegen_reexecution_path) ? JSON.parse(File.read(codegen_reexecution_path)) : {}
+    expected_reexecution_input = {
+      "path" => "packages/bun/#{codegen_reexecution['source']}",
+      "size_bytes" => File.file?(codegen_reexecution_path) ? File.size(codegen_reexecution_path) : nil,
+      "sha256" => codegen_reexecution["sha256"]
+    }
+    errors << "bun: npm code-generation reexecution proof input mismatch" unless receipt.dig("inputs", "codegen_reexecution_proof") == expected_reexecution_input
+    valid_reexecution_metadata = codegen_reexecution["full_codegen_tree_entry_count"] == 118 &&
+                                 codegen_reexecution["full_codegen_tree_sha256"] == "0e29d3eb4797d830872caa038c4b97e83e5d13b5b8c5f84009fdd103986d09af"
+    errors << "bun: code-generation reexecution package metadata mismatch" unless valid_reexecution_metadata
+    valid_reexecution = reexecution["schema"] == "bun-codegen-reexecution-proof/v1" &&
+                        reexecution["package"] == "bun" && reexecution["version"] == version &&
+                        reexecution["target"] == "fedora-44-x86_64" &&
+                        reexecution.dig("inputs", "build_ninja") == expected_build_ninja &&
+                        reexecution.dig("expected", "codegen_output_count") == 25 &&
+                        reexecution.dig("expected", "source_output_count") == 1 &&
+                        reexecution.dig("expected", "side_effect_header_count") == 9 &&
+                         reexecution.dig("expected", "codegen_tree_entry_count") == codegen_reexecution["full_codegen_tree_entry_count"] &&
+                         reexecution.dig("expected", "codegen_tree_sha256") == codegen_reexecution["full_codegen_tree_sha256"] &&
+                        Array(reexecution["runs"]).length == 2 &&
+                        reexecution.dig("validation", "generator_execution_reproduced") == true &&
+                        reexecution.dig("validation", "generated_output_producer_edges_verified") == false &&
+                        reexecution.dig("validation", "final_npm_codegen_closure_verified") == false
+    errors << "bun: code-generation reexecution proof contract mismatch" unless valid_reexecution
+    reexecution_script_path = File.join(ROOT, codegen_reexecution["audit_script"].to_s)
+    unless File.file?(reexecution_script_path) && codegen_reexecution["audit_script_sha256"].to_s.match?(/\A[0-9a-f]{64}\z/) &&
+           Digest::SHA256.file(reexecution_script_path).hexdigest == codegen_reexecution["audit_script_sha256"]
+      errors << "bun: code-generation reexecution auditor is missing or has wrong SHA-256"
+    end
 
     final_link = receipt["final_link"] || {}
     expected_undeclared = %w[
@@ -3809,7 +3859,7 @@ module Agentlab
                        provenance["header_count"] == expected_undeclared.length &&
                        provenance["header_paths_sha256"] == Digest::SHA256.hexdigest(expected_undeclared.sort.join("\n") + "\n") &&
                        provenance["ninja_output_edges_declared"] == false &&
-                       provenance["generator_execution_reproduced"] == false &&
+                        provenance["generator_execution_reproduced"] == true &&
                        valid_source_record.call(provenance["orchestrator"], "scripts/build/codegen.ts") &&
                        valid_source_record.call(provenance["write_helper"], "src/codegen/helpers.ts") &&
                        provenance_outputs == expected_undeclared
@@ -3900,6 +3950,7 @@ module Agentlab
       declared_codegen_package_manifest_mapping_verified
       linked_generated_output_mapping_verified
       undeclared_header_generator_side_effects_verified
+      generator_execution_reproduced
       selected_package_license_expressions_verified
       all_selected_package_license_texts_verified
     ]
@@ -3916,7 +3967,7 @@ module Agentlab
     errors << "bun: npm code-generation closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
     valid_metadata = metadata["undeclared_header_generator_side_effects_verified"] == true &&
                      metadata["generated_output_producer_edges_verified"] == false &&
-                     metadata["generator_execution_reproduced"] == false &&
+                      metadata["generator_execution_reproduced"] == true &&
                       metadata["final_npm_codegen_closure_verified"] == false &&
                       metadata["all_selected_package_license_texts_verified"] == true
     errors << "bun: npm code-generation metadata overclaims completion" unless valid_metadata
@@ -3927,7 +3978,12 @@ module Agentlab
       "Source29:       #{receipt_name.sub(version, '%{version}')}",
       "Source30:       #{metadata['audit_script_source']}",
       "echo \"%{npm_code_generation_closure_sha256}  %{SOURCE29}\" | sha256sum -c -",
-      "echo \"%{npm_code_generation_audit_script_sha256}  %{SOURCE30}\" | sha256sum -c -"
+      "echo \"%{npm_code_generation_audit_script_sha256}  %{SOURCE30}\" | sha256sum -c -",
+      "%global codegen_reexecution_proof_sha256 #{codegen_reexecution['sha256']}",
+      "%global codegen_reexecution_audit_script_sha256 #{codegen_reexecution['audit_script_sha256']}",
+      "Source33:       #{codegen_reexecution['source'].sub(version, '%{version}')}",
+      "Source34:       #{codegen_reexecution['audit_script_source']}",
+      "ruby %{SOURCE34} --receipt \"%{SOURCE33}\""
     ]
     errors << "bun: spec does not integrate the npm code-generation closure" unless required_spec_fragments.all? { |fragment| spec.include?(fragment) }
     errors
@@ -4049,6 +4105,7 @@ module Agentlab
     npm_evidence = receipt.dig("selected_license_evidence", "npm_codegen_inputs") || {}
     errors << "bun: final linked-license selected npm SPDX evidence mismatch" unless npm_codegen_receipt.dig("npm", "selected_expression_counts") == expected_npm_expression_counts && npm_codegen_receipt.dig("validation", "selected_package_license_expressions_verified") == true && npm_evidence["package_count"] == 38 && npm_evidence["selected_expression_counts"] == expected_npm_expression_counts && npm_evidence["selected_expressions_fedora_allowed"] == true
     errors << "bun: final linked-license selected npm text evidence mismatch" unless npm_codegen_receipt.dig("npm", "packages_with_required_text") == 38 && npm_codegen_receipt.dig("npm", "packages_missing_required_text") == [] && npm_codegen_receipt.dig("validation", "all_selected_package_license_texts_verified") == true && npm_evidence["packages_with_required_text"] == 38 && npm_evidence["packages_missing_required_text"] == [] && npm_evidence["selected_required_texts_verified"] == true
+    errors << "bun: final linked-license generator execution evidence mismatch" unless npm_codegen_receipt.dig("validation", "generator_execution_reproduced") == true && npm_evidence["generator_execution_reproduced"] == true
     errors << "bun: final linked-license npm code-generation scope overclaims completion" unless npm_codegen_receipt.dig("validation", "final_npm_codegen_closure_verified") == false && npm_evidence["final_codegen_provenance_verified"] == false
 
     webkit = receipt["webkit"] || {}
@@ -4117,7 +4174,7 @@ module Agentlab
     errors << "bun: final linked-license lol-html provider mismatch" unless provider["package"] == expected_provider["package"] && provider["version"] == expected_provider["version"] && provider["c_api_version"] == expected_provider["c_api_version"] && provider["soname"] == expected_provider["soname"] && provider["link_flag"] == "-llolhtml"
     errors << "bun: final linked-license lol-html license boundary mismatch" unless provider["aggregate_expression"] == provider_license["aggregate_expression"] && provider["linked_license_entries"] == provider_license["linked_license_entries"] && provider["license_dependencies_sha256"] == provider_license["license_dependencies_sha256"] && provider["fedora_spdx_review_complete"] == true && provider["excluded_from_bun_bundled_aggregate"] == true
 
-    true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified native_license_selection_review_verified native_license_selections_verified bundled_native_selected_spdx_verified bundled_native_selected_license_texts_verified npm_codegen_selected_spdx_verified npm_codegen_selected_license_texts_verified webkit_member_source_mapping_verified webkit_license_marker_inventory_verified webkit_transitive_dependency_mapping_verified webkit_headerless_dependency_review_verified]
+    true_validation = %w[input_receipts_verified final_link_inputs_mapped all_native_components_linked webkit_archives_verified system_lolhtml_provider_verified native_license_selection_review_verified native_license_selections_verified bundled_native_selected_spdx_verified bundled_native_selected_license_texts_verified npm_codegen_selected_spdx_verified npm_codegen_selected_license_texts_verified generator_execution_reproduced webkit_member_source_mapping_verified webkit_license_marker_inventory_verified webkit_transitive_dependency_mapping_verified webkit_headerless_dependency_review_verified]
     false_validation = %w[network_used webkit_linked_file_semantic_review_verified final_npm_codegen_closure_verified fedora_allowed_spdx_verified required_license_texts_verified final_license_expression_verified rpm_payload_license_verified]
     errors << "bun: final linked-license mapping validation is incomplete" unless true_validation.all? { |key| receipt.dig("validation", key) == true }
     errors << "bun: final linked-license closure overclaims completion" unless false_validation.all? { |key| receipt.dig("validation", key) == false }
@@ -7020,7 +7077,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.4%{?dist}",
+            "Release:        0.5%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       %{name}-%{version}-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -7306,7 +7363,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.4%{?dist}",
+        "Release:        0.5%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -7874,7 +7931,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.4%{?dist}",
+          "Release:        0.5%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

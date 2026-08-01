@@ -10,6 +10,8 @@ require "optparse"
 require "pathname"
 require "tempfile"
 
+load File.expand_path("audit-bun-codegen-reexecution", __dir__)
+
 module BunNpmCodeGenerationAudit
   class Error < StandardError; end
 
@@ -153,7 +155,7 @@ module BunNpmCodeGenerationAudit
     end.sort_by { |record| record.fetch("path") }
   end
 
-  def side_effect_provenance(source_root, build_root, edges, undeclared_outputs)
+  def side_effect_provenance(source_root, build_root, edges, undeclared_outputs, generator_execution_reproduced:)
     expected_outputs = SIDE_EFFECT_PRODUCERS.flat_map { |producer| producer.fetch("side_effect_outputs") }.sort
     actual_outputs = undeclared_outputs.map { |record| record.fetch("path") }.sort
     raise Error, "unexpected undeclared code-generation outputs: #{actual_outputs.inspect}" unless actual_outputs == expected_outputs
@@ -194,7 +196,7 @@ module BunNpmCodeGenerationAudit
       "header_count" => expected_outputs.length,
       "header_paths_sha256" => path_set_digest(expected_outputs),
       "ninja_output_edges_declared" => false,
-      "generator_execution_reproduced" => false,
+      "generator_execution_reproduced" => generator_execution_reproduced,
       "producers" => producers
     }
   end
@@ -334,7 +336,7 @@ module BunNpmCodeGenerationAudit
     records.sort_by { |record| [record.fetch("name"), record.fetch("version").to_s, record.dig("manifest", "path")] }
   end
 
-  def generate(proof_root:, source_inventory_path:, first_npm_path:, self_npm_path:, supplemental_license_text_path:, audit_date:)
+  def generate(proof_root:, source_inventory_path:, first_npm_path:, self_npm_path:, supplemental_license_text_path:, codegen_reexecution_path:, audit_date:)
     root = File.realpath(proof_root)
     source_root = File.join(root, "source")
     build_root = File.join(root, "build", "release-local")
@@ -344,6 +346,8 @@ module BunNpmCodeGenerationAudit
     inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
     first_npm = load_json(first_npm_path, "bun-npm-offline-install-proof/v2")
     self_npm = load_json(self_npm_path, "bun-npm-offline-install-proof/v2")
+    codegen_reexecution = load_json(codegen_reexecution_path, "bun-codegen-reexecution-proof/v1")
+    BunCodegenReexecutionAudit.validate!(codegen_reexecution)
     ninja_path = File.join(build_root, "build.ninja")
     ninja = File.read(ninja_path)
     direct_objects = parse_final_link(ninja)
@@ -363,7 +367,16 @@ module BunNpmCodeGenerationAudit
       )
     end
     undeclared_outputs = generated_outputs.reject { |record| record["producer_edge_declared"] }
-    producer_provenance = side_effect_provenance(source_root, build_root, edges, undeclared_outputs)
+    unless codegen_reexecution.dig("inputs", "build_ninja") == file_record(ninja_path, root)
+      raise Error, "code-generation reexecution build graph mismatch"
+    end
+    producer_provenance = side_effect_provenance(
+      source_root,
+      build_root,
+      edges,
+      undeclared_outputs,
+      generator_execution_reproduced: true
+    )
     package_manifests = selected_package_manifests(source_root, ninja)
     packages = package_records(
       source_root,
@@ -384,6 +397,7 @@ module BunNpmCodeGenerationAudit
         "source_license_inventory" => repo_record(source_inventory_path),
         "first_source_built_npm" => repo_record(first_npm_path),
         "self_source_built_npm" => repo_record(self_npm_path),
+        "codegen_reexecution_proof" => repo_record(codegen_reexecution_path),
         "build_ninja" => file_record(ninja_path, root)
       },
       "final_link" => {
@@ -413,6 +427,7 @@ module BunNpmCodeGenerationAudit
         "declared_codegen_package_manifest_mapping_verified" => true,
         "linked_generated_output_mapping_verified" => true,
         "undeclared_header_generator_side_effects_verified" => true,
+        "generator_execution_reproduced" => true,
         "generated_output_producer_edges_verified" => undeclared_outputs.empty?,
         "selected_package_license_expressions_verified" => true,
         "all_selected_package_license_texts_verified" => true,
@@ -422,14 +437,16 @@ module BunNpmCodeGenerationAudit
       },
       "scope" => {
         "included" => "NPM package manifests declared by current code-generation install edges, generated outputs consumed by direct final-link objects, and exact upstream producer provenance for undeclared generated-header side effects",
-        "excluded" => "distinct Ninja output edges for the nine headers, clean generator re-execution, unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
+        "excluded" => "distinct Ninja output edges for the nine headers, unselected installed package files, final WebKit terms, aggregate SPDX, final RPM payload, aarch64, and COPR acceptance"
       }
     }
   end
 
-  def refresh_receipt(receipt_path:, source_inventory_path:, supplemental_license_text_path:, audit_date:)
+  def refresh_receipt(receipt_path:, source_inventory_path:, supplemental_license_text_path:, codegen_reexecution_path:, audit_date:)
     receipt = load_json(receipt_path, "bun-npm-code-generation-closure/v2")
     inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
+    codegen_reexecution = load_json(codegen_reexecution_path, "bun-codegen-reexecution-proof/v1")
+    BunCodegenReexecutionAudit.validate!(codegen_reexecution)
     raise Error, "Bun release drifted while refreshing npm code-generation evidence" unless receipt.fetch("version") == inventory.fetch("release")
 
     peechy = receipt.dig("npm", "selected_packages").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
@@ -455,9 +472,15 @@ module BunNpmCodeGenerationAudit
     receipt["rpm_release"] = inventory.fetch("rpm_release")
     receipt["audit_date"] = audit_date
     receipt.fetch("inputs")["source_license_inventory"] = repo_record(source_inventory_path)
+    unless receipt.dig("inputs", "build_ninja") == codegen_reexecution.dig("inputs", "build_ninja")
+      raise Error, "code-generation reexecution build graph mismatch"
+    end
+    receipt.fetch("inputs")["codegen_reexecution_proof"] = repo_record(codegen_reexecution_path)
+    receipt.dig("final_link", "undeclared_header_side_effects")["generator_execution_reproduced"] = true
     receipt.fetch("npm")["packages_with_required_text"] = receipt.dig("npm", "selected_packages").count { |record| record["required_text_present"] }
     receipt.fetch("npm")["packages_missing_required_text"] = []
     receipt.fetch("validation")["all_selected_package_license_texts_verified"] = true
+    receipt.fetch("validation")["generator_execution_reproduced"] = true
     receipt
   end
 
@@ -481,13 +504,14 @@ module BunNpmCodeGenerationAudit
       parser.on("--first-npm PATH") { |value| options[:first_npm] = value }
       parser.on("--self-npm PATH") { |value| options[:self_npm] = value }
       parser.on("--peechy-license PATH") { |value| options[:supplemental_license_text] = value }
+      parser.on("--codegen-reexecution PATH") { |value| options[:codegen_reexecution] = value }
       parser.on("--refresh-receipt PATH") { |value| options[:refresh_receipt] = value }
       parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
       parser.on("--output PATH") { |value| options[:output] = value }
       parser.on("--check") { options[:check] = true }
       parser.on("--receipt PATH") { |value| options[:receipt] = value }
     end.parse!(argv)
-    required = options[:refresh_receipt] ? %i[source_inventory supplemental_license_text audit_date] : %i[proof_root source_inventory first_npm self_npm supplemental_license_text audit_date]
+    required = options[:refresh_receipt] ? %i[source_inventory supplemental_license_text codegen_reexecution audit_date] : %i[proof_root source_inventory first_npm self_npm supplemental_license_text codegen_reexecution audit_date]
     required.each { |key| raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key] }
     Date.iso8601(options.fetch(:audit_date))
     raise Error, "--output is required unless --check" unless options[:output] || options[:check]
@@ -498,6 +522,7 @@ module BunNpmCodeGenerationAudit
                   receipt_path: options.fetch(:refresh_receipt),
                   source_inventory_path: options.fetch(:source_inventory),
                   supplemental_license_text_path: options.fetch(:supplemental_license_text),
+                  codegen_reexecution_path: options.fetch(:codegen_reexecution),
                   audit_date: options.fetch(:audit_date)
                 )
               else
@@ -507,6 +532,7 @@ module BunNpmCodeGenerationAudit
                   first_npm_path: options.fetch(:first_npm),
                   self_npm_path: options.fetch(:self_npm),
                   supplemental_license_text_path: options.fetch(:supplemental_license_text),
+                  codegen_reexecution_path: options.fetch(:codegen_reexecution),
                   audit_date: options.fetch(:audit_date)
                 )
               end

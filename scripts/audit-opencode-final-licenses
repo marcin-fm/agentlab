@@ -118,6 +118,8 @@ module OpenCodeFinalLicenseAudit
     end
     ensure!(bun_validation["webkit_linked_file_semantic_review_verified"] == false, "Bun WebKit semantic review unexpectedly passed")
     ensure!(bun_validation["final_npm_codegen_closure_verified"] == false, "Bun npm/code-generation closure unexpectedly passed")
+    ensure!(bun_final_license.dig("selected_license_evidence", "npm_codegen_inputs", "generator_execution_reproduced") == true, "Bun generator-reexecution evidence is missing")
+    ensure!(bun_validation["generator_execution_reproduced"] == true, "Bun generator execution was not reproduced")
 
     bun_selected = bun_final_license.fetch("selected_license_evidence")
     bun_native_selected = bun_selected.fetch("bundled_native")
@@ -186,6 +188,7 @@ module OpenCodeFinalLicenseAudit
           "npm_codegen_package_count" => bun_npm_selected.fetch("package_count"),
           "npm_codegen_packages_with_required_text" => bun_npm_selected.fetch("packages_with_required_text")
         },
+        "generator_execution_reproduced" => true,
         "webkit_transitive_dependency_count" => bun_final_license.dig("webkit", "transitive_dependencies", "unique_dependency_count"),
         "unresolved_webkit_headerless_files" => webkit_holds,
         "external_lolhtml_provider" => bun_final_license.fetch("external_lolhtml_provider"),

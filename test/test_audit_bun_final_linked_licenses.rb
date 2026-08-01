@@ -46,6 +46,8 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
     assert_equal(38, receipt.dig("selected_license_evidence", "npm_codegen_inputs", "package_count"))
     assert_equal(38, receipt.dig("selected_license_evidence", "npm_codegen_inputs", "packages_with_required_text"))
     assert_equal([], receipt.dig("selected_license_evidence", "npm_codegen_inputs", "packages_missing_required_text"))
+    assert_equal(true, receipt.dig("selected_license_evidence", "npm_codegen_inputs", "generator_execution_reproduced"))
+    assert_equal(true, receipt.dig("validation", "generator_execution_reproduced"))
     assert_equal(true, receipt.dig("validation", "webkit_member_source_mapping_verified"))
     assert_equal(true, receipt.dig("validation", "webkit_license_marker_inventory_verified"))
     assert_equal(531, receipt.dig("webkit", "archive_member_count"))
@@ -81,7 +83,7 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
       receipt_path: receipt,
       source_inventory_path: inventory,
       npm_codegen_path: npm_codegen,
-      audit_date: "2026-07-31"
+      audit_date: "2026-08-01"
     )
     assert_equal("packages/bun/bun-1.3.14-source-license-inventory.json", rebound.dig("inputs", "source_license_inventory", "path"))
 
@@ -94,7 +96,7 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
         receipt_path: file.path,
         source_inventory_path: inventory,
         npm_codegen_path: npm_codegen,
-        audit_date: "2026-07-31"
+        audit_date: "2026-08-01"
       )
       assert_equal(BunFinalLinkedLicenseAudit::CURRENT_SOURCE_INVENTORY_RECORD, transitioned.dig("inputs", "source_license_inventory"))
     end
@@ -112,12 +114,12 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
         receipt_path: receipt,
         source_inventory_path: unrelated,
         npm_codegen_path: npm_codegen,
-        audit_date: "2026-07-31"
+        audit_date: "2026-08-01"
       )
     end
 
     npm = JSON.parse(File.read(npm_codegen))
-    npm["rpm_release"] = "0.0.39"
+    npm["rpm_release"] = "0.0.40"
     Tempfile.create(["bun-npm-codegen-stale-", ".json"]) do |file|
       file.write(JSON.generate(npm))
       file.flush
@@ -126,12 +128,12 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
           receipt_path: receipt,
           source_inventory_path: inventory,
           npm_codegen_path: file.path,
-          audit_date: "2026-07-31"
+          audit_date: "2026-08-01"
         )
       end
     end
 
-    npm["rpm_release"] = "0.0.40"
+    npm["rpm_release"] = "0.0.41"
     npm.fetch("validation")["all_selected_package_license_texts_verified"] = false
     Tempfile.create(["bun-npm-codegen-incomplete-", ".json"]) do |file|
       file.write(JSON.generate(npm))
@@ -141,7 +143,7 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
           receipt_path: receipt,
           source_inventory_path: inventory,
           npm_codegen_path: file.path,
-          audit_date: "2026-07-31"
+          audit_date: "2026-08-01"
         )
       end
     end
@@ -156,7 +158,22 @@ class BunFinalLinkedLicenseAuditTest < Minitest::Test
           receipt_path: receipt,
           source_inventory_path: inventory,
           npm_codegen_path: file.path,
-          audit_date: "2026-07-31"
+          audit_date: "2026-08-01"
+        )
+      end
+    end
+
+    npm.fetch("validation")["selected_package_license_expressions_verified"] = true
+    npm.fetch("validation")["generator_execution_reproduced"] = false
+    Tempfile.create(["bun-npm-codegen-unreproduced-", ".json"]) do |file|
+      file.write(JSON.generate(npm))
+      file.flush
+      assert_raises(BunFinalLinkedLicenseAudit::Error) do
+        BunFinalLinkedLicenseAudit.rebind_receipt(
+          receipt_path: receipt,
+          source_inventory_path: inventory,
+          npm_codegen_path: file.path,
+          audit_date: "2026-08-01"
         )
       end
     end

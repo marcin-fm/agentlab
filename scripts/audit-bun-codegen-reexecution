@@ -1,0 +1,367 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+
+module BunCodegenReexecutionAudit
+  class Error < StandardError; end
+
+  INPUTS = {
+    "build_ninja" => [2_469_137, "9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3"],
+    "configure_proof" => [7_150, "1144489b7421806f5ff89bfdcbe74f9b0c6758cc94e1fd33bf14acba75007a5f"],
+    "source_built_driver" => [66_969_072, "0d6abaaba9cf19248fe89afd7cd1c51e4d6dd17e56e89e5b62d71fe25b0a12e0"],
+    "lol_html_provider_rpm" => [440_797, "9ab3db281325b4a6e231fec587284f0427dd571cf8ae9244f5f85f29d7b1171a"],
+    "lol_html_runtime" => [889_048, "ea38242373a7a9f098cc85820a0fdf1682bdbfb5eb4132bc0ce72ecfebf398dd"]
+  }.freeze
+  CODEGEN_RECORDS_SHA256 = "52a451c1826969c8e3c0b66b13611caa95a1074bc62c658029efcd977c117df5"
+  SOURCE_RECORDS_SHA256 = "7c4f65ed0c50263be1cb9db840ac3c598cf6a9e07fb71e0589fb21829805a5a2"
+  CODEGEN_PATHS_SHA256 = "32b10f142e7edbb940e520a84b095291d12006d932cd8c2efc515806ef12caf7"
+  CODEGEN_TREE_SHA256 = "0e29d3eb4797d830872caa038c4b97e83e5d13b5b8c5f84009fdd103986d09af"
+  SOURCE_TREE_ENTRY_COUNT = 35_656
+  SOURCE_TREE_SHA256 = "4f4fb34a56f4b849c0785792fc76d39707114f93856fe7acfc8d0388ed00ad1e"
+  EMPTY_SHA256 = Digest::SHA256.hexdigest("")
+  RETAINED_PROOF_ROOT = "/srv/tmp/agentlab-bun-self-rebuild-proof-11111"
+  TASK_ROOT = "/srv/tmp/agentlab-bun-codegen-reexecution-20260801"
+  DRIVER_PATH = "/srv/tmp/agentlab-bun-self-rebuild-proof-00000/build/release-local/bun"
+  LOLHTML_LIBRARY_DIRECTORY = "#{TASK_ROOT}/lolhtml-runtime/usr/lib64"
+  LOLHTML_RPM_PATH = "#{TASK_ROOT}/lolhtml-rpms/fedora-44-x86_64/lol-html-3.0.1-0.4.fc44.x86_64.rpm"
+  INPUT_PATHS = {
+    "build_ninja" => "build/release-local/build.ninja",
+    "configure_proof" => "configure-proof.json",
+    "lol_html_provider_rpm" => "lol-html-3.0.1-0.4.fc44.x86_64.rpm"
+  }.freeze
+  BINDGENV2_SOURCES = %w[
+    src/runtime/socket/SocketConfig.bindv2.ts
+    src/runtime/socket/SSLConfig.bindv2.ts
+    src/test_runner/timers/FakeTimersConfig.bindv2.ts
+  ].freeze
+  VALIDATION_TRUE = %w[
+    all_declared_and_side_effect_outputs_removed_before_execution
+    all_outputs_byte_identical_to_retained_proof
+    independent_runs_byte_identical
+    full_codegen_tree_byte_identical
+    generator_execution_reproduced
+  ].freeze
+  VALIDATION_FALSE = %w[
+    network_used
+    package_manager_invoked
+    build_invoked
+    provider_rpm_installed
+    unexpected_output_files_present
+    generated_output_producer_edges_verified
+    final_npm_codegen_closure_verified
+  ].freeze
+
+  module_function
+
+  def digest(value)
+    Digest::SHA256.hexdigest(JSON.generate(value))
+  end
+
+  def path_digest(records)
+    Digest::SHA256.hexdigest(records.map { |record| record.fetch("path") }.sort.join("\n") + "\n")
+  end
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def file_record(path, root)
+    {
+      "path" => path.delete_prefix("#{root}/"),
+      "size_bytes" => File.size(path),
+      "sha256" => sha256(path)
+    }
+  end
+
+  def tree_entries(root, hash_files:)
+    Dir.glob(File.join(root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+      relative = path.delete_prefix("#{root}/")
+      next if relative.empty? || relative.split("/").any? { |part| [".", ".."].include?(part) }
+
+      if File.symlink?(path)
+        [relative, { "type" => "symlink", "target" => File.readlink(path) }]
+      elsif File.file?(path)
+        record = {
+          "type" => "file",
+          "mode" => format("%04o", File.lstat(path).mode & 0o7777),
+          "size_bytes" => File.size(path)
+        }
+        record["sha256"] = sha256(path) if hash_files
+        [relative, record]
+      elsif File.directory?(path)
+        [relative, { "type" => "directory", "mode" => format("%04o", File.lstat(path).mode & 0o7777) }]
+      else
+        raise Error, "unsupported filesystem entry in tree identity: #{relative}"
+      end
+    end.compact.sort.to_h
+  end
+
+  def tree_content_identity(root)
+    entries = tree_entries(root, hash_files: true)
+    {
+      "entry_count" => entries.length,
+      "sha256" => Digest::SHA256.hexdigest(JSON.generate(entries))
+    }
+  end
+
+  def verify_directory_path!(path, anchor:, label:)
+    expanded_path = File.expand_path(path)
+    expanded_anchor = File.expand_path(anchor)
+    prefix = "#{expanded_anchor}/"
+    unless expanded_path == expanded_anchor || expanded_path.start_with?(prefix)
+      raise Error, "#{label} escapes its workspace anchor"
+    end
+
+    relative = expanded_path.delete_prefix(prefix)
+    components = [expanded_anchor]
+    unless expanded_path == expanded_anchor
+      relative.split("/").each { |part| components << File.join(components.last, part) }
+    end
+    components.each do |component|
+      unless File.directory?(component) && !File.symlink?(component)
+        raise Error, "#{label} contains a symlink or non-directory component"
+      end
+    end
+    unless File.realpath(expanded_anchor) == expanded_anchor && File.realpath(expanded_path) == expanded_path
+      raise Error, "#{label} is not canonical"
+    end
+
+    expanded_path
+  rescue Errno::ENOENT
+    raise Error, "#{label} is missing"
+  end
+
+  def verify_file!(path, record, label)
+    unless File.file?(path) && File.size(path) == record.fetch("size_bytes") && sha256(path) == record.fetch("sha256")
+      raise Error, "#{label} live identity mismatch"
+    end
+  end
+
+  def expected_argv(run_name, producer)
+    source_root = "#{TASK_ROOT}/#{run_name}/source"
+    codegen_root = "#{TASK_ROOT}/#{run_name}/codegen"
+    prefix = %W[
+      unshare --net env TARGET_PLATFORM=linux TARGET_ARCH=x64
+      LD_LIBRARY_PATH=#{LOLHTML_LIBRARY_DIRECTORY} #{DRIVER_PATH} run
+    ]
+
+    case producer
+    when "bindgenv2"
+      prefix + [
+        "#{source_root}/src/codegen/bindgenv2/script.ts",
+        "--command=generate",
+        "--codegen-path=#{codegen_root}",
+        "--sources=#{BINDGENV2_SOURCES.map { |path| "#{source_root}/#{path}" }.join(",")}"
+      ]
+    when "bindgen"
+      prefix + [
+        "#{source_root}/src/codegen/bindgen.ts",
+        "--debug=OFF",
+        "--codegen-root=#{codegen_root}"
+      ]
+    else
+      raise Error, "unknown generator producer"
+    end
+  end
+
+  def validate!(receipt)
+    raise Error, "unsupported schema" unless receipt["schema"] == "bun-codegen-reexecution-proof/v1"
+    raise Error, "package identity mismatch" unless receipt["package"] == "bun" && receipt["version"] == "1.3.14"
+    raise Error, "target mismatch" unless receipt["target"] == "fedora-44-x86_64"
+    Date.iso8601(receipt.fetch("audit_date"))
+
+    inputs = receipt.fetch("inputs")
+    unless inputs["retained_proof_root"] == RETAINED_PROOF_ROOT && inputs["task_root"] == TASK_ROOT &&
+           inputs.dig("source_built_driver", "path") == "bun" && inputs.dig("source_built_driver", "execution_path") == DRIVER_PATH &&
+           inputs.dig("lol_html_runtime", "path") == "liblolhtml.so.1" && inputs.dig("lol_html_runtime", "library_directory") == LOLHTML_LIBRARY_DIRECTORY
+      raise Error, "proof execution input path mismatch"
+    end
+    INPUT_PATHS.each do |name, path|
+      raise Error, "#{name} path mismatch" unless inputs.dig(name, "path") == path
+    end
+    INPUTS.each do |name, (size, sha256)|
+      record = inputs.fetch(name)
+      raise Error, "#{name} identity mismatch" unless record["size_bytes"] == size && record["sha256"] == sha256
+    end
+
+    expected = receipt.fetch("expected")
+    codegen_outputs = expected.fetch("codegen_outputs")
+    source_outputs = expected.fetch("source_outputs")
+    unless expected["codegen_output_count"] == 25 && expected["source_output_count"] == 1 &&
+           expected["side_effect_header_count"] == 9 && expected["codegen_tree_entry_count"] == 118 &&
+           expected["codegen_tree_sha256"] == CODEGEN_TREE_SHA256 &&
+           digest(codegen_outputs) == CODEGEN_RECORDS_SHA256 && digest(source_outputs) == SOURCE_RECORDS_SHA256 &&
+           path_digest(codegen_outputs) == CODEGEN_PATHS_SHA256
+      raise Error, "expected output inventory mismatch"
+    end
+
+    runs = receipt.fetch("runs")
+    raise Error, "independent run inventory mismatch" unless runs.map { |run| run["name"] } == %w[run1 run2]
+    runs.each do |run|
+      raise Error, "run is not network isolated" unless run["network_isolated"] == true
+      raise Error, "run output counts mismatch" unless run["codegen_output_count"] == 25 && run["source_output_count"] == 1
+      unless run["codegen_tree_entry_count"] == 118 && run["codegen_tree_sha256"] == CODEGEN_TREE_SHA256 &&
+             digest(run.fetch("outputs")) == CODEGEN_RECORDS_SHA256 &&
+             digest(run.fetch("source_outputs")) == SOURCE_RECORDS_SHA256
+        raise Error, "run output identity mismatch"
+      end
+      unless run["full_codegen_tree_byte_identical"] == true && run["source_tree_shape_identical"] == true &&
+             run["unexpected_changed_source_files"] == []
+        raise Error, "run comparison is incomplete"
+      end
+      unless run["source_tree_entry_count"] == SOURCE_TREE_ENTRY_COUNT && run["source_tree_sha256"] == SOURCE_TREE_SHA256
+        raise Error, "run source tree identity mismatch"
+      end
+
+      commands = run.fetch("commands")
+      raise Error, "generator command inventory mismatch" unless commands.map { |command| command["producer"] } == %w[bindgenv2 bindgen]
+      commands.each do |command|
+        argv = command.fetch("argv")
+        log = command.fetch("log")
+        unless argv == expected_argv(run.fetch("name"), command.fetch("producer")) &&
+               log["path"] == "#{command.fetch("producer")}.log" &&
+               log["exit_status"] == 0 && log["size_bytes"] == 0 && log["sha256"] == EMPTY_SHA256
+          raise Error, "generator command proof mismatch"
+        end
+      end
+    end
+
+    validation = receipt.fetch("validation")
+    raise Error, "independent run count mismatch" unless validation["independent_run_count"] == 2
+    raise Error, "proof validation is incomplete" unless VALIDATION_TRUE.all? { |key| validation[key] == true }
+    raise Error, "proof overclaims completion" unless VALIDATION_FALSE.all? { |key| validation[key] == false }
+
+    true
+  rescue Date::Error, JSON::ParserError, KeyError => e
+    raise Error, e.message
+  end
+
+  def verify_live!(receipt, reexecute: false)
+    validate!(receipt)
+    inputs = receipt.fetch("inputs")
+    live_inputs = {
+      "build_ninja" => File.join(RETAINED_PROOF_ROOT, INPUT_PATHS.fetch("build_ninja")),
+      "configure_proof" => File.join(RETAINED_PROOF_ROOT, INPUT_PATHS.fetch("configure_proof")),
+      "source_built_driver" => DRIVER_PATH,
+      "lol_html_provider_rpm" => LOLHTML_RPM_PATH,
+      "lol_html_runtime" => File.join(LOLHTML_LIBRARY_DIRECTORY, "liblolhtml.so.1")
+    }
+    live_inputs.each { |name, path| verify_file!(path, inputs.fetch(name), name) }
+    raise Error, "source-built driver is not executable" unless File.executable?(DRIVER_PATH)
+
+    verify_directory_path!(RETAINED_PROOF_ROOT, anchor: RETAINED_PROOF_ROOT, label: "retained proof root")
+    retained_codegen = verify_directory_path!(
+      File.join(RETAINED_PROOF_ROOT, "build/release-local/codegen"),
+      anchor: RETAINED_PROOF_ROOT,
+      label: "retained codegen root"
+    )
+    retained_source = verify_directory_path!(
+      File.join(RETAINED_PROOF_ROOT, "source"),
+      anchor: RETAINED_PROOF_ROOT,
+      label: "retained source root"
+    )
+    retained_codegen_tree = tree_entries(retained_codegen, hash_files: true)
+    retained_source_identity = tree_content_identity(retained_source)
+    expected = receipt.fetch("expected")
+    unless retained_codegen_tree.length == expected.fetch("codegen_tree_entry_count") &&
+           Digest::SHA256.hexdigest(JSON.generate(retained_codegen_tree)) == expected.fetch("codegen_tree_sha256")
+      raise Error, "retained codegen tree identity mismatch"
+    end
+
+    receipt.fetch("runs").each do |run|
+      verify_directory_path!(TASK_ROOT, anchor: TASK_ROOT, label: "task root")
+      run_root = verify_directory_path!(
+        File.join(TASK_ROOT, run.fetch("name")),
+        anchor: TASK_ROOT,
+        label: "#{run.fetch('name')} root"
+      )
+      source_root = verify_directory_path!(
+        File.join(run_root, "source"),
+        anchor: run_root,
+        label: "#{run.fetch('name')} source root"
+      )
+      codegen_root = verify_directory_path!(
+        File.join(run_root, "codegen"),
+        anchor: run_root,
+        label: "#{run.fetch('name')} codegen root"
+      )
+      started_at = Time.now
+      expected_source_identity = {
+        "entry_count" => run.fetch("source_tree_entry_count"),
+        "sha256" => run.fetch("source_tree_sha256")
+      }
+      unless expected_source_identity == retained_source_identity && tree_content_identity(source_root) == retained_source_identity
+        raise Error, "#{run.fetch('name')} live source tree identity mismatch"
+      end
+
+      if reexecute
+        run.fetch("outputs").each { |record| FileUtils.rm_f(File.join(codegen_root, record.fetch("path"))) }
+        run.fetch("source_outputs").each { |record| FileUtils.rm_f(File.join(source_root, record.fetch("path"))) }
+        run.fetch("commands").each do |command|
+          stdout, stderr, status = Open3.capture3(*command.fetch("argv"), chdir: source_root)
+          File.binwrite(File.join(run_root, command.fetch("log").fetch("path")), stdout + stderr)
+          raise Error, "#{run.fetch('name')} #{command.fetch('producer')} failed with #{status.exitstatus}" unless status.success?
+        end
+      end
+
+      run.fetch("commands").each do |command|
+        label = "#{run.fetch('name')} #{command.fetch('producer')} log"
+        verify_file!(File.join(run_root, command.fetch("log").fetch("path")), command.fetch("log"), label)
+      end
+      run.fetch("outputs").each do |record|
+        verify_file!(File.join(codegen_root, record.fetch("path")), record, "#{run.fetch('name')} #{record.fetch('path')}")
+      end
+      run.fetch("source_outputs").each do |record|
+        verify_file!(File.join(source_root, record.fetch("path")), record, "#{run.fetch('name')} #{record.fetch('path')}")
+      end
+
+      raise Error, "#{run.fetch('name')} live codegen tree mismatch" unless tree_entries(codegen_root, hash_files: true) == retained_codegen_tree
+      raise Error, "#{run.fetch('name')} live source tree identity mismatch" unless tree_content_identity(source_root) == retained_source_identity
+
+      if reexecute
+        expected_source_outputs = run.fetch("source_outputs").map { |record| record.fetch("path") }
+        unexpected = Dir.glob(File.join(source_root, "**", "*"), File::FNM_DOTMATCH).select do |path|
+          relative = path.delete_prefix("#{source_root}/")
+          stat = File.lstat(path)
+          next false if stat.directory?
+          next false if stat.file? && expected_source_outputs.include?(relative)
+
+          stat.mtime >= started_at
+        end
+        unless unexpected.empty?
+          raise Error, "#{run.fetch('name')} changed unexpected source files: #{unexpected.join(', ')}"
+        end
+      end
+    end
+
+    true
+  end
+
+  def main(argv)
+    receipt_path = nil
+    verify_live = false
+    reexecute = false
+    OptionParser.new do |parser|
+      parser.on("--receipt PATH") { |value| receipt_path = value }
+      parser.on("--verify-live") { verify_live = true }
+      parser.on("--reexecute") { reexecute = true }
+    end.parse!(argv)
+    raise Error, "--receipt is required" unless receipt_path
+    raise Error, "--reexecute requires --verify-live" if reexecute && !verify_live
+
+    receipt = JSON.parse(File.read(receipt_path))
+    verify_live ? verify_live!(receipt, reexecute: reexecute) : validate!(receipt)
+    puts "Verified Bun code-generation reexecution proof #{receipt_path}."
+  rescue Errno::ENOENT, Error => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end
+
+BunCodegenReexecutionAudit.main(ARGV) if $PROGRAM_NAME == __FILE__

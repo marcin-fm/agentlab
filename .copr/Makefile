@@ -33,6 +33,7 @@ srpm:
 			install -pm0755 "$(repo_root)/scripts/audit-bun-source-licenses" "$$(dirname "$(spec)")/audit-bun-source-licenses"; \
 			install -pm0755 "$(repo_root)/scripts/audit-bun-final-linked-licenses" "$$(dirname "$(spec)")/audit-bun-final-linked-licenses"; \
 			install -pm0755 "$(repo_root)/scripts/audit-bun-npm-code-generation" "$$(dirname "$(spec)")/audit-bun-npm-code-generation"; \
+			install -pm0755 "$(repo_root)/scripts/audit-bun-codegen-reexecution" "$$(dirname "$(spec)")/audit-bun-codegen-reexecution"; \
 			ruby "$(repo_root)/scripts/prepare-bun-srpm-sources" --spec "$(spec)"; \
 			;; \
 		pdfium.spec) \
@@ -155,7 +156,7 @@ srpm:
 				--license-review "$$specdir/license-review.yml" \
 				--native-review "$$specdir/native-review.yml" \
 				--bun-final-license "$(repo_root)/packages/bun/bun-1.3.14-final-linked-license-closure.json" \
-				--date 2026-07-28 \
+				--date 2026-08-01 \
 				--check \
 				--receipt "$$specdir/opencode-$$version-final-license-closure.json"; \
 			install -pm0755 "$(repo_root)/scripts/materialize-opencode-node-modules" \

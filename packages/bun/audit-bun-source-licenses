@@ -1,0 +1,536 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "digest"
+require "cgi"
+require "fileutils"
+require "json"
+require "optparse"
+require "pathname"
+require "tempfile"
+
+module BunSourceLicenseAudit
+  class Error < StandardError; end
+
+  REPO_ROOT = File.expand_path("..", __dir__)
+
+  NATIVE_LICENSE_PATHS = {
+    "boringssl" => %w[LICENSE],
+    "brotli" => %w[LICENSE],
+    "cares" => %w[LICENSE.md],
+    "hdrhistogram" => %w[COPYING.txt LICENSE.txt],
+    "highway" => %w[LICENSE],
+    "libarchive" => %w[COPYING],
+    "libdeflate" => %w[COPYING],
+    "libjpeg-turbo" => %w[LICENSE.md README.ijg],
+    "libspng" => %w[LICENSE],
+    "libwebp" => %w[COPYING PATENTS],
+    "lshpack" => %w[LICENSE],
+    "lsqpack" => %w[LICENSE],
+    "lsquic" => %w[LICENSE LICENSE.chrome],
+    "mimalloc" => %w[LICENSE],
+    "picohttpparser" => %w[picohttpparser.c],
+    "tinycc" => %w[COPYING],
+    "zlib" => %w[LICENSE.md],
+    "zstd" => %w[COPYING LICENSE]
+  }.freeze
+  NATIVE_LICENSE_SELECTIONS = {
+    "boringssl" => ["Apache-2.0", "linked production crypto and SSL sources; Go test terms are not compiled"],
+    "brotli" => ["MIT", "complete upstream license and Fedora brotli precedent"],
+    "cares" => ["MIT", "complete upstream license and Fedora c-ares precedent"],
+    "hdrhistogram" => ["CC0-1.0 OR BSD-2-Clause", "both upstream alternatives are retained"],
+    "highway" => ["Apache-2.0", "linked subset excludes the CC0 random contribution"],
+    "libarchive" => ["BSD-2-Clause AND BSD-3-Clause AND CC0-1.0", "linked default, xxhash, NetBSD, UC Regents, public-domain, and CC0-selected BLAKE2 sources"],
+    "libdeflate" => ["MIT", "complete upstream license and Fedora libdeflate precedent"],
+    "libjpeg-turbo" => ["IJG AND BSD-3-Clause", "linked upstream libjpeg and TurboJPEG sources; Bun's separate stub is classified under Bun MIT"],
+    "libspng" => ["BSD-2-Clause AND libpng-2.0", "linked spng source carries both terms"],
+    "libwebp" => ["BSD-3-Clause WITH Google-Patent-WebM", "all linked codec and sharpyuv sources carry the upstream BSD terms and WebM patent grant"],
+    "lshpack" => ["MIT AND BSD-2-Clause", "linked source includes the BSD-2-Clause xxhash implementation"],
+    "lsqpack" => ["MIT", "complete upstream license"],
+    "lsquic" => ["MIT AND BSD-2-Clause AND BSD-3-Clause", "linked tree includes lsquic, xxhash, and Chromium-derived terms"],
+    "mimalloc" => ["MIT", "complete upstream license and Fedora mimalloc precedent"],
+    "picohttpparser" => ["MIT", "complete MIT terms embedded in picohttpparser.c; the Perl-license alternative is not selected"],
+    "tinycc" => ["LGPL-2.1-only", "linked TinyCC source retains its LGPL relink obligation"],
+    "zlib" => ["Zlib", "complete upstream terms and Fedora zlib-ng precedent"],
+    "zstd" => ["BSD-3-Clause OR GPL-2.0-only", "both upstream alternatives are retained"],
+  }.freeze
+  HISTORICAL_LOLHTML_EVIDENCE = {
+    "source_commit" => "ed1cc04702f7b609a8a735edf0a1cc7c33ec22c5",
+    "source_closure" => {
+      "path" => "packages/bun/bun-1.3.14-release-local-source-closure.json",
+      "sha256" => "ee3ed17e495779441326d10cd8d7f07a21b856285abc0f41ef9e5be6f99abbe0"
+    },
+    "source_license_inventory" => {
+      "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
+      "sha256" => "ea8fa634cb896eb1ba5376992e4f1001042d39836071d50ec9879b7fbd905bec"
+    },
+    "cargo_build_receipt" => {
+      "path" => "packages/bun/lolhtml-offline-build-proof.json",
+      "sha256" => "05785f79c560ce5953500acc7c9dea283a53b18240e59b62c84f57ab02eb5cce"
+    },
+    "cargo_rpm_receipt" => {
+      "path" => "packages/bun/lolhtml-rpm-cargo-proof.json",
+      "sha256" => "c7d08e312c359363a40ebe0fd24b91245f2fca369a60a1dc71d86e72c29ff164"
+    },
+    "active_provider" => "packages/lol-html/package.yml"
+  }.freeze
+  EXPECTED_NPM_DECLARATIONS = {
+    "(MIT AND BSD-3-Clause)" => 1,
+    "(MIT AND Zlib)" => 1,
+    "0BSD" => 1,
+    "<missing>" => 2,
+    "Apache-2.0" => 5,
+    "Artistic-2.0" => 1,
+    "BSD-2-Clause" => 1,
+    "BSD-3-Clause" => 5,
+    "ISC" => 10,
+    "MIT" => 207,
+    "MPL-2.0" => 2
+  }.freeze
+  LICENSE_BASENAME = /\A(?:licen[cs]e|copying|copyright|notice)(?:[._-].*)?\z/i
+  NPM_LICENSE_TEXT_RESOLUTIONS = {
+    ["constants-browserify", "1.0.0"] => {
+      "package_text_path" => "README.md",
+      "package_text_sha256" => "b06569bf170a015c56cbad9b45756519d0b8a682770fe30d66bc1e235e26196a",
+      "source_archive_sha256" => "ea9307fd609ddce9497e3ca6b49e6102d7326bd337f66c10143b7b326f931f59",
+      "repository" => "https://github.com/juliangruber/constants-browserify",
+      "registry_git_head" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "release_tag" => "v1.0.0",
+      "release_commit" => "e0ee990c75f3a0b3275e6bb2e3ff4d5d169d1b9d",
+      "repository_license_commit" => "49d435dd53bcf66d337dba96f979b6141582646b",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "d29c64dd9512b1ff684804b434a391e5b8bd36c23660c02238399b164681b74e",
+      "normalized_text_sha256" => "8e18f8b0cece5054ff7fa4f523523733d0b21b1a0774d8d67d2ff1a2a8310ce1",
+      "exact_release_source_correspondence_verified" => true
+    }
+  }.freeze
+  NPM_SUPPLEMENTAL_LICENSE_TEXTS = {
+    ["peechy", "0.4.34"] => {
+      "source_archive_sha256" => "135dcdcd42984756d18a31aedcb9a1b670261522542c6dc7c3fca6e1aa42534d",
+      "declared_license" => "MIT",
+      "repository" => "https://github.com/jarred-sumner/peechy",
+      "registry_git_head" => "069e5cfcbf1dff9a738be759671ef0d15c2c9da4",
+      "repository_license_commit" => "dba47f9680fdf7886fddaf6fc3589b845241eb83",
+      "repository_license_path" => "LICENSE.md",
+      "repository_license_sha256" => "a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e",
+      "normalized_text_sha256" => "7e74f1d97feb9e6aa3affbefa74ef914361fe0f0e9a167c961913e7e9d7895be",
+      "upstream_request" => { "attempted" => true, "available" => false, "reason" => "issues_disabled" },
+      "npm_archive_text_present" => false,
+      "exact_release_source_correspondence_verified" => false
+    }
+  }.freeze
+
+  module_function
+
+  def wyhash11(input)
+    mask = (1 << 64) - 1
+    primes = [0xa0761d6478bd642f, 0xe7037ed1a0b428db, 0x8ebc6af09c88c6e3, 0x589965cc75374cc3, 0x1d8e4e27c47d124f]
+    bytes = input.b.bytes
+    raise Error, "unsupported long npm prerelease identifier: #{input}" if bytes.length > 8
+
+    read = lambda do |offset, length|
+      slice = bytes.slice(offset, length)
+      raise Error, "cannot read npm prerelease identifier bytes" unless slice&.length == length
+
+      slice.each_with_index.sum { |byte, index| byte << (index * 8) }
+    end
+    mum = lambda do |a, b|
+      product = (a & mask) * (b & mask)
+      ((product >> 64) ^ (product & mask)) & mask
+    end
+    mix0 = ->(a, b, seed) { mum.call(a ^ seed ^ primes[0], b ^ seed ^ primes[1]) }
+    value = case bytes.length
+            when 0 then 0
+            when 1 then mix0.call(read.call(0, 1), primes[4], 0)
+            when 2 then mix0.call(read.call(0, 2), primes[4], 0)
+            when 3 then mix0.call((read.call(0, 2) << 8) | read.call(2, 1), primes[4], 0)
+            when 4 then mix0.call(read.call(0, 4), primes[4], 0)
+            when 5 then mix0.call((read.call(0, 4) << 8) | read.call(4, 1), primes[4], 0)
+            when 6 then mix0.call((read.call(0, 4) << 16) | read.call(4, 2), primes[4], 0)
+            when 7 then mix0.call((read.call(0, 4) << 24) | (read.call(4, 2) << 8) | read.call(6, 1), primes[4], 0)
+            when 8 then mix0.call((read.call(0, 4) << 32) | read.call(4, 4), primes[4], 0)
+            end
+    mum.call(value ^ bytes.length, primes[4])
+  end
+
+  def source_cache_name(source, install_roots, semver_hashes)
+    if source.fetch("origin") == "registry"
+      version = source.fetch("source_version")
+      match = version.match(/\A(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+(.+))?\z/)
+      raise Error, "unsupported npm semver for Bun cache: #{version}" unless match
+
+      rendered = "#{match[1]}.#{match[2]}.#{match[3]}"
+      rendered += "-#{semver_hashes.fetch(match[4]).downcase}" if match[4]
+      rendered += "+#{semver_hashes.fetch(match[5]).upcase}" if match[5]
+      "#{source.fetch('source_name')}@#{rendered}@@@1"
+    else
+      reference = source.fetch("references").fetch(0)
+      root = install_roots.fetch(reference.fetch("install_root"))
+      resolution = root.fetch("sources").find do |record|
+        record.fetch("package_path") == reference.fetch("package_path") && record.fetch("origin") == "github"
+      end&.fetch("resolution")
+      match = resolution.to_s.match(/\Agithub:([^#]+)#([0-9a-f]+)\z/)
+      raise Error, "cannot derive Bun GitHub cache identity" unless match
+
+      "@GH@#{match[1].tr('/', '-')}-#{match[2]}@@@1"
+    end
+  end
+
+  def sha256(path)
+    Digest::SHA256.file(path).hexdigest
+  end
+
+  def file_record(path, root, recorded_path: nil)
+    real = File.realpath(path)
+    root_real = File.realpath(root)
+    raise Error, "license path escapes source root: #{path}" unless real.start_with?("#{root_real}/")
+
+    {
+      "path" => recorded_path || real.delete_prefix("#{root_real}/"),
+      "size_bytes" => File.size(real),
+      "sha256" => sha256(real)
+    }
+  end
+
+  def source_cache_names(closure)
+    sources = closure.dig("npm", "source_archives")
+    roots = closure.dig("npm", "install_roots").to_h { |record| [record.fetch("path"), record] }
+    parts = sources.filter_map do |source|
+      next unless source.fetch("origin") == "registry"
+
+      source.fetch("source_version").match(/\A\d+\.\d+\.\d+(?:-([^+]+))?(?:\+(.+))?\z/)&.captures
+    end.flatten.compact.uniq.sort
+    hashes = parts.to_h do |part|
+      [part, format("%016x", wyhash11(part))]
+    end
+    sources.to_h do |source|
+      [source.fetch("archive"), source_cache_name(source, roots, hashes)]
+    end
+  end
+
+  def license_file_records(package_root, source_root, recorded_root: nil)
+    Dir.glob(File.join(package_root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+      next unless File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+
+      recorded_path = recorded_root && File.join(recorded_root, path.delete_prefix("#{package_root}/"))
+      file_record(path, recorded_root ? package_root : source_root, recorded_path: recorded_path)
+    end.sort_by { |record| record.fetch("path") }
+  end
+
+  def normalized_license_text(path)
+    text = File.read(path)
+    start = text.index("Copyright")
+    raise Error, "license text has no copyright marker: #{path}" unless start
+
+    CGI.unescapeHTML(text[start..]).gsub(/\s+/, " ").strip
+  end
+
+  def npm_license_text_resolution(source, manifest, package_root, source_root, recorded_root)
+    evidence = NPM_LICENSE_TEXT_RESOLUTIONS[[manifest.fetch("name"), manifest["version"]]]
+    return unless evidence
+
+    unless source.fetch("sha256") == evidence.fetch("source_archive_sha256")
+      raise Error, "npm license-text source archive drifted: #{manifest.fetch('name')}@#{manifest['version']}"
+    end
+    text_path = File.join(package_root, evidence.fetch("package_text_path"))
+    text_record = file_record(
+      text_path,
+      recorded_root ? package_root : source_root,
+      recorded_path: recorded_root && File.join(recorded_root, evidence.fetch("package_text_path"))
+    )
+    unless text_record.fetch("sha256") == evidence.fetch("package_text_sha256")
+      raise Error, "npm package-local license text drifted: #{manifest.fetch('name')}@#{manifest['version']}"
+    end
+    normalized_sha256 = Digest::SHA256.hexdigest(normalized_license_text(text_path))
+    unless normalized_sha256 == evidence.fetch("normalized_text_sha256")
+      raise Error, "npm normalized license text drifted: #{manifest.fetch('name')}@#{manifest['version']}"
+    end
+
+    evidence.reject { |key, _value| key == "package_text_path" || key == "package_text_sha256" }.merge(
+      "package_text" => text_record
+    )
+  end
+
+  def npm_supplemental_license_text(source, manifest, path, expected_directory:)
+    evidence = NPM_SUPPLEMENTAL_LICENSE_TEXTS[[manifest.fetch("name"), manifest["version"]]]
+    return unless evidence
+
+    raise Error, "missing supplemental npm license text" unless path && File.file?(path)
+    raise Error, "unexpected supplemental npm license text filename" unless File.basename(path) == "bun-1.3.14-peechy-0.4.34-LICENSE.md"
+    unless File.dirname(File.realpath(path)) == File.realpath(expected_directory)
+      raise Error, "supplemental npm license text is outside the checked source directory"
+    end
+    raise Error, "npm source archive drifted for supplemental license text" unless source.fetch("sha256") == evidence.fetch("source_archive_sha256")
+    raise Error, "npm license declaration drifted for supplemental license text" unless manifest["license"] == evidence.fetch("declared_license")
+    raise Error, "supplemental npm license text drifted" unless Digest::SHA256.file(path).hexdigest == evidence.fetch("repository_license_sha256")
+    normalized = CGI.unescapeHTML(File.read(path)[File.read(path).index("Copyright")..]).gsub(/\s+/, " ").strip
+    raise Error, "normalized supplemental npm license text drifted" unless Digest::SHA256.hexdigest(normalized) == evidence.fetch("normalized_text_sha256")
+
+    evidence.merge(
+      "text" => {
+        "path" => "packages/bun/#{File.basename(path)}",
+        "size_bytes" => File.size(path),
+        "sha256" => Digest::SHA256.file(path).hexdigest
+      }
+    )
+  end
+
+  def npm_inventory(closure, cache_root, source_root, supplemental_license_text_path:, supplemental_license_text_directory:, external_cache: false)
+    cache_names = source_cache_names(closure)
+    records = closure.dig("npm", "source_archives").map do |source|
+      cache_name = cache_names.fetch(source.fetch("archive"))
+      package_root = File.join(cache_root, cache_name)
+      manifest_path = File.join(package_root, "package.json")
+      raise Error, "missing npm package manifest #{cache_name}" unless File.file?(manifest_path)
+
+      manifest = JSON.parse(File.read(manifest_path))
+      recorded_root = external_cache ? File.join(".build-tools", "bun-install-cache", cache_name) : nil
+      license_files = license_file_records(package_root, source_root, recorded_root: recorded_root)
+      resolution = npm_license_text_resolution(source, manifest, package_root, source_root, recorded_root)
+      supplemental = npm_supplemental_license_text(
+        source,
+        manifest,
+        supplemental_license_text_path,
+        expected_directory: supplemental_license_text_directory
+      )
+      license_files << resolution.fetch("package_text") if resolution
+      record = {
+        "cache_name" => cache_name,
+        "name" => manifest.fetch("name"),
+        "version" => manifest["version"],
+        "license" => manifest["license"],
+        "legacy_licenses" => manifest["licenses"],
+        "license_files" => license_files.sort_by { |file| file.fetch("path") }
+      }
+      record["license_text_resolution"] = resolution if resolution
+      record["supplemental_license_text"] = supplemental if supplemental
+      record
+    end.sort_by { |record| [record.fetch("name"), record["version"].to_s, record.fetch("cache_name")] }
+    raise Error, "expected 236 npm cache entries" unless records.length == 236
+
+    declarations = records.group_by do |record|
+      value = record["license"]
+      value.nil? ? "<missing>" : value.is_a?(String) ? value : JSON.generate(value)
+    end.transform_values(&:length).sort.to_h
+    raise Error, "npm license declaration inventory drifted" unless declarations == EXPECTED_NPM_DECLARATIONS
+
+    missing = records.select { |record| record["license"].nil? }.map do |record|
+      {
+        "cache_name" => record.fetch("cache_name"),
+        "name" => record.fetch("name"),
+        "version" => record["version"],
+        "legacy_licenses" => record["legacy_licenses"],
+        "license_files" => record.fetch("license_files")
+      }
+    end
+    {
+      "cache_entries" => records.length,
+      "license_declarations" => declarations,
+      "entries_with_supplied_license_text" => records.count { |record| record.fetch("license_files").any? || record.key?("supplemental_license_text") },
+      "entries_without_supplied_license_text" => records.count { |record| record.fetch("license_files").empty? && !record.key?("supplemental_license_text") },
+      "missing_license_field" => missing,
+      "records" => records
+    }
+  end
+
+  def native_inventory(closure, source_root)
+    names = closure.fetch("native_github_sources").map { |record| record.fetch("name") }.sort
+    raise Error, "native license map does not match closure" unless names == NATIVE_LICENSE_PATHS.keys.sort
+
+    names.map do |name|
+      component_root = File.join(source_root, "vendor", name)
+      files = NATIVE_LICENSE_PATHS.fetch(name).map do |relative|
+        path = File.join(component_root, relative)
+        raise Error, "missing native license evidence #{name}/#{relative}" unless File.file?(path)
+
+        file_record(path, source_root)
+      end
+      {
+        "name" => name,
+        "source_identity" => File.read(File.join(component_root, ".ref")).strip,
+        "license_files" => files,
+        "license_selection" => NATIVE_LICENSE_SELECTIONS[name]&.then do |expression, basis|
+          { "selected_expression" => expression, "basis" => basis }
+        end
+      }
+    end
+  end
+
+  def webkit_inventory(source_root, webkit_source: nil)
+    webkit_root = webkit_source ? File.realpath(webkit_source) : File.join(source_root, "vendor", "WebKit")
+    files = Dir.glob(File.join(webkit_root, "**", "*"), File::FNM_DOTMATCH).filter_map do |path|
+      next unless File.file?(path) && File.basename(path).match?(LICENSE_BASENAME)
+
+      recorded_path = webkit_source && File.join("vendor", "WebKit", path.delete_prefix("#{webkit_root}/"))
+      file_record(path, webkit_source ? webkit_root : source_root, recorded_path: recorded_path)
+    end.sort_by { |record| record.fetch("path") }
+    required = %w[
+      vendor/WebKit/Source/JavaScriptCore/COPYING.LIB
+      vendor/WebKit/Source/ThirdParty/capstone/Source/LICENSE.TXT
+    ]
+    missing = required - files.map { |record| record.fetch("path") }
+    raise Error, "missing required WebKit license evidence: #{missing.join(', ')}" if missing.any?
+
+    {
+      "candidate_license_files" => files,
+      "candidate_license_file_count" => files.length,
+      "required_files_present" => required
+    }
+  end
+
+  def generate(source_root:, closure_path:, rpm_release:, audit_date:, supplemental_license_text_path:, npm_cache_path: nil, webkit_source_path: nil)
+    source_root = File.realpath(source_root)
+    closure_path = File.realpath(closure_path)
+    closure = JSON.parse(File.read(closure_path))
+    raise Error, "unexpected Bun release" unless closure.fetch("release") == "1.3.14"
+
+    npm_cache = npm_cache_path ? File.realpath(npm_cache_path) : File.join(source_root, ".build-tools", "bun-install-cache")
+    raise Error, "missing staged npm cache" unless Dir.exist?(npm_cache)
+
+    {
+      "schema" => "bun-source-license-inventory/v2",
+      "package" => "bun",
+      "release" => closure.fetch("release"),
+      "rpm_release" => rpm_release,
+      "audit_date" => audit_date,
+      "source_closure" => file_record(closure_path, File.dirname(closure_path)),
+      "bun_license" => file_record(File.join(source_root, "LICENSE.md"), source_root),
+      "npm" => npm_inventory(
+        closure,
+        npm_cache,
+        source_root,
+        supplemental_license_text_path: supplemental_license_text_path,
+        supplemental_license_text_directory: File.dirname(closure_path),
+        external_cache: !npm_cache_path.nil?
+      ),
+      "native" => native_inventory(closure, source_root),
+      "webkit" => webkit_inventory(source_root, webkit_source: webkit_source_path),
+      "historical_evidence" => {
+        "private_lolhtml_cargo_graph" => HISTORICAL_LOLHTML_EVIDENCE
+      },
+      "validation" => {
+        "source_closure_verified" => true,
+        "system_lolhtml_provider_external_to_bun_inventory" => true,
+        "npm_source_declarations_inventoried" => true,
+        "npm_supplied_license_texts_inventoried" => true,
+        "native_license_files_inventoried" => true,
+        "webkit_license_files_inventoried" => true,
+        "network_used" => false,
+        "final_npm_installed_closure_verified" => false,
+        "final_linked_native_components_verified" => false,
+        "webkit_linked_file_semantic_review_verified" => false,
+        "fedora_allowed_spdx_verified" => false,
+        "required_license_texts_verified" => false,
+        "final_license_expression_verified" => false,
+        "rpm_payload_license_verified" => false
+      },
+      "scope" => "provisional Bun source-license inventory for the glibc system-lol-html graph, covering npm source declarations and supplied texts plus selected native/WebKit license files; the external lol-html provider is accounted in its own package and prior private Cargo evidence remains historical only"
+    }
+  end
+
+  def refresh_receipt(receipt_path:, closure_path:, rpm_release:, audit_date:, supplemental_license_text_path:)
+    receipt = JSON.parse(File.read(receipt_path))
+    closure = JSON.parse(File.read(closure_path))
+    raise Error, "unsupported Bun source-license receipt" unless receipt["schema"] == "bun-source-license-inventory/v2"
+    raise Error, "Bun source-license release drifted" unless receipt["release"] == closure["release"] && closure["release"] == "1.3.14"
+    peechy_source = closure.dig("npm", "source_archives").find { |source| source["package_name"] == "peechy" && source["package_version"] == "0.4.34" }
+    raise Error, "Bun closure lacks peechy 0.4.34" unless peechy_source
+    peechy = receipt.dig("npm", "records").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
+    raise Error, "checked source receipt lacks the peechy record" unless peechy && peechy["license"] == "MIT" && Array(peechy["license_files"]).empty?
+    supplemental = npm_supplemental_license_text(
+      peechy_source,
+      { "name" => "peechy", "version" => "0.4.34", "license" => "MIT" },
+      supplemental_license_text_path,
+      expected_directory: File.dirname(File.realpath(closure_path))
+    )
+    if peechy.key?("supplemental_license_text")
+      raise Error, "checked peechy supplemental text drifted" unless peechy["supplemental_license_text"] == supplemental
+      unless receipt.dig("npm", "entries_with_supplied_license_text") == 223 && receipt.dig("npm", "entries_without_supplied_license_text") == 13
+        raise Error, "checked source receipt text counts drifted"
+      end
+    else
+      unless receipt.dig("npm", "entries_with_supplied_license_text") == 222 && receipt.dig("npm", "entries_without_supplied_license_text") == 14
+        raise Error, "checked source receipt text counts drifted"
+      end
+      peechy["supplemental_license_text"] = supplemental
+      receipt.fetch("npm")["entries_with_supplied_license_text"] = 223
+      receipt.fetch("npm")["entries_without_supplied_license_text"] = 13
+    end
+    receipt["rpm_release"] = rpm_release
+    receipt["audit_date"] = audit_date
+    receipt["source_closure"] = file_record(closure_path, File.dirname(closure_path))
+    receipt
+  end
+
+  def write_json(path, data)
+    FileUtils.mkdir_p(File.dirname(path))
+    Tempfile.create([".bun-license-inventory-", ".json"], File.dirname(path)) do |file|
+      file.binmode
+      file.write(JSON.pretty_generate(data) + "\n")
+      file.flush
+      file.fsync
+      File.chmod(0o644, file.path)
+      File.rename(file.path, path)
+    end
+  end
+
+  def main(argv)
+    options = {}
+    OptionParser.new do |parser|
+      parser.banner = "Usage: scripts/audit-bun-source-licenses --source-root PATH --closure PATH --rpm-release RELEASE --date YYYY-MM-DD [--output PATH | --check --receipt PATH]"
+      parser.on("--source-root PATH") { |value| options[:source_root] = value }
+      parser.on("--closure PATH") { |value| options[:closure] = value }
+      parser.on("--rpm-release RELEASE") { |value| options[:rpm_release] = value }
+      parser.on("--npm-cache PATH") { |value| options[:npm_cache] = value }
+      parser.on("--webkit-source PATH") { |value| options[:webkit_source] = value }
+      parser.on("--peechy-license PATH") { |value| options[:supplemental_license_text] = value }
+      parser.on("--refresh-receipt PATH") { |value| options[:refresh_receipt] = value }
+      parser.on("--date YYYY-MM-DD") { |value| options[:audit_date] = value }
+      parser.on("--output PATH") { |value| options[:output] = value }
+      parser.on("--check") { options[:check] = true }
+      parser.on("--receipt PATH") { |value| options[:receipt] = value }
+    end.parse!(argv)
+
+    required = options[:refresh_receipt] ? %i[closure rpm_release audit_date supplemental_license_text] : %i[source_root closure rpm_release audit_date supplemental_license_text]
+    required.each { |key| raise Error, "--#{key.to_s.tr('_', '-')} is required" unless options[key] }
+    Date.iso8601(options.fetch(:audit_date))
+    raise Error, "--output is required unless --check" unless options[:output] || options[:check]
+    raise Error, "--receipt is required with --check" if options[:check] && !options[:receipt]
+    raise Error, "--receipt is only valid with --check" if options[:receipt] && !options[:check]
+
+    result = if options[:refresh_receipt]
+               refresh_receipt(
+                 receipt_path: options.fetch(:refresh_receipt),
+                 closure_path: options.fetch(:closure),
+                 rpm_release: options.fetch(:rpm_release),
+                 audit_date: options.fetch(:audit_date),
+                 supplemental_license_text_path: options.fetch(:supplemental_license_text)
+               )
+             else
+               generate(
+                 source_root: options.fetch(:source_root),
+                 closure_path: options.fetch(:closure),
+                 rpm_release: options.fetch(:rpm_release),
+                 audit_date: options.fetch(:audit_date),
+                 supplemental_license_text_path: options.fetch(:supplemental_license_text),
+                 npm_cache_path: options[:npm_cache],
+                 webkit_source_path: options[:webkit_source]
+               )
+             end
+    serialized = JSON.pretty_generate(result) + "\n"
+    if options[:check]
+      raise Error, "Bun source-license inventory differs from checked receipt" unless File.binread(options.fetch(:receipt)) == serialized
+
+      puts "Verified Bun source-license inventory #{options.fetch(:receipt)}."
+    else
+      write_json(options.fetch(:output), result)
+      puts "Wrote Bun source-license inventory to #{options.fetch(:output)}."
+    end
+  rescue Date::Error, JSON::ParserError, KeyError, Errno::ENOENT, Error => e
+    warn "error: #{e.message}"
+    exit 1
+  end
+end
+
+BunSourceLicenseAudit.main(ARGV) if $PROGRAM_NAME == __FILE__

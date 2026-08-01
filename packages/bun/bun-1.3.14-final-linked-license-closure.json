@@ -3,7 +3,7 @@
   "package": "bun",
   "version": "1.3.14",
   "target": "fedora-44-x86_64-glibc-system-lolhtml",
-  "audit_date": "2026-07-31",
+  "audit_date": "2026-08-01",
   "inputs": {
     "self_rebuild": {
       "path": "packages/bun/self-rebuild-proof.json",
@@ -13,12 +13,12 @@
     "source_license_inventory": {
       "path": "packages/bun/bun-1.3.14-source-license-inventory.json",
       "size_bytes": 127845,
-      "sha256": "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb"
+      "sha256": "2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9"
     },
     "npm_code_generation_closure": {
       "path": "packages/bun/bun-1.3.14-npm-code-generation-closure.json",
-      "size_bytes": 51956,
-      "sha256": "1b80c19b2e32f527ce2d468a696b3c3f02866312c2a6ca40bdbb5c0f74f676e4"
+      "size_bytes": 52223,
+      "sha256": "9fef51b9e653a6327292c5d3cc5c03f3bfd554871620ea1351dd4e5220e1ca09"
     },
     "relink_audit": {
       "path": "packages/bun/relink-materials-proof.json",
@@ -31,7 +31,7 @@
       "sha256": "f79d9aa350ed8b08ee58ec115b24eccb9b99ab7c0c28bf406ad15bccb318d1e5"
     },
     "lolhtml_package": {
-      "path": "packages/lol-html/package.yml",
+      "path": "packages/lol-html/lol-html-3.0.0-package.yml",
       "size_bytes": 3945,
       "sha256": "c8bab9f03901bf2378b64aead63cee5217c733fcb46e23876d53c075507dd2e2"
     }
@@ -498,6 +498,7 @@
       "packages_missing_required_text": [],
       "selected_expressions_fedora_allowed": true,
       "selected_required_texts_verified": true,
+      "generator_execution_reproduced": true,
       "final_codegen_provenance_verified": false
     }
   },
@@ -42130,6 +42131,7 @@
     "bundled_native_selected_license_texts_verified": true,
     "npm_codegen_selected_spdx_verified": true,
     "npm_codegen_selected_license_texts_verified": true,
+    "generator_execution_reproduced": true,
     "webkit_member_source_mapping_verified": true,
     "webkit_license_marker_inventory_verified": true,
     "webkit_transitive_dependency_mapping_verified": true,

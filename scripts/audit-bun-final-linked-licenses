@@ -18,12 +18,12 @@ module BunFinalLinkedLicenseAudit
   PREVIOUS_SOURCE_INVENTORY_RECORD = {
     "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
     "size_bytes" => 127_845,
-    "sha256" => "bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25"
+    "sha256" => "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb"
   }.freeze
   CURRENT_SOURCE_INVENTORY_RECORD = {
     "path" => "packages/bun/bun-1.3.14-source-license-inventory.json",
     "size_bytes" => 127_845,
-    "sha256" => "c3fddadf91100fc4dd1a7f2415a0155453e05329087cbb1c6fd91bf4093227fb"
+    "sha256" => "2255927737a3329ecd6f43d1a5371fffe301f59fdbb3f6d7f886b1dcf463f3a9"
   }.freeze
   NATIVE_SELECTED_EXPRESSION_COUNTS = {
     "Apache-2.0" => 2,
@@ -453,6 +453,7 @@ module BunFinalLinkedLicenseAudit
     raise Error, "npm code-generation selected expression mismatch" unless npm_codegen.dig("npm", "selected_expression_counts") == NPM_SELECTED_EXPRESSION_COUNTS
     raise Error, "npm code-generation selected package mismatch" unless npm_codegen.dig("npm", "selected_package_manifest_count") == 38 && npm_codegen.dig("npm", "packages_with_required_text") == 38 && npm_codegen.dig("npm", "packages_missing_required_text") == []
     raise Error, "npm code-generation selected license review incomplete" unless npm_codegen.dig("validation", "selected_package_license_expressions_verified") == true && npm_codegen.dig("validation", "all_selected_package_license_texts_verified") == true
+    raise Error, "npm code-generation execution was not reproduced" unless npm_codegen.dig("validation", "generator_execution_reproduced") == true
     raise Error, "npm code-generation closure unexpectedly complete" unless npm_codegen.dig("validation", "final_npm_codegen_closure_verified") == false
     raise Error, "relink audit does not bind the self-rebuild" unless relink_audit.dig("source_build", "receipt") == File.basename(self_build_path) &&
       relink_audit.dig("source_build", "receipt_sha256") == sha256(self_build_path)
@@ -517,7 +518,6 @@ module BunFinalLinkedLicenseAudit
       self_build: self_build
     )
     lolhtml_record = repo_record(lolhtml_package_path)
-    lolhtml_record["path"] = "packages/lol-html/package.yml"
 
     {
       "schema" => "bun-final-linked-license-closure/v3",
@@ -560,6 +560,7 @@ module BunFinalLinkedLicenseAudit
           "packages_missing_required_text" => npm_codegen.dig("npm", "packages_missing_required_text"),
           "selected_expressions_fedora_allowed" => true,
           "selected_required_texts_verified" => true,
+          "generator_execution_reproduced" => true,
           "final_codegen_provenance_verified" => false
         }
       },
@@ -604,6 +605,7 @@ module BunFinalLinkedLicenseAudit
         "bundled_native_selected_license_texts_verified" => true,
         "npm_codegen_selected_spdx_verified" => true,
         "npm_codegen_selected_license_texts_verified" => true,
+        "generator_execution_reproduced" => true,
         "webkit_member_source_mapping_verified" => true,
         "webkit_license_marker_inventory_verified" => true,
         "webkit_transitive_dependency_mapping_verified" => true,
@@ -632,7 +634,7 @@ module BunFinalLinkedLicenseAudit
     npm_codegen_record = repo_record(npm_codegen_path)
     raise Error, "Bun source-license inventory drifted" unless source_record == CURRENT_SOURCE_INVENTORY_RECORD
     source_inventory = load_json(source_inventory_path, "bun-source-license-inventory/v2")
-    unless source_inventory["package"] == "bun" && source_inventory["release"] == "1.3.14" && source_inventory["rpm_release"] == "0.0.40"
+    unless source_inventory["package"] == "bun" && source_inventory["release"] == "1.3.14" && source_inventory["rpm_release"] == "0.0.41"
       raise Error, "Bun source-license inventory identity drifted"
     end
     validation = source_inventory.fetch("validation")
@@ -651,19 +653,21 @@ module BunFinalLinkedLicenseAudit
       raise Error, "Bun source-license inventory validation state drifted"
     end
     npm_codegen = load_json(npm_codegen_path, "bun-npm-code-generation-closure/v2")
-    unless npm_codegen["package"] == "bun" && npm_codegen["version"] == "1.3.14" && npm_codegen["rpm_release"] == "0.0.40" && npm_codegen.dig("inputs", "source_license_inventory") == source_record
+    unless npm_codegen["package"] == "bun" && npm_codegen["version"] == "1.3.14" && npm_codegen["rpm_release"] == "0.0.41" && npm_codegen.dig("inputs", "source_license_inventory") == source_record
       raise Error, "Bun npm code-generation closure identity drifted"
     end
     unless npm_codegen.dig("npm", "selected_expression_counts") == NPM_SELECTED_EXPRESSION_COUNTS && npm_codegen.dig("npm", "selected_package_manifest_count") == 38 && npm_codegen.dig("npm", "packages_with_required_text") == 38 && npm_codegen.dig("npm", "packages_missing_required_text") == []
       raise Error, "Bun npm code-generation selected license evidence drifted"
     end
     npm_validation = npm_codegen.fetch("validation")
-    unless npm_validation["selected_package_license_expressions_verified"] == true && npm_validation["all_selected_package_license_texts_verified"] == true && npm_validation["final_npm_codegen_closure_verified"] == false
+    unless npm_validation["selected_package_license_expressions_verified"] == true && npm_validation["all_selected_package_license_texts_verified"] == true && npm_validation["generator_execution_reproduced"] == true && npm_validation["final_npm_codegen_closure_verified"] == false
       raise Error, "Bun npm code-generation validation state drifted"
     end
 
     receipt.fetch("inputs")["source_license_inventory"] = source_record
     receipt.fetch("inputs")["npm_code_generation_closure"] = npm_codegen_record
+    receipt.fetch("selected_license_evidence").fetch("npm_codegen_inputs")["generator_execution_reproduced"] = true
+    receipt.fetch("validation")["generator_execution_reproduced"] = true
     receipt["audit_date"] = audit_date
     receipt
   end
