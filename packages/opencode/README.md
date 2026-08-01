@@ -8,7 +8,7 @@ The 745 integrity-checked registry archives now reproduce deterministic producti
 
 A network-isolated standalone build reports `1.18.8` and produces the checked 492-identity compiler map. The later full local rpmbuild was interrupted during Binaryen compilation and produced no source or binary RPM. Current configured-SCM source delivery, clean buildroot availability, RPM payload validation, and COPR proof therefore remain false.
 
-Release `1.18.8-0.2` refreshes the fail-closed final-license preflight against Bun `0.0.38`. Bun now supplies checked canonical upstream MIT text for selected `peechy 0.4.34`, while exact release-source correspondence remains false. The three OpenCode notice holds, six Bun WebKit fork-file holds, final aggregate expression, RPM license payload, clean target builds, and COPR remain unresolved.
+Release `1.18.8-0.3` refreshes the fail-closed final-license preflight against Bun `0.0.39`. Bun's checked Fedora 44 aarch64 source-build, two source-built npm handoffs, two seed-free self-rebuilds, and wrapper-free relink chain are complete without claiming RPM architecture enablement. Exact peechy release-source correspondence, the three OpenCode notice holds, six Bun WebKit fork-file holds, final aggregate expression, RPM license payload, clean target builds, and COPR remain unresolved.
 
 ## Historical 1.18.5 Evidence
 

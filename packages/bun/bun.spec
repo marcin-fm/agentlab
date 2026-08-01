@@ -31,12 +31,12 @@
 %global release_local_closure_sha256 f3ba1c9145a46aaf76a79e6fb676982610024f5d9ee3b2d312500dc3bc8ca080
 %global source_staging_helper_sha256 06259bf0d70a251b4efa61e49ea0799004f9b3bf194ebc519dbc3efa1b2e764a
 %global arm64_release_local_closure_sha256 d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a
-%global source_license_inventory_sha256 f19b7a4a7d4b0df3858083e7d27ee19321cc51e88a07a687d359afe04640d581
-%global source_license_audit_script_sha256 581d10dd37231ae455122275ded7d3fe241ba61a1c380b2d89c19b54a7861c94
-%global final_linked_license_closure_sha256 31ce9f7da56bfa78195dc35ce73541499ddbf68dcc4850a9230689781c881835
-%global final_linked_license_audit_script_sha256 c9a6413f1901f02fba289613aabbf69eb8d78a69357214b0505cbc666aa709c3
-%global npm_code_generation_closure_sha256 9e756483322f437eb0847acc54354068142966e8b1f609ce8f5c444b6b742f98
-%global npm_code_generation_audit_script_sha256 8615f5412a8f56388a852fb68b7d96376e260fa30b613d21b15b89c7ece6f993
+%global source_license_inventory_sha256 bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25
+%global source_license_audit_script_sha256 cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1
+%global final_linked_license_closure_sha256 f744160af861969b4fc15918bc3042851d20bdbb6c6065b662447cbb4e730e98
+%global final_linked_license_audit_script_sha256 2c846075b5965676414c265823397e61d79f74e4bea2b8d8e7b7cb628249c38c
+%global npm_code_generation_closure_sha256 c9b96a6850dfaad1818054087c28fea879654edb6a97456b3c121dd71849fb79
+%global npm_code_generation_audit_script_sha256 c29b2416b41dbfd2b809e3f23f2d16febaef5ec295ccb4bb49568b1b44a669f0
 %global peechy_license_sha256 a6f766e4ab93cbd6dbc17e58a3d33b09d09be18d2f67f3133005b038dbc5915e
 %global npm_cache_tree_sha256 50e66a5b8361735b2598a6be5d7d78f973db05104cbdf9b9addb01e9a113d214
 %global npm_cache_entries 4613
@@ -46,7 +46,7 @@
 
 Name:           bun
 Version:        1.3.14
-Release:        0.0.38%{?dist}
+Release:        0.0.39%{?dist}
 Summary:        JavaScript runtime and development toolkit
 
 # Provisional only. Complete the bundled-source license audit before enabling.
@@ -248,7 +248,7 @@ test -s .build-tools/npm-cache-manifest.jsonl
 ruby %{SOURCE26} \
   --source-root "$PWD" \
   --closure "%{SOURCE23}" \
-  --rpm-release 0.0.38 \
+  --rpm-release 0.0.39 \
   --date 2026-07-31 \
   --peechy-license "%{SOURCE32}" \
   --check \
@@ -394,6 +394,9 @@ mkdir -p %{buildroot}
 %license LICENSE.md
 
 %changelog
+* Sat Aug 01 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.39
+- Preserve the complete Fedora 44 aarch64 source-build and wrapper-free relink proof chain.
+
 * Fri Jul 31 2026 Marcin FM <marcin@lgic.pl> - 1.3.14-0.0.38
 - Add canonical supplemental MIT text for peechy 0.4.34 without claiming exact release-source correspondence.
 

@@ -433,7 +433,7 @@ module BunNpmCodeGenerationAudit
     raise Error, "Bun release drifted while refreshing npm code-generation evidence" unless receipt.fetch("version") == inventory.fetch("release")
 
     peechy = receipt.dig("npm", "selected_packages").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
-    raise Error, "checked receipt lacks the unresolved peechy record" unless peechy && peechy["required_text_present"] == false && peechy["missing_text_evidence"].is_a?(Hash)
+    raise Error, "checked receipt lacks the peechy record" unless peechy
     source_peechy = inventory.dig("npm", "records").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
     supplemental = supplemental_license_text(
       "peechy",
@@ -444,9 +444,14 @@ module BunNpmCodeGenerationAudit
     )
     raise Error, "source inventory peechy supplemental text mismatch" unless source_peechy && source_peechy["supplemental_license_text"] == supplemental
 
-    peechy.delete("missing_text_evidence")
-    peechy["supplemental_license_text"] = supplemental
-    peechy["required_text_present"] = true
+    if peechy["required_text_present"] == true
+      raise Error, "checked peechy supplemental text drifted" unless peechy["supplemental_license_text"] == supplemental && !peechy.key?("missing_text_evidence")
+    else
+      raise Error, "checked receipt lacks the unresolved peechy evidence" unless peechy["required_text_present"] == false && peechy["missing_text_evidence"].is_a?(Hash)
+      peechy.delete("missing_text_evidence")
+      peechy["supplemental_license_text"] = supplemental
+      peechy["required_text_present"] = true
+    end
     receipt["rpm_release"] = inventory.fetch("rpm_release")
     receipt["audit_date"] = audit_date
     receipt.fetch("inputs")["source_license_inventory"] = repo_record(source_inventory_path)

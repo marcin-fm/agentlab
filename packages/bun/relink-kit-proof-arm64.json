@@ -1,0 +1,114 @@
+{
+  "schema": "bun-relink-kit/v2",
+  "package": "bun",
+  "version": "1.3.14",
+  "date": "2026-07-31",
+  "source_audit": {
+    "schema": "bun-relink-materials-audit/v3",
+    "sha256": "f38ab8e9bf83a5e9f8dd83487cff06a5d347572fda6b51df5ed57197660daf59",
+    "link_manifest_sha256": "a1b052457d349520e50cbbd197cb96da905e8327341886c2cae0fee64471813e",
+    "direct_object_inventory_sha256": "bd8dab0708b1976f11a5cc779a911160b3519c072ee91aae9a8e2aedecfe8b23"
+  },
+  "kit": {
+    "root_name": "bun-1.3.14-relink-kit",
+    "archive": "bun-1.3.14-relink-kit.tar.zst",
+    "archive_size_bytes": 320906229,
+    "archive_sha256": "90d57e1277c5ba8eb29196ec923321040c9114e8790767122a35310b57a92c34",
+    "payload_manifest": {
+      "path": "relink/payload-manifest.json",
+      "size_bytes": 1596077,
+      "sha256": "446a09f4499da2cd6725c31db762a98ebaa0db2a7f0f756f0b320ff01714731b",
+      "kind": "payload-manifest",
+      "mode": "0644"
+    },
+    "link_command": {
+      "path": "relink/link-command.json",
+      "size_bytes": 2161,
+      "sha256": "b4ab2f11341c5ba796b4fcb37ec9d031f8f43f3d57134f9f34da879694c9881b",
+      "kind": "link-command",
+      "mode": "0644"
+    },
+    "relink_script": {
+      "path": "relink/relink.sh",
+      "kind": "relink-script",
+      "mode": "0755",
+      "size_bytes": 1011,
+      "sha256": "2c5bba07ca27aaef7de521f3e6f45ea9ae9932ddaf5fecf59eec83b8fbbf0d2a"
+    },
+    "readme": {
+      "path": "README.relink.txt",
+      "kind": "readme",
+      "mode": "0644",
+      "size_bytes": 673,
+      "sha256": "c46dcdbba4f411fe56ab50faa2f0dbc43adbc257289183f905e5213ccac18123"
+    },
+    "response_file": {
+      "path": "relink/bun-profile.rsp",
+      "kind": "response-file",
+      "mode": "0644",
+      "size_bytes": 55510,
+      "sha256": "d2adcfcc286bcc02e1bc249da7f383f8897015e50419989b6f07eb67c0d63f18"
+    },
+    "payload_summary": {
+      "file_count": 3468,
+      "symlink_count": 1415,
+      "object_count": 1166,
+      "archive_count": 3,
+      "linker_script_count": 2,
+      "generated_header_entry_count": 2294,
+      "generated_header_target_count": 1415,
+      "response_file_input_count": 1169
+    }
+  },
+  "validation": {
+    "archive_generated": true,
+    "payload_manifest_generated": true,
+    "response_file_reconstructed": true,
+    "wrapper_free_link_command_generated": true,
+    "proof_root_paths_removed_from_link_command": true,
+    "archive_extraction_verified": true,
+    "network_isolated_link_verified": true,
+    "relinked_output_verified": true,
+    "retained_profile_sha256_equal": true,
+    "retained_linker_map_sha256_equal": true,
+    "smoke_verified": true,
+    "html_rewriter_smoke_verified": true,
+    "fedora_shared_cxx_runtime_verified": true,
+    "system_lolhtml_provider_verified": true,
+    "seed_payload_absent_verified": true,
+    "seed_runtime_dependency_absent_verified": true
+  },
+  "link_validation": {
+    "network_namespace": true,
+    "output": {
+      "path": "build/release-local/bun-profile",
+      "size_bytes": 343581152,
+      "sha256": "9185ea59ec930545420893dd91374299a22f79d31541f0dd45b1eaa4dcda542c",
+      "retained_profile_sha256": "9185ea59ec930545420893dd91374299a22f79d31541f0dd45b1eaa4dcda542c",
+      "retained_profile_sha256_equal": true
+    },
+    "linker_map": {
+      "path": "build/release-local/bun-profile.linker-map",
+      "size_bytes": 82810440,
+      "sha256": "24fd5d09144afd3d4be4dfe299406b379c759add59aec46e16ccd7e90a3b88c8",
+      "retained_linker_map_sha256": "24fd5d09144afd3d4be4dfe299406b379c759add59aec46e16ccd7e90a3b88c8",
+      "retained_linker_map_sha256_equal": true
+    },
+    "revision": "1.3.14-canary.1+0d9b296af",
+    "version": "1.3.14",
+    "smoke_verified": true,
+    "html_rewriter_smoke_verified": true,
+    "fedora_shared_cxx_runtime_verified": true,
+    "system_lolhtml_provider_verified": true,
+    "shared_runtime_libraries": [
+      "libgcc_s.so.1",
+      "libstdc++.so.6",
+      "liblolhtml.so.1"
+    ],
+    "seed_payload_absent_verified": true,
+    "seed_runtime_dependency_absent_verified": true
+  },
+  "complete_lgpl_relink_materials_verified": true,
+  "final_license_audit_verified": false,
+  "final_rpm_verified": false
+}

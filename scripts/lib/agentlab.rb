@@ -5297,6 +5297,163 @@ module Agentlab
     errors << "bun: invalid aarch64 preflight evidence: #{e.message}"
   end
 
+  def validate_bun_aarch64_build_proof(package, proof, preflight, version, spec)
+    return ["bun: aarch64 build proof metadata is missing"] unless proof.is_a?(Hash)
+
+    errors = []
+    target = { "os" => "linux", "cpu" => "arm64", "libc" => "glibc" }
+    errors << "bun: aarch64 build proof state mismatch" unless proof["state"] == "source_build_and_relink_verified"
+    errors << "bun: aarch64 build proof platform mismatch" unless proof["proof_platform"] == "fedora-44-aarch64"
+    errors << "bun: aarch64 build proof target mismatch" unless proof["target"] == target
+    errors << "bun: aarch64 build proof prematurely enables the RPM architecture" unless proof["rpm_architecture_enabled"] == false && spec.match?(/^ExclusiveArch:\s+x86_64$/)
+
+    source_inputs = package.data.dig("build_plan", "source_inputs") || {}
+    webkit = source_inputs["webkit"] || {}
+    webkit_subset = webkit["jsc_only"] || {}
+    lolhtml = source_inputs["lolhtml"] || {}
+    npm_lock = source_inputs["npm_lock"] || {}
+    build_graph = source_inputs["build_graph"] || {}
+    expected_webkit = {
+      "commit" => webkit["commit"],
+      "archive_sha256" => webkit_subset["sha256"],
+      "source_receipt_sha256" => webkit_subset["proof_receipt_sha256"],
+      "tree_sha256" => webkit_subset["tree_sha256"],
+      "patch_sha256" => webkit["patch_sha256"]
+    }
+    expected_patches = {
+      "system_lolhtml_sha256" => lolhtml["patch_sha256"],
+      "npm_lock_sha256" => npm_lock["patch_sha256"],
+      "zig_build_cwd_sha256" => build_graph["patch_sha256"],
+      "fedora_shared_cxx_runtime_sha256" => build_graph["cxx_runtime_patch_sha256"]
+    }
+    proof_inputs = proof["source_inputs"] || {}
+    errors << "bun: aarch64 WebKit input contract mismatch" unless proof_inputs["webkit"] == expected_webkit
+    errors << "bun: aarch64 source-patch input contract mismatch" unless proof_inputs["source_patches"] == expected_patches
+
+    expected_provider = proof_inputs["staged_lolhtml_provider"] || {}
+    provider_valid = lambda do |provider|
+      payload = provider.is_a?(Hash) && provider["staged_payload"]
+      provider.is_a?(Hash) && payload.is_a?(Hash) &&
+        provider.values_at("package", "version", "c_api_version", "pkgconfig", "soname", "build_requirement") ==
+          [lolhtml["package"], lolhtml["version"], lolhtml["c_api_version"], lolhtml["pkgconfig"], lolhtml["soname"], lolhtml["build_requirement"]] &&
+        payload.values_at("package", "version", "c_api_version", "pkgconfig", "soname") ==
+          [lolhtml["package"], lolhtml["version"], lolhtml["c_api_version"], lolhtml["pkgconfig"], lolhtml["soname"]] &&
+        payload["header"] == expected_provider["header"] &&
+        payload["pkgconfig_file"] == expected_provider["pkgconfig_file"] &&
+        payload["shared_library"] == expected_provider["shared_library"] &&
+        payload["symlinks"] == { "liblolhtml.so.1" => "liblolhtml.so.1.4.0", "liblolhtml.so" => "liblolhtml.so.1.4.0" } &&
+        payload["critical_symbols_verified"] == true
+    end
+
+    load_receipt = lambda do |key, schema, version_key = "release", target_required = true|
+      metadata = proof[key]
+      unless metadata.is_a?(Hash)
+        errors << "bun: aarch64 #{key} metadata is missing"
+        next nil
+      end
+
+      name = metadata["proof_receipt"]
+      expected_sha256 = metadata["proof_receipt_sha256"]
+      valid_name = name.is_a?(String) && File.basename(name) == name
+      path = valid_name && File.join(package.directory, name)
+      unless path && File.file?(path) && expected_sha256.to_s.match?(/\A[0-9a-f]{64}\z/) && Digest::SHA256.file(path).hexdigest == expected_sha256
+        errors << "bun: aarch64 #{key} receipt is missing or has wrong SHA-256"
+        next nil
+      end
+
+      receipt = JSON.parse(File.read(path))
+      errors << "bun: aarch64 #{key} receipt schema mismatch" unless receipt["schema"] == schema
+      errors << "bun: aarch64 #{key} receipt identity mismatch" unless receipt["package"] == "bun" && receipt[version_key] == version
+      errors << "bun: aarch64 #{key} receipt target mismatch" if target_required && receipt["target"] != target
+      receipt
+    end
+
+    first = load_receipt.call("first_build", "bun-first-source-build-proof/v2")
+    npm1 = load_receipt.call("first_source_built_npm_install", "bun-npm-offline-install-proof/v2")
+    prior = load_receipt.call("prior_self_rebuild", "bun-self-rebuild-proof/v2")
+    npm2 = load_receipt.call("final_source_built_npm_install", "bun-npm-offline-install-proof/v2")
+    final = load_receipt.call("self_rebuild", "bun-self-rebuild-proof/v2")
+    audit = load_receipt.call("relink_materials_audit", "bun-relink-materials-audit/v3", "version")
+    kit = load_receipt.call("relink_kit", "bun-relink-kit/v2", "version", false)
+
+    if first
+      closure = preflight.is_a?(Hash) && preflight["source_closure"]
+      seed = preflight.is_a?(Hash) && preflight["bootstrap_seed"]
+      zig = preflight.is_a?(Hash) && preflight["zig_source_bootstrap"]
+      errors << "bun: aarch64 first-build closure mismatch" unless closure.is_a?(Hash) && first.dig("source_closure", "path") == closure["source"] && first.dig("source_closure", "sha256") == closure["sha256"]
+      errors << "bun: aarch64 first-build seed mismatch" unless seed.is_a?(Hash) && first.dig("bootstrap_seed", "archive_sha256") == seed["sha256"] && first.dig("bootstrap_seed", "binary_sha256") == seed["binary_sha256"] && first.dig("bootstrap_seed", "size_bytes") == seed["binary_size_bytes"]
+      errors << "bun: aarch64 first-build Zig mismatch" unless zig.is_a?(Hash) && first.dig("inputs", "zig", "executable_sha256") == zig.dig("output", "executable_sha256") && File.basename(first.dig("inputs", "zig", "receipt").to_s) == zig["receipt"]
+      errors << "bun: aarch64 first-build WebKit input mismatch" unless first.dig("inputs", "webkit") == expected_webkit.merge("minimized_jsc_only_source" => true)
+      errors << "bun: aarch64 first-build source-patch input mismatch" unless first.dig("inputs", "source_patches") == expected_patches
+      errors << "bun: aarch64 first-build lol-html provider mismatch" unless provider_valid.call(first.dig("inputs", "offline_inputs", "system_lolhtml_provider"))
+      errors << "bun: aarch64 first-build npm input mismatch" unless first.dig("inputs", "npm_proof", "path") == preflight.dig("npm_offline_install", "receipt") && first.dig("inputs", "npm_proof", "sha256") == preflight.dig("npm_offline_install", "receipt_sha256")
+      errors << "bun: aarch64 first-build controls are incomplete" unless first.dig("configure", "network_namespace") == true && first.dig("build", "network_namespace") == true && first.dig("build", "html_rewriter_smoke_verified") == true && first.dig("build", "system_lolhtml_provider_verified") == true && first.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+      errors << "bun: aarch64 first-build validation is incomplete" unless %w[bootstrap_seed_verified seed_isolated_verified source_build_verified].all? { |key| first.dig("validation", key) == true }
+      errors << "bun: aarch64 first-build overclaims later gates" unless first.dig("validation", "self_rebuild_performed") == false && first.dig("validation", "final_license_audit_verified") == false && first.dig("validation", "final_rpm_verified") == false
+    end
+
+    validate_npm = lambda do |receipt, driver_kind, driver_metadata, driver_receipt|
+      next unless receipt && driver_metadata.is_a?(Hash) && driver_receipt
+
+      errors << "bun: aarch64 source-built npm driver mismatch" unless receipt.dig("driver", "proof_kind") == driver_kind && receipt.dig("driver", "receipt") == driver_metadata["proof_receipt"] && receipt.dig("driver", "receipt_sha256") == driver_metadata["proof_receipt_sha256"] && receipt.dig("driver", "sha256") == driver_receipt.dig("build", "bun", "sha256")
+      errors << "bun: aarch64 source-built npm closure mismatch" unless receipt.dig("source_closure", "path") == preflight.dig("source_closure", "source") && receipt.dig("source_closure", "sha256") == preflight.dig("source_closure", "sha256") && receipt.dig("source_closure", "root_lock", "fedora_patch_sha256") == expected_patches["npm_lock_sha256"]
+      errors << "bun: aarch64 source-built npm lol-html provider mismatch" unless receipt.dig("driver", "system_lolhtml_provider", "soname") == lolhtml["soname"] && receipt.dig("driver", "system_lolhtml_provider", "shared_library_sha256") == expected_provider.dig("shared_library", "sha256")
+      validation = receipt["validation"] || {}
+      required = %w[source_built_driver_verified driver_receipt_bound driver_version_verified bootstrap_seed_not_used_for_install source_files_unchanged seed_absent_from_node_modules npm_cache_materialization_verified npm_offline_install_verified]
+      errors << "bun: aarch64 source-built npm validation is incomplete" unless required.all? { |key| validation[key] == true }
+      errors << "bun: aarch64 source-built npm proof overclaims later gates" unless validation["complete_bun_offline_materialization_verified"] == false && validation["dependency_resolution_performed"] == false && validation["full_bun_build_performed"] == false
+    end
+    validate_npm.call(npm1, "first_build", proof["first_build"], first)
+    validate_npm.call(npm2, "self_rebuild", proof["prior_self_rebuild"], prior)
+
+    validate_self = lambda do |receipt, metadata, driver_kind, driver_metadata, driver_receipt, npm_metadata|
+      next unless receipt && metadata.is_a?(Hash) && driver_metadata.is_a?(Hash) && driver_receipt && npm_metadata.is_a?(Hash)
+
+      errors << "bun: aarch64 self-rebuild driver mismatch" unless receipt.dig("first_build", "driver_proof_kind") == driver_kind && receipt.dig("first_build", "driver_receipt") == driver_metadata["proof_receipt"] && receipt.dig("first_build", "driver_receipt_sha256") == driver_metadata["proof_receipt_sha256"] && receipt.dig("first_build", "sha256") == driver_receipt.dig("build", "bun", "sha256")
+      errors << "bun: aarch64 self-rebuild npm input mismatch" unless receipt.dig("inputs", "npm_proof", "mode") == "source_built" && receipt.dig("inputs", "npm_proof", "path") == npm_metadata["proof_receipt"] && receipt.dig("inputs", "npm_proof", "sha256") == npm_metadata["proof_receipt_sha256"]
+      errors << "bun: aarch64 self-rebuild WebKit input mismatch" unless receipt.dig("inputs", "webkit") == expected_webkit.merge("minimized_jsc_only_source" => true)
+      errors << "bun: aarch64 self-rebuild source-patch input mismatch" unless receipt.dig("inputs", "source_patches") == expected_patches
+      errors << "bun: aarch64 self-rebuild lol-html provider mismatch" unless provider_valid.call(receipt.dig("inputs", "offline_inputs", "system_lolhtml_provider"))
+      errors << "bun: aarch64 self-rebuild runtime validation is incomplete" unless receipt.dig("configure", "network_namespace") == true && receipt.dig("build", "network_namespace") == true && receipt.dig("build", "html_rewriter_smoke_verified") == true && receipt.dig("build", "system_lolhtml_provider_verified") == true && receipt.dig("build", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+      required = %w[source_built_driver_verified self_rebuild_performed offline_verified seed_payload_absent_verified seed_runtime_dependency_absent_verified reproducibility_compared]
+      errors << "bun: aarch64 self-rebuild validation is incomplete" unless required.all? { |key| receipt.dig("validation", key) == true }
+      errors << "bun: aarch64 self-rebuild fixed-point result mismatch" unless receipt.dig("validation", "source_rebuild_fixed_point_verified") == metadata["source_rebuild_fixed_point_verified"]
+      errors << "bun: aarch64 self-rebuild overclaims later gates" unless receipt.dig("validation", "complete_lgpl_relink_materials_verified") == false && receipt.dig("validation", "final_license_audit_verified") == false && receipt.dig("validation", "final_rpm_verified") == false
+    end
+    validate_self.call(prior, (proof["prior_self_rebuild"] || {}).merge("source_rebuild_fixed_point_verified" => false), "first_build", proof["first_build"], first, proof["first_source_built_npm_install"])
+    validate_self.call(final, proof["self_rebuild"], "self_rebuild", proof["prior_self_rebuild"], prior, proof["final_source_built_npm_install"])
+
+    if final
+      errors << "bun: aarch64 final profile mismatch" unless final.dig("build", "bun_profile", "sha256") == proof["final_profile_sha256"]
+      errors << "bun: aarch64 final Bun mismatch" unless final.dig("build", "bun", "sha256") == proof["final_bun_sha256"]
+      errors << "bun: aarch64 final linker-map mismatch" unless final.dig("build", "linker_map", "sha256") == proof["final_linker_map_sha256"]
+    end
+
+    if audit
+      metadata = proof["relink_materials_audit"] || {}
+      errors << "bun: aarch64 relink audit source-build mismatch" unless audit.dig("source_build", "receipt") == proof.dig("self_rebuild", "proof_receipt") && audit.dig("source_build", "receipt_sha256") == proof.dig("self_rebuild", "proof_receipt_sha256") && audit.dig("source_build", "source_closure_sha256") == preflight.dig("source_closure", "sha256")
+      errors << "bun: aarch64 relink audit lol-html provider mismatch" unless provider_valid.call(audit["system_lolhtml_provider"])
+      errors << "bun: aarch64 relink audit inventory mismatch" unless audit.dig("final_link", "direct_object_count") == metadata["direct_object_count"] && audit.dig("final_link", "direct_object_bytes") == metadata["direct_object_bytes"] && audit.dig("final_link", "direct_object_inventory_sha256") == metadata["direct_object_inventory_sha256"] && audit.dig("final_link", "direct_archive_count") == metadata["direct_archive_count"] && audit.dig("final_link", "link_manifest_sha256") == metadata["link_manifest_sha256"]
+      errors << "bun: aarch64 relink audit overclaims final gates" unless audit["complete_lgpl_relink_materials_verified"] == false && audit["final_license_audit_verified"] == false && audit["final_rpm_verified"] == false
+    end
+
+    if kit
+      metadata = proof["relink_kit"] || {}
+      errors << "bun: aarch64 relink-kit audit mismatch" unless audit && kit.dig("source_audit", "schema") == audit["schema"] && kit.dig("source_audit", "sha256") == proof.dig("relink_materials_audit", "proof_receipt_sha256") && kit.dig("source_audit", "link_manifest_sha256") == proof.dig("relink_materials_audit", "link_manifest_sha256") && kit.dig("source_audit", "direct_object_inventory_sha256") == proof.dig("relink_materials_audit", "direct_object_inventory_sha256")
+      errors << "bun: aarch64 relink-kit archive mismatch" unless kit.dig("kit", "archive") == metadata["archive"] && kit.dig("kit", "archive_size_bytes") == metadata["archive_size_bytes"] && kit.dig("kit", "archive_sha256") == metadata["archive_sha256"]
+      errors << "bun: aarch64 relink-kit target chain mismatch" unless audit && final && audit["target"] == target && kit.dig("link_validation", "output", "size_bytes") == final.dig("build", "bun_profile", "size_bytes") && kit.dig("link_validation", "output", "sha256") == final.dig("build", "bun_profile", "sha256") && kit.dig("link_validation", "linker_map", "size_bytes") == final.dig("build", "linker_map", "size_bytes") && kit.dig("link_validation", "linker_map", "sha256") == final.dig("build", "linker_map", "sha256")
+      errors << "bun: aarch64 relink-kit output mismatch" unless kit.dig("link_validation", "output", "sha256") == proof["final_profile_sha256"] && kit.dig("link_validation", "linker_map", "sha256") == proof["final_linker_map_sha256"] && kit.dig("link_validation", "shared_runtime_libraries") == %w[libgcc_s.so.1 libstdc++.so.6 liblolhtml.so.1]
+      required = %w[archive_generated payload_manifest_generated response_file_reconstructed wrapper_free_link_command_generated proof_root_paths_removed_from_link_command archive_extraction_verified network_isolated_link_verified relinked_output_verified retained_profile_sha256_equal retained_linker_map_sha256_equal smoke_verified html_rewriter_smoke_verified fedora_shared_cxx_runtime_verified system_lolhtml_provider_verified seed_payload_absent_verified seed_runtime_dependency_absent_verified]
+      errors << "bun: aarch64 relink-kit validation is incomplete" unless required.all? { |key| kit.dig("validation", key) == true }
+      errors << "bun: aarch64 relink-kit delivery state mismatch" unless metadata["immutable_delivery_verified"] == false && proof["final_license_audit_verified"] == false && proof["final_rpm_verified"] == false
+    end
+
+    errors << "bun: aarch64 build proof summary is incomplete" unless proof["network_isolated"] == true && proof["source_built_npm_handoffs_verified"] == true && proof["seed_free_self_rebuilds_verified"] == true && proof["wrapper_free_relink_verified"] == true && proof["html_rewriter_smoke_verified"] == true && proof["system_lolhtml_provider_verified"] == true
+    errors
+  rescue JSON::ParserError, TypeError => e
+    errors << "bun: invalid aarch64 build proof: #{e.message}"
+  end
+
   def validate_bun_build_plan(package, spec)
     return [] unless package.name == "bun"
 
@@ -5359,6 +5516,7 @@ module Agentlab
     build_graph = source_inputs.is_a?(Hash) && source_inputs["build_graph"]
     seed = source_inputs.is_a?(Hash) && source_inputs["bootstrap_seed"]
     aarch64_preflight = source_inputs.is_a?(Hash) && source_inputs["aarch64_preflight"]
+    aarch64_build_proof = source_inputs.is_a?(Hash) && source_inputs["aarch64_build_proof"]
 
     if webkit.is_a?(Hash)
       errors << "bun: WebKit source must be pinned by the Bun release" unless webkit["release_pin"] == "bun-v#{version}"
@@ -5384,6 +5542,11 @@ module Agentlab
     errors.concat(validate_bun_npm_offline_install(package, stages["dependency_closure"], version))
     if plan["aarch64_preflight_required"] == true || aarch64_preflight.is_a?(Hash)
       errors.concat(validate_bun_aarch64_preflight(package, aarch64_preflight, npm_lock, version, spec))
+    end
+    if aarch64_build_proof.is_a?(Hash) && aarch64_preflight.is_a?(Hash)
+      errors.concat(validate_bun_aarch64_build_proof(package, aarch64_build_proof, aarch64_preflight, version, spec))
+    elsif plan["aarch64_preflight_required"] == true && aarch64_preflight.is_a?(Hash)
+      errors << "bun: aarch64 build proof metadata is missing"
     end
     errors.concat(validate_bun_system_lolhtml(package, lolhtml, stages, version, spec))
     errors.concat(validate_bun_source_delivery(package, stages["source_delivery"], stages["dependency_closure"], version, spec))
@@ -6827,7 +6990,7 @@ module Agentlab
           opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
           errors << "#{prefix} generated bundled Provides block does not match binary embedding receipt" unless opencode_spec.include?(node_bundled_provides_block(embedding))
           [
-            "Release:        0.2%{?dist}",
+            "Release:        0.3%{?dist}",
             "Source36:       audit-opencode-binary-embedding",
             "Source37:       %{name}-%{version}-binary-embedding.json",
             "Source38:       license-review.yml",
@@ -7113,7 +7276,7 @@ module Agentlab
         errors << "#{prefix} OpenTUI Zig patch SHA-256 does not match" unless Digest::SHA256.file(opentui_zig_patch).hexdigest == expected_sha256
       end
       [
-        "Release:        0.2%{?dist}",
+        "Release:        0.3%{?dist}",
         "%global debug_package %{nil}",
         "%global __strip /bin/true",
         "Source9:        https://github.com/anomalyco/opentui/archive/refs/tags/v%{opentui_version}.tar.gz",
@@ -7681,7 +7844,7 @@ module Agentlab
         errors << "#{prefix} final-license preflight validation flags do not match" unless final_license["validation"] == expected_final_validation
         opencode_spec = File.file?(package.spec_path) ? File.read(package.spec_path) : ""
         [
-          "Release:        0.2%{?dist}",
+          "Release:        0.3%{?dist}",
           "Source51:       audit-opencode-final-licenses",
           "Source52:       %{name}-%{version}-final-license-closure.json",
           'echo "%{final_license_auditor_sha256}  %{SOURCE51}" | sha256sum -c -',

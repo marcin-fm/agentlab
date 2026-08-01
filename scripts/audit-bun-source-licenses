@@ -437,21 +437,29 @@ module BunSourceLicenseAudit
     peechy_source = closure.dig("npm", "source_archives").find { |source| source["package_name"] == "peechy" && source["package_version"] == "0.4.34" }
     raise Error, "Bun closure lacks peechy 0.4.34" unless peechy_source
     peechy = receipt.dig("npm", "records").find { |record| record["name"] == "peechy" && record["version"] == "0.4.34" }
-    raise Error, "checked source receipt lacks the unresolved peechy record" unless peechy && peechy["license"] == "MIT" && Array(peechy["license_files"]).empty? && !peechy.key?("supplemental_license_text")
+    raise Error, "checked source receipt lacks the peechy record" unless peechy && peechy["license"] == "MIT" && Array(peechy["license_files"]).empty?
     supplemental = npm_supplemental_license_text(
       peechy_source,
       { "name" => "peechy", "version" => "0.4.34", "license" => "MIT" },
       supplemental_license_text_path,
       expected_directory: File.dirname(File.realpath(closure_path))
     )
-    raise Error, "checked source receipt text counts drifted" unless receipt.dig("npm", "entries_with_supplied_license_text") == 222 && receipt.dig("npm", "entries_without_supplied_license_text") == 14
-
-    peechy["supplemental_license_text"] = supplemental
+    if peechy.key?("supplemental_license_text")
+      raise Error, "checked peechy supplemental text drifted" unless peechy["supplemental_license_text"] == supplemental
+      unless receipt.dig("npm", "entries_with_supplied_license_text") == 223 && receipt.dig("npm", "entries_without_supplied_license_text") == 13
+        raise Error, "checked source receipt text counts drifted"
+      end
+    else
+      unless receipt.dig("npm", "entries_with_supplied_license_text") == 222 && receipt.dig("npm", "entries_without_supplied_license_text") == 14
+        raise Error, "checked source receipt text counts drifted"
+      end
+      peechy["supplemental_license_text"] = supplemental
+      receipt.fetch("npm")["entries_with_supplied_license_text"] = 223
+      receipt.fetch("npm")["entries_without_supplied_license_text"] = 13
+    end
     receipt["rpm_release"] = rpm_release
     receipt["audit_date"] = audit_date
     receipt["source_closure"] = file_record(closure_path, File.dirname(closure_path))
-    receipt.fetch("npm")["entries_with_supplied_license_text"] = 223
-    receipt.fetch("npm")["entries_without_supplied_license_text"] = 13
     receipt
   end
 

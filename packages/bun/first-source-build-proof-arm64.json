@@ -1,0 +1,300 @@
+{
+  "schema": "bun-first-source-build-proof/v2",
+  "package": "bun",
+  "release": "1.3.14",
+  "profile": "release-local",
+  "proof_date": "2026-07-31",
+  "source_closure": {
+    "path": "bun-1.3.14-release-local-source-closure-arm64.json",
+    "sha256": "d62881f573199d9e98cf0a5599c12d8bb54cbea79d3b20fe841fe35f993b3f5a",
+    "source_archive_sha256": "112a5915992807f04b183854d360c2bf87ac7c1587fb5da3c560bdbb75b8c92e",
+    "source_commit": "0d9b296af33f2b851fcbf4df3e9ec89751734ba4"
+  },
+  "bootstrap_seed": {
+    "archive_sha256": "a27ffb63a8310375836e0d6f668ae17fa8d8d18b88c37c821c65331973a19a3b",
+    "binary_sha256": "37141662ebed915a2ab89313156e455e2a1374395f5f6760d06407f49406f086",
+    "size_bytes": 91801560,
+    "version": "1.3.14",
+    "bootstrap_only": true,
+    "final_payload_allowed": false,
+    "final_runtime_dependency_allowed": false
+  },
+  "inputs": {
+    "zig": {
+      "source_commit": "04e7f6ac1e009525bc00934f20199c68f04e0a24",
+      "source_sha256": "b094c5f806d053896de897023b6c8ccb56903fb994c6f86dd44d848e760fe44d",
+      "patch_sha256": "77be015e0b2a83e6d287cfa832fa190dcfe7296320d111e0b129e11a418161fc",
+      "executable_sha256": "d4a3a638c38e4f2aa0df623461efb2b9613157628b6d2f8cb07d4f7a5eb83382",
+      "receipt": "/srv/code/agentlab/packages/bun/zig-bootstrap-proof-arm64.json"
+    },
+    "webkit": {
+      "commit": "5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b",
+      "archive_sha256": "38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d",
+      "minimized_jsc_only_source": true,
+      "source_receipt_sha256": "01b4549178b6469c4969b46dc1a5e31c17efdfb84d684d5ca192935227c89680",
+      "tree_sha256": "dcf7d67f6bced499d961d20c29a1dc12cead88650c7d9f79a830082969e744d8",
+      "patch_sha256": "023a4686ba96eb6ace658bef0226ba8b2968b57075ad11813918da93ed3c14e3"
+    },
+    "source_patches": {
+      "system_lolhtml_sha256": "840886d2caf3dd2a25146e329a9c876d4a2d3240ba610b9b0267d85eb325bdaf",
+      "npm_lock_sha256": "0ae29543c765ffa18aabd181b8fcc24245e88701f4792b424690f719aef18b80",
+      "zig_build_cwd_sha256": "6b8c241a4f1c5253e8dfcdabb943a956dd7867a044c5fef01591522090ad7fb2",
+      "fedora_shared_cxx_runtime_sha256": "b9712db0e79d0277dfece2d74c4e943ed5714dff20676ab87b7a4dc6e869850e"
+    },
+    "offline_inputs": {
+      "native_archives": 18,
+      "node_header_archives": 1,
+      "npm_install_roots": 3,
+      "supplemental_npm_trees": [
+        {
+          "path": "packages/@types/bun/node_modules",
+          "tree": {
+            "entries": 1,
+            "files": 0,
+            "directories": 0,
+            "symlinks": 1,
+            "file_bytes": 0,
+            "sha256": "413eb0310915bf29394c112a2ea8d232e14ea27a77ab1446cb31988de4052db4"
+          }
+        }
+      ],
+      "cargo_source_archives": 0,
+      "system_lolhtml_provider": {
+        "package": "lol-html",
+        "version": "3.0.0",
+        "c_api_version": "1.4.0",
+        "pkgconfig": "lol-html",
+        "soname": "liblolhtml.so.1",
+        "build_requirement": "pkgconfig(lol-html) >= 1.4.0",
+        "staged_payload": {
+          "root": "/srv/tmp/agentlab-bun-arm64-first-source-inputs/lolhtml-provider/stage",
+          "package": "lol-html",
+          "version": "3.0.0",
+          "c_api_version": "1.4.0",
+          "pkgconfig": "lol-html",
+          "soname": "liblolhtml.so.1",
+          "header": {
+            "path": "usr/include/lol_html.h",
+            "size_bytes": 41277,
+            "sha256": "7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293"
+          },
+          "pkgconfig_file": {
+            "path": "usr/lib64/pkgconfig/lol-html.pc",
+            "size_bytes": 247,
+            "sha256": "e85417c9de2ea6bc28818f3df82c14eb3a5b75c1714a4ac11545a02f47d6119d"
+          },
+          "shared_library": {
+            "path": "usr/lib64/liblolhtml.so.1.4.0",
+            "size_bytes": 877304,
+            "sha256": "1d0d7e23fbc9ca015a838bee88808dd765fae788e0b805b4a7c2564e315486f2"
+          },
+          "symlinks": {
+            "liblolhtml.so.1": "liblolhtml.so.1.4.0",
+            "liblolhtml.so": "liblolhtml.so.1.4.0"
+          },
+          "critical_symbols_verified": true
+        }
+      }
+    },
+    "npm_proof": {
+      "path": "npm-offline-install-proof-arm64.json",
+      "sha256": "794eff7b4de29af739aca6a23ef3396baea504ee7429e2b92abd8f497f7462aa",
+      "historical_seed_driven_install_only": true
+    }
+  },
+  "configure": {
+    "profile": "release-local",
+    "configure_json_sha256": "e85fcbef5c1a173917f3320b0a6382ad702a7477ef8ffb6adaa5d18fe716a266",
+    "build_ninja_sha256": "7d1550ddb3598a8a3ab553ef227347011377f8b6da156d39cac2c745aeb39dc9",
+    "install_edges": 3,
+    "prevalidated_install_stamps": [
+      "stamps/install__srv_tmp_agentlab_bun_arm64_first_source_build_configure_proof_source.stamp",
+      "stamps/install__srv_tmp_agentlab_bun_arm64_first_source_build_configure_proof_source_packages_bun_error.stamp",
+      "stamps/install__srv_tmp_agentlab_bun_arm64_first_source_build_configure_proof_source_src_node_fallbacks.stamp"
+    ],
+    "native_fetch_edges": 18,
+    "node_header_fetch_edges": 1,
+    "prepared_inputs_revalidated": true,
+    "bootstrap_seed_rule_scope_verified": true,
+    "bootstrap_seed_rules": [
+      "codegen",
+      "dep_build",
+      "dep_codegen",
+      "dep_configure",
+      "dep_fetch",
+      "dep_fetch_prebuilt",
+      "dep_prebuild",
+      "dep_subst",
+      "link",
+      "regen",
+      "smoke_test",
+      "zig_build",
+      "zig_check",
+      "zig_fetch"
+    ],
+    "local_webkit_verified": true,
+    "zig_fetch_absent": true,
+    "zig_source_cwd_verified": true,
+    "fedora_shared_cxx_runtime_verified": true,
+    "system_lolhtml_provider_verified": true,
+    "unexpected_urls_absent": true,
+    "target": {
+      "os": "linux",
+      "cpu": "arm64",
+      "libc": "glibc"
+    },
+    "install_rule_bypass": {
+      "schema": "bun-prevalidated-install-rule-bypass/v1",
+      "original_build_ninja_sha256": "3d4128ee0fc6ee5870e89d363caa27e44b62caa09a4d951c45f2131cc43ac994",
+      "patched_build_ninja_sha256": "7d1550ddb3598a8a3ab553ef227347011377f8b6da156d39cac2c745aeb39dc9",
+      "original_command": "command = cd $dir && /srv/tmp/agentlab-bun-arm64-first-source-build-configure-proof/seed/bun install --frozen-lockfile && touch $stamp",
+      "replacement_command": "command = /usr/bin/test -f $stamp",
+      "scope": "generated Ninja bun_install rule only; three prevalidated materialized node_modules trees"
+    },
+    "network_namespace": true,
+    "jobs": 4
+  },
+  "build": {
+    "network_namespace": true,
+    "nice_level": 10,
+    "jobs": 4,
+    "nested_cmake_jobs": 4,
+    "bun_profile": {
+      "path": "build/release-local/bun-profile",
+      "size_bytes": 343613128,
+      "sha256": "05d2c56df3edfc5a6bf9325aa40937780b52b1fb0914d3303060a567b0a3bb88"
+    },
+    "bun": {
+      "path": "build/release-local/bun",
+      "size_bytes": 69799264,
+      "sha256": "bbf616cc552bafc6b1be795617fbea3594c8f1f1dc8094bdc79a373429a66837"
+    },
+    "linker_map": {
+      "path": "build/release-local/bun-profile.linker-map",
+      "size_bytes": 82872930,
+      "sha256": "602782235416b1fc38af49dd3aef47d6422fba7c2b9a3c18368ea7ddd3847fea"
+    },
+    "revision": "1.3.14-canary.1+0d9b296af",
+    "version": "1.3.14",
+    "build_id": "53a085e8a61531aa861a14b276bb3731aff87b41",
+    "stabilization_passes": 0,
+    "smoke_verified": true,
+    "html_rewriter_smoke_verified": true,
+    "stripped_output_verified": true,
+    "strip_verification": {
+      "bun_profile_file": "/srv/tmp/agentlab-bun-arm64-first-source-build-configure-proof/build/release-local/bun-profile: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, for GNU/Linux 3.7.0, BuildID[sha1]=53a085e8a61531aa861a14b276bb3731aff87b41, with debug_info, not stripped",
+      "bun_file": "/srv/tmp/agentlab-bun-arm64-first-source-build-configure-proof/build/release-local/bun: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, for GNU/Linux 3.7.0, BuildID[sha1]=53a085e8a61531aa861a14b276bb3731aff87b41, not stripped",
+      "bun_profile_debug_sections": [
+        ".debug_abbrev",
+        ".debug_addr",
+        ".debug_aranges",
+        ".debug_frame",
+        ".debug_info",
+        ".debug_line",
+        ".debug_line_str",
+        ".debug_loc",
+        ".debug_loclists",
+        ".debug_pubnames",
+        ".debug_pubtypes",
+        ".debug_ranges",
+        ".debug_rnglists",
+        ".debug_str",
+        ".debug_str_offsets"
+      ],
+      "bun_debug_sections": [],
+      "size_reduced": true
+    },
+    "fedora_shared_cxx_runtime_verified": true,
+    "system_lolhtml_provider_verified": true,
+    "shared_runtime_libraries": [
+      "libgcc_s.so.1",
+      "libstdc++.so.6",
+      "liblolhtml.so.1"
+    ]
+  },
+  "retained_relink_evidence": {
+    "object_files": 1733,
+    "static_archives": 3,
+    "response_files": 0,
+    "compile_commands_retained": true,
+    "build_ninja_retained": true,
+    "linker_map_retained": true,
+    "complete_lgpl_relink_materials_verified": false
+  },
+  "seed_contamination": {
+    "roots": [
+      "source",
+      "cache",
+      "build/release-local"
+    ],
+    "allowed_control_metadata": [
+      "build/release-local/build.ninja",
+      "build/release-local/configure.json",
+      "build/release-local/deps/WebKit/build.ninja",
+      "configure.log",
+      "build.log",
+      "configure-proof.json"
+    ],
+    "same_size_files_hashed": 0,
+    "seed_hash_matches": 0,
+    "seed_identity_text_matches": 0,
+    "payload_absent_verified": true,
+    "runtime_dependency_absent_verified": true,
+    "ldd_sha256": "34cd7a0eed046d6c80f704926a653542c4dc99f8f78f9ca4bd5e91f627fda52f"
+  },
+  "resources": {
+    "before": {
+      "mem_available": "52409828 kB",
+      "swap_free": "0 kB",
+      "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=32066531\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=31871632",
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/libpod-ba39806b3be7587c8559356472216c3de09f51f482d53c899775bb13cb7b6903.scope/container/system.slice/cx-app.service",
+      "memory_current": "10432192512",
+      "memory_max": "max",
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "sock_throttled": 411
+      },
+      "disk": "/dev/mapper/main-system4  3856662528 2948370728 845363544      78% /srv"
+    },
+    "after": {
+      "mem_available": "52032288 kB",
+      "swap_free": "0 kB",
+      "memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=32066531\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=31871632",
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/libpod-ba39806b3be7587c8559356472216c3de09f51f482d53c899775bb13cb7b6903.scope/container/system.slice/cx-app.service",
+      "memory_current": "10533851136",
+      "memory_max": "max",
+      "memory_events": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0,
+        "sock_throttled": 411
+      },
+      "disk": "/dev/mapper/main-system4  3856662528 2948318076 845388164      78% /srv"
+    },
+    "oom_counters_unchanged": true
+  },
+  "validation": {
+    "bootstrap_seed_verified": true,
+    "seed_isolated_verified": true,
+    "source_build_verified": true,
+    "self_rebuild_performed": false,
+    "reproducibility_compared": false,
+    "complete_lgpl_relink_materials_verified": false,
+    "final_license_audit_verified": false,
+    "final_rpm_verified": false
+  },
+  "scope": "first network-isolated seed-driven Bun source build only; immediate source-built self-rebuild, reproducibility, complete LGPL relink materials, immutable hosting, final license review, and RPM remain blocked",
+  "target": {
+    "os": "linux",
+    "cpu": "arm64",
+    "libc": "glibc"
+  }
+}

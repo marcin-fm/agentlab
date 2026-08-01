@@ -4215,7 +4215,7 @@ class AgentlabTest < Minitest::Test
         inventory,
         plan.fetch("stages").fetch("dependency_closure"),
         "1.3.14",
-        spec.sub("--rpm-release 0.0.38", "--rpm-release 0.0.37")
+        spec.sub("--rpm-release 0.0.39", "--rpm-release 0.0.38")
       ),
       "bun: spec does not integrate the source-license inventory"
     )
@@ -4531,7 +4531,7 @@ class AgentlabTest < Minitest::Test
       data.fetch("build_plan").fetch("stages").each_value { |stage| stage["state"] = "blocked" }
       data.dig("build_plan", "stages", "dependency_closure")["state"] = "verified"
       self_stage = data.dig("build_plan", "stages", "self_rebuild")
-      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources bun-system-lolhtml.patch first-source-build-proof.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-kit-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
+      %w[bun-1.3.14-final-linked-license-closure.json bun-1.3.14-npm-code-generation-closure.json bun-1.3.14-release-local-source-closure.json bun-1.3.14-release-local-source-closure-arm64.json bun-1.3.14-source-license-inventory.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources bun-system-lolhtml.patch first-source-build-proof.json first-source-build-proof-arm64.json npm-offline-install-proof.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof.json relink-materials-proof-arm64.json relink-kit-proof.json relink-kit-proof-arm64.json self-rebuild-proof.json self-rebuild-proof-arm64-1.json self-rebuild-proof-arm64-2.json source-built-npm-install-proof.json source-built-npm-install-proof-arm64-1.json source-built-self-npm-install-proof.json source-built-self-npm-install-proof-arm64-2.json webkit-minimized-source-proof.json webkit-minimized-source-build-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -4586,7 +4586,7 @@ class AgentlabTest < Minitest::Test
         name = webkit.fetch(key)
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
-      %w[bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json self-rebuild-proof.json source-built-npm-install-proof.json source-built-self-npm-install-proof.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
+      %w[bun-1.3.14-release-local-source-closure-arm64.json bun-lightningcss-fedora-glibc-arm64-lock.patch bun-stage-release-local-sources first-source-build-proof-arm64.json npm-offline-install-proof-arm64.json prior-self-rebuild-proof.json relink-materials-proof-arm64.json relink-kit-proof-arm64.json self-rebuild-proof.json self-rebuild-proof-arm64-1.json self-rebuild-proof-arm64-2.json source-built-npm-install-proof.json source-built-npm-install-proof-arm64-1.json source-built-self-npm-install-proof.json source-built-self-npm-install-proof-arm64-2.json webkit-minimized-source-build-proof-arm64.json zig-bootstrap-proof-arm64.json zig-fedora-lib64.patch].each do |name|
         FileUtils.cp(File.join(source_package.directory, name), File.join(directory, name))
       end
       package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
@@ -4616,6 +4616,59 @@ class AgentlabTest < Minitest::Test
 
       errors = Agentlab.validate_bun_build_plan(package, File.read(File.join(source_package.directory, "bun.spec")))
       assert_includes(errors, "bun: relink-kit proof validation is incomplete")
+    end
+  end
+
+  def test_validates_bun_aarch64_build_proof_chain
+    source_package = Agentlab.package_named("bun")
+    Dir.mktmpdir do |directory|
+      directory = prepare_bun_fixture_repository(source_package, directory, copy_package: true)
+      data = Marshal.load(Marshal.dump(source_package.data))
+      package = Agentlab::Package.new(directory: directory, manifest_path: "unused", data: data)
+      spec = File.read(File.join(directory, "bun.spec"))
+
+      assert_empty(Agentlab.validate_bun_build_plan(package, spec))
+
+      first_path = File.join(directory, "first-source-build-proof-arm64.json")
+      first_receipt = JSON.parse(File.read(first_path))
+      first_receipt.dig("inputs", "webkit")["tree_sha256"] = "0" * 64
+      File.write(first_path, JSON.dump(first_receipt))
+      data.dig("build_plan", "source_inputs", "aarch64_build_proof", "first_build")["proof_receipt_sha256"] = Digest::SHA256.file(first_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: aarch64 first-build WebKit input mismatch")
+
+      FileUtils.cp(File.join(source_package.directory, "first-source-build-proof-arm64.json"), first_path)
+      data.dig("build_plan", "source_inputs", "aarch64_build_proof", "first_build")["proof_receipt_sha256"] = Digest::SHA256.file(first_path).hexdigest
+
+      final_path = File.join(directory, "self-rebuild-proof-arm64-2.json")
+      final_receipt = JSON.parse(File.read(final_path))
+      final_receipt.fetch("first_build")["driver_receipt_sha256"] = "0" * 64
+      File.write(final_path, JSON.dump(final_receipt))
+      data.dig("build_plan", "source_inputs", "aarch64_build_proof", "self_rebuild")["proof_receipt_sha256"] = Digest::SHA256.file(final_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: aarch64 self-rebuild driver mismatch")
+
+      FileUtils.cp(File.join(source_package.directory, "self-rebuild-proof-arm64-2.json"), final_path)
+      data.dig("build_plan", "source_inputs", "aarch64_build_proof", "self_rebuild")["proof_receipt_sha256"] = Digest::SHA256.file(final_path).hexdigest
+      kit_path = File.join(directory, "relink-kit-proof-arm64.json")
+      kit_receipt = JSON.parse(File.read(kit_path))
+      kit_receipt.dig("link_validation", "output")["size_bytes"] = 0
+      File.write(kit_path, JSON.dump(kit_receipt))
+      data.dig("build_plan", "source_inputs", "aarch64_build_proof", "relink_kit")["proof_receipt_sha256"] = Digest::SHA256.file(kit_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: aarch64 relink-kit target chain mismatch")
+
+      FileUtils.cp(File.join(source_package.directory, "relink-kit-proof-arm64.json"), kit_path)
+      kit_receipt = JSON.parse(File.read(kit_path))
+      kit_receipt.fetch("validation")["retained_linker_map_sha256_equal"] = false
+      File.write(kit_path, JSON.dump(kit_receipt))
+      data.dig("build_plan", "source_inputs", "aarch64_build_proof", "relink_kit")["proof_receipt_sha256"] = Digest::SHA256.file(kit_path).hexdigest
+
+      errors = Agentlab.validate_bun_build_plan(package, spec)
+      assert_includes(errors, "bun: aarch64 relink-kit validation is incomplete")
     end
   end
 

@@ -230,7 +230,9 @@ module Agentlab
         "symlink_count" => archive.fetch("symlink_count"),
         "regular_file_bytes" => archive.fetch("regular_file_bytes")
       }
-      raise Agentlab::Error, "minimized WebKit extracted tree does not match its receipt" unless manifest == expected
+      unless manifest == expected
+        raise Agentlab::Error, "minimized WebKit extracted tree does not match its receipt: expected #{expected.inspect}, got #{manifest.inspect}"
+      end
 
       manifest
     end
@@ -267,6 +269,11 @@ module Agentlab
       records = []
       root_path = File.join(staging, root)
       Find.find(root_path) do |path|
+        if generated_python_cache?(path)
+          Find.prune
+          next
+        end
+
         relative = Pathname(path).relative_path_from(Pathname(staging)).to_s
         stat = File.lstat(path)
         record = { "path" => relative, "mode" => format("%04o", stat.mode & 0o7777) }
@@ -295,6 +302,15 @@ module Agentlab
         "symlink_count" => records.count { |record| record["type"] == "symlink" },
         "regular_file_bytes" => records.sum { |record| record["type"] == "file" ? record.fetch("size_bytes") : 0 }
       }
+    end
+
+    def generated_python_cache?(path)
+      return false unless File.directory?(path) && File.basename(path) == "__pycache__"
+
+      Dir.children(path).all? do |entry|
+        child = File.join(path, entry)
+        File.lstat(child).file? && entry.end_with?(".pyc")
+      end
     end
 
     def normalize_git_modes!(root)

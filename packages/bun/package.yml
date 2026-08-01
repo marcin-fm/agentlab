@@ -5,7 +5,7 @@ blockers:
   - The external lol-html 3.0.0 package and Bun system-link patch require target Mock proof.
   - The complete LGPL relink kit is proven locally but lacks approved immutable delivery and final RPM integration.
   - Six Bun WebKit fork files lack explicit terms. Pechy 0.4.34 omits the required MIT text from its exact npm archive, but Source32 now supplies the canonical upstream text while exact release-source correspondence remains unverified.
-  - Final bundled-license accounting, the aarch64 Bun build chain, RPM acceptance, and COPR acceptance are incomplete.
+  - Final bundled-license accounting, aarch64 RPM integration and acceptance, and COPR acceptance are incomplete.
 upstream:
   provider: github
   repository: oven-sh/bun
@@ -155,9 +155,9 @@ build_plan:
       relationship: provisional_source_license_accounting
       release_pin: bun-v1.3.14
       source: bun-1.3.14-source-license-inventory.json
-      sha256: f19b7a4a7d4b0df3858083e7d27ee19321cc51e88a07a687d359afe04640d581
+      sha256: bde16b2739542fefd72b0d835cd717a009ff840e4086712befe8b31006d62f25
       audit_script: scripts/audit-bun-source-licenses
-      audit_script_sha256: 581d10dd37231ae455122275ded7d3fe241ba61a1c380b2d89c19b54a7861c94
+      audit_script_sha256: cbfbc3eb055ed807dc527f4845d121b90bb02abead82cb643a978113fd3f3ba1
       audit_script_source: audit-bun-source-licenses
       npm_cache_entries: 236
       npm_entries_with_license_text: 223
@@ -195,9 +195,9 @@ build_plan:
     npm_code_generation_closure:
       relationship: current_codegen_package_linked_output_and_side_effect_mapping
       source: bun-1.3.14-npm-code-generation-closure.json
-      sha256: 9e756483322f437eb0847acc54354068142966e8b1f609ce8f5c444b6b742f98
+      sha256: c9b96a6850dfaad1818054087c28fea879654edb6a97456b3c121dd71849fb79
       audit_script: scripts/audit-bun-npm-code-generation
-      audit_script_sha256: 8615f5412a8f56388a852fb68b7d96376e260fa30b613d21b15b89c7ece6f993
+      audit_script_sha256: c29b2416b41dbfd2b809e3f23f2d16febaef5ec295ccb4bb49568b1b44a669f0
       audit_script_source: audit-bun-npm-code-generation
       build_ninja_size_bytes: 2469137
       build_ninja_sha256: 9d382356fa600dbf4b0b489dc91ebff38e06a78938d31d9a04ce610ef20c9fd3
@@ -217,9 +217,9 @@ build_plan:
     final_linked_license_closure:
       relationship: current_final_link_component_mapping
       source: bun-1.3.14-final-linked-license-closure.json
-      sha256: 31ce9f7da56bfa78195dc35ce73541499ddbf68dcc4850a9230689781c881835
+      sha256: f744160af861969b4fc15918bc3042851d20bdbb6c6065b662447cbb4e730e98
       audit_script: scripts/audit-bun-final-linked-licenses
-      audit_script_sha256: c9a6413f1901f02fba289613aabbf69eb8d78a69357214b0505cbc666aa709c3
+      audit_script_sha256: 2c846075b5965676414c265823397e61d79f74e4bea2b8d8e7b7cb628249c38c
       audit_script_source: audit-bun-final-linked-licenses
       direct_object_count: 1162
       direct_archive_count: 3
@@ -412,6 +412,82 @@ build_plan:
           ninja: 1.13.2
           jobs: 4
           cpu: fedora-default
+    aarch64_build_proof:
+      state: source_build_and_relink_verified
+      proof_date: '2026-07-31'
+      proof_platform: fedora-44-aarch64
+      target:
+        os: linux
+        cpu: arm64
+        libc: glibc
+      source_inputs:
+        webkit:
+          commit: 5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b
+          archive_sha256: 38253c470959d729a196a543d6fce9e8aacc378ffc492790ded2b69598d7213d
+          source_receipt_sha256: 01b4549178b6469c4969b46dc1a5e31c17efdfb84d684d5ca192935227c89680
+          tree_sha256: dcf7d67f6bced499d961d20c29a1dc12cead88650c7d9f79a830082969e744d8
+          patch_sha256: 023a4686ba96eb6ace658bef0226ba8b2968b57075ad11813918da93ed3c14e3
+        source_patches:
+          system_lolhtml_sha256: 840886d2caf3dd2a25146e329a9c876d4a2d3240ba610b9b0267d85eb325bdaf
+          npm_lock_sha256: 0ae29543c765ffa18aabd181b8fcc24245e88701f4792b424690f719aef18b80
+          zig_build_cwd_sha256: 6b8c241a4f1c5253e8dfcdabb943a956dd7867a044c5fef01591522090ad7fb2
+          fedora_shared_cxx_runtime_sha256: b9712db0e79d0277dfece2d74c4e943ed5714dff20676ab87b7a4dc6e869850e
+        staged_lolhtml_provider:
+          header:
+            path: usr/include/lol_html.h
+            size_bytes: 41277
+            sha256: 7fe574ddaad36931ee4d72a43c0cf375e3b697b94ab4c137fe58d8643c402293
+          pkgconfig_file:
+            path: usr/lib64/pkgconfig/lol-html.pc
+            size_bytes: 247
+            sha256: e85417c9de2ea6bc28818f3df82c14eb3a5b75c1714a4ac11545a02f47d6119d
+          shared_library:
+            path: usr/lib64/liblolhtml.so.1.4.0
+            size_bytes: 877304
+            sha256: 1d0d7e23fbc9ca015a838bee88808dd765fae788e0b805b4a7c2564e315486f2
+      rpm_architecture_enabled: false
+      first_build:
+        proof_receipt: first-source-build-proof-arm64.json
+        proof_receipt_sha256: 80d2b0f7542361fe874ded16d6632fba2da8e80bc0e021f358e8b68616708427
+      first_source_built_npm_install:
+        proof_receipt: source-built-npm-install-proof-arm64-1.json
+        proof_receipt_sha256: 4f3ca454961dbc3b0a4412ccce256e07feb9631e92045e823572a9e375415d1d
+      prior_self_rebuild:
+        proof_receipt: self-rebuild-proof-arm64-1.json
+        proof_receipt_sha256: 2c29b52a85e57eec79ef73a1f9ebfbd1eb4f01c82c174df65ff78b809387f85d
+      final_source_built_npm_install:
+        proof_receipt: source-built-self-npm-install-proof-arm64-2.json
+        proof_receipt_sha256: f4eb105d3312b686647c33d5550639a05cdffc95bd91e91bb7776d4d4d280bc6
+      self_rebuild:
+        proof_receipt: self-rebuild-proof-arm64-2.json
+        proof_receipt_sha256: 9d3a94273e6d846d29a8e5ba654dbce1017ae7032272c014085d3c41ef7025a7
+        source_rebuild_fixed_point_verified: false
+      relink_materials_audit:
+        proof_receipt: relink-materials-proof-arm64.json
+        proof_receipt_sha256: f38ab8e9bf83a5e9f8dd83487cff06a5d347572fda6b51df5ed57197660daf59
+        direct_object_count: 1166
+        direct_object_bytes: 1472436656
+        direct_object_inventory_sha256: bd8dab0708b1976f11a5cc779a911160b3519c072ee91aae9a8e2aedecfe8b23
+        direct_archive_count: 3
+        link_manifest_sha256: a1b052457d349520e50cbbd197cb96da905e8327341886c2cae0fee64471813e
+      relink_kit:
+        proof_receipt: relink-kit-proof-arm64.json
+        proof_receipt_sha256: b129b42f9b761a628e6073a593b429df1423c9840201a37014f4984c3e82016f
+        archive: bun-1.3.14-relink-kit.tar.zst
+        archive_size_bytes: 320906229
+        archive_sha256: 90d57e1277c5ba8eb29196ec923321040c9114e8790767122a35310b57a92c34
+        immutable_delivery_verified: false
+      final_profile_sha256: 9185ea59ec930545420893dd91374299a22f79d31541f0dd45b1eaa4dcda542c
+      final_bun_sha256: ea292e417542dc3019015e80ac74ed072716e6b91dfae3372d8a3e8b6a28daea
+      final_linker_map_sha256: 24fd5d09144afd3d4be4dfe299406b379c759add59aec46e16ccd7e90a3b88c8
+      network_isolated: true
+      source_built_npm_handoffs_verified: true
+      seed_free_self_rebuilds_verified: true
+      wrapper_free_relink_verified: true
+      html_rewriter_smoke_verified: true
+      system_lolhtml_provider_verified: true
+      final_license_audit_verified: false
+      final_rpm_verified: false
   stages:
     zig_source_bootstrap:
       state: verified
@@ -471,7 +547,7 @@ build_plan:
     source_delivery:
       state: verified
       proof_receipt: srpm-source-delivery-proof.json
-      proof_receipt_sha256: 017c2726da78813d796a5c735c8b3f64b96f0a77ad387b2d56b476ebbc75a3c5
+      proof_receipt_sha256: 3ee7f2d33333bf90c1070cca196b272718fd7c9bf01fc876e5b2a374f5436811
       direct_source_checksums_verified: true
       canonical_closure_regenerated_verified: true
       canonical_closure_byte_identity_verified: true
@@ -505,7 +581,7 @@ build_plan:
     dependency_staging:
       state: verified
       proof_receipt: release-local-source-staging-proof.json
-      proof_receipt_sha256: c4c226f9a1b76f3a22a936e9f9d56a7d64d7638d8818d5a9c32293bcf3c7fc93
+      proof_receipt_sha256: b8e88c906444e00908dd59751eb761b2bc3a2f6a303b6a18d530839401205fcb
       production_spec_integration_verified: true
       srpm_inputs_verified: true
       native_sources_staged_verified: true

@@ -21,7 +21,7 @@
   },
   "packaging_patch_inputs": {
     "spec": "opencode.spec",
-    "spec_sha256": "9acbcad59c576bf4cf80cb2103625230aa8282bbd01e2c03285b96d992e5cc6a",
+    "spec_sha256": "0f3fbc7681b9ae030c9263ad00551f39c7d4270233b95b72b78fb8e9be68724b",
     "patches": [
       {
         "number": "0",
